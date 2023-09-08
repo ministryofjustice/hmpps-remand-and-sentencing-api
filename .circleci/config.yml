@@ -6,7 +6,7 @@ orbs:
 parameters:
   alerts-slack-channel:
     type: string
-    default: dps_alerts_security
+    default: farsight-alerts
   releases-slack-channel:
     type: string
     default: dps-releases
@@ -53,6 +53,7 @@ workflows:
           name: deploy_dev
           env: "dev"
           jira_update: true
+          jira_env_type: development
           context: hmpps-common-vars
           filters:
             branches:
@@ -63,38 +64,38 @@ workflows:
             - build_docker
             - helm_lint
           helm_timeout: 5m
-#      - request-preprod-approval:
-#          type: approval
-#          requires:
-#            - deploy_dev
-#      - hmpps/deploy_env:
-#          name: deploy_preprod
-#          env: "preprod"
-#          jira_update: true
-#          jira_env_type: staging
-#          context:
-#            - hmpps-common-vars
-#            - hmpps-remand-and-sentencing-api-preprod
-#          requires:
-#            - request-preprod-approval
-#          helm_timeout: 5m
-#      - request-prod-approval:
-#          type: approval
-#          requires:
-#            - deploy_preprod
-#      - hmpps/deploy_env:
-#          name: deploy_prod
-#          env: "prod"
-#          jira_update: true
-#          jira_env_type: production
-#          slack_notification: true
-#          slack_channel_name: << pipeline.parameters.releases-slack-channel >>
-#          context:
-#            - hmpps-common-vars
-#            - hmpps-remand-and-sentencing-api-prod
-#          requires:
-#            - request-prod-approval
-#          helm_timeout: 5m
+      - request-preprod-approval:
+          type: approval
+          requires:
+            - deploy_dev
+      - hmpps/deploy_env:
+          name: deploy_preprod
+          env: "preprod"
+          jira_update: true
+          jira_env_type: staging
+          context:
+            - hmpps-common-vars
+            - hmpps-remand-and-sentencing-api-preprod
+          requires:
+            - request-preprod-approval
+          helm_timeout: 5m
+      - request-prod-approval:
+          type: approval
+          requires:
+            - deploy_preprod
+      - hmpps/deploy_env:
+          name: deploy_prod
+          env: "prod"
+          jira_update: true
+          jira_env_type: production
+          slack_notification: true
+          slack_channel_name: << pipeline.parameters.releases-slack-channel >>
+          context:
+            - hmpps-common-vars
+            - hmpps-remand-and-sentencing-api-prod
+          requires:
+            - request-prod-approval
+          helm_timeout: 5m
 
   security:
     triggers:
