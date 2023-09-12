@@ -15,9 +15,9 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
   fun customOpenAPI(): OpenAPI? = OpenAPI()
     .info(
       Info()
-        .title("hmppsremandandsentencingapi API")
+        .title("Remand and Sentencing API")
         .version(version)
-        .description("API for hmppsremandandsentencingapi CRUD operations")
+        .description("API for Remand and Sentencing CRUD operations")
         .contact(
           Contact()
             .name("HMPPS Digital Studio")
