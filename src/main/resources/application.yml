@@ -18,6 +18,16 @@ spring:
       test:
         - "stdout"
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${hmpps.auth.url}/.well-known/jwks.json
+      client:
+        provider:
+          hmpps-auth:
+            token-uri: ${hmpps.auth.url}/oauth/token
+
 server:
   port: 8080
   servlet:
