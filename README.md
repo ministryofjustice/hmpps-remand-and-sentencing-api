@@ -2,7 +2,7 @@
 [![repo standards badge](https://img.shields.io/badge/dynamic/json?color=blue&style=flat&logo=github&label=MoJ%20Compliant&query=%24.result&url=https%3A%2F%2Foperations-engineering-reports.cloud-platform.service.justice.gov.uk%2Fapi%2Fv1%2Fcompliant_public_repositories%2Fhmpps-remand-and-sentencing-api)](https://operations-engineering-reports.cloud-platform.service.justice.gov.uk/public-github-repositories.html#hmpps-remand-and-sentencing-api "Link to report")
 [![CircleCI](https://circleci.com/gh/ministryofjustice/hmpps-remand-and-sentencing-api/tree/main.svg?style=svg)](https://circleci.com/gh/ministryofjustice/hmpps-remand-and-sentencing-api)
 [![Docker Repository on Quay](https://quay.io/repository/hmpps/hmpps-remand-and-sentencing-api/status "Docker Repository on Quay")](https://quay.io/repository/hmpps/hmpps-remand-and-sentencing-api)
-[![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://hmpps-remand-and-sentencing-api-dev.hmpps.service.justice.gov.uk/webjars/swagger-ui/index.html?configUrl=/v3/api-docs)
+[![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://remand-and-sentencing-api-dev.hmpps.service.justice.gov.uk/webjars/swagger-ui/index.html?configUrl=/v3/api-docs)
 
 This is a skeleton project from which to create new kotlin projects from.
 
