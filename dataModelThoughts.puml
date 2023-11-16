@@ -1,0 +1,148 @@
+@startuml
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+package "Remand and Sentencing Tables" as rst <<Frame>> {
+    entity "court_case" as cc {
+        * id : serial - PK
+        --
+        prisoner_id : varchar(255)
+        status : int
+        created_at : timestamp
+        created_by_username : varchar(100)
+        latest_appearance_id : bigint FK
+        latest_warrant_id : bigint FK
+    }
+    note right of cc
+        Represents a court case container. This has similarities with offender_cases table in nomis.
+        This can also follow an audit log structure to allow each modification to be a new entry.
+    end note
+    note right of cc::status
+        active/inactive, deleted and any other states a court case could be in
+    end note
+
+    entity "court_appearance" as ca {
+        * id : serial - PK
+        --
+        court_case_id : bigint - FK
+        court_code : varchar(100)
+        court_case_reference : varchar(100) NULL
+        court_date : timestamp
+        status : int
+        appearance_type : varchar(255)
+        created_at : timestamp
+        created_by_username : varchar(100)
+        supersedes_appearance_id : bigint NULL
+    }
+    note bottom of ca
+        Represents a court appearance. This has similarities with court_events table in nomis.
+        This can also follow an audit log structure to allow each modification to be a new entry.
+        There is the next questions which may change some things
+    end note
+    note right of ca::court_code
+        the identifier for the court the appearance took place at so that metadata can be looked up in view journey
+    end note
+    note right of ca::status
+        active/inactive, deleted and any other states an court appearance could be in
+    end note
+    note right of ca::appearance_type
+        video link, court appearance.
+        Only appears in the next questions after adding all offences to the appearance.. this is a thinker
+    end note
+    note right of ca::next_court_date
+        Only appears in the next questions after adding all offences to the appearance..
+        could this generate a new appearance record rather than storing it against a single record??
+    end note
+
+    entity "warrant" as warr {
+        * id : serial - PK
+        --
+        warrant_id : UUID
+        warrant_date : date
+        type : varchar(255)
+        prisoner_id : varchar(255)
+        court_case_id : bigint - FK NULL
+        court_appearance : bigint - FK NULL
+    }
+
+    note right of warr::type
+       remand, sentence and any other value a warrant could be
+    end note
+
+    entity "offence" as off {
+        * id : serial - PK
+        --
+        offence_code : varchar(255)
+        start_date : date
+        end_date : date NULL
+        status : int
+        created_at : timestamp
+        created_by_username : varchar(100)
+        supersedes_offence_id : bigint - FK NULL
+    }
+
+    note left of off::supersedes_offence_id
+     Offences can be added to/ upgraded so an offence can supersede another offence
+     e.g. shoplifting is the first offence then the next offence is shoplifting and damage
+    end note
+
+    entity "appearance_offence" as chr {
+        * id : serial - PK
+        --
+        appearance_id : bigint - FK
+        offence_id : bigint - FK
+        outcome: varchar(255)
+        created_at : timestamp
+        created_by_username : varchar(100)
+    }
+
+    note bottom of chr
+      Represents which offences were applicable to which court appearance. An offence can span over multiple court appearances
+      so there would be one entry for offence and multiple in this table if the offence spanned over.
+    end note
+
+    entity "sentence" as sen {
+    * id : serial - PK
+    ---
+    charge_id : bigint - FK
+    consecutive_to_sentence : bigint - FK
+    concurrent_to_sentence : bigint - FK
+    sentence_length : varchar(255)
+    fine_amount : NUMERIC(10, 2)
+    count_number : int
+    status : int
+    type: varchar(255)
+    start_date : date
+    created_at : timestamp
+    created_by_username : varchar(100)
+    }
+
+    note left of sen::type
+      determinate, indeterminate etc. Maybe this needs a table of all possibles?
+      does this service need to master this data?
+    end note
+
+    entity "term" as ter {
+    * id : serial - PK
+    ---
+    sentence_id : bigint FK
+    length : int
+    length_unit : int
+    term_order : int
+    created_at : timestamp
+    created_by_username : varchar(100)
+    }
+}
+
+cc ||--o{ ca
+cc ||--|| ca
+off ||--o{ chr
+off ||--|| off
+warr ||--|| cc
+warr }o--|| cc
+warr ||--|| ca
+ca ||--o{ chr
+chr ||--|| sen
+sen ||--|| sen
+sen ||--o{ ter
+@enduml
