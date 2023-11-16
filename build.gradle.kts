@@ -19,12 +19,12 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.1")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
 
-  testImplementation("io.jsonwebtoken:jjwt-impl:0.11.5")
-  testImplementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+  testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
+  testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
 }
 
