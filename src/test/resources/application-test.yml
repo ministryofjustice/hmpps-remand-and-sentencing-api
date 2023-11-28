@@ -5,6 +5,12 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
+spring:
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/ras"
+    username: "ras-user"
+    password: "ras-pass"
+
 # Wiremock auth server
 hmpps:
   auth:

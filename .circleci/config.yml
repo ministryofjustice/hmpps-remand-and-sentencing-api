@@ -14,8 +14,12 @@ parameters:
 jobs:
   validate:
     executor:
-      name: hmpps/java
-      tag: "20.0"
+      name: hmpps/java_postgres
+      jdk_tag: "20.0"
+      postgres_tag: "15"
+      postgres_password: "ras-pass"
+      postgres_username: "ras-user"
+      postgres_db: "ras"
     steps:
       - checkout
       - restore_cache:

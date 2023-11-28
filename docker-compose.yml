@@ -12,6 +12,15 @@ services:
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=dev
-
+  remand-and-sentencing-db:
+    image: postgres:15
+    networks:
+      - hmpps
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=ras-pass
+      - POSTGRES_USER=ras-user
+      - POSTGRES_DB=ras
 networks:
   hmpps:
