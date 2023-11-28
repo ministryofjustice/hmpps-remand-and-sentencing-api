@@ -31,7 +31,6 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
-
 }
 
 java {
