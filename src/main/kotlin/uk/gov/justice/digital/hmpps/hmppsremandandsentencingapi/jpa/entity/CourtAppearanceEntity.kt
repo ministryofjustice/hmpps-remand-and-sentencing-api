@@ -68,5 +68,5 @@ data class CourtAppearanceEntity(
 
   @OneToOne
   @JoinColumn(name = "next_court_appearance_id")
-  var nextCourtAppearance: CourtAppearanceEntity?,
+  var nextCourtAppearance: NextCourtAppearanceEntity?,
 )
