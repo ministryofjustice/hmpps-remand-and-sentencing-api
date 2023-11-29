@@ -8,8 +8,9 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -57,6 +58,15 @@ data class CourtAppearanceEntity(
   val createdByUsername: String,
   @Column
   val createdPrison: String,
-  @OneToMany(mappedBy = "courtAppearance")
-  val charges: Set<AppearanceChargeEntity>,
+  @ManyToMany
+  @JoinTable(
+    name = "appearance_charge",
+    joinColumns = [JoinColumn(name = "appearance_id")],
+    inverseJoinColumns = [JoinColumn(name = "charge_id")],
+  )
+  val charges: Set<ChargeEntity>,
+
+  @OneToOne
+  @JoinColumn(name = "next_court_appearance_id")
+  var nextCourtAppearance: CourtAppearanceEntity?,
 )

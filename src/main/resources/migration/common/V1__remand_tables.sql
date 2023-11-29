@@ -13,13 +13,6 @@ CREATE TABLE appearance_outcome(
     outcome_name VARCHAR NOT NULL
 );
 
-CREATE TABLE next_court_appearance(
-    id SERIAL PRIMARY KEY,
-    appearance_date date NOT NULL,
-    court_code VARCHAR,
-    appearance_type VARCHAR
-);
-
 CREATE TABLE court_appearance( -- COURT_EVENTS
     id SERIAL PRIMARY KEY,
     appearance_uuid UUID NOT NULL,
@@ -29,8 +22,9 @@ CREATE TABLE court_appearance( -- COURT_EVENTS
     court_case_reference VARCHAR,
     appearance_date date NOT NULL,
     status_id smallint NOT NULL, -- active/inactive, deleted and any other states an offence could be in represented by number
-    next_court_appearance_id int references next_court_appearance(id),
+    next_court_appearance_id int references court_appearance(id),
     previous_appearance_id int references court_appearance(id),
+    appearance_type VARCHAR,
     warrant_id VARCHAR,
     created_at timestamp with time zone not null,
     created_by_username VARCHAR NOT NULL,
