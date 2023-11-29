@@ -5,7 +5,7 @@ CREATE TABLE court_case( -- OFFENDER_CASES, a booking would also need to be crea
     latest_court_appearance_id int,
     created_at timestamp with time zone not null,
     created_by_username VARCHAR NOT NULL,
-    status_id INT NOT NULL -- active/inactive, deleted and any other states an offence could be in represented by number
+    status_id smallint NOT NULL -- active/inactive, deleted and any other states an offence could be in represented by number
 );
 
 CREATE TABLE appearance_outcome(
@@ -28,12 +28,12 @@ CREATE TABLE court_appearance( -- COURT_EVENTS
     court_code VARCHAR NOT NULL, -- the identifier for the court the appearance took place at so that metadata can be looked up in view journey
     court_case_reference VARCHAR,
     appearance_date date NOT NULL,
-    status_id INT NOT NULL, -- active/inactive, deleted and any other states an offence could be in represented by number
+    status_id smallint NOT NULL, -- active/inactive, deleted and any other states an offence could be in represented by number
     next_court_appearance_id int references next_court_appearance(id),
     previous_appearance_id int references court_appearance(id),
-    warrant_id int,
+    warrant_id VARCHAR,
     created_at timestamp with time zone not null,
-    created_by VARCHAR NOT NULL,
+    created_by_username VARCHAR NOT NULL,
     created_prison VARCHAR
 );
 
@@ -51,7 +51,7 @@ CREATE TABLE charge(
     offence_code VARCHAR NOT NULL,
     offence_start_date DATE NOT NULL,
     offence_end_date DATE,
-    status_id INT NOT NULL,
+    status_id smallint NOT NULL,
     charge_outcome_id int references charge_outcome(id) NOT NULL,
     superseding_charge_id int references charge(id)
 );
