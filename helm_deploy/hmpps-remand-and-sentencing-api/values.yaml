@@ -29,6 +29,11 @@ generic-service:
   namespace_secrets:
     hmpps-remand-and-sentencing-api:
       APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
+    rds-postgresql-instance-output:
+        DB_SERVER: rds_instance_endpoint
+        DB_NAME: database_name
+        DB_USER: database_username
+        DB_PASS: database_password
 
   allowlist:
     cymulate-1: 54.217.50.18/32
