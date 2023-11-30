@@ -14,7 +14,7 @@ data class NextCourtAppearanceEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val id: Int? = null,
+  val id: Int = 0,
   @Column
   val appearanceDate: LocalDate,
   @Column

@@ -25,7 +25,7 @@ data class CourtAppearanceEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val id: Int? = null,
+  val id: Int = 0,
   @Column
   val appearanceUuid: UUID,
 
