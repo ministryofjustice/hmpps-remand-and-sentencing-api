@@ -9,7 +9,7 @@ spring:
     max-in-memory-size: 10MB
 
   datasource:
-    url: "jdbc:postgresql://${db.server}/${db.name}"
+    url: "jdbc:postgresql://${db.server}/${db.name}?sslmode=${db.ssl.mode}"
     username: "${db.user}"
     password: "${db.pass}"
     hikari:
