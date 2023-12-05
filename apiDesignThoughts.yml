@@ -1,0 +1,350 @@
+openapi: 3.0.1
+info:
+  title: HMPPS Remand and Sentencing API
+  description: Recording Remand and sentencing
+  contact:
+    name: HMPPS Digital Studio
+    email: feedback@digital.justice.gov.uk
+  version: 2023-12-05.501.b1f88aa
+servers:
+  - url: https://remand-and-sentencing-api.hmpps.service.justice.gov.uk
+    description: Prod
+  - url: https://remand-and-sentencing-api-preprod.hmpps.service.justice.gov.ukk
+    description: Preprod
+  - url: https://remand-and-sentencing-api-dev.hmpps.service.justice.gov.uk
+    description: Development
+  - url: http://localhost:8080
+    description: Local
+tags:
+  - name: person-controller
+    description: Get person details
+  - name: court-case-controller
+    description: Court Cases
+  - name: court-appearance-controller
+    description: Court Appearances
+  - name: charge-controller
+    description: Charges
+paths:
+  /person/{prisonerId}:
+    get:
+      tags:
+        - person-controller
+      summary: Retrieve person details
+      description: This endpoint will retrieve person details
+      operationId: getPersonDetails
+      parameters:
+        - name: prisonerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetails'
+        '401':
+          description: Unauthorised, requires a valid Oauth2 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetails'
+        '403':
+          description: Forbidden, requires an appropriate role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetails'
+  /person/{prisonerId}/courtCases:
+    get:
+      tags:
+        - person-controller
+      summary: Retrieve all court cases for person
+      description: This endpoint will retrieve all court cases for a person
+      parameters:
+        - name: prisonerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns Court cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourtCase'
+  /courtCase/{courtCaseId}:
+    get:
+      tags:
+        - court-case-controller
+      summary: Retrieve a court case
+      parameters:
+        - name: courtCaseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Return court case
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourtCase'
+    put:
+      tags:
+        - court-case-controller
+      summary: Update court case
+      parameters:
+        - name: courtCaseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourtCase'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCourtCaseResponse'
+  /courtCase:
+    post:
+      tags:
+        - court-case-controller
+      summary: Create court case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourtCase'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCourtCaseResponse'
+  /courtAppearance:
+    post:
+      tags:
+        - court-appearance-controller
+      summary: Create Court appearance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourtAppearance'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCourtAppearanceResponse'
+  /courtAppearance/{courtAppearanceId}:
+    get:
+      tags:
+        - court-appearance-controller
+      summary: Get court appearance
+      parameters:
+        - name: courtAppearanceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get court appearance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourtAppearance'
+    put:
+      tags:
+        - court-appearance-controller
+      summary: Update court appearance
+      parameters:
+        - name: courtAppearanceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourtAppearance'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCourtAppearanceResponse'
+  /charge/{chargeId}:
+    get:
+      tags:
+        - charge-controller
+      summary: Charge appearance
+      parameters:
+        - name: chargeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get Charge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Charge'
+
+components:
+  schemas:
+    PersonDetails:
+      required:
+        - dateOfBirth
+        - firstName
+        - lastName
+        - personId
+      type: object
+      properties:
+        personId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        establishment:
+          type: string
+        cellNumber:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        pncNumber:
+          type: string
+        status:
+          type: string
+    CourtCase:
+      type: object
+      properties:
+        prisonerId:
+          type: string
+        uniqueIdentifier:
+          type: string
+        latestAppearance:
+          $ref: '#/components/schemas/CourtAppearance'
+        appearances:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtAppearance'
+    CreateCourtCase:
+      type: object
+      properties:
+        prisonerId:
+          type: string
+        appearances:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtAppearance'
+    CreateCourtCaseResponse:
+      type: object
+      properties:
+        uniqueIdentifier:
+          type: string
+    CourtAppearance:
+      type: object
+      properties:
+        uuid:
+          type: string
+        outcome:
+          type: string
+        courtCode:
+          type: string
+        courtCaseReference:
+          type: string
+        appearanceDate:
+          type: string
+          format: date
+          pattern: yyyy-mm-dd
+        warrantId:
+          type: string
+        nextCourtAppearance:
+          $ref: '#/components/schemas/NextCourtAppearance'
+        charges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Charge'
+    CreateCourtAppearance:
+      type: object
+      properties:
+        courtCaseId:
+          type: string
+        outcome:
+          type: string
+        courtCode:
+          type: string
+        courtCaseReference:
+          type: string
+        appearanceDate:
+          type: string
+          format: date
+          pattern: yyyy-mm-dd
+        warrantId:
+          type: string
+        nextCourtAppearance:
+          $ref: '#/components/schemas/NextCourtAppearance'
+        charges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Charge'
+    CreateCourtAppearanceResponse:
+      type: object
+      properties:
+        appearanceId:
+          type: string
+    NextCourtAppearance:
+      type: object
+      properties:
+        appearanceDate:
+          type: string
+          format: date
+          pattern: yyyy-mm-dd
+        courtCode:
+          type: string
+        appearanceType:
+          type: string
+    Charge:
+      type: object
+      properties:
+        chargeId:
+          type: string
+        offenceCode:
+          type: string
+        offenceStartDate:
+          type: string
+          format: date
+          pattern: yyyy-mm-dd
+        offenceEndDate:
+          type: string
+          format: date
+          pattern: yyyy-mm-dd
+        outcome:
+          type: string
