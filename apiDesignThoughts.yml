@@ -57,15 +57,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PersonDetails'
-  /person/{prisonerId}/courtCases:
+  /courtCase/search:
     get:
       tags:
-        - person-controller
+        - court-case-controller
       summary: Retrieve all court cases for person
       description: This endpoint will retrieve all court cases for a person
       parameters:
         - name: prisonerId
-          in: path
+          in: query
           required: true
           schema:
             type: string
@@ -78,13 +78,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CourtCase'
-  /courtCase/{courtCaseId}:
+  /courtCase/{courtCaseUuid}:
     get:
       tags:
         - court-case-controller
       summary: Retrieve a court case
       parameters:
-        - name: courtCaseId
+        - name: courtCaseUuid
           in: path
           required: true
           schema:
@@ -101,7 +101,7 @@ paths:
         - court-case-controller
       summary: Update court case
       parameters:
-        - name: courtCaseId
+        - name: courtCaseUuid
           in: path
           required: true
           schema:
@@ -155,13 +155,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateCourtAppearanceResponse'
-  /courtAppearance/{courtAppearanceId}:
+  /courtAppearance/{appearanceUuid}:
     get:
       tags:
         - court-appearance-controller
       summary: Get court appearance
       parameters:
-        - name: courtAppearanceId
+        - name: appearanceUuid
           in: path
           required: true
           schema:
@@ -178,7 +178,7 @@ paths:
         - court-appearance-controller
       summary: Update court appearance
       parameters:
-        - name: courtAppearanceId
+        - name: appearanceUuid
           in: path
           required: true
           schema:
@@ -196,13 +196,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateCourtAppearanceResponse'
-  /charge/{chargeId}:
+  /charge/{chargeUuid}:
     get:
       tags:
         - charge-controller
       summary: Charge appearance
       parameters:
-        - name: chargeId
+        - name: chargeUuid
           in: path
           required: true
           schema:
@@ -244,10 +244,14 @@ components:
           type: string
     CourtCase:
       type: object
+      required:
+        - prisonerId
+        - courtCaseUuid
+        - appearances
       properties:
         prisonerId:
           type: string
-        uniqueIdentifier:
+        courtCaseUuid:
           type: string
         latestAppearance:
           $ref: '#/components/schemas/CourtAppearance'
@@ -257,6 +261,9 @@ components:
             $ref: '#/components/schemas/CourtAppearance'
     CreateCourtCase:
       type: object
+      required:
+        - prisonerId
+        - appearances
       properties:
         prisonerId:
           type: string
@@ -266,13 +273,22 @@ components:
             $ref: '#/components/schemas/CourtAppearance'
     CreateCourtCaseResponse:
       type: object
+      required:
+        - courtCaseUuid
       properties:
-        uniqueIdentifier:
+        courtCaseUuid:
           type: string
     CourtAppearance:
       type: object
+      required:
+        - appearanceUuid
+        - outcome
+        - courtCode
+        - courtCaseReference
+        - appearanceDate
+        - charges
       properties:
-        uuid:
+        appearanceUuid:
           type: string
         outcome:
           type: string
@@ -294,8 +310,15 @@ components:
             $ref: '#/components/schemas/Charge'
     CreateCourtAppearance:
       type: object
+      required:
+        - courtCaseUuid
+        - outcome
+        - courtCode
+        - courtCaseReference
+        - appearanceDate
+        - charges
       properties:
-        courtCaseId:
+        courtCaseUuid:
           type: string
         outcome:
           type: string
@@ -318,7 +341,7 @@ components:
     CreateCourtAppearanceResponse:
       type: object
       properties:
-        appearanceId:
+        appearanceUuid:
           type: string
     NextCourtAppearance:
       type: object
@@ -333,8 +356,12 @@ components:
           type: string
     Charge:
       type: object
+      required:
+        - offenceCode
+        - offenceStartDate
+        - outcome
       properties:
-        chargeId:
+        chargeUuid:
           type: string
         offenceCode:
           type: string
