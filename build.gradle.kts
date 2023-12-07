@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.10.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.10.1"
   kotlin("plugin.spring") version "1.9.21"
 }
 
@@ -26,7 +26,7 @@ dependencies {
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
-  runtimeOnly("org.postgresql:postgresql:42.7.0")
+  runtimeOnly("org.postgresql:postgresql:42.7.1")
 
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
