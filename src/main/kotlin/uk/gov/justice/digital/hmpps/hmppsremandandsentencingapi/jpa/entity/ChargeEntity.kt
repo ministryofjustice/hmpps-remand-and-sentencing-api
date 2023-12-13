@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.LocalDate
 import java.util.UUID
@@ -24,9 +25,9 @@ data class ChargeEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  val lifetimeChargeUuid: UUID,
+  var lifetimeChargeUuid: UUID,
   @Column
-  val chargeUuid: UUID,
+  var chargeUuid: UUID,
   @Column
   val offenceCode: String,
   @Column
@@ -41,7 +42,22 @@ data class ChargeEntity(
   val chargeOutcome: ChargeOutcomeEntity,
   @OneToOne
   @JoinColumn(name = "superseding_charge_id")
-  val supersedingCharge: ChargeEntity?,
+  var supersedingCharge: ChargeEntity?,
   @ManyToMany(mappedBy = "charges")
   val appearances: Set<CourtAppearanceEntity>,
-)
+) {
+  fun isSame(other: ChargeEntity): Boolean {
+    return this.chargeUuid == other.chargeUuid &&
+      this.offenceCode == offenceCode &&
+      this.offenceStartDate.isEqual(other.offenceStartDate) &&
+      ((this.offenceEndDate == null && other.offenceEndDate == null) || this.offenceEndDate?.isEqual(other.offenceEndDate) == true) &&
+      this.statusId == other.statusId &&
+      this.chargeOutcome == other.chargeOutcome
+  }
+
+  companion object {
+    fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity): ChargeEntity {
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, appearances = emptySet())
+    }
+  }
+}
