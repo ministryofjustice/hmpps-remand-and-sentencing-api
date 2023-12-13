@@ -28,7 +28,7 @@ data class CourtCaseEntity(
   val caseUniqueIdentifier: String,
   @OneToOne
   @JoinColumn(name = "latest_court_appearance_id")
-  var latestCourtAppearance: CourtAppearanceEntity,
+  var latestCourtAppearance: CourtAppearanceEntity?,
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   @Column
