@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration
 
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm.RS256
+import io.jsonwebtoken.Jwts.SIG
 import org.springframework.context.annotation.Bean
-import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.stereotype.Component
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -24,26 +24,29 @@ class JwtAuthHelper {
   }
 
   @Bean
-  fun jwtDecoder(): ReactiveJwtDecoder = NimbusReactiveJwtDecoder.withPublicKey(keyPair.public as RSAPublicKey).build()
+  fun jwtDecoder(): JwtDecoder = NimbusJwtDecoder.withPublicKey(keyPair.public as RSAPublicKey).build()
 
   fun createJwt(
-    subject: String? = null,
-    userId: String? = "${subject}_ID",
+    subject: String,
+    user: String?,
+    client: String?,
     scope: List<String>? = listOf(),
     roles: List<String>? = listOf(),
     expiryTime: Duration = Duration.ofHours(1),
-    clientId: String = "hmpps-allocations-client",
     jwtId: String = UUID.randomUUID().toString(),
-  ): String {
-    val claims = mutableMapOf<String, Any?>("user_name" to subject, "client_id" to clientId, "user_id" to userId)
-    roles?.let { claims["authorities"] = roles }
-    scope?.let { claims["scope"] = scope }
-    return Jwts.builder()
-      .setId(jwtId)
-      .setSubject(subject)
-      .addClaims(claims)
-      .setExpiration(Date(System.currentTimeMillis() + expiryTime.toMillis()))
-      .signWith(keyPair.private, RS256)
-      .compact()
-  }
+  ): String =
+    mutableMapOf<String, Any>()
+      .also { user?.let { user -> it["user_name"] = user } }
+      .also { client?.let { client -> it["client_id"] = client } }
+      .also { roles?.let { roles -> it["authorities"] = roles } }
+      .also { scope?.let { scope -> it["scope"] = scope } }
+      .let {
+        Jwts.builder()
+          .id(jwtId)
+          .subject(subject)
+          .claims(it.toMap())
+          .expiration(Date(System.currentTimeMillis() + expiryTime.toMillis()))
+          .signWith(keyPair.private, SIG.RS256)
+          .compact()
+      }
 }

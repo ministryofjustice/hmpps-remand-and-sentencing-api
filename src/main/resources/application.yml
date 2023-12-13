@@ -35,6 +35,7 @@ spring:
         - "stdout"
 
   security:
+    strategy: MODE_INHERITABLETHREADLOCAL
     oauth2:
       resourceserver:
         jwt:
