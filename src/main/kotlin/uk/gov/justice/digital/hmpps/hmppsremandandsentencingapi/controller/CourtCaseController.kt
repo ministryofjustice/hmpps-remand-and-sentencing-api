@@ -29,7 +29,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "201", description = "Returns court case UUID"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
