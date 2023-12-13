@@ -7,16 +7,17 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
-import reactor.core.publisher.Mono
+import org.springframework.stereotype.Component
 
-class AuthAwareTokenConverter : Converter<Jwt, Mono<AbstractAuthenticationToken>> {
+@Component
+class AuthAwareTokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
   private val jwtGrantedAuthoritiesConverter: Converter<Jwt, Collection<GrantedAuthority>> = JwtGrantedAuthoritiesConverter()
 
-  override fun convert(jwt: Jwt): Mono<AbstractAuthenticationToken> {
+  override fun convert(jwt: Jwt): AbstractAuthenticationToken {
     val claims = jwt.claims
     val principal = findPrincipal(claims)
     val authorities = extractAuthorities(jwt)
-    return Mono.just(AuthAwareAuthenticationToken(jwt, principal, authorities))
+    return AuthAwareAuthenticationToken(jwt, principal, authorities)
   }
 
   private fun findPrincipal(claims: Map<String, Any?>): String {
@@ -43,7 +44,7 @@ class AuthAwareAuthenticationToken(
   private val aPrincipal: String,
   authorities: Collection<GrantedAuthority>,
 ) : JwtAuthenticationToken(jwt, authorities) {
-  override fun getPrincipal(): Any {
+  override fun getPrincipal(): String {
     return aPrincipal
   }
 }
