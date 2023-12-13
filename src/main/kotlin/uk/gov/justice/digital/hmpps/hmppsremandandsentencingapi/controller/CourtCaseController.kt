@@ -35,7 +35,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  suspend fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
+  fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
     return CreateCourtCaseResponse(courtCaseService.createCourtCase(createCourtCase).caseUniqueIdentifier)
   }
 }

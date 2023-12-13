@@ -12,7 +12,7 @@ import java.util.UUID
 class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService) {
 
   @Transactional
-  suspend fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
+  fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
     val courtCase = courtCaseRepository.save(CourtCaseEntity(prisonerId = createCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), latestCourtAppearance = null, createdByUsername = serviceUserService.getUsername(), statusId = EntityStatus.ACTIVE))
     val appearances = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
     courtCase.latestCourtAppearance = appearances.maxBy { it.appearanceDate }
