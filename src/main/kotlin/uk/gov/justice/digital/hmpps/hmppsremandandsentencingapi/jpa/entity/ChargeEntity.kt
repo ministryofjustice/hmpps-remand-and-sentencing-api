@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
@@ -43,8 +42,6 @@ data class ChargeEntity(
   @OneToOne
   @JoinColumn(name = "superseding_charge_id")
   var supersedingCharge: ChargeEntity?,
-  @ManyToMany(mappedBy = "charges")
-  val appearances: Set<CourtAppearanceEntity>,
 ) {
   fun isSame(other: ChargeEntity): Boolean {
     return this.chargeUuid == other.chargeUuid &&
@@ -57,7 +54,7 @@ data class ChargeEntity(
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity): ChargeEntity {
-      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, appearances = emptySet())
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null)
     }
   }
 }

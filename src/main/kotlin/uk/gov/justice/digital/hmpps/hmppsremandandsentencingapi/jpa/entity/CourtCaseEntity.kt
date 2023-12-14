@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -26,9 +27,7 @@ data class CourtCaseEntity(
   val prisonerId: String,
   @Column
   val caseUniqueIdentifier: String,
-  @OneToOne
-  @JoinColumn(name = "latest_court_appearance_id")
-  var latestCourtAppearance: CourtAppearanceEntity?,
+
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   @Column
@@ -37,4 +36,12 @@ data class CourtCaseEntity(
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
 
-)
+) {
+  @OneToMany
+  @JoinColumn(name = "court_case_id")
+  var appearances: List<CourtAppearanceEntity> = emptyList()
+
+  @OneToOne
+  @JoinColumn(name = "latest_court_appearance_id")
+  var latestCourtAppearance: CourtAppearanceEntity? = null
+}
