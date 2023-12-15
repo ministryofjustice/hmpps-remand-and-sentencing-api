@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
@@ -22,8 +24,8 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   @Transactional(readOnly = true)
-  fun searchCourtCases(prisonerId: String): List<CourtCase> {
-    return courtCaseRepository.findByPrisonerId(prisonerId).map {
+  fun searchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCase> {
+    return courtCaseRepository.findByPrisonerId(prisonerId, pageable).map {
       CourtCase.from(it)
     }
   }
