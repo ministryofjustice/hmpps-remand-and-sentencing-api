@@ -8,4 +8,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 
 interface CourtCaseRepository : CrudRepository<CourtCaseEntity, Int>, PagingAndSortingRepository<CourtCaseEntity, Int> {
   fun findByPrisonerId(prisonerId: String, pageable: Pageable): Page<CourtCaseEntity>
+
+  fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 }

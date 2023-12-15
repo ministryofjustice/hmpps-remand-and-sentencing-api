@@ -2,13 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import java.time.LocalDate
-import java.util.UUID
 import java.util.stream.LongStream
 
 class SearchCourtCaseTests : IntegrationTestBase() {
@@ -18,7 +12,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     val createdCourtCase = createCourtCase()
     webTestClient.get()
       .uri {
-        it.path("/courtCase/search")
+        it.path("/court-case/search")
           .queryParam("prisonerId", createdCourtCase.first)
           .build()
       }
@@ -41,7 +35,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     val otherCourtCase = createCourtCase("OTHERPRISONER")
     webTestClient.get()
       .uri {
-        it.path("/courtCase/search")
+        it.path("/court-case/search")
           .queryParam("prisonerId", expectedCourtCase.first)
           .build()
       }
@@ -68,7 +62,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase() }.toList()
     webTestClient.get()
       .uri {
-        it.path("/courtCase/search")
+        it.path("/court-case/search")
           .queryParam("prisonerId", courtCases.first().first)
           .build()
       }
@@ -88,7 +82,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase(minusDaysFromAppearanceDate = it) }.toList()
     webTestClient.get()
       .uri {
-        it.path("/courtCase/search")
+        it.path("/court-case/search")
           .queryParam("prisonerId", courtCases.first().first)
           .queryParam("sort", "latestCourtAppearance_appearanceDate,desc")
           .build()
@@ -110,7 +104,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
   fun `no token results in unauthorized`() {
     webTestClient.get()
       .uri {
-        it.path("/courtCase/search")
+        it.path("/court-case/search")
           .queryParam("prisonerId", "PRISONER_ID")
           .build()
       }
@@ -126,7 +120,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
   fun `token with incorrect role is forbidden`() {
     webTestClient.get()
       .uri {
-        it.path("/courtCase/search")
+        it.path("/court-case/search")
           .queryParam("prisonerId", "PRISONER_ID")
           .build()
       }
@@ -136,24 +130,5 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
-  }
-
-  fun createCourtCase(prisonerId: String = "PRI123", minusDaysFromAppearanceDate: Long = 0): Pair<String, String> {
-    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), null, null, listOf(charge))
-    val courtCase = CreateCourtCase(prisonerId, listOf(appearance))
-    val response = webTestClient
-      .post()
-      .uri("/courtCase")
-      .bodyValue(courtCase)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated.returnResult(CreateCourtCaseResponse::class.java)
-      .responseBody.blockFirst()!!
-    return courtCase.prisonerId to response.courtCaseUuid
   }
 }

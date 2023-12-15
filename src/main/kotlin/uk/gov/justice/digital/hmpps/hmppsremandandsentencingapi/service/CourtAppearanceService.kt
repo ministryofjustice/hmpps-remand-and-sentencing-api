@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import java.util.UUID
 
@@ -20,7 +21,17 @@ class CourtAppearanceService(
   private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
   private val chargeService: ChargeService,
   private val serviceUserService: ServiceUserService,
+  private val courtCaseRepository: CourtCaseRepository,
 ) {
+
+  @Transactional
+  fun createCourtAppearance(createCourtAppearance: CreateCourtAppearance): CourtAppearanceEntity? {
+    return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)?.let { courtCaseEntity ->
+      val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity)
+      courtCaseEntity.updateLatestCourtAppearance()
+      return courtAppearance
+    }
+  }
 
   @Transactional(TxType.REQUIRED)
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
