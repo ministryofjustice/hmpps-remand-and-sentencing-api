@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class CreateCourtAppearance(
+  val courtCaseUuid: String?,
   val appearanceUuid: UUID?,
   val outcome: String,
   val courtCode: String,

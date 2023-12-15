@@ -17,9 +17,9 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   @Transactional
   fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
     val courtCase = courtCaseRepository.save(CourtCaseEntity(prisonerId = createCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = serviceUserService.getUsername(), statusId = EntityStatus.ACTIVE))
-    val appearances = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
-    courtCase.latestCourtAppearance = appearances.maxBy { it.appearanceDate }
-    courtCase.appearances = appearances
+    courtCase.appearances = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
+    courtCase.updateLatestCourtAppearance()
+
     return courtCaseRepository.save(courtCase)
   }
 
@@ -29,4 +29,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       CourtCase.from(it)
     }
   }
+
+  @Transactional
+  fun getCourtCaseByUuid(courtCaseUUID: String): CourtCaseEntity? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)
 }

@@ -44,4 +44,8 @@ data class CourtCaseEntity(
   @OneToOne
   @JoinColumn(name = "latest_court_appearance_id")
   var latestCourtAppearance: CourtAppearanceEntity? = null
+
+  fun updateLatestCourtAppearance() {
+    this.latestCourtAppearance = appearances.maxBy { it.appearanceDate }
+  }
 }
