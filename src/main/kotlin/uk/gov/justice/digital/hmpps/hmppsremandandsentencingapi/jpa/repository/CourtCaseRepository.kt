@@ -1,8 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.CrudRepository
+import org.springframework.data.repository.PagingAndSortingRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 
-interface CourtCaseRepository : CrudRepository<CourtCaseEntity, Int> {
-  fun findByPrisonerId(prisonerId: String): List<CourtCaseEntity>
+interface CourtCaseRepository : CrudRepository<CourtCaseEntity, Int>, PagingAndSortingRepository<CourtCaseEntity, Int> {
+  fun findByPrisonerId(prisonerId: String, pageable: Pageable): Page<CourtCaseEntity>
 }

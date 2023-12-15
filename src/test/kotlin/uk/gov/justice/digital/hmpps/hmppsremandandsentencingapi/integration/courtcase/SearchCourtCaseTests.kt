@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.util.UUID
+import java.util.stream.LongStream
 
 class SearchCourtCaseTests : IntegrationTestBase() {
 
@@ -28,9 +29,9 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.[0].courtCaseUuid")
+      .jsonPath("$.content.[0].courtCaseUuid")
       .isEqualTo(createdCourtCase.second)
-      .jsonPath("$.[*].prisonerId")
+      .jsonPath("$.content.[*].prisonerId")
       .isEqualTo(createdCourtCase.first)
   }
 
@@ -51,14 +52,58 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.[0].courtCaseUuid")
+      .jsonPath("$.content.[0].courtCaseUuid")
       .isEqualTo(expectedCourtCase.second)
-      .jsonPath("$.[*].prisonerId")
+      .jsonPath("$.content.[*].prisonerId")
       .isEqualTo(expectedCourtCase.first)
-      .jsonPath("$.[?(@.courtCaseUuid == '${otherCourtCase.second}')]")
+      .jsonPath("$.content.[?(@.courtCaseUuid == '${otherCourtCase.second}')]")
       .doesNotExist()
-      .jsonPath("$.[?(@.prisonerId == '${otherCourtCase.first}')]")
+      .jsonPath("$.content.[?(@.prisonerId == '${otherCourtCase.first}')]")
       .doesNotExist()
+  }
+
+  // The default size is 20
+  @Test
+  fun `return paged results and not all results`() {
+    val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase() }.toList()
+    webTestClient.get()
+      .uri {
+        it.path("/courtCase/search")
+          .queryParam("prisonerId", courtCases.first().first)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.length()")
+      .isEqualTo(20)
+  }
+
+  @Test
+  fun `sort by latest appearance date`() {
+    val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase( minusDaysFromAppearanceDate = it) }.toList()
+    webTestClient.get()
+      .uri {
+        it.path("/courtCase/search")
+          .queryParam("prisonerId", courtCases.first().first)
+          .queryParam("sort","latestCourtAppearance_appearanceDate,desc")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].courtCaseUuid")
+      .isEqualTo(courtCases[0].second)
+      .jsonPath("$.content.[1].courtCaseUuid")
+      .isEqualTo(courtCases[1].second)
   }
 
   @Test
@@ -93,9 +138,9 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .isForbidden
   }
 
-  fun createCourtCase(prisonerId: String = "PRI123"): Pair<String, String> {
+  fun createCourtCase(prisonerId: String = "PRI123", minusDaysFromAppearanceDate: Long = 0): Pair<String, String> {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), null, null, listOf(charge))
     val courtCase = CreateCourtCase(prisonerId, listOf(appearance))
     val response = webTestClient
       .post()

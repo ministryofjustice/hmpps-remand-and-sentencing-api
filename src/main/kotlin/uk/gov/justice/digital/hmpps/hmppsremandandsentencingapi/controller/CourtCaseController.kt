@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -56,7 +58,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun searchCourtCases(@RequestParam("prisonerId") prisonerId: String): List<CourtCase> {
-    return courtCaseService.searchCourtCases(prisonerId)
+  fun searchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable): Page<CourtCase> {
+    return courtCaseService.searchCourtCases(prisonerId, pageable)
   }
 }
