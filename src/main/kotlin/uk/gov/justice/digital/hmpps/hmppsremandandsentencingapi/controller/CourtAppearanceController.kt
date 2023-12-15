@@ -36,7 +36,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createCourtCase(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse {
+  fun createCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse {
     return courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { CreateCourtAppearanceResponse(it.appearanceUuid) } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 }
