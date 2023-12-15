@@ -19,7 +19,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .post()
-      .uri("/courtCase")
+      .uri("/court-case")
       .bodyValue(courtCase)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
@@ -40,7 +40,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .post()
-      .uri("/courtCase")
+      .uri("/court-case")
       .bodyValue(courtCase)
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
@@ -57,7 +57,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .post()
-      .uri("/courtCase")
+      .uri("/court-case")
       .bodyValue(courtCase)
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))

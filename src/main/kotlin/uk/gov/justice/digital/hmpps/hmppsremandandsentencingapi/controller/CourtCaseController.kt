@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 
 @RestController
-@RequestMapping("/courtCase", produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(value = ["/courtCase", "/court-case"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-controller", description = "Court case")
 class CourtCaseController(private val courtCaseService: CourtCaseService) {
 

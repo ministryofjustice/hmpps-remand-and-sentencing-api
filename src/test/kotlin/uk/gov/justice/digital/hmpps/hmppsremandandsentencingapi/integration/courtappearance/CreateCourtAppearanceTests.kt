@@ -18,7 +18,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = CreateCourtAppearance(courtCase.second, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
     webTestClient
       .post()
-      .uri("/courtAppearance")
+      .uri("/court-appearance")
       .bodyValue(appearance)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
@@ -38,7 +38,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
     webTestClient
       .post()
-      .uri("/courtAppearance")
+      .uri("/court-appearance")
       .bodyValue(appearance)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
@@ -55,7 +55,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
     webTestClient
       .post()
-      .uri("/courtAppearance")
+      .uri("/court-appearance")
       .bodyValue(appearance)
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
@@ -71,7 +71,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
     webTestClient
       .post()
-      .uri("/courtAppearance")
+      .uri("/court-appearance")
       .bodyValue(appearance)
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
