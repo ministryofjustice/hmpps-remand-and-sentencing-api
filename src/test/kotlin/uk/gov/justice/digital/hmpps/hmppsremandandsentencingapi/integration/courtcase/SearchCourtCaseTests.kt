@@ -85,12 +85,12 @@ class SearchCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `sort by latest appearance date`() {
-    val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase( minusDaysFromAppearanceDate = it) }.toList()
+    val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase(minusDaysFromAppearanceDate = it) }.toList()
     webTestClient.get()
       .uri {
         it.path("/courtCase/search")
           .queryParam("prisonerId", courtCases.first().first)
-          .queryParam("sort","latestCourtAppearance_appearanceDate,desc")
+          .queryParam("sort", "latestCourtAppearance_appearanceDate,desc")
           .build()
       }
       .headers {
