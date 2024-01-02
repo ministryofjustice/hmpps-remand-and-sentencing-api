@@ -42,13 +42,13 @@ abstract class IntegrationTestBase {
     )
   }
 
-  protected fun createCourtCase(prisonerId: String = "PRI123", minusDaysFromAppearanceDate: Long = 0): Pair<String, String> {
+  protected fun createCourtCase(prisonerId: String = "PRI123", minusDaysFromAppearanceDate: Long = 0): Pair<String, CreateCourtCase> {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), null, null, listOf(charge))
     val courtCase = CreateCourtCase(prisonerId, listOf(appearance))
     val response = webTestClient
       .post()
-      .uri("/courtCase")
+      .uri("/court-case")
       .bodyValue(courtCase)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
@@ -58,6 +58,6 @@ abstract class IntegrationTestBase {
       .expectStatus()
       .isCreated.returnResult(CreateCourtCaseResponse::class.java)
       .responseBody.blockFirst()!!
-    return courtCase.prisonerId to response.courtCaseUuid
+    return response.courtCaseUuid to courtCase
   }
 }

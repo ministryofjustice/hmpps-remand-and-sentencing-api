@@ -29,4 +29,6 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       } ?: ChargeEntity.from(charge, outcome)
     return chargeRepository.save(toCreateCharge)
   }
+
+  fun findChargeByUuid(chargeUuid: UUID): ChargeEntity? = chargeRepository.findByChargeUuid(chargeUuid)
 }
