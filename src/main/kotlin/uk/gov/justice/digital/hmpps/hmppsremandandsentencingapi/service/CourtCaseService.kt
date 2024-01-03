@@ -30,6 +30,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     }
   }
 
-  @Transactional
-  fun getCourtCaseByUuid(courtCaseUUID: String): CourtCaseEntity? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)
+  @Transactional(readOnly = true)
+  fun getCourtCaseByUuid(courtCaseUUID: String): CourtCase? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let { CourtCase.from(it) }
 }
