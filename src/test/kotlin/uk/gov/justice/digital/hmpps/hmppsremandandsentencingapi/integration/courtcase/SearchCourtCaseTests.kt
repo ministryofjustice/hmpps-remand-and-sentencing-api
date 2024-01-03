@@ -13,7 +13,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     webTestClient.get()
       .uri {
         it.path("/court-case/search")
-          .queryParam("prisonerId", createdCourtCase.first)
+          .queryParam("prisonerId", createdCourtCase.second.prisonerId)
           .build()
       }
       .headers {
@@ -24,9 +24,9 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.content.[0].courtCaseUuid")
-      .isEqualTo(createdCourtCase.second)
-      .jsonPath("$.content.[*].prisonerId")
       .isEqualTo(createdCourtCase.first)
+      .jsonPath("$.content.[*].prisonerId")
+      .isEqualTo(createdCourtCase.second.prisonerId)
   }
 
   @Test
@@ -36,7 +36,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     webTestClient.get()
       .uri {
         it.path("/court-case/search")
-          .queryParam("prisonerId", expectedCourtCase.first)
+          .queryParam("prisonerId", expectedCourtCase.second.prisonerId)
           .build()
       }
       .headers {
@@ -47,12 +47,12 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.content.[0].courtCaseUuid")
-      .isEqualTo(expectedCourtCase.second)
-      .jsonPath("$.content.[*].prisonerId")
       .isEqualTo(expectedCourtCase.first)
-      .jsonPath("$.content.[?(@.courtCaseUuid == '${otherCourtCase.second}')]")
+      .jsonPath("$.content.[*].prisonerId")
+      .isEqualTo(expectedCourtCase.second.prisonerId)
+      .jsonPath("$.content.[?(@.courtCaseUuid == '${otherCourtCase.first}')]")
       .doesNotExist()
-      .jsonPath("$.content.[?(@.prisonerId == '${otherCourtCase.first}')]")
+      .jsonPath("$.content.[?(@.prisonerId == '${otherCourtCase.second.prisonerId}')]")
       .doesNotExist()
   }
 
@@ -63,7 +63,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     webTestClient.get()
       .uri {
         it.path("/court-case/search")
-          .queryParam("prisonerId", courtCases.first().first)
+          .queryParam("prisonerId", courtCases.first().second.prisonerId)
           .build()
       }
       .headers {
@@ -83,7 +83,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
     webTestClient.get()
       .uri {
         it.path("/court-case/search")
-          .queryParam("prisonerId", courtCases.first().first)
+          .queryParam("prisonerId", courtCases.first().second.prisonerId)
           .queryParam("sort", "latestCourtAppearance_appearanceDate,desc")
           .build()
       }
@@ -95,9 +95,9 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.content.[0].courtCaseUuid")
-      .isEqualTo(courtCases[0].second)
+      .isEqualTo(courtCases[0].first)
       .jsonPath("$.content.[1].courtCaseUuid")
-      .isEqualTo(courtCases[1].second)
+      .isEqualTo(courtCases[1].first)
   }
 
   @Test

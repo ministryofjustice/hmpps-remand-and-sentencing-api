@@ -15,7 +15,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   fun `create appearance in existing court case`() {
     val courtCase = createCourtCase()
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(courtCase.second, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
     webTestClient
       .post()
       .uri("/court-appearance")
