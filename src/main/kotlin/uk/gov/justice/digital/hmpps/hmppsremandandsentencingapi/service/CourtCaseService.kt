@@ -31,8 +31,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   private fun saveCourtCaseAppearances(courtCase: CourtCaseEntity, createCourtCase: CreateCourtCase): CourtCaseEntity {
-    val existingCourtAppearances = courtCase.appearances.associateBy { it.appearanceUuid }
-    val toDeleteAppearances = existingCourtAppearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.key } }.values
+    val toDeleteAppearances = courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
     toDeleteAppearances.forEach { courtAppearanceService.deleteCourtAppearance(it) }
     val appearances = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
