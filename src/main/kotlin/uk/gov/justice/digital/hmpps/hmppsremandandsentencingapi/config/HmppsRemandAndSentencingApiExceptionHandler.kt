@@ -13,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 
 @RestControllerAdvice
 class HmppsRemandAndSentencingApiExceptionHandler {
@@ -57,7 +58,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   }
 
   @ExceptionHandler(ImmutableCourtAppearanceException::class)
-  fun handleImmutableCourtAppearanceException(e: Exception): ResponseEntity<ErrorResponse> {
+  fun handleImmutableCourtAppearanceException(e: ImmutableCourtAppearanceException): ResponseEntity<ErrorResponse> {
     log.info("Immutable court appearance exception: {}", e.message)
     return ResponseEntity
       .status(BAD_REQUEST)
@@ -65,6 +66,20 @@ class HmppsRemandAndSentencingApiExceptionHandler {
         ErrorResponse(
           status = BAD_REQUEST,
           userMessage = "Immutable court appearance failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(ImmutableCourtCaseException::class)
+  fun handleImmutableCourtCaseException(e: ImmutableCourtCaseException): ResponseEntity<ErrorResponse> {
+    log.info("Immutable court case exception: {}", e.message)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Immutable court case failure: ${e.message}",
           developerMessage = e.message,
         ),
       )

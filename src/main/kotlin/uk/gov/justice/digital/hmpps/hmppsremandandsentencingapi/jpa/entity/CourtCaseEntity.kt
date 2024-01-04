@@ -14,6 +14,7 @@ import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 @Entity
 @Table(name = "court_case")
@@ -47,5 +48,11 @@ data class CourtCaseEntity(
 
   fun updateLatestCourtAppearance() {
     this.latestCourtAppearance = appearances.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.appearanceDate }
+  }
+
+  companion object {
+    fun placeholderEntity(prisonerId: String, caseUniqueIdentifier: String = UUID.randomUUID().toString(), createdByUsername: String): CourtCaseEntity {
+      return CourtCaseEntity(prisonerId = prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdByUsername = createdByUsername, statusId = EntityStatus.ACTIVE)
+    }
   }
 }

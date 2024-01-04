@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -44,6 +45,24 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
     return CreateCourtCaseResponse(courtCaseService.createCourtCase(createCourtCase).caseUniqueIdentifier)
+  }
+
+  @PutMapping("/{courtCaseUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @Operation(
+    summary = "Create Court case",
+    description = "This endpoint will create a court case",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "201", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun putCourtCase(@RequestBody createCourtCase: CreateCourtCase, @PathVariable courtCaseUuid: String): CreateCourtCaseResponse {
+    return CreateCourtCaseResponse(courtCaseService.putCourtCase(createCourtCase, courtCaseUuid).caseUniqueIdentifier)
   }
 
   @GetMapping("/search")
