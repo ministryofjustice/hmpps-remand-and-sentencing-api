@@ -46,6 +46,6 @@ data class CourtCaseEntity(
   var latestCourtAppearance: CourtAppearanceEntity? = null
 
   fun updateLatestCourtAppearance() {
-    this.latestCourtAppearance = appearances.maxBy { it.appearanceDate }
+    this.latestCourtAppearance = appearances.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.appearanceDate }
   }
 }

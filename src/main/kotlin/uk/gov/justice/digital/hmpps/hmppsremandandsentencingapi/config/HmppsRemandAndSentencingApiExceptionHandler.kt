@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 
 @RestControllerAdvice
 class HmppsRemandAndSentencingApiExceptionHandler {
@@ -50,6 +51,20 @@ class HmppsRemandAndSentencingApiExceptionHandler {
         ErrorResponse(
           status = NOT_FOUND,
           userMessage = "not found: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(ImmutableCourtAppearanceException::class)
+  fun handleImmutableCourtAppearanceException(e: Exception): ResponseEntity<ErrorResponse> {
+    log.info("Immutable court appearance exception: {}", e.message)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Immutable court appearance failure: ${e.message}",
           developerMessage = e.message,
         ),
       )
