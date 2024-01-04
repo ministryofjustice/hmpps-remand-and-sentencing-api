@@ -76,7 +76,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  @ResponseStatus(HttpStatus.CREATED)
+  @ResponseStatus(HttpStatus.OK)
   fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse {
     return courtAppearanceService.createCourtAppearance(createCourtAppearance.copy(appearanceUuid = appearanceUuid))?.let { CreateCourtAppearanceResponse(it.appearanceUuid) } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
