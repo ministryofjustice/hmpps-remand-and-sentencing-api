@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.LocalDate
 import java.util.UUID
 
@@ -24,7 +25,7 @@ data class CourtAppearance(
         courtAppearanceEntity.appearanceDate,
         courtAppearanceEntity.warrantId,
         courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
-        courtAppearanceEntity.charges.map { Charge.from(it) },
+        courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { Charge.from(it) },
       )
     }
   }

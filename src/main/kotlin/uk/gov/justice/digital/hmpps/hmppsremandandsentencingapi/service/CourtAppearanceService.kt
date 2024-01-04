@@ -38,21 +38,25 @@ class CourtAppearanceService(
   @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
     val appearanceOutcome = appearanceOutcomeRepository.findByOutcomeName(courtAppearance.outcome) ?: appearanceOutcomeRepository.save(AppearanceOutcomeEntity(outcomeName = courtAppearance.outcome))
-    val charges = courtAppearance.charges.map { chargeService.createCharge(it) }
+    val charges = courtAppearance.charges.map { chargeService.createCharge(it) }.toMutableSet()
     val toCreateAppearance = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
       ?.let { courtAppearanceEntity ->
         if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
           throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
         }
-        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges.toSet())
+        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges)
         if (courtAppearanceEntity.isSame(compareAppearance)) {
+          val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
+          toDeleteCharges.forEach { chargeService.deleteCharge(it) }
+
+          courtAppearanceEntity.charges.addAll(charges)
           return@let courtAppearanceEntity
         }
         courtAppearanceEntity.statusId = EntityStatus.EDITED
         compareAppearance.previousAppearance = courtAppearanceEntity
         compareAppearance.appearanceUuid = UUID.randomUUID()
         compareAppearance
-      } ?: CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges.toSet())
+      } ?: CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges)
 
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { NextCourtAppearanceEntity.from(it) }
     if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) == false) {

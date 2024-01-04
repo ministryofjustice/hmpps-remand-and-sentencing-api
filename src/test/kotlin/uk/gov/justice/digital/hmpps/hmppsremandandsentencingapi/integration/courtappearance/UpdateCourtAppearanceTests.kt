@@ -33,6 +33,52 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update appearance to delete charge`() {
+    val courtCase = createCourtCase()
+    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
+    val secondCharge = CreateCharge(UUID.randomUUID(), "OFF567", LocalDate.now(), null, "OUT123")
+    val appearance = courtCase.second.appearances.first().copy(charges = listOf(charge, secondCharge), courtCaseUuid = courtCase.first)
+    webTestClient
+      .put()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .bodyValue(appearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val appearanceWithoutSecondCharge = appearance.copy(charges = listOf(charge))
+    webTestClient
+      .put()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .bodyValue(appearanceWithoutSecondCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges.[?(@.chargeUuid == '${secondCharge.chargeUuid}')]")
+      .doesNotExist()
+      .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')]")
+      .exists()
+  }
+
+  @Test
   fun `cannot edit an already edited court appearance`() {
     val courtCase = createCourtCase()
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")

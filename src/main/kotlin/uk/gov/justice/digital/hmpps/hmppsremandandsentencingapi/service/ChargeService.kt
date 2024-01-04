@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import java.util.UUID
@@ -28,6 +29,11 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
         return compareCharge
       } ?: ChargeEntity.from(charge, outcome)
     return chargeRepository.save(toCreateCharge)
+  }
+
+  @Transactional(TxType.REQUIRED)
+  fun deleteCharge(charge: ChargeEntity) {
+    charge.statusId = EntityStatus.DELETED
   }
 
   fun findChargeByUuid(chargeUuid: UUID): ChargeEntity? = chargeRepository.findByChargeUuid(chargeUuid)
