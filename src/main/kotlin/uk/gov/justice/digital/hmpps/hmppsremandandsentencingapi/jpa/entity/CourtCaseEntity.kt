@@ -46,10 +46,6 @@ data class CourtCaseEntity(
   @JoinColumn(name = "latest_court_appearance_id")
   var latestCourtAppearance: CourtAppearanceEntity? = null
 
-  fun updateLatestCourtAppearance() {
-    this.latestCourtAppearance = appearances.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.appearanceDate }
-  }
-
   companion object {
     fun placeholderEntity(prisonerId: String, caseUniqueIdentifier: String = UUID.randomUUID().toString(), createdByUsername: String): CourtCaseEntity {
       return CourtCaseEntity(prisonerId = prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdByUsername = createdByUsername, statusId = EntityStatus.ACTIVE)
