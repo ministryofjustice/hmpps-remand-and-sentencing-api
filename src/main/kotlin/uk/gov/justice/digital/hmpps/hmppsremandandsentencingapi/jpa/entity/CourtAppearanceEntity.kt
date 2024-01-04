@@ -65,7 +65,7 @@ data class CourtAppearanceEntity(
     joinColumns = [JoinColumn(name = "appearance_id")],
     inverseJoinColumns = [JoinColumn(name = "charge_id")],
   )
-  var charges: MutableSet<ChargeEntity>,
+  val charges: MutableSet<ChargeEntity>,
 
   @OneToOne
   @JoinColumn(name = "next_court_appearance_id")
