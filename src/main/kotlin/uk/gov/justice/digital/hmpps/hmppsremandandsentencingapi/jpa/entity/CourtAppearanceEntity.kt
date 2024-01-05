@@ -65,7 +65,7 @@ data class CourtAppearanceEntity(
     joinColumns = [JoinColumn(name = "appearance_id")],
     inverseJoinColumns = [JoinColumn(name = "charge_id")],
   )
-  val charges: Set<ChargeEntity>,
+  val charges: MutableSet<ChargeEntity>,
 
   @OneToOne
   @JoinColumn(name = "next_court_appearance_id")
@@ -84,7 +84,7 @@ data class CourtAppearanceEntity(
 
   companion object {
 
-    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: Set<ChargeEntity>): CourtAppearanceEntity {
+    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
       return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null)
     }
 
