@@ -30,7 +30,7 @@ class CourtAppearanceService(
   fun createCourtAppearance(createCourtAppearance: CreateCourtAppearance): CourtAppearanceEntity? {
     return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)?.let { courtCaseEntity ->
       val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity)
-      courtCaseEntity.updateLatestCourtAppearance()
+      courtCaseEntity.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance)
       return courtAppearance
     }
   }
@@ -60,6 +60,11 @@ class CourtAppearanceService(
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
     }
     return courtAppearanceRepository.save(toCreateAppearance)
+  }
+
+  @Transactional
+  fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
+    courtAppearanceEntity.statusId = EntityStatus.DELETED
   }
 
   @Transactional(readOnly = true)
