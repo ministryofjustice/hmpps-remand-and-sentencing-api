@@ -59,7 +59,7 @@ class CourtAppearanceService(
       } ?: CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges)
 
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { NextCourtAppearanceEntity.from(it) }
-    if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) == false) {
+    if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) != true) {
       val toSaveNextCourtAppearance = nextCourtAppearance?.let { nextCourtAppearanceRepository.save(it) }
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
     }
