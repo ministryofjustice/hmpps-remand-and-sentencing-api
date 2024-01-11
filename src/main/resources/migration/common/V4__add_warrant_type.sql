@@ -1,0 +1,1 @@
+ALTER TABLE court_appearance ADD COLUMN warrant_type VARCHAR NOT NULL DEFAULT 'REMAND';

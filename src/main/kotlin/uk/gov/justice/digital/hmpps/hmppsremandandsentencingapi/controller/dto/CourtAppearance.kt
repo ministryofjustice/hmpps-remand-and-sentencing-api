@@ -12,6 +12,7 @@ data class CourtAppearance(
   val courtCaseReference: String,
   val appearanceDate: LocalDate,
   val warrantId: String?,
+  val warrantType: String,
   val nextCourtAppearance: NextCourtAppearance?,
   val charges: List<Charge>,
 ) {
@@ -24,6 +25,7 @@ data class CourtAppearance(
         courtAppearanceEntity.courtCaseReference,
         courtAppearanceEntity.appearanceDate,
         courtAppearanceEntity.warrantId,
+        courtAppearanceEntity.warrantType,
         courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
         courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { Charge.from(it) },
       )

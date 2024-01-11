@@ -32,6 +32,8 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdAppearance.nextCourtAppearance!!.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.nextCourtAppearance.courtCode")
       .isEqualTo(createdAppearance.nextCourtAppearance!!.courtCode)
+      .jsonPath("$.warrantType")
+      .isEqualTo(createdAppearance.warrantType)
   }
 
   @Test
