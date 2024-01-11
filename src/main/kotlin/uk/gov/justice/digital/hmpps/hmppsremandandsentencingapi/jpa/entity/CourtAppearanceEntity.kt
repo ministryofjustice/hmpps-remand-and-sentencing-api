@@ -59,6 +59,8 @@ data class CourtAppearanceEntity(
   val createdByUsername: String,
   @Column
   val createdPrison: String?,
+  @Column
+  val warrantType: String,
   @ManyToMany
   @JoinTable(
     name = "appearance_charge",
@@ -85,7 +87,7 @@ data class CourtAppearanceEntity(
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
-      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null)
+      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType)
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {

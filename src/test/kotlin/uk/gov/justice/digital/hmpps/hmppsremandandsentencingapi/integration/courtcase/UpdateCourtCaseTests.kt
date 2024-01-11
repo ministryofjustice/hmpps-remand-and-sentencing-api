@@ -16,7 +16,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   fun `update court case`() {
     val courtCase = createCourtCase()
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", null, listOf(charge))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
     webTestClient
       .put()
@@ -37,8 +37,8 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `delete an appearance if emitted from list of appearances`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now(), null, null, listOf(charge))
-    val secondAppearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now().minusDays(7L), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now(), null, "REMAND", null, listOf(charge))
+    val secondAppearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now().minusDays(7L), null, "REMAND", null, listOf(charge))
     val courtCase = CreateCourtCase("PRISONER1", listOf(appearance, secondAppearance))
     val courtCaseUuid = UUID.randomUUID()
     webTestClient
@@ -105,7 +105,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `no token results in unauthorized`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", null, listOf(charge))
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .put()
@@ -122,7 +122,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `token with incorrect role is forbidden`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123")
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", null, listOf(charge))
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .put()
