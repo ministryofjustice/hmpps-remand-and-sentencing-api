@@ -15,8 +15,16 @@ spring:
 hmpps:
   auth:
     url: http://localhost:8090/auth
+    client:
+      id: client-id
+      secret: client-secret
 
 # Wiremock prison-api
 prison:
   api:
     url: http://localhost:8332
+
+document:
+  management:
+    api:
+      url: http://localhost:8442

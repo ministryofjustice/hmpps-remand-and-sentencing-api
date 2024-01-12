@@ -30,6 +30,8 @@ generic-service:
   namespace_secrets:
     hmpps-remand-and-sentencing-api:
       APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
+      HMPPS_AUTH_CLIENT_ID: "CLIENT_ID"
+      HMPPS_AUTH_CLIENT_SECRET: "CLIENT_SECRET"
     rds-postgresql-instance-output:
         DB_SERVER: rds_instance_endpoint
         DB_NAME: database_name
