@@ -1,18 +1,22 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config
 
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
+import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
+import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient
+import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.web.context.annotation.RequestScope
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.ExchangeFunction
@@ -46,25 +50,48 @@ class WebClientConfiguration(
   }
 
   @Bean
-  fun authorizedClientManagerAppScope(
-    clientRegistrationRepository: ClientRegistrationRepository,
-    oAuth2AuthorizedClientService: OAuth2AuthorizedClientService,
-  ): OAuth2AuthorizedClientManager {
-    val authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder.builder().clientCredentials().build()
-    val authorizedClientManager = AuthorizedClientServiceOAuth2AuthorizedClientManager(
-      clientRegistrationRepository,
-      oAuth2AuthorizedClientService,
-    )
-    authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider)
-    return authorizedClientManager
-  }
-
-  @Bean
+  @RequestScope
   fun documentManagementApiWebClient(
-    @Qualifier(value = "authorizedClientManagerAppScope") authorizedClientManager: OAuth2AuthorizedClientManager,
+    clientRegistrationRepository: ClientRegistrationRepository,
     builder: WebClient.Builder,
   ): WebClient {
-    return getOAuthWebClient(authorizedClientManager, builder, documentManagementApiUri, "document-management-api")
+    return getOAuthWebClient(authorizedClientManagerUserEnhanced(clientRegistrationRepository), builder.filter(addDocumentManagementHeadersFilterFunction()), documentManagementApiUri, "document-management-api")
+  }
+
+  private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction {
+    return ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
+      val authentication: Authentication = SecurityContextHolder.getContext()
+        .authentication
+      val filtered = ClientRequest.from(request)
+        .header("Username", authentication.name)
+        .header("Service-Name", "Remand and Sentencing")
+        .build()
+      next.exchange(filtered)
+    }
+  }
+
+  private fun authorizedClientManagerUserEnhanced(clients: ClientRegistrationRepository?): OAuth2AuthorizedClientManager {
+    val service: OAuth2AuthorizedClientService = InMemoryOAuth2AuthorizedClientService(clients)
+    val manager = AuthorizedClientServiceOAuth2AuthorizedClientManager(clients, service)
+
+    val defaultClientCredentialsTokenResponseClient = DefaultClientCredentialsTokenResponseClient()
+
+    val authentication = SecurityContextHolder.getContext().authentication
+
+    defaultClientCredentialsTokenResponseClient.setRequestEntityConverter { grantRequest: OAuth2ClientCredentialsGrantRequest ->
+      val converter = CustomOAuth2ClientCredentialsGrantRequestEntityConverter()
+      val username = authentication.name
+      converter.enhanceWithUsername(grantRequest, username)
+    }
+
+    val authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder.builder()
+      .clientCredentials { clientCredentialsGrantBuilder: OAuth2AuthorizedClientProviderBuilder.ClientCredentialsGrantBuilder ->
+        clientCredentialsGrantBuilder.accessTokenResponseClient(defaultClientCredentialsTokenResponseClient)
+      }
+      .build()
+
+    manager.setAuthorizedClientProvider(authorizedClientProvider)
+    return manager
   }
 
   private fun getOAuthWebClient(
