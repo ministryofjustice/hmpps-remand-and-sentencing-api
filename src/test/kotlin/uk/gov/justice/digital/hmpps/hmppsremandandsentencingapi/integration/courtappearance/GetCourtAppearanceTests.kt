@@ -34,6 +34,8 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdAppearance.nextCourtAppearance!!.courtCode)
       .jsonPath("$.warrantType")
       .isEqualTo(createdAppearance.warrantType)
+      .jsonPath("$.taggedBail")
+      .isEqualTo(createdAppearance.taggedBail!!)
   }
 
   @Test
