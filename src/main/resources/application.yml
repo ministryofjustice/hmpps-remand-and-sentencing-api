@@ -44,6 +44,12 @@ spring:
         provider:
           hmpps-auth:
             token-uri: ${hmpps.auth.url}/oauth/token
+        registration:
+          document-management-api:
+            provider: hmpps-auth
+            client-id: ${hmpps.auth.client.id}
+            client-secret: ${hmpps.auth.client.secret}
+            authorization-grant-type: client_credentials
 
 server:
   port: 8080

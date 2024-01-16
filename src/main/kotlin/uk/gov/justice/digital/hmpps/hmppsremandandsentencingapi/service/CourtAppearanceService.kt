@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
@@ -24,6 +26,7 @@ class CourtAppearanceService(
   private val chargeService: ChargeService,
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
+  private val documentManagementApiClient: DocumentManagementApiClient,
 ) {
 
   @Transactional
@@ -63,7 +66,14 @@ class CourtAppearanceService(
       val toSaveNextCourtAppearance = nextCourtAppearance?.let { nextCourtAppearanceRepository.save(it) }
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
     }
+    updateDocumentMetadata(toCreateAppearance, courtCaseEntity.prisonerId)
     return courtAppearanceRepository.save(toCreateAppearance)
+  }
+
+  fun updateDocumentMetadata(courtAppearanceEntity: CourtAppearanceEntity, prisonerId: String) {
+    courtAppearanceEntity.takeIf { it.warrantId != null }?.let {
+      documentManagementApiClient.putDocumentMetadata(it.warrantId!!, DocumentMetadata(prisonerId))
+    }
   }
 
   @Transactional
