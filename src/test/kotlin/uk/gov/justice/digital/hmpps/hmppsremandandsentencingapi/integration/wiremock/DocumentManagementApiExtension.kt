@@ -3,8 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wir
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
@@ -41,7 +40,7 @@ class DocumentManagementApiMockServer : WireMockServer(WireMockConfiguration.opt
 
   fun stubPutDocumentMetadata(documentId: String, prisonerId: String): StubMapping =
     stubFor(
-      post("/documents/$documentId/metadata")
+      put("/documents/$documentId/metadata")
         .withRequestBody(equalToJson(documentMetadataRequest(prisonerId)))
         .willReturn(
           aResponse()
