@@ -11,7 +11,7 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
 
   fun putDocumentMetadata(documentId: String, metadata: DocumentMetadata) {
     webClient
-      .post()
+      .put()
       .uri("/documents/{documentId}/metadata", documentId)
       .body(Mono.just(metadata), DocumentMetadata::class.java)
       .retrieve()
