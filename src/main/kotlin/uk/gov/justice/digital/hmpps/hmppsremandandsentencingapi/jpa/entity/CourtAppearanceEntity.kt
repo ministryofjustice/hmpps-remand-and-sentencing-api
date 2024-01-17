@@ -61,6 +61,8 @@ data class CourtAppearanceEntity(
   val createdPrison: String?,
   @Column
   val warrantType: String,
+  @Column
+  val taggedBail: Int?,
   @ManyToMany
   @JoinTable(
     name = "appearance_charge",
@@ -81,13 +83,15 @@ data class CourtAppearanceEntity(
       this.courtCode == other.courtCode &&
       this.courtCaseReference == other.courtCaseReference &&
       this.appearanceDate.isEqual(other.appearanceDate) &&
-      this.statusId == other.statusId
+      this.statusId == other.statusId &&
+      this.warrantType == other.warrantType &&
+      this.taggedBail == other.taggedBail
   }
 
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
-      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType)
+      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType, taggedBail = courtAppearance.taggedBail)
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {
