@@ -11,3 +11,8 @@ hmpps:
 prison:
   api:
     url: http://localhost:8332
+
+document:
+  management:
+    api:
+      url: http://localhost:8442
