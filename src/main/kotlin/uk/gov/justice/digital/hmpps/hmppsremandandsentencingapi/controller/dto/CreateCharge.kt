@@ -9,4 +9,5 @@ data class CreateCharge(
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,
   val outcome: String,
+  val terrorRelated: Boolean?,
 )

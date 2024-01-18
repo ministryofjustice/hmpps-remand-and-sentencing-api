@@ -42,6 +42,8 @@ data class ChargeEntity(
   @OneToOne
   @JoinColumn(name = "superseding_charge_id")
   var supersedingCharge: ChargeEntity?,
+  @Column
+  val terrorRelated: Boolean?,
 ) {
   fun isSame(other: ChargeEntity): Boolean {
     return this.chargeUuid == other.chargeUuid &&
@@ -49,12 +51,13 @@ data class ChargeEntity(
       this.offenceStartDate.isEqual(other.offenceStartDate) &&
       ((this.offenceEndDate == null && other.offenceEndDate == null) || this.offenceEndDate?.isEqual(other.offenceEndDate) == true) &&
       this.statusId == other.statusId &&
-      this.chargeOutcome == other.chargeOutcome
+      this.chargeOutcome == other.chargeOutcome &&
+      this.terrorRelated == other.terrorRelated
   }
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity): ChargeEntity {
-      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null)
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated)
     }
   }
 }

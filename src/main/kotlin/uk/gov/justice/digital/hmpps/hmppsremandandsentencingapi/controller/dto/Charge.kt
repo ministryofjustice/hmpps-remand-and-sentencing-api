@@ -10,6 +10,7 @@ data class Charge(
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,
   val outcome: String,
+  val terrorRelated: Boolean?,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): Charge {
@@ -19,6 +20,7 @@ data class Charge(
         chargeEntity.offenceStartDate,
         chargeEntity.offenceEndDate,
         chargeEntity.chargeOutcome.outcomeName,
+        chargeEntity.terrorRelated,
       )
     }
   }
