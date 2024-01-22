@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
@@ -99,5 +100,23 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
   )
   fun getCourtCaseDetails(@PathVariable courtCaseUuid: String): CourtCase {
     return courtCaseService.getCourtCaseByUuid(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+  }
+
+  @GetMapping("/{courtCaseUuid}/latest-appearance")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @Operation(
+    summary = "Retrieve latest court appearance of court case",
+    description = "This endpoint will retrieve latest court appearance of court case",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns latest appearance details"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
+    ],
+  )
+  fun getLatestAppearanceDetails(@PathVariable courtCaseUuid: String): CourtAppearance {
+    return courtCaseService.getLatestAppearanceByCourtCaseUuid(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
   }
 }
