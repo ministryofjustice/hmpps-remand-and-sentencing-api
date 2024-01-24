@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import java.util.UUID
 
 @Service
-class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository) {
+class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService) {
 
   @Transactional(TxType.REQUIRED)
   fun createCharge(charge: CreateCharge): ChargeEntity {
@@ -33,12 +33,19 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
         compareCharge.lifetimeChargeUuid = chargeEntity.lifetimeChargeUuid
         compareCharge
       } ?: ChargeEntity.from(charge, outcome)
-    return chargeRepository.save(toCreateCharge)
+    return chargeRepository.save(toCreateCharge).also {
+      if (charge.sentence != null) {
+        it.sentences.add(sentenceService.createSentence(charge.sentence, it))
+      } else {
+        it.getActiveSentence()?.let { sentence -> sentenceService.deleteSentence(sentence) }
+      }
+    }
   }
 
   @Transactional(TxType.REQUIRED)
   fun deleteCharge(charge: ChargeEntity) {
     charge.statusId = EntityStatus.DELETED
+    charge.getActiveSentence()?.let { sentenceService.deleteSentence(it) }
   }
 
   fun findChargeByUuid(chargeUuid: UUID): ChargeEntity? = chargeRepository.findByChargeUuid(chargeUuid)

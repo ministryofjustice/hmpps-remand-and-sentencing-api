@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
@@ -44,7 +45,14 @@ data class ChargeEntity(
   var supersedingCharge: ChargeEntity?,
   @Column
   val terrorRelated: Boolean?,
+
 ) {
+  @OneToMany(mappedBy = "charge")
+  var sentences: MutableList<SentenceEntity> = mutableListOf()
+
+  fun getActiveSentence(): SentenceEntity? {
+    return sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
+  }
   fun isSame(other: ChargeEntity): Boolean {
     return this.chargeUuid == other.chargeUuid &&
       this.offenceCode == offenceCode &&
