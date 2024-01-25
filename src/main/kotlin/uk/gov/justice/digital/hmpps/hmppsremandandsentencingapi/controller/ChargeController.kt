@@ -35,6 +35,6 @@ class ChargeController(private val chargeService: ChargeService) {
     ],
   )
   fun getChargeDetails(@PathVariable chargeUuid: UUID): Charge {
-    return chargeService.findChargeByUuid(chargeUuid)?.let { chargeEntity -> Charge.from(chargeEntity) } ?: throw EntityNotFoundException("No charge found at $chargeUuid")
+    return chargeService.findChargeByUuid(chargeUuid) ?: throw EntityNotFoundException("No charge found at $chargeUuid")
   }
 }
