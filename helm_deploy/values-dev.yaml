@@ -20,3 +20,4 @@ generic-prometheus-alerts:
 
 generic-data-analytics-extractor:
   enabled: true
+  dataProductName: hmpps_remand_and_sentencing_dev
