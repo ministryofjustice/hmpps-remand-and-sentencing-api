@@ -21,7 +21,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
 
   // OpenAPI
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
@@ -29,7 +29,7 @@ dependencies {
 
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.5")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.5")
-  testImplementation("org.wiremock:wiremock-standalone:3.4.2")
+  testImplementation("org.wiremock:wiremock-standalone:3.5.2")
 }
 
 java {
