@@ -8,11 +8,12 @@ data class CreateCourtAppearance(
   val appearanceUuid: UUID?,
   val outcome: String,
   val courtCode: String,
-  val courtCaseReference: String,
+  val courtCaseReference: String?,
   val appearanceDate: LocalDate,
   val warrantId: String?,
   val warrantType: String,
   val taggedBail: Int?,
+  val overallSentenceLength: CreatePeriodLength?,
   val nextCourtAppearance: CreateNextCourtAppearance?,
   val charges: List<CreateCharge>,
 )

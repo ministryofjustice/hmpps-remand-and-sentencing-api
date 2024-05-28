@@ -7,4 +7,7 @@ data class CreateSentence(
   val chargeNumber: String,
   val custodialPeriodLength: CreatePeriodLength,
   val extendedLicensePeriodLength: CreatePeriodLength?,
+  val sentenceServeType: String, // possible enum
+  val consecutiveTo: String?,
+  val sentenceType: String,
 )
