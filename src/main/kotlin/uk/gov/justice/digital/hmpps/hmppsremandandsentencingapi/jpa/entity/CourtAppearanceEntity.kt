@@ -41,7 +41,7 @@ data class CourtAppearanceEntity(
   @Column
   val courtCode: String,
   @Column
-  val courtCaseReference: String,
+  val courtCaseReference: String?,
   @Column
   val appearanceDate: LocalDate,
   @Column
@@ -63,6 +63,9 @@ data class CourtAppearanceEntity(
   val warrantType: String,
   @Column
   val taggedBail: Int?,
+  @OneToOne
+  @JoinColumn(name = "overall_sentence_length_id")
+  var overallSentenceLength: PeriodLengthEntity?,
   @ManyToMany
   @JoinTable(
     name = "appearance_charge",
@@ -85,13 +88,14 @@ data class CourtAppearanceEntity(
       this.appearanceDate.isEqual(other.appearanceDate) &&
       this.statusId == other.statusId &&
       this.warrantType == other.warrantType &&
-      this.taggedBail == other.taggedBail
+      this.taggedBail == other.taggedBail &&
+      ((this.overallSentenceLength == null && other.overallSentenceLength == null) || this.overallSentenceLength?.isSame(other.overallSentenceLength) == true)
   }
 
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
-      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType, taggedBail = courtAppearance.taggedBail)
+      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType, taggedBail = courtAppearance.taggedBail, overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) })
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {

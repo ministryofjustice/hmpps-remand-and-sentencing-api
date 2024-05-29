@@ -1,11 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
-import java.math.BigDecimal
-
 data class CreatePeriodLength(
-  val years: BigDecimal?,
-  val months: BigDecimal?,
-  val weeks: BigDecimal?,
-  val days: BigDecimal?,
+  val years: Int?,
+  val months: Int?,
+  val weeks: Int?,
+  val days: Int?,
   val periodOrder: String,
 )
