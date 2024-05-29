@@ -35,6 +35,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
   init {
     val schema: Schema<LocalTime> = Schema<LocalTime>()
     schema.example(LocalTime.now().format(DateTimeFormatter.ISO_TIME))
+    schema.type("string")
     SpringDocUtils.getConfig().replaceWithSchema(LocalTime::class.java, schema)
   }
 }
