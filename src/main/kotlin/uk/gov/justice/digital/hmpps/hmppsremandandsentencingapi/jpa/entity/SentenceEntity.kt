@@ -51,7 +51,7 @@ data class SentenceEntity(
   @JoinColumn(name = "consecutive_to_id")
   val consecutiveTo: SentenceEntity?,
   @Column
-  val sentenceType: String?,
+  val sentenceType: String,
   @OneToOne
   @JoinColumn(name = "superseding_sentence_id")
   var supersedingSentence: SentenceEntity?,
