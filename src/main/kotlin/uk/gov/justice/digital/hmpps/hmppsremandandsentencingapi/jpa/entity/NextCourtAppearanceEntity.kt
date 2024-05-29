@@ -8,6 +8,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Entity
 @Table(name = "next_court_appearance")
@@ -18,6 +19,8 @@ data class NextCourtAppearanceEntity(
   val id: Int = 0,
   @Column
   val appearanceDate: LocalDate,
+  @Column
+  val appearanceTime: LocalTime?,
   @Column
   val courtCode: String,
   @Column
@@ -33,6 +36,7 @@ data class NextCourtAppearanceEntity(
     fun from(nextCourtAppearance: CreateNextCourtAppearance): NextCourtAppearanceEntity {
       return NextCourtAppearanceEntity(
         appearanceDate = nextCourtAppearance.appearanceDate,
+        appearanceTime = nextCourtAppearance.appearanceTime,
         courtCode = nextCourtAppearance.courtCode,
         appearanceType = nextCourtAppearance.appearanceType,
       )

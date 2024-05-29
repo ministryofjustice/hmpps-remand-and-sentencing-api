@@ -19,7 +19,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
     val sentence = CreateSentence(null, "1", CreatePeriodLength(BigDecimal.ONE, null, null, null, periodOrder = "years"), null)
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
-    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, listOf(charge))
+    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -39,7 +39,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `must not create appearance when no court case exists`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -56,7 +56,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `no token results in unauthorized`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -72,7 +72,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `token with incorrect role is forbidden`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
     webTestClient
       .post()
       .uri("/court-appearance")

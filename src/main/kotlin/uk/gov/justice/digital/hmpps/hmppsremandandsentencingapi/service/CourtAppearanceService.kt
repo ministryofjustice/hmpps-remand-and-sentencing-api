@@ -11,11 +11,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Appea
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import java.util.UUID
 
 @Service
@@ -23,6 +25,7 @@ class CourtAppearanceService(
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val nextCourtAppearanceRepository: NextCourtAppearanceRepository,
   private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
+  private val periodLengthRepository: PeriodLengthRepository,
   private val chargeService: ChargeService,
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
@@ -65,6 +68,11 @@ class CourtAppearanceService(
     if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) != true) {
       val toSaveNextCourtAppearance = nextCourtAppearance?.let { nextCourtAppearanceRepository.save(it) }
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
+    }
+    val overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) }
+    if (toCreateAppearance.overallSentenceLength?.isSame(overallSentenceLength) != true) {
+      val toSaveOverallSentenceLength = overallSentenceLength?.let { periodLengthRepository.save(it) }
+      toCreateAppearance.overallSentenceLength = toSaveOverallSentenceLength
     }
     updateDocumentMetadata(toCreateAppearance, courtCaseEntity.prisonerId)
     return courtAppearanceRepository.save(toCreateAppearance)

@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 
 @Sql("classpath:test_data/reset-database.sql")
@@ -52,8 +53,10 @@ abstract class IntegrationTestBase {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
     val appearance = CreateCourtAppearance(
       null, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), "123", "REMAND", 1,
+      CreatePeriodLength(BigDecimal.ONE, null, null, null, periodOrder = "years"),
       CreateNextCourtAppearance(
         LocalDate.now(),
+        LocalTime.now(),
         "COURT1",
         "Court Appearance",
       ),
