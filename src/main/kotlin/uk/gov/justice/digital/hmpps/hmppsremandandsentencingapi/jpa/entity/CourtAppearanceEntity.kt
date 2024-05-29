@@ -89,7 +89,7 @@ data class CourtAppearanceEntity(
       this.statusId == other.statusId &&
       this.warrantType == other.warrantType &&
       this.taggedBail == other.taggedBail &&
-      this.overallSentenceLength == other.overallSentenceLength
+      ((this.overallSentenceLength == null && other.overallSentenceLength == null) || this.overallSentenceLength?.isSame(other.overallSentenceLength) == true)
   }
 
   companion object {
