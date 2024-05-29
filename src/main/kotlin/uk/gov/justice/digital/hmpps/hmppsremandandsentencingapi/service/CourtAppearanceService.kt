@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -44,7 +46,12 @@ class CourtAppearanceService(
   @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
     val appearanceOutcome = appearanceOutcomeRepository.findByOutcomeName(courtAppearance.outcome) ?: appearanceOutcomeRepository.save(AppearanceOutcomeEntity(outcomeName = courtAppearance.outcome))
-    val charges = courtAppearance.charges.map { chargeService.createCharge(it) }.toMutableSet()
+    val sentencesCreated = mutableMapOf<String, SentenceEntity>()
+    val charges = courtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map {
+      val charge = chargeService.createCharge(it, sentencesCreated)
+      charge.getActiveSentence()?.let { sentence -> sentencesCreated.put(sentence.chargeNumber, sentence) }
+      charge
+    }.toMutableSet()
     val toCreateAppearance = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
       ?.let { courtAppearanceEntity ->
         if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
@@ -82,6 +89,16 @@ class CourtAppearanceService(
     courtAppearanceEntity.takeIf { it.warrantId != null }?.let {
       documentManagementApiClient.putDocumentMetadata(it.warrantId!!, DocumentMetadata(prisonerId))
     }
+  }
+
+  private fun chargesByConsecutiveToLast(first: CreateCharge, second: CreateCharge): Int {
+    if (first.sentence?.consecutiveToChargeNumber == null) {
+      return -1
+    }
+    if (first.sentence.consecutiveToChargeNumber == second.sentence?.chargeNumber) {
+      return 1
+    }
+    return 0
   }
 
   @Transactional

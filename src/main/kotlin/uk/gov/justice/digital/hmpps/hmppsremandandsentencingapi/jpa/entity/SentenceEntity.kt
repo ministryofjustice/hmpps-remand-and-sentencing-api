@@ -45,6 +45,13 @@ data class SentenceEntity(
   val createdByUsername: String,
   @Column
   val createdPrison: String?,
+  @Column
+  val sentenceServeType: String,
+  @OneToOne
+  @JoinColumn(name = "consecutive_to_id")
+  val consecutiveTo: SentenceEntity?,
+  @Column
+  val sentenceType: String?,
   @OneToOne
   @JoinColumn(name = "superseding_sentence_id")
   var supersedingSentence: SentenceEntity?,
@@ -56,11 +63,14 @@ data class SentenceEntity(
   fun isSame(other: SentenceEntity?): Boolean {
     return chargeNumber == other?.chargeNumber &&
       custodialPeriodLength.isSame(other.custodialPeriodLength) &&
-      ((extendedLicensePeriodLength == null && other.extendedLicensePeriodLength == null) || extendedLicensePeriodLength?.isSame(other.extendedLicensePeriodLength) == true)
+      ((extendedLicensePeriodLength == null && other.extendedLicensePeriodLength == null) || extendedLicensePeriodLength?.isSame(other.extendedLicensePeriodLength) == true) &&
+      sentenceServeType == other.sentenceServeType &&
+      sentenceType == other.sentenceType &&
+      ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true)
   }
 
   companion object {
-    fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity): SentenceEntity {
+    fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?): SentenceEntity {
       return SentenceEntity(
         lifetimeSentenceUuid = UUID.randomUUID(),
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
@@ -72,6 +82,9 @@ data class SentenceEntity(
         createdPrison = null,
         supersedingSentence = null,
         charge = chargeEntity,
+        sentenceServeType = sentence.sentenceServeType,
+        consecutiveTo = consecutiveTo,
+        sentenceType = sentence.sentenceType,
       )
     }
   }
