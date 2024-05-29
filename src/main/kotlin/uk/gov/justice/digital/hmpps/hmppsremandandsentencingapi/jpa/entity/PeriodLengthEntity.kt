@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
-import java.math.BigDecimal
 
 @Entity
 @Table(name = "period_length")
@@ -17,13 +16,13 @@ data class PeriodLengthEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  val years: BigDecimal?,
+  val years: Int?,
   @Column
-  val months: BigDecimal?,
+  val months: Int?,
   @Column
-  val weeks: BigDecimal?,
+  val weeks: Int?,
   @Column
-  val days: BigDecimal?,
+  val days: Int?,
   @Column
   val periodOrder: String,
 ) {

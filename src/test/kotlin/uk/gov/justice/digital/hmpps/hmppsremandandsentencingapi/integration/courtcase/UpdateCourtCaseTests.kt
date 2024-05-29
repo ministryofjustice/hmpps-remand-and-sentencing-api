@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -18,7 +17,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `update court case`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(BigDecimal.ONE, null, null, null, periodOrder = "years"), null)
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null)
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
     val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
@@ -40,7 +39,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `delete an appearance if emitted from list of appearances`() {
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(BigDecimal.ONE, null, null, null, periodOrder = "years"), null)
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null)
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, sentence)
     val appearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
     val secondAppearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now().minusDays(7L), null, "REMAND", 1, null, null, listOf(charge))

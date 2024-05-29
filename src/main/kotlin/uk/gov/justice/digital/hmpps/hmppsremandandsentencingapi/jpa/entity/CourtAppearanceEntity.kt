@@ -95,7 +95,7 @@ data class CourtAppearanceEntity(
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
-      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType, taggedBail = courtAppearance.taggedBail, overallSentenceLength = null)
+      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType, taggedBail = courtAppearance.taggedBail, overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) })
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {

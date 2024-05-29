@@ -70,7 +70,7 @@ class CourtAppearanceService(
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
     }
     val overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) }
-    if (toCreateAppearance.overallSentenceLength?.isSame(overallSentenceLength) != true) {
+    if (toCreateAppearance.overallSentenceLength?.isSame(overallSentenceLength) != true || (overallSentenceLength?.id == 0 && toCreateAppearance.overallSentenceLength?.id == 0)) {
       val toSaveOverallSentenceLength = overallSentenceLength?.let { periodLengthRepository.save(it) }
       toCreateAppearance.overallSentenceLength = toSaveOverallSentenceLength
     }
