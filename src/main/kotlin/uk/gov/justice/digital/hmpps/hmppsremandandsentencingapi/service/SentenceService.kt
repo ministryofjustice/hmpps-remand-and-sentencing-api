@@ -16,13 +16,15 @@ import java.util.UUID
 class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService) {
 
   @Transactional(TxType.REQUIRED)
-  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity): SentenceEntity {
+  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>): SentenceEntity {
+    val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] }
     val toCreateSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
       ?.let { sentenceEntity ->
         if (sentenceEntity.statusId == EntityStatus.DELETED) {
           throw ImmutableSentenceException("Cannot edit and already edited sentence")
         }
-        val compareSentence = SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity)
+
+        val compareSentence = SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence)
         if (sentenceEntity.isSame(compareSentence)) {
           return@let sentenceEntity
         }
@@ -33,7 +35,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         compareSentence.custodialPeriodLength = if (sentenceEntity.custodialPeriodLength.isSame(compareSentence.custodialPeriodLength)) sentenceEntity.custodialPeriodLength else compareSentence.custodialPeriodLength
         compareSentence.extendedLicensePeriodLength = if (sentenceEntity.extendedLicensePeriodLength?.isSame(compareSentence.extendedLicensePeriodLength) == true) sentenceEntity.extendedLicensePeriodLength else compareSentence.extendedLicensePeriodLength
         compareSentence
-      } ?: SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity)
+      } ?: SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence)
     toCreateSentence.custodialPeriodLength = periodLengthRepository.save(toCreateSentence.custodialPeriodLength)
     toCreateSentence.extendedLicensePeriodLength = toCreateSentence.extendedLicensePeriodLength?.let { periodLengthRepository.save(it) }
     return sentenceRepository.save(toCreateSentence)

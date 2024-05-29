@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableChargeException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
@@ -16,7 +17,7 @@ import java.util.UUID
 class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService) {
 
   @Transactional
-  fun createCharge(charge: CreateCharge): ChargeEntity {
+  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>): ChargeEntity {
     val outcome = chargeOutcomeRepository.findByOutcomeName(charge.outcome) ?: chargeOutcomeRepository.save(ChargeOutcomeEntity(outcomeName = charge.outcome))
     val toCreateCharge = charge.chargeUuid?.let { chargeRepository.findByChargeUuid(it) }
       ?.let { chargeEntity ->
@@ -35,7 +36,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       } ?: ChargeEntity.from(charge, outcome)
     return chargeRepository.save(toCreateCharge).also {
       if (charge.sentence != null) {
-        it.sentences.add(sentenceService.createSentence(charge.sentence, it))
+        it.sentences.add(sentenceService.createSentence(charge.sentence, it, sentencesCreated))
       } else {
         it.getActiveSentence()?.let { sentence -> sentenceService.deleteSentence(sentence) }
       }
