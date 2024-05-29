@@ -3,10 +3,14 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.servers.Server
+import org.springdoc.core.utils.SpringDocUtils
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Configuration
 class OpenApiConfiguration(buildProperties: BuildProperties) {
@@ -28,4 +32,9 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
         .description("Recording Remand and sentencing")
         .contact(Contact().name("HMPPS Digital Studio").email("feedback@digital.justice.gov.uk")),
     )
+  init {
+    val schema: Schema<LocalTime> = Schema<LocalTime>()
+    schema.example(LocalTime.now().format(DateTimeFormatter.ISO_TIME))
+    SpringDocUtils.getConfig().replaceWithSchema(LocalTime::class.java, schema)
+  }
 }
