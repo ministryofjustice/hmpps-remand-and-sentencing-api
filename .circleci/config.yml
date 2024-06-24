@@ -15,7 +15,7 @@ jobs:
   validate:
     executor:
       name: hmpps/java_postgres
-      jdk_tag: "20.0"
+      jdk_tag: "21.0"
       postgres_tag: "15"
       postgres_password: "ras-pass"
       postgres_username: "ras-user"
