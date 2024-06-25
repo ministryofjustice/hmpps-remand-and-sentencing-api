@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  hmpps: ministryofjustice/hmpps@8
+  hmpps: ministryofjustice/hmpps@9
 
 parameters:
   alerts-slack-channel:
@@ -10,12 +10,15 @@ parameters:
   releases-slack-channel:
     type: string
     default: legacy-replacement-releases
+  jdk-tag:
+    type: string
+    default: "21.0"
 
 jobs:
   validate:
     executor:
       name: hmpps/java_postgres
-      jdk_tag: "21.0"
+      jdk_tag: << pipeline.parameters.jdk-tag >>
       postgres_tag: "15"
       postgres_password: "ras-pass"
       postgres_username: "ras-user"
@@ -120,12 +123,13 @@ workflows:
           slack_channel: << pipeline.parameters.alerts-slack-channel >>
           context:
             - hmpps-common-vars
-          jdk_tag: "20.0"
+          jdk_tag: << pipeline.parameters.jdk-tag >>
       - hmpps/trivy_latest_scan:
           slack_channel: << pipeline.parameters.alerts-slack-channel >>
           context:
             - hmpps-common-vars
       - hmpps/veracode_pipeline_scan:
+          jdk_tag: << pipeline.parameters.jdk-tag >>
           slack_channel: << pipeline.parameters.alerts-slack-channel >>
           context:
             - veracode-credentials
