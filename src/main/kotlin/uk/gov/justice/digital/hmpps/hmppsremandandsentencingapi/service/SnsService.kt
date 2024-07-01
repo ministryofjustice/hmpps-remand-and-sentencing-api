@@ -3,7 +3,9 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.util.UriComponentsBuilder
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import software.amazon.awssdk.services.sns.model.PublishRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
@@ -13,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Per
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 private const val EVENT_TYPE = "eventType"
 
@@ -22,6 +25,8 @@ private const val STRING = "String"
 class SnsService(
   hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
+  @Value("\${ingress.url}") private val ingressUrl: String,
+  @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppsdomaintopic")
@@ -38,7 +43,7 @@ class SnsService(
       "court-case.inserted",
       1,
       "Court case inserted event",
-      "",
+      generateDetailsUri(courtCaseLookupPath, courtCaseId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
       HmppsCourtCaseMessage(courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
@@ -52,4 +57,7 @@ class SnsService(
         ).build(),
     ).get()
   }
+
+  private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
+
 }
