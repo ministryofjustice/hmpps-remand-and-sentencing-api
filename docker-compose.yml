@@ -21,5 +21,20 @@ services:
       - POSTGRES_PASSWORD=ras-pass
       - POSTGRES_USER=ras-user
       - POSTGRES_DB=ras
+  localstack:
+    image: localstack/localstack:3
+    networks:
+      - hmpps
+    container_name: localstack
+    ports:
+      - "4566:4566"
+      - 4510-4559:4510-4559
+    environment:
+      - SERVICES=sns,sqs
+      - DEBUG=${DEBUG:-0}
+      - DEFAULT_REGION=eu-west-2
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
 networks:
   hmpps:

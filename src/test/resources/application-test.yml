@@ -18,7 +18,18 @@ hmpps:
     client:
       id: client-id
       secret: client-secret
-
+  sqs:
+    provider: localstack
+    queues:
+      hmppsdomainqueue:
+        queueName: hmpps_domain_queue
+        dlqName: hmpps_domain_dlq
+        subscribeTopicId: hmppsdomaintopic
+        subscribeFilter: '{"eventType":[ "court-case.inserted"] }'
+        dlqMaxReceiveCount: 1
+    topics:
+      hmppsdomaintopic:
+        arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
 # Wiremock prison-api
 prison:
   api:

@@ -37,6 +37,8 @@ generic-service:
         DB_NAME: database_name
         DB_USER: database_username
         DB_PASS: database_password
+    hmpps-domain-events-topic:
+      HMPPS_SQS_TOPICS_HMPPSDOMAINTOPIC_ARN: "topic_arn"
 
   allowlist:
     cymulate-1: 54.217.50.18/32

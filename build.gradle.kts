@@ -23,6 +23,10 @@ dependencies {
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
 
+  // AWS
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.0.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.postgresql:postgresql:42.7.3")
@@ -30,6 +34,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.6")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
   testImplementation("org.wiremock:wiremock-standalone:3.7.0")
+  testImplementation("org.awaitility:awaitility-kotlin:4.2.1")
 }
 
 java {

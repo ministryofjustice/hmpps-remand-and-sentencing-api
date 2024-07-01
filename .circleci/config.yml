@@ -17,8 +17,9 @@ parameters:
 jobs:
   validate:
     executor:
-      name: hmpps/java_postgres
+      name: hmpps/java_localstack_postgres
       jdk_tag: << pipeline.parameters.jdk-tag >>
+      localstack_tag: "3"
       postgres_tag: "15"
       postgres_password: "ras-pass"
       postgres_username: "ras-user"
