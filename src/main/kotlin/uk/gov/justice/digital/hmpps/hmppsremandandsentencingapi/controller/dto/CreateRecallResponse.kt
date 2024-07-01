@@ -7,7 +7,7 @@ data class CreateRecallResponse(
   val recallUuid: UUID,
 ) {
   companion object {
-    fun transform(recall: RecallEntity): CreateRecallResponse =
+    fun from(recall: RecallEntity): CreateRecallResponse =
       CreateRecallResponse(recallUuid = recall.recallUniqueIdentifier)
   }
 }

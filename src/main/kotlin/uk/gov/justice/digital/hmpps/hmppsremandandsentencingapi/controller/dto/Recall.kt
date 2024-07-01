@@ -16,7 +16,7 @@ data class Recall(
   val createdByUsername: String,
 ) {
   companion object {
-    fun transform(recall: RecallEntity): Recall =
+    fun from(recall: RecallEntity): Recall =
       Recall(
         recallUniqueIdentifier = recall.recallUniqueIdentifier,
         prisonerId = recall.prisonerId,

@@ -15,12 +15,12 @@ class RecallService(private val recallRepository: RecallRepository) {
   @Transactional
   fun createRecall(createRecall: CreateRecall): CreateRecallResponse {
     val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall))
-    return CreateRecallResponse.transform(recall)
+    return CreateRecallResponse.from(recall)
   }
 
   @Transactional(readOnly = true)
   fun findRecallByUuid(recallUniqueIdentifier: UUID): Recall {
     val recall = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier) ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
-    return Recall.transform(recall)
+    return Recall.from(recall)
   }
 }

@@ -43,7 +43,7 @@ class RecallController(private val recallService: RecallService) {
     recallService.createRecall(createRecall)
 
   @GetMapping("/{recallUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Retrieve a recall",
     description = "This endpoint will retrieve the details of a recall",
