@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Per
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 private const val EVENT_TYPE = "eventType"
 
@@ -26,7 +25,7 @@ class SnsService(
   hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   @Value("\${ingress.url}") private val ingressUrl: String,
-  @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String
+  @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String,
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppsdomaintopic")
@@ -59,5 +58,4 @@ class SnsService(
   }
 
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
-
 }
