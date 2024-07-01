@@ -62,7 +62,7 @@ class RecallIntTests : IntegrationTestBase() {
       .uri("/recall")
       .bodyValue(recall)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()

@@ -26,7 +26,7 @@ import java.util.UUID
 class RecallController(private val recallService: RecallService) {
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Create a recall",
     description = "This endpoint will create a recall",
