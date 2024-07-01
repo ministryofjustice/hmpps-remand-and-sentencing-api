@@ -26,11 +26,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 
 @RestController
-@RequestMapping("/court-case", produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-controller", description = "Court case")
 class CourtCaseController(private val courtCaseService: CourtCaseService) {
 
-  @PostMapping
+  @PostMapping("/court-case")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Create Court case",
@@ -48,7 +48,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
     return CreateCourtCaseResponse(courtCaseService.createCourtCase(createCourtCase).caseUniqueIdentifier)
   }
 
-  @PutMapping("/{courtCaseUuid}")
+  @PutMapping("/court-case/{courtCaseUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Create Court case",
@@ -66,7 +66,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
     return CreateCourtCaseResponse(courtCaseService.putCourtCase(createCourtCase, courtCaseUuid).caseUniqueIdentifier)
   }
 
-  @GetMapping("/search")
+  @GetMapping("/court-case/search")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Retrieve all court cases for person",
@@ -84,7 +84,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
     return courtCaseService.searchCourtCases(prisonerId, pageable)
   }
 
-  @GetMapping("/{courtCaseUuid}")
+  @GetMapping("\${court.case.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Retrieve court case details",
@@ -102,7 +102,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
     return courtCaseService.getCourtCaseByUuid(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
   }
 
-  @GetMapping("/{courtCaseUuid}/latest-appearance")
+  @GetMapping("/court-case/{courtCaseUuid}/latest-appearance")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Retrieve latest court appearance of court case",

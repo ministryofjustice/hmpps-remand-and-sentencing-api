@@ -14,6 +14,6 @@ see https://github.com/ministryofjustice/dps-project-bootstrap.
 ## Running tests
 execute the following commands:
 ```shell
-docker compose up remand-and-sentencing-db -d 
+docker compose up remand-and-sentencing-db localstack -d 
 ./gradlew check
 ```

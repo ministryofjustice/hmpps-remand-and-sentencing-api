@@ -5,13 +5,14 @@ generic-service:
   replicaCount: 2
 
   ingress:
-    host: remand-and-sentencing-api-preprod.hmpps.service.justice.gov.uk
+    host: &ingressHost remand-and-sentencing-api-preprod.hmpps.service.justice.gov.uk
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     HMPPS_AUTH_URL: https://sign-in-preprod.hmpps.service.justice.gov.uk/auth
     PRISON_API_URL: https://prison-api-preprod.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: https://document-api-preprod.hmpps.service.justice.gov.uk
+    INGRESS_URL: *ingressHost
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
