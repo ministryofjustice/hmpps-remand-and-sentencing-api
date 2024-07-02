@@ -1,6 +1,7 @@
 generic-service:
   nameOverride: hmpps-remand-and-sentencing-api
-
+  productId: "DPS014"
+  serviceAccountName: hmpps-remand-and-sentencing-api
   replicaCount: 4
 
   image:
