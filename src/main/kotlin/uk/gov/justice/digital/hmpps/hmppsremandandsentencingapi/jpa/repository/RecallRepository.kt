@@ -6,4 +6,5 @@ import java.util.UUID
 
 interface RecallRepository : CrudRepository<RecallEntity, Int> {
   fun findOneByRecallUniqueIdentifier(recallUniqueIdentifier: UUID): RecallEntity?
+  fun findByPrisonerId(prisonerId: String): List<RecallEntity>
 }

@@ -23,4 +23,8 @@ class RecallService(private val recallRepository: RecallRepository) {
     val recall = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier) ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
     return Recall.from(recall)
   }
+
+  @Transactional(readOnly = true)
+  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> =
+    recallRepository.findByPrisonerId(prisonerId).map { Recall.from(it) }
 }
