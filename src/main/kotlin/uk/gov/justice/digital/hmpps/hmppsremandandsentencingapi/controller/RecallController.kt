@@ -71,5 +71,5 @@ class RecallController(private val recallService: RecallService) {
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getRecall(@PathVariable prisonerId: String): List<Recall> = recallService.findRecallsByPrisonerId(prisonerId)
+  fun getRecallsByPrisonerId(@PathVariable prisonerId: String): List<Recall> = recallService.findRecallsByPrisonerId(prisonerId)
 }
