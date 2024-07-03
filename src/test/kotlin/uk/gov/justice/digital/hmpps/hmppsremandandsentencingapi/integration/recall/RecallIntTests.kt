@@ -45,9 +45,7 @@ class RecallIntTests : IntegrationTestBase() {
       )
   }
 
-  @Sql(
-    "classpath:test_data/insert-recalls.sql",
-  )
+  @Sql("classpath:test_data/insert-recalls.sql")
   @Test
   fun `Get all recalls for a prisoner`() {
     val recalls = getRecallsByPrisonerId("A12345B")
