@@ -119,6 +119,7 @@ abstract class IntegrationTestBase {
     Assertions.assertEquals(1, messages.size)
     val courtCaseInsertedMessage = messages.first()
     Assertions.assertEquals(prisonerId, courtCaseInsertedMessage.personReference.identifiers.first { it.type == "NOMS" }.value)
+    Assertions.assertEquals("DPS", courtCaseInsertedMessage.additionalInformation.source)
   }
 
   private fun getAllDomainMessages(): List<HmppsMessage<HmppsCourtCaseMessage>> {
