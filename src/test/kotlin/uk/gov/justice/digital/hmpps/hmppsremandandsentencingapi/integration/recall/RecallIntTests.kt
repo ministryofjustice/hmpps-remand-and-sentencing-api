@@ -7,7 +7,6 @@ import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FOURTEEN_DAY_FIXED_TERM_RECALL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.HDC_RECALL
@@ -85,11 +84,13 @@ class RecallIntTests : IntegrationTestBase() {
     val uuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000")
     val originalRecall = getRecallByUUID(uuid)
 
-    val updatedRecall = putRecall(
-      UpdateRecall(
+    putRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
         recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
         recallDate = originalRecall.recallDate,
         returnToCustodyDate = originalRecall.returnToCustodyDate,
+        createdByUsername = "user001",
       ),
       uuid,
     )
@@ -153,7 +154,7 @@ class RecallIntTests : IntegrationTestBase() {
       .expectBody(SaveRecallResponse::class.java)
       .returnResult().responseBody!!
 
-  private fun putRecall(recall: UpdateRecall, uuid: UUID) =
+  private fun putRecall(recall: CreateRecall, uuid: UUID) =
     webTestClient
       .put()
       .uri("/recall/$uuid")

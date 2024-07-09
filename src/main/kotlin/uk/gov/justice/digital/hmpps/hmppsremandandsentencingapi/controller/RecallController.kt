@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
 import java.util.UUID
 
@@ -78,18 +77,17 @@ class RecallController(private val recallService: RecallService) {
   @PutMapping("/{recallUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
-    summary = "Update a recall",
-    description = "This endpoint will update a recall",
+    summary = "Update a recall (or create one with the passed in details)",
+    description = "This endpoint will update a recall (or create one with the passed in details)",
   )
   @ApiResponses(
     value = [
       ApiResponse(responseCode = "200", description = "Returns court case UUID"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-      ApiResponse(responseCode = "404", description = "Not found if no recall exists with provided UUID"),
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun updateRecall(@RequestBody updateRecall: UpdateRecall, @PathVariable recallUuid: String): SaveRecallResponse =
-    recallService.updateRecall(UUID.fromString(recallUuid), updateRecall)
+  fun updateRecall(@RequestBody recall: CreateRecall, @PathVariable recallUuid: UUID): SaveRecallResponse =
+    recallService.updateRecall(recallUuid, recall)
 }

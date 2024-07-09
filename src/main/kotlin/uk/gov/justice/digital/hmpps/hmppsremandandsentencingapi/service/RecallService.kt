@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import java.util.UUID
@@ -20,15 +19,15 @@ class RecallService(private val recallRepository: RecallRepository) {
   }
 
   @Transactional
-  fun updateRecall(recallUniqueIdentifier: UUID, updateRecall: UpdateRecall): SaveRecallResponse {
-    val recall = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
-      ?: throw EntityNotFoundException("Recall with identifier $recallUniqueIdentifier")
+  fun updateRecall(recallUniqueIdentifier: UUID, recall: CreateRecall): SaveRecallResponse {
+    val recallToUpdate = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
+      ?: recallRepository.save(RecallEntity.placeholderEntity(recall))
 
     val savedRecall = recallRepository.save(
-      recall.copy(
-        recallDate = updateRecall.recallDate,
-        returnToCustodyDate = updateRecall.returnToCustodyDate,
-        recallType = updateRecall.recallType,
+      recallToUpdate.copy(
+        recallDate = recall.recallDate,
+        returnToCustodyDate = recall.returnToCustodyDate,
+        recallType = recall.recallType,
       ),
     )
 
