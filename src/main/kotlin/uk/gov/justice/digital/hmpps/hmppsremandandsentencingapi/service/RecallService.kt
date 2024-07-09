@@ -21,7 +21,7 @@ class RecallService(private val recallRepository: RecallRepository) {
   @Transactional
   fun updateRecall(recallUniqueIdentifier: UUID, recall: CreateRecall): SaveRecallResponse {
     val recallToUpdate = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
-      ?: recallRepository.save(RecallEntity.placeholderEntity(recall))
+      ?: recallRepository.save(RecallEntity.placeholderEntity(recall, recallUniqueIdentifier))
 
     val savedRecall = recallRepository.save(
       recallToUpdate.copy(
