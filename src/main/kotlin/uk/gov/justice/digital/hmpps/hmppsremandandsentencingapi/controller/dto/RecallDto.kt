@@ -10,3 +10,9 @@ data class CreateRecall(
   val recallType: RecallType,
   val createdByUsername: String,
 )
+
+data class UpdateRecall(
+  val recallDate: LocalDate,
+  val returnToCustodyDate: LocalDate,
+  val recallType: RecallType,
+)
