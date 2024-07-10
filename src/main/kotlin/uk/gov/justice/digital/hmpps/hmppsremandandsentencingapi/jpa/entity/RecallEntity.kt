@@ -30,8 +30,9 @@ data class RecallEntity(
   val createdByUsername: String,
 ) {
   companion object {
-    fun placeholderEntity(createRecall: CreateRecall): RecallEntity =
+    fun placeholderEntity(createRecall: CreateRecall, recallUniqueIdentifier: UUID? = null): RecallEntity =
       RecallEntity(
+        recallUniqueIdentifier = recallUniqueIdentifier ?: UUID.randomUUID(),
         prisonerId = createRecall.prisonerId,
         recallDate = createRecall.recallDate,
         returnToCustodyDate = createRecall.returnToCustodyDate,

@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FOURTEEN_DAY_FIXED_TERM_RECALL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.HDC_RECALL
@@ -78,6 +78,41 @@ class RecallIntTests : IntegrationTestBase() {
       )
   }
 
+  @Sql("classpath:test_data/insert-recalls.sql")
+  @Test
+  fun `Update a recall`() {
+    val uuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000")
+    val originalRecall = getRecallByUUID(uuid)
+
+    putRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
+        recallDate = originalRecall.recallDate,
+        returnToCustodyDate = originalRecall.returnToCustodyDate,
+        createdByUsername = "user001",
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUniqueIdentifier = uuid,
+          prisonerId = originalRecall.prisonerId,
+          recallDate = originalRecall.recallDate,
+          returnToCustodyDate = originalRecall.returnToCustodyDate,
+          recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
+          createdByUsername = originalRecall.createdByUsername,
+          createdAt = originalRecall.createdAt,
+        ),
+      )
+  }
+
   private fun getRecallByUUID(recallUuid: UUID): Recall =
     webTestClient
       .get()
@@ -116,6 +151,21 @@ class RecallIntTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isCreated
-      .expectBody(CreateRecallResponse::class.java)
+      .expectBody(SaveRecallResponse::class.java)
+      .returnResult().responseBody!!
+
+  private fun putRecall(recall: CreateRecall, uuid: UUID) =
+    webTestClient
+      .put()
+      .uri("/recall/$uuid")
+      .bodyValue(recall)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(SaveRecallResponse::class.java)
       .returnResult().responseBody!!
 }

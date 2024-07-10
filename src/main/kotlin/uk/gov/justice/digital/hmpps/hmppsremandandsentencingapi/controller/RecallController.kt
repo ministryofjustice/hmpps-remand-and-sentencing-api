@@ -10,13 +10,14 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
 import java.util.UUID
 
@@ -39,7 +40,7 @@ class RecallController(private val recallService: RecallService) {
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createRecall(@RequestBody createRecall: CreateRecall): CreateRecallResponse =
+  fun createRecall(@RequestBody createRecall: CreateRecall): SaveRecallResponse =
     recallService.createRecall(createRecall)
 
   @GetMapping("/{recallUuid}")
@@ -72,4 +73,21 @@ class RecallController(private val recallService: RecallService) {
     ],
   )
   fun getRecallsByPrisonerId(@PathVariable prisonerId: String): List<Recall> = recallService.findRecallsByPrisonerId(prisonerId)
+
+  @PutMapping("/{recallUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Update a recall (or create one with the passed in details)",
+    description = "This endpoint will update a recall (or create one with the passed in details)",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun updateRecall(@RequestBody recall: CreateRecall, @PathVariable recallUuid: UUID): SaveRecallResponse =
+    recallService.updateRecall(recallUuid, recall)
 }
