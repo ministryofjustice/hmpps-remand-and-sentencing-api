@@ -55,7 +55,7 @@ data class ChargeEntity(
   }
   fun isSame(other: ChargeEntity): Boolean {
     return this.chargeUuid == other.chargeUuid &&
-      this.offenceCode == offenceCode &&
+      this.offenceCode == other.offenceCode &&
       this.offenceStartDate.isEqual(other.offenceStartDate) &&
       ((this.offenceEndDate == null && other.offenceEndDate == null) || this.offenceEndDate?.isEqual(other.offenceEndDate) == true) &&
       this.statusId == other.statusId &&
