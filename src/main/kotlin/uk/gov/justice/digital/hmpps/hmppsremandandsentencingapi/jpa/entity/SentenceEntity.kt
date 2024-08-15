@@ -13,6 +13,7 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -58,6 +59,8 @@ data class SentenceEntity(
   @ManyToOne
   @JoinColumn(name = "charge_id")
   val charge: ChargeEntity,
+  @Column
+  val convictionDate: LocalDate?,
 ) {
 
   fun isSame(other: SentenceEntity?): Boolean {
@@ -66,7 +69,8 @@ data class SentenceEntity(
       ((extendedLicensePeriodLength == null && other.extendedLicensePeriodLength == null) || extendedLicensePeriodLength?.isSame(other.extendedLicensePeriodLength) == true) &&
       sentenceServeType == other.sentenceServeType &&
       sentenceType == other.sentenceType &&
-      ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true)
+      ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
+      convictionDate == other.convictionDate
   }
 
   companion object {
@@ -85,6 +89,7 @@ data class SentenceEntity(
         sentenceServeType = sentence.sentenceServeType,
         consecutiveTo = consecutiveTo,
         sentenceType = sentence.sentenceType,
+        convictionDate = sentence.convictionDate,
       )
     }
   }

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import java.time.LocalDate
 import java.util.UUID
 
 data class CreateSentence(
@@ -10,4 +11,5 @@ data class CreateSentence(
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
   val sentenceType: String,
+  val convictionDate: LocalDate?,
 )

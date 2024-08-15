@@ -84,7 +84,7 @@ abstract class IntegrationTestBase {
   }
 
   protected fun createCourtCase(prisonerId: String = "PRI123", minusDaysFromAppearanceDate: Long = 0): Pair<String, CreateCourtCase> {
-    val sentence = CreateSentence(UUID.randomUUID(), "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)")
+    val sentence = CreateSentence(UUID.randomUUID(), "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
     val appearance = CreateCourtAppearance(
       null, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), "123", "REMAND", 1,
@@ -96,6 +96,7 @@ abstract class IntegrationTestBase {
         "Court Appearance",
       ),
       listOf(charge),
+      LocalDate.now().minusDays(7),
     )
     val courtCase = CreateCourtCase(prisonerId, listOf(appearance))
     val response = webTestClient

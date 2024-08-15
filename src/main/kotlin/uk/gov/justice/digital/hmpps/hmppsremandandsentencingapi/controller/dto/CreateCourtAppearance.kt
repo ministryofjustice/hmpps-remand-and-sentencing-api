@@ -16,4 +16,5 @@ data class CreateCourtAppearance(
   val overallSentenceLength: CreatePeriodLength?,
   val nextCourtAppearance: CreateNextCourtAppearance?,
   val charges: List<CreateCharge>,
+  val overallConvictionDate: LocalDate?,
 )

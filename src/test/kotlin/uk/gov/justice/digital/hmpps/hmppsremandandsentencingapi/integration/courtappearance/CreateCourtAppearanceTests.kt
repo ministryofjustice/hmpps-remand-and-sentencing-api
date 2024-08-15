@@ -16,9 +16,9 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create appearance in existing court case`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)")
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
-    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -38,13 +38,13 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create appearance with consecutive to sentences`() {
     val courtCase = createCourtCase()
-    val forthWithSentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)")
+    val forthWithSentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val forthWithCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, forthWithSentence)
-    val concurrentSentence = CreateSentence(null, "2", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "CONCURRENT", null, "SDS (Standard Determinate Sentence)")
+    val concurrentSentence = CreateSentence(null, "2", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "CONCURRENT", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val concurrentCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, concurrentSentence)
-    val consecutiveToSentence = CreateSentence(null, "3", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "CONSECUTIVE_TO", "1", "SDS (Standard Determinate Sentence)")
+    val consecutiveToSentence = CreateSentence(null, "3", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "CONSECUTIVE_TO", "1", "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val consecutiveToCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, consecutiveToSentence)
-    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "SENTENCE", 1, CreatePeriodLength(6, null, null, null, "years"), null, listOf(consecutiveToCharge, concurrentCharge, forthWithCharge))
+    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "SENTENCE", 1, CreatePeriodLength(6, null, null, null, "years"), null, listOf(consecutiveToCharge, concurrentCharge, forthWithCharge), LocalDate.now().minusDays(7))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -64,7 +64,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `must not create appearance when no court case exists`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -81,7 +81,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `no token results in unauthorized`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -97,7 +97,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `token with incorrect role is forbidden`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
     webTestClient
       .post()
       .uri("/court-appearance")
