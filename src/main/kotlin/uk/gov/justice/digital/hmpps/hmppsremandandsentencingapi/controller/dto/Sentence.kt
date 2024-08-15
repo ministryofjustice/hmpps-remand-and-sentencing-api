@@ -12,7 +12,7 @@ data class Sentence(
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
   val sentenceType: String,
-  val convictionDate: LocalDate?
+  val convictionDate: LocalDate?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence {
@@ -24,7 +24,7 @@ data class Sentence(
         sentenceEntity.sentenceServeType,
         sentenceEntity.consecutiveTo?.chargeNumber,
         sentenceEntity.sentenceType,
-        sentenceEntity.convictionDate
+        sentenceEntity.convictionDate,
       )
     }
   }
