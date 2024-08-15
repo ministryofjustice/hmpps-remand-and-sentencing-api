@@ -17,9 +17,9 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `update court case`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)")
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
-    val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
     webTestClient
       .put()
@@ -39,10 +39,10 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `delete an appearance if emitted from list of appearances`() {
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)")
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, sentence)
-    val appearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
-    val secondAppearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now().minusDays(7L), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
+    val secondAppearance = CreateCourtAppearance(null, UUID.randomUUID(), "OUT123", "COURT1", "COURTREF1", LocalDate.now().minusDays(7L), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7))
     val courtCase = CreateCourtCase("PRISONER1", listOf(appearance, secondAppearance))
     val courtCaseUuid = UUID.randomUUID()
     webTestClient
@@ -109,7 +109,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `no token results in unauthorized`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .put()
@@ -126,7 +126,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `token with incorrect role is forbidden`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge))
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
     val courtCase = CreateCourtCase("PRI123", listOf(appearance))
     webTestClient
       .put()
