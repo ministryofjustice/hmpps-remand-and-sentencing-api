@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 data class CourtCase(
   val prisonerId: String,
   val courtCaseUuid: String,
-  val latestAppearance: CourtAppearance,
+  val latestAppearance: CourtAppearance?,
   val appearances: List<CourtAppearance>,
 ) {
   companion object {
@@ -14,7 +14,7 @@ data class CourtCase(
       return CourtCase(
         courtCaseEntity.prisonerId,
         courtCaseEntity.caseUniqueIdentifier,
-        CourtAppearance.from(courtCaseEntity.latestCourtAppearance!!),
+        courtCaseEntity.latestCourtAppearance?.let { CourtAppearance.from(it) },
         courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.map { CourtAppearance.from(it) },
       )
     }
