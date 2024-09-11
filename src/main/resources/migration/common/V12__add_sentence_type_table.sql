@@ -6,7 +6,7 @@ CREATE TABLE sentence_type(
     max_age_exclusive int,
     min_date_inclusive date,
     max_date_exclusive date,
-    classification VARCHAR NOT NULL -- standard, extended, sopc(?), indeterminate, botus, civil, dto, fine
+    classification VARCHAR NOT NULL -- standard, extended, sopc, indeterminate, botus, civil, dto, fine
 );
 
 INSERT INTO sentence_type(sentence_type_uuid, description, min_age_inclusive, max_age_exclusive, min_date_inclusive, max_date_exclusive, classification) values
@@ -24,7 +24,7 @@ INSERT INTO sentence_type(sentence_type_uuid, description, min_age_inclusive, ma
 ('0e822fe7-80dd-4c5d-b477-33b7109058c9', 'Serious Terrorism Sentence',21,null,'2020-12-01',null,'EXTENDED'),
 ('8d04557c-8e54-4e2a-844f-272163fca833', 'SDS (Standard Determinate Sentence)',18,null,null,'2020-12-01','STANDARD'),
 ('02fe3513-40a6-47e9-a72d-9dafdd936a0e', 'SDS (Standard Determinate Sentence)',21,null,'2020-12-01',null,'STANDARD'),
-('6d0948c1-243b-4a2d-8b23-0721a5a1a949', 'ORA SDS (Offender rehabilitation act standard determinate sentence)',21,null,null,'2020-12-01','STANDARD'),
+('6d0948c1-243b-4a2d-8b23-0721a5a1a949', 'ORA SDS (Offender rehabilitation act standard determinate sentence)',18,null,null,'2020-12-01','STANDARD'),
 ('e138374d-810f-4718-a81a-1c9d4745031e', 'ORA SDS (Offender rehabilitation act standard determinate sentence)',21,null,'2020-12-01',null,'STANDARD'),
 ('1104e683-5467-4340-b961-ff53672c4f39', 'SDS (Standard Determinate Sentence)',null,18,'2020-12-01',null,'STANDARD'),
 ('f1fb11de-aa51-4a74-8c5c-9c08ada6db37', 'ORA (Offender rehabilitation act)',null,18,'2020-12-01',null,'STANDARD'),
@@ -38,7 +38,7 @@ INSERT INTO sentence_type(sentence_type_uuid, description, min_age_inclusive, ma
 ('b4769983-fd23-4c95-9f47-5e5eb3aef491', 'Section 236A SOPC CJA03',18,null,null,'2020-12-01','SOPC'),
 ('4d434819-4aff-442a-8c78-64dfcfba61cc', 'SOPC (offenders of a particular concern)',18,21,'2020-12-01',null,'SOPC'),
 ('deb22e75-2335-44de-8a9f-1047d58c9b04', 'SOPC (offenders of a particular concern)',21,null,'2020-12-01',null,'SOPC'),
-('4e745d45-2c42-48b3-998d-0c7d1a19a8fc', 'Automatic LIfe',21,null,null,'2020-12-01','INDETERMINATE'),
+('4e745d45-2c42-48b3-998d-0c7d1a19a8fc', 'Automatic Life',18,null,null,'2020-12-01','INDETERMINATE'),
 ('496cdc0f-0136-413f-ab6b-c24ce53b8f1e', 'Automatic Life',21,null,'2020-12-01',null,'INDETERMINATE'),
 ('4eaf630e-1629-43a0-aaef-31dfd805e54a', 'Automatic Life Sec 273 Sentencing Code (18 - 20)',18,21,'2020-12-01',null,'INDETERMINATE'),
 ('a501bc80-2d82-44c4-98af-17467620463c', 'Automatic Life Sec 224A 03',18,null,null,'2020-12-01','INDETERMINATE'),
@@ -50,7 +50,7 @@ INSERT INTO sentence_type(sentence_type_uuid, description, min_age_inclusive, ma
 ('8f23e11b-dfa6-4d97-81ca-07ccd5f9983a', 'Detention During His Majesty''s Pleasure',null,21,null,'2020-12-01','INDETERMINATE'),
 ('69811a64-c18a-4e18-9f9a-87a3fa7ee0bd', 'Detention During His Majesty''s Pleasure',null,21,'2020-12-01',null,'INDETERMINATE'),
 ('ba057d8b-07ba-4779-a704-5b54e6135dcf', 'Indeterminate Sentence for the Public Protection',18,null,null,'2020-12-01','INDETERMINATE'),
-('e3b69eb7-6362-4d8b-affe-480abcfd35f7', 'Adult Mandatory Life',21,null,null,'2020-12-01','INDETERMINATE'),
+('e3b69eb7-6362-4d8b-affe-480abcfd35f7', 'Adult Mandatory Life',18,null,null,'2020-12-01','INDETERMINATE'),
 ('61ae9cdf-ae37-4a91-8216-deb9fef7330e', 'Adult Mandatory Life',21,null,'2020-12-01',null,'INDETERMINATE'),
 ('d8d38763-bee6-474e-8988-7dfa3d02f3ae', 'Custody For Life Sec 272 Sentencing Code (18 - 20)',18,21,'2020-12-01',null,'INDETERMINATE'),
 ('3725c368-fbfb-4e46-babf-12aabc2a7f91', 'Custody For Life Sec 275 Sentencing Code (Murder) (U21)',null,21,'2020-12-01',null,'INDETERMINATE'),
