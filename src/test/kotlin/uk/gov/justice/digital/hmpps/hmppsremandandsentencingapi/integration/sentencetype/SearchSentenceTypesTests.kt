@@ -1,0 +1,151 @@
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sentencetype
+
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import org.springframework.core.ParameterizedTypeReference
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import java.util.stream.Stream
+
+class SearchSentenceTypesTests : IntegrationTestBase() {
+
+  private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
+
+  @Test
+  fun `providing no parameters results in bad request`() {
+    val result = webTestClient.get()
+      .uri("/sentence-type/search")
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isBadRequest
+  }
+
+  @ParameterizedTest(name = "Sentence type bucket test, age {0} on date {1}")
+  @MethodSource("sentenceTypeParameters")
+  fun `sentence type bucket tests`(age: Int, convictionDate: String, expectedDescriptions: List<String>) {
+    val result = webTestClient.get()
+      .uri("/sentence-type/search?age=$age&convictionDate=$convictionDate")
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceType>>())
+      .returnResult().responseBody!!
+    val descriptions = result.map { it.description }
+    Assertions.assertThat(descriptions).containsExactlyInAnyOrderElementsOf(expectedDescriptions)
+  }
+
+  companion object {
+    @JvmStatic
+    fun sentenceTypeParameters(): Stream<Arguments> {
+      return Stream.of(
+        Arguments.of(
+          25,
+          "15/12/2020",
+          listOf(
+            "Imprisonment in Default of Fine",
+            "SDS (Standard Determinate Sentence)",
+            "ORA SDS (Offender rehabilitation act standard determinate sentence)",
+            "Automatic Life",
+            "ORA Breach Top Up Supervision",
+            "Civil Imprisonment",
+            "Adult Discretionary Life",
+            "EDS (Extended Determinate Sentence)",
+            "Adult Mandatory Life",
+            "SOPC (offenders of a particular concern)",
+            "Serious Terrorism Sentence",
+            "Violent Offender Order",
+          ),
+        ),
+        Arguments.of(
+          19,
+          "15/12/2020",
+          listOf(
+            "Imprisonment in Default of Fine",
+            "Automatic Life Sec 273 Sentencing Code (18 - 20)",
+            "ORA Breach Top Up Supervision",
+            "Civil Imprisonment",
+            "Detention For Life",
+            "Adult Discretionary Life",
+            "EDS (Extended Determinate Sentence)",
+            "Detention During His Majesty's Pleasure",
+            "Custody For Life Sec 272 Sentencing Code (18 - 20)",
+            "Custody For Life Sec 275 Sentencing Code (Murder) (U21)",
+            "SOPC (offenders of a particular concern)",
+            "Serious Terrorism Sentence",
+            "Violent Offender Order",
+            "YOI (Young offender institution)",
+            "YOI ORA (Young offender Institution offender rehabilitation act)",
+          ),
+        ),
+        Arguments.of(
+          17,
+          "15/12/2020",
+          listOf(
+            "Imprisonment in Default of Fine",
+            "Detention For Life",
+            "Detention and Training Order",
+            "ORA Detention and Training Order",
+            "EDS (Extended Determinate Sentence)",
+            "Detention During His Majesty's Pleasure",
+            "SDOPC (Special sentence of detention for terrorist offenders of particular concern)",
+            "SDS (Standard Determinate Sentence)",
+            "ORA (Offender rehabilitation act)",
+            "Custody For Life Sec 275 Sentencing Code (Murder) (U21)",
+            "Youth Rehabilitation Order",
+          ),
+        ),
+        Arguments.of(
+          20,
+          "15/11/2020",
+          listOf(
+            "SDS (Standard Determinate Sentence)",
+            "ORA SDS (Offender rehabilitation act standard determinate sentence)",
+            "Automatic Life",
+            "Automatic Life Sec 224A 03",
+            "ORA Breach Top Up Supervision",
+            "Civil Imprisonment",
+            "Detention For Life",
+            "Adult Discretionary Life",
+            "Extended Sentence for Public Protection",
+            "Detention During His Majesty's Pleasure",
+            "Indeterminate Sentence for the Public Protection",
+            "EDS LASPO Automatic Release",
+            "EDS LASPO Discretionary Release",
+            "Adult Mandatory Life",
+            "Section 236A SOPC CJA03",
+            "Custody For Life - Under 21 CJA03",
+            "Custody Life (18-21 Years Old)",
+            "Legacy (1967 Act)",
+            "Legacy (1991 Act)",
+          ),
+        ),
+        Arguments.of(
+          17,
+          "15/11/2020",
+          listOf(
+            "Detention For Life",
+            "Detention For Public Protection",
+            "Detention and Training Order",
+            "ORA Detention and Training Order",
+            "Extended Sentence for Public Protection",
+            "Detention During His Majesty's Pleasure",
+            "Serious Offence -18 CJA03 POCCA 2000",
+            "ORA (Offender rehabilitation act)",
+            "Custody For Life - Under 21 CJA03",
+            "YOI (Young offender institution)",
+            "YOI ORA (Young offender Institution offender rehabilitation act)",
+            "Legacy (1967 Act)",
+            "Legacy (1991 Act)",
+            "Section 104",
+            "Section 105",
+          ),
+        ),
+      )
+    }
+  }
+}

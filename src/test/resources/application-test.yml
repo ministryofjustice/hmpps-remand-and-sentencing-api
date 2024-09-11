@@ -6,6 +6,11 @@ management.endpoint:
   info.cache.time-to-live: 0
 
 spring:
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   datasource:
     url: "jdbc:postgresql://localhost:5432/ras"
     username: "ras-user"
