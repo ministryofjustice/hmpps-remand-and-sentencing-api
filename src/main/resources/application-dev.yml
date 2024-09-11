@@ -16,3 +16,6 @@ document:
   management:
     api:
       url: http://localhost:8442
+
+ingress:
+  url: localhost:8080
