@@ -8,6 +8,8 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.core.ParameterizedTypeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.stream.Stream
 
 class SearchSentenceTypesTests : IntegrationTestBase() {
@@ -16,7 +18,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
 
   @Test
   fun `providing no parameters results in bad request`() {
-    val result = webTestClient.get()
+    webTestClient.get()
       .uri("/sentence-type/search")
       .headers { it.authToken() }
       .exchange()
@@ -26,9 +28,9 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Sentence type bucket test, age {0} on date {1}")
   @MethodSource("sentenceTypeParameters")
-  fun `sentence type bucket tests`(age: Int, convictionDate: String, expectedDescriptions: List<String>) {
+  fun `sentence type bucket tests`(age: Int, convictionDate: LocalDate, expectedDescriptions: List<String>) {
     val result = webTestClient.get()
-      .uri("/sentence-type/search?age=$age&convictionDate=$convictionDate")
+      .uri("/sentence-type/search?age=$age&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}")
       .headers { it.authToken() }
       .exchange()
       .expectStatus()
@@ -45,7 +47,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
       return Stream.of(
         Arguments.of(
           25,
-          "15/12/2020",
+          LocalDate.parse("2020-12-15"),
           listOf(
             "Imprisonment in Default of Fine",
             "SDS (Standard Determinate Sentence)",
@@ -63,7 +65,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         ),
         Arguments.of(
           19,
-          "15/12/2020",
+          LocalDate.parse("2020-12-15"),
           listOf(
             "Imprisonment in Default of Fine",
             "Automatic Life Sec 273 Sentencing Code (18 - 20)",
@@ -84,7 +86,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         ),
         Arguments.of(
           17,
-          "15/12/2020",
+          LocalDate.parse("2020-12-15"),
           listOf(
             "Imprisonment in Default of Fine",
             "Detention For Life",
@@ -101,7 +103,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         ),
         Arguments.of(
           20,
-          "15/11/2020",
+          LocalDate.parse("2020-11-15"),
           listOf(
             "SDS (Standard Determinate Sentence)",
             "ORA SDS (Offender rehabilitation act standard determinate sentence)",
@@ -126,7 +128,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         ),
         Arguments.of(
           17,
-          "15/11/2020",
+          LocalDate.parse("2020-11-15"),
           listOf(
             "Detention For Life",
             "Detention For Public Protection",
