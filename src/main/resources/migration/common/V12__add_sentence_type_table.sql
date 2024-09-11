@@ -6,7 +6,7 @@ CREATE TABLE sentence_type(
     max_age_exclusive int,
     min_date_inclusive date,
     max_date_exclusive date,
-    classification VARCHAR NOT NULL -- standard, extended, sopc, indeterminate, botus, civil, dto, fine
+    classification VARCHAR NOT NULL
 );
 
 INSERT INTO sentence_type(sentence_type_uuid, description, min_age_inclusive, max_age_exclusive, min_date_inclusive, max_date_exclusive, classification) values
