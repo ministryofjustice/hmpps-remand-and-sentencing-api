@@ -24,7 +24,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.3.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.4.1")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 
   // Database dependencies
