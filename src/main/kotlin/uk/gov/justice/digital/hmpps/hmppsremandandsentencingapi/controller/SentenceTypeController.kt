@@ -57,4 +57,21 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
   fun getSentenceTypeByUuid(@PathVariable sentenceTypeUuid: UUID): SentenceType {
     return sentenceTypesService.findByUuid(sentenceTypeUuid) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeUuid")
   }
+
+  @GetMapping("/uuid/multiple")
+  @Operation(
+    summary = "get all sentence types by uuids",
+    description = "This endpoint will get all sentence types by uuids",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns sentence types"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun getSentenceTypesByIds(@RequestParam("uuids") uuids: List<UUID>): List<SentenceType> {
+    return sentenceTypesService.findByUuids(uuids)
+  }
 }
