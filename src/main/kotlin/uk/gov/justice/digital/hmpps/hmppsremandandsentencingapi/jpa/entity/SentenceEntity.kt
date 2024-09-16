@@ -51,8 +51,9 @@ data class SentenceEntity(
   @OneToOne
   @JoinColumn(name = "consecutive_to_id")
   val consecutiveTo: SentenceEntity?,
-  @Column
-  val sentenceType: String,
+  @OneToOne
+  @JoinColumn(name = "sentence_type_id")
+  val sentenceType: SentenceTypeEntity,
   @OneToOne
   @JoinColumn(name = "superseding_sentence_id")
   var supersedingSentence: SentenceEntity?,
@@ -74,7 +75,7 @@ data class SentenceEntity(
   }
 
   companion object {
-    fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?): SentenceEntity {
+    fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       return SentenceEntity(
         lifetimeSentenceUuid = UUID.randomUUID(),
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
@@ -88,7 +89,7 @@ data class SentenceEntity(
         charge = chargeEntity,
         sentenceServeType = sentence.sentenceServeType,
         consecutiveTo = consecutiveTo,
-        sentenceType = sentence.sentenceType,
+        sentenceType = sentenceType,
         convictionDate = sentence.convictionDate,
       )
     }

@@ -23,7 +23,7 @@ data class Sentence(
         sentenceEntity.extendedLicensePeriodLength?.let { PeriodLength.from(it) },
         sentenceEntity.sentenceServeType,
         sentenceEntity.consecutiveTo?.chargeNumber,
-        sentenceEntity.sentenceType,
+        sentenceEntity.sentenceType.description,
         sentenceEntity.convictionDate,
       )
     }

@@ -10,6 +10,6 @@ data class CreateSentence(
   val extendedLicensePeriodLength: CreatePeriodLength?,
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
-  val sentenceType: String,
+  val sentenceTypeId: UUID,
   val convictionDate: LocalDate?,
 )
