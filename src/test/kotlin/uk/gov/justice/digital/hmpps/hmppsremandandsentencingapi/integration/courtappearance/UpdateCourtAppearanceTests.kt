@@ -16,7 +16,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `update appearance in existing court case`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, sentence)
     val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7))
     webTestClient
@@ -69,7 +69,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `update appearance to delete charge`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
     val secondCharge = CreateCharge(UUID.randomUUID(), "OFF567", LocalDate.now(), null, "OUT123", null, sentence)
     val appearance = courtCase.second.appearances.first().copy(charges = listOf(charge, secondCharge), courtCaseUuid = courtCase.first)
@@ -116,7 +116,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `cannot edit an already edited court appearance`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, sentence)
     val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, "OUT123", "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7))
     webTestClient
