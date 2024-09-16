@@ -25,7 +25,7 @@ dependencies {
 
   // AWS
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.4.2")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
