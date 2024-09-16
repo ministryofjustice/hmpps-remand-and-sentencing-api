@@ -18,5 +18,5 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
   )
   fun findByAgeInAndConvictionDateIn(age: Int, convictionDate: LocalDate): List<SentenceTypeEntity>
 
-  fun findBySentenceTypeUuid(sentenceTypeUuid: UUID): SentenceTypeEntity
+  fun findBySentenceTypeUuid(sentenceTypeUuid: UUID): SentenceTypeEntity?
 }

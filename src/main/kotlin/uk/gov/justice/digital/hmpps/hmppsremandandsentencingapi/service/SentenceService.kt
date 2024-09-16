@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import jakarta.persistence.EntityNotFoundException
 import jakarta.transaction.Transactional
 import jakarta.transaction.Transactional.TxType
 import org.springframework.stereotype.Service
@@ -19,7 +20,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>): SentenceEntity {
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] }
-    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId)
+    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val toCreateSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
       ?.let { sentenceEntity ->
         if (sentenceEntity.statusId == EntityStatus.DELETED) {
