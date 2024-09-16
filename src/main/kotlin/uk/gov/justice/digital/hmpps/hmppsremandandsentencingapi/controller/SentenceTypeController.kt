@@ -50,6 +50,7 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
       ApiResponse(responseCode = "200", description = "Returns sentence"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no sentence type at uuid"),
     ],
   )
   @ResponseStatus(HttpStatus.OK)
