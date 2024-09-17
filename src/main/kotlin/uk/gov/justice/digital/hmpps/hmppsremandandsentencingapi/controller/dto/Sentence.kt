@@ -11,7 +11,7 @@ data class Sentence(
   val extendedLicensePeriodLength: PeriodLength?,
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
-  val sentenceType: String,
+  val sentenceType: SentenceType,
   val convictionDate: LocalDate?,
 ) {
   companion object {
@@ -23,7 +23,7 @@ data class Sentence(
         sentenceEntity.extendedLicensePeriodLength?.let { PeriodLength.from(it) },
         sentenceEntity.sentenceServeType,
         sentenceEntity.consecutiveTo?.chargeNumber,
-        sentenceEntity.sentenceType.description,
+        SentenceType.from(sentenceEntity.sentenceType),
         sentenceEntity.convictionDate,
       )
     }
