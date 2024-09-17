@@ -28,6 +28,8 @@ class GetChargeTests : IntegrationTestBase() {
       .isEqualTo(createdCharge.offenceStartDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.outcome")
       .isEqualTo(createdCharge.outcome)
+      .jsonPath("$.sentence.sentenceType.sentenceTypeUuid")
+      .isEqualTo(createdCharge.sentence!!.sentenceTypeId.toString())
   }
 
   @Test
