@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
@@ -31,12 +32,7 @@ data class SentenceEntity(
   var sentenceUuid: UUID,
   @Column
   val chargeNumber: String,
-  @OneToOne
-  @JoinColumn(name = "custodial_length_id")
-  var custodialPeriodLength: PeriodLengthEntity,
-  @OneToOne
-  @JoinColumn(name = "extended_licence_length_id")
-  var extendedLicensePeriodLength: PeriodLengthEntity?,
+
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
@@ -63,11 +59,13 @@ data class SentenceEntity(
   @Column
   val convictionDate: LocalDate?,
 ) {
+  @OneToMany
+  @JoinColumn(name = "sentence_id")
+  var periodLengths: List<PeriodLengthEntity> = emptyList()
 
   fun isSame(other: SentenceEntity?): Boolean {
     return chargeNumber == other?.chargeNumber &&
-      custodialPeriodLength.isSame(other.custodialPeriodLength) &&
-      ((extendedLicensePeriodLength == null && other.extendedLicensePeriodLength == null) || extendedLicensePeriodLength?.isSame(other.extendedLicensePeriodLength) == true) &&
+      periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
       sentenceServeType == other.sentenceServeType &&
       sentenceType == other.sentenceType &&
       ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
@@ -76,12 +74,10 @@ data class SentenceEntity(
 
   companion object {
     fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
-      return SentenceEntity(
+      val sentenceEntity = SentenceEntity(
         lifetimeSentenceUuid = UUID.randomUUID(),
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         chargeNumber = sentence.chargeNumber,
-        custodialPeriodLength = PeriodLengthEntity.from(sentence.custodialPeriodLength),
-        extendedLicensePeriodLength = sentence.extendedLicensePeriodLength?.let { PeriodLengthEntity.from(it) },
         statusId = EntityStatus.ACTIVE,
         createdByUsername = createdByUsername,
         createdPrison = null,
@@ -92,6 +88,8 @@ data class SentenceEntity(
         sentenceType = sentenceType,
         convictionDate = sentence.convictionDate,
       )
+      sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }
+      return sentenceEntity
     }
   }
 }

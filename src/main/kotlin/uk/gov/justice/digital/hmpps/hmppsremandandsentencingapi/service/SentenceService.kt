@@ -35,13 +35,16 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         compareSentence.sentenceUuid = UUID.randomUUID()
         compareSentence.supersedingSentence = sentenceEntity
         compareSentence.lifetimeSentenceUuid = sentenceEntity.lifetimeSentenceUuid
-        compareSentence.custodialPeriodLength = if (sentenceEntity.custodialPeriodLength.isSame(compareSentence.custodialPeriodLength)) sentenceEntity.custodialPeriodLength else compareSentence.custodialPeriodLength
-        compareSentence.extendedLicensePeriodLength = if (sentenceEntity.extendedLicensePeriodLength?.isSame(compareSentence.extendedLicensePeriodLength) == true) sentenceEntity.extendedLicensePeriodLength else compareSentence.extendedLicensePeriodLength
         compareSentence
       } ?: SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
-    toCreateSentence.custodialPeriodLength = periodLengthRepository.save(toCreateSentence.custodialPeriodLength)
-    toCreateSentence.extendedLicensePeriodLength = toCreateSentence.extendedLicensePeriodLength?.let { periodLengthRepository.save(it) }
-    return sentenceRepository.save(toCreateSentence)
+    val toCreatePeriodLengths = toCreateSentence.periodLengths.filter { it.id == 0 }
+    toCreateSentence.periodLengths = toCreateSentence.periodLengths.filter { it.id != 0 }
+    val createdSentence = sentenceRepository.save(toCreateSentence)
+    toCreatePeriodLengths.forEach {
+      it.sentenceEntity = createdSentence
+      periodLengthRepository.save(it)
+    }
+    return createdSentence
   }
 
   fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? {

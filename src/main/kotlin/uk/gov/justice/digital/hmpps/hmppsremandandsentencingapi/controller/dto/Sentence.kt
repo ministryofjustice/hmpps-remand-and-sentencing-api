@@ -7,8 +7,7 @@ import java.util.UUID
 data class Sentence(
   val sentenceUuid: UUID,
   val chargeNumber: String,
-  val custodialPeriodLength: PeriodLength,
-  val extendedLicensePeriodLength: PeriodLength?,
+  val periodLengths: List<PeriodLength>,
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
   val sentenceType: SentenceType,
@@ -19,8 +18,7 @@ data class Sentence(
       return Sentence(
         sentenceEntity.sentenceUuid,
         sentenceEntity.chargeNumber,
-        PeriodLength.from(sentenceEntity.custodialPeriodLength),
-        sentenceEntity.extendedLicensePeriodLength?.let { PeriodLength.from(it) },
+        sentenceEntity.periodLengths.map { PeriodLength.from(it) },
         sentenceEntity.sentenceServeType,
         sentenceEntity.consecutiveTo?.chargeNumber,
         SentenceType.from(sentenceEntity.sentenceType),

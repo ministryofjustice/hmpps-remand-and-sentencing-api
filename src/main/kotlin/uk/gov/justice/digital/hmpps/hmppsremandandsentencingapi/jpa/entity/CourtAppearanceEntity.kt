@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
@@ -63,9 +64,6 @@ data class CourtAppearanceEntity(
   val warrantType: String,
   @Column
   val taggedBail: Int?,
-  @OneToOne
-  @JoinColumn(name = "overall_sentence_length_id")
-  var overallSentenceLength: PeriodLengthEntity?,
   @ManyToMany
   @JoinTable(
     name = "appearance_charge",
@@ -82,6 +80,10 @@ data class CourtAppearanceEntity(
   val overallConvictionDate: LocalDate?,
 ) {
 
+  @OneToMany
+  @JoinColumn(name = "appearance_id")
+  var periodLengths: List<PeriodLengthEntity> = emptyList()
+
   fun isSame(other: CourtAppearanceEntity): Boolean {
     return this.appearanceUuid == other.appearanceUuid &&
       this.appearanceOutcome == other.appearanceOutcome &&
@@ -92,14 +94,33 @@ data class CourtAppearanceEntity(
       this.statusId == other.statusId &&
       this.warrantType == other.warrantType &&
       this.taggedBail == other.taggedBail &&
-      ((this.overallSentenceLength == null && other.overallSentenceLength == null) || this.overallSentenceLength?.isSame(other.overallSentenceLength) == true) &&
+      periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
       this.overallConvictionDate == other.overallConvictionDate
   }
 
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
-      return CourtAppearanceEntity(appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(), appearanceOutcome = appearanceOutcome, courtCase = courtCase, courtCode = courtAppearance.courtCode, courtCaseReference = courtAppearance.courtCaseReference, appearanceDate = courtAppearance.appearanceDate, statusId = EntityStatus.ACTIVE, warrantId = courtAppearance.warrantId, charges = charges, previousAppearance = null, createdPrison = null, createdByUsername = createdByUsername, nextCourtAppearance = null, warrantType = courtAppearance.warrantType, taggedBail = courtAppearance.taggedBail, overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) }, overallConvictionDate = courtAppearance.overallConvictionDate)
+      val courtAppearanceEntity = CourtAppearanceEntity(
+        appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(),
+        appearanceOutcome = appearanceOutcome,
+        courtCase = courtCase,
+        courtCode = courtAppearance.courtCode,
+        courtCaseReference = courtAppearance.courtCaseReference,
+        appearanceDate = courtAppearance.appearanceDate,
+        statusId = EntityStatus.ACTIVE,
+        warrantId = courtAppearance.warrantId,
+        charges = charges,
+        previousAppearance = null,
+        createdPrison = null,
+        createdByUsername = createdByUsername,
+        nextCourtAppearance = null,
+        warrantType = courtAppearance.warrantType,
+        taggedBail = courtAppearance.taggedBail,
+        overallConvictionDate = courtAppearance.overallConvictionDate,
+      )
+      courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
+      return courtAppearanceEntity
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {
