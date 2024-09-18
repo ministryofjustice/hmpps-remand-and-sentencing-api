@@ -9,7 +9,7 @@ data class PeriodLength(
   val weeks: Int?,
   val days: Int?,
   val periodOrder: String,
-  val periodLengthType: PeriodLengthType
+  val periodLengthType: PeriodLengthType,
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity): PeriodLength {
@@ -19,7 +19,7 @@ data class PeriodLength(
         periodLengthEntity.weeks,
         periodLengthEntity.days,
         periodLengthEntity.periodOrder,
-        periodLengthEntity.periodLengthType
+        periodLengthEntity.periodLengthType,
       )
     }
   }
