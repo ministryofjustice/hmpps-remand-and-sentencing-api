@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.time.LocalDate
 import java.util.UUID
 
@@ -32,7 +33,7 @@ data class CourtAppearance(
         courtAppearanceEntity.taggedBail,
         courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
         courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { Charge.from(it) },
-        courtAppearanceEntity.overallSentenceLength?.let { PeriodLength.from(it) },
+        courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
         courtAppearanceEntity.overallConvictionDate,
       )
     }

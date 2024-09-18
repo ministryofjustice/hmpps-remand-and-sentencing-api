@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Appea
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -76,13 +75,15 @@ class CourtAppearanceService(
       val toSaveNextCourtAppearance = nextCourtAppearance?.let { nextCourtAppearanceRepository.save(it) }
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
     }
-    val overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) }
-    if (toCreateAppearance.overallSentenceLength?.isSame(overallSentenceLength) != true || (overallSentenceLength?.id == 0 && toCreateAppearance.overallSentenceLength?.id == 0)) {
-      val toSaveOverallSentenceLength = overallSentenceLength?.let { periodLengthRepository.save(it) }
-      toCreateAppearance.overallSentenceLength = toSaveOverallSentenceLength
-    }
     updateDocumentMetadata(toCreateAppearance, courtCaseEntity.prisonerId)
-    return courtAppearanceRepository.save(toCreateAppearance)
+    val toCreatePeriodLengths = toCreateAppearance.periodLengths.filter { it.id == 0 }
+    toCreateAppearance.periodLengths = toCreateAppearance.periodLengths.filter { it.id != 0 }
+    val createdCourtAppearance = courtAppearanceRepository.save(toCreateAppearance)
+    toCreatePeriodLengths.forEach {
+      it.appearanceEntity = createdCourtAppearance
+      periodLengthRepository.save(it)
+    }
+    return createdCourtAppearance
   }
 
   fun updateDocumentMetadata(courtAppearanceEntity: CourtAppearanceEntity, prisonerId: String) {
