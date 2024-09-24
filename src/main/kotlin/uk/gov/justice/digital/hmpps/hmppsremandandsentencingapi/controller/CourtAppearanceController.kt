@@ -6,14 +6,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
@@ -23,11 +21,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtApp
 import java.util.UUID
 
 @RestController
-@RequestMapping("/court-appearance", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-appearance-controller", description = "Court Appearances")
 class CourtAppearanceController(private val courtAppearanceService: CourtAppearanceService) {
 
-  @PostMapping
+  @PostMapping("/court-appearance")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Create Court appearance",
@@ -45,7 +42,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     return courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { CreateCourtAppearanceResponse(it.appearanceUuid) } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 
-  @GetMapping("/{appearanceUuid}")
+  @GetMapping("\${court.appearance.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Retrieve court appearance details",
@@ -63,7 +60,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     return courtAppearanceService.findAppearanceByUuid(appearanceUuid) ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
   }
 
-  @PutMapping("/{appearanceUuid}")
+  @PutMapping("/court-appearance/{appearanceUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Create Court appearance",

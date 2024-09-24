@@ -86,3 +86,5 @@ management:
 court:
   case:
     getByIdPath: /court-case/{courtCaseUuid}
+  appearance:
+    getByIdPath: /court-appearance/{appearanceUuid}
