@@ -30,6 +30,8 @@ data class CourtAppearanceEntity(
   val id: Int = 0,
   @Column
   var appearanceUuid: UUID,
+  @Column
+  var lifetimeUuid: UUID,
 
   @ManyToOne
   @JoinColumn(name = "appearance_outcome_id")
@@ -118,6 +120,7 @@ data class CourtAppearanceEntity(
         warrantType = courtAppearance.warrantType,
         taggedBail = courtAppearance.taggedBail,
         overallConvictionDate = courtAppearance.overallConvictionDate,
+        lifetimeUuid = UUID.randomUUID(),
       )
       courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
       return courtAppearanceEntity
