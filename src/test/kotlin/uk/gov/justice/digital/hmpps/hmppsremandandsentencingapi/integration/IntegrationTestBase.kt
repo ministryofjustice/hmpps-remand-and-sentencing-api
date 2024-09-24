@@ -132,13 +132,14 @@ abstract class IntegrationTestBase {
     return response.courtCaseUuid to courtCase
   }
 
-  fun expectCourtCaseInsertedMessage(prisonerId: String) {
+  fun expectInsertedMessages(prisonerId: String) {
     numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 2)
     val messages = getAllDomainMessages()
     Assertions.assertEquals(2, messages.size)
-    val courtCaseInsertedMessage = messages.first()
-    Assertions.assertEquals(prisonerId, courtCaseInsertedMessage.personReference.identifiers.first { it.type == "NOMS" }.value)
-    Assertions.assertEquals("DPS", courtCaseInsertedMessage.additionalInformation.get("source").asText())
+    messages.forEach { message ->
+      Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
+      Assertions.assertEquals("DPS", message.additionalInformation.get("source").asText())
+    }
   }
 
   private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
