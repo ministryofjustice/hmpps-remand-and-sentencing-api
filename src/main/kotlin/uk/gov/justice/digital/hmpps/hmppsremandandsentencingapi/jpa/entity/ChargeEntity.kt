@@ -15,6 +15,8 @@ import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Entity
@@ -45,6 +47,8 @@ data class ChargeEntity(
   var supersedingCharge: ChargeEntity?,
   @Column
   val terrorRelated: Boolean?,
+  @Column
+  val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
 
 ) {
   @OneToMany(mappedBy = "charge")

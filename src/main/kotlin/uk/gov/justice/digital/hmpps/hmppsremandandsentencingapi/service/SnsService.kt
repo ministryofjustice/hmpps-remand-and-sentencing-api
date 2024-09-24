@@ -7,6 +7,7 @@ import org.springframework.web.util.UriComponentsBuilder
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtAppearanceMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtChargeMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
@@ -26,6 +27,7 @@ class SnsService(
   @Value("\${ingress.url}") private val ingressUrl: String,
   @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String,
   @Value("\${court.appearance.getByIdPath}") private val courtAppearanceLookupPath: String,
+  @Value("\${court.charge.getByIdPath}") private val courtChargeLookupPath: String,
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppsdomaintopic")
@@ -53,6 +55,19 @@ class SnsService(
       generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
       HmppsCourtAppearanceMessage(courtAppearanceId),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+    domainEventsTopic.publish(hmppsCourtAppearanceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtAppearanceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtAppearanceInsertedEvent.eventType).build()))
+  }
+
+  fun chargeInserted(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
+    val hmppsCourtAppearanceInsertedEvent = HmppsMessage(
+      "charge.inserted",
+      1,
+      "Charge inserted event",
+      generateDetailsUri(courtAppearanceLookupPath, chargeId),
+      timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+      HmppsCourtChargeMessage(chargeId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
     domainEventsTopic.publish(hmppsCourtAppearanceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtAppearanceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtAppearanceInsertedEvent.eventType).build()))

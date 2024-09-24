@@ -1,0 +1,1 @@
+ALTER TABLE charge ADD COLUMN created_at timestamp with time zone not null DEFAULT NOW();
