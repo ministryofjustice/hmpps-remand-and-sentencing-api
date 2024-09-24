@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -23,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
@@ -133,23 +133,23 @@ abstract class IntegrationTestBase {
   }
 
   fun expectCourtCaseInsertedMessage(prisonerId: String) {
-    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 1)
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 2)
     val messages = getAllDomainMessages()
-    Assertions.assertEquals(1, messages.size)
+    Assertions.assertEquals(2, messages.size)
     val courtCaseInsertedMessage = messages.first()
     Assertions.assertEquals(prisonerId, courtCaseInsertedMessage.personReference.identifiers.first { it.type == "NOMS" }.value)
-    Assertions.assertEquals("DPS", courtCaseInsertedMessage.additionalInformation.source)
+    Assertions.assertEquals("DPS", courtCaseInsertedMessage.additionalInformation.get("source").asText())
   }
 
-  private fun getAllDomainMessages(): List<HmppsMessage<HmppsCourtCaseMessage>> {
-    val messages = ArrayList<HmppsMessage<HmppsCourtCaseMessage>>()
+  private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
+    val messages = ArrayList<HmppsMessage<ObjectNode>>()
     while (hmppsDomainQueueSqsClient.countAllMessagesOnQueue(hmppsDomainQueue.queueUrl).get() != 0) {
       val message = hmppsDomainQueueSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build())
       messages.addAll(
         message.get().messages().map {
           hmppsDomainQueueSqsClient.deleteMessage(DeleteMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).receiptHandle(it.receiptHandle()).build()).get()
           val sqsMessage = objectMapper.readValue(it.body(), SQSMessage::class.java)
-          val courtCaseInsertedMessageType = object : TypeReference<HmppsMessage<HmppsCourtCaseMessage>>() {}
+          val courtCaseInsertedMessageType = object : TypeReference<HmppsMessage<ObjectNode>>() {}
           objectMapper.readValue(sqsMessage.Message, courtCaseInsertedMessageType)
         },
       )
