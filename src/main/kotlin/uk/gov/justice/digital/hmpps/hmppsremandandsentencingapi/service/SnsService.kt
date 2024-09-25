@@ -83,7 +83,7 @@ class SnsService(
       generateDetailsUri(sentenceLookupPath, sentenceId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
       HmppsSentenceMessage(sentenceId),
-      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId)))
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
     domainEventsTopic.publish(hmppsSentenceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsSentenceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsSentenceInsertedEvent.eventType).build()))
   }

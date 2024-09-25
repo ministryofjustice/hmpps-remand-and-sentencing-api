@@ -46,7 +46,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       it.sentenceEntity = createdSentence
       periodLengthRepository.save(it)
     }
-    if(status == EntityChangeStatus.CREATED) {
+    if (status == EntityChangeStatus.CREATED) {
       snsService.sentenceInserted(prisonerId, createdSentence.sentenceUuid.toString(), createdSentence.createdAt)
     }
     return createdSentence

@@ -37,7 +37,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       } ?: (ChargeEntity.from(charge, outcome) to EntityChangeStatus.CREATED)
     return chargeRepository.save(toCreateCharge).also {
       if (charge.sentence != null) {
-        it.sentences.add(sentenceService.createSentence(charge.sentence, it, sentencesCreated))
+        it.sentences.add(sentenceService.createSentence(charge.sentence, it, sentencesCreated, prisonerId))
       } else {
         it.getActiveSentence()?.let { sentence -> sentenceService.deleteSentence(sentence) }
       }
