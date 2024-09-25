@@ -90,3 +90,5 @@ court:
     getByIdPath: /court-appearance/{appearanceUuid}
   charge:
     getByIdPath: /charge/{chargeUuid}
+  sentence:
+    getByIdPath: /sentence/{sentenceUuid}
