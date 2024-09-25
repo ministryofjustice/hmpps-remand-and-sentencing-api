@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Hmp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtChargeMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsSentenceMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -28,6 +29,7 @@ class SnsService(
   @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String,
   @Value("\${court.appearance.getByIdPath}") private val courtAppearanceLookupPath: String,
   @Value("\${court.charge.getByIdPath}") private val courtChargeLookupPath: String,
+  @Value("\${court.sentence.getByIdPath}") private val sentenceLookupPath: String,
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppsdomaintopic")
@@ -61,16 +63,29 @@ class SnsService(
   }
 
   fun chargeInserted(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
-    val hmppsCourtAppearanceInsertedEvent = HmppsMessage(
+    val hmppsCourtChargeInsertedEvent = HmppsMessage(
       "charge.inserted",
       1,
       "Charge inserted event",
-      generateDetailsUri(courtAppearanceLookupPath, chargeId),
+      generateDetailsUri(courtChargeLookupPath, chargeId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
       HmppsCourtChargeMessage(chargeId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsCourtAppearanceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtAppearanceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtAppearanceInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsCourtChargeInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeInsertedEvent.eventType).build()))
+  }
+
+  fun sentenceInserted(prisonerId: String, sentenceId: String, timeUpdated: ZonedDateTime) {
+    val hmppsSentenceInsertedEvent = HmppsMessage(
+      "sentence.inserted",
+      1,
+      "Sentence inserted event",
+      generateDetailsUri(sentenceLookupPath, sentenceId),
+      timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+      HmppsSentenceMessage(sentenceId),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId)))
+    )
+    domainEventsTopic.publish(hmppsSentenceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsSentenceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsSentenceInsertedEvent.eventType).build()))
   }
 
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
