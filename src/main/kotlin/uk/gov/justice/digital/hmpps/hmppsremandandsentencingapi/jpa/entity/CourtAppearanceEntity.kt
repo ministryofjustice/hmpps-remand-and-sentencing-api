@@ -35,7 +35,7 @@ data class CourtAppearanceEntity(
 
   @ManyToOne
   @JoinColumn(name = "appearance_outcome_id")
-  val appearanceOutcome: AppearanceOutcomeEntity,
+  val appearanceOutcome: AppearanceOutcomeEntity?,
 
   @ManyToOne
   @JoinColumn(name = "court_case_id")
@@ -102,7 +102,7 @@ data class CourtAppearanceEntity(
 
   companion object {
 
-    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
+    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
       val courtAppearanceEntity = CourtAppearanceEntity(
         appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(),
         appearanceOutcome = appearanceOutcome,

@@ -22,8 +22,8 @@ class GetLatestCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearanceDate")
       .isEqualTo(createdCase.second.appearances.first().appearanceDate.format(DateTimeFormatter.ISO_DATE))
-      .jsonPath("$.outcome")
-      .isEqualTo(createdCase.second.appearances.first().outcome)
+      .jsonPath("$.outcome.outcomeUuid")
+      .isEqualTo(createdCase.second.appearances.first().outcomeUuid.toString())
   }
 
   @Test
