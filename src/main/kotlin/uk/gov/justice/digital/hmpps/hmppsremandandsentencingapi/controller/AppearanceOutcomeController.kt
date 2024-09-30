@@ -55,5 +55,4 @@ class AppearanceOutcomeController(private val appearanceOutcomeService: Appearan
   fun getAppearanceOutcomeByUuid(@PathVariable outcomeUuid: UUID): CourtAppearanceOutcome {
     return appearanceOutcomeService.findByUuid(outcomeUuid) ?: throw EntityNotFoundException("No appearance outcome found at $outcomeUuid")
   }
-
 }
