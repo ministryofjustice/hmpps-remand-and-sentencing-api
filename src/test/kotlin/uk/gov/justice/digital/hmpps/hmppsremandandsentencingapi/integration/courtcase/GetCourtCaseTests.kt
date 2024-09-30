@@ -26,8 +26,8 @@ class GetCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(createdCase.second.prisonerId)
       .jsonPath("$.latestAppearance.appearanceDate")
       .isEqualTo(createdCase.second.appearances.first().appearanceDate.format(DateTimeFormatter.ISO_DATE))
-      .jsonPath("$.latestAppearance.outcome")
-      .isEqualTo(createdCase.second.appearances.first().outcome)
+      .jsonPath("$.latestAppearance.outcome.outcomeUuid")
+      .isEqualTo(createdCase.second.appearances.first().outcomeUuid.toString())
   }
 
   @Test
