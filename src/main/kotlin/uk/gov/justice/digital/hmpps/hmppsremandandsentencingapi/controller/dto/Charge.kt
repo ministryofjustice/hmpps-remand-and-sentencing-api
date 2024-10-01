@@ -10,7 +10,7 @@ data class Charge(
   val offenceCode: String,
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,
-  val outcome: String,
+  val outcome: ChargeOutcome?,
   val terrorRelated: Boolean?,
   val sentence: Sentence?,
 ) {
@@ -22,7 +22,7 @@ data class Charge(
         chargeEntity.offenceCode,
         chargeEntity.offenceStartDate,
         chargeEntity.offenceEndDate,
-        chargeEntity.chargeOutcome.outcomeName,
+        chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
         chargeEntity.terrorRelated,
         chargeEntity.getActiveSentence()?.let { Sentence.from(it) },
       )

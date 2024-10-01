@@ -20,4 +20,5 @@ data class AppearanceOutcomeEntity(
   val nomisCode: String,
   val outcomeType: String,
   val displayOrder: Int,
+  val relatedChargeOutcomeUuid: UUID,
 )

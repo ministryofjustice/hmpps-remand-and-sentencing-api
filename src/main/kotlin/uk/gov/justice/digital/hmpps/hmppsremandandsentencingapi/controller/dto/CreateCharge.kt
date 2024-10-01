@@ -8,7 +8,7 @@ data class CreateCharge(
   val offenceCode: String,
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,
-  val outcome: String,
+  val outcomeUuid: UUID?,
   val terrorRelated: Boolean?,
   val sentence: CreateSentence?,
 )

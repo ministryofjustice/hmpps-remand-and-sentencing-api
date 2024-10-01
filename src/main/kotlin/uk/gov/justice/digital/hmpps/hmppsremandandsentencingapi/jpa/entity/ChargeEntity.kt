@@ -41,7 +41,7 @@ data class ChargeEntity(
   var statusId: EntityStatus,
   @ManyToOne
   @JoinColumn(name = "charge_outcome_id")
-  val chargeOutcome: ChargeOutcomeEntity,
+  val chargeOutcome: ChargeOutcomeEntity?,
   @OneToOne
   @JoinColumn(name = "superseding_charge_id")
   var supersedingCharge: ChargeEntity?,
@@ -68,7 +68,7 @@ data class ChargeEntity(
   }
 
   companion object {
-    fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity): ChargeEntity {
+    fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?): ChargeEntity {
       return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated)
     }
   }

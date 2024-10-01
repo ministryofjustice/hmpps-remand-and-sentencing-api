@@ -9,6 +9,7 @@ data class CourtAppearanceOutcome(
   val nomisCode: String,
   val outcomeType: String,
   val displayOrder: Int,
+  val relatedChargeOutcomeUuid: UUID,
 ) {
   companion object {
     fun from(appearanceOutcomeEntity: AppearanceOutcomeEntity): CourtAppearanceOutcome {
@@ -18,6 +19,7 @@ data class CourtAppearanceOutcome(
         appearanceOutcomeEntity.nomisCode,
         appearanceOutcomeEntity.outcomeType,
         appearanceOutcomeEntity.displayOrder,
+        appearanceOutcomeEntity.relatedChargeOutcomeUuid,
       )
     }
   }
