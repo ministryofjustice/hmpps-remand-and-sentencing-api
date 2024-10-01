@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableChargeException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -19,7 +18,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
   @Transactional
   fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): ChargeEntity {
-    val outcome = chargeOutcomeRepository.findByOutcomeName(charge.outcome) ?: chargeOutcomeRepository.save(ChargeOutcomeEntity(outcomeName = charge.outcome))
+    val outcome = charge.outcomeUuid?.let { chargeOutcomeRepository.findByOutcomeUuid(it) }
     val (toCreateCharge, status) = charge.chargeUuid?.let { chargeRepository.findByChargeUuid(it) }
       ?.let { chargeEntity ->
         if (chargeEntity.statusId == EntityStatus.EDITED) {
