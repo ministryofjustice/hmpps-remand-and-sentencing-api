@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
@@ -14,17 +16,18 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import java.util.UUID
 
 @Service
-class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val snsService: SnsService) {
+class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val snsService: SnsService, private val objectMapper: ObjectMapper) {
 
   @Transactional
   fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): ChargeEntity {
-    val outcome = charge.outcomeUuid?.let { chargeOutcomeRepository.findByOutcomeUuid(it) }
+    val outcome = charge.outcomeUuid?.let { chargeOutcomeRepository.findByOutcomeUuid(it) } ?: charge.legacyData?.outcomeReason?.let { chargeOutcomeRepository.findByNomisCode(it) }
+    val legacyData = charge.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val (toCreateCharge, status) = charge.chargeUuid?.let { chargeRepository.findByChargeUuid(it) }
       ?.let { chargeEntity ->
         if (chargeEntity.statusId == EntityStatus.EDITED) {
           throw ImmutableChargeException("Cannot edit an already edited charge")
         }
-        val compareCharge = ChargeEntity.from(charge, outcome)
+        val compareCharge = ChargeEntity.from(charge, outcome, legacyData)
         if (chargeEntity.isSame(compareCharge)) {
           return@let chargeEntity to EntityChangeStatus.NO_CHANGE
         }
@@ -33,7 +36,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
         compareCharge.supersedingCharge = chargeEntity
         compareCharge.lifetimeChargeUuid = chargeEntity.lifetimeChargeUuid
         compareCharge to EntityChangeStatus.EDITED
-      } ?: (ChargeEntity.from(charge, outcome) to EntityChangeStatus.CREATED)
+      } ?: (ChargeEntity.from(charge, outcome, legacyData) to EntityChangeStatus.CREATED)
     return chargeRepository.save(toCreateCharge).also {
       if (charge.sentence != null) {
         it.sentences.add(sentenceService.createSentence(charge.sentence, it, sentencesCreated, prisonerId))
