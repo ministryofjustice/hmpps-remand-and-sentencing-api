@@ -1,0 +1,1 @@
+ALTER TABLE court_appearance ADD COLUMN legacy_data jsonb NULL;

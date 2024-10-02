@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import com.fasterxml.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -20,6 +21,7 @@ data class CourtAppearance(
   val charges: List<Charge>,
   val overallSentenceLength: PeriodLength?,
   val overallConvictionDate: LocalDate?,
+  val legacyData: JsonNode?,
 ) {
   companion object {
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance {
@@ -37,6 +39,7 @@ data class CourtAppearance(
         courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { Charge.from(it) },
         courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
         courtAppearanceEntity.overallConvictionDate,
+        courtAppearanceEntity.legacyData,
       )
     }
   }

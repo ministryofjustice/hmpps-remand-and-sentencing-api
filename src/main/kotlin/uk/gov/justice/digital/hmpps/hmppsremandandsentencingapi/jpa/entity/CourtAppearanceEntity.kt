@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
+import com.fasterxml.jackson.databind.JsonNode
+import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -14,6 +16,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.LocalDate
@@ -80,6 +83,9 @@ data class CourtAppearanceEntity(
 
   @Column
   val overallConvictionDate: LocalDate?,
+  @Type(value = JsonType::class)
+  @Column(columnDefinition = "jsonb")
+  var legacyData: JsonNode? = null,
 ) {
 
   @OneToMany
@@ -97,12 +103,13 @@ data class CourtAppearanceEntity(
       this.warrantType == other.warrantType &&
       this.taggedBail == other.taggedBail &&
       periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
-      this.overallConvictionDate == other.overallConvictionDate
+      this.overallConvictionDate == other.overallConvictionDate &&
+      this.legacyData == other.legacyData
   }
 
   companion object {
 
-    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>): CourtAppearanceEntity {
+    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
       val courtAppearanceEntity = CourtAppearanceEntity(
         appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(),
         appearanceOutcome = appearanceOutcome,
@@ -121,6 +128,7 @@ data class CourtAppearanceEntity(
         taggedBail = courtAppearance.taggedBail,
         overallConvictionDate = courtAppearance.overallConvictionDate,
         lifetimeUuid = UUID.randomUUID(),
+        legacyData = legacyData,
       )
       courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
       return courtAppearanceEntity

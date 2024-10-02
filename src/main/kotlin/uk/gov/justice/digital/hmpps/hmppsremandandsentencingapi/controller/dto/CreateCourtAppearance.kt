@@ -17,4 +17,5 @@ data class CreateCourtAppearance(
   val nextCourtAppearance: CreateNextCourtAppearance?,
   val charges: List<CreateCharge>,
   val overallConvictionDate: LocalDate?,
+  val legacyData: CourtAppearanceLegacyData?,
 )
