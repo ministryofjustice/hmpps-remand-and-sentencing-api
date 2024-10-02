@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
@@ -32,6 +34,7 @@ class CourtAppearanceService(
   private val courtCaseRepository: CourtCaseRepository,
   private val documentManagementApiClient: DocumentManagementApiClient,
   private val snsService: SnsService,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @Transactional
@@ -45,19 +48,20 @@ class CourtAppearanceService(
 
   @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
-    val appearanceOutcome = courtAppearance.outcomeUuid?.let { appearanceOutcomeRepository.findByOutcomeUuid(it) }
+    val appearanceOutcome = courtAppearance.outcomeUuid?.let { appearanceOutcomeRepository.findByOutcomeUuid(it) } ?: courtAppearance.legacyData?.outcomeReason?.let { appearanceOutcomeRepository.findByNomisCode(it) }
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
     val charges = courtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map {
       val charge = chargeService.createCharge(it, sentencesCreated, courtCaseEntity.prisonerId)
       charge.getActiveSentence()?.let { sentence -> sentencesCreated.put(sentence.chargeNumber, sentence) }
       charge
     }.toMutableSet()
+    val legacyData = courtAppearance.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val (toCreateAppearance, status) = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
       ?.let { courtAppearanceEntity ->
         if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
           throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
         }
-        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges)
+        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
         if (courtAppearanceEntity.isSame(compareAppearance)) {
           val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
           toDeleteCharges.forEach { chargeService.deleteCharge(it) }
@@ -70,7 +74,7 @@ class CourtAppearanceService(
         compareAppearance.appearanceUuid = UUID.randomUUID()
         compareAppearance.lifetimeUuid = courtAppearanceEntity.lifetimeUuid
         compareAppearance to EntityChangeStatus.EDITED
-      } ?: (CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges) to EntityChangeStatus.CREATED)
+      } ?: (CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData) to EntityChangeStatus.CREATED)
 
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { NextCourtAppearanceEntity.from(it) }
     if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) != true) {

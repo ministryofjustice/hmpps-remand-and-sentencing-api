@@ -6,4 +6,6 @@ import java.util.UUID
 
 interface AppearanceOutcomeRepository : CrudRepository<AppearanceOutcomeEntity, Int> {
   fun findByOutcomeUuid(outcomeUuid: UUID): AppearanceOutcomeEntity?
+
+  fun findByNomisCode(nomisCode: String): AppearanceOutcomeEntity?
 }
