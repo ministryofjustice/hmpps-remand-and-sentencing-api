@@ -6,4 +6,6 @@ import java.util.UUID
 
 interface ChargeOutcomeRepository : CrudRepository<ChargeOutcomeEntity, Int> {
   fun findByOutcomeUuid(outcomeUuid: UUID): ChargeOutcomeEntity?
+
+  fun findByNomisCode(nomisCode: String): ChargeOutcomeEntity?
 }
