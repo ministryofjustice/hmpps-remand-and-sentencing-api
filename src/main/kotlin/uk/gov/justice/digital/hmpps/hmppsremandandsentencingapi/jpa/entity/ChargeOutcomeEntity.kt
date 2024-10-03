@@ -21,4 +21,5 @@ data class ChargeOutcomeEntity(
   val nomisCode: String,
   val outcomeType: String,
   val displayOrder: Int,
+  val isSubList: Boolean,
 )

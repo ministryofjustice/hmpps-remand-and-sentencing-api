@@ -9,6 +9,7 @@ data class ChargeOutcome(
   val nomisCode: String,
   val outcomeType: String,
   val displayOrder: Int,
+  val isSubList: Boolean,
 ) {
   companion object {
     fun from(chargeOutcomeEntity: ChargeOutcomeEntity): ChargeOutcome {
@@ -18,6 +19,7 @@ data class ChargeOutcome(
         chargeOutcomeEntity.nomisCode,
         chargeOutcomeEntity.outcomeType,
         chargeOutcomeEntity.displayOrder,
+        chargeOutcomeEntity.isSubList
       )
     }
   }
