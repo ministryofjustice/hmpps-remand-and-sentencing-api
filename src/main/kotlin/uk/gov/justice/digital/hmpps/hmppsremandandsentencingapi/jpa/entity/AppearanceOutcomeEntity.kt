@@ -21,4 +21,5 @@ data class AppearanceOutcomeEntity(
   val outcomeType: String,
   val displayOrder: Int,
   val relatedChargeOutcomeUuid: UUID,
+  val isSubList: Boolean,
 )

@@ -28,6 +28,8 @@ class GetAppearanceOutcomeByUuidTests : IntegrationTestBase() {
       .isEqualTo("REMAND")
       .jsonPath("$.displayOrder")
       .isEqualTo(20)
+      .jsonPath("$.isSubList")
+      .isEqualTo(false)
   }
 
   @Test
