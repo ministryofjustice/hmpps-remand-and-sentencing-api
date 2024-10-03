@@ -19,7 +19,7 @@ data class ChargeOutcome(
         chargeOutcomeEntity.nomisCode,
         chargeOutcomeEntity.outcomeType,
         chargeOutcomeEntity.displayOrder,
-        chargeOutcomeEntity.isSubList
+        chargeOutcomeEntity.isSubList,
       )
     }
   }
