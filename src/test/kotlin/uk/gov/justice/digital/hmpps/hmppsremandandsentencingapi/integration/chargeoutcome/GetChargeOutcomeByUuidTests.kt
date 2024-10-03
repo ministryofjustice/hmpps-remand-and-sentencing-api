@@ -28,6 +28,8 @@ class GetChargeOutcomeByUuidTests : IntegrationTestBase() {
       .isEqualTo("REMAND")
       .jsonPath("$.displayOrder")
       .isEqualTo(70)
+      .jsonPath("$.isSubList")
+      .isEqualTo(false)
   }
 
   @Test
