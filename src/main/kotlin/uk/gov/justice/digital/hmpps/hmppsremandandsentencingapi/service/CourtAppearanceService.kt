@@ -48,14 +48,18 @@ class CourtAppearanceService(
 
   @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
-    val appearanceOutcome = courtAppearance.outcomeUuid?.let { appearanceOutcomeRepository.findByOutcomeUuid(it) } ?: courtAppearance.legacyData?.outcomeReason?.let { appearanceOutcomeRepository.findByNomisCode(it) }
+    var appearanceLegacyData = courtAppearance.legacyData
+    val appearanceOutcome = courtAppearance.outcomeUuid?.let {
+      appearanceLegacyData = appearanceLegacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null)
+      appearanceOutcomeRepository.findByOutcomeUuid(it)
+    } ?: appearanceLegacyData?.nomisOutcomeCode?.let { appearanceOutcomeRepository.findByNomisCode(it) }
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
     val charges = courtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map {
       val charge = chargeService.createCharge(it, sentencesCreated, courtCaseEntity.prisonerId)
       charge.getActiveSentence()?.let { sentence -> sentencesCreated.put(sentence.chargeNumber, sentence) }
       charge
     }.toMutableSet()
-    val legacyData = courtAppearance.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
+    val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val (toCreateAppearance, status) = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
       ?.let { courtAppearanceEntity ->
         if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {

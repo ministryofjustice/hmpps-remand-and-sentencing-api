@@ -1,11 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter
-import com.fasterxml.jackson.annotation.JsonAnySetter
-
 data class CourtAppearanceLegacyData(
-  val outcomeReason: String?,
-  @JsonAnySetter
-  @get:JsonAnyGetter
-  val otherFields: Map<String, Any> = hashMapOf(),
+  val eventId: String?,
+  val caseId: String?,
+  val postedDate: String?,
+  val nomisOutcomeCode: String?,
+  val outcomeDescription: String?,
 )
