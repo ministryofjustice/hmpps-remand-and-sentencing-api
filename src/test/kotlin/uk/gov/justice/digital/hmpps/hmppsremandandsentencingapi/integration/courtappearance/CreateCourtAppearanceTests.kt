@@ -32,7 +32,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     )
     val appearance = CreateCourtAppearance(
       courtCase.first, UUID.randomUUID(), null, "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7),
-      CourtAppearanceLegacyData("1116"),
+      CourtAppearanceLegacyData("1", "1", "10-10-2015", "1116", "A NOMIS outcome description"),
     )
     webTestClient
       .post()
