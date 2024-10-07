@@ -20,8 +20,12 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
   @Transactional
   fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): ChargeEntity {
-    val outcome = charge.outcomeUuid?.let { chargeOutcomeRepository.findByOutcomeUuid(it) } ?: charge.legacyData?.outcomeReason?.let { chargeOutcomeRepository.findByNomisCode(it) }
-    val legacyData = charge.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
+    var chargeLegacyData = charge.legacyData
+    val outcome = charge.outcomeUuid?.let {
+      chargeLegacyData = chargeLegacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null)
+      chargeOutcomeRepository.findByOutcomeUuid(it)
+    } ?: chargeLegacyData?.nomisOutcomeCode?.let { chargeOutcomeRepository.findByNomisCode(it) }
+    val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val (toCreateCharge, status) = charge.chargeUuid?.let { chargeRepository.findByChargeUuid(it) }
       ?.let { chargeEntity ->
         if (chargeEntity.statusId == EntityStatus.EDITED) {
