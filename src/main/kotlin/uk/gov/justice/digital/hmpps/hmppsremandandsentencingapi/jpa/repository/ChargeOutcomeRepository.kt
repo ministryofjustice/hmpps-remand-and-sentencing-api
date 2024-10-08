@@ -8,4 +8,6 @@ interface ChargeOutcomeRepository : CrudRepository<ChargeOutcomeEntity, Int> {
   fun findByOutcomeUuid(outcomeUuid: UUID): ChargeOutcomeEntity?
 
   fun findByNomisCode(nomisCode: String): ChargeOutcomeEntity?
+
+  fun findByOutcomeUuidIn(outcomeUuids: List<UUID>): List<ChargeOutcomeEntity>
 }
