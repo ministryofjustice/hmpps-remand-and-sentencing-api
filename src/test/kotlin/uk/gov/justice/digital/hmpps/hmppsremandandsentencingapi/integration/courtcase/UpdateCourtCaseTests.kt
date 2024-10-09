@@ -44,7 +44,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, sentence, null)
     val appearance = CreateCourtAppearance(null, UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "COURTREF1", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
     val secondAppearance = CreateCourtAppearance(null, UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "COURTREF1", LocalDate.now().minusDays(7L), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7), null)
-    val courtCase = CreateCourtCase("PRISONER1", listOf(appearance, secondAppearance))
+    val courtCase = CreateCourtCase("PRISONER1", listOf(appearance, secondAppearance), null)
     val courtCaseUuid = UUID.randomUUID()
     webTestClient
       .put()
@@ -111,7 +111,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   fun `no token results in unauthorized`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
     val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
-    val courtCase = CreateCourtCase("PRI123", listOf(appearance))
+    val courtCase = CreateCourtCase("PRI123", listOf(appearance), null)
     webTestClient
       .put()
       .uri("/court-case/${UUID.randomUUID()}")
@@ -128,7 +128,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   fun `token with incorrect role is forbidden`() {
     val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
     val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
-    val courtCase = CreateCourtCase("PRI123", listOf(appearance))
+    val courtCase = CreateCourtCase("PRI123", listOf(appearance), null)
     webTestClient
       .put()
       .uri("/court-case/${UUID.randomUUID()}")
