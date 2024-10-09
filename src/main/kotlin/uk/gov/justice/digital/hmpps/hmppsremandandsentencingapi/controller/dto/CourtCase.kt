@@ -9,7 +9,7 @@ data class CourtCase(
   val courtCaseUuid: String,
   val latestAppearance: CourtAppearance?,
   val appearances: List<CourtAppearance>,
-  val legacyData: JsonNode?
+  val legacyData: JsonNode?,
 ) {
   companion object {
     fun from(courtCaseEntity: CourtCaseEntity): CourtCase {
