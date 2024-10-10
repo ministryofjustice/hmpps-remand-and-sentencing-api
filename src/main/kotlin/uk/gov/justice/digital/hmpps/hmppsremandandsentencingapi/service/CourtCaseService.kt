@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -13,11 +15,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
-class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val snsService: SnsService) {
+class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val snsService: SnsService, private val objectMapper: ObjectMapper) {
 
   @Transactional
   fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): CourtCaseEntity {
-    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(CourtCaseEntity.placeholderEntity(createCourtCase.prisonerId, caseUniqueIdentifier, serviceUserService.getUsername()))
+    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(CourtCaseEntity.placeholderEntity(createCourtCase.prisonerId, caseUniqueIdentifier, serviceUserService.getUsername(), createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
 
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
@@ -27,7 +29,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
   @Transactional
   fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
-    val courtCase = courtCaseRepository.save(CourtCaseEntity.placeholderEntity(prisonerId = createCourtCase.prisonerId, createdByUsername = serviceUserService.getUsername()))
+    val courtCase = courtCaseRepository.save(CourtCaseEntity.placeholderEntity(prisonerId = createCourtCase.prisonerId, createdByUsername = serviceUserService.getUsername(), legacyData = createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
     return saveCourtCaseAppearances(courtCase, createCourtCase).also { savedCourtCase ->
       snsService.courtCaseInserted(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, savedCourtCase.createdAt)
     }

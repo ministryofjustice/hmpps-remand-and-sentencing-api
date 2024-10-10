@@ -117,7 +117,7 @@ abstract class IntegrationTestBase {
       LocalDate.now().minusDays(7),
       null,
     )
-    val courtCase = CreateCourtCase(prisonerId, listOf(appearance))
+    val courtCase = CreateCourtCase(prisonerId, listOf(appearance), null)
     val response = webTestClient
       .post()
       .uri("/court-case")
