@@ -37,6 +37,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
   testImplementation("org.wiremock:wiremock-standalone:3.9.1")
   testImplementation("org.awaitility:awaitility-kotlin:4.2.2")
+  testImplementation("io.mockk:mockk:1.13.13")
 }
 
 java {
