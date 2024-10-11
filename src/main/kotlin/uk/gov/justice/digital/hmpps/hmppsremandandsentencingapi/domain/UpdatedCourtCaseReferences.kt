@@ -6,5 +6,5 @@ data class UpdatedCourtCaseReferences(
   val prisonerId: String,
   val courtCaseId: String,
   val timeUpdated: ZonedDateTime,
-  val hasUpdated: Boolean
+  val hasUpdated: Boolean,
 )

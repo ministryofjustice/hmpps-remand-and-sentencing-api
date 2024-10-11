@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.l
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedCourtCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SnsService
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -45,10 +44,10 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
       val toAddCaseReferences = activeCaseReferences
         .filter { activeCaseReference -> existingCaseReferences.none { existingCaseReference -> existingCaseReference.offenderCaseReference == activeCaseReference.offenderCaseReference } }
       existingCaseReferences.addAll(toAddCaseReferences)
-      val toRemoveCaseReferences = inactiveCaseReferences.filter { inactiveCaseReference -> existingCaseReferences.any { existingCaseReference -> inactiveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference  } }
+      val toRemoveCaseReferences = inactiveCaseReferences.filter { inactiveCaseReference -> existingCaseReferences.any { existingCaseReference -> inactiveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
 
       val toStoreCaseReferences = existingCaseReferences.filter { existingCaseReference -> toRemoveCaseReferences.none { toRemoveCaseReference -> toRemoveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
       courtCaseEntity.legacyData = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(toStoreCaseReferences.toMutableList()))
       UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, caseUniqueIdentifier, ZonedDateTime.now(), toAddCaseReferences.isNotEmpty() || toRemoveCaseReferences.isNotEmpty())
-  }
+    }
 }
