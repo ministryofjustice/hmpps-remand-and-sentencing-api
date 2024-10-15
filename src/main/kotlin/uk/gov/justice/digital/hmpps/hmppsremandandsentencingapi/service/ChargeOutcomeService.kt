@@ -11,4 +11,6 @@ class ChargeOutcomeService(private val chargeOutcomeRepository: ChargeOutcomeRep
   fun getAll(): List<ChargeOutcome> = chargeOutcomeRepository.findAll().map { ChargeOutcome.from(it) }
 
   fun findByUuid(outcomeUuid: UUID): ChargeOutcome? = chargeOutcomeRepository.findByOutcomeUuid(outcomeUuid)?.let { ChargeOutcome.from(it) }
+
+  fun findByUuids(outcomeUuids: List<UUID>): List<ChargeOutcome> = chargeOutcomeRepository.findByOutcomeUuidIn(outcomeUuids).map { ChargeOutcome.from(it) }
 }
