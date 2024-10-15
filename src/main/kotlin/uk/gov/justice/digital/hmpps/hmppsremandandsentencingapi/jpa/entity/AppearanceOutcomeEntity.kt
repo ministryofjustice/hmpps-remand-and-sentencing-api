@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.util.UUID
 
 @Entity
 @Table(name = "appearance_outcome")
@@ -14,6 +15,11 @@ data class AppearanceOutcomeEntity(
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  @Column
   val outcomeName: String,
+  val outcomeUuid: UUID,
+  val nomisCode: String,
+  val outcomeType: String,
+  val displayOrder: Int,
+  val relatedChargeOutcomeUuid: UUID,
+  val isSubList: Boolean,
 )

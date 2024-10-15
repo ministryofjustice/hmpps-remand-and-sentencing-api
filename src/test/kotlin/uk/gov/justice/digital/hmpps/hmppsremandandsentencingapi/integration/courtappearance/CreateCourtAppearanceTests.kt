@@ -7,7 +7,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.ChargeLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.time.LocalDate
 import java.util.UUID
 
@@ -16,9 +19,21 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create appearance in existing court case`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
-    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
-    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val charge = CreateCharge(
+      UUID.randomUUID(),
+      "OFF123",
+      LocalDate.now(),
+      null,
+      null,
+      true,
+      sentence,
+      ChargeLegacyData("1", "1", "10-10-2015", "1116", "A NOMIS charge outcome description"),
+    )
+    val appearance = CreateCourtAppearance(
+      courtCase.first, UUID.randomUUID(), null, "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7),
+      CourtAppearanceLegacyData("1", "1", "10-10-2015", "1116", "A NOMIS outcome description"),
+    )
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -38,13 +53,24 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create appearance with consecutive to sentences`() {
     val courtCase = createCourtCase()
-    val forthWithSentence = CreateSentence(null, "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
-    val forthWithCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, forthWithSentence)
-    val concurrentSentence = CreateSentence(null, "2", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "CONCURRENT", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
-    val concurrentCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, concurrentSentence)
-    val consecutiveToSentence = CreateSentence(null, "3", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "CONSECUTIVE_TO", "1", "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
-    val consecutiveToCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, consecutiveToSentence)
-    val appearance = CreateCourtAppearance(courtCase.first, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "SENTENCE", 1, CreatePeriodLength(6, null, null, null, "years"), null, listOf(consecutiveToCharge, concurrentCharge, forthWithCharge), LocalDate.now().minusDays(7))
+    val forthWithSentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val forthWithCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), true, forthWithSentence, null)
+    val concurrentSentence = CreateSentence(null, "2", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "CONCURRENT", null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val concurrentCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), true, concurrentSentence, null)
+    val consecutiveToSentence = CreateSentence(null, "3", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "CONSECUTIVE_TO", "1", UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val consecutiveToCharge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), true, consecutiveToSentence, null)
+    val appearance = CreateCourtAppearance(
+      courtCase.first, UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "SENTENCE", 1,
+      CreatePeriodLength(
+        6,
+        null,
+        null,
+        null,
+        "years",
+        PeriodLengthType.OVERALL_SENTENCE_LENGTH,
+      ),
+      null, listOf(consecutiveToCharge, concurrentCharge, forthWithCharge), LocalDate.now().minusDays(7), null,
+    )
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -63,8 +89,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `must not create appearance when no court case exists`() {
-    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
+    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -80,8 +106,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `no token results in unauthorized`() {
-    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
+    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -96,8 +122,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null)
+    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
+    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
     webTestClient
       .post()
       .uri("/court-appearance")

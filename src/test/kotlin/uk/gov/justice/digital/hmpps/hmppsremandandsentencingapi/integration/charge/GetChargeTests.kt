@@ -21,13 +21,15 @@ class GetChargeTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.chargeUuid")
-      .isEqualTo(createdCharge.chargeUuid!!.toString())
+      .isEqualTo(createdCharge.chargeUuid.toString())
       .jsonPath("$.offenceCode")
       .isEqualTo(createdCharge.offenceCode)
       .jsonPath("$.offenceStartDate")
       .isEqualTo(createdCharge.offenceStartDate.format(DateTimeFormatter.ISO_DATE))
-      .jsonPath("$.outcome")
-      .isEqualTo(createdCharge.outcome)
+      .jsonPath("$.outcome.outcomeUuid")
+      .isEqualTo(createdCharge.outcomeUuid!!.toString())
+      .jsonPath("$.sentence.sentenceType.sentenceTypeUuid")
+      .isEqualTo(createdCharge.sentence!!.sentenceTypeId.toString())
   }
 
   @Test

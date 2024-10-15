@@ -6,10 +6,9 @@ import java.util.UUID
 data class CreateSentence(
   val sentenceUuid: UUID?,
   val chargeNumber: String,
-  val custodialPeriodLength: CreatePeriodLength,
-  val extendedLicensePeriodLength: CreatePeriodLength?,
+  val periodLengths: List<CreatePeriodLength>,
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
-  val sentenceType: String,
+  val sentenceTypeId: UUID,
   val convictionDate: LocalDate?,
 )

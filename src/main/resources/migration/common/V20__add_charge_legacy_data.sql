@@ -1,0 +1,1 @@
+ALTER TABLE charge ADD COLUMN legacy_data jsonb NULL;

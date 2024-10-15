@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -23,11 +24,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
@@ -84,11 +85,28 @@ abstract class IntegrationTestBase {
   }
 
   protected fun createCourtCase(prisonerId: String = "PRI123", minusDaysFromAppearanceDate: Long = 0): Pair<String, CreateCourtCase> {
-    val sentence = CreateSentence(UUID.randomUUID(), "1", CreatePeriodLength(1, null, null, null, periodOrder = "years"), null, "FORTHWITH", null, "SDS (Standard Determinate Sentence)", LocalDate.now().minusDays(7))
-    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, "OUT123", true, sentence)
+    val sentence = CreateSentence(
+      UUID.randomUUID(),
+      "1",
+      listOf(
+        CreatePeriodLength(
+          1,
+          null,
+          null,
+          null,
+          "years",
+          PeriodLengthType.SENTENCE_LENGTH,
+        ),
+      ),
+      "FORTHWITH",
+      null,
+      UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"),
+      LocalDate.now().minusDays(7),
+    )
+    val charge = CreateCharge(UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), true, sentence, null)
     val appearance = CreateCourtAppearance(
-      null, UUID.randomUUID(), "OUT123", "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), "123", "REMAND", 1,
-      CreatePeriodLength(1, null, null, null, periodOrder = "years"),
+      null, UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), "123", "REMAND", 1,
+      CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.OVERALL_SENTENCE_LENGTH),
       CreateNextCourtAppearance(
         LocalDate.now(),
         LocalTime.now(),
@@ -97,8 +115,9 @@ abstract class IntegrationTestBase {
       ),
       listOf(charge),
       LocalDate.now().minusDays(7),
+      null,
     )
-    val courtCase = CreateCourtCase(prisonerId, listOf(appearance))
+    val courtCase = CreateCourtCase(prisonerId, listOf(appearance), null)
     val response = webTestClient
       .post()
       .uri("/court-case")
@@ -114,24 +133,25 @@ abstract class IntegrationTestBase {
     return response.courtCaseUuid to courtCase
   }
 
-  fun expectCourtCaseInsertedMessage(prisonerId: String) {
-    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 1)
+  fun expectInsertedMessages(prisonerId: String) {
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 4)
     val messages = getAllDomainMessages()
-    Assertions.assertEquals(1, messages.size)
-    val courtCaseInsertedMessage = messages.first()
-    Assertions.assertEquals(prisonerId, courtCaseInsertedMessage.personReference.identifiers.first { it.type == "NOMS" }.value)
-    Assertions.assertEquals("DPS", courtCaseInsertedMessage.additionalInformation.source)
+    Assertions.assertEquals(4, messages.size)
+    messages.forEach { message ->
+      Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
+      Assertions.assertEquals("DPS", message.additionalInformation.get("source").asText())
+    }
   }
 
-  private fun getAllDomainMessages(): List<HmppsMessage<HmppsCourtCaseMessage>> {
-    val messages = ArrayList<HmppsMessage<HmppsCourtCaseMessage>>()
+  private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
+    val messages = ArrayList<HmppsMessage<ObjectNode>>()
     while (hmppsDomainQueueSqsClient.countAllMessagesOnQueue(hmppsDomainQueue.queueUrl).get() != 0) {
       val message = hmppsDomainQueueSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build())
       messages.addAll(
         message.get().messages().map {
           hmppsDomainQueueSqsClient.deleteMessage(DeleteMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).receiptHandle(it.receiptHandle()).build()).get()
           val sqsMessage = objectMapper.readValue(it.body(), SQSMessage::class.java)
-          val courtCaseInsertedMessageType = object : TypeReference<HmppsMessage<HmppsCourtCaseMessage>>() {}
+          val courtCaseInsertedMessageType = object : TypeReference<HmppsMessage<ObjectNode>>() {}
           objectMapper.readValue(sqsMessage.Message, courtCaseInsertedMessageType)
         },
       )

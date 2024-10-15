@@ -1,13 +1,16 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import com.fasterxml.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.time.LocalDate
 import java.util.UUID
 
 data class CourtAppearance(
   val appearanceUuid: UUID,
-  val outcome: String,
+  val lifetimeUuid: UUID,
+  val outcome: CourtAppearanceOutcome?,
   val courtCode: String,
   val courtCaseReference: String?,
   val appearanceDate: LocalDate,
@@ -18,12 +21,14 @@ data class CourtAppearance(
   val charges: List<Charge>,
   val overallSentenceLength: PeriodLength?,
   val overallConvictionDate: LocalDate?,
+  val legacyData: JsonNode?,
 ) {
   companion object {
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance {
       return CourtAppearance(
         courtAppearanceEntity.appearanceUuid,
-        courtAppearanceEntity.appearanceOutcome.outcomeName,
+        courtAppearanceEntity.lifetimeUuid,
+        courtAppearanceEntity.appearanceOutcome?.let { CourtAppearanceOutcome.from(it) },
         courtAppearanceEntity.courtCode,
         courtAppearanceEntity.courtCaseReference,
         courtAppearanceEntity.appearanceDate,
@@ -32,8 +37,9 @@ data class CourtAppearance(
         courtAppearanceEntity.taggedBail,
         courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
         courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { Charge.from(it) },
-        courtAppearanceEntity.overallSentenceLength?.let { PeriodLength.from(it) },
+        courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
         courtAppearanceEntity.overallConvictionDate,
+        courtAppearanceEntity.legacyData,
       )
     }
   }

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
@@ -8,12 +10,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -32,6 +33,8 @@ class CourtAppearanceService(
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
   private val documentManagementApiClient: DocumentManagementApiClient,
+  private val snsService: SnsService,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @Transactional
@@ -45,44 +48,56 @@ class CourtAppearanceService(
 
   @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
-    val appearanceOutcome = appearanceOutcomeRepository.findByOutcomeName(courtAppearance.outcome) ?: appearanceOutcomeRepository.save(AppearanceOutcomeEntity(outcomeName = courtAppearance.outcome))
+    var appearanceLegacyData = courtAppearance.legacyData
+    val appearanceOutcome = courtAppearance.outcomeUuid?.let {
+      appearanceLegacyData = appearanceLegacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null)
+      appearanceOutcomeRepository.findByOutcomeUuid(it)
+    } ?: appearanceLegacyData?.nomisOutcomeCode?.let { appearanceOutcomeRepository.findByNomisCode(it) }
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
     val charges = courtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map {
-      val charge = chargeService.createCharge(it, sentencesCreated)
+      val charge = chargeService.createCharge(it, sentencesCreated, courtCaseEntity.prisonerId)
       charge.getActiveSentence()?.let { sentence -> sentencesCreated.put(sentence.chargeNumber, sentence) }
       charge
     }.toMutableSet()
-    val toCreateAppearance = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
+    val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
+    val (toCreateAppearance, status) = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
       ?.let { courtAppearanceEntity ->
         if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
           throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
         }
-        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges)
+        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
         if (courtAppearanceEntity.isSame(compareAppearance)) {
           val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
           toDeleteCharges.forEach { chargeService.deleteCharge(it) }
 
           courtAppearanceEntity.charges.addAll(charges)
-          return@let courtAppearanceEntity
+          return@let courtAppearanceEntity to EntityChangeStatus.NO_CHANGE
         }
         courtAppearanceEntity.statusId = EntityStatus.EDITED
         compareAppearance.previousAppearance = courtAppearanceEntity
         compareAppearance.appearanceUuid = UUID.randomUUID()
-        compareAppearance
-      } ?: CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges)
+        compareAppearance.lifetimeUuid = courtAppearanceEntity.lifetimeUuid
+        compareAppearance to EntityChangeStatus.EDITED
+      } ?: (CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData) to EntityChangeStatus.CREATED)
 
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { NextCourtAppearanceEntity.from(it) }
     if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) != true) {
       val toSaveNextCourtAppearance = nextCourtAppearance?.let { nextCourtAppearanceRepository.save(it) }
       toCreateAppearance.nextCourtAppearance = toSaveNextCourtAppearance
     }
-    val overallSentenceLength = courtAppearance.overallSentenceLength?.let { PeriodLengthEntity.from(it) }
-    if (toCreateAppearance.overallSentenceLength?.isSame(overallSentenceLength) != true || (overallSentenceLength?.id == 0 && toCreateAppearance.overallSentenceLength?.id == 0)) {
-      val toSaveOverallSentenceLength = overallSentenceLength?.let { periodLengthRepository.save(it) }
-      toCreateAppearance.overallSentenceLength = toSaveOverallSentenceLength
-    }
     updateDocumentMetadata(toCreateAppearance, courtCaseEntity.prisonerId)
-    return courtAppearanceRepository.save(toCreateAppearance)
+    val toCreatePeriodLengths = toCreateAppearance.periodLengths.filter { it.id == 0 }
+    toCreateAppearance.periodLengths = toCreateAppearance.periodLengths.filter { it.id != 0 }
+
+    val createdCourtAppearance = courtAppearanceRepository.save(toCreateAppearance)
+    toCreatePeriodLengths.forEach {
+      it.appearanceEntity = createdCourtAppearance
+      periodLengthRepository.save(it)
+    }
+    if (status == EntityChangeStatus.CREATED) {
+      snsService.courtAppearanceInserted(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.createdAt)
+    }
+    return createdCourtAppearance
   }
 
   fun updateDocumentMetadata(courtAppearanceEntity: CourtAppearanceEntity, prisonerId: String) {

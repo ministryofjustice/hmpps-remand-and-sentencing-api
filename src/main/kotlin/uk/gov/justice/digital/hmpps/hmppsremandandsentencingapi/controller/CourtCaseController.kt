@@ -24,11 +24,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SnsService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-controller", description = "Court case")
-class CourtCaseController(private val courtCaseService: CourtCaseService) {
+class CourtCaseController(private val courtCaseService: CourtCaseService, private val courtCaseReferenceService: CourtCaseReferenceService, private val snsService: SnsService) {
 
   @PostMapping("/court-case")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -45,7 +47,8 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
-    return CreateCourtCaseResponse(courtCaseService.createCourtCase(createCourtCase).caseUniqueIdentifier)
+    val courtCase = courtCaseService.createCourtCase(createCourtCase).also { courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier) }
+    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier)
   }
 
   @PutMapping("/court-case/{courtCaseUuid}")
@@ -63,7 +66,13 @@ class CourtCaseController(private val courtCaseService: CourtCaseService) {
   )
   @ResponseStatus(HttpStatus.OK)
   fun putCourtCase(@RequestBody createCourtCase: CreateCourtCase, @PathVariable courtCaseUuid: String): CreateCourtCaseResponse {
-    return CreateCourtCaseResponse(courtCaseService.putCourtCase(createCourtCase, courtCaseUuid).caseUniqueIdentifier)
+    val courtCase = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid).also {
+      val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier)
+      updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
+        snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
+      }
+    }
+    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier)
   }
 
   @GetMapping("/court-case/search")
