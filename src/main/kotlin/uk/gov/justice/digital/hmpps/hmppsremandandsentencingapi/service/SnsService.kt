@@ -46,7 +46,7 @@ class SnsService(
       HmppsCourtCaseMessage(courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
   }
 
   fun courtAppearanceInserted(prisonerId: String, courtAppearanceId: String, timeUpdated: ZonedDateTime) {
@@ -59,7 +59,7 @@ class SnsService(
       HmppsCourtAppearanceMessage(courtAppearanceId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsCourtAppearanceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtAppearanceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtAppearanceInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsCourtAppearanceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtAppearanceInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtAppearanceInsertedEvent.eventType).build()))
   }
 
   fun chargeInserted(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
@@ -72,7 +72,7 @@ class SnsService(
       HmppsCourtChargeMessage(chargeId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsCourtChargeInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsCourtChargeInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeInsertedEvent.eventType).build()))
   }
 
   fun sentenceInserted(prisonerId: String, sentenceId: String, timeUpdated: ZonedDateTime) {
@@ -85,7 +85,7 @@ class SnsService(
       HmppsSentenceMessage(sentenceId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsSentenceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsSentenceInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsSentenceInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsSentenceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsSentenceInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsSentenceInsertedEvent.eventType).build()))
   }
 
   fun legacyCaseReferencesUpdated(prisonerId: String, courtCaseId: String, timeUpdated: ZonedDateTime) {
@@ -98,7 +98,7 @@ class SnsService(
       HmppsCourtCaseMessage(courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
   }
 
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
