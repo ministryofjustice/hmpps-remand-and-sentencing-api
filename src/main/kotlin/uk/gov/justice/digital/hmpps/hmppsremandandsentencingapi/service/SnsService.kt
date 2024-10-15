@@ -46,7 +46,7 @@ class SnsService(
       HmppsCourtCaseMessage(courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
-    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
+    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
   }
 
   fun courtAppearanceInserted(prisonerId: String, courtAppearanceId: String, timeUpdated: ZonedDateTime) {
