@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
@@ -98,6 +99,19 @@ class CourtAppearanceService(
       snsService.courtAppearanceInserted(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.createdAt)
     }
     return createdCourtAppearance
+  }
+
+  @Transactional
+  fun createChargeInAppearance(createCharge: CreateCharge): ChargeEntity? {
+    return courtAppearanceRepository.findByAppearanceUuid(createCharge.appearanceUuid!!)?.let { courtAppearance ->
+      val sentencesCreated = courtAppearance.charges.filter { it.getActiveSentence() != null }.map { charge ->
+        val sentence = charge.getActiveSentence()!!
+        sentence.chargeNumber to sentence
+      }.toMap()
+      val charge = chargeService.createCharge(createCharge, sentencesCreated, courtAppearance.courtCase.prisonerId)
+      courtAppearance.charges.add(charge)
+      charge
+    }
   }
 
   fun updateDocumentMetadata(courtAppearanceEntity: CourtAppearanceEntity, prisonerId: String) {

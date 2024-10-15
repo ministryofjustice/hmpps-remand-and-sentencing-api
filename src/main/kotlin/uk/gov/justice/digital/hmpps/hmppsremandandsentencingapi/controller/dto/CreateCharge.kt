@@ -5,6 +5,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class CreateCharge(
+  val appearanceUuid: UUID?,
   val chargeUuid: UUID?,
   val offenceCode: String,
   val offenceStartDate: LocalDate,
