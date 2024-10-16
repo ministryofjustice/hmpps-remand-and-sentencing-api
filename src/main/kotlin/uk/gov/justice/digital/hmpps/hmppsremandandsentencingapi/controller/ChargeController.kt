@@ -5,11 +5,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateChargeResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.OrphanedChargeException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import java.util.UUID
 
@@ -33,5 +40,23 @@ class ChargeController(private val chargeService: ChargeService) {
   )
   fun getChargeDetails(@PathVariable chargeUuid: UUID): Charge {
     return chargeService.findChargeByUuid(chargeUuid) ?: throw EntityNotFoundException("No charge found at $chargeUuid")
+  }
+
+  @PutMapping("/charge/{chargeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
+  @Operation(
+    summary = "Create Charge",
+    description = "This endpoint will create a charge in a given court appearance",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun updateCharge(@RequestBody createCharge: CreateCharge, @PathVariable chargeUuid: UUID): CreateChargeResponse {
+    return chargeService.createCharge(createCharge.copy(chargeUuid = chargeUuid))?.let { CreateChargeResponse(it.chargeUuid) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
   }
 }

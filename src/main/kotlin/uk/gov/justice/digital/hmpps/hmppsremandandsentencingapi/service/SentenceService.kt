@@ -21,7 +21,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): SentenceEntity {
-    val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] }
+    val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findBySentenceUuid(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val (toCreateSentence, status) = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
       ?.let { sentenceEntity ->
