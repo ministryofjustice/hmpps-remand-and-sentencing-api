@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.OrphanedChargeException
 
 @RestControllerAdvice
 class HmppsRemandAndSentencingApiExceptionHandler {
@@ -95,6 +96,20 @@ class HmppsRemandAndSentencingApiExceptionHandler {
         ErrorResponse(
           status = BAD_REQUEST,
           userMessage = "Missing servlet request parameter failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(OrphanedChargeException::class)
+  fun handleIOrphanedChargeException(e: OrphanedChargeException): ResponseEntity<ErrorResponse> {
+    log.info("Orphansed charge exception: {}", e.message)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Orphaned charge failure: ${e.message}",
           developerMessage = e.message,
         ),
       )

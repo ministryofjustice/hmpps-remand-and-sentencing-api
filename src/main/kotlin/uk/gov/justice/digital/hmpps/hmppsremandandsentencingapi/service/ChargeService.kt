@@ -13,10 +13,30 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import java.util.UUID
 
 @Service
-class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val snsService: SnsService, private val objectMapper: ObjectMapper) {
+class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val snsService: SnsService, private val objectMapper: ObjectMapper, private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository) {
+
+  @Transactional
+  fun createCharge(charge: CreateCharge): ChargeEntity? {
+    val appearance = charge.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
+    var prisonerId = appearance?.courtCase?.prisonerId
+    if (appearance == null) {
+      courtCaseRepository.findFirstByAppearancesChargesChargeUuid(charge.chargeUuid!!)?.also { prisonerId = it.prisonerId }
+    }
+    return prisonerId?.let {
+      val chargeEntity = createCharge(charge, emptyMap(), it)
+      appearance?.let {
+        if (appearance.charges.none { it.chargeUuid == chargeEntity.chargeUuid }) {
+          appearance.charges.add(chargeEntity)
+        }
+      }
+      chargeEntity
+    }
+  }
 
   @Transactional
   fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): ChargeEntity {
