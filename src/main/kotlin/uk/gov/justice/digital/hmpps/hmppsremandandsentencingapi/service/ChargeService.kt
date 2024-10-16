@@ -74,6 +74,9 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional
+  fun deleteCharge(chargeUuid: UUID) = chargeRepository.findByChargeUuid(chargeUuid)?.let { deleteCharge(it) }
+
+  @Transactional
   fun deleteCharge(charge: ChargeEntity) {
     charge.statusId = EntityStatus.DELETED
     charge.getActiveSentence()?.let { sentenceService.deleteSentence(it) }
