@@ -69,7 +69,7 @@ class ChargeController(private val chargeService: ChargeService) {
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "204"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],

@@ -131,8 +131,12 @@ class CourtAppearanceService(
   }
 
   @Transactional
+  fun deleteCourtAppearance(appearanceUuid: UUID) = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let { deleteCourtAppearance(it) }
+
+  @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
+    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge) }
   }
 
   @Transactional(readOnly = true)
