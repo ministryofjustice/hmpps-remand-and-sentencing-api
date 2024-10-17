@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "charge_outcome")
-data class ChargeOutcomeEntity(
+class ChargeOutcomeEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)

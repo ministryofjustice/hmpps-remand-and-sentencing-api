@@ -16,7 +16,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "recall")
-data class RecallEntity(
+class RecallEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
@@ -29,6 +29,11 @@ data class RecallEntity(
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
 ) {
+
+  fun copy(recallDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallType): RecallEntity {
+    return RecallEntity(this.id, this.recallUniqueIdentifier, this.prisonerId, recallDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername)
+  }
+
   companion object {
     fun placeholderEntity(createRecall: CreateRecall, recallUniqueIdentifier: UUID? = null): RecallEntity =
       RecallEntity(

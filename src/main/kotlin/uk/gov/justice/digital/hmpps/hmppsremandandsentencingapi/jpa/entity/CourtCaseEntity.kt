@@ -21,7 +21,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "court_case")
-data class CourtCaseEntity(
+class CourtCaseEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)

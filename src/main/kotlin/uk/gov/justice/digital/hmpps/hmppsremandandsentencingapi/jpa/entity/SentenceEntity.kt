@@ -21,7 +21,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "sentence")
-data class SentenceEntity(
+class SentenceEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -13,7 +13,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "sentence_type")
-data class SentenceTypeEntity(
+class SentenceTypeEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,

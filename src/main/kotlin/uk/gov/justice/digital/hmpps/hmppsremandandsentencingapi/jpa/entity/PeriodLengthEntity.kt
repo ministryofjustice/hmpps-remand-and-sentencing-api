@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 
 @Entity
 @Table(name = "period_length")
-data class PeriodLengthEntity(
+class PeriodLengthEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
