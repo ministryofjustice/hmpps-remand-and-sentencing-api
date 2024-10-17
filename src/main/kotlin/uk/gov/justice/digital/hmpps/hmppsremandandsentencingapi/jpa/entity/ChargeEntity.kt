@@ -24,7 +24,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "charge")
-data class ChargeEntity(
+class ChargeEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
