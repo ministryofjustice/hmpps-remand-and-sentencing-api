@@ -12,7 +12,7 @@ import java.time.LocalTime
 
 @Entity
 @Table(name = "next_court_appearance")
-data class NextCourtAppearanceEntity(
+class NextCourtAppearanceEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)

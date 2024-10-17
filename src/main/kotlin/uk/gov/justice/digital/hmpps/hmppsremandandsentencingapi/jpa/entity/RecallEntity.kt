@@ -16,7 +16,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "recall")
-data class RecallEntity(
+class RecallEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
