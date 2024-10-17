@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
@@ -55,10 +56,13 @@ class ChargeEntity(
   @Type(value = JsonType::class)
   @Column(columnDefinition = "jsonb")
   var legacyData: JsonNode? = null,
-
+  @ManyToMany(mappedBy = "charges")
+  val courtAppearances: MutableSet<CourtAppearanceEntity>,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableList<SentenceEntity> = mutableListOf()
+
+  fun hasNoActiveCourtAppearances(): Boolean = courtAppearances.none { it.statusId == EntityStatus.ACTIVE }
 
   fun getActiveSentence(): SentenceEntity? {
     return sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
@@ -76,7 +80,7 @@ class ChargeEntity(
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?): ChargeEntity {
-      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData)
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf())
     }
   }
 }
