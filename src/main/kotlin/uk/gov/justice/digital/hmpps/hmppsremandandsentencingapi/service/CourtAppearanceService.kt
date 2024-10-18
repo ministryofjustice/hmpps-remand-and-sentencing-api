@@ -96,7 +96,7 @@ class CourtAppearanceService(
       periodLengthRepository.save(it)
     }
     if (status == EntityChangeStatus.CREATED) {
-      snsService.courtAppearanceInserted(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.createdAt)
+      snsService.courtAppearanceInserted(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, createdCourtAppearance.createdAt)
     }
     return createdCourtAppearance
   }
