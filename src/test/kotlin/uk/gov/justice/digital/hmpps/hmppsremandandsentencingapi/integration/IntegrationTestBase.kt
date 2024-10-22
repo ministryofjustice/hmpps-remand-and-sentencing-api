@@ -128,6 +128,7 @@ abstract class IntegrationTestBase {
       .expectStatus()
       .isCreated.returnResult(CreateCourtCaseResponse::class.java)
       .responseBody.blockFirst()!!
+    purgeQueues()
     return response.courtCaseUuid to courtCase
   }
 
