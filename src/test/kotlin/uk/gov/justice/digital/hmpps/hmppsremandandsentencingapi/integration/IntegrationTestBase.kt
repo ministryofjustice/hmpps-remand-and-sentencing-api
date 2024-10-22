@@ -67,10 +67,7 @@ abstract class IntegrationTestBase {
 
   @BeforeEach
   fun clearDependencies() {
-    runBlocking {
-      hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_queue", hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl))
-      hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_dlq", hmppsDomainQueueSqsDlqClient, hmppsDomainQueue.dlqUrl!!))
-    }
+    purgeQueues()
   }
 
   internal fun HttpHeaders.authToken(roles: List<String> = emptyList()) {
@@ -134,6 +131,13 @@ abstract class IntegrationTestBase {
     return response.courtCaseUuid to courtCase
   }
 
+  fun purgeQueues() {
+    runBlocking {
+      hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_queue", hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl))
+      hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_dlq", hmppsDomainQueueSqsDlqClient, hmppsDomainQueue.dlqUrl!!))
+    }
+  }
+
   fun expectInsertedMessages(prisonerId: String) {
     numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 4)
     val messages = getAllDomainMessages()
@@ -142,6 +146,11 @@ abstract class IntegrationTestBase {
       Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
       Assertions.assertEquals("DPS", message.additionalInformation.get("source").asText())
     }
+  }
+
+  fun getMessages(expectedNumberOfMessages: Int): List<HmppsMessage<ObjectNode>> {
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, expectedNumberOfMessages)
+    return getAllDomainMessages()
   }
 
   private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
