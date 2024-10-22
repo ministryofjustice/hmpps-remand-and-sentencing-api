@@ -139,6 +139,7 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
     courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge) }
+    snsService.courtAppearanceDeleted(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.appearanceUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity.createdAt)
   }
 
   @Transactional(readOnly = true)
