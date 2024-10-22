@@ -97,6 +97,8 @@ class CourtAppearanceService(
     }
     if (status == EntityChangeStatus.CREATED) {
       snsService.courtAppearanceInserted(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, createdCourtAppearance.createdAt)
+    } else if (status == EntityChangeStatus.EDITED) {
+      snsService.courtAppearanceUpdated(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, createdCourtAppearance.createdAt)
     }
     return createdCourtAppearance
   }
