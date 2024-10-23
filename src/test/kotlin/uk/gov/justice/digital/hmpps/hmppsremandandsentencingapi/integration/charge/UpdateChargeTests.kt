@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.charge
 
+import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -44,6 +45,8 @@ class UpdateChargeTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.chargeUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+    val messages = getMessages(2)
+    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("charge.updated")
   }
 
   @Test

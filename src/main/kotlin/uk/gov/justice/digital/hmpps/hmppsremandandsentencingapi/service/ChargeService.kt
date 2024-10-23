@@ -69,6 +69,8 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       }
       if (status == EntityChangeStatus.CREATED) {
         snsService.chargeInserted(prisonerId, it.chargeUuid.toString(), it.createdAt)
+      } else if (status == EntityChangeStatus.EDITED) {
+        snsService.chargeUpdated(prisonerId, it.chargeUuid.toString(), it.createdAt)
       }
     }
   }
