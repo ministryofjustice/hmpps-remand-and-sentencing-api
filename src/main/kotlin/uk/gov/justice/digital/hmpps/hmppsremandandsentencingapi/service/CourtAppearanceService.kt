@@ -69,7 +69,7 @@ class CourtAppearanceService(
         val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
         if (courtAppearanceEntity.isSame(compareAppearance)) {
           val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
-          toDeleteCharges.forEach { chargeService.deleteCharge(it) }
+          toDeleteCharges.forEach { chargeService.deleteCharge(it, courtCaseEntity.prisonerId) }
 
           courtAppearanceEntity.charges.addAll(charges)
           return@let courtAppearanceEntity to EntityChangeStatus.NO_CHANGE
@@ -138,7 +138,7 @@ class CourtAppearanceService(
   @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
-    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge) }
+    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId) }
     snsService.courtAppearanceDeleted(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.appearanceUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity.createdAt)
   }
 

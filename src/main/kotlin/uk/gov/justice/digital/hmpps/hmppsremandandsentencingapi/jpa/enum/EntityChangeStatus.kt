@@ -4,4 +4,5 @@ enum class EntityChangeStatus {
   NO_CHANGE,
   CREATED,
   EDITED,
+  DELETED,
 }
