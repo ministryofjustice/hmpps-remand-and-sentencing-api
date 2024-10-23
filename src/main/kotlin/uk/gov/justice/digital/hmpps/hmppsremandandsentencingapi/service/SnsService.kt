@@ -113,6 +113,19 @@ class SnsService(
     domainEventsTopic.publish(hmppsCourtChargeUpdatedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeUpdatedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeUpdatedEvent.eventType).build()))
   }
 
+  fun chargeDeleted(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
+    val hmppsCourtChargeDeletedEvent = HmppsMessage(
+      "charge.deleted",
+      1,
+      "Charge deleted event",
+      generateDetailsUri(courtChargeLookupPath, chargeId),
+      timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+      HmppsCourtChargeMessage(chargeId),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+    domainEventsTopic.publish(hmppsCourtChargeDeletedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeDeletedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeDeletedEvent.eventType).build()))
+  }
+
   fun sentenceInserted(prisonerId: String, sentenceId: String, timeUpdated: ZonedDateTime) {
     val hmppsSentenceInsertedEvent = HmppsMessage(
       "sentence.inserted",

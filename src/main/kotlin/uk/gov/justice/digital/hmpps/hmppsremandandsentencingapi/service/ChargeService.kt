@@ -76,12 +76,16 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional
-  fun deleteCharge(chargeUuid: UUID) = chargeRepository.findByChargeUuid(chargeUuid)?.let { deleteCharge(it) }
+  fun deleteCharge(chargeUuid: UUID) = chargeRepository.findByChargeUuid(chargeUuid)?.let { deleteCharge(it, it.courtAppearances.firstOrNull()?.courtCase?.prisonerId) }
 
   @Transactional
-  fun deleteCharge(charge: ChargeEntity) {
+  fun deleteCharge(charge: ChargeEntity, prisonerId: String?) {
+    val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.statusId = EntityStatus.DELETED
     charge.getActiveSentence()?.let { sentenceService.deleteSentence(it) }
+    if (changeStatus == EntityChangeStatus.DELETED) {
+      snsService.chargeDeleted(prisonerId!!, charge.chargeUuid.toString(), charge.createdAt)
+    }
   }
 
   @Transactional(readOnly = true)

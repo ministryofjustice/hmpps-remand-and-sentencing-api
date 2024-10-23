@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.charge
 
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -21,6 +22,8 @@ class DeleteChargeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isNoContent
+    val messages = getMessages(1)
+    Assertions.assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("charge.deleted")
   }
 
   @Test
