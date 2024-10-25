@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SnsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
@@ -127,5 +128,23 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   )
   fun getLatestAppearanceDetails(@PathVariable courtCaseUuid: String): CourtAppearance {
     return courtCaseService.getLatestAppearanceByCourtCaseUuid(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+  }
+
+  @PutMapping("/court-case/{courtCaseUuid}/case-references/refresh")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
+  @Operation(
+    summary = "Refresh case references",
+    description = "This endpoint will refresh case references",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun refreshCaseReferences(@RequestBody courtCaseLegacyData: CourtCaseLegacyData, @PathVariable courtCaseUuid: String) {
+    courtCaseReferenceService.refreshCaseReferences(courtCaseLegacyData, courtCaseUuid)
   }
 }

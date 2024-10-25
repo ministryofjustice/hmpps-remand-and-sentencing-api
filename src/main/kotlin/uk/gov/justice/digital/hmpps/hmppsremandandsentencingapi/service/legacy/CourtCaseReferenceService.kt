@@ -8,12 +8,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.l
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedCourtCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @Service
-class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseRepository, private val objectMapper: ObjectMapper) {
+class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseRepository, private val objectMapper: ObjectMapper, val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
 
   @Transactional
   fun updateCourtCaseReferences(caseUniqueIdentifier: String): UpdatedCourtCaseReferences? =
@@ -50,4 +52,18 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
       courtCaseEntity.legacyData = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(toStoreCaseReferences.toMutableList()))
       UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, caseUniqueIdentifier, ZonedDateTime.now(), toAddCaseReferences.isNotEmpty() || toRemoveCaseReferences.isNotEmpty())
     }
+
+  @Transactional
+  fun refreshCaseReferences(courtCaseLegacyData: CourtCaseLegacyData, courtCaseUuid: String) {
+    courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { courtCase ->
+      courtCase.legacyData = objectMapper.valueToTree<JsonNode>(courtCaseLegacyData)
+      val legacyCourtCaseReferences = courtCaseLegacyData.caseReferences.map { it.offenderCaseReference }.toSet()
+      val toEditAppearances = courtCase.appearances.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
+      toEditAppearances.forEach { editedAppearance ->
+        val newAppearance = editedAppearance.copyAndRemoveCaseReference(serviceUserService.getUsername())
+        editedAppearance.statusId = EntityStatus.EDITED
+        courtAppearanceRepository.save(newAppearance)
+      }
+    }
+  }
 }
