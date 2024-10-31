@@ -107,6 +107,16 @@ class CourtAppearanceEntity(
       this.legacyData == other.legacyData
   }
 
+  fun copyAndRemoveCaseReference(createdByUsername: String): CourtAppearanceEntity {
+    val courtAppearance = CourtAppearanceEntity(
+      0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtCode, null, appearanceDate,
+      EntityStatus.ACTIVE, this, warrantId,
+      ZonedDateTime.now(), createdByUsername, createdPrison, warrantType, taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
+    )
+    courtAppearance.periodLengths = periodLengths.toList()
+    return courtAppearance
+  }
+
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {

@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.l
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
@@ -21,7 +22,9 @@ import java.util.UUID
 class CourtCaseReferenceServiceTests {
   private val courtCaseRepository = mockk<CourtCaseRepository>()
   private val objectMapper = jacksonObjectMapper()
-  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, objectMapper)
+  private val courtAppearanceRepository = mockk<CourtAppearanceRepository>()
+  private val serviceUserService = mockk<ServiceUserService>()
+  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, objectMapper, courtAppearanceRepository, serviceUserService)
 
   @Test
   fun `insert new active case references`() {
