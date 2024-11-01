@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.CourtCaseLegacyData
@@ -49,7 +50,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
     val courtCase = courtCaseService.createCourtCase(createCourtCase).also { courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier) }
-    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier)
+    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier, createCourtCase.appearances.map { CreateCourtAppearanceResponse(it.appearanceUuid, it.legacyData?.eventId) })
   }
 
   @PutMapping("/court-case/{courtCaseUuid}")
@@ -73,7 +74,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
         snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
       }
     }
-    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier)
+    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier, createCourtCase.appearances.map { CreateCourtAppearanceResponse(it.appearanceUuid, it.legacyData?.eventId) })
   }
 
   @GetMapping("/court-case/search")
