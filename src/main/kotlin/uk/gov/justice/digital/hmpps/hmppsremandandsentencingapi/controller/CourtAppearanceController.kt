@@ -48,7 +48,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
         snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
       }
-      CreateCourtAppearanceResponse(appearance.appearanceUuid, createCourtAppearance.legacyData?.eventId)
+      CreateCourtAppearanceResponse.from(createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 
@@ -89,7 +89,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
         snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
       }
-      CreateCourtAppearanceResponse(appearance.appearanceUuid, createCourtAppearance.legacyData?.eventId)
+      CreateCourtAppearanceResponse.from(createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 
@@ -108,7 +108,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createChargeInAppearance(@RequestBody createCharge: CreateCharge, @PathVariable appearanceUuid: UUID): CreateChargeResponse {
-    return courtAppearanceService.createChargeInAppearance(createCharge.copy(appearanceUuid = appearanceUuid))?.let { CreateChargeResponse(it.chargeUuid) } ?: throw EntityNotFoundException("No appearance found at $appearanceUuid")
+    return courtAppearanceService.createChargeInAppearance(createCharge.copy(appearanceUuid = appearanceUuid))?.let { CreateChargeResponse.from(createCharge) } ?: throw EntityNotFoundException("No appearance found at $appearanceUuid")
   }
 
   @DeleteMapping("court-appearance/{appearanceUuid}")
