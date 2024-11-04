@@ -50,6 +50,10 @@ class CreateCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.courtCaseUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .jsonPath("$.appearances[0].appearanceUuid")
+      .isEqualTo(appearance.appearanceUuid.toString())
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid.toString())
     expectInsertedMessages(courtCase.prisonerId)
   }
 
