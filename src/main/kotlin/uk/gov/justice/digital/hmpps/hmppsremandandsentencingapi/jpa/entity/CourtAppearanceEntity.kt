@@ -121,7 +121,7 @@ class CourtAppearanceEntity(
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
       val courtAppearanceEntity = CourtAppearanceEntity(
-        appearanceUuid = courtAppearance.appearanceUuid ?: UUID.randomUUID(),
+        appearanceUuid = courtAppearance.appearanceUuid,
         appearanceOutcome = appearanceOutcome,
         courtCase = courtCase,
         courtCode = courtAppearance.courtCode,

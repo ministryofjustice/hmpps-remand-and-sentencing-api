@@ -58,7 +58,7 @@ class ChargeController(private val chargeService: ChargeService) {
   )
   @ResponseStatus(HttpStatus.OK)
   fun updateCharge(@RequestBody createCharge: CreateCharge, @PathVariable chargeUuid: UUID): CreateChargeResponse {
-    return chargeService.createCharge(createCharge.copy(chargeUuid = chargeUuid))?.let { CreateChargeResponse(it.chargeUuid) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
+    return chargeService.createCharge(createCharge.copy(chargeUuid = chargeUuid))?.let { CreateChargeResponse.from(createCharge) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
   }
 
   @DeleteMapping("/charge/{chargeUuid}")
