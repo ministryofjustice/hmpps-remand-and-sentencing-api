@@ -18,23 +18,19 @@ class FineAmountEntity(
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  @OneToOne
-  @JoinColumn(name = "sentence_id")
-  var sentence: SentenceEntity,
   @Column
   var fineAmount: BigDecimal,
+  @OneToOne
+  @JoinColumn(name = "sentence_id")
+  var sentenceEntity: SentenceEntity?,
 ) {
   fun isSame(other: FineAmountEntity?): Boolean {
-    if (other != null) {
-      return fineAmount.compareTo(other.fineAmount) == 0
-    }
-
-    return false
+    return other?.fineAmount?.compareTo(fineAmount) == 0
   }
 
   companion object {
-    fun from(fineAmount: CreateFineAmount, sentenceEntity: SentenceEntity): FineAmountEntity {
-      return FineAmountEntity(sentence = sentenceEntity, fineAmount = fineAmount.fineAmount)
+    fun from(fineAmount: CreateFineAmount): FineAmountEntity {
+      return FineAmountEntity(fineAmount = fineAmount.fineAmount, sentenceEntity = null)
     }
   }
 }

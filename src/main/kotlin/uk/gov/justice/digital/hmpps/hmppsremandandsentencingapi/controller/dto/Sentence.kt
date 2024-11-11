@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.FineAmountEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import java.time.LocalDate
 import java.util.UUID
@@ -13,10 +12,10 @@ data class Sentence(
   val consecutiveToChargeNumber: String?,
   val sentenceType: SentenceType,
   val convictionDate: LocalDate?,
-  val fineAmount: FineAmount?
+  val fineAmount: FineAmount?,
 ) {
   companion object {
-    fun from(sentenceEntity: SentenceEntity, fineAmountEntity: FineAmountEntity?): Sentence {
+    fun from(sentenceEntity: SentenceEntity): Sentence {
       return Sentence(
         sentenceEntity.sentenceUuid,
         sentenceEntity.chargeNumber,
@@ -25,7 +24,7 @@ data class Sentence(
         sentenceEntity.consecutiveTo?.chargeNumber,
         SentenceType.from(sentenceEntity.sentenceType),
         sentenceEntity.convictionDate,
-        fineAmountEntity?.let { FineAmount.from(it) }
+        sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
       )
     }
   }

@@ -12,5 +12,5 @@ data class CreateSentence(
   val consecutiveToSentenceUuid: UUID?,
   val sentenceTypeId: UUID,
   val convictionDate: LocalDate?,
-  val fineAmount: CreateFineAmount?
+  val fineAmount: CreateFineAmount?,
 )

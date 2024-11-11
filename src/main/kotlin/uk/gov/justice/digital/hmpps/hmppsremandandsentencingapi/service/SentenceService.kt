@@ -11,13 +11,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.FineAmountRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import java.util.UUID
 
 @Service
-class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val snsService: SnsService) {
+class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val snsService: SnsService, private val fineAmountRepository: FineAmountRepository) {
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): SentenceEntity {
@@ -41,10 +42,16 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       } ?: (SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType) to EntityChangeStatus.CREATED)
     val toCreatePeriodLengths = toCreateSentence.periodLengths.filter { it.id == 0 }
     toCreateSentence.periodLengths = toCreateSentence.periodLengths.filter { it.id != 0 }
+    val toCreateFineAmount = toCreateSentence.fineAmountEntity?.takeIf { it.id == 0 }
+    toCreateSentence.fineAmountEntity = toCreateSentence.fineAmountEntity?.takeUnless { it.id == 0 }
     val createdSentence = sentenceRepository.save(toCreateSentence)
     toCreatePeriodLengths.forEach {
       it.sentenceEntity = createdSentence
       periodLengthRepository.save(it)
+    }
+    toCreateFineAmount?.let {
+      it.sentenceEntity = createdSentence
+      fineAmountRepository.save(it)
     }
     if (status == EntityChangeStatus.CREATED) {
       snsService.sentenceInserted(prisonerId, createdSentence.sentenceUuid.toString(), createdSentence.createdAt)
