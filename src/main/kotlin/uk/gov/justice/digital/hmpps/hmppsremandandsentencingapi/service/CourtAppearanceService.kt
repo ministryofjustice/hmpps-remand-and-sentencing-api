@@ -61,7 +61,7 @@ class CourtAppearanceService(
       charge
     }.toMutableSet()
     val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
-    val (toCreateAppearance, status) = courtAppearance.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
+    val (toCreateAppearance, status) = courtAppearance.appearanceUuid.let { courtAppearanceRepository.findByAppearanceUuid(it) }
       ?.let { courtAppearanceEntity ->
         if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
           throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
@@ -77,6 +77,7 @@ class CourtAppearanceService(
         courtAppearanceEntity.statusId = EntityStatus.EDITED
         compareAppearance.previousAppearance = courtAppearanceEntity
         compareAppearance.appearanceUuid = UUID.randomUUID()
+        courtAppearance.appearanceUuid = compareAppearance.appearanceUuid
         compareAppearance.lifetimeUuid = courtAppearanceEntity.lifetimeUuid
         compareAppearance to EntityChangeStatus.EDITED
       } ?: (CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData) to EntityChangeStatus.CREATED)

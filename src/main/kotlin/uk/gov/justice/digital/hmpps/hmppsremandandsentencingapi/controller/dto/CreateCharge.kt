@@ -1,12 +1,17 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
+import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.ChargeLegacyData
 import java.time.LocalDate
 import java.util.UUID
 
 data class CreateCharge(
   val appearanceUuid: UUID?,
-  val chargeUuid: UUID?,
+  @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonSetter(nulls = Nulls.SKIP)
+  var chargeUuid: UUID = UUID.randomUUID(),
   val offenceCode: String,
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,

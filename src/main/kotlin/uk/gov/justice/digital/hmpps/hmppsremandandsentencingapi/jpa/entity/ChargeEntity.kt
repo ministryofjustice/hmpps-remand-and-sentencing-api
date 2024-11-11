@@ -80,7 +80,7 @@ class ChargeEntity(
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?): ChargeEntity {
-      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid ?: UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf())
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf())
     }
   }
 }

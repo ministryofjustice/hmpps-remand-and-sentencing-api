@@ -46,7 +46,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       chargeOutcomeRepository.findByOutcomeUuid(it)
     } ?: chargeLegacyData?.nomisOutcomeCode?.let { chargeOutcomeRepository.findByNomisCode(it) }
     val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
-    val (toCreateCharge, status) = charge.chargeUuid?.let { chargeRepository.findByChargeUuid(it) }
+    val (toCreateCharge, status) = charge.chargeUuid.let { chargeRepository.findByChargeUuid(it) }
       ?.let { chargeEntity ->
         if (chargeEntity.statusId == EntityStatus.EDITED) {
           throw ImmutableChargeException("Cannot edit an already edited charge")
@@ -57,6 +57,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
         }
         chargeEntity.statusId = EntityStatus.EDITED
         compareCharge.chargeUuid = UUID.randomUUID()
+        charge.chargeUuid = compareCharge.chargeUuid
         compareCharge.supersedingCharge = chargeEntity
         compareCharge.lifetimeChargeUuid = chargeEntity.lifetimeChargeUuid
         compareCharge to EntityChangeStatus.EDITED

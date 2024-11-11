@@ -49,7 +49,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
     val courtCase = courtCaseService.createCourtCase(createCourtCase).also { courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier) }
-    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier)
+    return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
   }
 
   @PutMapping("/court-case/{courtCaseUuid}")
@@ -73,7 +73,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
         snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
       }
     }
-    return CreateCourtCaseResponse(courtCase.caseUniqueIdentifier)
+    return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
   }
 
   @GetMapping("/court-case/search")
