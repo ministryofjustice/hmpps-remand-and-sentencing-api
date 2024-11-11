@@ -25,13 +25,16 @@ class FineAmountEntity(
   var fineAmount: BigDecimal,
 ) {
   fun isSame(other: FineAmountEntity?): Boolean {
-    return sentence == other?.sentence &&
-      fineAmount == other.fineAmount
+    if (other != null) {
+      return fineAmount.compareTo(other.fineAmount) == 0
+    }
+
+    return false
   }
 
   companion object {
-    fun from(fineAmount: CreateFineAmount): FineAmountEntity {
-      return FineAmountEntity(sentence = SentenceEntity.from(fineAmount.sentence), fineAmount = fineAmount.fineAmount)
+    fun from(fineAmount: CreateFineAmount, sentenceEntity: SentenceEntity): FineAmountEntity {
+      return FineAmountEntity(sentence = sentenceEntity, fineAmount = fineAmount.fineAmount)
     }
   }
 }
