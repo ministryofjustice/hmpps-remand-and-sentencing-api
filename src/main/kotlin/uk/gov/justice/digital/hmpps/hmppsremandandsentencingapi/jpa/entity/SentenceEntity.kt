@@ -58,10 +58,14 @@ class SentenceEntity(
   val charge: ChargeEntity,
   @Column
   val convictionDate: LocalDate?,
+
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
   var periodLengths: List<PeriodLengthEntity> = emptyList()
+
+  @OneToOne(mappedBy = "sentenceEntity")
+  var fineAmountEntity: FineAmountEntity? = null
 
   fun isSame(other: SentenceEntity?): Boolean {
     return chargeNumber == other?.chargeNumber &&
@@ -69,7 +73,8 @@ class SentenceEntity(
       sentenceServeType == other.sentenceServeType &&
       sentenceType == other.sentenceType &&
       ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
-      convictionDate == other.convictionDate
+      convictionDate == other.convictionDate &&
+      ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
   }
 
   companion object {
@@ -89,6 +94,7 @@ class SentenceEntity(
         convictionDate = sentence.convictionDate,
       )
       sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }
+      sentence.fineAmount?.let { sentenceEntity.fineAmountEntity = FineAmountEntity.from(it) }
       return sentenceEntity
     }
   }

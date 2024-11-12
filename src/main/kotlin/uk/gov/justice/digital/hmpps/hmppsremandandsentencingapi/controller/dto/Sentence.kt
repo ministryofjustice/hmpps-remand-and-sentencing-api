@@ -12,6 +12,7 @@ data class Sentence(
   val consecutiveToChargeNumber: String?,
   val sentenceType: SentenceType,
   val convictionDate: LocalDate?,
+  val fineAmount: FineAmount?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence {
@@ -23,6 +24,7 @@ data class Sentence(
         sentenceEntity.consecutiveTo?.chargeNumber,
         SentenceType.from(sentenceEntity.sentenceType),
         sentenceEntity.convictionDate,
+        sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
       )
     }
   }

@@ -100,6 +100,7 @@ abstract class IntegrationTestBase {
       null,
       UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"),
       LocalDate.now().minusDays(7),
+      null,
     )
     val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), true, sentence, null)
     val appearance = CreateCourtAppearance(

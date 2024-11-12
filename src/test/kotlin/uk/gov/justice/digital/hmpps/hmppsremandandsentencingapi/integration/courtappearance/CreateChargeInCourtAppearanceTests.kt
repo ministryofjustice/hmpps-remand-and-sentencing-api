@@ -17,7 +17,7 @@ class CreateChargeInCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create charge in existing court appearance`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7), null)
     val charge = CreateCharge(
       null,
       UUID.randomUUID(),
