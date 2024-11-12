@@ -5,11 +5,13 @@ import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.legacy.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -19,7 +21,10 @@ class UpdateChargeTests : IntegrationTestBase() {
   fun `can update charge supplying appearance uuid`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(
+      null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7),
+      CreateFineAmount(BigDecimal.TEN),
+    )
     val charge = CreateCharge(
       createdAppearance.appearanceUuid,
       createdAppearance.charges.first().chargeUuid,
@@ -53,7 +58,7 @@ class UpdateChargeTests : IntegrationTestBase() {
   fun `can update charge without supplying appearance uuid and charge already being in a court case`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7))
+    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7), null)
     val charge = CreateCharge(
       null,
       createdAppearance.charges.first().chargeUuid,
