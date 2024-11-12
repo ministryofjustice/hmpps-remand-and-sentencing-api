@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -41,6 +42,24 @@ class ChargeController(private val chargeService: ChargeService) {
   )
   fun getChargeDetails(@PathVariable chargeUuid: UUID): Charge {
     return chargeService.findChargeByUuid(chargeUuid) ?: throw EntityNotFoundException("No charge found at $chargeUuid")
+  }
+
+  @PostMapping("/charge")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
+  @Operation(
+    summary = "Create Charge",
+    description = "This endpoint will create a charge in a given court appearance",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "201", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.CREATED)
+  fun createCharge(@RequestBody createCharge: CreateCharge): CreateChargeResponse {
+    return chargeService.createCharge(createCharge)?.let { CreateChargeResponse.from(createCharge) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
   }
 
   @PutMapping("/charge/{chargeUuid}")
