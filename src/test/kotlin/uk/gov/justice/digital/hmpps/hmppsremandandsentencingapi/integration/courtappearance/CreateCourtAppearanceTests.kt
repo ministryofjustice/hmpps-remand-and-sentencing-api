@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 class CreateCourtAppearanceTests : IntegrationTestBase() {
@@ -38,7 +39,15 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     )
     val appearance = CreateCourtAppearance(
       courtCase.first, UUID.randomUUID(), null, "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7),
-      CourtAppearanceLegacyData("1", "1", "10-10-2015", "1116", "A NOMIS outcome description"),
+      CourtAppearanceLegacyData(
+        "1",
+        "1",
+        "10-10-2015",
+        "1116",
+        "A NOMIS outcome description",
+        LocalDate.now().plusDays(4),
+        LocalDateTime.now().plusDays(4).withHour(10).withMinute(0).withSecond(0).withNano(0),
+      ),
     )
     webTestClient
       .post()
