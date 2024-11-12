@@ -143,6 +143,16 @@ class CourtAppearanceService(
     snsService.courtAppearanceDeleted(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.appearanceUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity.createdAt)
   }
 
+  @Transactional
+  fun disassociateChargeWithAppearance(appearanceUuid: UUID, chargeUuid: UUID) = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let { courtAppearanceEntity ->
+    val chargeToRemove = courtAppearanceEntity.charges.find { it.chargeUuid == chargeUuid }
+    chargeToRemove?.let { chargeEntity ->
+      courtAppearanceEntity.charges.remove(chargeEntity)
+      chargeEntity.courtAppearances.remove(courtAppearanceEntity)
+      chargeEntity.takeIf { it.hasNoActiveCourtAppearances() }?.let { chargeService.deleteCharge(it, courtAppearanceEntity.courtCase.prisonerId) }
+    }
+  }
+
   @Transactional(readOnly = true)
   fun findAppearanceByUuid(appearanceUuid: UUID): CourtAppearance? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let { CourtAppearance.from(it) }
 }
