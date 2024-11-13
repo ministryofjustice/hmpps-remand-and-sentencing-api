@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FOURTEEN_DAY_FIXED_TERM_RECALL
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.HDC_RECALL
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.HDC_STANDARD_RECALL
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -61,7 +61,7 @@ class RecallIntTests : IntegrationTestBase() {
             prisonerId = "A12345B",
             recallDate = LocalDate.of(2024, 7, 1),
             returnToCustodyDate = LocalDate.of(2024, 7, 1),
-            recallType = HDC_RECALL,
+            recallType = HDC_STANDARD_RECALL,
             createdByUsername = "admin_user",
             createdAt = ZonedDateTime.now(),
           ),
@@ -70,7 +70,7 @@ class RecallIntTests : IntegrationTestBase() {
             prisonerId = "A12345B",
             recallDate = LocalDate.of(2024, 7, 2),
             returnToCustodyDate = LocalDate.of(2024, 7, 2),
-            recallType = HDC_RECALL,
+            recallType = HDC_STANDARD_RECALL,
             createdByUsername = "admin_user",
             createdAt = ZonedDateTime.now(),
           ),
