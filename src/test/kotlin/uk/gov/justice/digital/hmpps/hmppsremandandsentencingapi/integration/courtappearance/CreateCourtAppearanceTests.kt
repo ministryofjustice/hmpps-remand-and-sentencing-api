@@ -45,7 +45,6 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
         "10-10-2015",
         "1116",
         "A NOMIS outcome description",
-        LocalDate.now().plusDays(4),
         LocalDateTime.now().plusDays(4).withHour(10).withMinute(0).withSecond(0).withNano(0),
       ),
     )
