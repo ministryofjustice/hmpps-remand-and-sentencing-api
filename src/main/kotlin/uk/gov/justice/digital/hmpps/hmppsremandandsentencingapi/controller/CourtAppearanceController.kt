@@ -170,6 +170,24 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     courtAppearanceService.deleteCourtAppearance(appearanceUuid)
   }
 
+  @DeleteMapping("/court-appearance/{lifetimeUuid}/lifetime")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
+  @Operation(
+    summary = "Delete Appearance",
+    description = "This endpoint will delete an appearance",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun deleteAppearanceByLifetime(@PathVariable lifetimeUuid: UUID) {
+    courtAppearanceService.deleteCourtAppearanceByLifetime(lifetimeUuid)
+  }
+
   @DeleteMapping("/court-appearance/{appearanceUuid}/charge/{chargeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
   @Operation(
