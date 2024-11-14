@@ -70,6 +70,24 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     return courtAppearanceService.findAppearanceByUuid(appearanceUuid) ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
   }
 
+  @GetMapping("\${court.appearance.getByLifetimeIdPath}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW', 'ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO')")
+  @Operation(
+    summary = "Retrieve court appearance details",
+    description = "This endpoint will retrieve court appearance details",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court appearance details"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no court appearance at uuid"),
+    ],
+  )
+  fun getCourtAppearanceDetailsByLifetime(@PathVariable lifetimeUuid: UUID): CourtAppearance {
+    return courtAppearanceService.findAppearanceByLifetimeUuid(lifetimeUuid) ?: throw EntityNotFoundException("No court appearance found at $lifetimeUuid")
+  }
+
   @PutMapping("/court-appearance/{appearanceUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(

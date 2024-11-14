@@ -104,7 +104,7 @@ abstract class IntegrationTestBase {
     )
     val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), true, sentence, null)
     val appearance = CreateCourtAppearance(
-      null, UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), "123", "REMAND", 1,
+      null, UUID.randomUUID(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now().minusDays(minusDaysFromAppearanceDate), "123", "REMAND", 1,
       CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.OVERALL_SENTENCE_LENGTH),
       CreateNextCourtAppearance(
         LocalDate.now(),

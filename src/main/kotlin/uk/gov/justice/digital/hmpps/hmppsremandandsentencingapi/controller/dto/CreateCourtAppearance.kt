@@ -12,6 +12,9 @@ data class CreateCourtAppearance(
   @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonSetter(nulls = Nulls.SKIP)
   var appearanceUuid: UUID = UUID.randomUUID(),
+  @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonSetter(nulls = Nulls.SKIP)
+  var lifetimeUuid: UUID = UUID.randomUUID(),
   val outcomeUuid: UUID?,
   val courtCode: String,
   val courtCaseReference: String?,
