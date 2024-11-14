@@ -6,4 +6,6 @@ import java.util.UUID
 
 interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int> {
   fun findByAppearanceUuid(appearanceUuid: UUID): CourtAppearanceEntity?
+
+  fun findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid: UUID): CourtAppearanceEntity?
 }

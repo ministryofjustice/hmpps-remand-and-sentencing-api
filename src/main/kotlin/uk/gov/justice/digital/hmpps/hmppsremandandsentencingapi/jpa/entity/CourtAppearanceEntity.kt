@@ -137,7 +137,7 @@ class CourtAppearanceEntity(
         warrantType = courtAppearance.warrantType,
         taggedBail = courtAppearance.taggedBail,
         overallConvictionDate = courtAppearance.overallConvictionDate,
-        lifetimeUuid = UUID.randomUUID(),
+        lifetimeUuid = courtAppearance.lifetimeUuid,
         legacyData = legacyData,
       )
       courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
