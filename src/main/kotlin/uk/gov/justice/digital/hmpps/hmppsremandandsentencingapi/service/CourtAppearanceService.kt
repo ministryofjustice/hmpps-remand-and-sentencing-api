@@ -48,7 +48,29 @@ class CourtAppearanceService(
   }
 
   @Transactional
+  fun createCourtAppearanceByAppearanceUuid(createCourtAppearance: CreateCourtAppearance, appearanceUuid: UUID): CourtAppearanceEntity? {
+    return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)?.let { courtCaseEntity ->
+      val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity, courtAppearanceRepository.findByAppearanceUuid(appearanceUuid))
+      courtCaseEntity.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance)
+      return courtAppearance
+    }
+  }
+
+  @Transactional
+  fun createCourtAppearanceByLifetimeUuid(createCourtAppearance: CreateCourtAppearance, lifetimeUuid: UUID): CourtAppearanceEntity? {
+    return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)?.let { courtCaseEntity ->
+      val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity, courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid))
+      courtCaseEntity.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance)
+      return courtAppearance
+    }
+  }
+
+  @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
+    return createCourtAppearance(courtAppearance, courtCaseEntity, courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid))
+  }
+
+  private fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity, existingCourtAppearanceEntity: CourtAppearanceEntity?): CourtAppearanceEntity {
     var appearanceLegacyData = courtAppearance.legacyData
     val appearanceOutcome = courtAppearance.outcomeUuid?.let {
       appearanceLegacyData = appearanceLegacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null)
@@ -61,26 +83,25 @@ class CourtAppearanceService(
       charge
     }.toMutableSet()
     val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
-    val (toCreateAppearance, status) = courtAppearance.appearanceUuid.let { courtAppearanceRepository.findByAppearanceUuid(it) }
-      ?.let { courtAppearanceEntity ->
-        if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
-          throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
-        }
-        val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
-        if (courtAppearanceEntity.isSame(compareAppearance)) {
-          val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
-          toDeleteCharges.forEach { chargeService.deleteCharge(it, courtCaseEntity.prisonerId) }
+    val (toCreateAppearance, status) = existingCourtAppearanceEntity?.let { courtAppearanceEntity ->
+      if (courtAppearanceEntity.statusId == EntityStatus.EDITED) {
+        throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
+      }
+      val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
+      if (courtAppearanceEntity.isSame(compareAppearance)) {
+        val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
+        toDeleteCharges.forEach { chargeService.deleteCharge(it, courtCaseEntity.prisonerId) }
 
-          courtAppearanceEntity.charges.addAll(charges)
-          return@let courtAppearanceEntity to EntityChangeStatus.NO_CHANGE
-        }
-        courtAppearanceEntity.statusId = EntityStatus.EDITED
-        compareAppearance.previousAppearance = courtAppearanceEntity
-        compareAppearance.appearanceUuid = UUID.randomUUID()
-        courtAppearance.appearanceUuid = compareAppearance.appearanceUuid
-        compareAppearance.lifetimeUuid = courtAppearanceEntity.lifetimeUuid
-        compareAppearance to EntityChangeStatus.EDITED
-      } ?: (CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData) to EntityChangeStatus.CREATED)
+        courtAppearanceEntity.charges.addAll(charges)
+        return@let courtAppearanceEntity to EntityChangeStatus.NO_CHANGE
+      }
+      courtAppearanceEntity.statusId = EntityStatus.EDITED
+      compareAppearance.previousAppearance = courtAppearanceEntity
+      compareAppearance.appearanceUuid = UUID.randomUUID()
+      courtAppearance.appearanceUuid = compareAppearance.appearanceUuid
+      compareAppearance.lifetimeUuid = courtAppearanceEntity.lifetimeUuid
+      compareAppearance to EntityChangeStatus.EDITED
+    } ?: (CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData) to EntityChangeStatus.CREATED)
 
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { NextCourtAppearanceEntity.from(it) }
     if (toCreateAppearance.nextCourtAppearance?.isSame(nextCourtAppearance) != true) {
@@ -107,10 +128,10 @@ class CourtAppearanceService(
   @Transactional
   fun createChargeInAppearance(createCharge: CreateCharge): ChargeEntity? {
     return courtAppearanceRepository.findByAppearanceUuid(createCharge.appearanceUuid!!)?.let { courtAppearance ->
-      val sentencesCreated = courtAppearance.charges.filter { it.getActiveSentence() != null }.map { charge ->
+      val sentencesCreated = courtAppearance.charges.filter { it.getActiveSentence() != null }.associate { charge ->
         val sentence = charge.getActiveSentence()!!
         sentence.chargeNumber to sentence
-      }.toMap()
+      }
       val charge = chargeService.createCharge(createCharge, sentencesCreated, courtAppearance.courtCase.prisonerId)
       courtAppearance.charges.add(charge)
       charge

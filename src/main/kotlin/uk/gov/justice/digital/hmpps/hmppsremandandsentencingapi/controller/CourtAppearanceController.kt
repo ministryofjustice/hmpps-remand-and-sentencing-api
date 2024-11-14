@@ -103,7 +103,30 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   )
   @ResponseStatus(HttpStatus.OK)
   fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse {
-    return courtAppearanceService.createCourtAppearance(createCourtAppearance.copy(appearanceUuid = appearanceUuid))?.let { appearance ->
+    return courtAppearanceService.createCourtAppearanceByAppearanceUuid(createCourtAppearance.copy(appearanceUuid = appearanceUuid), appearanceUuid)?.let { appearance ->
+      courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
+        snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
+      }
+      CreateCourtAppearanceResponse.from(createCourtAppearance)
+    } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
+  }
+
+  @PutMapping("/court-appearance/{lifetimeUuid}/lifetime")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
+  @Operation(
+    summary = "Create Court appearance",
+    description = "This endpoint will create a court appearance in a given court case",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court case UUID"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun updateCourtAppearanceByLifetime(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable lifetimeUuid: UUID): CreateCourtAppearanceResponse {
+    return courtAppearanceService.createCourtAppearanceByLifetimeUuid(createCourtAppearance.copy(lifetimeUuid = lifetimeUuid), lifetimeUuid)?.let { appearance ->
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
         snsService.legacyCaseReferencesUpdated(it.prisonerId, it.courtCaseId, it.timeUpdated)
       }
