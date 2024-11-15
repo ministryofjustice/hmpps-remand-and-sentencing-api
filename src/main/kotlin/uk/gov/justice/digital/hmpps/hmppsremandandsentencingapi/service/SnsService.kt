@@ -165,5 +165,17 @@ class SnsService(
     domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
   }
 
+  fun <T> publishDomainEvent(
+    eventType: String,
+    description: String,
+    detailsUrl: String,
+    timeUpdated: ZonedDateTime,
+    additionalInformation: T,
+    personReference: PersonReference,
+  ) {
+    val hmppsMessage = HmppsMessage(eventType, 1, description, detailsUrl, timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), additionalInformation, personReference)
+    domainEventsTopic.publish(hmppsMessage.eventType, objectMapper.writeValueAsString(hmppsMessage), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsMessage.eventType).build()))
+  }
+
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
 }
