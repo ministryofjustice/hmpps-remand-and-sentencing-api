@@ -37,5 +37,16 @@ class CourtCaseDomainEventService(
     )
   }
 
+  fun delete(id: String, prisonerId: String, source: String) {
+    snsService.publishDomainEvent(
+      "court-case.deleted",
+      "Court case deleted",
+      generateDetailsUri(courtCaseLookupPath, id),
+      ZonedDateTime.now(),
+      HmppsCourtCaseMessage(id, source),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+  }
+
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
 }
