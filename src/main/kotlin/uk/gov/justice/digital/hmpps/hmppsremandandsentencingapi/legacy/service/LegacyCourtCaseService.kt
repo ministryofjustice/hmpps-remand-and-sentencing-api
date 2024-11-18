@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
@@ -20,5 +21,9 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
       ),
     )
     return LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier)
+  }
+
+  fun get(courtCaseUuid: String): LegacyCourtCase? {
+    return courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { LegacyCourtCase.from(it) }
   }
 }
