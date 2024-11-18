@@ -25,15 +25,25 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     return LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier)
   }
 
-  fun get(courtCaseUuid: String): LegacyCourtCase? {
-    return courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { LegacyCourtCase.from(it) }
+  fun get(courtCaseUuid: String): LegacyCourtCase {
+    return getUnlessDeleted(courtCaseUuid).let { LegacyCourtCase.from(it) }
   }
 
   @Transactional
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
-    val existingCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+    val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
+  }
+
+  @Transactional
+  fun delete(courtCaseUuid: String) {
+    val existingCourtCase = getUnlessDeleted(courtCaseUuid)
+    existingCourtCase.statusId = EntityStatus.DELETED
+  }
+
+  private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity {
+    return courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
+      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
   }
 }
