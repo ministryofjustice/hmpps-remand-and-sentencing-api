@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -62,5 +63,24 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RO', 'ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun get(@PathVariable courtCaseUuid: String): LegacyCourtCase {
     return legacyCourtCaseService.get(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+  }
+
+  @PutMapping("/{courtCaseUuid}")
+  @Operation(
+    summary = "Updates a court case",
+    description = "Synchronise an update of court case from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "court case created"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
+  fun update(@PathVariable courtCaseUuid: String, @RequestBody courtCase: LegacyCreateCourtCase) {
+    legacyCourtCaseService.update(courtCaseUuid, courtCase).also {
+      eventService.update(it.courtCaseUuid, courtCase.prisonerId, "NOMIS")
+    }
   }
 }
