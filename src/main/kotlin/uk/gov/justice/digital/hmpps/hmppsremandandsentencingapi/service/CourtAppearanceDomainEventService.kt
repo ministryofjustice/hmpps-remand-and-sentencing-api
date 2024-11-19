@@ -21,7 +21,7 @@ class CourtAppearanceDomainEventService(
       "Court appearance inserted",
       generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
       ZonedDateTime.now(),
-      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId),
+      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
