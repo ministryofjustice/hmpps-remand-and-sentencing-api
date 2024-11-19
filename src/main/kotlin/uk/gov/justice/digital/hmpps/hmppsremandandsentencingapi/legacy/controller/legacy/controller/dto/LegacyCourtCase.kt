@@ -7,10 +7,11 @@ data class LegacyCourtCase(
   val courtCaseUuid: String,
   val prisonerId: String,
   val active: Boolean,
+  val legacyData: CourtCaseLegacyData?,
 ) {
   companion object {
-    fun from(courtCaseEntity: CourtCaseEntity): LegacyCourtCase {
-      return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == EntityStatus.ACTIVE)
+    fun from(courtCaseEntity: CourtCaseEntity, legacyData: CourtCaseLegacyData?): LegacyCourtCase {
+      return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == EntityStatus.ACTIVE, legacyData)
     }
   }
 }
