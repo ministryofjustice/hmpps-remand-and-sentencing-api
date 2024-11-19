@@ -19,6 +19,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCreateCourtAppearance
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -142,6 +143,29 @@ class CourtAppearanceEntity(
       )
       courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
       return courtAppearanceEntity
+    }
+
+    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String): CourtAppearanceEntity {
+      return CourtAppearanceEntity(
+        appearanceUuid = UUID.randomUUID(),
+        appearanceOutcome = appearanceOutcome,
+        courtCase = courtCase,
+        courtCode = courtAppearance.courtCode,
+        courtCaseReference = null,
+        appearanceDate = courtAppearance.appearanceDate,
+        statusId = EntityStatus.ACTIVE,
+        warrantId = null,
+        charges = mutableSetOf(),
+        previousAppearance = null,
+        createdPrison = null,
+        createdByUsername = createdByUsername,
+        nextCourtAppearance = null,
+        warrantType = appearanceOutcome?.outcomeType ?: "UNKNOWN",
+        taggedBail = null,
+        overallConvictionDate = null,
+        lifetimeUuid = UUID.randomUUID(),
+        legacyData = null,
+      )
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {
