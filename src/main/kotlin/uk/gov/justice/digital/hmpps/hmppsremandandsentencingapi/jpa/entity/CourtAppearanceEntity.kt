@@ -118,6 +118,16 @@ class CourtAppearanceEntity(
     return courtAppearance
   }
 
+  fun copyFrom(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
+    val courtAppearance = CourtAppearanceEntity(
+      0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
+      EntityStatus.ACTIVE, this, warrantId,
+      ZonedDateTime.now(), createdByUsername, createdPrison, appearanceOutcome?.outcomeType ?: "UNKNOWN", taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
+    )
+    courtAppearance.periodLengths = periodLengths.toList()
+    return courtAppearance
+  }
+
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
@@ -145,7 +155,7 @@ class CourtAppearanceEntity(
       return courtAppearanceEntity
     }
 
-    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String): CourtAppearanceEntity {
+    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
       return CourtAppearanceEntity(
         appearanceUuid = UUID.randomUUID(),
         appearanceOutcome = appearanceOutcome,
@@ -164,7 +174,7 @@ class CourtAppearanceEntity(
         taggedBail = null,
         overallConvictionDate = null,
         lifetimeUuid = UUID.randomUUID(),
-        legacyData = null,
+        legacyData = legacyData,
       )
     }
 

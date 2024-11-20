@@ -30,7 +30,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCourtCaseCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -151,6 +153,25 @@ abstract class IntegrationTestBase {
       .responseBody.blockFirst()!!
     purgeQueues()
     return response.courtCaseUuid to legacyCreateCourtCase
+  }
+
+  protected fun createLegacyCourtAppearance(legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(), legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance()): Pair<UUID, LegacyCreateCourtAppearance> {
+    val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
+    val toCreateAppearance = legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(toCreateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyCourtAppearanceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    purgeQueues()
+    return response.lifetimeUuid to toCreateAppearance
   }
 
   fun purgeQueues() {
