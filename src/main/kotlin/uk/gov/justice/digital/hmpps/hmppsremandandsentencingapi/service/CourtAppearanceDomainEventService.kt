@@ -37,5 +37,16 @@ class CourtAppearanceDomainEventService(
     )
   }
 
+  fun delete(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: String) {
+    snsService.publishDomainEvent(
+      "court-appearance.deleted",
+      "Court appearance deleted",
+      generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
+      ZonedDateTime.now(),
+      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+  }
+
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
 }
