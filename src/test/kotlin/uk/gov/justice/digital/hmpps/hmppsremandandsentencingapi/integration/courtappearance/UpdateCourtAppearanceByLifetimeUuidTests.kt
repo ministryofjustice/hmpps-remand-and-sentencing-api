@@ -58,7 +58,7 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/court-appearance/${appearance.lifetimeUuid}/lifetime")
+      .uri("/legacy/court-appearance/${appearance.lifetimeUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
       }
@@ -103,7 +103,7 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/court-appearance/${appearance.lifetimeUuid}/lifetime")
+      .uri("/legacy/court-appearance/${appearance.lifetimeUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
       }
@@ -111,9 +111,9 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges.[?(@.chargeUuid == '${secondCharge.chargeUuid}')]")
+      .jsonPath("$.charges.[?(@.offenceCode == '${secondCharge.offenceCode}')]")
       .doesNotExist()
-      .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')]")
+      .jsonPath("$.charges.[?(@.offenceCode == '${charge.offenceCode}')]")
       .exists()
   }
 

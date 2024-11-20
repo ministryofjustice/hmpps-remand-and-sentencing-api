@@ -18,7 +18,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/legacy/court-appearance/${createdCourtAppearance.first}")
       .bodyValue(toUpdate)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_APPEARANCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -37,7 +37,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/legacy/court-appearance/${UUID.randomUUID()}")
       .bodyValue(toUpdate)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_APPEARANCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()

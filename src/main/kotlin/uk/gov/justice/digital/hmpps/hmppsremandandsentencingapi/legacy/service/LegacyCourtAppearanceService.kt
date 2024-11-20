@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
@@ -45,6 +46,11 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
+  }
+
+  @Transactional
+  fun get(lifetimeUuid: UUID): LegacyCourtAppearance {
+    return LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid), objectMapper)
   }
 
   private fun getUnlessDeleted(lifetimeUuid: UUID): CourtAppearanceEntity {

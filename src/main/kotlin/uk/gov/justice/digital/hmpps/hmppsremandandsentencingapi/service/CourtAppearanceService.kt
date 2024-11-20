@@ -179,7 +179,4 @@ class CourtAppearanceService(
 
   @Transactional(readOnly = true)
   fun findAppearanceByUuid(appearanceUuid: UUID): CourtAppearance? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let { CourtAppearance.from(it) }
-
-  @Transactional(readOnly = true)
-  fun findAppearanceByLifetimeUuid(lifetimeUuid: UUID): CourtAppearance? = courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid)?.let { CourtAppearance.from(it) }
 }
