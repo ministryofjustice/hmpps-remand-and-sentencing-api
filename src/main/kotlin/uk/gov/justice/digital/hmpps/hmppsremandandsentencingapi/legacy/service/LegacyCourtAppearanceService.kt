@@ -53,6 +53,12 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
     return LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid), objectMapper)
   }
 
+  @Transactional
+  fun delete(lifetimeUuid: UUID) {
+    val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
+    existingCourtAppearance.statusId = EntityStatus.DELETED
+  }
+
   private fun getUnlessDeleted(lifetimeUuid: UUID): CourtAppearanceEntity {
     return courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid)
       ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $lifetimeUuid")
