@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 class LegacyCreateChargeTests : IntegrationTestBase() {
 
   @Test
-  fun `create appearance in existing court case`() {
+  fun `create charge in existing court case`() {
     val (appearanceLifetimeUuid) = createLegacyCourtAppearance()
     val legacyCharge = DataCreator.legacyCreateCharge(appearanceLifetimeUuid = appearanceLifetimeUuid)
 
@@ -34,7 +34,7 @@ class LegacyCreateChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `must not create appearance when no court case exists`() {
+  fun `must not charge when no court appearance exists`() {
     val legacyCharge = DataCreator.legacyCreateCharge()
     webTestClient
       .post()
