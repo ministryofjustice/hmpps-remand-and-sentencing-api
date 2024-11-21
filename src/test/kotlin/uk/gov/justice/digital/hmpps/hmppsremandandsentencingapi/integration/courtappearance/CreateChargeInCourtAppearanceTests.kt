@@ -27,7 +27,7 @@ class CreateChargeInCourtAppearanceTests : IntegrationTestBase() {
       null,
       true,
       sentence,
-      ChargeLegacyData("1", "1", "10-10-2015", "1116", "A NOMIS charge outcome description"),
+      ChargeLegacyData("10-10-2015", "1116", "A NOMIS charge outcome description"),
     )
     webTestClient
       .post()
@@ -56,7 +56,7 @@ class CreateChargeInCourtAppearanceTests : IntegrationTestBase() {
       null,
       true,
       null,
-      ChargeLegacyData("1", "1", "10-10-2015", "1116", "A NOMIS charge outcome description"),
+      ChargeLegacyData("10-10-2015", "1116", "A NOMIS charge outcome description"),
     )
     webTestClient
       .post()
