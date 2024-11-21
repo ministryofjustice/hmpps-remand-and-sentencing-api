@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
