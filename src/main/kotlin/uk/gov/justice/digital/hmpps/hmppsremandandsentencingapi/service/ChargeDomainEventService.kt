@@ -26,5 +26,16 @@ class ChargeDomainEventService(
     )
   }
 
+  fun update(prisonerId: String, chargeId: String, courtCaseId: String, source: String) {
+    snsService.publishDomainEvent(
+      "charge.updated",
+      "Charge updated",
+      generateDetailsUri(courtChargeLookupPath, chargeId),
+      ZonedDateTime.now(),
+      HmppsCourtChargeMessage(chargeId, courtCaseId, source),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+  }
+
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
 }
