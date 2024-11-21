@@ -18,6 +18,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto.LegacyCreateCharge
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -53,6 +54,8 @@ class ChargeEntity(
   val terrorRelated: Boolean?,
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+  @Column
+  val createdByUsername: String,
   @Type(value = JsonType::class)
   @Column(columnDefinition = "jsonb")
   var legacyData: JsonNode? = null,
@@ -79,8 +82,12 @@ class ChargeEntity(
   }
 
   companion object {
-    fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?): ChargeEntity {
-      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf())
+    fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?, createdByUsername: String): ChargeEntity {
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf(), createdByUsername = createdByUsername)
+    }
+
+    fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode, createdByUsername: String): ChargeEntity {
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = if (charge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = legacyData, courtAppearances = mutableSetOf(), createdByUsername = createdByUsername)
     }
   }
 }

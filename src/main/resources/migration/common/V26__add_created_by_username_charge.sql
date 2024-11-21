@@ -1,0 +1,1 @@
+alter table charge add column created_by_username VARCHAR NOT NULL DEFAULT 'UNRECORDED';

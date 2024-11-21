@@ -78,7 +78,7 @@ class CourtAppearanceService(
     } ?: appearanceLegacyData?.nomisOutcomeCode?.let { appearanceOutcomeRepository.findByNomisCode(it) }
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
     val charges = courtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map {
-      val charge = chargeService.createCharge(it, sentencesCreated, courtCaseEntity.prisonerId)
+      val charge = chargeService.createCharge(it, sentencesCreated, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier)
       charge.getActiveSentence()?.let { sentence -> sentencesCreated.put(sentence.chargeNumber, sentence) }
       charge
     }.toMutableSet()
@@ -90,7 +90,7 @@ class CourtAppearanceService(
       val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
       if (courtAppearanceEntity.isSame(compareAppearance)) {
         val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
-        toDeleteCharges.forEach { chargeService.deleteCharge(it, courtCaseEntity.prisonerId) }
+        toDeleteCharges.forEach { chargeService.deleteCharge(it, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier) }
 
         courtAppearanceEntity.charges.addAll(charges)
         return@let courtAppearanceEntity to EntityChangeStatus.NO_CHANGE
@@ -132,7 +132,7 @@ class CourtAppearanceService(
         val sentence = charge.getActiveSentence()!!
         sentence.chargeNumber to sentence
       }
-      val charge = chargeService.createCharge(createCharge, sentencesCreated, courtAppearance.courtCase.prisonerId)
+      val charge = chargeService.createCharge(createCharge, sentencesCreated, courtAppearance.courtCase.prisonerId, courtAppearance.courtCase.caseUniqueIdentifier)
       courtAppearance.charges.add(charge)
       charge
     }
@@ -160,7 +160,7 @@ class CourtAppearanceService(
   @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
-    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId) }
+    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
     snsService.courtAppearanceDeleted(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.appearanceUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity.createdAt)
   }
 
@@ -170,7 +170,7 @@ class CourtAppearanceService(
     chargeToRemove?.let { chargeEntity ->
       courtAppearanceEntity.charges.remove(chargeEntity)
       chargeEntity.courtAppearances.remove(courtAppearanceEntity)
-      chargeEntity.takeIf { it.hasNoActiveCourtAppearances() }?.let { chargeService.deleteCharge(it, courtAppearanceEntity.courtCase.prisonerId) }
+      chargeEntity.takeIf { it.hasNoActiveCourtAppearances() }?.let { chargeService.deleteCharge(it, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
     }
   }
 

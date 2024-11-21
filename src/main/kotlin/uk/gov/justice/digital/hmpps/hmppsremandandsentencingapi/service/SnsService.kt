@@ -100,40 +100,40 @@ class SnsService(
     domainEventsTopic.publish(hmppsCourtAppearanceDeletedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtAppearanceDeletedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtAppearanceDeletedEvent.eventType).build()))
   }
 
-  fun chargeInserted(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
+  fun chargeInserted(prisonerId: String, chargeId: String, courtCaseId: String, timeUpdated: ZonedDateTime) {
     val hmppsCourtChargeInsertedEvent = HmppsMessage(
       "charge.inserted",
       1,
       "Charge inserted event",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-      HmppsCourtChargeMessage(chargeId),
+      HmppsCourtChargeMessage(chargeId, courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
     domainEventsTopic.publish(hmppsCourtChargeInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeInsertedEvent.eventType).build()))
   }
 
-  fun chargeUpdated(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
+  fun chargeUpdated(prisonerId: String, chargeId: String, courtCaseId: String, timeUpdated: ZonedDateTime) {
     val hmppsCourtChargeUpdatedEvent = HmppsMessage(
       "charge.updated",
       1,
       "Charge updated event",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-      HmppsCourtChargeMessage(chargeId),
+      HmppsCourtChargeMessage(chargeId, courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
     domainEventsTopic.publish(hmppsCourtChargeUpdatedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeUpdatedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeUpdatedEvent.eventType).build()))
   }
 
-  fun chargeDeleted(prisonerId: String, chargeId: String, timeUpdated: ZonedDateTime) {
+  fun chargeDeleted(prisonerId: String, chargeId: String, courtCaseId: String, timeUpdated: ZonedDateTime) {
     val hmppsCourtChargeDeletedEvent = HmppsMessage(
       "charge.deleted",
       1,
       "Charge deleted event",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-      HmppsCourtChargeMessage(chargeId),
+      HmppsCourtChargeMessage(chargeId, courtCaseId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
     domainEventsTopic.publish(hmppsCourtChargeDeletedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtChargeDeletedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtChargeDeletedEvent.eventType).build()))
