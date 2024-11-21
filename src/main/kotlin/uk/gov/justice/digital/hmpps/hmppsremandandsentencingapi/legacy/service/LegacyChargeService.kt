@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
@@ -43,6 +44,10 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUUID, existingCharge.courtAppearances.first().courtCase.caseUniqueIdentifier, existingCharge.courtAppearances.first().courtCase.prisonerId)
+  }
+
+  fun get(lifetimeUUID: UUID): LegacyCharge {
+    return LegacyCharge.from(getUnlessDeleted(lifetimeUUID), objectMapper)
   }
 
   private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity {
