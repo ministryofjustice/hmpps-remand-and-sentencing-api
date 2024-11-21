@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -84,5 +85,25 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW', 'ROLE_REMAND_AND_SENTENCING_CHARGE_RO')")
   fun get(@PathVariable lifetimeUuid: UUID): LegacyCharge {
     return legacyChargeService.get(lifetimeUuid)
+  }
+
+  @DeleteMapping("/{lifetimeUuid}")
+  @Operation(
+    summary = "Delete Charge",
+    description = "Synchronise a deletion of charge from NOMIS offender charges into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
+  fun delete(@PathVariable lifetimeUuid: UUID) {
+    legacyChargeService.get(lifetimeUuid).also { legacyCharge ->
+      legacyChargeService.delete(lifetimeUuid)
+      eventService.delete(legacyCharge.prisonerId, legacyCharge.lifetimeUuid.toString(), legacyCharge.courtCaseUuid, "NOMIS")
+    }
   }
 }

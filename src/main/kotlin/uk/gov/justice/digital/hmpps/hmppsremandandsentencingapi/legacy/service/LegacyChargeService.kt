@@ -46,8 +46,15 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUUID, existingCharge.courtAppearances.first().courtCase.caseUniqueIdentifier, existingCharge.courtAppearances.first().courtCase.prisonerId)
   }
 
+  @Transactional(readOnly = true)
   fun get(lifetimeUUID: UUID): LegacyCharge {
     return LegacyCharge.from(getUnlessDeleted(lifetimeUUID), objectMapper)
+  }
+
+  @Transactional
+  fun delete(lifetimeUUID: UUID) {
+    val charge = getUnlessDeleted(lifetimeUUID)
+    charge.statusId = EntityStatus.DELETED
   }
 
   private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity {
