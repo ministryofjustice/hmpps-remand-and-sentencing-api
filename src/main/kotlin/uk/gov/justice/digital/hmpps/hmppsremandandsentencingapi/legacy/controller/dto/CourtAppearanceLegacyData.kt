@@ -1,4 +1,6 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.legacy.controller.dto
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
+
+import java.time.LocalDateTime
 
 data class CourtAppearanceLegacyData(
   val eventId: String?,
@@ -6,5 +8,5 @@ data class CourtAppearanceLegacyData(
   val postedDate: String?,
   val nomisOutcomeCode: String?,
   val outcomeDescription: String?,
-  val nextEventDateTime: java.time.LocalDateTime?,
+  val nextEventDateTime: LocalDateTime?,
 )
