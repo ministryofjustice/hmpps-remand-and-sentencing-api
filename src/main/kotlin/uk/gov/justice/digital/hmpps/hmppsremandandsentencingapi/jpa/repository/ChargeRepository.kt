@@ -6,4 +6,6 @@ import java.util.UUID
 
 interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   fun findByChargeUuid(chargeUuid: UUID): ChargeEntity?
+
+  fun findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeUUID: UUID): ChargeEntity?
 }

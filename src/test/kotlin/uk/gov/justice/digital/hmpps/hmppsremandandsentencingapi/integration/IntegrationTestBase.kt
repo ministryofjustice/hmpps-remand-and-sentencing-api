@@ -30,8 +30,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
@@ -172,6 +174,25 @@ abstract class IntegrationTestBase {
       .responseBody.blockFirst()!!
     purgeQueues()
     return response.lifetimeUuid to toCreateAppearance
+  }
+
+  protected fun createLegacyCharge(legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(), legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(), legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge()): Pair<UUID, LegacyCreateCharge> {
+    val courtAppearance = createLegacyCourtAppearance(legacyCreateCourtCase, legacyCreateCourtAppearance)
+    val toCreateCharge = legacyCharge.copy(appearanceLifetimeUuid = courtAppearance.first)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/charge")
+      .bodyValue(toCreateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyChargeCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    purgeQueues()
+    return response.lifetimeUuid to toCreateCharge
   }
 
   fun purgeQueues() {

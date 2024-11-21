@@ -7,15 +7,19 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
+import java.util.UUID
 
 @RestController
 @RequestMapping("/legacy/charge", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -39,6 +43,27 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse {
     return legacyChargeService.create(charge).also {
       eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, "NOMIS")
+    }
+  }
+
+  @PutMapping("/{lifetimeUuid}")
+  @Operation(
+    summary = "Update a charge",
+    description = "Synchronise an update of charge from NOMIS Offender charges into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "charge updated"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
+  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyCreateCharge) {
+    legacyChargeService.update(lifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
+      if (entityChangeStatus == EntityChangeStatus.EDITED) {
+        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, "NOMIS")
+      }
     }
   }
 }
