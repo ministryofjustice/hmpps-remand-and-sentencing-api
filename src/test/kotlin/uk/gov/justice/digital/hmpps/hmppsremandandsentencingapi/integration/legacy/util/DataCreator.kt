@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -32,14 +32,12 @@ class DataCreator {
     }
 
     fun chargeLegacyData(
-      offenceChargeId: String = "1",
-      bookingId: String = "1",
       postedDate: String = LocalDate.now().format(
         DateTimeFormatter.ISO_DATE,
       ),
       nomisOutcomeCode: String = "1",
       outcomeDescription: String = "Outcome Description",
-    ): ChargeLegacyData = ChargeLegacyData(offenceChargeId, bookingId, postedDate, nomisOutcomeCode, outcomeDescription)
+    ): ChargeLegacyData = ChargeLegacyData(postedDate, nomisOutcomeCode, outcomeDescription)
 
     fun legacyCreateCharge(appearanceLifetimeUuid: UUID = UUID.randomUUID(), offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, active: Boolean = true, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyCreateCharge {
       return LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, active, legacyData)
