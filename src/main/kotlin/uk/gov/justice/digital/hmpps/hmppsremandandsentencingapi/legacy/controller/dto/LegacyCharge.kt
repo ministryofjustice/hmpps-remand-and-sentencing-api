@@ -6,6 +6,8 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class LegacyCharge(
+  val prisonerId: String,
+  val courtCaseUuid: String,
   val lifetimeUuid: UUID,
   val nomisOutcomeCode: String?,
   val offenceCode: String,
@@ -17,6 +19,8 @@ data class LegacyCharge(
     fun from(chargeEntity: ChargeEntity, objectMapper: ObjectMapper): LegacyCharge {
       val legacyData = chargeEntity.legacyData?.let { objectMapper.treeToValue<ChargeLegacyData>(it, ChargeLegacyData::class.java) }
       return LegacyCharge(
+        chargeEntity.courtAppearances.first().courtCase.prisonerId,
+        chargeEntity.courtAppearances.first().courtCase.caseUniqueIdentifier,
         chargeEntity.lifetimeChargeUuid,
         legacyData?.nomisOutcomeCode ?: chargeEntity.chargeOutcome?.nomisCode,
         chargeEntity.offenceCode,
