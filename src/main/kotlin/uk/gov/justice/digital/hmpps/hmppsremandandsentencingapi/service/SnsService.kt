@@ -5,9 +5,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtAppearanceMessage
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtChargeMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsSentenceMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
@@ -26,9 +23,6 @@ class SnsService(
   hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
   @Value("\${ingress.url}") private val ingressUrl: String,
-  @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String,
-  @Value("\${court.appearance.getByIdPath}") private val courtAppearanceLookupPath: String,
-  @Value("\${court.charge.getByIdPath}") private val courtChargeLookupPath: String,
   @Value("\${court.sentence.getByIdPath}") private val sentenceLookupPath: String,
 ) {
   private val domainEventsTopic by lazy {
@@ -47,19 +41,6 @@ class SnsService(
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
     domainEventsTopic.publish(hmppsSentenceInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsSentenceInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsSentenceInsertedEvent.eventType).build()))
-  }
-
-  fun legacyCaseReferencesUpdated(prisonerId: String, courtCaseId: String, timeUpdated: ZonedDateTime) {
-    val hmppsCourtCaseInsertedEvent = HmppsMessage(
-      "legacy.court-case-references.updated",
-      1,
-      "Legacy court case references updated",
-      generateDetailsUri(courtCaseLookupPath, courtCaseId),
-      timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-      HmppsCourtCaseMessage(courtCaseId),
-      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
-    )
-    domainEventsTopic.publish(hmppsCourtCaseInsertedEvent.eventType, objectMapper.writeValueAsString(hmppsCourtCaseInsertedEvent), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsCourtCaseInsertedEvent.eventType).build()))
   }
 
   fun <T> publishDomainEvent(
