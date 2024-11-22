@@ -48,5 +48,16 @@ class CourtCaseDomainEventService(
     )
   }
 
+  fun legacyCaseReferencesUpdated(id: String, prisonerId: String, source: String) {
+    snsService.publishDomainEvent(
+      "legacy.court-case-references.updated",
+      "Legacy court case references updated",
+      generateDetailsUri(courtCaseLookupPath, id),
+      ZonedDateTime.now(),
+      HmppsCourtCaseMessage(id, source),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+  }
+
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
 }

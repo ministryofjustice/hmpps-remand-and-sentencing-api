@@ -34,7 +34,7 @@ class CourtAppearanceService(
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
   private val documentManagementApiClient: DocumentManagementApiClient,
-  private val snsService: SnsService,
+  private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService,
   private val objectMapper: ObjectMapper,
 ) {
 
@@ -118,9 +118,9 @@ class CourtAppearanceService(
       periodLengthRepository.save(it)
     }
     if (status == EntityChangeStatus.CREATED) {
-      snsService.courtAppearanceInserted(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, createdCourtAppearance.createdAt)
+      courtAppearanceDomainEventService.create(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.lifetimeUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, "DPS")
     } else if (status == EntityChangeStatus.EDITED) {
-      snsService.courtAppearanceUpdated(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.appearanceUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, createdCourtAppearance.createdAt)
+      courtAppearanceDomainEventService.update(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.lifetimeUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, "DPS")
     }
     return createdCourtAppearance
   }
@@ -161,7 +161,7 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
     courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
-    snsService.courtAppearanceDeleted(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.appearanceUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity.createdAt)
+    courtAppearanceDomainEventService.delete(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, "DPS")
   }
 
   @Transactional

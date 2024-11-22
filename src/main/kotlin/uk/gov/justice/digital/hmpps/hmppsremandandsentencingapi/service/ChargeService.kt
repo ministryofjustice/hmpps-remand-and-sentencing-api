@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import java.util.UUID
 
 @Service
-class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val snsService: SnsService, private val objectMapper: ObjectMapper, private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
+class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val chargeDomainEventService: ChargeDomainEventService, private val objectMapper: ObjectMapper, private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
 
   @Transactional
   fun createCharge(charge: CreateCharge): ChargeEntity? {
@@ -73,9 +73,9 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
         it.getActiveSentence()?.let { sentence -> sentenceService.deleteSentence(sentence) }
       }
       if (status == EntityChangeStatus.CREATED) {
-        snsService.chargeInserted(prisonerId, it.chargeUuid.toString(), courtCaseId, it.createdAt)
+        chargeDomainEventService.create(prisonerId, it.lifetimeChargeUuid.toString(), courtCaseId, "DPS")
       } else if (status == EntityChangeStatus.EDITED) {
-        snsService.chargeUpdated(prisonerId, it.chargeUuid.toString(), courtCaseId, it.createdAt)
+        chargeDomainEventService.update(prisonerId, it.lifetimeChargeUuid.toString(), courtCaseId, "DPS")
       }
     }
   }
@@ -89,7 +89,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     charge.statusId = EntityStatus.DELETED
     charge.getActiveSentence()?.let { sentenceService.deleteSentence(it) }
     if (changeStatus == EntityChangeStatus.DELETED) {
-      snsService.chargeDeleted(prisonerId!!, charge.chargeUuid.toString(), courtCaseId!!, charge.createdAt)
+      chargeDomainEventService.delete(prisonerId!!, charge.lifetimeChargeUuid.toString(), courtCaseId!!, "DPS")
     }
   }
 
