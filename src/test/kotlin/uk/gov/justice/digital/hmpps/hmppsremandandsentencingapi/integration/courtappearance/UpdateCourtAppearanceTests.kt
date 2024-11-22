@@ -81,6 +81,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
+    purgeQueues()
     val appearanceWithoutSecondCharge = appearance.copy(charges = listOf(charge))
     webTestClient
       .put()
@@ -93,6 +94,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
+
+    val messages = getMessages(2)
+    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("court-appearance.updated")
 
     webTestClient
       .get()

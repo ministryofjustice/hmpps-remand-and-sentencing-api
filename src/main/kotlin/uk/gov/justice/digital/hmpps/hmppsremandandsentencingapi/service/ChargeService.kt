@@ -93,6 +93,13 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     }
   }
 
+  @Transactional
+  fun deleteChargeIfOrphan(charge: ChargeEntity, prisonerId: String, courtCaseId: String) {
+    if (charge.courtAppearances.none { it.statusId == EntityStatus.ACTIVE }) {
+      deleteCharge(charge, prisonerId, courtCaseId)
+    }
+  }
+
   @Transactional(readOnly = true)
   fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findByChargeUuid(chargeUuid)?.let { Charge.from(it) }
 }
