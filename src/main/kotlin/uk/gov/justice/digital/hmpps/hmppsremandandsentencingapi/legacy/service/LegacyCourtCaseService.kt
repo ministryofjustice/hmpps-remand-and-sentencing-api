@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
@@ -27,11 +26,8 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     return LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier)
   }
 
-  fun get(courtCaseUuid: String): LegacyCourtCase {
-    val courtCase = getUnlessDeleted(courtCaseUuid)
-    val legacyData = courtCase.legacyData?.let { objectMapper.treeToValue<CourtCaseLegacyData>(it, CourtCaseLegacyData::class.java) }
-    return LegacyCourtCase.from(courtCase, legacyData)
-  }
+  @Transactional(readOnly = true)
+  fun get(courtCaseUuid: String): LegacyCourtCase = LegacyCourtCase.from(getUnlessDeleted(courtCaseUuid))
 
   @Transactional
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
