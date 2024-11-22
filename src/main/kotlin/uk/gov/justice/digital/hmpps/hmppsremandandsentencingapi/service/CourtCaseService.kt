@@ -14,10 +14,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
-import java.time.ZonedDateTime
 
 @Service
-class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val snsService: SnsService, private val objectMapper: ObjectMapper) {
+class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val courtCaseDomainEventService: CourtCaseDomainEventService, private val objectMapper: ObjectMapper) {
 
   @Transactional
   fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): CourtCaseEntity {
@@ -33,7 +32,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.placeholderEntity(prisonerId = createCourtCase.prisonerId, createdByUsername = serviceUserService.getUsername(), legacyData = createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
     return saveCourtCaseAppearances(courtCase, createCourtCase).also { savedCourtCase ->
-      snsService.courtCaseInserted(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, savedCourtCase.createdAt)
+      courtCaseDomainEventService.create(savedCourtCase.caseUniqueIdentifier, savedCourtCase.prisonerId, "DPS")
     }
   }
 
@@ -63,7 +62,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { courtCaseEntity ->
       courtCaseEntity.statusId = EntityStatus.DELETED
       courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.forEach { courtAppearanceService.deleteCourtAppearance(it) }
-      snsService.courtCaseDeleted(courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, ZonedDateTime.now())
+      courtCaseDomainEventService.delete(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, "DPS")
     }
   }
 }
