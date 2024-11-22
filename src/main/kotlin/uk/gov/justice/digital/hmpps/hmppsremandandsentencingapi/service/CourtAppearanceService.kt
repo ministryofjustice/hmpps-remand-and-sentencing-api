@@ -90,10 +90,15 @@ class CourtAppearanceService(
       val compareAppearance = CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), charges, legacyData)
       if (courtAppearanceEntity.isSame(compareAppearance)) {
         val toDeleteCharges = courtAppearanceEntity.charges.filter { existingCharge -> courtAppearance.charges.none { it.chargeUuid == existingCharge.chargeUuid } }
-        toDeleteCharges.forEach { chargeService.deleteCharge(it, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier) }
-
-        courtAppearanceEntity.charges.addAll(charges)
-        return@let courtAppearanceEntity to EntityChangeStatus.NO_CHANGE
+        courtAppearanceEntity.charges.removeAll(toDeleteCharges)
+        toDeleteCharges.forEach { chargeEntity ->
+          chargeEntity.courtAppearances.removeIf { it.id == courtAppearanceEntity.id }
+          chargeService.deleteChargeIfOrphan(chargeEntity, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier)
+        }
+        val toAddCharges = charges.filter { charge -> courtAppearanceEntity.charges.none { existingCharge -> charge.chargeUuid == existingCharge.chargeUuid } }
+        courtAppearanceEntity.charges.addAll(toAddCharges)
+        val entityChangeStatus = if (toAddCharges.isNotEmpty() || toDeleteCharges.isNotEmpty()) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
+        return@let courtAppearanceEntity to entityChangeStatus
       }
       courtAppearanceEntity.statusId = EntityStatus.EDITED
       compareAppearance.previousAppearance = courtAppearanceEntity
