@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.util.stream.LongStream
 
 class SearchCourtCaseTests : IntegrationTestBase() {
@@ -32,7 +34,7 @@ class SearchCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `must only return court cases associated with prisoner id`() {
     val expectedCourtCase = createCourtCase()
-    val otherCourtCase = createCourtCase("OTHERPRISONER")
+    val otherCourtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = "OTHERPRISONER"))
     webTestClient.get()
       .uri {
         it.path("/court-case/search")
@@ -79,7 +81,15 @@ class SearchCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `sort by latest appearance date`() {
-    val courtCases = LongStream.range(0, 100).mapToObj { createCourtCase(minusDaysFromAppearanceDate = it) }.toList()
+    val courtCases = LongStream.range(0, 100).mapToObj {
+      createCourtCase(
+        DpsDataCreator.dpsCreateCourtCase(
+          appearances = listOf(
+            DpsDataCreator.dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(it)),
+          ),
+        ),
+      )
+    }.toList()
     webTestClient.get()
       .uri {
         it.path("/court-case/search")

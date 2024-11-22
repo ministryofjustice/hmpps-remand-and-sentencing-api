@@ -4,13 +4,8 @@ import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
@@ -18,13 +13,11 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
   @Test
   fun `update appearance in existing court case`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7), null)
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, sentence, null)
-    val appearance = CreateCourtAppearance(courtCase.first, courtCase.second.appearances.first().appearanceUuid, courtCase.second.appearances.first().lifetimeUuid, UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "ADIFFERENTCOURTCASEREFERENCE", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), LocalDate.now().minusDays(7), null)
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, lifetimeUuid = courtCase.second.appearances.first().lifetimeUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
     webTestClient
       .put()
-      .uri("/court-appearance/${appearance.lifetimeUuid}/lifetime")
-      .bodyValue(appearance)
+      .uri("/court-appearance/${courtCase.second.appearances.first().lifetimeUuid}/lifetime")
+      .bodyValue(updateCourtAppearance)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -73,9 +66,8 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
   @Test
   fun `update appearance to delete charge`() {
     val courtCase = createCourtCase()
-    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7), null)
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
-    val secondCharge = CreateCharge(null, UUID.randomUUID(), "OFF567", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, sentence, null)
+    val charge = DpsDataCreator.dpsCreateCharge()
+    val secondCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "OFF567")
     val appearance = courtCase.second.appearances.first().copy(charges = listOf(charge, secondCharge), courtCaseUuid = courtCase.first)
     webTestClient
       .put()
@@ -119,12 +111,11 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
 
   @Test
   fun `must not update appearance when no court case exists`() {
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = UUID.randomUUID().toString())
     webTestClient
       .put()
-      .uri("/court-appearance/${appearance.lifetimeUuid}/lifetime")
-      .bodyValue(appearance)
+      .uri("/court-appearance/${updateCourtAppearance.lifetimeUuid}/lifetime")
+      .bodyValue(updateCourtAppearance)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -136,12 +127,11 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
 
   @Test
   fun `no token results in unauthorized`() {
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance()
     webTestClient
       .put()
-      .uri("/court-appearance/${appearance.lifetimeUuid}/lifetime")
-      .bodyValue(appearance)
+      .uri("/court-appearance/${updateCourtAppearance.lifetimeUuid}/lifetime")
+      .bodyValue(updateCourtAppearance)
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
       }
@@ -152,12 +142,11 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
-    val appearance = CreateCourtAppearance(UUID.randomUUID().toString(), UUID.randomUUID(), UUID.randomUUID(), UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"), "COURT1", "GH123456789", LocalDate.now(), null, "REMAND", 1, null, null, listOf(charge), null, null)
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance()
     webTestClient
       .put()
-      .uri("/court-appearance/${appearance.lifetimeUuid}/lifetime")
-      .bodyValue(appearance)
+      .uri("/court-appearance/${updateCourtAppearance.lifetimeUuid}/lifetime")
+      .bodyValue(updateCourtAppearance)
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
         it.contentType = MediaType.APPLICATION_JSON

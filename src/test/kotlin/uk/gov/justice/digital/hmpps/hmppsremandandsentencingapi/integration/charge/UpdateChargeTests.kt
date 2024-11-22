@@ -4,16 +4,8 @@ import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
-import java.math.BigDecimal
-import java.time.LocalDate
-import java.util.UUID
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class UpdateChargeTests : IntegrationTestBase() {
 
@@ -21,25 +13,13 @@ class UpdateChargeTests : IntegrationTestBase() {
   fun `can update charge supplying appearance uuid`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val sentence = CreateSentence(
-      null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7),
-      CreateFineAmount(BigDecimal.TEN),
-    )
-    val charge = CreateCharge(
-      createdAppearance.appearanceUuid,
-      createdAppearance.charges.first().chargeUuid,
-      "OFF123",
-      LocalDate.now(),
-      null,
-      null,
-      true,
-      sentence,
-      ChargeLegacyData("10-10-2015", "1116", "A NOMIS charge outcome description"),
-    )
+    val createdCharge = createdAppearance.charges.first()
+    val toUpdateCharge = DpsDataCreator.dpsCreateCharge(appearanceUuid = createdAppearance.appearanceUuid, chargeUuid = createdCharge.chargeUuid, offenceCode = "OFF567")
+
     webTestClient
       .put()
-      .uri("/charge/${charge.chargeUuid}")
-      .bodyValue(charge)
+      .uri("/charge/${createdCharge.chargeUuid}")
+      .bodyValue(toUpdateCharge)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -58,22 +38,13 @@ class UpdateChargeTests : IntegrationTestBase() {
   fun `can update charge without supplying appearance uuid and charge already being in a court case`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val sentence = CreateSentence(null, "1", listOf(CreatePeriodLength(1, null, null, null, "years", PeriodLengthType.SENTENCE_LENGTH)), "FORTHWITH", null, null, UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"), LocalDate.now().minusDays(7), null)
-    val charge = CreateCharge(
-      null,
-      createdAppearance.charges.first().chargeUuid,
-      "OFF123",
-      LocalDate.now(),
-      null,
-      null,
-      true,
-      sentence,
-      ChargeLegacyData("10-10-2015", "1116", "A NOMIS charge outcome description"),
-    )
+    val createdCharge = createdAppearance.charges.first()
+    val toUpdateCharge = DpsDataCreator.dpsCreateCharge(chargeUuid = createdCharge.chargeUuid, offenceCode = "OFF567")
+
     webTestClient
       .put()
-      .uri("/charge/${charge.chargeUuid}")
-      .bodyValue(charge)
+      .uri("/charge/${createdCharge.chargeUuid}")
+      .bodyValue(toUpdateCharge)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -88,21 +59,11 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `cannot create a charge without court appearance and court case`() {
-    val charge = CreateCharge(
-      null,
-      UUID.randomUUID(),
-      "OFF123",
-      LocalDate.now(),
-      null,
-      null,
-      true,
-      null,
-      ChargeLegacyData("10-10-2015", "1116", "A NOMIS charge outcome description"),
-    )
+    val toUpdateCharge = DpsDataCreator.dpsCreateCharge()
     webTestClient
       .put()
-      .uri("/charge/${charge.chargeUuid}")
-      .bodyValue(charge)
+      .uri("/charge/${toUpdateCharge.chargeUuid}")
+      .bodyValue(toUpdateCharge)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -114,11 +75,11 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `no token results in unauthorized`() {
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
+    val toUpdateCharge = DpsDataCreator.dpsCreateCharge()
     webTestClient
       .put()
-      .uri("/charge/${charge.chargeUuid}")
-      .bodyValue(charge)
+      .uri("/charge/${toUpdateCharge.chargeUuid}")
+      .bodyValue(toUpdateCharge)
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
       }
@@ -129,11 +90,11 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val charge = CreateCharge(null, UUID.randomUUID(), "OFF123", LocalDate.now(), null, UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"), null, null, null)
+    val toUpdateCharge = DpsDataCreator.dpsCreateCharge()
     webTestClient
       .put()
-      .uri("/charge/${charge.chargeUuid}")
-      .bodyValue(charge)
+      .uri("/charge/${toUpdateCharge.chargeUuid}")
+      .bodyValue(toUpdateCharge)
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
         it.contentType = MediaType.APPLICATION_JSON
