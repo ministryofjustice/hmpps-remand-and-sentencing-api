@@ -8,7 +8,7 @@ class LegacyGetCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `get legacy court case by uuid`() {
-    val createdCase = createLegacyCourtCase()
+    val createdCase = createCourtCase()
     webTestClient
       .get()
       .uri("/legacy/court-case/${createdCase.first}")
@@ -24,7 +24,7 @@ class LegacyGetCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.prisonerId")
       .isEqualTo(createdCase.second.prisonerId)
       .jsonPath("$.active")
-      .isEqualTo(createdCase.second.active)
+      .isEqualTo(true)
   }
 
   @Test
