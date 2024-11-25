@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateChargeResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceService
@@ -114,24 +112,6 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       }
       CreateCourtAppearanceResponse.from(createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
-  }
-
-  @PostMapping("/court-appearance/{appearanceUuid}/charge")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  @Operation(
-    summary = "Create Charge in appearance",
-    description = "This endpoint will create a charge in a given court appearance",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "201", description = "Returns charge UUID"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @ResponseStatus(HttpStatus.CREATED)
-  fun createChargeInAppearance(@RequestBody createCharge: CreateCharge, @PathVariable appearanceUuid: UUID): CreateChargeResponse {
-    return courtAppearanceService.createChargeInAppearance(createCharge.copy(appearanceUuid = appearanceUuid))?.let { CreateChargeResponse.from(createCharge) } ?: throw EntityNotFoundException("No appearance found at $appearanceUuid")
   }
 
   @DeleteMapping("/court-appearance/{appearanceUuid}")
