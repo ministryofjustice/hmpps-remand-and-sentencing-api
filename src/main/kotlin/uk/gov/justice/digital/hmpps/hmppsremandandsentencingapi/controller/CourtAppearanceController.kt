@@ -131,22 +131,4 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   fun deleteAppearance(@PathVariable appearanceUuid: UUID) {
     courtAppearanceService.deleteCourtAppearance(appearanceUuid)
   }
-
-  @DeleteMapping("/court-appearance/{appearanceUuid}/charge/{chargeUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  @Operation(
-    summary = "Disassociate charge with appearance",
-    description = "This endpoint will disassociate a charge with an appearance",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "204"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun disassociateChargeWithAppearance(@PathVariable appearanceUuid: UUID, @PathVariable chargeUuid: UUID) {
-    courtAppearanceService.disassociateChargeWithAppearance(appearanceUuid, chargeUuid)
-  }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -63,7 +64,7 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   @Transactional
   fun linkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): EntityChangeStatus {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
-    val existingCharge = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeChargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
+    val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     if (!existingCourtAppearance.charges.contains(existingCharge)) {
       existingCourtAppearance.charges.add(existingCharge)
@@ -73,8 +74,28 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
     return entityChangeStatus
   }
 
+  @Transactional
+  fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): Pair<EntityChangeStatus, EntityChangeStatus> {
+    val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
+    val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
+    var appearanceEntityChangeStatus = EntityChangeStatus.NO_CHANGE
+    var chargeEntityStatus = EntityChangeStatus.NO_CHANGE
+    if (existingCourtAppearance.charges.contains(existingCharge)) {
+      existingCourtAppearance.charges.remove(existingCharge)
+      existingCharge.courtAppearances.remove(existingCourtAppearance)
+      appearanceEntityChangeStatus = EntityChangeStatus.EDITED
+      if (existingCharge.hasNoActiveCourtAppearances()) {
+        existingCharge.statusId = EntityStatus.DELETED
+        chargeEntityStatus = EntityChangeStatus.DELETED
+      }
+    }
+    return appearanceEntityChangeStatus to chargeEntityStatus
+  }
+
   private fun getUnlessDeleted(lifetimeUuid: UUID): CourtAppearanceEntity {
     return courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid)
       ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $lifetimeUuid")
   }
+
+  private fun getChargeUnlessDelete(lifetimeChargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeChargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
 }
