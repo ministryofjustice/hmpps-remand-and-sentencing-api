@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
@@ -19,7 +20,7 @@ import java.util.UUID
 import kotlin.collections.plus
 
 @Service
-class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtAppearanceRepository, private val courtCaseRepository: CourtCaseRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper) {
+class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtAppearanceRepository, private val courtCaseRepository: CourtCaseRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper, private val chargeRepository: ChargeRepository) {
 
   @Transactional
   fun create(courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse {
@@ -57,6 +58,19 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   fun delete(lifetimeUuid: UUID) {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     existingCourtAppearance.statusId = EntityStatus.DELETED
+  }
+
+  @Transactional
+  fun linkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): EntityChangeStatus {
+    val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
+    val existingCharge = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeChargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
+    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
+    if (!existingCourtAppearance.charges.contains(existingCharge)) {
+      existingCourtAppearance.charges.add(existingCharge)
+      existingCharge.courtAppearances.add(existingCourtAppearance)
+      entityChangeStatus = EntityChangeStatus.EDITED
+    }
+    return entityChangeStatus
   }
 
   private fun getUnlessDeleted(lifetimeUuid: UUID): CourtAppearanceEntity {

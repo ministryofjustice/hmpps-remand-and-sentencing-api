@@ -107,4 +107,26 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       eventService.delete(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, "NOMIS")
     }
   }
+
+  @PutMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
+  @Operation(
+    summary = "Delete Appearance",
+    description = "Synchronise a link between court appearance and charge from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID) {
+    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
+      val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
+      if (entityChangeStatus == EntityChangeStatus.EDITED) {
+        eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, "NOMIS")
+      }
+    }
+  }
 }
