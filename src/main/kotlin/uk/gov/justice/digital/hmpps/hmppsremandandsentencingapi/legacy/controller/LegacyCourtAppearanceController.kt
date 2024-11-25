@@ -21,13 +21,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtAppearanceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceDomainEventService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/legacy/court-appearance", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-appearance-controller", description = "CRUD operations for syncing court appearance data from NOMIS Court Events into remand and sentencing api database.")
-class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService) {
+class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService, private val chargeEventService: ChargeDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -111,7 +112,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   @PutMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
   @Operation(
-    summary = "Delete Appearance",
+    summary = "link Appearance with Charge",
     description = "Synchronise a link between court appearance and charge from NOMIS into remand and sentencing API.",
   )
   @ApiResponses(
@@ -126,6 +127,31 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, "NOMIS")
+      }
+    }
+  }
+
+  @DeleteMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
+  @Operation(
+    summary = "Delete Appearance Charge link",
+    description = "Synchronise a deletion of link between court appearance and charge from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun unlinkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID) {
+    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
+      val (appearanceChangeStatus, chargeChangeStatus) = legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
+      if (appearanceChangeStatus == EntityChangeStatus.EDITED) {
+        eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, "NOMIS")
+      }
+      if (chargeChangeStatus == EntityChangeStatus.DELETED) {
+        chargeEventService.delete(legacyCourtAppearance.prisonerId, chargeLifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, "NOMIS")
       }
     }
   }
