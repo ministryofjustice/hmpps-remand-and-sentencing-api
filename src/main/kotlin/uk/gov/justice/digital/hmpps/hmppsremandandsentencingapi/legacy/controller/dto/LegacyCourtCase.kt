@@ -11,11 +11,12 @@ data class LegacyCourtCase(
   val startDate: LocalDate?,
   val courtId: String?,
   val caseReference: String?,
+  val caseReferences: List<CaseReferenceLegacyData>,
 ) {
   companion object {
-    fun from(courtCaseEntity: CourtCaseEntity): LegacyCourtCase {
+    fun from(courtCaseEntity: CourtCaseEntity, courtCaseLegacyData: CourtCaseLegacyData?): LegacyCourtCase {
       val firstAppearance = courtCaseEntity.appearances.firstOrNull { entity -> entity.statusId == EntityStatus.ACTIVE }
-      return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == EntityStatus.ACTIVE, firstAppearance?.appearanceDate, firstAppearance?.courtCode, firstAppearance?.courtCaseReference)
+      return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == EntityStatus.ACTIVE, firstAppearance?.appearanceDate, firstAppearance?.courtCode, firstAppearance?.courtCaseReference, courtCaseLegacyData?.caseReferences ?: emptyList())
     }
   }
 }
