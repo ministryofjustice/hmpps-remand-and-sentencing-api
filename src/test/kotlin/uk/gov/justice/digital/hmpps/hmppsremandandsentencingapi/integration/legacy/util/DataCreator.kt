@@ -1,10 +1,15 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -42,5 +47,18 @@ class DataCreator {
     fun legacyCreateCharge(appearanceLifetimeUuid: UUID = UUID.randomUUID(), offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, active: Boolean = true, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyCreateCharge {
       return LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, active, legacyData)
     }
+
+    fun caseReferenceLegacyData(
+      offenderCaseReference: String = "NOMIS123",
+      updatedDate: LocalDateTime = LocalDateTime.now(),
+    ): CaseReferenceLegacyData = CaseReferenceLegacyData(offenderCaseReference, updatedDate)
+
+    fun courtCaseLegacyData(caseReferences: MutableList<CaseReferenceLegacyData> = mutableListOf(caseReferenceLegacyData())): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences)
+
+    fun migrationCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true, courtCaseLegacyData: CourtCaseLegacyData = courtCaseLegacyData(), appearances: List<MigrationCreateCourtAppearance> = listOf(migrationCreateCourtAppearance())): MigrationCreateCourtCase = MigrationCreateCourtCase(prisonerId, active, courtCaseLegacyData, appearances)
+
+    fun migrationCreateCourtAppearance(courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(), charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge())): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(courtCode, appearanceDate, legacyData, charges)
+
+    fun migrationCreateCharge(chargeNOMISId: String = "5453", offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, active: Boolean = true, legacyData: ChargeLegacyData = chargeLegacyData()): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, active, legacyData)
   }
 }

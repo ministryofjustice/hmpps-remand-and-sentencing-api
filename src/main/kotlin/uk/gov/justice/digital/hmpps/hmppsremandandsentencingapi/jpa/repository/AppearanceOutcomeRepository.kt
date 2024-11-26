@@ -8,4 +8,6 @@ interface AppearanceOutcomeRepository : CrudRepository<AppearanceOutcomeEntity, 
   fun findByOutcomeUuid(outcomeUuid: UUID): AppearanceOutcomeEntity?
 
   fun findByNomisCode(nomisCode: String): AppearanceOutcomeEntity?
+
+  fun findByNomisCodeIn(nomisCodes: List<String>): List<AppearanceOutcomeEntity>
 }

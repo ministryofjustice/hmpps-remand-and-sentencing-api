@@ -19,6 +19,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -98,6 +99,10 @@ class ChargeEntity(
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode, createdByUsername: String): ChargeEntity {
       return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = if (charge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = legacyData, courtAppearances = mutableSetOf(), createdByUsername = createdByUsername)
+    }
+
+    fun from(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode, createdByUsername: String): ChargeEntity {
+      return ChargeEntity(lifetimeChargeUuid = UUID.randomUUID(), chargeUuid = UUID.randomUUID(), offenceCode = migrationCreateCharge.offenceCode, offenceStartDate = migrationCreateCharge.offenceStartDate, offenceEndDate = migrationCreateCharge.offenceEndDate, statusId = if (migrationCreateCharge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = legacyData, courtAppearances = mutableSetOf(), createdByUsername = createdByUsername)
     }
   }
 }

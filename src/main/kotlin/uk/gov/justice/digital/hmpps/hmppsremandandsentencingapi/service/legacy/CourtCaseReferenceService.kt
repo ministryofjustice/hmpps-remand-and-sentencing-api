@@ -11,8 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 @Service
 class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseRepository, private val objectMapper: ObjectMapper, val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
@@ -26,9 +26,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
         .map {
           CaseReferenceLegacyData(
             it.courtCaseReference!!,
-            it.createdAt.format(
-              DateTimeFormatter.ISO_OFFSET_DATE_TIME,
-            ),
+            it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
           )
         }
       val inactiveCaseReferences = appearanceStatuses.getOrDefault(false, emptyList())
@@ -37,9 +35,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
         .map {
           CaseReferenceLegacyData(
             it.courtCaseReference!!,
-            it.createdAt.format(
-              DateTimeFormatter.ISO_OFFSET_DATE_TIME,
-            ),
+            it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
           )
         }
       val existingCaseReferences = courtCaseEntity.legacyData?.let { objectMapper.treeToValue<CourtCaseLegacyData>(it, CourtCaseLegacyData::class.java).caseReferences } ?: mutableListOf()

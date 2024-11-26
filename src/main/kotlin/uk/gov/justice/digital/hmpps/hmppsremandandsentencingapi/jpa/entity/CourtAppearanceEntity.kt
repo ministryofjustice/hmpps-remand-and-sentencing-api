@@ -20,6 +20,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -163,6 +164,29 @@ class CourtAppearanceEntity(
         courtCode = courtAppearance.courtCode,
         courtCaseReference = null,
         appearanceDate = courtAppearance.appearanceDate,
+        statusId = EntityStatus.ACTIVE,
+        warrantId = null,
+        charges = mutableSetOf(),
+        previousAppearance = null,
+        createdPrison = null,
+        createdByUsername = createdByUsername,
+        nextCourtAppearance = null,
+        warrantType = appearanceOutcome?.outcomeType ?: "UNKNOWN",
+        taggedBail = null,
+        overallConvictionDate = null,
+        lifetimeUuid = UUID.randomUUID(),
+        legacyData = legacyData,
+      )
+    }
+
+    fun from(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode, courtCaseReference: String?): CourtAppearanceEntity {
+      return CourtAppearanceEntity(
+        appearanceUuid = UUID.randomUUID(),
+        appearanceOutcome = appearanceOutcome,
+        courtCase = courtCase,
+        courtCode = migrationCreateCourtAppearance.courtCode,
+        courtCaseReference = courtCaseReference,
+        appearanceDate = migrationCreateCourtAppearance.appearanceDate,
         statusId = EntityStatus.ACTIVE,
         warrantId = null,
         charges = mutableSetOf(),
