@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.mockk.every
 import io.mockk.mockk
@@ -15,13 +16,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
 import java.util.UUID
 
 class CourtCaseReferenceServiceTests {
   private val courtCaseRepository = mockk<CourtCaseRepository>()
-  private val objectMapper = jacksonObjectMapper()
+  private val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
   private val courtAppearanceRepository = mockk<CourtAppearanceRepository>()
   private val serviceUserService = mockk<ServiceUserService>()
   private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, objectMapper, courtAppearanceRepository, serviceUserService)
@@ -64,7 +64,7 @@ class CourtCaseReferenceServiceTests {
     Assertions.assertThat(caseReferences).hasSize(5).extracting<String> { it.offenderCaseReference }.containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
   }
 
-  private fun generateLegacyData(caseReferences: List<String>): JsonNode = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)) }.toMutableList()))
+  private fun generateLegacyData(caseReferences: List<String>): JsonNode = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList()))
 
   private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(appearanceUuid = UUID.randomUUID(), lifetimeUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdByUsername = "U", createdPrison = "P", warrantType = "W", taggedBail = null, charges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
 }
