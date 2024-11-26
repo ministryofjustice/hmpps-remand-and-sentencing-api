@@ -13,8 +13,8 @@ data class LegacyCourtAppearance(
   val nomisOutcomeCode: String?,
   val courtCode: String,
   val appearanceDate: LocalDate,
-  val legacyData: CourtAppearanceLegacyData?,
   val charges: List<LegacyCharge>,
+  val nextCourtAppearance: LegacyNextCourtAppearance?,
 ) {
   companion object {
     fun from(courtAppearanceEntity: CourtAppearanceEntity, objectMapper: ObjectMapper): LegacyCourtAppearance {
@@ -31,8 +31,8 @@ data class LegacyCourtAppearance(
         legacyData?.nomisOutcomeCode ?: courtAppearanceEntity.appearanceOutcome?.nomisCode,
         courtAppearanceEntity.courtCode,
         courtAppearanceEntity.appearanceDate,
-        legacyData,
         courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { chargeEntity -> LegacyCharge.from(chargeEntity, objectMapper) },
+        courtAppearanceEntity.nextCourtAppearance?.let { LegacyNextCourtAppearance.from(it) },
       )
     }
   }
