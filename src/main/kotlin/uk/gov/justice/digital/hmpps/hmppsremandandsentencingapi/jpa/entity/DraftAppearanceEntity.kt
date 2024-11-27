@@ -36,6 +36,11 @@ class DraftAppearanceEntity(
   @JoinColumn(name = "court_case_id")
   val courtCase: CourtCaseEntity,
 ) {
+
+  fun copyFrom(draftAppearance: DraftCreateCourtAppearance, createdByUsername: String): DraftAppearanceEntity {
+    return DraftAppearanceEntity(id, draftUuid, createdAt, createdByUsername, draftAppearance.sessionBlob, courtCase)
+  }
+
   companion object {
     fun from(draftAppearance: DraftCreateCourtAppearance, createdByUsername: String, courtCase: CourtCaseEntity): DraftAppearanceEntity {
       return DraftAppearanceEntity(draftUuid = UUID.randomUUID(), createdByUsername = createdByUsername, sessionBlob = draftAppearance.sessionBlob, courtCase = courtCase)

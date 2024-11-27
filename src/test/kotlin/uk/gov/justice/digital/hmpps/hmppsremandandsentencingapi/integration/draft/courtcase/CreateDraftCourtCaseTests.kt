@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.draft
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.draft.courtcase
 
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
