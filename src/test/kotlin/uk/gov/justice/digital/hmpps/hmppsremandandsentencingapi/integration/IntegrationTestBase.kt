@@ -19,6 +19,8 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtCaseCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
@@ -31,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
@@ -56,7 +59,7 @@ abstract class IntegrationTestBase {
   protected lateinit var hmppsQueueService: HmppsQueueService
 
   @Autowired
-  private lateinit var objectMapper: ObjectMapper
+  protected lateinit var objectMapper: ObjectMapper
 
   private val hmppsDomainQueue by lazy {
     hmppsQueueService.findByQueueId("hmppsdomainqueue") ?: throw MissingQueueException("HmppsQueue hmppsdomainqueue not found")
@@ -151,6 +154,21 @@ abstract class IntegrationTestBase {
       .responseBody.blockFirst()!!
     purgeQueues()
     return response.lifetimeUuid to toCreateCharge
+  }
+
+  protected fun createDraftCourtCase(draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase()): DraftCourtCaseCreatedResponse {
+    return webTestClient
+      .post()
+      .uri("/draft/court-case")
+      .bodyValue(draftCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(DraftCourtCaseCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
   }
 
   fun purgeQueues() {
