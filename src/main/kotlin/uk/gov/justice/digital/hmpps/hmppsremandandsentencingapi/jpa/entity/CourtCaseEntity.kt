@@ -52,6 +52,9 @@ class CourtCaseEntity(
   @JoinColumn(name = "court_case_id")
   var appearances: List<CourtAppearanceEntity> = emptyList()
 
+  @OneToMany(mappedBy = "courtCase")
+  var draftAppearances: MutableList<DraftAppearanceEntity> = mutableListOf()
+
   @OneToOne
   @JoinColumn(name = "latest_court_appearance_id")
   var latestCourtAppearance: CourtAppearanceEntity? = null
