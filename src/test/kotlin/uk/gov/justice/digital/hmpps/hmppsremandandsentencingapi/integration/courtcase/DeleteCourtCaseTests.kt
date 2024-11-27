@@ -11,6 +11,7 @@ class DeleteCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `can delete court case`() {
     val courtCase = createCourtCase()
+    createDraftAppearance(courtCase.first)
     webTestClient
       .delete()
       .uri("/court-case/${courtCase.first}")

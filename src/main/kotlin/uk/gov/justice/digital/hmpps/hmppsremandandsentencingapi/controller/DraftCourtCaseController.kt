@@ -50,7 +50,7 @@ class DraftCourtCaseController(private val draftCourtCaseService: DraftCourtCase
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "201", description = "court appearance created"),
+      ApiResponse(responseCode = "201", description = "draft court appearance created"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
