@@ -19,7 +19,9 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtCaseCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -168,6 +170,21 @@ abstract class IntegrationTestBase {
       .exchange()
       .expectStatus()
       .isCreated.returnResult(DraftCourtCaseCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+  }
+
+  protected fun createDraftAppearance(courtCaseUuid: String, draftAppearance: DraftCreateCourtAppearance = DraftDataCreator.draftCreateCourtAppearance()): DraftCourtAppearanceCreatedResponse {
+    return webTestClient
+      .post()
+      .uri("/draft/court-case/$courtCaseUuid/appearance")
+      .bodyValue(draftAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(DraftCourtAppearanceCreatedResponse::class.java)
       .responseBody.blockFirst()!!
   }
 
