@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -54,5 +55,22 @@ class DraftCourtAppearanceController(private val draftCourtAppearanceService: Dr
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
   fun get(@PathVariable draftUuid: UUID): DraftCourtAppearance {
     return draftCourtAppearanceService.get(draftUuid)
+  }
+
+  @DeleteMapping("/{draftUuid}")
+  @Operation(
+    summary = "deletes a draft court appearance",
+    description = "deletes a draft court appearance",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "court appearance deleted"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
+  fun delete(@PathVariable draftUuid: UUID) {
+    draftCourtAppearanceService.delete(draftUuid)
   }
 }
