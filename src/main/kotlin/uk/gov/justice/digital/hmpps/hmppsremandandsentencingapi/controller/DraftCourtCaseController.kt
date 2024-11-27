@@ -7,12 +7,15 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtCaseCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.draft.DraftCourtCaseService
 
@@ -37,5 +40,23 @@ class DraftCourtCaseController(private val draftCourtCaseService: DraftCourtCase
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
   fun create(@RequestBody draftCourtCase: DraftCreateCourtCase): DraftCourtCaseCreatedResponse {
     return draftCourtCaseService.create(draftCourtCase)
+  }
+
+  @PostMapping("/{courtCaseUuid}/appearance")
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+    summary = "Create a draft court appearance in court case",
+    description = "Creates a draft draft court appearance in court case for when a user wants to pause inputting a warrant and come back later",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "201", description = "court appearance created"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
+  fun createDraftAppearanceInCourtCase(@PathVariable courtCaseUuid: String, @RequestBody draftCourtAppearance: DraftCreateCourtAppearance): DraftCourtAppearanceCreatedResponse {
+    return draftCourtCaseService.createAppearanceInCourtCase(courtCaseUuid, draftCourtAppearance)
   }
 }
