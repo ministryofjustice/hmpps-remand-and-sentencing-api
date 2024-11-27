@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Type
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
@@ -66,6 +67,10 @@ class CourtCaseEntity(
 
     fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String): CourtCaseEntity {
       return CourtCaseEntity(prisonerId = migrationCreateCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (migrationCreateCourtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
+    }
+
+    fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity {
+      return CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = EntityStatus.DRAFT)
     }
   }
 }
