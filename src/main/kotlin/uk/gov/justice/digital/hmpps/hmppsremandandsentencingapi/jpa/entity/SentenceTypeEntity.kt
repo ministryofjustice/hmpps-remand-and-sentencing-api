@@ -25,4 +25,5 @@ class SentenceTypeEntity(
   val maxDateExclusive: LocalDate?,
   @Enumerated(EnumType.STRING)
   val classification: SentenceTypeClassification,
+  val hint: String
 )

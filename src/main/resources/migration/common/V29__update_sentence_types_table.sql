@@ -87,7 +87,7 @@ SET description = 'Custody for life sec 275 sentencing code (murder) (U21)'
 WHERE description = 'Custody For Life Sec 275 Sentencing Code (Murder) (U21)';
 
 UPDATE sentence_type
-SET description = 'Custody for life - Under 21 CJA03'
+SET description = 'Custody for life - under 21 CJA03'
 WHERE description = 'Custody For Life - Under 21 CJA03';
 
 UPDATE sentence_type
@@ -114,8 +114,8 @@ UPDATE sentence_type
 SET description = 'Imprisonment in default of fine'
 WHERE description = 'Imprisonment in Default of Fine';
 
-ALTER TABLE sentence_type ADD COLUMN hint jsonb NULL;
+ALTER TABLE sentence_type ADD COLUMN hint_text VARCHAR NULL;
 
 UPDATE sentence_type
-SET hint = '{"text": "A mandatory licence period of 12 months will be automatically added to the sentence"}'::jsonb
+SET hint = 'A mandatory licence period of 12 months will be automatically added to the sentence'
 WHERE description = 'SOPC (Offenders of a particular concern)';

@@ -21,7 +21,7 @@ class GetSentenceTypeByUuidTests : IntegrationTestBase() {
       .jsonPath("$.sentenceTypeUuid")
       .isEqualTo("1104e683-5467-4340-b961-ff53672c4f39")
       .jsonPath("$.description")
-      .isEqualTo("SDS (Standard Determinate Sentence)")
+      .isEqualTo("SDS (Standard determinate sentence)")
       .jsonPath("$.classification")
       .isEqualTo("STANDARD")
   }

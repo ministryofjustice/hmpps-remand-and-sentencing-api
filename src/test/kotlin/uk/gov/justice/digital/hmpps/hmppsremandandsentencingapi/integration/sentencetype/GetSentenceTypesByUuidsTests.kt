@@ -32,6 +32,6 @@ class GetSentenceTypesByUuidsTests : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     val descriptions = result.map { it.description }
-    Assertions.assertThat(descriptions).containsExactlyInAnyOrderElementsOf(listOf("EDS (Extended Determinate Sentence)", "SDS (Standard Determinate Sentence)"))
+    Assertions.assertThat(descriptions).containsExactlyInAnyOrderElementsOf(listOf("EDS (Extended determinate sentence)", "SDS (Standard determinate sentence)"))
   }
 }
