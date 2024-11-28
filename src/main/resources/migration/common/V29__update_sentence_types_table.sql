@@ -123,10 +123,6 @@ SET description = 'Legacy (1991 act)'
 WHERE description = 'Legacy (1991 Act)';
 
 UPDATE sentence_type
-SET description = 'Automatic life sec 224A 03'
-WHERE description = 'Automatic life Sec 224A 03';
-
-UPDATE sentence_type
 SET description = 'Detention for life'
 WHERE description = 'Detention For life';
 

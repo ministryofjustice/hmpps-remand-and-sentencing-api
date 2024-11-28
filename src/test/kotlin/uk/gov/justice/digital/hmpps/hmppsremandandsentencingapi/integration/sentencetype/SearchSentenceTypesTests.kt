@@ -108,7 +108,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
             "SDS (Standard determinate sentence)",
             "ORA SDS (Offender rehabilitation act standard determinate sentence)",
             "Automatic life",
-            "Automatic life Sec 224A 03",
+            "Automatic life sec 224A 03",
             "ORA Breach top up supervision",
             "Civil imprisonment",
             "Detention for life",
