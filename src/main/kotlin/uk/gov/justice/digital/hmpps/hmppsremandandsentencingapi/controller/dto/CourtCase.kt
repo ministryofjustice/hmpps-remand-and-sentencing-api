@@ -11,6 +11,7 @@ data class CourtCase(
   val latestAppearance: CourtAppearance?,
   val appearances: List<CourtAppearance>,
   val legacyData: JsonNode?,
+  val draftAppearances: List<DraftCourtAppearance>,
 ) {
   companion object {
     fun from(courtCaseEntity: CourtCaseEntity): CourtCase {
@@ -21,6 +22,7 @@ data class CourtCase(
         courtCaseEntity.latestCourtAppearance?.let { CourtAppearance.from(it) },
         courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.map { CourtAppearance.from(it) },
         courtCaseEntity.legacyData,
+        courtCaseEntity.draftAppearances.map { DraftCourtAppearance.from(it) },
       )
     }
   }
