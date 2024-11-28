@@ -89,7 +89,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
           LocalDate.parse("2020-12-15"),
           listOf(
             "Imprisonment in default of fine",
-            "Detention For life",
+            "Detention for life",
             "Detention and training order",
             "ORA Detention and training order",
             "EDS (Extended determinate sentence)",
