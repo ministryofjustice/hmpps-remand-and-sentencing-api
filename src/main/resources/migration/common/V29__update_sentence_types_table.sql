@@ -114,6 +114,22 @@ UPDATE sentence_type
 SET description = 'Imprisonment in default of fine'
 WHERE description = 'Imprisonment in Default of Fine';
 
+UPDATE sentence_type
+SET description = 'Legacy (1967 act)'
+WHERE description = 'Legacy (1967 Act)';
+
+UPDATE sentence_type
+SET description = 'Legacy (1991 act)'
+WHERE description = 'Legacy (1991 Act)';
+
+UPDATE sentence_type
+SET description = 'Automatic life sec 224A 03'
+WHERE description = 'Automatic life Sec 224A 03';
+
+UPDATE sentence_type
+SET description = 'Detention for life'
+WHERE description = 'Detention For life';
+
 ALTER TABLE sentence_type ADD COLUMN hint_text VARCHAR NULL;
 
 UPDATE sentence_type

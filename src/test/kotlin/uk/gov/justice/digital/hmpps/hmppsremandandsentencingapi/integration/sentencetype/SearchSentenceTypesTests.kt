@@ -69,7 +69,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
           listOf(
             "Imprisonment in default of fine",
             "Automatic life sec 273 sentencing code (18 - 20)",
-            "ORA Breach top Up supervision",
+            "ORA Breach top up supervision",
             "Civil imprisonment",
             "Detention for life",
             "Adult discretionary life",
