@@ -8,10 +8,11 @@ data class SentenceType(
   val sentenceTypeUuid: UUID,
   val description: String,
   val classification: SentenceTypeClassification,
+  val hintTest: String,
 ) {
   companion object {
     fun from(sentenceTypeEntity: SentenceTypeEntity): SentenceType {
-      return SentenceType(sentenceTypeEntity.sentenceTypeUuid, sentenceTypeEntity.description, sentenceTypeEntity.classification)
+      return SentenceType(sentenceTypeEntity.sentenceTypeUuid, sentenceTypeEntity.description, sentenceTypeEntity.classification, sentenceTypeEntity.hintText)
     }
   }
 }
