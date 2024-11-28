@@ -117,5 +117,5 @@ WHERE description = 'Imprisonment in Default of Fine';
 ALTER TABLE sentence_type ADD COLUMN hint_text VARCHAR NULL;
 
 UPDATE sentence_type
-SET hint = 'A mandatory licence period of 12 months will be automatically added to the sentence'
+SET hint_text = 'A mandatory licence period of 12 months will be automatically added to the sentence'
 WHERE description = 'SOPC (Offenders of a particular concern)';
