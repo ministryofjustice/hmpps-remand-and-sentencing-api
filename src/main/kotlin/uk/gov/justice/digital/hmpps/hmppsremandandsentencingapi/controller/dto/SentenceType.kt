@@ -8,7 +8,7 @@ data class SentenceType(
   val sentenceTypeUuid: UUID,
   val description: String,
   val classification: SentenceTypeClassification,
-  val hintTest: String?,
+  val hintText: String?,
 ) {
   companion object {
     fun from(sentenceTypeEntity: SentenceTypeEntity): SentenceType {
