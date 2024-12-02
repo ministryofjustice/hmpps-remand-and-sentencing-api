@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Entity
@@ -62,7 +61,7 @@ class CourtAppearanceEntity(
   @Column
   val warrantId: String?,
   @Column
-  val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+  val createdAt: ZonedDateTime = ZonedDateTime.now(),
   @Column
   val createdByUsername: String,
   @Column
@@ -95,8 +94,7 @@ class CourtAppearanceEntity(
   var periodLengths: List<PeriodLengthEntity> = emptyList()
 
   fun isSame(other: CourtAppearanceEntity): Boolean {
-    return this.appearanceUuid == other.appearanceUuid &&
-      this.appearanceOutcome == other.appearanceOutcome &&
+    return this.appearanceOutcome == other.appearanceOutcome &&
       this.courtCase == other.courtCase &&
       this.courtCode == other.courtCode &&
       this.courtCaseReference == other.courtCaseReference &&
@@ -129,6 +127,15 @@ class CourtAppearanceEntity(
     return courtAppearance
   }
 
+  fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
+    val courtAppearanceEntity = CourtAppearanceEntity(
+      0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
+      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, null, courtAppearance.warrantType, courtAppearance.taggedBail, charges, null, courtAppearance.overallConvictionDate, legacyData,
+    )
+    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
+    return courtAppearanceEntity
+  }
+
   companion object {
 
     fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
@@ -152,7 +159,6 @@ class CourtAppearanceEntity(
         lifetimeUuid = courtAppearance.lifetimeUuid,
         legacyData = legacyData,
       )
-      courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
       return courtAppearanceEntity
     }
 

@@ -28,8 +28,8 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearanceUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
-    val messages = getMessages(4)
-    Assertions.assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("court-appearance.updated")
+    val messages = getMessages(5)
+    Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("court-appearance.updated")
   }
 
   @Test
