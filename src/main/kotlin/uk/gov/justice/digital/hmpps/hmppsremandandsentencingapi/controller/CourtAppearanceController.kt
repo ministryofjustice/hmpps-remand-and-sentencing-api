@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
@@ -44,7 +45,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   fun createCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse {
     return courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { appearance ->
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, "DPS")
+        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
       CreateCourtAppearanceResponse.from(createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
@@ -85,7 +86,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse {
     return courtAppearanceService.createCourtAppearanceByAppearanceUuid(createCourtAppearance.copy(appearanceUuid = appearanceUuid), appearanceUuid)?.let { appearance ->
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, "DPS")
+        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
       CreateCourtAppearanceResponse.from(createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
@@ -108,7 +109,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   fun updateCourtAppearanceByLifetime(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable lifetimeUuid: UUID): CreateCourtAppearanceResponse {
     return courtAppearanceService.createCourtAppearanceByLifetimeUuid(createCourtAppearance.copy(lifetimeUuid = lifetimeUuid), lifetimeUuid)?.let { appearance ->
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, "DPS")
+        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
       CreateCourtAppearanceResponse.from(createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")

@@ -18,12 +18,15 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
+
+private const val UNKNOWN_WARRANT_TYPE = "UNKNOWN"
 
 @Entity
 @Table(name = "court_appearance")
@@ -121,7 +124,7 @@ class CourtAppearanceEntity(
     val courtAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
       EntityStatus.ACTIVE, this, warrantId,
-      ZonedDateTime.now(), createdByUsername, createdPrison, appearanceOutcome?.outcomeType ?: "UNKNOWN", taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
+      ZonedDateTime.now(), createdByUsername, createdPrison, appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE, taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
     )
     courtAppearance.periodLengths = periodLengths.toList()
     return courtAppearance
@@ -134,6 +137,14 @@ class CourtAppearanceEntity(
     )
     courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
     return courtAppearanceEntity
+  }
+
+  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?): CourtAppearanceEntity {
+    return CourtAppearanceEntity(
+      0, UUID.randomUUID(), lifetimeUuid, null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
+      EntityStatus.FUTURE, this, null,
+      ZonedDateTime.now(), createdByUsername, null, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, null,
+    )
   }
 
   companion object {
@@ -162,6 +173,29 @@ class CourtAppearanceEntity(
       return courtAppearanceEntity
     }
 
+    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?): CourtAppearanceEntity {
+      return CourtAppearanceEntity(
+        appearanceUuid = UUID.randomUUID(),
+        appearanceOutcome = null,
+        courtCase = courtCase,
+        courtCode = nextCourtAppearance.courtCode,
+        courtCaseReference = courtCaseReference,
+        appearanceDate = nextCourtAppearance.appearanceDate,
+        statusId = EntityStatus.FUTURE,
+        warrantId = null,
+        charges = mutableSetOf(),
+        previousAppearance = null,
+        createdPrison = null,
+        createdByUsername = createdByUsername,
+        nextCourtAppearance = null,
+        warrantType = UNKNOWN_WARRANT_TYPE,
+        taggedBail = null,
+        overallConvictionDate = null,
+        lifetimeUuid = UUID.randomUUID(),
+        legacyData = null,
+      )
+    }
+
     fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
       return CourtAppearanceEntity(
         appearanceUuid = UUID.randomUUID(),
@@ -177,7 +211,7 @@ class CourtAppearanceEntity(
         createdPrison = null,
         createdByUsername = createdByUsername,
         nextCourtAppearance = null,
-        warrantType = appearanceOutcome?.outcomeType ?: "UNKNOWN",
+        warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
         taggedBail = null,
         overallConvictionDate = null,
         lifetimeUuid = UUID.randomUUID(),
@@ -200,7 +234,7 @@ class CourtAppearanceEntity(
         createdPrison = null,
         createdByUsername = createdByUsername,
         nextCourtAppearance = null,
-        warrantType = appearanceOutcome?.outcomeType ?: "UNKNOWN",
+        warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
         taggedBail = null,
         overallConvictionDate = null,
         lifetimeUuid = UUID.randomUUID(),

@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
@@ -71,7 +72,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     val courtCase = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid).also {
       val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier)
       updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, "DPS")
+        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
     }
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)

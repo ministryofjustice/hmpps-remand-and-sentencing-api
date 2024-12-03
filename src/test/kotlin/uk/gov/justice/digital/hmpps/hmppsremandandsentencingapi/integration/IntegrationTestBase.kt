@@ -86,7 +86,7 @@ abstract class IntegrationTestBase {
     )
   }
 
-  protected fun createCourtCase(createCourtCase: CreateCourtCase = DpsDataCreator.dpsCreateCourtCase()): Pair<String, CreateCourtCase> {
+  protected fun createCourtCase(createCourtCase: CreateCourtCase = DpsDataCreator.dpsCreateCourtCase(), purgeQueues: Boolean = true): Pair<String, CreateCourtCase> {
     val response = webTestClient
       .post()
       .uri("/court-case")
@@ -99,7 +99,9 @@ abstract class IntegrationTestBase {
       .expectStatus()
       .isCreated.returnResult(CreateCourtCaseResponse::class.java)
       .responseBody.blockFirst()!!
-    purgeQueues()
+    if (purgeQueues) {
+      purgeQueues()
+    }
     return response.courtCaseUuid to createCourtCase
   }
 
@@ -196,9 +198,9 @@ abstract class IntegrationTestBase {
   }
 
   fun expectInsertedMessages(prisonerId: String) {
-    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 4)
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 5)
     val messages = getAllDomainMessages()
-    Assertions.assertEquals(4, messages.size)
+    Assertions.assertEquals(5, messages.size)
     messages.forEach { message ->
       Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
       Assertions.assertEquals("DPS", message.additionalInformation.get("source").asText())

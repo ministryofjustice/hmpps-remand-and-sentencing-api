@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -83,8 +84,9 @@ class CourtAppearanceService(
     val (appearanceLegacyData, appearanceOutcome) = getAppearanceOutcome(courtAppearance)
     val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { nextCourtAppearance ->
+      val futureCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.fromFuture(nextCourtAppearance, courtCaseEntity, serviceUserService.getUsername(), courtAppearance.courtCaseReference))
       nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nextCourtAppearance),
+        NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance),
       )
     }
     val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), createdCharges, legacyData))
@@ -97,7 +99,13 @@ class CourtAppearanceService(
     }
     updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
-    courtAppearanceDomainEventService.create(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.lifetimeUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, "DPS")
+    courtAppearanceDomainEventService.create(
+      createdCourtAppearance.courtCase.prisonerId,
+      createdCourtAppearance.lifetimeUuid.toString(),
+      createdCourtAppearance.courtCase.caseUniqueIdentifier,
+      EventSource.DPS,
+    )
+    nextCourtAppearance?.futureSkeletonAppearance?.let { courtAppearanceEntity -> courtAppearanceDomainEventService.create(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, EventSource.DPS) }
     return createdCourtAppearance
   }
 
@@ -123,15 +131,70 @@ class CourtAppearanceService(
       }
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
-    val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { NextCourtAppearanceEntity.from(it) }
-    if (activeRecord.nextCourtAppearance?.isSame(nextCourtAppearance) != true) {
-      activeRecord.nextCourtAppearance = nextCourtAppearance?.let { nextCourtAppearanceRepository.save(it) }
-    }
+    val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord)
     updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
     if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
-      courtAppearanceDomainEventService.update(activeRecord.courtCase.prisonerId, activeRecord.lifetimeUuid.toString(), activeRecord.courtCase.caseUniqueIdentifier, "DPS")
+      courtAppearanceDomainEventService.update(activeRecord.courtCase.prisonerId, activeRecord.lifetimeUuid.toString(), activeRecord.courtCase.caseUniqueIdentifier, EventSource.DPS)
     }
+
+    if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.CREATED) {
+      courtAppearanceDomainEventService.create(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, EventSource.DPS)
+    } else if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.EDITED) {
+      courtAppearanceDomainEventService.update(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, EventSource.DPS)
+    } else if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.DELETED) {
+      courtAppearanceDomainEventService.delete(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, EventSource.DPS)
+    }
+
     return activeRecord
+  }
+
+  private fun updateNextCourtAppearance(
+    courtAppearance: CreateCourtAppearance,
+    activeRecord: CourtAppearanceEntity,
+  ): Pair<EntityChangeStatus, CourtAppearanceEntity?> {
+    return activeRecord.nextCourtAppearance?.let { activeNextCourtAppearance ->
+      if (courtAppearance.nextCourtAppearance != null) {
+        val activeFutureSkeletonAppearance = activeNextCourtAppearance.futureSkeletonAppearance
+        var futureCourtAppearance = activeFutureSkeletonAppearance.copyFromFuture(
+          courtAppearance.nextCourtAppearance,
+          activeRecord.courtCase,
+          serviceUserService.getUsername(),
+          courtAppearance.courtCaseReference,
+        )
+        val nextCourtAppearance =
+          NextCourtAppearanceEntity.from(courtAppearance.nextCourtAppearance, futureCourtAppearance)
+        if (!activeNextCourtAppearance.isSame(nextCourtAppearance)) {
+          val savedFutureCourtAppearance = courtAppearanceRepository.save(futureCourtAppearance)
+          activeFutureSkeletonAppearance.statusId = EntityStatus.EDITED
+          activeRecord.nextCourtAppearance = nextCourtAppearanceRepository.save(
+            NextCourtAppearanceEntity.from(
+              courtAppearance.nextCourtAppearance,
+              savedFutureCourtAppearance,
+            ),
+          )
+          return@let EntityChangeStatus.EDITED to savedFutureCourtAppearance
+        }
+        EntityChangeStatus.NO_CHANGE to null
+      } else {
+        activeNextCourtAppearance.futureSkeletonAppearance.statusId = EntityStatus.DELETED
+        activeRecord.nextCourtAppearance = null
+        EntityChangeStatus.DELETED to activeNextCourtAppearance.futureSkeletonAppearance
+      }
+    } ?: courtAppearance.nextCourtAppearance?.let { toCreateNextCourtAppearance ->
+      val futureCourtAppearance = courtAppearanceRepository.save(
+        CourtAppearanceEntity.fromFuture(
+          toCreateNextCourtAppearance,
+          activeRecord.courtCase,
+          serviceUserService.getUsername(),
+          courtAppearance.courtCaseReference,
+        ),
+      )
+      val savedNextCourtAppearance = nextCourtAppearanceRepository.save(
+        NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance),
+      )
+      activeRecord.nextCourtAppearance = savedNextCourtAppearance
+      EntityChangeStatus.CREATED to futureCourtAppearance
+    } ?: (EntityChangeStatus.NO_CHANGE to null)
   }
 
   private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity): Pair<EntityChangeStatus, MutableSet<ChargeEntity>> {
@@ -195,7 +258,7 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
     courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
-    courtAppearanceDomainEventService.delete(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, "DPS")
+    courtAppearanceDomainEventService.delete(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, EventSource.DPS)
   }
 
   @Transactional(readOnly = true)

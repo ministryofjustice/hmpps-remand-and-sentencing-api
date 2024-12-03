@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
@@ -45,7 +46,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
   fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse {
     return legacyChargeService.create(charge).also {
-      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, "NOMIS")
+      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
     }
   }
 
@@ -65,7 +66,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyCreateCharge) {
     legacyChargeService.update(lifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, "NOMIS")
+        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
   }
@@ -103,7 +104,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   fun delete(@PathVariable lifetimeUuid: UUID) {
     legacyChargeService.get(lifetimeUuid).also { legacyCharge ->
       legacyChargeService.delete(lifetimeUuid)
-      eventService.delete(legacyCharge.prisonerId, legacyCharge.lifetimeUuid.toString(), legacyCharge.courtCaseUuid, "NOMIS")
+      eventService.delete(legacyCharge.prisonerId, legacyCharge.lifetimeUuid.toString(), legacyCharge.courtCaseUuid, EventSource.NOMIS)
     }
   }
 }

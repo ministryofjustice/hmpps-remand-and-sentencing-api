@@ -5,6 +5,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import java.time.LocalDate
@@ -25,6 +27,9 @@ class NextCourtAppearanceEntity(
   val courtCode: String,
   @Column
   val appearanceType: String,
+  @OneToOne
+  @JoinColumn(name = "future_skeleton_appearance_id")
+  val futureSkeletonAppearance: CourtAppearanceEntity,
 ) {
   fun isSame(other: NextCourtAppearanceEntity?): Boolean {
     return other != null && appearanceDate.isEqual(other.appearanceDate) &&
@@ -33,12 +38,13 @@ class NextCourtAppearanceEntity(
   }
 
   companion object {
-    fun from(nextCourtAppearance: CreateNextCourtAppearance): NextCourtAppearanceEntity {
+    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity): NextCourtAppearanceEntity {
       return NextCourtAppearanceEntity(
         appearanceDate = nextCourtAppearance.appearanceDate,
         appearanceTime = nextCourtAppearance.appearanceTime,
         courtCode = nextCourtAppearance.courtCode,
         appearanceType = nextCourtAppearance.appearanceType,
+        futureSkeletonAppearance = futureSkeletonAppearance,
       )
     }
   }
