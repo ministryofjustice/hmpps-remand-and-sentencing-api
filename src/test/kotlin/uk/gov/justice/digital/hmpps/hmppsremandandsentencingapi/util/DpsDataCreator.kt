@@ -33,7 +33,7 @@ class DpsDataCreator {
     ): CreatePeriodLength = CreatePeriodLength(years, months, weeks, days, periodOrder, type)
 
     fun dpsCreateNextCourtAppearance(
-      appearanceDate: LocalDate = LocalDate.now(),
+      appearanceDate: LocalDate = LocalDate.now().plusDays(2),
       appearanceTime: LocalTime? = LocalTime.now(),
       courtCode: String = "COURT1",
       appearanceType: String = "Court Appearance",

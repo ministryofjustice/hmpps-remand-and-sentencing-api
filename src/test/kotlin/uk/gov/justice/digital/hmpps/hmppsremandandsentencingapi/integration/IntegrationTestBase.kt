@@ -86,7 +86,7 @@ abstract class IntegrationTestBase {
     )
   }
 
-  protected fun createCourtCase(createCourtCase: CreateCourtCase = DpsDataCreator.dpsCreateCourtCase()): Pair<String, CreateCourtCase> {
+  protected fun createCourtCase(createCourtCase: CreateCourtCase = DpsDataCreator.dpsCreateCourtCase(), purgeQueues: Boolean = true): Pair<String, CreateCourtCase> {
     val response = webTestClient
       .post()
       .uri("/court-case")
@@ -99,7 +99,9 @@ abstract class IntegrationTestBase {
       .expectStatus()
       .isCreated.returnResult(CreateCourtCaseResponse::class.java)
       .responseBody.blockFirst()!!
-    purgeQueues()
+    if (purgeQueues) {
+      purgeQueues()
+    }
     return response.courtCaseUuid to createCourtCase
   }
 

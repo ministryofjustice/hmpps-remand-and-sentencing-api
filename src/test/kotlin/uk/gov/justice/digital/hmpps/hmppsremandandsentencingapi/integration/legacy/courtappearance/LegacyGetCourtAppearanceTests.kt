@@ -30,6 +30,24 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `can get appearance and future appearance when DPS next court appearance is set`() {
+    createCourtCase(purgeQueues = false)
+    val courtAppearanceMessages = getMessages(5).filter { message -> message.eventType == "court-appearance.inserted" }
+    val courtAppearanceLifetimeUuid = courtAppearanceMessages.map { message -> message.additionalInformation.get("courtAppearanceId").asText() }
+    courtAppearanceLifetimeUuid.forEach { lifetimeUuid ->
+      webTestClient
+        .get()
+        .uri("/legacy/court-appearance/$lifetimeUuid")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
+        }
+        .exchange()
+        .expectStatus()
+        .isOk
+    }
+  }
+
+  @Test
   fun `no appearance exist for uuid results in not found`() {
     webTestClient
       .get()
