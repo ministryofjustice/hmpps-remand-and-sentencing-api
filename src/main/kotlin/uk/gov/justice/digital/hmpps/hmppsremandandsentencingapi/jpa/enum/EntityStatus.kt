@@ -6,4 +6,5 @@ enum class EntityStatus {
   EDITED,
   DELETED,
   DRAFT,
+  FUTURE,
 }
