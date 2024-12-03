@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableChargeException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
@@ -73,9 +74,9 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
         it.getActiveSentence()?.let { sentence -> sentenceService.deleteSentence(sentence) }
       }
       if (status == EntityChangeStatus.CREATED) {
-        chargeDomainEventService.create(prisonerId, it.lifetimeChargeUuid.toString(), courtCaseId, "DPS")
+        chargeDomainEventService.create(prisonerId, it.lifetimeChargeUuid.toString(), courtCaseId, EventSource.DPS)
       } else if (status == EntityChangeStatus.EDITED) {
-        chargeDomainEventService.update(prisonerId, it.lifetimeChargeUuid.toString(), courtCaseId, "DPS")
+        chargeDomainEventService.update(prisonerId, it.lifetimeChargeUuid.toString(), courtCaseId, EventSource.DPS)
       }
     }
   }
@@ -89,7 +90,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     charge.statusId = EntityStatus.DELETED
     charge.getActiveSentence()?.let { sentenceService.deleteSentence(it) }
     if (changeStatus == EntityChangeStatus.DELETED) {
-      chargeDomainEventService.delete(prisonerId!!, charge.lifetimeChargeUuid.toString(), courtCaseId!!, "DPS")
+      chargeDomainEventService.delete(prisonerId!!, charge.lifetimeChargeUuid.toString(), courtCaseId!!, EventSource.DPS)
     }
   }
 

@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -98,8 +99,13 @@ class CourtAppearanceService(
     }
     updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
-    courtAppearanceDomainEventService.create(createdCourtAppearance.courtCase.prisonerId, createdCourtAppearance.lifetimeUuid.toString(), createdCourtAppearance.courtCase.caseUniqueIdentifier, "DPS")
-    nextCourtAppearance?.futureSkeletonAppearance?.let { courtAppearanceEntity -> courtAppearanceDomainEventService.create(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, "DPS") }
+    courtAppearanceDomainEventService.create(
+      createdCourtAppearance.courtCase.prisonerId,
+      createdCourtAppearance.lifetimeUuid.toString(),
+      createdCourtAppearance.courtCase.caseUniqueIdentifier,
+      EventSource.DPS,
+    )
+    nextCourtAppearance?.futureSkeletonAppearance?.let { courtAppearanceEntity -> courtAppearanceDomainEventService.create(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, EventSource.DPS) }
     return createdCourtAppearance
   }
 
@@ -128,15 +134,15 @@ class CourtAppearanceService(
     val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord)
     updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
     if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
-      courtAppearanceDomainEventService.update(activeRecord.courtCase.prisonerId, activeRecord.lifetimeUuid.toString(), activeRecord.courtCase.caseUniqueIdentifier, "DPS")
+      courtAppearanceDomainEventService.update(activeRecord.courtCase.prisonerId, activeRecord.lifetimeUuid.toString(), activeRecord.courtCase.caseUniqueIdentifier, EventSource.DPS)
     }
 
     if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.CREATED) {
-      courtAppearanceDomainEventService.create(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, "DPS")
+      courtAppearanceDomainEventService.create(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, EventSource.DPS)
     } else if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.EDITED) {
-      courtAppearanceDomainEventService.update(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, "DPS")
+      courtAppearanceDomainEventService.update(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, EventSource.DPS)
     } else if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.DELETED) {
-      courtAppearanceDomainEventService.delete(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, "DPS")
+      courtAppearanceDomainEventService.delete(futureSkeletonAppearance!!.courtCase.prisonerId, futureSkeletonAppearance.lifetimeUuid.toString(), futureSkeletonAppearance.courtCase.caseUniqueIdentifier, EventSource.DPS)
     }
 
     return activeRecord
@@ -252,7 +258,7 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
     courtAppearanceEntity.statusId = EntityStatus.DELETED
     courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
-    courtAppearanceDomainEventService.delete(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, "DPS")
+    courtAppearanceDomainEventService.delete(courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.lifetimeUuid.toString(), courtAppearanceEntity.courtCase.caseUniqueIdentifier, EventSource.DPS)
   }
 
   @Transactional(readOnly = true)

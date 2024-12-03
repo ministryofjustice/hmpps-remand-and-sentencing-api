@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
@@ -43,7 +44,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun create(@RequestBody courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
     return legacyCourtCaseService.create(courtCase).also {
-      eventService.create(it.courtCaseUuid, courtCase.prisonerId, "NOMIS")
+      eventService.create(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
     }
   }
 
@@ -80,7 +81,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun update(@PathVariable courtCaseUuid: String, @RequestBody courtCase: LegacyCreateCourtCase) {
     legacyCourtCaseService.update(courtCaseUuid, courtCase).also {
-      eventService.update(it.courtCaseUuid, courtCase.prisonerId, "NOMIS")
+      eventService.update(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
     }
   }
 
@@ -100,7 +101,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   fun delete(@PathVariable courtCaseUuid: String) {
     legacyCourtCaseService.get(courtCaseUuid).also { legacyCourtCase ->
       legacyCourtCaseService.delete(courtCaseUuid)
-      eventService.delete(courtCaseUuid, legacyCourtCase.prisonerId, "NOMIS")
+      eventService.delete(courtCaseUuid, legacyCourtCase.prisonerId, EventSource.NOMIS)
     }
   }
 }

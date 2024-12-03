@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
@@ -33,7 +34,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.placeholderEntity(prisonerId = createCourtCase.prisonerId, createdByUsername = serviceUserService.getUsername(), legacyData = createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
     return saveCourtCaseAppearances(courtCase, createCourtCase).also { savedCourtCase ->
-      courtCaseDomainEventService.create(savedCourtCase.caseUniqueIdentifier, savedCourtCase.prisonerId, "DPS")
+      courtCaseDomainEventService.create(savedCourtCase.caseUniqueIdentifier, savedCourtCase.prisonerId, EventSource.DPS)
     }
   }
 
@@ -64,7 +65,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       courtCaseEntity.statusId = EntityStatus.DELETED
       courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.forEach { courtAppearanceService.deleteCourtAppearance(it) }
       draftAppearanceRepository.deleteAll(courtCaseEntity.draftAppearances)
-      courtCaseDomainEventService.delete(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, "DPS")
+      courtCaseDomainEventService.delete(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, EventSource.DPS)
     }
   }
 }

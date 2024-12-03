@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
@@ -15,7 +16,7 @@ class CourtCaseDomainEventService(
   @Value("\${court.case.getByIdPath}") private val courtCaseLookupPath: String,
 ) {
 
-  fun create(id: String, prisonerId: String, source: String) {
+  fun create(id: String, prisonerId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "court-case.inserted",
       "Court case inserted",
@@ -26,7 +27,7 @@ class CourtCaseDomainEventService(
     )
   }
 
-  fun update(id: String, prisonerId: String, source: String) {
+  fun update(id: String, prisonerId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "court-case.updated",
       "Court case updated",
@@ -37,7 +38,7 @@ class CourtCaseDomainEventService(
     )
   }
 
-  fun delete(id: String, prisonerId: String, source: String) {
+  fun delete(id: String, prisonerId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "court-case.deleted",
       "Court case deleted",
@@ -48,7 +49,7 @@ class CourtCaseDomainEventService(
     )
   }
 
-  fun legacyCaseReferencesUpdated(id: String, prisonerId: String, source: String) {
+  fun legacyCaseReferencesUpdated(id: String, prisonerId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "legacy.court-case-references.updated",
       "Legacy court case references updated",

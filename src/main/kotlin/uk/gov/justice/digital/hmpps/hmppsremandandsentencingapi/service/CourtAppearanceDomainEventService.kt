@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtAppearanceMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
@@ -15,7 +16,7 @@ class CourtAppearanceDomainEventService(
   @Value("\${court.appearance.getByIdPath}") private val courtAppearanceLookupPath: String,
 ) {
 
-  fun create(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: String) {
+  fun create(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "court-appearance.inserted",
       "Court appearance inserted",
@@ -26,7 +27,7 @@ class CourtAppearanceDomainEventService(
     )
   }
 
-  fun update(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: String) {
+  fun update(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "court-appearance.updated",
       "Court appearance updated",
@@ -37,7 +38,7 @@ class CourtAppearanceDomainEventService(
     )
   }
 
-  fun delete(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: String) {
+  fun delete(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "court-appearance.deleted",
       "Court appearance deleted",
