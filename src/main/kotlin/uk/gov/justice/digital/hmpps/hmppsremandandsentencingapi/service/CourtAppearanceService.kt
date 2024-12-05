@@ -131,7 +131,7 @@ class CourtAppearanceService(
       }
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
-    val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord)
+    val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord, existingCourtAppearanceEntity.nextCourtAppearance)
     updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
     if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
       courtAppearanceDomainEventService.update(activeRecord.courtCase.prisonerId, activeRecord.lifetimeUuid.toString(), activeRecord.courtCase.caseUniqueIdentifier, EventSource.DPS)
@@ -151,8 +151,9 @@ class CourtAppearanceService(
   private fun updateNextCourtAppearance(
     courtAppearance: CreateCourtAppearance,
     activeRecord: CourtAppearanceEntity,
+    existingNextCourtAppearance: NextCourtAppearanceEntity?,
   ): Pair<EntityChangeStatus, CourtAppearanceEntity?> {
-    return activeRecord.nextCourtAppearance?.let { activeNextCourtAppearance ->
+    return existingNextCourtAppearance?.let { activeNextCourtAppearance ->
       if (courtAppearance.nextCourtAppearance != null) {
         val activeFutureSkeletonAppearance = activeNextCourtAppearance.futureSkeletonAppearance
         var futureCourtAppearance = activeFutureSkeletonAppearance.copyFromFuture(
