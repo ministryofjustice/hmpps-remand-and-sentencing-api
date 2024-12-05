@@ -9,7 +9,7 @@ data class CreateCourtCaseResponse(
     fun from(courtCaseUuid: String, createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
       return CreateCourtCaseResponse(
         courtCaseUuid,
-        createCourtCase.appearances.map { CreateCourtAppearanceResponse.from(it) },
+        createCourtCase.appearances.map { CreateCourtAppearanceResponse.from(it.appearanceUuid, it) },
         createCourtCase.appearances.flatMap { it.charges }.map { CreateChargeResponse.from(it) },
       )
     }

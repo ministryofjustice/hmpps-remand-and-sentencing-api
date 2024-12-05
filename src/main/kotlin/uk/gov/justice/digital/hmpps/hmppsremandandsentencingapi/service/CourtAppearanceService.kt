@@ -175,6 +175,7 @@ class CourtAppearanceService(
           )
           return@let EntityChangeStatus.EDITED to savedFutureCourtAppearance
         }
+        activeRecord.nextCourtAppearance = existingNextCourtAppearance
         EntityChangeStatus.NO_CHANGE to null
       } else {
         activeNextCourtAppearance.futureSkeletonAppearance.statusId = EntityStatus.DELETED

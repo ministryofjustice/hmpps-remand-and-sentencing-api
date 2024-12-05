@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
@@ -31,6 +32,39 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val messages = getMessages(5)
     Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("court-appearance.updated")
+  }
+
+  @Test
+  fun `updating only a court appearance keeps the next court appearance`() {
+    val courtCase = createCourtCase()
+    val createdAppearance = courtCase.second.appearances.first()
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, lifetimeUuid = createdAppearance.lifetimeUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val response = webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+    webTestClient
+      .get()
+      .uri("/court-appearance/${response.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.nextCourtAppearance")
+      .exists()
   }
 
   @Test
