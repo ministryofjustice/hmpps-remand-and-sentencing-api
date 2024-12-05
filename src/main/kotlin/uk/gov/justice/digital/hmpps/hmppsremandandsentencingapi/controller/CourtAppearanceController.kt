@@ -47,7 +47,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
         courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
-      CreateCourtAppearanceResponse.from(createCourtAppearance)
+      CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 
@@ -88,7 +88,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
         courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
-      CreateCourtAppearanceResponse.from(createCourtAppearance)
+      CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 
@@ -111,7 +111,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
         courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
       }
-      CreateCourtAppearanceResponse.from(createCourtAppearance)
+      CreateCourtAppearanceResponse.from(lifetimeUuid, createCourtAppearance)
     } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
   }
 
