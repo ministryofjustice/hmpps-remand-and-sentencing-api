@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Entity
@@ -54,7 +53,7 @@ class ChargeEntity(
   @Column
   val terrorRelated: Boolean?,
   @Column
-  val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+  val createdAt: ZonedDateTime = ZonedDateTime.now(),
   @Column
   val createdByUsername: String,
   @Type(value = JsonType::class)
@@ -72,8 +71,7 @@ class ChargeEntity(
     return sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
   }
   fun isSame(other: ChargeEntity): Boolean {
-    return this.chargeUuid == other.chargeUuid &&
-      this.offenceCode == other.offenceCode &&
+    return this.offenceCode == other.offenceCode &&
       this.offenceStartDate.isEqual(other.offenceStartDate) &&
       ((this.offenceEndDate == null && other.offenceEndDate == null) || this.offenceEndDate?.isEqual(other.offenceEndDate) == true) &&
       this.statusId == other.statusId &&
@@ -87,6 +85,15 @@ class ChargeEntity(
       0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
       if (charge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome, this, terrorRelated,
       ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
+    )
+    charge.sentences = sentences.toMutableList()
+    return charge
+  }
+
+  fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?, createdByUsername: String): ChargeEntity {
+    val charge = ChargeEntity(
+      0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
+      EntityStatus.ACTIVE, chargeOutcome, this, charge.terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
     )
     charge.sentences = sentences.toMutableList()
     return charge
