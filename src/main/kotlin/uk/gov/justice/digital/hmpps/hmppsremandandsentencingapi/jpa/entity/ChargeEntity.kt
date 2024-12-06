@@ -81,22 +81,18 @@ class ChargeEntity(
   }
 
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdByUsername: String, legacyData: JsonNode): ChargeEntity {
-    val charge = ChargeEntity(
+    return ChargeEntity(
       0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
       if (charge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome, this, terrorRelated,
       ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
     )
-    charge.sentences = sentences.toMutableList()
-    return charge
   }
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?, createdByUsername: String): ChargeEntity {
-    val charge = ChargeEntity(
+    return ChargeEntity(
       0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
       EntityStatus.ACTIVE, chargeOutcome, this, charge.terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
     )
-    charge.sentences = sentences.toMutableList()
-    return charge
   }
 
   companion object {
