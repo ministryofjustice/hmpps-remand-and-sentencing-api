@@ -30,8 +30,8 @@ class UpdateChargeTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.chargeUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
-    val messages = getMessages(1)
-    Assertions.assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("charge.updated")
+    val messages = getMessages(2)
+    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("charge.updated", "sentence.inserted")
   }
 
   @Test
