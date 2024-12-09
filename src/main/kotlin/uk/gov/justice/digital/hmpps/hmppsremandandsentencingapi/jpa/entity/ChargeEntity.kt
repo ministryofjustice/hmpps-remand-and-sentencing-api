@@ -67,7 +67,7 @@ class ChargeEntity(
 
   fun hasNoActiveCourtAppearances(): Boolean = courtAppearances.none { it.statusId == EntityStatus.ACTIVE }
 
-  fun hasTwoActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (courtAppearances + courtAppearance).count { it.statusId == EntityStatus.ACTIVE } == 2
+  fun hasTwoOrMoreActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (courtAppearances + courtAppearance).count { it.statusId == EntityStatus.ACTIVE } >= 2
 
   fun getActiveSentence(): SentenceEntity? {
     return sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }

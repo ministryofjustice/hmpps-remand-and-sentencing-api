@@ -66,7 +66,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyCreateCharge) {
     legacyChargeService.update(lifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
+        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), charge.appearanceLifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
   }

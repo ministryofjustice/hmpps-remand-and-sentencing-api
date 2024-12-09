@@ -27,13 +27,13 @@ class ChargeDomainEventService(
     )
   }
 
-  fun update(prisonerId: String, chargeId: String, courtCaseId: String, source: EventSource) {
+  fun update(prisonerId: String, chargeId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "charge.updated",
       "Charge updated",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       ZonedDateTime.now(),
-      HmppsCourtChargeMessage(chargeId, courtCaseId, source),
+      HmppsCourtChargeMessage(chargeId, courtCaseId, source, courtAppearanceId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
