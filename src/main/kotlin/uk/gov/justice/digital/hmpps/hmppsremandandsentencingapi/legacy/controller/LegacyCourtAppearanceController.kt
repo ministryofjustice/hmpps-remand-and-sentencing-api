@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceDomainEventService
@@ -29,7 +31,7 @@ import java.util.UUID
 @RestController
 @RequestMapping("/legacy/court-appearance", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-appearance-controller", description = "CRUD operations for syncing court appearance data from NOMIS Court Events into remand and sentencing api database.")
-class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService, private val chargeEventService: ChargeDomainEventService) {
+class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService, private val chargeEventService: ChargeDomainEventService, private val legacyChargeService: LegacyChargeService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -130,6 +132,23 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
         eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
       }
     }
+  }
+
+  @GetMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW', 'ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO')")
+  @Operation(
+    summary = "link Appearance with Charge",
+    description = "Synchronise a link between court appearance and charge from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun getChargeAtAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID): LegacyCharge {
+    return legacyChargeService.getChargeAtAppearance(lifetimeUuid, chargeLifetimeUuid)
   }
 
   @DeleteMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")

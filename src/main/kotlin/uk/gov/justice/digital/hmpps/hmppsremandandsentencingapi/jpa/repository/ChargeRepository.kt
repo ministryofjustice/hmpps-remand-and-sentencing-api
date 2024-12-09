@@ -8,4 +8,6 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   fun findByChargeUuid(chargeUuid: UUID): ChargeEntity?
 
   fun findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeUUID: UUID): ChargeEntity?
+
+  fun findFirstByCourtAppearancesLifetimeUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(courtAppearanceLifetimeUuid: UUID, lifetimeUUID: UUID): ChargeEntity?
 }
