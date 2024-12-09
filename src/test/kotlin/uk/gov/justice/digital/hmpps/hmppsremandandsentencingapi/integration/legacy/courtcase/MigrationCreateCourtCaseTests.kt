@@ -6,6 +6,8 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCaseResponse
+import java.time.LocalDate
+import java.util.UUID
 import java.util.regex.Pattern
 
 class MigrationCreateCourtCaseTests : IntegrationTestBase() {
@@ -36,6 +38,51 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
     val createdCharge = response.charges.first()
     Assertions.assertThat(createdCharge.lifetimeChargeUuid.toString()).matches(Pattern.compile("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     Assertions.assertThat(createdCharge.chargeNOMISId).isEqualTo(migrationCourtCase.appearances.first().charges.first().chargeNOMISId)
+  }
+
+  @Test
+  fun `can create snapshots of charges in different appearances`() {
+    val chargeNOMISId = "555"
+    val firstSnapshot = DataCreator.migrationCreateCharge(chargeNOMISId = chargeNOMISId, legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "99"))
+    val secondSnapshot = DataCreator.migrationCreateCharge(chargeNOMISId = chargeNOMISId, legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "66"))
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "1"), charges = listOf(firstSnapshot))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "2"), charges = listOf(secondSnapshot))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(secondAppearance, firstAppearance))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCaseResponse::class.java)
+      .responseBody.blockFirst()!!
+    Assertions.assertThat(response.charges).hasSize(1)
+    val chargeLifetimeUuid = response.charges.first().lifetimeChargeUuid
+    val firstAppearanceLifetimeUuid = response.appearances.first { appearanceResponse -> firstAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
+    checkChargeSnapshotOutcomeCode(firstAppearanceLifetimeUuid, chargeLifetimeUuid, firstSnapshot.legacyData.nomisOutcomeCode!!)
+    val secondAppearanceLifetimeUuid = response.appearances.first { appearanceResponse -> secondAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
+    checkChargeSnapshotOutcomeCode(secondAppearanceLifetimeUuid, chargeLifetimeUuid, secondSnapshot.legacyData.nomisOutcomeCode!!)
+  }
+
+  private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
+    webTestClient
+      .get()
+      .uri("/legacy/court-appearance/$appearanceLifetimeUuid/charge/$chargeLifetimeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.nomisOutcomeCode")
+      .isEqualTo(expectedOutcomeCode)
   }
 
   @Test
