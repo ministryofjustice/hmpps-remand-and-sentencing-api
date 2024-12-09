@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableChargeException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -35,11 +36,9 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       }
     }
     return prisonerId?.let {
-      val chargeEntity = createCharge(charge, emptyMap(), it, courtCaseId!!)
-      appearance?.let {
-        if (appearance.charges.none { it.chargeUuid == chargeEntity.chargeUuid }) {
-          appearance.charges.add(chargeEntity)
-        }
+      val chargeEntity = createCharge(charge, emptyMap(), it, courtCaseId!!, appearance!!)
+      if (appearance.charges.none { it.chargeUuid == chargeEntity.chargeUuid }) {
+        appearance.charges.add(chargeEntity)
       }
       chargeEntity
     }
@@ -56,7 +55,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     return savedCharge
   }
 
-  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity): ChargeEntity {
+  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity, courtAppearance: CourtAppearanceEntity): ChargeEntity {
     if (existingCharge.statusId == EntityStatus.EDITED) {
       throw ImmutableChargeException("Cannot edit an already edited charge")
     }
@@ -67,7 +66,12 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     var activeRecord = existingCharge
 
     if (!existingCharge.isSame(compareCharge)) {
-      existingCharge.statusId = EntityStatus.EDITED
+      if (existingCharge.hasTwoActiveCourtAppearance(courtAppearance)) {
+        existingCharge.courtAppearances.remove(courtAppearance)
+        courtAppearance.charges.remove(existingCharge)
+      } else {
+        existingCharge.statusId = EntityStatus.EDITED
+      }
       activeRecord = chargeRepository.save(compareCharge)
       chargeChangeStatus = EntityChangeStatus.EDITED
     }
@@ -92,10 +96,10 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional
-  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): ChargeEntity {
+  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity): ChargeEntity {
     val existingCharge = chargeRepository.findByChargeUuid(charge.chargeUuid)
     val charge = if (existingCharge != null) {
-      updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge)
+      updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge, courtAppearance)
     } else {
       createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId)
     }

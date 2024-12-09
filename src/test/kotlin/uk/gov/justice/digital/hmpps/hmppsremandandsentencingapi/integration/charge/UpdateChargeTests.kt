@@ -35,29 +35,6 @@ class UpdateChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `can update charge without supplying appearance uuid and charge already being in a court case`() {
-    val courtCase = createCourtCase()
-    val createdAppearance = courtCase.second.appearances.first()
-    val createdCharge = createdAppearance.charges.first()
-    val toUpdateCharge = DpsDataCreator.dpsCreateCharge(chargeUuid = createdCharge.chargeUuid, offenceCode = "OFF567")
-
-    webTestClient
-      .put()
-      .uri("/charge/${createdCharge.chargeUuid}")
-      .bodyValue(toUpdateCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.chargeUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
-  }
-
-  @Test
   fun `cannot create a charge without court appearance and court case`() {
     val toUpdateCharge = DpsDataCreator.dpsCreateCharge()
     webTestClient

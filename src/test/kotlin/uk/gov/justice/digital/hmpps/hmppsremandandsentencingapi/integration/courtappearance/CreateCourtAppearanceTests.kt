@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
@@ -53,6 +54,58 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearanceUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+  }
+
+  @Test
+  fun `create charge with different outcome in second appearance keeps the first appearance outcome the same`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val appearance = courtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val oldOutcome = charge.outcomeUuid!! // f17328cf-ceaa-43c2-930a-26cf74480e18
+    val newOutcome = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2")
+    val chargeWithNewOutcome = charge.copy(outcomeUuid = newOutcome)
+    val newAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(chargeWithNewOutcome))
+    val newAppearanceResponse = webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(newAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].outcome.outcomeUuid")
+      .isEqualTo(oldOutcome)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${newAppearanceResponse.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].outcome.outcomeUuid")
+      .isEqualTo(newOutcome)
   }
 
   @Test

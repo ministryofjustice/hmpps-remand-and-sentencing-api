@@ -130,10 +130,10 @@ class CourtAppearanceEntity(
     return courtAppearance
   }
 
-  fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
+  fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
     val courtAppearanceEntity = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
-      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, null, courtAppearance.warrantType, courtAppearance.taggedBail, charges, null, courtAppearance.overallConvictionDate, legacyData,
+      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, null, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, legacyData,
     )
     courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
     return courtAppearanceEntity
@@ -149,7 +149,7 @@ class CourtAppearanceEntity(
 
   companion object {
 
-    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, charges: MutableSet<ChargeEntity>, legacyData: JsonNode?): CourtAppearanceEntity {
+    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
       val courtAppearanceEntity = CourtAppearanceEntity(
         appearanceUuid = courtAppearance.appearanceUuid,
         appearanceOutcome = appearanceOutcome,
@@ -159,7 +159,6 @@ class CourtAppearanceEntity(
         appearanceDate = courtAppearance.appearanceDate,
         statusId = EntityStatus.ACTIVE,
         warrantId = courtAppearance.warrantId,
-        charges = charges,
         previousAppearance = null,
         createdPrison = null,
         createdByUsername = createdByUsername,
@@ -169,6 +168,7 @@ class CourtAppearanceEntity(
         overallConvictionDate = courtAppearance.overallConvictionDate,
         lifetimeUuid = courtAppearance.lifetimeUuid,
         legacyData = legacyData,
+        charges = mutableSetOf(),
       )
       return courtAppearanceEntity
     }
