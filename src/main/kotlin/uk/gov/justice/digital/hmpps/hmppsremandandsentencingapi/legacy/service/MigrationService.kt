@@ -29,9 +29,9 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
   fun create(migrationCreateCourtCase: MigrationCreateCourtCase): MigrationCreateCourtCaseResponse {
     val createdByUsername = serviceUserService.getUsername()
     val createdCourtCase = courtCaseRepository.save(CourtCaseEntity.from(migrationCreateCourtCase, createdByUsername))
-    val createdChargesMap = createCharges(migrationCreateCourtCase.appearances.flatMap { appearance -> appearance.charges }, createdByUsername)
     val latestCourtCaseReference = migrationCreateCourtCase.courtCaseLegacyData.caseReferences.maxByOrNull { caseReferenceLegacyData -> caseReferenceLegacyData.updatedDate }?.offenderCaseReference
-    val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdChargesMap, createdCourtCase, latestCourtCaseReference)
+    val createdChargesMap: MutableMap<String, ChargeEntity> = HashMap()
+    val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdCourtCase, latestCourtCaseReference, createdChargesMap)
 
     return MigrationCreateCourtCaseResponse(
       createdCourtCase.caseUniqueIdentifier,
@@ -40,33 +40,32 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     )
   }
 
-  fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdByUsername: String, createdChargesMap: Map<String, ChargeEntity>, createdCourtCase: CourtCaseEntity, courtCaseReference: String?): Map<String, CourtAppearanceEntity> {
+  fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, createdChargesMap: MutableMap<String, ChargeEntity>): Map<String, CourtAppearanceEntity> {
     val nomisAppearanceOutcomeIds = migrationCreateAppearances.filter { appearance -> appearance.legacyData.nomisOutcomeCode != null }.map { appearance -> appearance.legacyData.nomisOutcomeCode!! }.distinct()
     val dpsAppearanceOutcomes = appearanceOutcomeRepository.findByNomisCodeIn(nomisAppearanceOutcomeIds).associate { entity -> entity.nomisCode to entity }
-    return migrationCreateAppearances.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdChargesMap, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes) }
+    val nomisChargeOutcomeIds = migrationCreateAppearances.flatMap { courtAppearance -> courtAppearance.charges }.filter { charge -> charge.legacyData.nomisOutcomeCode != null }.map { charge -> charge.legacyData.nomisOutcomeCode!! }.distinct()
+    val dpsChargeOutcomes = chargeOutcomeRepository.findByNomisCodeIn(nomisChargeOutcomeIds).associate { entity -> entity.nomisCode to entity }
+    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap) }
   }
 
-  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdChargesMap: Map<String, ChargeEntity>, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>): CourtAppearanceEntity {
+  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>): CourtAppearanceEntity {
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { dpsAppearanceOutcomes[it] }
     val legacyData = migrationCreateCourtAppearance.legacyData.let { legacyData -> objectMapper.valueToTree<JsonNode>(legacyData) }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, legacyData, courtCaseReference))
-    createdAppearance.charges.addAll(migrationCreateCourtAppearance.charges.map { charge -> createdChargesMap[charge.chargeNOMISId]!! })
+    val charges = migrationCreateCourtAppearance.charges.map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap) }
+    createdAppearance.charges.addAll(charges)
     return createdAppearance
   }
 
-  fun createCharges(migrationCreateCharges: List<MigrationCreateCharge>, createdByUsername: String): Map<String, ChargeEntity> {
-    val nomisChargeOutcomeIds = migrationCreateCharges.filter { charge -> charge.legacyData.nomisOutcomeCode != null }.map { charge -> charge.legacyData.nomisOutcomeCode!! }.distinct()
-    val dpsChargeOutcomes = chargeOutcomeRepository.findByNomisCodeIn(nomisChargeOutcomeIds).associate { entity -> entity.nomisCode to entity }
-    return migrationCreateCharges
-      .associate { charge -> charge.chargeNOMISId to charge }
-      .mapValues { (_, value) ->
-        createCharge(value, createdByUsername, dpsChargeOutcomes)
-      }
-  }
-
-  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>): ChargeEntity {
+  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>): ChargeEntity {
     val dpsChargeOutcome = migrationCreateCharge.legacyData.nomisOutcomeCode?.let { dpsChargeOutcomes[it] }
     val legacyData = migrationCreateCharge.legacyData.let { legacyData -> objectMapper.valueToTree<JsonNode>(legacyData) }
-    return chargeRepository.save(ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, legacyData, createdByUsername))
+    val toCreateCharge = createdChargesMap[migrationCreateCharge.chargeNOMISId]?.let { existingCharge ->
+      val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, legacyData, createdByUsername)
+      if (existingCharge.isSame(chargeInAppearance)) existingCharge else chargeInAppearance
+    } ?: ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, legacyData, createdByUsername)
+    val createdCharge = chargeRepository.save(toCreateCharge)
+    createdChargesMap.put(migrationCreateCharge.chargeNOMISId, createdCharge)
+    return createdCharge
   }
 }
