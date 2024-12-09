@@ -12,6 +12,9 @@ data class CreateCharge(
   @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonSetter(nulls = Nulls.SKIP)
   var chargeUuid: UUID = UUID.randomUUID(),
+  @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonSetter(nulls = Nulls.SKIP)
+  var lifetimeChargeUuid: UUID = UUID.randomUUID(),
   val offenceCode: String,
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,
