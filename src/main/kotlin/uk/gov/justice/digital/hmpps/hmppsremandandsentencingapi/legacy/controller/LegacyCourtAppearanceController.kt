@@ -137,8 +137,8 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   @GetMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW', 'ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO')")
   @Operation(
-    summary = "link Appearance with Charge",
-    description = "Synchronise a link between court appearance and charge from NOMIS into remand and sentencing API.",
+    summary = "Get latest charge at appearance",
+    description = "This endpoint will retrieve the latest charge at a court appearance",
   )
   @ApiResponses(
     value = [
