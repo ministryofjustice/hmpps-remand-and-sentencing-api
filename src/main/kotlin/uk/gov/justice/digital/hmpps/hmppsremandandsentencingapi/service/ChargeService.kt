@@ -66,7 +66,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     var activeRecord = existingCharge
 
     if (!existingCharge.isSame(compareCharge)) {
-      if (existingCharge.hasTwoActiveCourtAppearance(courtAppearance)) {
+      if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
         existingCharge.courtAppearances.remove(courtAppearance)
         courtAppearance.charges.remove(existingCharge)
       } else {
@@ -81,7 +81,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       activeRecord.getActiveSentence()?.let { sentenceEntity -> sentenceService.deleteSentence(sentenceEntity) }
     }
     if (chargeChangeStatus == EntityChangeStatus.EDITED) {
-      chargeDomainEventService.update(prisonerId, activeRecord.lifetimeChargeUuid.toString(), courtCaseId, EventSource.DPS)
+      chargeDomainEventService.update(prisonerId, activeRecord.lifetimeChargeUuid.toString(), courtAppearance.lifetimeUuid.toString(), courtCaseId, EventSource.DPS)
     }
     return activeRecord
   }
