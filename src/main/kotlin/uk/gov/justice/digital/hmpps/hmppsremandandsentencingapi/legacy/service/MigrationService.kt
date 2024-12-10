@@ -21,18 +21,20 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.LocalDate
 
 @Service
 class MigrationService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val chargeRepository: ChargeRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper) {
 
   @Transactional
   fun create(migrationCreateCourtCase: MigrationCreateCourtCase): MigrationCreateCourtCaseResponse {
+    val currentDate = LocalDate.now()
     val createdByUsername = serviceUserService.getUsername()
     val createdCourtCase = courtCaseRepository.save(CourtCaseEntity.from(migrationCreateCourtCase, createdByUsername))
     val latestCourtCaseReference = migrationCreateCourtCase.courtCaseLegacyData.caseReferences.maxByOrNull { caseReferenceLegacyData -> caseReferenceLegacyData.updatedDate }?.offenderCaseReference
     val createdChargesMap: MutableMap<String, ChargeEntity> = HashMap()
     val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdCourtCase, latestCourtCaseReference, createdChargesMap)
-
+    createdCourtCase.latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> currentDate.isAfter(courtAppearanceEntity.appearanceDate) || currentDate.isEqual(courtAppearanceEntity.appearanceDate) }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
     return MigrationCreateCourtCaseResponse(
       createdCourtCase.caseUniqueIdentifier,
       createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.lifetimeUuid, eventId) },
