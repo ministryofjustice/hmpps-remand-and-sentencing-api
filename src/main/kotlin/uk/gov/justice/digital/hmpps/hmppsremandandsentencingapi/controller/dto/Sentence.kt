@@ -6,7 +6,7 @@ import java.util.UUID
 
 data class Sentence(
   val sentenceUuid: UUID,
-  val chargeNumber: String,
+  val chargeNumber: String?,
   val periodLengths: List<PeriodLength>,
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
