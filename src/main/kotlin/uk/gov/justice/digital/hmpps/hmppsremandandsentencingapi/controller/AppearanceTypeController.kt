@@ -32,11 +32,10 @@ class AppearanceTypeController(private val appearanceTypeService: AppearanceType
   )
   fun getAllAppearanceTypes(): List<AppearanceType> = appearanceTypeService.getAll()
 
-
   @GetMapping("/{appearanceTypeUuid}")
   @Operation(
     summary = "Get appearance type by uuid",
-    description = "This endpoint will get appearance type by uuid"
+    description = "This endpoint will get appearance type by uuid",
   )
   @ApiResponses(
     value = [
