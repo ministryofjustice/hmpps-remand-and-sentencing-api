@@ -69,8 +69,8 @@ class SentenceEntity(
 
   fun isSame(other: SentenceEntity?): Boolean {
     return chargeNumber == other?.chargeNumber &&
-      periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
-      sentenceServeType == other.sentenceServeType &&
+      periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
+      sentenceServeType == other?.sentenceServeType &&
       sentenceType == other.sentenceType &&
       ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
       convictionDate == other.convictionDate &&
