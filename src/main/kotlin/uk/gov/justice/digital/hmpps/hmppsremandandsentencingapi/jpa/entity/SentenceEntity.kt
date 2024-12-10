@@ -31,7 +31,7 @@ class SentenceEntity(
   @Column
   var sentenceUuid: UUID,
   @Column
-  val chargeNumber: String,
+  val chargeNumber: String?,
 
   @Column
   @Enumerated(EnumType.ORDINAL)
