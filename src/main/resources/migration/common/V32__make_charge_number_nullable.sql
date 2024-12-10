@@ -1,0 +1,1 @@
+ALTER TABLE sentence ALTER COLUMN charge_number DROP NOT NULL;
