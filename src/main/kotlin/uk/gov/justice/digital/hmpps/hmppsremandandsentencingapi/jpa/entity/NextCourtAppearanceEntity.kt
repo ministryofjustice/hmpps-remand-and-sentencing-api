@@ -25,8 +25,9 @@ class NextCourtAppearanceEntity(
   val appearanceTime: LocalTime?,
   @Column
   val courtCode: String,
-  @Column
-  val appearanceType: String,
+  @OneToOne
+  @JoinColumn(name = "appearance_type_id")
+  val appearanceType: AppearanceTypeEntity,
   @OneToOne
   @JoinColumn(name = "future_skeleton_appearance_id")
   val futureSkeletonAppearance: CourtAppearanceEntity,
@@ -38,12 +39,12 @@ class NextCourtAppearanceEntity(
   }
 
   companion object {
-    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity): NextCourtAppearanceEntity {
+    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
       return NextCourtAppearanceEntity(
         appearanceDate = nextCourtAppearance.appearanceDate,
         appearanceTime = nextCourtAppearance.appearanceTime,
         courtCode = nextCourtAppearance.courtCode,
-        appearanceType = nextCourtAppearance.appearanceType,
+        appearanceType = appearanceTypeEntity,
         futureSkeletonAppearance = futureSkeletonAppearance,
       )
     }

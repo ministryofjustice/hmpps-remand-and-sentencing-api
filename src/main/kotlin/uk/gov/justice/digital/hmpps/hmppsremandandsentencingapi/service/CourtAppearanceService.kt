@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
@@ -40,6 +42,7 @@ class CourtAppearanceService(
   private val documentManagementApiClient: DocumentManagementApiClient,
   private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService,
   private val objectMapper: ObjectMapper,
+  private val appearanceTypeRepository: AppearanceTypeRepository,
 ) {
 
   @Transactional
@@ -84,8 +87,9 @@ class CourtAppearanceService(
     val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { nextCourtAppearance ->
       val futureCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.fromFuture(nextCourtAppearance, courtCaseEntity, serviceUserService.getUsername(), courtAppearance.courtCaseReference))
+      val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nextCourtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type found at ${nextCourtAppearance.appearanceTypeUuid}")
       nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance),
+        NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance, appearanceType),
       )
     }
     val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), legacyData))
@@ -164,8 +168,9 @@ class CourtAppearanceService(
           serviceUserService.getUsername(),
           courtAppearance.courtCaseReference,
         )
+        val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(courtAppearance.nextCourtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type found at ${courtAppearance.nextCourtAppearance.appearanceTypeUuid}")
         val nextCourtAppearance =
-          NextCourtAppearanceEntity.from(courtAppearance.nextCourtAppearance, futureCourtAppearance)
+          NextCourtAppearanceEntity.from(courtAppearance.nextCourtAppearance, futureCourtAppearance, appearanceType)
         if (!activeNextCourtAppearance.isSame(nextCourtAppearance)) {
           val savedFutureCourtAppearance = courtAppearanceRepository.save(futureCourtAppearance)
           activeFutureSkeletonAppearance.statusId = EntityStatus.EDITED
@@ -173,6 +178,7 @@ class CourtAppearanceService(
             NextCourtAppearanceEntity.from(
               courtAppearance.nextCourtAppearance,
               savedFutureCourtAppearance,
+              appearanceType,
             ),
           )
           return@let EntityChangeStatus.EDITED to savedFutureCourtAppearance
@@ -193,8 +199,9 @@ class CourtAppearanceService(
           courtAppearance.courtCaseReference,
         ),
       )
+      val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(toCreateNextCourtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type found at ${courtAppearance.nextCourtAppearance.appearanceTypeUuid}")
       val savedNextCourtAppearance = nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance),
+        NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance, appearanceType),
       )
       activeRecord.nextCourtAppearance = savedNextCourtAppearance
       EntityChangeStatus.CREATED to futureCourtAppearance

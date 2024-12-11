@@ -8,7 +8,7 @@ data class NextCourtAppearance(
   val appearanceDate: LocalDate,
   val appearanceTime: LocalTime?,
   val courtCode: String,
-  val appearanceType: String,
+  val appearanceType: AppearanceType,
 ) {
   companion object {
     fun from(nextCourtAppearanceEntity: NextCourtAppearanceEntity): NextCourtAppearance {
@@ -16,7 +16,7 @@ data class NextCourtAppearance(
         nextCourtAppearanceEntity.appearanceDate,
         nextCourtAppearanceEntity.appearanceTime,
         nextCourtAppearanceEntity.courtCode,
-        nextCourtAppearanceEntity.appearanceType,
+        AppearanceType.from(nextCourtAppearanceEntity.appearanceType),
       )
     }
   }
