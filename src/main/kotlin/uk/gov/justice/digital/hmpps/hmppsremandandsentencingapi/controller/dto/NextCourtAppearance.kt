@@ -16,7 +16,7 @@ data class NextCourtAppearance(
         nextCourtAppearanceEntity.appearanceDate,
         nextCourtAppearanceEntity.appearanceTime,
         nextCourtAppearanceEntity.courtCode,
-        nextCourtAppearanceEntity.appearanceType,
+        nextCourtAppearanceEntity.appearanceType.description,
       )
     }
   }
