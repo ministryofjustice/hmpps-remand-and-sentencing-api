@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
@@ -37,8 +38,11 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     val latestCourtCaseReference = migrationCreateCourtCase.courtCaseLegacyData.caseReferences.maxByOrNull { caseReferenceLegacyData -> caseReferenceLegacyData.updatedDate }?.offenderCaseReference
     val createdChargesMap: MutableMap<String, ChargeEntity> = HashMap()
     val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdCourtCase, latestCourtCaseReference, createdChargesMap)
-    createdCourtCase.latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> currentDate.isAfter(courtAppearanceEntity.appearanceDate) || currentDate.isEqual(courtAppearanceEntity.appearanceDate) }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
-    manageDpsNextCourtAppearances(migrationCreateCourtCase, createdAppearances)
+    manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase, createdAppearances)
+    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
+    createdCourtCase.latestCourtAppearance = latestCourtAppearance
+    latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, migrationCreateCourtCase, createdAppearances) }
+
     return MigrationCreateCourtCaseResponse(
       createdCourtCase.caseUniqueIdentifier,
       createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.lifetimeUuid, eventId) },
@@ -46,7 +50,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     )
   }
 
-  fun manageDpsNextCourtAppearances(migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<String, CourtAppearanceEntity>) {
+  fun manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<String, CourtAppearanceEntity>) {
     val nomisAppearances = migrationCreateCourtCase.appearances.associateBy { appearance -> appearance.legacyData.eventId!! }
     val matchedNomisAppearances = migrationCreateCourtCase.appearances.filter { appearance -> appearance.legacyData.nextEventDateTime != null }.map { appearance ->
       appearance.legacyData.eventId!! to migrationCreateCourtCase.appearances.firstOrNull { potentialAppearance ->
@@ -62,6 +66,17 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
       val nextAppearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nomisNextAppearance.appearanceTypeUuid)!!
       createdAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
         NextCourtAppearanceEntity.from(nomisAppearance, nomisNextAppearance, createdNextAppearance, nextAppearanceType),
+      )
+    }
+  }
+
+  fun managedNoMatchedDpsNextCourtAppearance(latestCourtAppearance: CourtAppearanceEntity, migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<String, CourtAppearanceEntity>) {
+    if (latestCourtAppearance.nextCourtAppearance == null && createdAppearances.values.any { it.statusId == EntityStatus.FUTURE }) {
+      val (nextFutureDatedEventId, nextFutureDatedAppearance) = createdAppearances.filter { (_, courtAppearanceEntity) -> courtAppearanceEntity.statusId == EntityStatus.FUTURE }.minBy { (_, courtAppearanceEntity) -> courtAppearanceEntity.appearanceDate }
+      val nomisNextFutureDatedAppearance = migrationCreateCourtCase.appearances.first { it.legacyData.eventId == nextFutureDatedEventId }
+      val nextAppearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nomisNextFutureDatedAppearance.appearanceTypeUuid)!!
+      latestCourtAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
+        NextCourtAppearanceEntity.from(nextFutureDatedAppearance, nextAppearanceType),
       )
     }
   }

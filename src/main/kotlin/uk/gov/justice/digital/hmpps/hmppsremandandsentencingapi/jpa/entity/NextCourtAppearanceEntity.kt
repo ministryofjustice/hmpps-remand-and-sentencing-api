@@ -59,5 +59,15 @@ class NextCourtAppearanceEntity(
         futureSkeletonAppearance = futureAppearance,
       )
     }
+
+    fun from(futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
+      return NextCourtAppearanceEntity(
+        appearanceDate = futureAppearance.appearanceDate,
+        appearanceTime = null,
+        courtCode = futureAppearance.courtCode,
+        appearanceType = appearanceTypeEntity,
+        futureSkeletonAppearance = futureAppearance,
+      )
+    }
   }
 }
