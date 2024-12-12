@@ -227,7 +227,7 @@ class CourtAppearanceEntity(
         courtCode = migrationCreateCourtAppearance.courtCode,
         courtCaseReference = courtCaseReference,
         appearanceDate = migrationCreateCourtAppearance.appearanceDate,
-        statusId = EntityStatus.ACTIVE,
+        statusId = if (migrationCreateCourtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
         warrantId = null,
         charges = mutableSetOf(),
         previousAppearance = null,

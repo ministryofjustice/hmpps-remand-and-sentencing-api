@@ -27,9 +27,9 @@ class DataCreator {
       postedDate: String = LocalDate.now().format(
         DateTimeFormatter.ISO_DATE,
       ),
-      nomisOutcomeCode: String = "1",
-      outcomeDescription: String = "Outcome Description",
-      nextEventDateTime: LocalDateTime = LocalDateTime.now(),
+      nomisOutcomeCode: String? = "1",
+      outcomeDescription: String? = "Outcome Description",
+      nextEventDateTime: LocalDateTime? = LocalDateTime.now(),
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime)
 
     fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance {
@@ -57,7 +57,7 @@ class DataCreator {
 
     fun migrationCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true, courtCaseLegacyData: CourtCaseLegacyData = courtCaseLegacyData(), appearances: List<MigrationCreateCourtAppearance> = listOf(migrationCreateCourtAppearance())): MigrationCreateCourtCase = MigrationCreateCourtCase(prisonerId, active, courtCaseLegacyData, appearances)
 
-    fun migrationCreateCourtAppearance(courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(), charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge())): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(courtCode, appearanceDate, legacyData, charges)
+    fun migrationCreateCourtAppearance(courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(), charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge())): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
 
     fun migrationCreateCharge(chargeNOMISId: String = "5453", offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, active: Boolean = true, legacyData: ChargeLegacyData = chargeLegacyData()): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, active, legacyData)
   }

@@ -69,6 +69,41 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
     checkChargeSnapshotOutcomeCode(secondAppearanceLifetimeUuid, chargeLifetimeUuid, secondSnapshot.legacyData.nomisOutcomeCode!!)
   }
 
+  @Test
+  fun `creates DPS next court appearances when next court date and appearance date match`() {
+    val futureAppearance = DataCreator.migrationCreateCourtAppearance(appearanceDate = LocalDate.now().plusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "567", nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null))
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = futureAppearance.appearanceDate.atTime(10, 0)))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(firstAppearance, futureAppearance))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCaseResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val firstAppearanceLifetimeUuid = response.appearances.first { appearanceResponse -> firstAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
+
+    webTestClient
+      .get()
+      .uri("/court-case/${response.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.lifetimeUuid == '$firstAppearanceLifetimeUuid')].nextCourtAppearance.courtCode")
+      .isEqualTo(futureAppearance.courtCode)
+  }
+
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
     webTestClient
       .get()
