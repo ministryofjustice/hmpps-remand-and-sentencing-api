@@ -1,0 +1,1 @@
+ALTER TABLE sentence ADD COLUMN legacy_data jsonb NULL;
