@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
+import com.fasterxml.jackson.databind.JsonNode
+import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -12,6 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.LocalDate
@@ -57,6 +60,9 @@ class SentenceEntity(
   val charge: ChargeEntity,
   @Column
   val convictionDate: LocalDate?,
+  @Type(value = JsonType::class)
+  @Column(columnDefinition = "jsonb")
+  var legacyData: JsonNode? = null,
 
 ) {
   @OneToMany
