@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -46,6 +47,16 @@ class NextCourtAppearanceEntity(
         courtCode = nextCourtAppearance.courtCode,
         appearanceType = appearanceTypeEntity,
         futureSkeletonAppearance = futureSkeletonAppearance,
+      )
+    }
+
+    fun from(nomisAppearance: MigrationCreateCourtAppearance, nomisFutureAppearance: MigrationCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
+      return NextCourtAppearanceEntity(
+        appearanceDate = nomisAppearance.legacyData.nextEventDateTime!!.toLocalDate(),
+        appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime(),
+        courtCode = nomisFutureAppearance.courtCode,
+        appearanceType = appearanceTypeEntity,
+        futureSkeletonAppearance = futureAppearance,
       )
     }
   }
