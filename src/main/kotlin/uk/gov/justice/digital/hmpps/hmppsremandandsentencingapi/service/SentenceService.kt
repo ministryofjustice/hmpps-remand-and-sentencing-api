@@ -8,8 +8,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableSentenceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.FineAmountEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.FineAmountRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
@@ -22,40 +23,38 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): SentenceEntity {
+    val existingSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
+    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId)
+  }
+
+  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): SentenceEntity {
+    if (existingSentence.statusId == EntityStatus.EDITED) {
+      throw ImmutableSentenceException("Cannot edit and already edited sentence")
+    }
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findBySentenceUuid(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
-    val (toCreateSentence, status) = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
-      ?.let { sentenceEntity ->
-        if (sentenceEntity.statusId == EntityStatus.DELETED) {
-          throw ImmutableSentenceException("Cannot edit and already edited sentence")
-        }
+    val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
+    var activeRecord = existingSentence
+    if (!existingSentence.isSame(compareSentence)) {
+      existingSentence.statusId = EntityStatus.EDITED
+      val toCreatePeriodLengths = compareSentence.periodLengths.toList()
+      compareSentence.periodLengths = emptyList()
+      val toCreateFineAmount = compareSentence.fineAmountEntity
+      compareSentence.fineAmountEntity = null
+      activeRecord = sentenceRepository.save(compareSentence)
+      activeRecord.periodLengths = toCreatePeriodLengths.map { periodLengthRepository.save(it) }
+      activeRecord.fineAmountEntity = toCreateFineAmount?.let { fineAmountRepository.save(it) }
+    }
+    return activeRecord
+  }
 
-        val compareSentence = SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
-        if (sentenceEntity.isSame(compareSentence)) {
-          return@let sentenceEntity to EntityChangeStatus.NO_CHANGE
-        }
-        sentenceEntity.statusId = EntityStatus.EDITED
-        compareSentence.sentenceUuid = UUID.randomUUID()
-        compareSentence.supersedingSentence = sentenceEntity
-        compareSentence.lifetimeSentenceUuid = sentenceEntity.lifetimeSentenceUuid
-        compareSentence to EntityChangeStatus.EDITED
-      } ?: (SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType) to EntityChangeStatus.CREATED)
-    val toCreatePeriodLengths = toCreateSentence.periodLengths.filter { it.id == 0 }
-    toCreateSentence.periodLengths = toCreateSentence.periodLengths.filter { it.id != 0 }
-    val toCreateFineAmount = toCreateSentence.fineAmountEntity?.takeIf { it.id == 0 }
-    toCreateSentence.fineAmountEntity = toCreateSentence.fineAmountEntity?.takeUnless { it.id == 0 }
-    val createdSentence = sentenceRepository.save(toCreateSentence)
-    toCreatePeriodLengths.forEach {
-      it.sentenceEntity = createdSentence
-      periodLengthRepository.save(it)
-    }
-    toCreateFineAmount?.let {
-      it.sentenceEntity = createdSentence
-      fineAmountRepository.save(it)
-    }
-    if (status == EntityChangeStatus.CREATED) {
-      snsService.sentenceInserted(prisonerId, createdSentence.sentenceUuid.toString(), createdSentence.createdAt)
-    }
+  private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): SentenceEntity {
+    val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findBySentenceUuid(it) }
+    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
+    val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
+    createdSentence.periodLengths = sentence.periodLengths.map { periodLengthRepository.save(PeriodLengthEntity.from(it)) }
+    sentence.fineAmount?.let { createdSentence.fineAmountEntity = fineAmountRepository.save(FineAmountEntity.from(it)) }
+    snsService.sentenceInserted(prisonerId, createdSentence.sentenceUuid.toString(), createdSentence.createdAt)
     return createdSentence
   }
 
