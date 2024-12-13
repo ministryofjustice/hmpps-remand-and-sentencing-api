@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional.TxType
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableSentenceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.FineAmountEntity
@@ -19,7 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import java.util.UUID
 
 @Service
-class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val snsService: SnsService, private val fineAmountRepository: FineAmountRepository) {
+class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceDomainEventService: SentenceDomainEventService, private val fineAmountRepository: FineAmountRepository) {
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String): SentenceEntity {
@@ -44,6 +45,12 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       activeRecord = sentenceRepository.save(compareSentence)
       activeRecord.periodLengths = toCreatePeriodLengths.map { periodLengthRepository.save(it) }
       activeRecord.fineAmountEntity = toCreateFineAmount?.let { fineAmountRepository.save(it) }
+      sentenceDomainEventService.update(
+        prisonerId,
+        activeRecord.lifetimeSentenceUuid.toString(),
+        chargeEntity.lifetimeChargeUuid.toString(),
+        EventSource.DPS,
+      )
     }
     return activeRecord
   }
@@ -54,7 +61,12 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     createdSentence.periodLengths = sentence.periodLengths.map { periodLengthRepository.save(PeriodLengthEntity.from(it)) }
     sentence.fineAmount?.let { createdSentence.fineAmountEntity = fineAmountRepository.save(FineAmountEntity.from(it)) }
-    snsService.sentenceInserted(prisonerId, createdSentence.sentenceUuid.toString(), createdSentence.createdAt)
+    sentenceDomainEventService.create(
+      prisonerId,
+      createdSentence.lifetimeSentenceUuid.toString(),
+      chargeEntity.lifetimeChargeUuid.toString(),
+      EventSource.DPS,
+    )
     return createdSentence
   }
 
