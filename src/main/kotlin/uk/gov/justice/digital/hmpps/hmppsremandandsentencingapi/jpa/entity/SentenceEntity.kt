@@ -82,6 +82,26 @@ class SentenceEntity(
       ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
   }
 
+  fun copyFrom(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
+    val sentenceEntity = SentenceEntity(
+      lifetimeSentenceUuid = lifetimeSentenceUuid,
+      sentenceUuid = UUID.randomUUID(),
+      chargeNumber = sentence.chargeNumber,
+      statusId = EntityStatus.ACTIVE,
+      createdByUsername = createdByUsername,
+      createdPrison = createdPrison,
+      supersedingSentence = this,
+      charge = chargeEntity,
+      sentenceServeType = sentence.sentenceServeType,
+      consecutiveTo = consecutiveTo,
+      sentenceType = sentenceType,
+      convictionDate = sentence.convictionDate,
+    )
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }
+    sentenceEntity.fineAmountEntity = sentence.fineAmount?.let { FineAmountEntity.from(it) }
+    return sentenceEntity
+  }
+
   companion object {
     fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
@@ -98,8 +118,6 @@ class SentenceEntity(
         sentenceType = sentenceType,
         convictionDate = sentence.convictionDate,
       )
-      sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }
-      sentence.fineAmount?.let { sentenceEntity.fineAmountEntity = FineAmountEntity.from(it) }
       return sentenceEntity
     }
   }
