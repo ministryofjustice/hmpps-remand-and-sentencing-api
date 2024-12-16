@@ -11,7 +11,7 @@ data class LegacyCharge(
   val lifetimeUuid: UUID,
   val nomisOutcomeCode: String?,
   val offenceCode: String,
-  val offenceStartDate: LocalDate,
+  val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
   val legacyData: ChargeLegacyData?,
 ) {
