@@ -5,7 +5,7 @@ import java.time.LocalDate
 data class MigrationCreateCharge(
   val chargeNOMISId: String,
   val offenceCode: String,
-  val offenceStartDate: LocalDate,
+  val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
   val active: Boolean,
   val legacyData: ChargeLegacyData,

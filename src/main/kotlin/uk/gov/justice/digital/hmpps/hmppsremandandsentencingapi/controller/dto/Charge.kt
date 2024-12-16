@@ -9,7 +9,7 @@ data class Charge(
   val chargeUuid: UUID,
   val lifetimeUuid: UUID,
   val offenceCode: String,
-  val offenceStartDate: LocalDate,
+  val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
   val outcome: ChargeOutcome?,
   val terrorRelated: Boolean?,
