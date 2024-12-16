@@ -38,7 +38,7 @@ class ChargeEntity(
   @Column
   val offenceCode: String,
   @Column
-  val offenceStartDate: LocalDate,
+  val offenceStartDate: LocalDate?,
   @Column
   val offenceEndDate: LocalDate?,
   @Column
@@ -74,7 +74,7 @@ class ChargeEntity(
   }
   fun isSame(other: ChargeEntity): Boolean {
     return this.offenceCode == other.offenceCode &&
-      this.offenceStartDate.isEqual(other.offenceStartDate) &&
+      ((this.offenceStartDate == null && other.offenceStartDate == null) || this.offenceStartDate?.isEqual(other.offenceStartDate) == true) &&
       ((this.offenceEndDate == null && other.offenceEndDate == null) || this.offenceEndDate?.isEqual(other.offenceEndDate) == true) &&
       this.statusId == other.statusId &&
       this.chargeOutcome == other.chargeOutcome &&
