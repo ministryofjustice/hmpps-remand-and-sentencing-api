@@ -40,6 +40,17 @@ class NextCourtAppearanceEntity(
       appearanceType == other.appearanceType
   }
 
+  fun copyFrom(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
+    return NextCourtAppearanceEntity(
+      id,
+      nomisAppearance.appearanceDate,
+      appearanceTime,
+      nomisAppearance.courtCode,
+      appearanceTypeEntity,
+      futureAppearance,
+    )
+  }
+
   companion object {
     fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
       return NextCourtAppearanceEntity(

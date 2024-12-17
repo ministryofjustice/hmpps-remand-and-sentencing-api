@@ -58,7 +58,20 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
     val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, serviceUserService.getUsername(), legacyData)
     if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
       existingCourtAppearance.statusId = EntityStatus.EDITED
-      courtAppearanceRepository.save(updatedCourtAppearance)
+      val savedRecord = courtAppearanceRepository.save(updatedCourtAppearance)
+      if (savedRecord.statusId == EntityStatus.FUTURE) {
+        (
+          courtAppearanceRepository.findByNextEventDateTime(savedRecord.courtCase.id, courtAppearance.appearanceDate) ?: courtAppearanceRepository.findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(
+            savedRecord.courtCase,
+            EntityStatus.ACTIVE,
+          )
+          )?.let { nextEventAppearance ->
+          val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(courtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${courtAppearance.appearanceTypeUuid}")
+          val toSaveNextCourtAppearance = nextEventAppearance.nextCourtAppearance?.copyFrom(courtAppearance, savedRecord, appearanceType)
+            ?: NextCourtAppearanceEntity.from(courtAppearance, savedRecord, appearanceType)
+          nextEventAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(toSaveNextCourtAppearance)
+        }
+      }
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
