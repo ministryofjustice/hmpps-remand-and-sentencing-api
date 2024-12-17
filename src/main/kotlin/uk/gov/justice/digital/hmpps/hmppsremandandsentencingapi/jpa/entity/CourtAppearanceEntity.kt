@@ -123,7 +123,7 @@ class CourtAppearanceEntity(
   fun copyFrom(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
     val courtAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
-      EntityStatus.ACTIVE, this, warrantId,
+      if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE, this, warrantId,
       ZonedDateTime.now(), createdByUsername, createdPrison, appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE, taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
     )
     courtAppearance.periodLengths = periodLengths.toList()

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import java.util.UUID
 
 class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
@@ -27,6 +28,50 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("court-appearance.updated")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+  }
+
+  @Test
+  fun `update future dated appearance`() {
+    val (lifetimeUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "99", nextEventDateTime = null))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(futureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyCourtAppearanceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val editedFutureCourtAppearance = futureCourtAppearance.copy(courtCode = "ANOTHERCOURTCODE")
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${response.lifetimeUuid}")
+      .bodyValue(editedFutureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-case/${legacyCourtAppearance.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.courtCode")
+      .isEqualTo(editedFutureCourtAppearance.courtCode)
   }
 
   @Test
