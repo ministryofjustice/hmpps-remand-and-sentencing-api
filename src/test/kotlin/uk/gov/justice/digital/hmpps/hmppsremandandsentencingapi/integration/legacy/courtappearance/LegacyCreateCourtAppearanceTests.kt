@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
 
@@ -31,6 +33,63 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("court-appearance.inserted")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+  }
+
+  @Test
+  fun `create future dated appearance in existing court case`() {
+    val legacyCourtCase = createLegacyCourtCase()
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtCase.first, appearanceDate = LocalDate.now().plusDays(10), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(futureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .expectBody()
+      .jsonPath("$.lifetimeUuid")
+      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+    val message = getMessages(1)[0]
+    Assertions.assertThat(message.eventType).isEqualTo("court-appearance.inserted")
+    Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+  }
+
+  @Test
+  fun `create future dated appearance with existing appearance`() {
+    val (lifetimeUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "99", nextEventDateTime = null))
+    webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(futureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .expectBody()
+      .jsonPath("$.lifetimeUuid")
+      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+
+    webTestClient
+      .get()
+      .uri("/court-case/${legacyCourtAppearance.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.appearanceDate")
+      .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
+
   }
 
   @Test

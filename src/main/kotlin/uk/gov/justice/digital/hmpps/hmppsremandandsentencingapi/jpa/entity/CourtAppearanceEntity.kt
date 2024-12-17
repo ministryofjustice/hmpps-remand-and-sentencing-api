@@ -204,7 +204,7 @@ class CourtAppearanceEntity(
         courtCode = courtAppearance.courtCode,
         courtCaseReference = null,
         appearanceDate = courtAppearance.appearanceDate,
-        statusId = EntityStatus.ACTIVE,
+        statusId = if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
         warrantId = null,
         charges = mutableSetOf(),
         previousAppearance = null,
