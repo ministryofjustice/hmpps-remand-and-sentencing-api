@@ -45,8 +45,6 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
         val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(courtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${courtAppearance.appearanceTypeUuid}")
         nextEventAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(NextCourtAppearanceEntity.from(courtAppearance, createdCourtAppearance, appearanceType))
       }
-
-      // match a court appearance
     }
     return LegacyCourtAppearanceCreatedResponse(createdCourtAppearance.lifetimeUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
   }
