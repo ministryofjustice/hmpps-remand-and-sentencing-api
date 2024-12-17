@@ -29,11 +29,11 @@ class DataCreator {
       ),
       nomisOutcomeCode: String? = "1",
       outcomeDescription: String? = "Outcome Description",
-      nextEventDateTime: LocalDateTime? = LocalDateTime.now(),
+      nextEventDateTime: LocalDateTime? = LocalDateTime.now().plusDays(10),
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime)
 
-    fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance {
-      return LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData)
+    fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance {
+      return LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
     }
 
     fun chargeLegacyData(
