@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
@@ -46,6 +47,10 @@ class DataCreator {
 
     fun legacyCreateCharge(appearanceLifetimeUuid: UUID = UUID.randomUUID(), offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, active: Boolean = true, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyCreateCharge {
       return LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, active, legacyData)
+    }
+
+    fun legacyUpdateCharge(offenceStartDate: LocalDate = LocalDate.now().minusDays(20), offenceEndDate: LocalDate? = null, active: Boolean = true, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyUpdateCharge {
+      return LegacyUpdateCharge(offenceStartDate, offenceEndDate, active, legacyData)
     }
 
     fun caseReferenceLegacyData(

@@ -19,6 +19,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -85,6 +86,14 @@ class ChargeEntity(
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdByUsername: String, legacyData: JsonNode): ChargeEntity {
     return ChargeEntity(
       0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
+      if (charge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome, this, terrorRelated,
+      ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
+    )
+  }
+
+  fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdByUsername: String, legacyData: JsonNode): ChargeEntity {
+    return ChargeEntity(
+      0, lifetimeChargeUuid, UUID.randomUUID(), offenceCode, charge.offenceStartDate, charge.offenceEndDate,
       if (charge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome, this, terrorRelated,
       ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
     )
