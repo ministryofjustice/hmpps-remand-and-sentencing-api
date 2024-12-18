@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import java.util.UUID
@@ -67,6 +68,27 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     legacyChargeService.update(lifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), charge.appearanceLifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
+      }
+    }
+  }
+
+  @PutMapping("/{lifetimeUuid}/appearance/{appearanceLifetimeUuid}")
+  @Operation(
+    summary = "Update a charge in an appearance",
+    description = "Synchronise an update of charge within an appearance from NOMIS Offender charges into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "charge updated"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
+  fun updateInAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable appearanceLifetimeUuid: UUID, @RequestBody charge: LegacyUpdateCharge) {
+    legacyChargeService.updateInAppearance(lifetimeUuid, appearanceLifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
+      if (entityChangeStatus == EntityChangeStatus.EDITED) {
+        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), appearanceLifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
   }
