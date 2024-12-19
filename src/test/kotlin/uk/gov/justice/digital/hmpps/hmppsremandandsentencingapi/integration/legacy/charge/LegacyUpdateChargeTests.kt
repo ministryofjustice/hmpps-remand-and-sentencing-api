@@ -58,11 +58,10 @@ class LegacyUpdateChargeTests : IntegrationTestBase() {
       .returnResult(CourtCase::class.java)
       .responseBody.blockFirst()!!
 
-      courtCase.appearances.flatMap { it.charges }
-        .forEach { charge ->
-          Assertions.assertEquals(toUpdate.offenceCode, charge.offenceCode)
-        }
-
+    courtCase.appearances.flatMap { it.charges }
+      .forEach { charge ->
+        Assertions.assertEquals(toUpdate.offenceCode, charge.offenceCode)
+      }
   }
 
   @Test
