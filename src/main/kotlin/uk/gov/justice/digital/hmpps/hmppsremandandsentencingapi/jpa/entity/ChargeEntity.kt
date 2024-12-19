@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -112,6 +113,15 @@ class ChargeEntity(
       if (migrationCreateCharge.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, chargeOutcome, this, null,
       ZonedDateTime.now(), createdByUsername, legacyData, mutableSetOf(),
     )
+  }
+
+  fun copyFrom(charge: LegacyUpdateWholeCharge, createdByUsername: String): ChargeEntity {
+    val charge = ChargeEntity(
+      0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, offenceStartDate, offenceEndDate,
+      EntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
+    )
+    charge.sentences = sentences.toMutableList()
+    return charge
   }
 
   companion object {

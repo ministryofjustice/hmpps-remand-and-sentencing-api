@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import java.util.UUID
@@ -53,8 +54,8 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
 
   @PutMapping("/{lifetimeUuid}")
   @Operation(
-    summary = "Update a charge",
-    description = "Synchronise an update of charge from NOMIS Offender charges into remand and sentencing API.",
+    summary = "Update a charge in all appearances",
+    description = "Synchronise an update of charge in all appearances from NOMIS Offender charges into remand and sentencing API.",
   )
   @ApiResponses(
     value = [
@@ -64,12 +65,8 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyCreateCharge) {
-    legacyChargeService.update(lifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), charge.appearanceLifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
-      }
-    }
+  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyUpdateWholeCharge) {
+    legacyChargeService.updateInAllAppearances(lifetimeUuid, charge)
   }
 
   @PutMapping("/{lifetimeUuid}/appearance/{appearanceLifetimeUuid}")

@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
 
@@ -33,18 +34,21 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   }
 
   @Transactional
-  fun update(lifetimeUUID: UUID, charge: LegacyCreateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    val existingCharge = getUnlessDeleted(lifetimeUUID)
-    val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
-    val legacyData = objectMapper.valueToTree<JsonNode>(charge.legacyData)
-    val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, serviceUserService.getUsername(), legacyData)
-    if (!existingCharge.isSame(updatedCharge)) {
-      existingCharge.statusId = EntityStatus.EDITED
-      chargeRepository.save(updatedCharge)
-      entityChangeStatus = EntityChangeStatus.EDITED
+  fun updateInAllAppearances(lifetimeUUID: UUID, charge: LegacyUpdateWholeCharge) {
+    val existingChargeRecords = chargeRepository.findByLifetimeChargeUuidAndStatusId(lifetimeUUID, EntityStatus.ACTIVE)
+    if (existingChargeRecords.isEmpty()) {
+      throw EntityNotFoundException("No charge found at $lifetimeUUID")
     }
-    return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUUID, existingCharge.courtAppearances.first().courtCase.caseUniqueIdentifier, existingCharge.courtAppearances.first().courtCase.prisonerId)
+    existingChargeRecords.forEach { existingCharge ->
+      val updatedCharge = existingCharge.copyFrom(charge, serviceUserService.getUsername())
+      if (!existingCharge.isSame(updatedCharge)) {
+        existingCharge.statusId = EntityStatus.EDITED
+        val savedCharge = chargeRepository.save(updatedCharge)
+        existingCharge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.forEach { courtAppearance ->
+          courtAppearance.charges.add(savedCharge)
+        }
+      }
+    }
   }
 
   @Transactional

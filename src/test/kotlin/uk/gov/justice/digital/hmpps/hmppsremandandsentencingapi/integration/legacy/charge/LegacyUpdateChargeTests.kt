@@ -1,21 +1,41 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.charge
 
-import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class LegacyUpdateChargeTests : IntegrationTestBase() {
 
   @Test
-  fun `update charge in existing court appearance`() {
-    val createdCharge = createLegacyCharge()
-    val toUpdate = DataCreator.legacyCreateCharge(offenceCode = "ANOTHERCODE")
+  fun `update charge in all court appearances`() {
+    val dpsCharge = DpsDataCreator.dpsCreateCharge()
+    val firstAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    val createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))
+    val courtCaseResponse = webTestClient
+      .post()
+      .uri("/court-case")
+      .bodyValue(createCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(CreateCourtCaseResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val toUpdate = DataCreator.legacyUpdateWholeCharge(offenceCode = "ANOTHERCODE")
     webTestClient
       .put()
-      .uri("/legacy/charge/${createdCharge.first}")
+      .uri("/legacy/charge/${dpsCharge.lifetimeChargeUuid}")
       .bodyValue(toUpdate)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
@@ -24,9 +44,24 @@ class LegacyUpdateChargeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-    val message = getMessages(1)[0]
-    Assertions.assertThat(message.eventType).isEqualTo("charge.updated")
-    Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+
+    val courtCase = webTestClient
+      .get()
+      .uri("/court-case/${courtCaseResponse.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(CourtCase::class.java)
+      .responseBody.blockFirst()!!
+
+    courtCase.appearances.flatMap { it.charges }
+      .forEach { charge ->
+        Assertions.assertEquals(toUpdate.offenceCode, charge.offenceCode)
+      }
   }
 
   @Test
