@@ -26,7 +26,8 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   fun create(charge: LegacyCreateCharge): LegacyChargeCreatedResponse {
     val courtAppearance = courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(charge.appearanceLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at ${charge.appearanceLifetimeUuid}")
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
-    val legacyData = objectMapper.valueToTree<JsonNode>(charge.legacyData)
+    val chargeLegacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null) } ?: charge.legacyData
+    val legacyData = objectMapper.valueToTree<JsonNode>(chargeLegacyData)
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, legacyData, serviceUserService.getUsername()))
     courtAppearance.charges.add(createdCharge)
     createdCharge.courtAppearances.add(courtAppearance)
