@@ -59,29 +59,44 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     if (existingCharge.statusId == EntityStatus.EDITED) {
       throw ImmutableChargeException("Cannot edit an already edited charge")
     }
-    var chargeChangeStatus = EntityChangeStatus.NO_CHANGE
+    val chargeChanges = mutableListOf<Pair<EntityChangeStatus, ChargeEntity>>()
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val compareCharge = existingCharge.copyFrom(charge, chargeOutcome, legacyData, serviceUserService.getUsername())
     var activeRecord = existingCharge
 
     if (!existingCharge.isSame(compareCharge)) {
+      var chargeChangeStatus = EntityChangeStatus.EDITED
       if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
         existingCharge.courtAppearances.remove(courtAppearance)
         courtAppearance.charges.remove(existingCharge)
+        if (existingCharge.offenceCode != compareCharge.offenceCode) {
+          // update existing charge with replaced by charge outcome
+          val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
+          val updatedExistingCharge = chargeRepository.save(existingCharge.copyFrom(replacedWithAnotherOutcome, serviceUserService.getUsername()))
+          courtAppearance.charges.add(updatedExistingCharge)
+          chargeChanges.add(EntityChangeStatus.EDITED to updatedExistingCharge)
+          chargeChangeStatus = EntityChangeStatus.CREATED
+          compareCharge.supersedingCharge = updatedExistingCharge
+          compareCharge.lifetimeChargeUuid = UUID.randomUUID()
+        }
       } else {
         existingCharge.statusId = EntityStatus.EDITED
       }
       activeRecord = chargeRepository.save(compareCharge)
-      chargeChangeStatus = EntityChangeStatus.EDITED
+      chargeChanges.add(chargeChangeStatus to activeRecord)
     }
     if (charge.sentence != null) {
       activeRecord.sentences.add(sentenceService.createSentence(charge.sentence, activeRecord, sentencesCreated, prisonerId))
     } else {
       activeRecord.getActiveSentence()?.let { sentenceEntity -> sentenceService.deleteSentence(sentenceEntity) }
     }
-    if (chargeChangeStatus == EntityChangeStatus.EDITED) {
-      chargeDomainEventService.update(prisonerId, activeRecord.lifetimeChargeUuid.toString(), courtAppearance.lifetimeUuid.toString(), courtCaseId, EventSource.DPS)
+    chargeChanges.forEach { (chargeChangeStatus, record) ->
+      if (chargeChangeStatus == EntityChangeStatus.EDITED) {
+        chargeDomainEventService.update(prisonerId, record.lifetimeChargeUuid.toString(), courtAppearance.lifetimeUuid.toString(), courtCaseId, EventSource.DPS)
+      } else if (chargeChangeStatus == EntityChangeStatus.CREATED) {
+        chargeDomainEventService.create(prisonerId, record.lifetimeChargeUuid.toString(), courtCaseId, EventSource.DPS)
+      }
     }
     return activeRecord
   }
@@ -128,4 +143,8 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
   @Transactional(readOnly = true)
   fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findByChargeUuid(chargeUuid)?.let { Charge.from(it) }
+
+  companion object {
+    val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
+  }
 }
