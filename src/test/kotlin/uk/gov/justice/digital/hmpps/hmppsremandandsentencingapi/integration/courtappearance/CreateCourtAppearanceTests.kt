@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -106,6 +107,63 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].outcome.outcomeUuid")
       .isEqualTo(newOutcome)
+  }
+
+  @Test
+  fun `update charge with different offence code in second appearance results in charge created`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val appearance = courtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val chargeWithOffenceCode = charge.copy(offenceCode = "OFF634624")
+    val newAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(chargeWithOffenceCode))
+    val newAppearanceResponse = webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(newAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val messages = getMessages(4)
+    Assertions.assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated")
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].lifetimeUuid")
+      .isEqualTo(charge.lifetimeChargeUuid)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${newAppearanceResponse.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.lifetimeUuid == '${charge.lifetimeChargeUuid}')].offenceCode")
+      .isEqualTo(charge.offenceCode)
+      .jsonPath("$.charges[?(@.lifetimeUuid == '${charge.lifetimeChargeUuid}')].outcome.outcomeUuid")
+      .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced by another outcome
+      .jsonPath("$.charges[?(@.lifetimeUuid != '${charge.lifetimeChargeUuid}')].offenceCode")
+      .isEqualTo(chargeWithOffenceCode.offenceCode)
   }
 
   @Test
