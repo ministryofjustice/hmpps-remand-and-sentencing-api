@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "6.1.0"
-  kotlin("plugin.spring") version "2.0.21"
-  kotlin("plugin.jpa") version "2.0.21"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "6.1.2"
+  kotlin("plugin.spring") version "2.1.0"
+  kotlin("plugin.jpa") version "2.1.0"
 }
 
 configurations {
@@ -26,8 +26,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.2.1")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.2.2")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
@@ -37,7 +37,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
   testImplementation("org.wiremock:wiremock-standalone:3.10.0")
   testImplementation("org.awaitility:awaitility-kotlin:4.2.2")
-  testImplementation("io.mockk:mockk:1.13.13")
+  testImplementation("io.mockk:mockk:1.13.14")
 }
 
 java {
