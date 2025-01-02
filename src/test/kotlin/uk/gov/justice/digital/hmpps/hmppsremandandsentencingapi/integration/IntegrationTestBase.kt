@@ -198,9 +198,9 @@ abstract class IntegrationTestBase {
   }
 
   fun expectInsertedMessages(prisonerId: String) {
-    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 5)
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 6)
     val messages = getAllDomainMessages()
-    Assertions.assertEquals(5, messages.size)
+    Assertions.assertEquals(6, messages.size)
     messages.forEach { message ->
       Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
       Assertions.assertEquals("DPS", message.additionalInformation.get("source").asText())

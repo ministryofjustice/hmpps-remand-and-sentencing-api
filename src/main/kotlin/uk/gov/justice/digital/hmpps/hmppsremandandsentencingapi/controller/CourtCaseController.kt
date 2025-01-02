@@ -50,7 +50,12 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
-    val courtCase = courtCaseService.createCourtCase(createCourtCase).also { courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier) }
+    val courtCase = courtCaseService.createCourtCase(createCourtCase).also {
+      val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier)
+      updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
+        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
+      }
+    }
     return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
   }
 
