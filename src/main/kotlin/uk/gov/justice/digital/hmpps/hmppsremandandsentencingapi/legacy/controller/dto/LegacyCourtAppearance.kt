@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 
 data class LegacyCourtAppearance(
@@ -13,6 +14,7 @@ data class LegacyCourtAppearance(
   val nomisOutcomeCode: String?,
   val courtCode: String,
   val appearanceDate: LocalDate,
+  val appearanceTime: LocalTime,
   val charges: List<LegacyCharge>,
   val nextCourtAppearance: LegacyNextCourtAppearance?,
 ) {
@@ -31,6 +33,7 @@ data class LegacyCourtAppearance(
         legacyData?.nomisOutcomeCode ?: courtAppearanceEntity.appearanceOutcome?.nomisCode,
         courtAppearanceEntity.courtCode,
         courtAppearanceEntity.appearanceDate,
+        legacyData?.appearanceTime ?: LocalTime.MIDNIGHT,
         courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { chargeEntity -> LegacyCharge.from(chargeEntity, objectMapper) },
         courtAppearanceEntity.nextCourtAppearance?.let { LegacyNextCourtAppearance.from(it) },
       )

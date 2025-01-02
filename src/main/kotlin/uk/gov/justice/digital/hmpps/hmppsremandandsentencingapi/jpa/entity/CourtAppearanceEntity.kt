@@ -139,11 +139,11 @@ class CourtAppearanceEntity(
     return courtAppearanceEntity
   }
 
-  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?): CourtAppearanceEntity {
+  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity {
     return CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
       EntityStatus.FUTURE, this, null,
-      ZonedDateTime.now(), createdByUsername, null, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, null,
+      ZonedDateTime.now(), createdByUsername, null, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, legacyData,
     )
   }
 
@@ -173,7 +173,7 @@ class CourtAppearanceEntity(
       return courtAppearanceEntity
     }
 
-    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?): CourtAppearanceEntity {
+    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity {
       return CourtAppearanceEntity(
         appearanceUuid = UUID.randomUUID(),
         appearanceOutcome = null,
@@ -192,7 +192,7 @@ class CourtAppearanceEntity(
         taggedBail = null,
         overallConvictionDate = null,
         lifetimeUuid = UUID.randomUUID(),
-        legacyData = null,
+        legacyData = legacyData,
       )
     }
 
