@@ -11,11 +11,13 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update charge in existing court appearance`() {
-    val createdCharge = createLegacyCharge()
+    val (_, createdCourtCase) = createCourtCase()
+    val appearance = createdCourtCase.appearances.first()
+    val charge = appearance.charges.first()
     val toUpdate = DataCreator.legacyUpdateCharge()
     webTestClient
       .put()
-      .uri("/legacy/charge/${createdCharge.first}/appearance/${createdCharge.second.appearanceLifetimeUuid}")
+      .uri("/legacy/charge/${charge.lifetimeChargeUuid}/appearance/${appearance.lifetimeUuid}")
       .bodyValue(toUpdate)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
@@ -27,6 +29,18 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("charge.updated")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].lifetimeUuid")
+      .isEqualTo(charge.lifetimeChargeUuid)
   }
 
   @Test

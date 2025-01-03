@@ -62,7 +62,8 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, serviceUserService.getUsername(), legacyData)
     if (!existingCharge.isSame(updatedCharge)) {
       existingCharge.statusId = EntityStatus.EDITED
-      chargeRepository.save(updatedCharge)
+      val savedCharge = chargeRepository.save(updatedCharge)
+      existingCharge.courtAppearances.first { it.lifetimeUuid == appearanceLifetimeUuid }.charges.add(savedCharge)
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, existingCharge.courtAppearances.first().courtCase.caseUniqueIdentifier, existingCharge.courtAppearances.first().courtCase.prisonerId)
