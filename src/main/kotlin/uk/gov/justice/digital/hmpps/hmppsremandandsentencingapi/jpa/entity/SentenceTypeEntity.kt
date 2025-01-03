@@ -26,4 +26,7 @@ class SentenceTypeEntity(
   @Enumerated(EnumType.STRING)
   val classification: SentenceTypeClassification,
   val hintText: String?,
+  val nomisCjaCode: String,
+  val nomisSentenceCalcType: String,
+  val displayOrder: Int,
 )
