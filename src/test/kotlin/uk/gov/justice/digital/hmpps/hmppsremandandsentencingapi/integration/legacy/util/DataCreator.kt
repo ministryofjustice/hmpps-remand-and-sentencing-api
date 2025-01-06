@@ -16,6 +16,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class DataCreator {
@@ -33,7 +34,7 @@ class DataCreator {
       nomisOutcomeCode: String? = "1",
       outcomeDescription: String? = "Outcome Description",
       nextEventDateTime: LocalDateTime? = LocalDateTime.now().plusDays(10),
-      appearanceTime: LocalTime = LocalTime.now(),
+      appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime)
 
     fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance {

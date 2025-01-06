@@ -89,6 +89,8 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.appearanceDate")
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
+      .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.appearanceTime")
+      .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
   }
 
   @Test
