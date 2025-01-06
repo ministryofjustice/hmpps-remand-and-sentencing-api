@@ -89,7 +89,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     if (charge.sentence != null) {
       activeRecord.sentences.add(sentenceService.createSentence(charge.sentence, activeRecord, sentencesCreated, prisonerId))
     } else {
-      activeRecord.getActiveSentence()?.let { sentenceEntity -> sentenceService.deleteSentence(sentenceEntity) }
+      activeRecord.getActiveSentence()?.let { sentenceEntity -> sentenceService.deleteSentence(sentenceEntity, activeRecord, prisonerId) }
     }
     chargeChanges.forEach { (chargeChangeStatus, record) ->
       if (chargeChangeStatus == EntityChangeStatus.EDITED) {
@@ -128,7 +128,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   fun deleteCharge(charge: ChargeEntity, prisonerId: String?, courtCaseId: String?) {
     val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.statusId = EntityStatus.DELETED
-    charge.getActiveSentence()?.let { sentenceService.deleteSentence(it) }
+    charge.getActiveSentence()?.let { sentenceService.deleteSentence(it, charge, prisonerId!!) }
     if (changeStatus == EntityChangeStatus.DELETED) {
       chargeDomainEventService.delete(prisonerId!!, charge.lifetimeChargeUuid.toString(), courtCaseId!!, EventSource.DPS)
     }

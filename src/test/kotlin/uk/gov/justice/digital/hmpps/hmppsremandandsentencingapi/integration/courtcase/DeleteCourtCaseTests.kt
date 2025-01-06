@@ -22,8 +22,8 @@ class DeleteCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isNoContent
-    val messages = getMessages(3)
-    Assertions.assertThat(messages).hasSize(3).extracting<String> { it.eventType }.contains("court-case.deleted")
+    val messages = getMessages(4)
+    Assertions.assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("court-case.deleted")
   }
 
   @Test
