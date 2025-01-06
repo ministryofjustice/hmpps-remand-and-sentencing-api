@@ -78,7 +78,13 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findBySentenceUuid(sentenceUuid)?.let { Sentence.from(it) }
 
   @Transactional(TxType.REQUIRED)
-  fun deleteSentence(sentence: SentenceEntity) {
+  fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String) {
     sentence.statusId = EntityStatus.DELETED
+    sentenceDomainEventService.delete(
+      prisonerId,
+      sentence.lifetimeSentenceUuid.toString(),
+      chargeEntity.lifetimeChargeUuid.toString(),
+      EventSource.DPS,
+    )
   }
 }

@@ -22,8 +22,8 @@ class DeleteChargeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isNoContent
-    val messages = getMessages(1)
-    Assertions.assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("charge.deleted")
+    val messages = getMessages(2)
+    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("charge.deleted", "sentence.deleted")
   }
 
   @Test

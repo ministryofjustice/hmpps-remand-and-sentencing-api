@@ -37,5 +37,16 @@ class SentenceDomainEventService(
     )
   }
 
+  fun delete(prisonerId: String, sentenceId: String, courtChargeId: String, source: EventSource) {
+    snsService.publishDomainEvent(
+      "sentence.deleted",
+      "Sentence deleted",
+      generateDetailsUri(sentenceLookupPath, sentenceId),
+      ZonedDateTime.now(),
+      HmppsSentenceMessage(sentenceId, courtChargeId, source),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+  }
+
   private fun generateDetailsUri(path: String, id: String): String = UriComponentsBuilder.newInstance().scheme("https").host(ingressUrl).path(path).buildAndExpand(id).toUriString()
 }
