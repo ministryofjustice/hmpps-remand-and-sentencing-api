@@ -44,7 +44,7 @@ class NextCourtAppearanceEntity(
     return NextCourtAppearanceEntity(
       id,
       nomisAppearance.appearanceDate,
-      appearanceTime,
+      nomisAppearance.legacyData.appearanceTime,
       nomisAppearance.courtCode,
       appearanceTypeEntity,
       futureAppearance,
@@ -75,7 +75,7 @@ class NextCourtAppearanceEntity(
     fun from(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
       return NextCourtAppearanceEntity(
         appearanceDate = nomisAppearance.appearanceDate,
-        appearanceTime = null,
+        appearanceTime = nomisAppearance.legacyData.appearanceTime,
         courtCode = nomisAppearance.courtCode,
         appearanceType = appearanceTypeEntity,
         futureSkeletonAppearance = futureAppearance,
