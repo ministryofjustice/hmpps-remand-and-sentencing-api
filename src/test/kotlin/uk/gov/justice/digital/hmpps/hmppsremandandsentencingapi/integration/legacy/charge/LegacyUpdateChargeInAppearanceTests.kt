@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
@@ -32,6 +33,52 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
     webTestClient
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].lifetimeUuid")
+      .isEqualTo(charge.lifetimeChargeUuid)
+  }
+
+  @Test
+  fun `update charge in appearance when its linked to multiple appearances`() {
+    val charge = DpsDataCreator.dpsCreateCharge()
+    val firstAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge))
+    val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+    val legacyUpdateCharge = DataCreator.legacyUpdateCharge()
+    webTestClient
+      .put()
+      .uri("/legacy/charge/${charge.lifetimeChargeUuid}/appearance/${secondAppearance.lifetimeUuid}")
+      .bodyValue(legacyUpdateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${firstAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].lifetimeUuid")
+      .isEqualTo(charge.lifetimeChargeUuid)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${secondAppearance.appearanceUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
       }
