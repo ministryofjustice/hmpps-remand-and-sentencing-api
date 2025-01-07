@@ -56,14 +56,20 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   fun updateInAppearance(lifetimeUuid: UUID, appearanceLifetimeUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCharge = chargeRepository.findFirstByCourtAppearancesLifetimeUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUuid")
+    val appearance = existingCharge.courtAppearances.first { it.lifetimeUuid == appearanceLifetimeUuid }
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
     val chargeLegacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null) } ?: charge.legacyData
     val legacyData = objectMapper.valueToTree<JsonNode>(chargeLegacyData)
     val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, serviceUserService.getUsername(), legacyData)
     if (!existingCharge.isSame(updatedCharge)) {
-      existingCharge.statusId = EntityStatus.EDITED
+      if (existingCharge.hasTwoOrMoreActiveCourtAppearance(appearance)) {
+        existingCharge.courtAppearances.remove(appearance)
+        appearance.charges.remove(existingCharge)
+      } else {
+        existingCharge.statusId = EntityStatus.EDITED
+      }
       val savedCharge = chargeRepository.save(updatedCharge)
-      existingCharge.courtAppearances.first { it.lifetimeUuid == appearanceLifetimeUuid }.charges.add(savedCharge)
+      appearance.charges.add(savedCharge)
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, existingCharge.courtAppearances.first().courtCase.caseUniqueIdentifier, existingCharge.courtAppearances.first().courtCase.prisonerId)
