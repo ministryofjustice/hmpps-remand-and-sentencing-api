@@ -243,7 +243,12 @@ class CourtAppearanceEntity(
     }
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {
-      return courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.appearanceDate }
+      return courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
+        compareBy(
+          CourtAppearanceEntity::appearanceDate,
+          CourtAppearanceEntity::createdAt,
+        ),
+      )
     }
   }
 }
