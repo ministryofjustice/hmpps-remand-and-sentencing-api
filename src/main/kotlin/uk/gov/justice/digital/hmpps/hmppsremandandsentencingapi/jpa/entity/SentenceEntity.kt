@@ -77,6 +77,7 @@ class SentenceEntity(
       periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
       sentenceServeType == other?.sentenceServeType &&
       sentenceType == other.sentenceType &&
+      createdPrison == other.createdPrison &&
       ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
       convictionDate == other.convictionDate &&
       ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
@@ -89,7 +90,7 @@ class SentenceEntity(
       chargeNumber = sentence.chargeNumber,
       statusId = EntityStatus.ACTIVE,
       createdByUsername = createdByUsername,
-      createdPrison = createdPrison,
+      createdPrison = sentence.prisonId,
       supersedingSentence = this,
       charge = chargeEntity,
       sentenceServeType = sentence.sentenceServeType,
@@ -110,7 +111,7 @@ class SentenceEntity(
         chargeNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,
         createdByUsername = createdByUsername,
-        createdPrison = null,
+        createdPrison = sentence.prisonId,
         supersedingSentence = null,
         charge = chargeEntity,
         sentenceServeType = sentence.sentenceServeType,

@@ -107,7 +107,8 @@ class CourtAppearanceEntity(
       this.taggedBail == other.taggedBail &&
       periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
       this.overallConvictionDate == other.overallConvictionDate &&
-      this.legacyData == other.legacyData
+      this.legacyData == other.legacyData &&
+      this.createdPrison == other.createdPrison
   }
 
   fun copyAndRemoveCaseReference(createdByUsername: String): CourtAppearanceEntity {
@@ -133,7 +134,7 @@ class CourtAppearanceEntity(
   fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
     val courtAppearanceEntity = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
-      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, null, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, legacyData,
+      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, legacyData,
     )
     courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
     return courtAppearanceEntity
@@ -160,7 +161,7 @@ class CourtAppearanceEntity(
         statusId = EntityStatus.ACTIVE,
         warrantId = courtAppearance.warrantId,
         previousAppearance = null,
-        createdPrison = null,
+        createdPrison = courtAppearance.prisonId,
         createdByUsername = createdByUsername,
         nextCourtAppearance = null,
         warrantType = courtAppearance.warrantType,

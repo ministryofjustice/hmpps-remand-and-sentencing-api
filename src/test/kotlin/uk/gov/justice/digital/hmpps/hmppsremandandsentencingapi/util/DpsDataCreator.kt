@@ -55,7 +55,8 @@ class DpsDataCreator {
       charges: List<CreateCharge> = listOf(dpsCreateCharge()),
       overallConvictionDate: LocalDate? = LocalDate.now().minusDays(7),
       legacyData: CourtAppearanceLegacyData? = null,
-    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, lifetimeUuid, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, taggedBail, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData)
+      prisonId: String = "PRISON1",
+    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, lifetimeUuid, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, taggedBail, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData, prisonId)
 
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
@@ -80,6 +81,7 @@ class DpsDataCreator {
       sentenceTypeId: UUID = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"),
       convictionDate: LocalDate? = LocalDate.now().minusDays(7),
       fineAmount: CreateFineAmount? = null,
-    ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToChargeNumber, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount)
+      prisonId: String = "PRISON1",
+    ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToChargeNumber, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId)
   }
 }
