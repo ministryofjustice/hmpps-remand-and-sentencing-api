@@ -77,6 +77,7 @@ class SentenceEntity(
       periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
       sentenceServeType == other?.sentenceServeType &&
       sentenceType == other.sentenceType &&
+      createdPrison == other.createdPrison &&
       ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
       convictionDate == other.convictionDate &&
       ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
