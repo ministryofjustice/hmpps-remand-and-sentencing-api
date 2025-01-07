@@ -72,6 +72,7 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
           nextEventAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(toSaveNextCourtAppearance)
         }
       }
+      existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances + savedRecord)
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
@@ -86,6 +87,7 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   fun delete(lifetimeUuid: UUID) {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     existingCourtAppearance.statusId = EntityStatus.DELETED
+    existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances)
   }
 
   @Transactional
