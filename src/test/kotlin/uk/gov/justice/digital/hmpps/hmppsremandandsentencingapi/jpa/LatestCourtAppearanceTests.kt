@@ -9,7 +9,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
-class latestCourtAppearanceTests {
+class LatestCourtAppearanceTests {
 
   @Test
   fun `must fall back to created at when appearance dates are the same`() {
@@ -45,7 +45,7 @@ class latestCourtAppearanceTests {
       nextCourtAppearance = null,
       overallConvictionDate = LocalDate.now(),
       appearanceDate = appearanceDate,
-      createdAt = createdAt
+      createdAt = createdAt,
     )
   }
 }
