@@ -1,0 +1,1 @@
+ALTER TABLE charge_outcome drop column charge_status;
