@@ -22,4 +22,6 @@ class ChargeOutcomeEntity(
   val outcomeType: String,
   val displayOrder: Int,
   val isSubList: Boolean,
+  val dispositionCode: String,
+  val chargeStatus: String,
 )
