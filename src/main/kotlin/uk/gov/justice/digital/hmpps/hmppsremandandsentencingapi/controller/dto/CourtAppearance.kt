@@ -24,6 +24,9 @@ data class CourtAppearance(
   val legacyData: JsonNode?,
 ) {
   companion object {
+
+    val displayChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE)
+
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance {
       return CourtAppearance(
         courtAppearanceEntity.appearanceUuid,
@@ -36,7 +39,7 @@ data class CourtAppearance(
         courtAppearanceEntity.warrantType,
         courtAppearanceEntity.taggedBail,
         courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
-        courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { Charge.from(it) },
+        courtAppearanceEntity.charges.filter { displayChargeStatuses.contains(it.statusId) }.map { Charge.from(it) },
         courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
         courtAppearanceEntity.overallConvictionDate,
         courtAppearanceEntity.legacyData,

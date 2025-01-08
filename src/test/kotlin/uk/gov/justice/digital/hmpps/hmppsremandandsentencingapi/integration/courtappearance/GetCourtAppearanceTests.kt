@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -40,6 +41,28 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdAppearance.charges[0].sentence!!.sentenceUuid.toString())
       .jsonPath("$.charges[0].sentence.chargeNumber")
       .isEqualTo(createdAppearance.charges[0].sentence!!.chargeNumber)
+  }
+
+  @Test
+  fun `return inactive and active charges`() {
+    val inactiveCharge = DpsDataCreator.dpsCreateCharge(outcomeUuid = UUID.fromString("86776327-7e1f-4830-bd4e-69168b3b0197")) // not guilty
+    val activeCharge = DpsDataCreator.dpsCreateCharge(outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2")) // remand in custody
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(inactiveCharge, activeCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid!!}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.chargeUuid == '${inactiveCharge.chargeUuid}')]")
+      .exists()
+      .jsonPath("$.charges[?(@.chargeUuid == '${activeCharge.chargeUuid}')]")
+      .exists()
   }
 
   @Test
