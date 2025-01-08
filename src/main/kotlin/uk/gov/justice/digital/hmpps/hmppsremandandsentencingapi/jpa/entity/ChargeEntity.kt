@@ -101,16 +101,18 @@ class ChargeEntity(
   }
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?, createdByUsername: String): ChargeEntity {
+    val entityStatus = chargeOutcome?.getEntityStatus() ?: EntityStatus.ACTIVE
     return ChargeEntity(
       0, lifetimeChargeUuid, UUID.randomUUID(), charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
-      EntityStatus.ACTIVE, chargeOutcome, this, charge.terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
+      entityStatus, chargeOutcome, this, charge.terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
     )
   }
 
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdByUsername: String): ChargeEntity {
+    val entityStatus = chargeOutcome?.getEntityStatus() ?: EntityStatus.ACTIVE
     val charge = ChargeEntity(
       0, lifetimeChargeUuid, UUID.randomUUID(), offenceCode, offenceStartDate, offenceEndDate,
-      EntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
+      entityStatus, chargeOutcome, this, terrorRelated, ZonedDateTime.now(), createdByUsername, legacyData, courtAppearances.toMutableSet(),
     )
     charge.sentences = sentences.toMutableList()
     return charge
@@ -135,7 +137,8 @@ class ChargeEntity(
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode?, createdByUsername: String): ChargeEntity {
-      return ChargeEntity(lifetimeChargeUuid = charge.lifetimeChargeUuid, chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf(), createdByUsername = createdByUsername)
+      val entityStatus = chargeOutcome?.getEntityStatus() ?: EntityStatus.ACTIVE
+      return ChargeEntity(lifetimeChargeUuid = charge.lifetimeChargeUuid, chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = entityStatus, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = legacyData, courtAppearances = mutableSetOf(), createdByUsername = createdByUsername)
     }
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, legacyData: JsonNode, createdByUsername: String): ChargeEntity {
