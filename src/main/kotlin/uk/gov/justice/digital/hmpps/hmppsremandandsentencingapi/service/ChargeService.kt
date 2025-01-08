@@ -104,7 +104,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   private fun getChargeOutcome(charge: CreateCharge): Pair<ChargeLegacyData?, ChargeOutcomeEntity?> {
     var chargeLegacyData = charge.legacyData
     val chargeOutcome = charge.outcomeUuid?.let {
-      chargeLegacyData = chargeLegacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null)
+      chargeLegacyData = chargeLegacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null)
       chargeOutcomeRepository.findByOutcomeUuid(it)
     } ?: chargeLegacyData?.nomisOutcomeCode?.let { chargeOutcomeRepository.findByNomisCode(it) }
     return chargeLegacyData to chargeOutcome

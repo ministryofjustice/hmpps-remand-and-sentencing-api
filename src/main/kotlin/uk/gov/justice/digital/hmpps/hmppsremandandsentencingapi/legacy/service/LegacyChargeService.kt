@@ -26,7 +26,7 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   fun create(charge: LegacyCreateCharge): LegacyChargeCreatedResponse {
     val courtAppearance = courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(charge.appearanceLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at ${charge.appearanceLifetimeUuid}")
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
-    val chargeLegacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null) } ?: charge.legacyData
+    val chargeLegacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
     val legacyData = objectMapper.valueToTree<JsonNode>(chargeLegacyData)
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, legacyData, serviceUserService.getUsername()))
     courtAppearance.charges.add(createdCharge)
@@ -58,7 +58,7 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     val existingCharge = chargeRepository.findFirstByCourtAppearancesLifetimeUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUuid")
     val appearance = existingCharge.courtAppearances.first { it.lifetimeUuid == appearanceLifetimeUuid }
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
-    val chargeLegacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null) } ?: charge.legacyData
+    val chargeLegacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
     val legacyData = objectMapper.valueToTree<JsonNode>(chargeLegacyData)
     val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, serviceUserService.getUsername(), legacyData)
     if (!existingCharge.isSame(updatedCharge)) {
