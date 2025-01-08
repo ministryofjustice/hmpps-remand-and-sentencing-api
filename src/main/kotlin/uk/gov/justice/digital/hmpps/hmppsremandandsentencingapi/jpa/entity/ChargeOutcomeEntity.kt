@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import java.util.UUID
 
 @Entity
@@ -24,7 +23,4 @@ class ChargeOutcomeEntity(
   val displayOrder: Int,
   val isSubList: Boolean,
   val dispositionCode: String,
-  val chargeStatus: String,
-) {
-  fun getEntityStatus(): EntityStatus = if (chargeStatus == "ACTIVE") EntityStatus.ACTIVE else EntityStatus.INACTIVE
-}
+)
