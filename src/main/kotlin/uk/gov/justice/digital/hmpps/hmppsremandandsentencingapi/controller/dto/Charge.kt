@@ -16,7 +16,6 @@ data class Charge(
   val terrorRelated: Boolean?,
   val sentence: Sentence?,
   val legacyData: JsonNode?,
-  val status: EntityStatus,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): Charge {
@@ -30,7 +29,6 @@ data class Charge(
         chargeEntity.terrorRelated,
         chargeEntity.getActiveSentence()?.let { Sentence.from(it) },
         chargeEntity.legacyData,
-        chargeEntity.statusId,
       )
     }
   }
