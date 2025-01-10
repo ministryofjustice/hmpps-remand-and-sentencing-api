@@ -2,7 +2,7 @@
 # Per environment values which override defaults in hmpps-remand-and-sentencing-api/values.yaml
 
 generic-service:
-  replicaCount: 2
+  replicaCount: 10
 
   ingress:
     host: &ingressHost remand-and-sentencing-api-preprod.hmpps.service.justice.gov.uk
@@ -20,6 +20,12 @@ generic-service:
     groups:
       - internal
       - circleci
+
+  resources:
+    requests:
+      memory: 2G
+    limits:
+      memory: 4G
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
