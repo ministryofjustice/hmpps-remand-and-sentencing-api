@@ -1,0 +1,1 @@
+ALTER TABLE period_length ADD COLUMN legacy_data jsonb NULL;

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
+import com.fasterxml.jackson.databind.JsonNode
+import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -10,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 
@@ -38,6 +41,9 @@ class PeriodLengthEntity(
   @ManyToOne
   @JoinColumn(name = "appearance_id")
   var appearanceEntity: CourtAppearanceEntity?,
+  @Type(value = JsonType::class)
+  @Column(columnDefinition = "jsonb")
+  var legacyData: JsonNode? = null,
 
 ) {
   fun isSame(other: PeriodLengthEntity?): Boolean {
