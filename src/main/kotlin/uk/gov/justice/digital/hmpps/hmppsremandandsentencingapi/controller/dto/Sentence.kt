@@ -10,7 +10,7 @@ data class Sentence(
   val periodLengths: List<PeriodLength>,
   val sentenceServeType: String,
   val consecutiveToChargeNumber: String?,
-  val sentenceType: SentenceType,
+  val sentenceType: SentenceType?,
   val convictionDate: LocalDate?,
   val fineAmount: FineAmount?,
 ) {
@@ -22,7 +22,7 @@ data class Sentence(
         sentenceEntity.periodLengths.map { PeriodLength.from(it) },
         sentenceEntity.sentenceServeType,
         sentenceEntity.consecutiveTo?.chargeNumber,
-        SentenceType.from(sentenceEntity.sentenceType),
+        sentenceEntity.sentenceType?.let { SentenceType.from(it) },
         sentenceEntity.convictionDate,
         sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
       )

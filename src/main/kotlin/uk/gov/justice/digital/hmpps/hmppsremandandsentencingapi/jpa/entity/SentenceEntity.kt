@@ -17,6 +17,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -51,7 +52,7 @@ class SentenceEntity(
   val consecutiveTo: SentenceEntity?,
   @OneToOne
   @JoinColumn(name = "sentence_type_id")
-  val sentenceType: SentenceTypeEntity,
+  val sentenceType: SentenceTypeEntity?,
   @OneToOne
   @JoinColumn(name = "superseding_sentence_id")
   var supersedingSentence: SentenceEntity?,
@@ -120,6 +121,24 @@ class SentenceEntity(
         convictionDate = sentence.convictionDate,
       )
       return sentenceEntity
+    }
+
+    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+      return SentenceEntity(
+        lifetimeSentenceUuid = UUID.randomUUID(),
+        sentenceUuid = UUID.randomUUID(),
+        chargeNumber = sentence.chargeNumber,
+        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        createdByUsername = createdByUsername,
+        createdPrison = sentence.prisonId,
+        supersedingSentence = null,
+        charge = chargeEntity,
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = sentenceTypeEntity,
+        convictionDate = null,
+        legacyData = legacyData,
+      )
     }
   }
 }
