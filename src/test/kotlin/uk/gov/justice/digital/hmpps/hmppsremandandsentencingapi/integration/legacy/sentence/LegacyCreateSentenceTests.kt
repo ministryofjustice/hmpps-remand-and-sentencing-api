@@ -34,6 +34,23 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `must not be able to create a sentence on a already sentenced charge`() {
+    val (sentenceLifetimeUuid, sentence) = createLegacySentence()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = sentence.chargeLifetimeUuid)
+    webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isBadRequest
+  }
+
+  @Test
   fun `must not sentence when no court appearance exists`() {
     val legacySentence = DataCreator.legacyCreateSentence()
     webTestClient

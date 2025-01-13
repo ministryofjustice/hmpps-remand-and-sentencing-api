@@ -13,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.OrphanedChargeException
@@ -103,13 +104,27 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(OrphanedChargeException::class)
   fun handleIOrphanedChargeException(e: OrphanedChargeException): ResponseEntity<ErrorResponse> {
-    log.info("Orphansed charge exception: {}", e.message)
+    log.info("Orphaned charge exception: {}", e.message)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
         ErrorResponse(
           status = BAD_REQUEST,
           userMessage = "Orphaned charge failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(ChargeAlreadySentencedException::class)
+  fun handleChargeAlreadySentencedException(e: ChargeAlreadySentencedException): ResponseEntity<ErrorResponse> {
+    log.info("Charge already sentenced exception: {}", e.message)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "charge already sentenced failure: ${e.message}",
           developerMessage = e.message,
         ),
       )

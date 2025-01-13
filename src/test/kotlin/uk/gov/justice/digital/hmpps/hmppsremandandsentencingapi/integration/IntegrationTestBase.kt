@@ -34,6 +34,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
@@ -158,6 +160,31 @@ abstract class IntegrationTestBase {
       .responseBody.blockFirst()!!
     purgeQueues()
     return response.lifetimeUuid to toCreateCharge
+  }
+
+  protected fun createLegacySentence(
+    legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
+    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
+    legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
+    legacySentence: LegacyCreateSentence =
+      DataCreator.legacyCreateSentence(),
+  ): Pair<UUID, LegacyCreateSentence> {
+    val (chargeLifetimeUuid) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
+    val toCreateSentence = legacySentence.copy(chargeLifetimeUuid = chargeLifetimeUuid)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(toCreateSentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    purgeQueues()
+    return response.lifetimeUuid to toCreateSentence
   }
 
   protected fun createDraftCourtCase(draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase()): DraftCourtCaseCreatedResponse {

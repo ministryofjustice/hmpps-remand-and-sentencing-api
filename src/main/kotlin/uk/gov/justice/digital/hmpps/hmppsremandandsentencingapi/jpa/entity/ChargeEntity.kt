@@ -74,6 +74,10 @@ class ChargeEntity(
   fun getActiveSentence(): SentenceEntity? {
     return sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
   }
+
+  fun getActiveOrInactiveSentence(): SentenceEntity? {
+    return sentences.firstOrNull { setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE).contains(it.statusId) }
+  }
   fun isSame(other: ChargeEntity): Boolean {
     return this.offenceCode == other.offenceCode &&
       ((this.offenceStartDate == null && other.offenceStartDate == null) || this.offenceStartDate?.isEqual(other.offenceStartDate) == true) &&
