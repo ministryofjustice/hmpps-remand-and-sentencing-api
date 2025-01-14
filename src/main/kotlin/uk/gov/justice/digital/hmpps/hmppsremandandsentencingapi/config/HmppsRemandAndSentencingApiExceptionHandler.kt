@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
+import org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.MissingServletRequestParameterException
@@ -120,10 +121,10 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   fun handleChargeAlreadySentencedException(e: ChargeAlreadySentencedException): ResponseEntity<ErrorResponse> {
     log.info("Charge already sentenced exception: {}", e.message)
     return ResponseEntity
-      .status(BAD_REQUEST)
+      .status(UNPROCESSABLE_ENTITY)
       .body(
         ErrorResponse(
-          status = BAD_REQUEST,
+          status = UNPROCESSABLE_ENTITY,
           userMessage = "charge already sentenced failure: ${e.message}",
           developerMessage = e.message,
         ),

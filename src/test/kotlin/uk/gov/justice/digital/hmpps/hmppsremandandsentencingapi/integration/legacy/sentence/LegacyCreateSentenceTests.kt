@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -35,7 +36,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
 
   @Test
   fun `must not be able to create a sentence on a already sentenced charge`() {
-    val (sentenceLifetimeUuid, sentence) = createLegacySentence()
+    val (_, sentence) = createLegacySentence()
     val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = sentence.chargeLifetimeUuid)
     webTestClient
       .post()
@@ -47,11 +48,11 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isBadRequest
+      .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
   }
 
   @Test
-  fun `must not sentence when no court appearance exists`() {
+  fun `must not sentence when no charge exists`() {
     val legacySentence = DataCreator.legacyCreateSentence()
     webTestClient
       .post()
