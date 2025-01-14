@@ -104,6 +104,27 @@ class SentenceEntity(
     return sentenceEntity
   }
 
+  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+    val sentenceEntity = SentenceEntity(
+      lifetimeSentenceUuid = lifetimeSentenceUuid,
+      sentenceUuid = UUID.randomUUID(),
+      chargeNumber = sentence.chargeNumber,
+      statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+      createdByUsername = createdByUsername,
+      createdPrison = sentence.prisonId,
+      supersedingSentence = this,
+      charge = charge,
+      sentenceServeType = "UNKNOWN",
+      consecutiveTo = consecutiveTo,
+      sentenceType = sentenceTypeEntity,
+      convictionDate = convictionDate,
+      legacyData = legacyData,
+    )
+    sentenceEntity.periodLengths = periodLengths.toList()
+    sentenceEntity.fineAmountEntity = sentence.fine?.let { FineAmountEntity.from(it) }
+    return sentenceEntity
+  }
+
   companion object {
     fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
@@ -133,7 +154,7 @@ class SentenceEntity(
         createdPrison = sentence.prisonId,
         supersedingSentence = null,
         charge = chargeEntity,
-        sentenceServeType = "CONCURRENT",
+        sentenceServeType = "UNKNOWN",
         consecutiveTo = null,
         sentenceType = sentenceTypeEntity,
         convictionDate = null,
