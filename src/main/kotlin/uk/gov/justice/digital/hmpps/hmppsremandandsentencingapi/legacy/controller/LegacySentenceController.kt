@@ -36,7 +36,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   @ApiResponses(
     value = [
       ApiResponse(responseCode = "201", description = "sentence created"),
-      ApiResponse(responseCode = "422", description = "Unprocessable entity, sentence must not be already sentenced"),
+      ApiResponse(responseCode = "422", description = "Unprocessable entity, charge must not be already sentenced"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
