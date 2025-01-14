@@ -128,7 +128,7 @@ class SentenceEntity(
   companion object {
     fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
-        lifetimeSentenceUuid = UUID.randomUUID(),
+        lifetimeSentenceUuid = sentence.lifetimeSentenceUuid,
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         chargeNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,

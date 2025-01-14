@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.F
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
@@ -56,6 +57,11 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       existingSentence.charge.sentences.add(activeRecord)
     }
     return entityChangeStatus to LegacySentenceCreatedResponse(activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId, activeRecord.lifetimeSentenceUuid!!, activeRecord.charge.lifetimeChargeUuid)
+  }
+
+  @Transactional(readOnly = true)
+  fun get(lifetimeUuid: UUID): LegacySentence {
+    return LegacySentence.from(getUnlessDeleted(lifetimeUuid), objectMapper)
   }
 
   private fun getUnlessDeleted(lifetimeUuid: UUID): SentenceEntity {

@@ -73,6 +73,7 @@ class DpsDataCreator {
 
     fun dpsCreateSentence(
       sentenceUuid: UUID? = UUID.randomUUID(),
+      lifetimeUuid: UUID = UUID.randomUUID(),
       chargeNumber: String = "1",
       periodLengths: List<CreatePeriodLength> = listOf(dpsCreatePeriodLength(type = PeriodLengthType.SENTENCE_LENGTH)),
       sentenceServeType: String = "FORTHWITH",
@@ -82,6 +83,6 @@ class DpsDataCreator {
       convictionDate: LocalDate? = LocalDate.now().minusDays(7),
       fineAmount: CreateFineAmount? = null,
       prisonId: String = "PRISON1",
-    ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToChargeNumber, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId)
+    ): CreateSentence = CreateSentence(sentenceUuid, lifetimeUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToChargeNumber, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId)
   }
 }
