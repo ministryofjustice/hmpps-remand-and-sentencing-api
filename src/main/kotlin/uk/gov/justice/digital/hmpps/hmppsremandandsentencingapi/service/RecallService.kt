@@ -44,4 +44,11 @@ class RecallService(private val recallRepository: RecallRepository) {
   @Transactional(readOnly = true)
   fun findRecallsByPrisonerId(prisonerId: String): List<Recall> =
     recallRepository.findByPrisonerId(prisonerId).map { Recall.from(it) }
+
+  @Transactional(readOnly = true)
+  fun findLatestRecallByPrisonerId(prisonerId: String): Recall {
+    val latest = recallRepository.findFirstByPrisonerIdOrderByRecallDateDescCreatedAtDesc(prisonerId)
+      ?: throw EntityNotFoundException("No recalls recorded for given prisonerId")
+    return Recall.from(latest)
+  }
 }

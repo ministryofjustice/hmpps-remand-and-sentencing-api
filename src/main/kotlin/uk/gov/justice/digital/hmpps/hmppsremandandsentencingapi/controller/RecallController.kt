@@ -59,7 +59,24 @@ class RecallController(private val recallService: RecallService) {
   )
   fun getRecall(@PathVariable recallUuid: UUID): Recall = recallService.findRecallByUuid(recallUuid)
 
+  @GetMapping("/person/{prisonerId}/latest")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Retrieve latest recall for a person",
+    description = "This endpoint will retrieve the latest recall for a person",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Return latest recalls for person"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "No recall found for given prisonerId"),
+    ],
+  )
+  fun getLatestRecallByPrisonerId(@PathVariable prisonerId: String): Recall = recallService.findLatestRecallByPrisonerId(prisonerId)
+
   @GetMapping("/person/{prisonerId}")
+
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Retrieve all recalls for a person",

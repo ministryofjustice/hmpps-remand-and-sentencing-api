@@ -8,5 +8,6 @@ data class CreateRecall(
   val recallDate: LocalDate,
   val returnToCustodyDate: LocalDate,
   val recallType: RecallType,
+  val calculationRequestId: Long,
   val createdByUsername: String,
 )

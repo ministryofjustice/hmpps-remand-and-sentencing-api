@@ -1,0 +1,1 @@
+ALTER TABLE recall ADD COLUMN calculationRequestId integer NULL;

@@ -26,12 +26,13 @@ class RecallEntity(
   val returnToCustodyDate: LocalDate,
   @Enumerated(EnumType.STRING)
   val recallType: RecallType,
+  val calculationRequestId: Long,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
 ) {
 
   fun copy(recallDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallType): RecallEntity {
-    return RecallEntity(this.id, this.recallUniqueIdentifier, this.prisonerId, recallDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername)
+    return RecallEntity(this.id, this.recallUniqueIdentifier, this.prisonerId, recallDate, returnToCustodyDate, recallType, this.calculationRequestId, this.createdAt, this.createdByUsername)
   }
 
   companion object {
@@ -42,6 +43,7 @@ class RecallEntity(
         recallDate = createRecall.recallDate,
         returnToCustodyDate = createRecall.returnToCustodyDate,
         recallType = createRecall.recallType,
+        calculationRequestId = createRecall.calculationRequestId,
         createdByUsername = createRecall.createdByUsername,
       )
   }

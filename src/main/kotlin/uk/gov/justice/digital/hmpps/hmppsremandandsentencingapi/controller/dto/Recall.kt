@@ -12,6 +12,7 @@ data class Recall(
   val recallDate: LocalDate,
   val returnToCustodyDate: LocalDate,
   val recallType: RecallType,
+  val calculationRequestId: Long,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
 ) {
@@ -23,6 +24,7 @@ data class Recall(
         recallDate = recall.recallDate,
         returnToCustodyDate = recall.returnToCustodyDate,
         recallType = recall.recallType,
+        calculationRequestId = recall.calculationRequestId,
         createdByUsername = recall.createdByUsername,
         createdAt = recall.createdAt,
       )
