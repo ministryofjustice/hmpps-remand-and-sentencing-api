@@ -64,6 +64,12 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     return LegacySentence.from(getUnlessDeleted(lifetimeUuid), objectMapper)
   }
 
+  @Transactional
+  fun delete(lifetimeUuid: UUID) {
+    val sentence = getUnlessDeleted(lifetimeUuid)
+    sentence.statusId = EntityStatus.DELETED
+  }
+
   private fun getUnlessDeleted(lifetimeUuid: UUID): SentenceEntity {
     return sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(lifetimeUuid)
       ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No sentence found at $lifetimeUuid")

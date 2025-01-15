@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -86,5 +87,25 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")
   fun get(@PathVariable lifetimeUuid: UUID): LegacySentence {
     return legacySentenceService.get(lifetimeUuid)
+  }
+
+  @DeleteMapping("/{lifetimeUuid}")
+  @Operation(
+    summary = "Delete Sentence",
+    description = "Synchronise a deletion of sentence from NOMIS offender charges into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
+  fun delete(@PathVariable lifetimeUuid: UUID) {
+    legacySentenceService.get(lifetimeUuid).also { legacySentence ->
+      legacySentenceService.delete(lifetimeUuid)
+      eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), EventSource.NOMIS)
+    }
   }
 }
