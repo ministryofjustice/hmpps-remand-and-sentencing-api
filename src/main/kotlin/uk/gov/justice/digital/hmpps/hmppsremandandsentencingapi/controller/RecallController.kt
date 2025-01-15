@@ -76,7 +76,6 @@ class RecallController(private val recallService: RecallService) {
   fun getLatestRecallByPrisonerId(@PathVariable prisonerId: String): Recall = recallService.findLatestRecallByPrisonerId(prisonerId)
 
   @GetMapping("/person/{prisonerId}")
-
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Retrieve all recalls for a person",
