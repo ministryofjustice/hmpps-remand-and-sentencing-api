@@ -4,4 +4,5 @@ data class MigrationCreateCourtCaseResponse(
   val courtCaseUuid: String,
   val appearances: List<MigrationCreateCourtAppearanceResponse>,
   val charges: List<MigrationCreateChargeResponse>,
+  val sentences: List<MigrationCreateSentenceResponse>,
 )
