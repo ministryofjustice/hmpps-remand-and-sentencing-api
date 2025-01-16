@@ -39,6 +39,9 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
     val createdCharge = response.charges.first()
     Assertions.assertThat(createdCharge.lifetimeChargeUuid.toString()).matches(Pattern.compile("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     Assertions.assertThat(createdCharge.chargeNOMISId).isEqualTo(migrationCourtCase.appearances.first().charges.first().chargeNOMISId)
+    val createdSentence = response.sentences.first()
+    Assertions.assertThat(createdSentence.lifetimeSentenceUuid.toString()).matches(Pattern.compile("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+    Assertions.assertThat(createdSentence.sentenceNOMISId).isEqualTo(migrationCourtCase.appearances.first().charges.first().sentence!!.sentenceId)
   }
 
   @Test
