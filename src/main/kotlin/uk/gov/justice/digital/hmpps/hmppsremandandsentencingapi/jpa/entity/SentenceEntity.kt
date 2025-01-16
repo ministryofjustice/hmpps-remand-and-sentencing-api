@@ -18,6 +18,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -31,7 +32,7 @@ class SentenceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  var lifetimeSentenceUuid: UUID?,
+  var lifetimeSentenceUuid: UUID,
   @Column
   var sentenceUuid: UUID,
   @Column
@@ -152,6 +153,24 @@ class SentenceEntity(
         statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
         createdByUsername = createdByUsername,
         createdPrison = sentence.prisonId,
+        supersedingSentence = null,
+        charge = chargeEntity,
+        sentenceServeType = "UNKNOWN",
+        consecutiveTo = null,
+        sentenceType = sentenceTypeEntity,
+        convictionDate = null,
+        legacyData = legacyData,
+      )
+    }
+
+    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+      return SentenceEntity(
+        lifetimeSentenceUuid = UUID.randomUUID(),
+        sentenceUuid = UUID.randomUUID(),
+        chargeNumber = sentence.chargeNumber,
+        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        createdByUsername = createdByUsername,
+        createdPrison = null,
         supersedingSentence = null,
         charge = chargeEntity,
         sentenceServeType = "UNKNOWN",
