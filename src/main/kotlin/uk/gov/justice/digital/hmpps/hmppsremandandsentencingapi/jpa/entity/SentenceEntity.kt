@@ -105,7 +105,7 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
@@ -115,7 +115,7 @@ class SentenceEntity(
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
       charge = charge,
-      sentenceServeType = "UNKNOWN",
+      sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceTypeEntity,
       convictionDate = convictionDate,
@@ -145,7 +145,7 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
       return SentenceEntity(
         lifetimeSentenceUuid = UUID.randomUUID(),
         sentenceUuid = UUID.randomUUID(),
@@ -155,8 +155,8 @@ class SentenceEntity(
         createdPrison = sentence.prisonId,
         supersedingSentence = null,
         charge = chargeEntity,
-        sentenceServeType = "UNKNOWN",
-        consecutiveTo = null,
+        sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
+        consecutiveTo = consecutiveTo,
         sentenceType = sentenceTypeEntity,
         convictionDate = null,
         legacyData = legacyData,

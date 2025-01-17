@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 
 class LegacyCreateSentenceTests : IntegrationTestBase() {
 
@@ -49,6 +50,38 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+  }
+
+  @Test
+  fun `must be able to create a consecutive to sentence`() {
+    val (lifetimeUuid) = createLegacySentence()
+    val (chargeLifetimeUuid) = createLegacyCharge()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = chargeLifetimeUuid, consecutiveToLifetimeUuid = lifetimeUuid)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient
+      .get()
+      .uri("/legacy/sentence/${response.lifetimeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.consecutiveToLifetimeUuid")
+      .isEqualTo(lifetimeUuid.toString())
   }
 
   @Test
