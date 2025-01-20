@@ -6,6 +6,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -57,7 +58,7 @@ class CourtAppearanceEntity(
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "previous_appearance_id")
   var previousAppearance: CourtAppearanceEntity?,
 
