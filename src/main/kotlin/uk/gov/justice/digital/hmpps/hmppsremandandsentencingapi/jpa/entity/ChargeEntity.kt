@@ -6,6 +6,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -49,7 +50,7 @@ class ChargeEntity(
   @ManyToOne
   @JoinColumn(name = "charge_outcome_id")
   val chargeOutcome: ChargeOutcomeEntity?,
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "superseding_charge_id")
   var supersedingCharge: ChargeEntity?,
   @Column
