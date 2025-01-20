@@ -1,0 +1,1 @@
+create index idx_court_appearance_court_case_id on court_appearance(court_case_id);

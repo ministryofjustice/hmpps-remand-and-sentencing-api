@@ -10,6 +10,7 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateFine
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateFine
 import java.math.BigDecimal
 
 @Entity
@@ -36,6 +37,10 @@ class FineAmountEntity(
 
     fun from(legacyCreateFine: LegacyCreateFine): FineAmountEntity {
       return FineAmountEntity(fineAmount = legacyCreateFine.fineAmount, sentenceEntity = null)
+    }
+
+    fun from(migrationCreateFine: MigrationCreateFine): FineAmountEntity {
+      return FineAmountEntity(fineAmount = migrationCreateFine.fineAmount, sentenceEntity = null)
     }
   }
 }

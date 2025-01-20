@@ -14,6 +14,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateFine
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationSentenceId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -69,8 +72,8 @@ class DataCreator {
       ),
     ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate)
 
-    fun legacyCreateSentence(chargeLifetimeUuid: UUID = UUID.randomUUID(), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData()): LegacyCreateSentence =
-      LegacyCreateSentence(chargeLifetimeUuid, chargeNumber, fine, active, prisonId, sentenceLegacyData)
+    fun legacyCreateSentence(chargeLifetimeUuid: UUID = UUID.randomUUID(), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData()): LegacyCreateSentence =
+      LegacyCreateSentence(chargeLifetimeUuid, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData)
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge {
       return LegacyUpdateWholeCharge(offenceCode)
@@ -91,6 +94,13 @@ class DataCreator {
 
     fun migrationCreateCourtAppearance(courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(), charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge())): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
 
-    fun migrationCreateCharge(chargeNOMISId: String = "5453", offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData()): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, legacyData)
+    fun migrationCreateCharge(chargeNOMISId: String = "5453", offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData()): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, legacyData, sentence = migrationCreateSentence())
+
+    fun migrationCreateSentence(sentenceId: MigrationSentenceId = migrationSentenceId(), chargeNumber: String = "1", fine: MigrationCreateFine = migrationCreateFine(), active: Boolean = true, legacyData: SentenceLegacyData = sentenceLegacyData()): MigrationCreateSentence =
+      MigrationCreateSentence(sentenceId, chargeNumber, fine, active, legacyData)
+
+    fun migrationCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): MigrationCreateFine = MigrationCreateFine(fineAmount)
+
+    fun migrationSentenceId(offenderBookingId: Long = 1, sequence: Int = 1): MigrationSentenceId = MigrationSentenceId(offenderBookingId, sequence)
   }
 }

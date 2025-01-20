@@ -23,4 +23,6 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
   fun findBySentenceTypeUuidIn(sentenceTypeUuids: List<UUID>): List<SentenceTypeEntity>
 
   fun findByNomisCjaCodeAndNomisSentenceCalcType(nomisCjaCode: String, nomisSentenceCalcType: String): SentenceTypeEntity?
+
+  fun findByNomisCjaCodeInAndNomisSentenceCalcTypeIn(nomisCjaCodes: List<String>, nomisSentenceCalcTypes: List<String>): List<SentenceTypeEntity>
 }

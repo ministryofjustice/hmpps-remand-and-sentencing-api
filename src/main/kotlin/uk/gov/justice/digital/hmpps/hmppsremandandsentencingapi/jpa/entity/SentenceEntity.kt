@@ -6,6 +6,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -18,6 +19,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -31,7 +33,7 @@ class SentenceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  var lifetimeSentenceUuid: UUID?,
+  var lifetimeSentenceUuid: UUID,
   @Column
   var sentenceUuid: UUID,
   @Column
@@ -53,7 +55,7 @@ class SentenceEntity(
   @OneToOne
   @JoinColumn(name = "sentence_type_id")
   val sentenceType: SentenceTypeEntity?,
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "superseding_sentence_id")
   var supersedingSentence: SentenceEntity?,
   @ManyToOne
@@ -104,7 +106,7 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
@@ -114,7 +116,7 @@ class SentenceEntity(
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
       charge = charge,
-      sentenceServeType = "UNKNOWN",
+      sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceTypeEntity,
       convictionDate = convictionDate,
@@ -144,7 +146,7 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
       return SentenceEntity(
         lifetimeSentenceUuid = UUID.randomUUID(),
         sentenceUuid = UUID.randomUUID(),
@@ -152,6 +154,24 @@ class SentenceEntity(
         statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
         createdByUsername = createdByUsername,
         createdPrison = sentence.prisonId,
+        supersedingSentence = null,
+        charge = chargeEntity,
+        sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
+        consecutiveTo = consecutiveTo,
+        sentenceType = sentenceTypeEntity,
+        convictionDate = null,
+        legacyData = legacyData,
+      )
+    }
+
+    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+      return SentenceEntity(
+        lifetimeSentenceUuid = UUID.randomUUID(),
+        sentenceUuid = UUID.randomUUID(),
+        chargeNumber = sentence.chargeNumber,
+        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        createdByUsername = createdByUsername,
+        createdPrison = null,
         supersedingSentence = null,
         charge = chargeEntity,
         sentenceServeType = "UNKNOWN",

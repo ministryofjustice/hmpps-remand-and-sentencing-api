@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
@@ -125,11 +126,16 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID) {
+  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge) {
     legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
       val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
+      }
+    }
+    legacyChargeService.updateInAppearance(chargeLifetimeUuid, lifetimeUuid, updateCharge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
+      if (entityChangeStatus == EntityChangeStatus.EDITED) {
+        chargeEventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
   }
