@@ -164,7 +164,7 @@ class SentenceEntity(
       )
     }
 
-    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode): SentenceEntity {
+    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
       return SentenceEntity(
         lifetimeSentenceUuid = UUID.randomUUID(),
         sentenceUuid = UUID.randomUUID(),
@@ -174,8 +174,8 @@ class SentenceEntity(
         createdPrison = null,
         supersedingSentence = null,
         charge = chargeEntity,
-        sentenceServeType = "UNKNOWN",
-        consecutiveTo = null,
+        sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
+        consecutiveTo = consecutiveTo,
         sentenceType = sentenceTypeEntity,
         convictionDate = null,
         legacyData = legacyData,
