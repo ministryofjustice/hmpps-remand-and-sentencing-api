@@ -143,6 +143,44 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(futureAppearance.courtCode)
   }
 
+  @Test
+  fun `can create sentence when consecutive to another in the same court case`() {
+    val firstSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 1))
+    val consecutiveToSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 5), consecutiveToSentenceId = firstSentence.sentenceId)
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = "11", sentence = firstSentence)
+    val consecutiveToCharge = DataCreator.migrationCreateCharge(chargeNOMISId = "22", sentence = consecutiveToSentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(consecutiveToCharge, charge))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCaseResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val consecutiveToSentenceLifetimeUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == consecutiveToSentence.sentenceId }.lifetimeSentenceUuid
+
+    webTestClient
+      .get()
+      .uri("/court-case/${response.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceLifetimeUuid == '$consecutiveToSentenceLifetimeUuid')].consecutiveToChargeNumber")
+      .isEqualTo(firstSentence.chargeNumber!!)
+  }
+
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
     webTestClient
       .get()

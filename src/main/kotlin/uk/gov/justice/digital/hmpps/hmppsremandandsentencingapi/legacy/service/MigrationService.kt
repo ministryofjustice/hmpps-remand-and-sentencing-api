@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
@@ -104,9 +105,20 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { dpsAppearanceOutcomes[it] }
     val legacyData = migrationCreateCourtAppearance.legacyData.let { legacyData -> objectMapper.valueToTree<JsonNode>(legacyData) }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, legacyData, courtCaseReference))
-    val charges = migrationCreateCourtAppearance.charges.map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap) }
+
+    val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap) }
     createdAppearance.charges.addAll(charges)
     return createdAppearance
+  }
+
+  private fun chargesByConsecutiveToLast(first: MigrationCreateCharge, second: MigrationCreateCharge): Int {
+    if (first.sentence?.consecutiveToSentenceId == null) {
+      return -1
+    }
+    if (first.sentence.consecutiveToSentenceId == second.sentence?.sentenceId) {
+      return 1
+    }
+    return 0
   }
 
   fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>): ChargeEntity {
@@ -132,7 +144,15 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { dpsSentenceTypes[it] }
     val sentenceLegacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
     val legacyData = objectMapper.valueToTree<JsonNode>(sentenceLegacyData)
-    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, legacyData)
+    var consecutiveToSentence: SentenceEntity? = null
+    if (migrationCreateSentence.consecutiveToSentenceId != null) {
+      consecutiveToSentence = createdSentencesMap[migrationCreateSentence.consecutiveToSentenceId]
+        ?: throw EntityNotFoundException("Cannot find sentence with booking id ${migrationCreateSentence.consecutiveToSentenceId.offenderBookingId} and sequence ${migrationCreateSentence.consecutiveToSentenceId.sequence}")
+    } else if (migrationCreateSentence.consecutiveToSentenceLifetimeUuid != null) {
+      consecutiveToSentence = sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
+    }
+
+    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, legacyData, consecutiveToSentence)
     val createdSentence = sentenceRepository.save(toCreateSentence)
     createdSentence.fineAmountEntity = migrationCreateSentence.fine?.let { fineAmountRepository.save(FineAmountEntity.from(it)) }
     createdSentencesMap.put(migrationCreateSentence.sentenceId, createdSentence)

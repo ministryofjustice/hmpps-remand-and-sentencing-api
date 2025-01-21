@@ -6,6 +6,7 @@ import java.util.UUID
 
 data class Sentence(
   val sentenceUuid: UUID,
+  val sentenceLifetimeUuid: UUID,
   val chargeNumber: String?,
   val periodLengths: List<PeriodLength>,
   val sentenceServeType: String,
@@ -18,6 +19,7 @@ data class Sentence(
     fun from(sentenceEntity: SentenceEntity): Sentence {
       return Sentence(
         sentenceEntity.sentenceUuid,
+        sentenceEntity.lifetimeSentenceUuid,
         sentenceEntity.chargeNumber,
         sentenceEntity.periodLengths.map { PeriodLength.from(it) },
         sentenceEntity.sentenceServeType,
