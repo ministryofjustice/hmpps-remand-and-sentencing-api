@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import com.fasterxml.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import java.time.LocalDate
 import java.util.UUID
@@ -14,6 +15,7 @@ data class Sentence(
   val sentenceType: SentenceType?,
   val convictionDate: LocalDate?,
   val fineAmount: FineAmount?,
+  val legacyData: JsonNode?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence {
@@ -27,6 +29,7 @@ data class Sentence(
         sentenceEntity.sentenceType?.let { SentenceType.from(it) },
         sentenceEntity.convictionDate,
         sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
+        sentenceEntity.legacyData,
       )
     }
   }
