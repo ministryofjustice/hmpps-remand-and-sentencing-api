@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationSentenceId
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -102,5 +103,8 @@ class DataCreator {
     fun migrationCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): MigrationCreateFine = MigrationCreateFine(fineAmount)
 
     fun migrationSentenceId(offenderBookingId: Long = 1, sequence: Int = 1): MigrationSentenceId = MigrationSentenceId(offenderBookingId, sequence)
+
+    fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1"): PeriodLengthLegacyData =
+      PeriodLengthLegacyData(lifeSentence, sentenceTermCode)
   }
 }
