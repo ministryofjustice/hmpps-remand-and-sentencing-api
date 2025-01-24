@@ -7,24 +7,26 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 data class Recall(
-  val recallUniqueIdentifier: UUID,
+  val recallUuid: UUID,
   val prisonerId: String,
-  val recallDate: LocalDate,
+  val revocationDate: LocalDate,
   val returnToCustodyDate: LocalDate,
   val recallType: RecallType,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
+  val createdByPrison: String,
 ) {
   companion object {
     fun from(recall: RecallEntity): Recall =
       Recall(
-        recallUniqueIdentifier = recall.recallUniqueIdentifier,
+        recallUuid = recall.recallUuid,
         prisonerId = recall.prisonerId,
-        recallDate = recall.recallDate,
+        revocationDate = recall.revocationDate,
         returnToCustodyDate = recall.returnToCustodyDate,
         recallType = recall.recallType,
         createdByUsername = recall.createdByUsername,
         createdAt = recall.createdAt,
+        createdByPrison = recall.createdByPrison,
       )
   }
 }

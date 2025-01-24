@@ -19,13 +19,13 @@ class RecallService(private val recallRepository: RecallRepository) {
   }
 
   @Transactional
-  fun updateRecall(recallUniqueIdentifier: UUID, recall: CreateRecall): SaveRecallResponse {
-    val recallToUpdate = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
-      ?: recallRepository.save(RecallEntity.placeholderEntity(recall, recallUniqueIdentifier))
+  fun updateRecall(recallUuid: UUID, recall: CreateRecall): SaveRecallResponse {
+    val recallToUpdate = recallRepository.findOneByRecallUuid(recallUuid)
+      ?: recallRepository.save(RecallEntity.placeholderEntity(recall, recallUuid))
 
     val savedRecall = recallRepository.save(
       recallToUpdate.copy(
-        recallDate = recall.recallDate,
+        revocationDate = recall.revocationDate,
         returnToCustodyDate = recall.returnToCustodyDate,
         recallType = recall.recallType,
       ),
@@ -35,8 +35,8 @@ class RecallService(private val recallRepository: RecallRepository) {
   }
 
   @Transactional(readOnly = true)
-  fun findRecallByUuid(recallUniqueIdentifier: UUID): Recall {
-    val recall = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
+  fun findRecallByUuid(recallUuid: UUID): Recall {
+    val recall = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
     return Recall.from(recall)
   }

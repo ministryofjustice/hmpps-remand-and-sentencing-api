@@ -20,29 +20,31 @@ class RecallEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  val recallUniqueIdentifier: UUID = UUID.randomUUID(),
+  val recallUuid: UUID = UUID.randomUUID(),
   val prisonerId: String,
-  val recallDate: LocalDate,
+  val revocationDate: LocalDate,
   val returnToCustodyDate: LocalDate,
   @Enumerated(EnumType.STRING)
   val recallType: RecallType,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
+  val createdByPrison: String,
 ) {
 
-  fun copy(recallDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallType): RecallEntity {
-    return RecallEntity(this.id, this.recallUniqueIdentifier, this.prisonerId, recallDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername)
+  fun copy(revocationDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallType): RecallEntity {
+    return RecallEntity(this.id, this.recallUuid, this.prisonerId, revocationDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername, this.createdByPrison)
   }
 
   companion object {
-    fun placeholderEntity(createRecall: CreateRecall, recallUniqueIdentifier: UUID? = null): RecallEntity =
+    fun placeholderEntity(createRecall: CreateRecall, recallUuid: UUID? = null): RecallEntity =
       RecallEntity(
-        recallUniqueIdentifier = recallUniqueIdentifier ?: UUID.randomUUID(),
+        recallUuid = recallUuid ?: UUID.randomUUID(),
         prisonerId = createRecall.prisonerId,
-        recallDate = createRecall.recallDate,
+        revocationDate = createRecall.revocationDate,
         returnToCustodyDate = createRecall.returnToCustodyDate,
         recallType = createRecall.recallType,
         createdByUsername = createRecall.createdByUsername,
+        createdByPrison = createRecall.createdByPrison,
       )
   }
 }
