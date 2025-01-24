@@ -26,7 +26,7 @@ CREATE TABLE recall_sentence(
 );
 
 CREATE TABLE recall_type(
-    recall_type_id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     code VARCHAR NOT NULL,
     description VARCHAR NOT NULL
 );
