@@ -1,5 +1,4 @@
 DROP TABLE recall CASCADE ;
-DROP TABLE recall_type CASCADE ;
 
 CREATE TABLE recall(
     id SERIAL PRIMARY KEY,
