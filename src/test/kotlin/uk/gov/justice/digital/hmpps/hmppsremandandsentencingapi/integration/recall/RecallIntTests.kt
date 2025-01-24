@@ -22,7 +22,7 @@ class RecallIntTests : IntegrationTestBase() {
       prisonerId = "A12345B",
       revocationDate = LocalDate.of(2024, 1, 2),
       returnToCustodyDate = LocalDate.of(2024, 2, 3),
-      recallType = FTR_14,
+      recallTypeCode = FTR_14,
       createdByUsername = "user001",
       createdByPrison = "PRI",
     )
@@ -91,7 +91,7 @@ class RecallIntTests : IntegrationTestBase() {
     putRecall(
       CreateRecall(
         prisonerId = "A12345B",
-        recallType = FTR_14,
+        recallTypeCode = FTR_14,
         revocationDate = originalRecall.revocationDate,
         returnToCustodyDate = originalRecall.returnToCustodyDate,
         createdByUsername = "user001",

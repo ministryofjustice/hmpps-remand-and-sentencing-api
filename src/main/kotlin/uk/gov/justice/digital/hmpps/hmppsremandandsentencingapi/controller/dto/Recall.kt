@@ -23,7 +23,7 @@ data class Recall(
         prisonerId = recall.prisonerId,
         revocationDate = recall.revocationDate,
         returnToCustodyDate = recall.returnToCustodyDate,
-        recallType = recall.recallType,
+        recallType = recall.recallType.code,
         createdByUsername = recall.createdByUsername,
         createdAt = recall.createdAt,
         createdByPrison = recall.createdByPrison,
