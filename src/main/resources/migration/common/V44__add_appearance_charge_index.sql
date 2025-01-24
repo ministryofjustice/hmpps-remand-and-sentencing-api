@@ -1,0 +1,1 @@
+create index idx_appearance_charge_id on appearance_charge(appearance_id, charge_id);
