@@ -54,7 +54,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
     courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { courtCase ->
       courtCase.legacyData = objectMapper.valueToTree<JsonNode>(courtCaseLegacyData)
       val legacyCourtCaseReferences = courtCaseLegacyData.caseReferences.map { it.offenderCaseReference }.toSet()
-      val toEditAppearances = courtCase.appearances.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
+      val toEditAppearances = courtCase.appearances.filter { it.statusId == EntityStatus.ACTIVE }.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
       toEditAppearances.forEach { editedAppearance ->
         val newAppearance = editedAppearance.copyAndRemoveCaseReference(serviceUserService.getUsername())
         editedAppearance.statusId = EntityStatus.EDITED
