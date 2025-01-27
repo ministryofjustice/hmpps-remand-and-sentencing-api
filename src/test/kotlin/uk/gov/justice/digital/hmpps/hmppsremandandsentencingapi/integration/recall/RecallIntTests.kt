@@ -8,8 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FOURTEEN_DAY_FIXED_TERM_RECALL
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.HDC_STANDARD_RECALL
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR_HDC
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -20,10 +20,11 @@ class RecallIntTests : IntegrationTestBase() {
   fun `Create recall and fetch it based on returned UUID`() {
     val recall = CreateRecall(
       prisonerId = "A12345B",
-      recallDate = LocalDate.of(2024, 1, 2),
+      revocationDate = LocalDate.of(2024, 1, 2),
       returnToCustodyDate = LocalDate.of(2024, 2, 3),
-      recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
+      recallTypeCode = FTR_14,
       createdByUsername = "user001",
+      createdByPrison = "PRI",
     )
 
     val createRecall = postRecall(recall)
@@ -34,13 +35,14 @@ class RecallIntTests : IntegrationTestBase() {
       .ignoringFields("createdAt")
       .isEqualTo(
         Recall(
-          recallUniqueIdentifier = createRecall.recallUuid,
+          recallUuid = createRecall.recallUuid,
           prisonerId = "A12345B",
-          recallDate = LocalDate.of(2024, 1, 2),
+          revocationDate = LocalDate.of(2024, 1, 2),
           returnToCustodyDate = LocalDate.of(2024, 2, 3),
-          recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
+          recallType = FTR_14,
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
+          createdByPrison = "PRI",
         ),
       )
   }
@@ -57,22 +59,24 @@ class RecallIntTests : IntegrationTestBase() {
       .isEqualTo(
         listOf(
           Recall(
-            recallUniqueIdentifier = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+            recallUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
             prisonerId = "A12345B",
-            recallDate = LocalDate.of(2024, 7, 1),
+            revocationDate = LocalDate.of(2024, 7, 1),
             returnToCustodyDate = LocalDate.of(2024, 7, 1),
-            recallType = HDC_STANDARD_RECALL,
+            recallType = LR_HDC,
             createdByUsername = "admin_user",
             createdAt = ZonedDateTime.now(),
+            createdByPrison = "HMI",
           ),
           Recall(
-            recallUniqueIdentifier = UUID.fromString("550e8400-e29b-41d4-a716-446655440001"),
+            recallUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440001"),
             prisonerId = "A12345B",
-            recallDate = LocalDate.of(2024, 7, 2),
+            revocationDate = LocalDate.of(2024, 7, 2),
             returnToCustodyDate = LocalDate.of(2024, 7, 2),
-            recallType = HDC_STANDARD_RECALL,
+            recallType = LR_HDC,
             createdByUsername = "admin_user",
             createdAt = ZonedDateTime.now(),
+            createdByPrison = "HMI",
           ),
         ),
       )
@@ -87,10 +91,11 @@ class RecallIntTests : IntegrationTestBase() {
     putRecall(
       CreateRecall(
         prisonerId = "A12345B",
-        recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
-        recallDate = originalRecall.recallDate,
+        recallTypeCode = FTR_14,
+        revocationDate = originalRecall.revocationDate,
         returnToCustodyDate = originalRecall.returnToCustodyDate,
         createdByUsername = "user001",
+        createdByPrison = originalRecall.createdByPrison,
       ),
       uuid,
     )
@@ -102,13 +107,14 @@ class RecallIntTests : IntegrationTestBase() {
       .ignoringCollectionOrder()
       .isEqualTo(
         Recall(
-          recallUniqueIdentifier = uuid,
+          recallUuid = uuid,
           prisonerId = originalRecall.prisonerId,
-          recallDate = originalRecall.recallDate,
+          revocationDate = originalRecall.revocationDate,
           returnToCustodyDate = originalRecall.returnToCustodyDate,
-          recallType = FOURTEEN_DAY_FIXED_TERM_RECALL,
+          recallType = FTR_14,
           createdByUsername = originalRecall.createdByUsername,
           createdAt = originalRecall.createdAt,
+          createdByPrison = originalRecall.createdByPrison,
         ),
       )
   }

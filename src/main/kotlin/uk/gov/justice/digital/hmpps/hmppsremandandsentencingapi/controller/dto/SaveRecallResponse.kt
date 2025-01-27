@@ -8,6 +8,6 @@ data class SaveRecallResponse(
 ) {
   companion object {
     fun from(recall: RecallEntity): SaveRecallResponse =
-      SaveRecallResponse(recallUuid = recall.recallUniqueIdentifier)
+      SaveRecallResponse(recallUuid = recall.recallUuid)
   }
 }

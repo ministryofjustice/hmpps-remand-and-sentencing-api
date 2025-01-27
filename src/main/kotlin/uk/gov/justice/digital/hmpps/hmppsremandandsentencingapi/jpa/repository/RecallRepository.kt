@@ -5,6 +5,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import java.util.UUID
 
 interface RecallRepository : CrudRepository<RecallEntity, Int> {
-  fun findOneByRecallUniqueIdentifier(recallUniqueIdentifier: UUID): RecallEntity?
+  fun findOneByRecallUuid(recallUuid: UUID): RecallEntity?
   fun findByPrisonerId(prisonerId: String): List<RecallEntity>
 }
