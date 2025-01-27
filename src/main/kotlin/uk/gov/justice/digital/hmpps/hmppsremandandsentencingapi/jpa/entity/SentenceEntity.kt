@@ -122,7 +122,7 @@ class SentenceEntity(
       convictionDate = convictionDate,
       legacyData = legacyData,
     )
-    sentenceEntity.periodLengths = periodLengths.toList()
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }
     sentenceEntity.fineAmountEntity = sentence.fine?.let { FineAmountEntity.from(it) }
     return sentenceEntity
   }
