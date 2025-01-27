@@ -15,6 +15,8 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 
 @Entity
 @Table(name = "period_length")
@@ -67,6 +69,38 @@ class PeriodLengthEntity(
         sentenceEntity = null,
         appearanceEntity = null,
       )
+    }
+
+    fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
+      val order = getPeriodOrder(periodLength)
+      val type = PeriodLengthTypeMapper.convert(periodLength.legacyData, sentenceCalcType)
+      return PeriodLengthEntity(
+        years = periodLength.periodYears,
+        months = periodLength.periodMonths,
+        weeks = periodLength.periodWeeks,
+        days = periodLength.periodDays,
+        periodLengthType = type,
+        periodOrder = order,
+        sentenceEntity = null,
+        appearanceEntity = null,
+      )
+    }
+
+    private fun getPeriodOrder(periodLength: LegacyCreatePeriodLength): String {
+      val units: MutableList<String> = mutableListOf()
+      if (periodLength.periodYears != null) {
+        units.add("years")
+      }
+      if (periodLength.periodMonths != null) {
+        units.add("months")
+      }
+      if (periodLength.periodWeeks != null) {
+        units.add("weeks")
+      }
+      if (periodLength.periodDays != null) {
+        units.add("days")
+      }
+      return units.joinToString(",")
     }
   }
 }

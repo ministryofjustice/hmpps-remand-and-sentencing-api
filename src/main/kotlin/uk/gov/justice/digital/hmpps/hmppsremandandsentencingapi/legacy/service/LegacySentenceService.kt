@@ -7,11 +7,13 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.FineAmountEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.FineAmountRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
@@ -21,7 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceU
 import java.util.UUID
 
 @Service
-class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val objectMapper: ObjectMapper, private val serviceUserService: ServiceUserService, private val fineAmountRepository: FineAmountRepository) {
+class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val objectMapper: ObjectMapper, private val serviceUserService: ServiceUserService, private val fineAmountRepository: FineAmountRepository, private val periodLengthRepository: PeriodLengthRepository) {
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
@@ -36,6 +38,14 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, legacyData, consecutiveToSentence))
     charge.sentences.add(createdSentence)
     sentence.fine?.let { createdSentence.fineAmountEntity = fineAmountRepository.save(FineAmountEntity.from(it)) }
+    createdSentence.periodLengths = sentence.periodLengths.map { legacyPeriodLength ->
+      val createdPeriodLength = periodLengthRepository.save(
+        PeriodLengthEntity.from(legacyPeriodLength, dpsSentenceType?.nomisSentenceCalcType ?: sentenceLegacyData.sentenceCalcType!!),
+      )
+      createdPeriodLength.sentenceEntity = createdSentence
+      createdPeriodLength
+    }
+
     return LegacySentenceCreatedResponse(charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId, createdSentence.lifetimeSentenceUuid!!, charge.lifetimeChargeUuid)
   }
 
@@ -54,8 +64,15 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       entityChangeStatus = EntityChangeStatus.EDITED
       val toCreateFineAmount = updatedSentence.fineAmountEntity
       updatedSentence.fineAmountEntity = null
+      val toCreatePeriodLengths = updatedSentence.periodLengths
+      updatedSentence.periodLengths = emptyList()
       val activeRecord = sentenceRepository.save(updatedSentence)
       activeRecord.fineAmountEntity = toCreateFineAmount?.let { fineAmountRepository.save(it) }
+      activeRecord.periodLengths = toCreatePeriodLengths.map {
+        val createdPeriodLength = periodLengthRepository.save(it)
+        createdPeriodLength.sentenceEntity = activeRecord
+        createdPeriodLength
+      }
       existingSentence.charge.sentences.add(activeRecord)
     }
     return entityChangeStatus to LegacySentenceCreatedResponse(activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId, activeRecord.lifetimeSentenceUuid!!, activeRecord.charge.lifetimeChargeUuid)

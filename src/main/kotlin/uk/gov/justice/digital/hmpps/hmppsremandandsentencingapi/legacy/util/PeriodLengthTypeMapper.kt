@@ -8,19 +8,21 @@ class PeriodLengthTypeMapper {
 
     val civilSentenceCalcTypes: Set<String> = setOf("CIVIL", "CIVILLT")
 
+    val extendedSentenceCalcTypes: Set<String> = setOf("EDS18", "EDS21", "EDSU18", "EPP", "LASPO_AR", "LASPO_DR", "STS18", "STS21")
+
     fun convert(periodLengthLegacyData: PeriodLengthLegacyData, sentenceCalcType: String): PeriodLengthType {
+      var periodLengthType: PeriodLengthType = PeriodLengthType.SENTENCE_LENGTH
       if (periodLengthLegacyData.lifeSentence == true) {
-        return PeriodLengthType.TARIFF_LENGTH
-      }
-      if (periodLengthLegacyData.sentenceTermCode == "DET") {
-        if (civilSentenceCalcTypes.contains(sentenceCalcType)) {
-          return PeriodLengthType.TERM_LENGTH
-        } else {
-          return PeriodLengthType.SENTENCE_LENGTH
-        }
+        periodLengthType = PeriodLengthType.TARIFF_LENGTH
+      } else if (periodLengthLegacyData.sentenceTermCode == "DET" && civilSentenceCalcTypes.contains(sentenceCalcType)) {
+        periodLengthType = PeriodLengthType.TERM_LENGTH
+      } else if (periodLengthLegacyData.sentenceTermCode == "IMP" && extendedSentenceCalcTypes.contains(sentenceCalcType)) {
+        periodLengthType = PeriodLengthType.CUSTODIAL_TERM
+      } else if (periodLengthLegacyData.sentenceTermCode == "LIC") {
+        periodLengthType = PeriodLengthType.LICENCE_PERIOD
       }
 
-      return PeriodLengthType.CUSTODIAL_TERM
+      return periodLengthType
     }
   }
 }
