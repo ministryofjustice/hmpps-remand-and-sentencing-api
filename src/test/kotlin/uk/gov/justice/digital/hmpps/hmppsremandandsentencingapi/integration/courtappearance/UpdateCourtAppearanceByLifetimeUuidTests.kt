@@ -59,7 +59,7 @@ class UpdateCourtAppearanceByLifetimeUuidTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges.[0].offenceCode")
+      .jsonPath("$.charges.[?(@.lifetimeUuid != '${charge.lifetimeChargeUuid}')].offenceCode")
       .isEqualTo(charge.offenceCode)
   }
 

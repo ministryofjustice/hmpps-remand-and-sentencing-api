@@ -15,7 +15,7 @@ class UpdateChargeTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
     val createdCharge = createdAppearance.charges.first()
-    val toUpdateCharge = DpsDataCreator.dpsCreateCharge(appearanceUuid = createdAppearance.appearanceUuid, chargeUuid = createdCharge.chargeUuid, offenceCode = "OFF567")
+    val toUpdateCharge = DpsDataCreator.dpsCreateCharge(appearanceUuid = createdAppearance.appearanceUuid, chargeUuid = createdCharge.chargeUuid, offenceStartDate = LocalDate.now().minusDays(10))
 
     webTestClient
       .put()
