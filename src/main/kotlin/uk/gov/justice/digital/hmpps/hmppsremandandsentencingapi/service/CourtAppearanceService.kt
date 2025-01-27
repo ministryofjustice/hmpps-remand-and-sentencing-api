@@ -217,14 +217,13 @@ class CourtAppearanceService(
   }
 
   private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity): EntityChangeStatus {
-    val createdCharges = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity)
-
     val toDeleteCharges = existingCourtAppearanceEntity.charges.filter { existingCharge -> charges.none { createCharge -> createCharge.chargeUuid == existingCharge.chargeUuid } }
     toDeleteCharges.forEach { chargeEntity ->
       chargeEntity.courtAppearances.removeIf { it.id == existingCourtAppearanceEntity.id }
       chargeService.deleteChargeIfOrphan(chargeEntity, prisonerId, courtCaseUuid)
     }
     existingCourtAppearanceEntity.charges.removeAll(toDeleteCharges)
+    val createdCharges = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity)
     val toAddCharges = createdCharges.filter { chargeEntity -> existingCourtAppearanceEntity.charges.none { existingCharge -> chargeEntity.chargeUuid == existingCharge.chargeUuid } }
     existingCourtAppearanceEntity.charges.addAll(toAddCharges)
 

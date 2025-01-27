@@ -67,19 +67,20 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
     if (!existingCharge.isSame(compareCharge)) {
       var chargeChangeStatus = EntityChangeStatus.EDITED
+      if (existingCharge.offenceCode != compareCharge.offenceCode) {
+        // update existing charge with replaced by charge outcome
+        val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
+        val updatedExistingCharge = chargeRepository.save(existingCharge.copyFrom(replacedWithAnotherOutcome, serviceUserService.getUsername()))
+        courtAppearance.charges.add(updatedExistingCharge)
+        updatedExistingCharge.courtAppearances.add(courtAppearance)
+        chargeChanges.add(EntityChangeStatus.EDITED to updatedExistingCharge)
+        chargeChangeStatus = EntityChangeStatus.CREATED
+        compareCharge.supersedingCharge = updatedExistingCharge
+        compareCharge.lifetimeChargeUuid = UUID.randomUUID()
+      }
       if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
         existingCharge.courtAppearances.remove(courtAppearance)
         courtAppearance.charges.remove(existingCharge)
-        if (existingCharge.offenceCode != compareCharge.offenceCode) {
-          // update existing charge with replaced by charge outcome
-          val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
-          val updatedExistingCharge = chargeRepository.save(existingCharge.copyFrom(replacedWithAnotherOutcome, serviceUserService.getUsername()))
-          courtAppearance.charges.add(updatedExistingCharge)
-          chargeChanges.add(EntityChangeStatus.EDITED to updatedExistingCharge)
-          chargeChangeStatus = EntityChangeStatus.CREATED
-          compareCharge.supersedingCharge = updatedExistingCharge
-          compareCharge.lifetimeChargeUuid = UUID.randomUUID()
-        }
       } else {
         existingCharge.statusId = EntityStatus.EDITED
       }

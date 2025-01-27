@@ -94,7 +94,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges.[0].offenceCode")
+      .jsonPath("$.charges.[?(@.lifetimeUuid == '${charge.lifetimeChargeUuid}')].outcome.outcomeUuid")
+      .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced with another outcome
+      .jsonPath("$.charges.[?(@.lifetimeUuid != '${charge.lifetimeChargeUuid}')].offenceCode")
       .isEqualTo(charge.offenceCode)
   }
 
