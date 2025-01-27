@@ -13,4 +13,5 @@ data class MigrationCreateSentence(
   val consecutiveToSentenceId: MigrationSentenceId?,
   @Schema(description = "The consecutive to lifetime uuid if the sentence is not in the same court case")
   val consecutiveToSentenceLifetimeUuid: UUID?,
+  val periodLengths: List<MigrationCreatePeriodLength>,
 )

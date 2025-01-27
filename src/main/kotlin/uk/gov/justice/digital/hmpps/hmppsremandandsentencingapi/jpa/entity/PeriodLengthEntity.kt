@@ -16,6 +16,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 
 @Entity
@@ -72,7 +73,7 @@ class PeriodLengthEntity(
     }
 
     fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
-      val order = getPeriodOrder(periodLength)
+      val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
       val type = PeriodLengthTypeMapper.convert(periodLength.legacyData, sentenceCalcType)
       return PeriodLengthEntity(
         years = periodLength.periodYears,
@@ -86,18 +87,33 @@ class PeriodLengthEntity(
       )
     }
 
-    private fun getPeriodOrder(periodLength: LegacyCreatePeriodLength): String {
+    fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
+      val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
+      val type = PeriodLengthTypeMapper.convert(periodLength.legacyData, sentenceCalcType)
+      return PeriodLengthEntity(
+        years = periodLength.periodYears,
+        months = periodLength.periodMonths,
+        weeks = periodLength.periodWeeks,
+        days = periodLength.periodDays,
+        periodLengthType = type,
+        periodOrder = order,
+        sentenceEntity = null,
+        appearanceEntity = null,
+      )
+    }
+
+    private fun getPeriodOrder(years: Int?, months: Int?, weeks: Int?, days: Int?): String {
       val units: MutableList<String> = mutableListOf()
-      if (periodLength.periodYears != null) {
+      if (years != null) {
         units.add("years")
       }
-      if (periodLength.periodMonths != null) {
+      if (months != null) {
         units.add("months")
       }
-      if (periodLength.periodWeeks != null) {
+      if (weeks != null) {
         units.add("weeks")
       }
-      if (periodLength.periodDays != null) {
+      if (days != null) {
         units.add("days")
       }
       return units.joinToString(",")
