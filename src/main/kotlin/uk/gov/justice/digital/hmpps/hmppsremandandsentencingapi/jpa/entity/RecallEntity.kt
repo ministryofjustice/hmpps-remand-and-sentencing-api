@@ -1,14 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -20,29 +19,32 @@ class RecallEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  val recallUniqueIdentifier: UUID = UUID.randomUUID(),
+  val recallUuid: UUID = UUID.randomUUID(),
   val prisonerId: String,
-  val recallDate: LocalDate,
+  val revocationDate: LocalDate,
   val returnToCustodyDate: LocalDate,
-  @Enumerated(EnumType.STRING)
-  val recallType: RecallType,
+  @ManyToOne
+  @JoinColumn(name = "recall_type_id")
+  val recallType: RecallTypeEntity,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
+  val createdByPrison: String,
 ) {
 
-  fun copy(recallDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallType): RecallEntity {
-    return RecallEntity(this.id, this.recallUniqueIdentifier, this.prisonerId, recallDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername)
+  fun copy(revocationDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallTypeEntity): RecallEntity {
+    return RecallEntity(this.id, this.recallUuid, this.prisonerId, revocationDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername, this.createdByPrison)
   }
 
   companion object {
-    fun placeholderEntity(createRecall: CreateRecall, recallUniqueIdentifier: UUID? = null): RecallEntity =
+    fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity =
       RecallEntity(
-        recallUniqueIdentifier = recallUniqueIdentifier ?: UUID.randomUUID(),
+        recallUuid = recallUuid ?: UUID.randomUUID(),
         prisonerId = createRecall.prisonerId,
-        recallDate = createRecall.recallDate,
+        revocationDate = createRecall.revocationDate,
         returnToCustodyDate = createRecall.returnToCustodyDate,
-        recallType = createRecall.recallType,
+        recallType = recallType,
         createdByUsername = createRecall.createdByUsername,
+        createdByPrison = createRecall.createdByPrison,
       )
   }
 }

@@ -8,26 +8,29 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import java.util.UUID
 
 @Service
-class RecallService(private val recallRepository: RecallRepository) {
+class RecallService(private val recallRepository: RecallRepository, private val recallTypeRepository: RecallTypeRepository) {
   @Transactional
   fun createRecall(createRecall: CreateRecall): SaveRecallResponse {
-    val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall))
+    val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
+    val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!))
     return SaveRecallResponse.from(recall)
   }
 
   @Transactional
-  fun updateRecall(recallUniqueIdentifier: UUID, recall: CreateRecall): SaveRecallResponse {
-    val recallToUpdate = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
-      ?: recallRepository.save(RecallEntity.placeholderEntity(recall, recallUniqueIdentifier))
+  fun updateRecall(recallUuid: UUID, recall: CreateRecall): SaveRecallResponse {
+    val recallType = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
+    val recallToUpdate = recallRepository.findOneByRecallUuid(recallUuid)
+      ?: recallRepository.save(RecallEntity.placeholderEntity(recall, recallType, recallUuid))
 
     val savedRecall = recallRepository.save(
       recallToUpdate.copy(
-        recallDate = recall.recallDate,
+        revocationDate = recall.revocationDate,
         returnToCustodyDate = recall.returnToCustodyDate,
-        recallType = recall.recallType,
+        recallType = recallType,
       ),
     )
 
@@ -35,8 +38,8 @@ class RecallService(private val recallRepository: RecallRepository) {
   }
 
   @Transactional(readOnly = true)
-  fun findRecallByUuid(recallUniqueIdentifier: UUID): Recall {
-    val recall = recallRepository.findOneByRecallUniqueIdentifier(recallUniqueIdentifier)
+  fun findRecallByUuid(recallUuid: UUID): Recall {
+    val recall = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
     return Recall.from(recall)
   }
