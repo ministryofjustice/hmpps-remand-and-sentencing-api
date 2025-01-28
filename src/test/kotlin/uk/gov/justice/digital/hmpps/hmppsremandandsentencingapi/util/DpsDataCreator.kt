@@ -34,7 +34,7 @@ class DpsDataCreator {
 
     fun dpsCreateNextCourtAppearance(
       appearanceDate: LocalDate = LocalDate.now().plusDays(2),
-      appearanceTime: LocalTime? = LocalTime.now(),
+      appearanceTime: LocalTime? = LocalTime.of(10, 15, 0, 0),
       courtCode: String = "COURT1",
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
     ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid)
