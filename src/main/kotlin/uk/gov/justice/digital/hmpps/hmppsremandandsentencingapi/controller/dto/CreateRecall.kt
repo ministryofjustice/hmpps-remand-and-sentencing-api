@@ -5,8 +5,8 @@ import java.time.LocalDate
 
 data class CreateRecall(
   val prisonerId: String,
-  val revocationDate: LocalDate,
-  val returnToCustodyDate: LocalDate,
+  val revocationDate: LocalDate?,
+  val returnToCustodyDate: LocalDate?,
   val recallTypeCode: RecallType,
   val createdByUsername: String,
   val createdByPrison: String,
