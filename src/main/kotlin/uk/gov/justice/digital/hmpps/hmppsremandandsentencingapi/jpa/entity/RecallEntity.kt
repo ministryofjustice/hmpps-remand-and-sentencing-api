@@ -21,8 +21,8 @@ class RecallEntity(
   val id: Int = 0,
   val recallUuid: UUID = UUID.randomUUID(),
   val prisonerId: String,
-  val revocationDate: LocalDate,
-  val returnToCustodyDate: LocalDate,
+  val revocationDate: LocalDate?,
+  val returnToCustodyDate: LocalDate?,
   @ManyToOne
   @JoinColumn(name = "recall_type_id")
   val recallType: RecallTypeEntity,
@@ -31,7 +31,7 @@ class RecallEntity(
   val createdByPrison: String,
 ) {
 
-  fun copy(revocationDate: LocalDate, returnToCustodyDate: LocalDate, recallType: RecallTypeEntity): RecallEntity {
+  fun copy(revocationDate: LocalDate?, returnToCustodyDate: LocalDate?, recallType: RecallTypeEntity): RecallEntity {
     return RecallEntity(this.id, this.recallUuid, this.prisonerId, revocationDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername, this.createdByPrison)
   }
 

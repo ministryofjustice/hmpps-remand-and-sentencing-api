@@ -9,8 +9,8 @@ import java.util.UUID
 data class Recall(
   val recallUuid: UUID,
   val prisonerId: String,
-  val revocationDate: LocalDate,
-  val returnToCustodyDate: LocalDate,
+  val revocationDate: LocalDate?,
+  val returnToCustodyDate: LocalDate?,
   val recallType: RecallType,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,

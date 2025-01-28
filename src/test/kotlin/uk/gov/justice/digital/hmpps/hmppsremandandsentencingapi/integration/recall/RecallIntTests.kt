@@ -47,6 +47,37 @@ class RecallIntTests : IntegrationTestBase() {
       )
   }
 
+  @Test
+  fun `Create recall with no dates and fetch it based on returned UUID`() {
+    val recall = CreateRecall(
+      prisonerId = "A12345B",
+      revocationDate = null,
+      returnToCustodyDate = null,
+      recallTypeCode = FTR_14,
+      createdByUsername = "user001",
+      createdByPrison = "PRI",
+    )
+
+    val createRecall = postRecall(recall)
+    val actualRecall = getRecallByUUID(createRecall.recallUuid)
+
+    assertThat(actualRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .isEqualTo(
+        Recall(
+          recallUuid = createRecall.recallUuid,
+          prisonerId = "A12345B",
+          revocationDate = null,
+          returnToCustodyDate = null,
+          recallType = FTR_14,
+          createdByUsername = "user001",
+          createdAt = ZonedDateTime.now(),
+          createdByPrison = "PRI",
+        ),
+      )
+  }
+
   @Sql("classpath:test_data/insert-recalls.sql")
   @Test
   fun `Get all recalls for a prisoner`() {
