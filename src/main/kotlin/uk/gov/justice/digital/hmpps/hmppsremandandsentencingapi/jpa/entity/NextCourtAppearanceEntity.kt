@@ -36,6 +36,7 @@ class NextCourtAppearanceEntity(
 ) {
   fun isSame(other: NextCourtAppearanceEntity?): Boolean {
     return other != null && appearanceDate.isEqual(other.appearanceDate) &&
+      appearanceTime == other.appearanceTime &&
       courtCode == other.courtCode &&
       appearanceType == other.appearanceType
   }

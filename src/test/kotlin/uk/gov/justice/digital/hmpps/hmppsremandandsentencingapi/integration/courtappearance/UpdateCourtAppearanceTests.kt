@@ -7,6 +7,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class UpdateCourtAppearanceTests : IntegrationTestBase() {
@@ -65,6 +66,42 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.nextCourtAppearance")
       .exists()
+  }
+
+  @Test
+  fun `updating the next appearance time stores the updated value`() {
+    val courtCase = createCourtCase()
+    val createdAppearance = courtCase.second.appearances.first()
+    val createdNextAppearance = createdAppearance.nextCourtAppearance!!
+    val updateNextAppearance = createdNextAppearance.copy(appearanceTime = createdNextAppearance.appearanceTime!!.plusHours(2).withSecond(0).withNano(0))
+    val updateCourtAppearance = createdAppearance.copy(courtCaseUuid = courtCase.first, appearanceUuid = createdAppearance.appearanceUuid, lifetimeUuid = createdAppearance.lifetimeUuid, nextCourtAppearance = updateNextAppearance)
+    val response = webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${response.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.nextCourtAppearance.appearanceTime")
+      .isEqualTo(updateNextAppearance.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
   }
 
   @Test
