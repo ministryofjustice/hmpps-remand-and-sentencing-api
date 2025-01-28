@@ -46,6 +46,7 @@ class RecallIntTests : IntegrationTestBase() {
         ),
       )
   }
+
   @Test
   fun `Create recall with no dates and fetch it based on returned UUID`() {
     val recall = CreateRecall(
