@@ -13,9 +13,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import java.util.UUID
 
 @Service
-class RecallService(private val recallRepository: RecallRepository,
-                    private val recallTypeRepository: RecallTypeRepository,
-                    private val recallDomainEventService: RecallDomainEventService
+class RecallService(
+  private val recallRepository: RecallRepository,
+  private val recallTypeRepository: RecallTypeRepository,
+  private val recallDomainEventService: RecallDomainEventService,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall): SaveRecallResponse {
