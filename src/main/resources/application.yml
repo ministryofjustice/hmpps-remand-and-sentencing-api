@@ -94,3 +94,5 @@ court:
     getByIdPath: /charge/{chargeUuid}
   sentence:
     getByIdPath: /sentence/{sentenceUuid}
+recall:
+  getByIdPath: /recall/{recallUuid}

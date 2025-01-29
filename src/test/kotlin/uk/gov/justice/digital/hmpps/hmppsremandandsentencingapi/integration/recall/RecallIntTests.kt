@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.recall
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -45,6 +46,8 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = "PRI",
         ),
       )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
   }
 
   @Test
@@ -76,6 +79,9 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = "PRI",
         ),
       )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+
   }
 
   @Sql("classpath:test_data/insert-recalls.sql")
