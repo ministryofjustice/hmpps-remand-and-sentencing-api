@@ -16,6 +16,7 @@ data class LegacySentence(
   val chargeNumber: String?,
   val fineAmount: BigDecimal?,
   val legacyData: SentenceLegacyData?,
+  val periodLengths: List<LegacyPeriodLength>,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity, objectMapper: ObjectMapper): LegacySentence {
