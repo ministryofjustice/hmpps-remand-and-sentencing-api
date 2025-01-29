@@ -36,6 +36,7 @@ data class LegacySentence(
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmountEntity?.fineAmount,
         legacyData,
+        sentenceEntity.periodLengths.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
       )
     }
   }
