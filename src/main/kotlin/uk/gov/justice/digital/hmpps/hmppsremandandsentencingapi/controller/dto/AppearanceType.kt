@@ -9,12 +9,10 @@ data class AppearanceType(
   val displayOrder: Int,
 ) {
   companion object {
-    fun from(appearanceTypeEntity: AppearanceTypeEntity): AppearanceType {
-      return AppearanceType(
-        appearanceTypeEntity.appearanceTypeUuid,
-        appearanceTypeEntity.description,
-        appearanceTypeEntity.displayOrder,
-      )
-    }
+    fun from(appearanceTypeEntity: AppearanceTypeEntity): AppearanceType = AppearanceType(
+      appearanceTypeEntity.appearanceTypeUuid,
+      appearanceTypeEntity.description,
+      appearanceTypeEntity.displayOrder,
+    )
   }
 }

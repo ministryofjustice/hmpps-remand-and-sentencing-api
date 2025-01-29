@@ -12,15 +12,13 @@ data class PeriodLength(
   val periodLengthType: PeriodLengthType,
 ) {
   companion object {
-    fun from(periodLengthEntity: PeriodLengthEntity): PeriodLength {
-      return PeriodLength(
-        periodLengthEntity.years,
-        periodLengthEntity.months,
-        periodLengthEntity.weeks,
-        periodLengthEntity.days,
-        periodLengthEntity.periodOrder,
-        periodLengthEntity.periodLengthType,
-      )
-    }
+    fun from(periodLengthEntity: PeriodLengthEntity): PeriodLength = PeriodLength(
+      periodLengthEntity.years,
+      periodLengthEntity.months,
+      periodLengthEntity.weeks,
+      periodLengthEntity.days,
+      periodLengthEntity.periodOrder,
+      periodLengthEntity.periodLengthType,
+    )
   }
 }

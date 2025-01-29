@@ -13,16 +13,14 @@ data class CourtAppearanceOutcome(
   val isSubList: Boolean,
 ) {
   companion object {
-    fun from(appearanceOutcomeEntity: AppearanceOutcomeEntity): CourtAppearanceOutcome {
-      return CourtAppearanceOutcome(
-        appearanceOutcomeEntity.outcomeUuid,
-        appearanceOutcomeEntity.outcomeName,
-        appearanceOutcomeEntity.nomisCode,
-        appearanceOutcomeEntity.outcomeType,
-        appearanceOutcomeEntity.displayOrder,
-        appearanceOutcomeEntity.relatedChargeOutcomeUuid,
-        appearanceOutcomeEntity.isSubList,
-      )
-    }
+    fun from(appearanceOutcomeEntity: AppearanceOutcomeEntity): CourtAppearanceOutcome = CourtAppearanceOutcome(
+      appearanceOutcomeEntity.outcomeUuid,
+      appearanceOutcomeEntity.outcomeName,
+      appearanceOutcomeEntity.nomisCode,
+      appearanceOutcomeEntity.outcomeType,
+      appearanceOutcomeEntity.displayOrder,
+      appearanceOutcomeEntity.relatedChargeOutcomeUuid,
+      appearanceOutcomeEntity.isSubList,
+    )
   }
 }

@@ -150,59 +150,55 @@ class RecallIntTests : IntegrationTestBase() {
       )
   }
 
-  private fun getRecallByUUID(recallUuid: UUID): Recall =
-    webTestClient
-      .get()
-      .uri("/recall/$recallUuid")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody(Recall::class.java)
-      .returnResult().responseBody!!
+  private fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
+    .get()
+    .uri("/recall/$recallUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(Recall::class.java)
+    .returnResult().responseBody!!
 
-  private fun getRecallsByPrisonerId(prisonerId: String): List<Recall> =
-    webTestClient
-      .get()
-      .uri("/recall/person/$prisonerId")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBodyList(Recall::class.java)
-      .returnResult().responseBody!!
+  private fun getRecallsByPrisonerId(prisonerId: String): List<Recall> = webTestClient
+    .get()
+    .uri("/recall/person/$prisonerId")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBodyList(Recall::class.java)
+    .returnResult().responseBody!!
 
-  private fun postRecall(recall: CreateRecall) =
-    webTestClient
-      .post()
-      .uri("/recall")
-      .bodyValue(recall)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated
-      .expectBody(SaveRecallResponse::class.java)
-      .returnResult().responseBody!!
+  private fun postRecall(recall: CreateRecall) = webTestClient
+    .post()
+    .uri("/recall")
+    .bodyValue(recall)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated
+    .expectBody(SaveRecallResponse::class.java)
+    .returnResult().responseBody!!
 
-  private fun putRecall(recall: CreateRecall, uuid: UUID) =
-    webTestClient
-      .put()
-      .uri("/recall/$uuid")
-      .bodyValue(recall)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody(SaveRecallResponse::class.java)
-      .returnResult().responseBody!!
+  private fun putRecall(recall: CreateRecall, uuid: UUID) = webTestClient
+    .put()
+    .uri("/recall/$uuid")
+    .bodyValue(recall)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(SaveRecallResponse::class.java)
+    .returnResult().responseBody!!
 }

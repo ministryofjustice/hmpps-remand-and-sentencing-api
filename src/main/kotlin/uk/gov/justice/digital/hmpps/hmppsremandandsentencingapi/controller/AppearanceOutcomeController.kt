@@ -34,9 +34,7 @@ class AppearanceOutcomeController(private val appearanceOutcomeService: Appearan
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getAllAppearanceOutcomes(): List<CourtAppearanceOutcome> {
-    return appearanceOutcomeService.getAll()
-  }
+  fun getAllAppearanceOutcomes(): List<CourtAppearanceOutcome> = appearanceOutcomeService.getAll()
 
   @GetMapping("/{outcomeUuid}")
   @Operation(
@@ -52,7 +50,5 @@ class AppearanceOutcomeController(private val appearanceOutcomeService: Appearan
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getAppearanceOutcomeByUuid(@PathVariable outcomeUuid: UUID): CourtAppearanceOutcome {
-    return appearanceOutcomeService.findByUuid(outcomeUuid) ?: throw EntityNotFoundException("No appearance outcome found at $outcomeUuid")
-  }
+  fun getAppearanceOutcomeByUuid(@PathVariable outcomeUuid: UUID): CourtAppearanceOutcome = appearanceOutcomeService.findByUuid(outcomeUuid) ?: throw EntityNotFoundException("No appearance outcome found at $outcomeUuid")
 }

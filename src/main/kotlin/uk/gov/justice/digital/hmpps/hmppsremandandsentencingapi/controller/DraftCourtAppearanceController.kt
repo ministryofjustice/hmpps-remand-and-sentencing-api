@@ -53,9 +53,7 @@ class DraftCourtAppearanceController(private val draftCourtAppearanceService: Dr
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
-  fun get(@PathVariable draftUuid: UUID): DraftCourtAppearance {
-    return draftCourtAppearanceService.get(draftUuid)
-  }
+  fun get(@PathVariable draftUuid: UUID): DraftCourtAppearance = draftCourtAppearanceService.get(draftUuid)
 
   @DeleteMapping("/{draftUuid}")
   @Operation(

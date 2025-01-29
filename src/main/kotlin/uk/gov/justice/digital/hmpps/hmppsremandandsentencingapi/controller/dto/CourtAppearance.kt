@@ -27,23 +27,21 @@ data class CourtAppearance(
 
     val returnChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE)
 
-    fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance {
-      return CourtAppearance(
-        courtAppearanceEntity.appearanceUuid,
-        courtAppearanceEntity.lifetimeUuid,
-        courtAppearanceEntity.appearanceOutcome?.let { CourtAppearanceOutcome.from(it) },
-        courtAppearanceEntity.courtCode,
-        courtAppearanceEntity.courtCaseReference,
-        courtAppearanceEntity.appearanceDate,
-        courtAppearanceEntity.warrantId,
-        courtAppearanceEntity.warrantType,
-        courtAppearanceEntity.taggedBail,
-        courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
-        courtAppearanceEntity.charges.filter { returnChargeStatuses.contains(it.statusId) }.map { Charge.from(it) },
-        courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
-        courtAppearanceEntity.overallConvictionDate,
-        courtAppearanceEntity.legacyData,
-      )
-    }
+    fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance = CourtAppearance(
+      courtAppearanceEntity.appearanceUuid,
+      courtAppearanceEntity.lifetimeUuid,
+      courtAppearanceEntity.appearanceOutcome?.let { CourtAppearanceOutcome.from(it) },
+      courtAppearanceEntity.courtCode,
+      courtAppearanceEntity.courtCaseReference,
+      courtAppearanceEntity.appearanceDate,
+      courtAppearanceEntity.warrantId,
+      courtAppearanceEntity.warrantType,
+      courtAppearanceEntity.taggedBail,
+      courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
+      courtAppearanceEntity.charges.filter { returnChargeStatuses.contains(it.statusId) }.map { Charge.from(it) },
+      courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
+      courtAppearanceEntity.overallConvictionDate,
+      courtAppearanceEntity.legacyData,
+    )
   }
 }

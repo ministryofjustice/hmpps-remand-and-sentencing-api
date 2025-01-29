@@ -17,18 +17,16 @@ data class Charge(
   val legacyData: JsonNode?,
 ) {
   companion object {
-    fun from(chargeEntity: ChargeEntity): Charge {
-      return Charge(
-        chargeEntity.chargeUuid,
-        chargeEntity.lifetimeChargeUuid,
-        chargeEntity.offenceCode,
-        chargeEntity.offenceStartDate,
-        chargeEntity.offenceEndDate,
-        chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
-        chargeEntity.terrorRelated,
-        chargeEntity.getActiveSentence()?.let { Sentence.from(it) },
-        chargeEntity.legacyData,
-      )
-    }
+    fun from(chargeEntity: ChargeEntity): Charge = Charge(
+      chargeEntity.chargeUuid,
+      chargeEntity.lifetimeChargeUuid,
+      chargeEntity.offenceCode,
+      chargeEntity.offenceStartDate,
+      chargeEntity.offenceEndDate,
+      chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
+      chargeEntity.terrorRelated,
+      chargeEntity.getActiveSentence()?.let { Sentence.from(it) },
+      chargeEntity.legacyData,
+    )
   }
 }

@@ -42,14 +42,12 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse {
-    return courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { appearance ->
-      courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
-      }
-      CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
-    } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
-  }
+  fun createCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { appearance ->
+    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
+      courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
+    }
+    CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
+  } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @GetMapping("\${court.appearance.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -65,9 +63,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       ApiResponse(responseCode = "404", description = "Not found if no court appearance at uuid"),
     ],
   )
-  fun getCourtAppearanceDetails(@PathVariable appearanceUuid: UUID): CourtAppearance {
-    return courtAppearanceService.findAppearanceByUuid(appearanceUuid) ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
-  }
+  fun getCourtAppearanceDetails(@PathVariable appearanceUuid: UUID): CourtAppearance = courtAppearanceService.findAppearanceByUuid(appearanceUuid) ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
 
   @PutMapping("/court-appearance/{appearanceUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -83,14 +79,12 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse {
-    return courtAppearanceService.createCourtAppearanceByAppearanceUuid(createCourtAppearance.copy(appearanceUuid = appearanceUuid), appearanceUuid)?.let { appearance ->
-      courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
-      }
-      CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
-    } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
-  }
+  fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearanceByAppearanceUuid(createCourtAppearance.copy(appearanceUuid = appearanceUuid), appearanceUuid)?.let { appearance ->
+    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
+      courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
+    }
+    CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
+  } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @PutMapping("/court-appearance/{lifetimeUuid}/lifetime")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
@@ -106,14 +100,12 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun updateCourtAppearanceByLifetime(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable lifetimeUuid: UUID): CreateCourtAppearanceResponse {
-    return courtAppearanceService.createCourtAppearanceByLifetimeUuid(createCourtAppearance.copy(lifetimeUuid = lifetimeUuid), lifetimeUuid)?.let { appearance ->
-      courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
-      }
-      CreateCourtAppearanceResponse.from(lifetimeUuid, createCourtAppearance)
-    } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
-  }
+  fun updateCourtAppearanceByLifetime(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable lifetimeUuid: UUID): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearanceByLifetimeUuid(createCourtAppearance.copy(lifetimeUuid = lifetimeUuid), lifetimeUuid)?.let { appearance ->
+    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
+      courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
+    }
+    CreateCourtAppearanceResponse.from(lifetimeUuid, createCourtAppearance)
+  } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @DeleteMapping("/court-appearance/{appearanceUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")

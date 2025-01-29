@@ -11,13 +11,11 @@ data class NextCourtAppearance(
   val appearanceType: AppearanceType,
 ) {
   companion object {
-    fun from(nextCourtAppearanceEntity: NextCourtAppearanceEntity): NextCourtAppearance {
-      return NextCourtAppearance(
-        nextCourtAppearanceEntity.appearanceDate,
-        nextCourtAppearanceEntity.appearanceTime,
-        nextCourtAppearanceEntity.courtCode,
-        AppearanceType.from(nextCourtAppearanceEntity.appearanceType),
-      )
-    }
+    fun from(nextCourtAppearanceEntity: NextCourtAppearanceEntity): NextCourtAppearance = NextCourtAppearance(
+      nextCourtAppearanceEntity.appearanceDate,
+      nextCourtAppearanceEntity.appearanceTime,
+      nextCourtAppearanceEntity.courtCode,
+      AppearanceType.from(nextCourtAppearanceEntity.appearanceType),
+    )
   }
 }

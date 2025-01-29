@@ -34,19 +34,18 @@ class JwtAuthHelper {
     roles: List<String>? = listOf(),
     expiryTime: Duration = Duration.ofHours(1),
     jwtId: String = UUID.randomUUID().toString(),
-  ): String =
-    mutableMapOf<String, Any>()
-      .also { user?.let { user -> it["user_name"] = user } }
-      .also { client?.let { client -> it["client_id"] = client } }
-      .also { roles?.let { roles -> it["authorities"] = roles } }
-      .also { scope?.let { scope -> it["scope"] = scope } }
-      .let {
-        Jwts.builder()
-          .id(jwtId)
-          .subject(subject)
-          .claims(it.toMap())
-          .expiration(Date(System.currentTimeMillis() + expiryTime.toMillis()))
-          .signWith(keyPair.private, SIG.RS256)
-          .compact()
-      }
+  ): String = mutableMapOf<String, Any>()
+    .also { user?.let { user -> it["user_name"] = user } }
+    .also { client?.let { client -> it["client_id"] = client } }
+    .also { roles?.let { roles -> it["authorities"] = roles } }
+    .also { scope?.let { scope -> it["scope"] = scope } }
+    .let {
+      Jwts.builder()
+        .id(jwtId)
+        .subject(subject)
+        .claims(it.toMap())
+        .expiration(Date(System.currentTimeMillis() + expiryTime.toMillis()))
+        .signWith(keyPair.private, SIG.RS256)
+        .compact()
+    }
 }

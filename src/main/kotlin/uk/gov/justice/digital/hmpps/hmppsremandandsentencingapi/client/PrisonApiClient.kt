@@ -10,12 +10,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Priso
 class PrisonApiClient(@Qualifier("prisonApiWebClient") private val webClient: WebClient) {
 
   private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
-  fun getOffenderDetail(prisonerId: String): PrisonerDetails {
-    return webClient
-      .get()
-      .uri("/api/offenders/{prisonerId}", prisonerId)
-      .retrieve()
-      .bodyToMono(typeReference<PrisonerDetails>())
-      .block()!!
-  }
+  fun getOffenderDetail(prisonerId: String): PrisonerDetails = webClient
+    .get()
+    .uri("/api/offenders/{prisonerId}", prisonerId)
+    .retrieve()
+    .bodyToMono(typeReference<PrisonerDetails>())
+    .block()!!
 }

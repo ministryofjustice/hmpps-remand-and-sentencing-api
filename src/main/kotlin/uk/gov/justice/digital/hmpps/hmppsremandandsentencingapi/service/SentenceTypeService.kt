@@ -8,9 +8,7 @@ import java.util.UUID
 
 @Service
 class SentenceTypeService(private val sentenceTypeRepository: SentenceTypeRepository) {
-  fun search(age: Int, convictionDate: LocalDate): List<SentenceType> {
-    return sentenceTypeRepository.findByAgeInAndConvictionDateIn(age, convictionDate).map { SentenceType.from(it) }
-  }
+  fun search(age: Int, convictionDate: LocalDate): List<SentenceType> = sentenceTypeRepository.findByAgeInAndConvictionDateIn(age, convictionDate).map { SentenceType.from(it) }
 
   fun findByUuid(sentenceTypeUuid: UUID): SentenceType? = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)?.let { SentenceType.from(it) }
 
