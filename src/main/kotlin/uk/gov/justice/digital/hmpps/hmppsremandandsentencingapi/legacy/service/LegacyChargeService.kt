@@ -76,15 +76,11 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   }
 
   @Transactional(readOnly = true)
-  fun get(lifetimeUUID: UUID): LegacyCharge {
-    return LegacyCharge.from(getUnlessDeleted(lifetimeUUID), objectMapper)
-  }
+  fun get(lifetimeUUID: UUID): LegacyCharge = LegacyCharge.from(getUnlessDeleted(lifetimeUUID), objectMapper)
 
   @Transactional(readOnly = true)
-  fun getChargeAtAppearance(appearanceLifetimeUuid: UUID, lifetimeUUID: UUID): LegacyCharge {
-    return chargeRepository.findFirstByCourtAppearancesLifetimeUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUUID)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { chargeEntity -> LegacyCharge.from(chargeEntity, objectMapper) } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID for appearance $appearanceLifetimeUuid")
-  }
+  fun getChargeAtAppearance(appearanceLifetimeUuid: UUID, lifetimeUUID: UUID): LegacyCharge = chargeRepository.findFirstByCourtAppearancesLifetimeUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUUID)
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { chargeEntity -> LegacyCharge.from(chargeEntity, objectMapper) } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID for appearance $appearanceLifetimeUuid")
 
   @Transactional
   fun delete(lifetimeUUID: UUID) {
@@ -92,8 +88,6 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     charge.statusId = EntityStatus.DELETED
   }
 
-  private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity {
-    return chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeUUID)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
-  }
+  private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeUUID)
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
 }

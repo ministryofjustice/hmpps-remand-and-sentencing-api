@@ -13,7 +13,10 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 
-class DocumentManagementApiExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
+class DocumentManagementApiExtension :
+  BeforeAllCallback,
+  AfterAllCallback,
+  BeforeEachCallback {
 
   companion object {
     @JvmField
@@ -38,13 +41,12 @@ class DocumentManagementApiMockServer : WireMockServer(WireMockConfiguration.opt
     private const val WIREMOCK_PORT = 8442
   }
 
-  fun stubPutDocumentMetadata(documentId: String, prisonerId: String): StubMapping =
-    stubFor(
-      put("/documents/$documentId/metadata")
-        .withRequestBody(equalToJson(documentMetadataRequest(prisonerId)))
-        .willReturn(
-          aResponse()
-            .withStatus(200),
-        ),
-    )
+  fun stubPutDocumentMetadata(documentId: String, prisonerId: String): StubMapping = stubFor(
+    put("/documents/$documentId/metadata")
+      .withRequestBody(equalToJson(documentMetadataRequest(prisonerId)))
+      .willReturn(
+        aResponse()
+          .withStatus(200),
+      ),
+  )
 }

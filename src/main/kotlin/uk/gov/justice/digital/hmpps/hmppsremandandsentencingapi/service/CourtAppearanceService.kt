@@ -76,11 +76,9 @@ class CourtAppearanceService(
   }
 
   @Transactional
-  fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
-    return courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
-      updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
-    } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
-  }
+  fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
+    updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
+  } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
 
   private fun createCourtAppearanceEntity(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity {
     val (appearanceLegacyData, appearanceOutcome) = getAppearanceOutcome(courtAppearance)

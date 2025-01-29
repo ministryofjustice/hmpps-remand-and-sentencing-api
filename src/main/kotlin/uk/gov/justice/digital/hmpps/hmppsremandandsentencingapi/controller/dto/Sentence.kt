@@ -18,19 +18,17 @@ data class Sentence(
   val legacyData: JsonNode?,
 ) {
   companion object {
-    fun from(sentenceEntity: SentenceEntity): Sentence {
-      return Sentence(
-        sentenceEntity.sentenceUuid,
-        sentenceEntity.lifetimeSentenceUuid,
-        sentenceEntity.chargeNumber,
-        sentenceEntity.periodLengths.map { PeriodLength.from(it) },
-        sentenceEntity.sentenceServeType,
-        sentenceEntity.consecutiveTo?.chargeNumber,
-        sentenceEntity.sentenceType?.let { SentenceType.from(it) },
-        sentenceEntity.convictionDate,
-        sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
-        sentenceEntity.legacyData,
-      )
-    }
+    fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
+      sentenceEntity.sentenceUuid,
+      sentenceEntity.lifetimeSentenceUuid,
+      sentenceEntity.chargeNumber,
+      sentenceEntity.periodLengths.map { PeriodLength.from(it) },
+      sentenceEntity.sentenceServeType,
+      sentenceEntity.consecutiveTo?.chargeNumber,
+      sentenceEntity.sentenceType?.let { SentenceType.from(it) },
+      sentenceEntity.convictionDate,
+      sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
+      sentenceEntity.legacyData,
+    )
   }
 }

@@ -36,7 +36,5 @@ class DraftCourtAppearanceService(private val draftAppearanceRepository: DraftAp
     }
   }
 
-  fun getOrThrow(draftUuid: UUID): DraftAppearanceEntity {
-    return draftAppearanceRepository.findByDraftUuid(draftUuid) ?: throw EntityNotFoundException("No draft appearance found at $draftUuid")
-  }
+  fun getOrThrow(draftUuid: UUID): DraftAppearanceEntity = draftAppearanceRepository.findByDraftUuid(draftUuid) ?: throw EntityNotFoundException("No draft appearance found at $draftUuid")
 }

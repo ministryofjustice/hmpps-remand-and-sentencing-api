@@ -14,17 +14,15 @@ data class PersonDetails(
   val status: String?,
 ) {
   companion object {
-    fun from(prisonerDetails: PrisonerDetails): PersonDetails {
-      return PersonDetails(
-        prisonerDetails.offenderNo,
-        prisonerDetails.firstName,
-        prisonerDetails.lastName,
-        prisonerDetails.assignedLivingUnit?.agencyName,
-        prisonerDetails.assignedLivingUnit?.description,
-        prisonerDetails.dateOfBirth,
-        prisonerDetails.getPNCNumber(),
-        prisonerDetails.legalStatus,
-      )
-    }
+    fun from(prisonerDetails: PrisonerDetails): PersonDetails = PersonDetails(
+      prisonerDetails.offenderNo,
+      prisonerDetails.firstName,
+      prisonerDetails.lastName,
+      prisonerDetails.assignedLivingUnit?.agencyName,
+      prisonerDetails.assignedLivingUnit?.description,
+      prisonerDetails.dateOfBirth,
+      prisonerDetails.getPNCNumber(),
+      prisonerDetails.legalStatus,
+    )
   }
 }

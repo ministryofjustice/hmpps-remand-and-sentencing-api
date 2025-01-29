@@ -49,28 +49,24 @@ class PeriodLengthEntity(
   var legacyData: JsonNode? = null,
 
 ) {
-  fun isSame(other: PeriodLengthEntity?): Boolean {
-    return years == other?.years &&
-      months == other?.months &&
-      weeks == other?.weeks &&
-      days == other?.days &&
-      periodOrder == other?.periodOrder &&
-      periodLengthType == other.periodLengthType
-  }
+  fun isSame(other: PeriodLengthEntity?): Boolean = years == other?.years &&
+    months == other?.months &&
+    weeks == other?.weeks &&
+    days == other?.days &&
+    periodOrder == other?.periodOrder &&
+    periodLengthType == other.periodLengthType
 
   companion object {
-    fun from(periodLength: CreatePeriodLength): PeriodLengthEntity {
-      return PeriodLengthEntity(
-        years = periodLength.years,
-        months = periodLength.months,
-        weeks = periodLength.weeks,
-        days = periodLength.days,
-        periodOrder = periodLength.periodOrder,
-        periodLengthType = periodLength.type,
-        sentenceEntity = null,
-        appearanceEntity = null,
-      )
-    }
+    fun from(periodLength: CreatePeriodLength): PeriodLengthEntity = PeriodLengthEntity(
+      years = periodLength.years,
+      months = periodLength.months,
+      weeks = periodLength.weeks,
+      days = periodLength.days,
+      periodOrder = periodLength.periodOrder,
+      periodLengthType = periodLength.type,
+      sentenceEntity = null,
+      appearanceEntity = null,
+    )
 
     fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)

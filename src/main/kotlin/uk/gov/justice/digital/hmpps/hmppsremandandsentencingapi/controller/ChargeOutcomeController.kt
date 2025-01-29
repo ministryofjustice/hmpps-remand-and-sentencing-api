@@ -35,9 +35,7 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getAllChargeOutcomes(): List<ChargeOutcome> {
-    return chargeOutcomeService.getAll()
-  }
+  fun getAllChargeOutcomes(): List<ChargeOutcome> = chargeOutcomeService.getAll()
 
   @GetMapping("/{outcomeUuid}")
   @Operation(
@@ -53,9 +51,7 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getChargeOutcomeByUuid(@PathVariable outcomeUuid: UUID): ChargeOutcome {
-    return chargeOutcomeService.findByUuid(outcomeUuid) ?: throw EntityNotFoundException("No charge outcome found at $outcomeUuid")
-  }
+  fun getChargeOutcomeByUuid(@PathVariable outcomeUuid: UUID): ChargeOutcome = chargeOutcomeService.findByUuid(outcomeUuid) ?: throw EntityNotFoundException("No charge outcome found at $outcomeUuid")
 
   @GetMapping("/uuid/multiple")
   @Operation(
@@ -70,7 +66,5 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getChargeOutcomesByIds(@RequestParam("uuids") uuids: List<UUID>): List<ChargeOutcome> {
-    return chargeOutcomeService.findByUuids(uuids)
-  }
+  fun getChargeOutcomesByIds(@RequestParam("uuids") uuids: List<UUID>): List<ChargeOutcome> = chargeOutcomeService.findByUuids(uuids)
 }

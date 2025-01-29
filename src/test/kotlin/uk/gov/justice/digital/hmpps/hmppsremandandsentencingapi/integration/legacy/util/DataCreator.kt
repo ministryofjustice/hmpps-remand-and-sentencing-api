@@ -31,9 +31,7 @@ import java.util.UUID
 
 class DataCreator {
   companion object Factory {
-    fun legacyCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true): LegacyCreateCourtCase {
-      return LegacyCreateCourtCase(prisonerId, active)
-    }
+    fun legacyCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active)
 
     fun courtAppearanceLegacyData(
       eventId: String = "1",
@@ -47,9 +45,7 @@ class DataCreator {
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime)
 
-    fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance {
-      return LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
-    }
+    fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
 
     fun chargeLegacyData(
       postedDate: String = LocalDate.now().format(
@@ -60,9 +56,7 @@ class DataCreator {
       outcomeDispositionCode: String = "INTERIM",
     ): ChargeLegacyData = ChargeLegacyData(postedDate, nomisOutcomeCode, outcomeDescription, outcomeDispositionCode)
 
-    fun legacyCreateCharge(appearanceLifetimeUuid: UUID = UUID.randomUUID(), offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyCreateCharge {
-      return LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData)
-    }
+    fun legacyCreateCharge(appearanceLifetimeUuid: UUID = UUID.randomUUID(), offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyCreateCharge = LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData)
 
     fun legacyCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): LegacyCreateFine = LegacyCreateFine(fineAmount)
 
@@ -75,16 +69,11 @@ class DataCreator {
       ),
     ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate)
 
-    fun legacyCreateSentence(chargeLifetimeUuid: UUID = UUID.randomUUID(), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(), periodLengths: List<LegacyCreatePeriodLength> = listOf(legacyCreatePeriodLength())): LegacyCreateSentence =
-      LegacyCreateSentence(chargeLifetimeUuid, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData, periodLengths)
+    fun legacyCreateSentence(chargeLifetimeUuid: UUID = UUID.randomUUID(), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(), periodLengths: List<LegacyCreatePeriodLength> = listOf(legacyCreatePeriodLength())): LegacyCreateSentence = LegacyCreateSentence(chargeLifetimeUuid, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData, periodLengths)
 
-    fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge {
-      return LegacyUpdateWholeCharge(offenceCode)
-    }
+    fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
 
-    fun legacyUpdateCharge(offenceStartDate: LocalDate = LocalDate.now().minusDays(20), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyUpdateCharge {
-      return LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData)
-    }
+    fun legacyUpdateCharge(offenceStartDate: LocalDate = LocalDate.now().minusDays(20), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData()): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData)
 
     fun caseReferenceLegacyData(
       offenderCaseReference: String = "NOMIS123",
@@ -99,20 +88,16 @@ class DataCreator {
 
     fun migrationCreateCharge(chargeNOMISId: String = "5453", offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData(), sentence: MigrationCreateSentence? = migrationCreateSentence()): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, legacyData, sentence = sentence)
 
-    fun migrationCreateSentence(sentenceId: MigrationSentenceId = migrationSentenceId(), chargeNumber: String = "1", fine: MigrationCreateFine = migrationCreateFine(), active: Boolean = true, legacyData: SentenceLegacyData = sentenceLegacyData(), consecutiveToSentenceId: MigrationSentenceId? = null, consecutiveToSentenceLifetimeUuid: UUID? = null, periodLengths: List<MigrationCreatePeriodLength> = listOf(migrationCreatePeriodLength())): MigrationCreateSentence =
-      MigrationCreateSentence(sentenceId, chargeNumber, fine, active, legacyData, consecutiveToSentenceId, consecutiveToSentenceLifetimeUuid, periodLengths)
+    fun migrationCreateSentence(sentenceId: MigrationSentenceId = migrationSentenceId(), chargeNumber: String = "1", fine: MigrationCreateFine = migrationCreateFine(), active: Boolean = true, legacyData: SentenceLegacyData = sentenceLegacyData(), consecutiveToSentenceId: MigrationSentenceId? = null, consecutiveToSentenceLifetimeUuid: UUID? = null, periodLengths: List<MigrationCreatePeriodLength> = listOf(migrationCreatePeriodLength())): MigrationCreateSentence = MigrationCreateSentence(sentenceId, chargeNumber, fine, active, legacyData, consecutiveToSentenceId, consecutiveToSentenceLifetimeUuid, periodLengths)
 
-    fun migrationCreatePeriodLength(periodType: String = "IMP", periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): MigrationCreatePeriodLength =
-      MigrationCreatePeriodLength(periodType, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
+    fun migrationCreatePeriodLength(periodType: String = "IMP", periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): MigrationCreatePeriodLength = MigrationCreatePeriodLength(periodType, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
 
     fun migrationCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): MigrationCreateFine = MigrationCreateFine(fineAmount)
 
     fun migrationSentenceId(offenderBookingId: Long = 1, sequence: Int = 1): MigrationSentenceId = MigrationSentenceId(offenderBookingId, sequence)
 
-    fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1"): PeriodLengthLegacyData =
-      PeriodLengthLegacyData(lifeSentence, sentenceTermCode)
+    fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1"): PeriodLengthLegacyData = PeriodLengthLegacyData(lifeSentence, sentenceTermCode)
 
-    fun legacyCreatePeriodLength(periodType: String = "IMP", periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength =
-      LegacyCreatePeriodLength(periodType, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
+    fun legacyCreatePeriodLength(periodType: String = "IMP", periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength = LegacyCreatePeriodLength(periodType, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
   }
 }

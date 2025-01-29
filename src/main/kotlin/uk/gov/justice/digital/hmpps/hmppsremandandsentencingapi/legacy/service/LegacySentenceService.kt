@@ -79,9 +79,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
   }
 
   @Transactional(readOnly = true)
-  fun get(lifetimeUuid: UUID): LegacySentence {
-    return LegacySentence.from(getUnlessDeleted(lifetimeUuid), objectMapper)
-  }
+  fun get(lifetimeUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(lifetimeUuid), objectMapper)
 
   @Transactional
   fun delete(lifetimeUuid: UUID) {
@@ -89,8 +87,6 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     sentence.statusId = EntityStatus.DELETED
   }
 
-  private fun getUnlessDeleted(lifetimeUuid: UUID): SentenceEntity {
-    return sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(lifetimeUuid)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No sentence found at $lifetimeUuid")
-  }
+  private fun getUnlessDeleted(lifetimeUuid: UUID): SentenceEntity = sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(lifetimeUuid)
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No sentence found at $lifetimeUuid")
 }

@@ -40,9 +40,7 @@ class ChargeController(private val chargeService: ChargeService) {
       ApiResponse(responseCode = "404", description = "Not found if no charge at uuid"),
     ],
   )
-  fun getChargeDetails(@PathVariable chargeUuid: UUID): Charge {
-    return chargeService.findChargeByUuid(chargeUuid) ?: throw EntityNotFoundException("No charge found at $chargeUuid")
-  }
+  fun getChargeDetails(@PathVariable chargeUuid: UUID): Charge = chargeService.findChargeByUuid(chargeUuid) ?: throw EntityNotFoundException("No charge found at $chargeUuid")
 
   @PostMapping("/charge")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
@@ -58,9 +56,7 @@ class ChargeController(private val chargeService: ChargeService) {
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createCharge(@RequestBody createCharge: CreateCharge): CreateChargeResponse {
-    return chargeService.createCharge(createCharge)?.let { CreateChargeResponse.from(createCharge) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
-  }
+  fun createCharge(@RequestBody createCharge: CreateCharge): CreateChargeResponse = chargeService.createCharge(createCharge)?.let { CreateChargeResponse.from(createCharge) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
 
   @PutMapping("/charge/{chargeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
@@ -76,9 +72,7 @@ class ChargeController(private val chargeService: ChargeService) {
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun updateCharge(@RequestBody createCharge: CreateCharge, @PathVariable chargeUuid: UUID): CreateChargeResponse {
-    return chargeService.createCharge(createCharge.copy(chargeUuid = chargeUuid))?.let { CreateChargeResponse.from(createCharge) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
-  }
+  fun updateCharge(@RequestBody createCharge: CreateCharge, @PathVariable chargeUuid: UUID): CreateChargeResponse = chargeService.createCharge(createCharge.copy(chargeUuid = chargeUuid))?.let { CreateChargeResponse.from(createCharge) } ?: throw OrphanedChargeException("Cannot create a charge with no court appearance or court case associated with it")
 
   @DeleteMapping("/charge/{chargeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")

@@ -34,63 +34,52 @@ class NextCourtAppearanceEntity(
   @JoinColumn(name = "future_skeleton_appearance_id")
   val futureSkeletonAppearance: CourtAppearanceEntity,
 ) {
-  fun isSame(other: NextCourtAppearanceEntity?): Boolean {
-    return other != null && appearanceDate.isEqual(other.appearanceDate) &&
-      ((appearanceTime == null && other.appearanceTime == null) || appearanceTime == other.appearanceTime) &&
-      courtCode == other.courtCode &&
-      appearanceType == other.appearanceType
-  }
+  fun isSame(other: NextCourtAppearanceEntity?): Boolean = other != null &&
+    appearanceDate.isEqual(other.appearanceDate) &&
+    ((appearanceTime == null && other.appearanceTime == null) || appearanceTime == other.appearanceTime) &&
+    courtCode == other.courtCode &&
+    appearanceType == other.appearanceType
 
-  fun copyFrom(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
-    return NextCourtAppearanceEntity(
-      id,
-      nomisAppearance.appearanceDate,
-      nomisAppearance.legacyData.appearanceTime,
-      nomisAppearance.courtCode,
-      appearanceTypeEntity,
-      futureAppearance,
-    )
-  }
+  fun copyFrom(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+    id,
+    nomisAppearance.appearanceDate,
+    nomisAppearance.legacyData.appearanceTime,
+    nomisAppearance.courtCode,
+    appearanceTypeEntity,
+    futureAppearance,
+  )
 
   companion object {
-    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
-      return NextCourtAppearanceEntity(
-        appearanceDate = nextCourtAppearance.appearanceDate,
-        appearanceTime = nextCourtAppearance.appearanceTime,
-        courtCode = nextCourtAppearance.courtCode,
-        appearanceType = appearanceTypeEntity,
-        futureSkeletonAppearance = futureSkeletonAppearance,
-      )
-    }
+    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+      appearanceDate = nextCourtAppearance.appearanceDate,
+      appearanceTime = nextCourtAppearance.appearanceTime,
+      courtCode = nextCourtAppearance.courtCode,
+      appearanceType = appearanceTypeEntity,
+      futureSkeletonAppearance = futureSkeletonAppearance,
+    )
 
-    fun from(nomisAppearance: MigrationCreateCourtAppearance, nomisFutureAppearance: MigrationCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
-      return NextCourtAppearanceEntity(
-        appearanceDate = nomisAppearance.legacyData.nextEventDateTime!!.toLocalDate(),
-        appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime(),
-        courtCode = nomisFutureAppearance.courtCode,
-        appearanceType = appearanceTypeEntity,
-        futureSkeletonAppearance = futureAppearance,
-      )
-    }
+    fun from(nomisAppearance: MigrationCreateCourtAppearance, nomisFutureAppearance: MigrationCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+      appearanceDate = nomisAppearance.legacyData.nextEventDateTime!!.toLocalDate(),
+      appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime(),
+      courtCode = nomisFutureAppearance.courtCode,
+      appearanceType = appearanceTypeEntity,
+      futureSkeletonAppearance = futureAppearance,
+    )
 
-    fun from(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
-      return NextCourtAppearanceEntity(
-        appearanceDate = nomisAppearance.appearanceDate,
-        appearanceTime = nomisAppearance.legacyData.appearanceTime,
-        courtCode = nomisAppearance.courtCode,
-        appearanceType = appearanceTypeEntity,
-        futureSkeletonAppearance = futureAppearance,
-      )
-    }
+    fun from(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+      appearanceDate = nomisAppearance.appearanceDate,
+      appearanceTime = nomisAppearance.legacyData.appearanceTime,
+      courtCode = nomisAppearance.courtCode,
+      appearanceType = appearanceTypeEntity,
+      futureSkeletonAppearance = futureAppearance,
+    )
 
-    fun from(futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity {
-      return NextCourtAppearanceEntity(
-        appearanceDate = futureAppearance.appearanceDate,
-        appearanceTime = null,
-        courtCode = futureAppearance.courtCode,
-        appearanceType = appearanceTypeEntity,
-        futureSkeletonAppearance = futureAppearance,
-      )
-    }
+    fun from(futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+      appearanceDate = futureAppearance.appearanceDate,
+      appearanceTime = null,
+      courtCode = futureAppearance.courtCode,
+      appearanceType = appearanceTypeEntity,
+      futureSkeletonAppearance = futureAppearance,
+    )
   }
 }

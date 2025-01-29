@@ -11,8 +11,6 @@ data class SentenceType(
   val hintText: String?,
 ) {
   companion object {
-    fun from(sentenceTypeEntity: SentenceTypeEntity): SentenceType {
-      return SentenceType(sentenceTypeEntity.sentenceTypeUuid, sentenceTypeEntity.description, sentenceTypeEntity.classification, sentenceTypeEntity.hintText)
-    }
+    fun from(sentenceTypeEntity: SentenceTypeEntity): SentenceType = SentenceType(sentenceTypeEntity.sentenceTypeUuid, sentenceTypeEntity.description, sentenceTypeEntity.classification, sentenceTypeEntity.hintText)
   }
 }

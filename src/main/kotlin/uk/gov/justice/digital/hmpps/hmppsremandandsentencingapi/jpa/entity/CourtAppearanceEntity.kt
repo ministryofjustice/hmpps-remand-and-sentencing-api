@@ -97,20 +97,18 @@ class CourtAppearanceEntity(
   @JoinColumn(name = "appearance_id")
   var periodLengths: List<PeriodLengthEntity> = emptyList()
 
-  fun isSame(other: CourtAppearanceEntity): Boolean {
-    return this.appearanceOutcome == other.appearanceOutcome &&
-      this.courtCase == other.courtCase &&
-      this.courtCode == other.courtCode &&
-      this.courtCaseReference == other.courtCaseReference &&
-      this.appearanceDate.isEqual(other.appearanceDate) &&
-      this.statusId == other.statusId &&
-      this.warrantType == other.warrantType &&
-      this.taggedBail == other.taggedBail &&
-      periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
-      this.overallConvictionDate == other.overallConvictionDate &&
-      this.legacyData == other.legacyData &&
-      this.createdPrison == other.createdPrison
-  }
+  fun isSame(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
+    this.courtCase == other.courtCase &&
+    this.courtCode == other.courtCode &&
+    this.courtCaseReference == other.courtCaseReference &&
+    this.appearanceDate.isEqual(other.appearanceDate) &&
+    this.statusId == other.statusId &&
+    this.warrantType == other.warrantType &&
+    this.taggedBail == other.taggedBail &&
+    periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
+    this.overallConvictionDate == other.overallConvictionDate &&
+    this.legacyData == other.legacyData &&
+    this.createdPrison == other.createdPrison
 
   fun copyAndRemoveCaseReference(createdByUsername: String): CourtAppearanceEntity {
     val courtAppearance = CourtAppearanceEntity(
@@ -141,13 +139,11 @@ class CourtAppearanceEntity(
     return courtAppearanceEntity
   }
 
-  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity {
-    return CourtAppearanceEntity(
-      0, UUID.randomUUID(), lifetimeUuid, null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
-      EntityStatus.FUTURE, this, null,
-      ZonedDateTime.now(), createdByUsername, null, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, legacyData,
-    )
-  }
+  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity = CourtAppearanceEntity(
+    0, UUID.randomUUID(), lifetimeUuid, null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
+    EntityStatus.FUTURE, this, null,
+    ZonedDateTime.now(), createdByUsername, null, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, legacyData,
+  )
 
   companion object {
 
@@ -175,82 +171,74 @@ class CourtAppearanceEntity(
       return courtAppearanceEntity
     }
 
-    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity {
-      return CourtAppearanceEntity(
-        appearanceUuid = UUID.randomUUID(),
-        appearanceOutcome = null,
-        courtCase = courtCase,
-        courtCode = nextCourtAppearance.courtCode,
-        courtCaseReference = courtCaseReference,
-        appearanceDate = nextCourtAppearance.appearanceDate,
-        statusId = EntityStatus.FUTURE,
-        warrantId = null,
-        charges = mutableSetOf(),
-        previousAppearance = null,
-        createdPrison = null,
-        createdByUsername = createdByUsername,
-        nextCourtAppearance = null,
-        warrantType = UNKNOWN_WARRANT_TYPE,
-        taggedBail = null,
-        overallConvictionDate = null,
-        lifetimeUuid = UUID.randomUUID(),
-        legacyData = legacyData,
-      )
-    }
+    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = nextCourtAppearance.courtCode,
+      courtCaseReference = courtCaseReference,
+      appearanceDate = nextCourtAppearance.appearanceDate,
+      statusId = EntityStatus.FUTURE,
+      warrantId = null,
+      charges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdByUsername = createdByUsername,
+      nextCourtAppearance = null,
+      warrantType = UNKNOWN_WARRANT_TYPE,
+      taggedBail = null,
+      overallConvictionDate = null,
+      lifetimeUuid = UUID.randomUUID(),
+      legacyData = legacyData,
+    )
 
-    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
-      return CourtAppearanceEntity(
-        appearanceUuid = UUID.randomUUID(),
-        appearanceOutcome = appearanceOutcome,
-        courtCase = courtCase,
-        courtCode = courtAppearance.courtCode,
-        courtCaseReference = null,
-        appearanceDate = courtAppearance.appearanceDate,
-        statusId = if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
-        warrantId = null,
-        charges = mutableSetOf(),
-        previousAppearance = null,
-        createdPrison = null,
-        createdByUsername = createdByUsername,
-        nextCourtAppearance = null,
-        warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
-        taggedBail = null,
-        overallConvictionDate = null,
-        lifetimeUuid = UUID.randomUUID(),
-        legacyData = legacyData,
-      )
-    }
+    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = appearanceOutcome,
+      courtCase = courtCase,
+      courtCode = courtAppearance.courtCode,
+      courtCaseReference = null,
+      appearanceDate = courtAppearance.appearanceDate,
+      statusId = if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
+      warrantId = null,
+      charges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdByUsername = createdByUsername,
+      nextCourtAppearance = null,
+      warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
+      taggedBail = null,
+      overallConvictionDate = null,
+      lifetimeUuid = UUID.randomUUID(),
+      legacyData = legacyData,
+    )
 
-    fun from(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode, courtCaseReference: String?): CourtAppearanceEntity {
-      return CourtAppearanceEntity(
-        appearanceUuid = UUID.randomUUID(),
-        appearanceOutcome = appearanceOutcome,
-        courtCase = courtCase,
-        courtCode = migrationCreateCourtAppearance.courtCode,
-        courtCaseReference = courtCaseReference,
-        appearanceDate = migrationCreateCourtAppearance.appearanceDate,
-        statusId = if (migrationCreateCourtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
-        warrantId = null,
-        charges = mutableSetOf(),
-        previousAppearance = null,
-        createdPrison = null,
-        createdByUsername = createdByUsername,
-        nextCourtAppearance = null,
-        warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
-        taggedBail = null,
-        overallConvictionDate = null,
-        lifetimeUuid = UUID.randomUUID(),
-        legacyData = legacyData,
-      )
-    }
+    fun from(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode, courtCaseReference: String?): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = appearanceOutcome,
+      courtCase = courtCase,
+      courtCode = migrationCreateCourtAppearance.courtCode,
+      courtCaseReference = courtCaseReference,
+      appearanceDate = migrationCreateCourtAppearance.appearanceDate,
+      statusId = if (migrationCreateCourtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
+      warrantId = null,
+      charges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdByUsername = createdByUsername,
+      nextCourtAppearance = null,
+      warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
+      taggedBail = null,
+      overallConvictionDate = null,
+      lifetimeUuid = UUID.randomUUID(),
+      legacyData = legacyData,
+    )
 
-    fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? {
-      return courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
-        compareBy(
-          CourtAppearanceEntity::appearanceDate,
-          CourtAppearanceEntity::createdAt,
-        ),
-      )
-    }
+    fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
+      compareBy(
+        CourtAppearanceEntity::appearanceDate,
+        CourtAppearanceEntity::createdAt,
+      ),
+    )
   }
 }

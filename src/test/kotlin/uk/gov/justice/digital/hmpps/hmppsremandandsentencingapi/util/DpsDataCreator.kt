@@ -19,9 +19,7 @@ class DpsDataCreator {
     fun dpsCreateCourtCase(
       prisonerId: String = "PRI123",
       appearances: List<CreateCourtAppearance> = listOf(dpsCreateCourtAppearance()),
-    ): CreateCourtCase {
-      return CreateCourtCase(prisonerId, appearances, null)
-    }
+    ): CreateCourtCase = CreateCourtCase(prisonerId, appearances, null)
 
     fun dpsCreatePeriodLength(
       years: Int? = 1,

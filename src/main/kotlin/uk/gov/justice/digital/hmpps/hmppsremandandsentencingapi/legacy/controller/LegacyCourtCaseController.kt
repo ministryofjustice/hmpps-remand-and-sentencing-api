@@ -42,10 +42,8 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun create(@RequestBody courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
-    return legacyCourtCaseService.create(courtCase).also {
-      eventService.create(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
-    }
+  fun create(@RequestBody courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse = legacyCourtCaseService.create(courtCase).also {
+    eventService.create(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
   }
 
   @GetMapping("/{courtCaseUuid}")
@@ -62,9 +60,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RO', 'ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun get(@PathVariable courtCaseUuid: String): LegacyCourtCase {
-    return legacyCourtCaseService.get(courtCaseUuid)
-  }
+  fun get(@PathVariable courtCaseUuid: String): LegacyCourtCase = legacyCourtCaseService.get(courtCaseUuid)
 
   @PutMapping("/{courtCaseUuid}")
   @Operation(
