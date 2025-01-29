@@ -7,10 +7,8 @@ data class FineAmount(
   val fineAmount: BigDecimal,
 ) {
   companion object {
-    fun from(fineAmountEntity: FineAmountEntity): FineAmount {
-      return FineAmount(
-        fineAmountEntity.fineAmount,
-      )
-    }
+    fun from(fineAmountEntity: FineAmountEntity): FineAmount = FineAmount(
+      fineAmountEntity.fineAmount,
+    )
   }
 }

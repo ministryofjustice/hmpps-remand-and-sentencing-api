@@ -75,16 +75,14 @@ class SentenceEntity(
   @OneToOne(mappedBy = "sentenceEntity")
   var fineAmountEntity: FineAmountEntity? = null
 
-  fun isSame(other: SentenceEntity?): Boolean {
-    return chargeNumber == other?.chargeNumber &&
-      periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
-      sentenceServeType == other?.sentenceServeType &&
-      sentenceType == other.sentenceType &&
-      createdPrison == other.createdPrison &&
-      ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
-      convictionDate == other.convictionDate &&
-      ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
-  }
+  fun isSame(other: SentenceEntity?): Boolean = chargeNumber == other?.chargeNumber &&
+    periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
+    sentenceServeType == other?.sentenceServeType &&
+    sentenceType == other.sentenceType &&
+    createdPrison == other.createdPrison &&
+    ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
+    convictionDate == other.convictionDate &&
+    ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
 
   fun copyFrom(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
@@ -146,40 +144,36 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
-      return SentenceEntity(
-        lifetimeSentenceUuid = UUID.randomUUID(),
-        sentenceUuid = UUID.randomUUID(),
-        chargeNumber = sentence.chargeNumber,
-        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
-        createdByUsername = createdByUsername,
-        createdPrison = sentence.prisonId,
-        supersedingSentence = null,
-        charge = chargeEntity,
-        sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
-        consecutiveTo = consecutiveTo,
-        sentenceType = sentenceTypeEntity,
-        convictionDate = null,
-        legacyData = legacyData,
-      )
-    }
+    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+      lifetimeSentenceUuid = UUID.randomUUID(),
+      sentenceUuid = UUID.randomUUID(),
+      chargeNumber = sentence.chargeNumber,
+      statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+      createdByUsername = createdByUsername,
+      createdPrison = sentence.prisonId,
+      supersedingSentence = null,
+      charge = chargeEntity,
+      sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
+      consecutiveTo = consecutiveTo,
+      sentenceType = sentenceTypeEntity,
+      convictionDate = null,
+      legacyData = legacyData,
+    )
 
-    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
-      return SentenceEntity(
-        lifetimeSentenceUuid = UUID.randomUUID(),
-        sentenceUuid = UUID.randomUUID(),
-        chargeNumber = sentence.chargeNumber,
-        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
-        createdByUsername = createdByUsername,
-        createdPrison = null,
-        supersedingSentence = null,
-        charge = chargeEntity,
-        sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
-        consecutiveTo = consecutiveTo,
-        sentenceType = sentenceTypeEntity,
-        convictionDate = null,
-        legacyData = legacyData,
-      )
-    }
+    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+      lifetimeSentenceUuid = UUID.randomUUID(),
+      sentenceUuid = UUID.randomUUID(),
+      chargeNumber = sentence.chargeNumber,
+      statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+      createdByUsername = createdByUsername,
+      createdPrison = null,
+      supersedingSentence = null,
+      charge = chargeEntity,
+      sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
+      consecutiveTo = consecutiveTo,
+      sentenceType = sentenceTypeEntity,
+      convictionDate = null,
+      legacyData = legacyData,
+    )
   }
 }

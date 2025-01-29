@@ -48,10 +48,8 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  fun create(@RequestBody courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse {
-    return legacyCourtAppearanceService.create(courtAppearance).also {
-      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
-    }
+  fun create(@RequestBody courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse = legacyCourtAppearanceService.create(courtAppearance).also {
+    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -89,9 +87,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW', 'ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO')")
-  fun get(@PathVariable lifetimeUuid: UUID): LegacyCourtAppearance {
-    return legacyCourtAppearanceService.get(lifetimeUuid)
-  }
+  fun get(@PathVariable lifetimeUuid: UUID): LegacyCourtAppearance = legacyCourtAppearanceService.get(lifetimeUuid)
 
   @DeleteMapping("/{lifetimeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
@@ -153,9 +149,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getChargeAtAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID): LegacyCharge {
-    return legacyChargeService.getChargeAtAppearance(lifetimeUuid, chargeLifetimeUuid)
-  }
+  fun getChargeAtAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID): LegacyCharge = legacyChargeService.getChargeAtAppearance(lifetimeUuid, chargeLifetimeUuid)
 
   @DeleteMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")

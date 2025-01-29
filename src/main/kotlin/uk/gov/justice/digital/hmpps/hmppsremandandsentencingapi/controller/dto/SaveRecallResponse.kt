@@ -7,7 +7,6 @@ data class SaveRecallResponse(
   val recallUuid: UUID,
 ) {
   companion object {
-    fun from(recall: RecallEntity): SaveRecallResponse =
-      SaveRecallResponse(recallUuid = recall.recallUuid)
+    fun from(recall: RecallEntity): SaveRecallResponse = SaveRecallResponse(recallUuid = recall.recallUuid)
   }
 }

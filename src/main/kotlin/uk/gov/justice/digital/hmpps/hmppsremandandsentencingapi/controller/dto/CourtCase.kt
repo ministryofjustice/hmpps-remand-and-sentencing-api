@@ -14,16 +14,14 @@ data class CourtCase(
   val draftAppearances: List<DraftCourtAppearance>,
 ) {
   companion object {
-    fun from(courtCaseEntity: CourtCaseEntity): CourtCase {
-      return CourtCase(
-        courtCaseEntity.prisonerId,
-        courtCaseEntity.caseUniqueIdentifier,
-        courtCaseEntity.statusId,
-        courtCaseEntity.latestCourtAppearance?.let { CourtAppearance.from(it) },
-        courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.map { CourtAppearance.from(it) },
-        courtCaseEntity.legacyData,
-        courtCaseEntity.draftAppearances.map { DraftCourtAppearance.from(it) },
-      )
-    }
+    fun from(courtCaseEntity: CourtCaseEntity): CourtCase = CourtCase(
+      courtCaseEntity.prisonerId,
+      courtCaseEntity.caseUniqueIdentifier,
+      courtCaseEntity.statusId,
+      courtCaseEntity.latestCourtAppearance?.let { CourtAppearance.from(it) },
+      courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.map { CourtAppearance.from(it) },
+      courtCaseEntity.legacyData,
+      courtCaseEntity.draftAppearances.map { DraftCourtAppearance.from(it) },
+    )
   }
 }

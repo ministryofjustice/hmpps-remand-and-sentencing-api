@@ -38,9 +38,7 @@ class DraftCourtCaseController(private val draftCourtCaseService: DraftCourtCase
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
-  fun create(@RequestBody draftCourtCase: DraftCreateCourtCase): DraftCourtCaseCreatedResponse {
-    return draftCourtCaseService.create(draftCourtCase)
-  }
+  fun create(@RequestBody draftCourtCase: DraftCreateCourtCase): DraftCourtCaseCreatedResponse = draftCourtCaseService.create(draftCourtCase)
 
   @PostMapping("/{courtCaseUuid}/appearance")
   @ResponseStatus(HttpStatus.CREATED)
@@ -56,7 +54,5 @@ class DraftCourtCaseController(private val draftCourtCaseService: DraftCourtCase
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
-  fun createDraftAppearanceInCourtCase(@PathVariable courtCaseUuid: String, @RequestBody draftCourtAppearance: DraftCreateCourtAppearance): DraftCourtAppearanceCreatedResponse {
-    return draftCourtCaseService.createAppearanceInCourtCase(courtCaseUuid, draftCourtAppearance)
-  }
+  fun createDraftAppearanceInCourtCase(@PathVariable courtCaseUuid: String, @RequestBody draftCourtAppearance: DraftCreateCourtAppearance): DraftCourtAppearanceCreatedResponse = draftCourtCaseService.createAppearanceInCourtCase(courtCaseUuid, draftCourtAppearance)
 }

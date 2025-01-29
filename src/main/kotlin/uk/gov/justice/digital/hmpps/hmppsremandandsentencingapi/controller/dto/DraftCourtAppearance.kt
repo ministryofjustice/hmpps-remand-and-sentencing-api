@@ -9,8 +9,6 @@ data class DraftCourtAppearance(
   val sessionBlob: JsonNode,
 ) {
   companion object {
-    fun from(draftAppearanceEntity: DraftAppearanceEntity): DraftCourtAppearance {
-      return DraftCourtAppearance(draftAppearanceEntity.draftUuid, draftAppearanceEntity.sessionBlob)
-    }
+    fun from(draftAppearanceEntity: DraftAppearanceEntity): DraftCourtAppearance = DraftCourtAppearance(draftAppearanceEntity.draftUuid, draftAppearanceEntity.sessionBlob)
   }
 }

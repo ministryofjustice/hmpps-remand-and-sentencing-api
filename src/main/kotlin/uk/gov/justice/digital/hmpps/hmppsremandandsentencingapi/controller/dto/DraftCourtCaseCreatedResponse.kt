@@ -8,8 +8,6 @@ data class DraftCourtCaseCreatedResponse(
   val draftAppearances: List<DraftCourtAppearanceCreatedResponse>,
 ) {
   companion object {
-    fun from(courtCaseEntity: CourtCaseEntity, draftAppearances: List<DraftAppearanceEntity>): DraftCourtCaseCreatedResponse {
-      return DraftCourtCaseCreatedResponse(courtCaseEntity.caseUniqueIdentifier, draftAppearances.map { draftAppearanceEntity -> DraftCourtAppearanceCreatedResponse.from(draftAppearanceEntity) })
-    }
+    fun from(courtCaseEntity: CourtCaseEntity, draftAppearances: List<DraftAppearanceEntity>): DraftCourtCaseCreatedResponse = DraftCourtCaseCreatedResponse(courtCaseEntity.caseUniqueIdentifier, draftAppearances.map { draftAppearanceEntity -> DraftCourtAppearanceCreatedResponse.from(draftAppearanceEntity) })
   }
 }

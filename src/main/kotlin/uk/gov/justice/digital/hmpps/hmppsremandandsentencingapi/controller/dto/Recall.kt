@@ -17,16 +17,15 @@ data class Recall(
   val createdByPrison: String,
 ) {
   companion object {
-    fun from(recall: RecallEntity): Recall =
-      Recall(
-        recallUuid = recall.recallUuid,
-        prisonerId = recall.prisonerId,
-        revocationDate = recall.revocationDate,
-        returnToCustodyDate = recall.returnToCustodyDate,
-        recallType = recall.recallType.code,
-        createdByUsername = recall.createdByUsername,
-        createdAt = recall.createdAt,
-        createdByPrison = recall.createdByPrison,
-      )
+    fun from(recall: RecallEntity): Recall = Recall(
+      recallUuid = recall.recallUuid,
+      prisonerId = recall.prisonerId,
+      revocationDate = recall.revocationDate,
+      returnToCustodyDate = recall.returnToCustodyDate,
+      recallType = recall.recallType.code,
+      createdByUsername = recall.createdByUsername,
+      createdAt = recall.createdAt,
+      createdByPrison = recall.createdByPrison,
+    )
   }
 }

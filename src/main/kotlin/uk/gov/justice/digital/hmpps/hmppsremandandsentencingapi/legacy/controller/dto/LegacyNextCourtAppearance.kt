@@ -10,12 +10,10 @@ data class LegacyNextCourtAppearance(
   val courtId: String,
 ) {
   companion object {
-    fun from(nextCourtAppearanceEntity: NextCourtAppearanceEntity): LegacyNextCourtAppearance {
-      return LegacyNextCourtAppearance(
-        nextCourtAppearanceEntity.appearanceDate,
-        nextCourtAppearanceEntity.appearanceTime,
-        nextCourtAppearanceEntity.courtCode,
-      )
-    }
+    fun from(nextCourtAppearanceEntity: NextCourtAppearanceEntity): LegacyNextCourtAppearance = LegacyNextCourtAppearance(
+      nextCourtAppearanceEntity.appearanceDate,
+      nextCourtAppearanceEntity.appearanceTime,
+      nextCourtAppearanceEntity.courtCode,
+    )
   }
 }

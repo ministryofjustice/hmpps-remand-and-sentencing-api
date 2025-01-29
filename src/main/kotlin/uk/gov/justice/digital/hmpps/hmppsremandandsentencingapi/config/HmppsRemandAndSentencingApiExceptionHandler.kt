@@ -36,30 +36,26 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   }
 
   @ExceptionHandler(AccessDeniedException::class)
-  fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> {
-    return ResponseEntity
-      .status(FORBIDDEN)
-      .body(
-        ErrorResponse(
-          status = FORBIDDEN,
-          userMessage = "forbidden: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
-  }
+  fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(FORBIDDEN)
+    .body(
+      ErrorResponse(
+        status = FORBIDDEN,
+        userMessage = "forbidden: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
 
   @ExceptionHandler(EntityNotFoundException::class)
-  fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> {
-    return ResponseEntity
-      .status(NOT_FOUND)
-      .body(
-        ErrorResponse(
-          status = NOT_FOUND,
-          userMessage = "not found: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
-  }
+  fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(NOT_FOUND)
+    .body(
+      ErrorResponse(
+        status = NOT_FOUND,
+        userMessage = "not found: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
 
   @ExceptionHandler(ImmutableCourtAppearanceException::class)
   fun handleImmutableCourtAppearanceException(e: ImmutableCourtAppearanceException): ResponseEntity<ErrorResponse> {

@@ -20,16 +20,14 @@ class PeriodLengthTypeMapperTests {
 
   companion object {
     @JvmStatic
-    fun periodLengthTypeParameters(): Stream<Arguments> {
-      return Stream.of(
-        Arguments.of(true, "IMP", "ALP", PeriodLengthType.TARIFF_LENGTH),
-        Arguments.of(false, "DET", "CIVIL", PeriodLengthType.TERM_LENGTH),
-        Arguments.of(false, "DET", "DPP", PeriodLengthType.SENTENCE_LENGTH),
-        Arguments.of(false, "SUP", "VOO", PeriodLengthType.SENTENCE_LENGTH),
-        Arguments.of(false, "IMP", "EDS18", PeriodLengthType.CUSTODIAL_TERM),
-        Arguments.of(false, "IMP", "FTR_ORA", PeriodLengthType.SENTENCE_LENGTH),
-        Arguments.of(false, "LIC", "EDS18", PeriodLengthType.LICENCE_PERIOD),
-      )
-    }
+    fun periodLengthTypeParameters(): Stream<Arguments> = Stream.of(
+      Arguments.of(true, "IMP", "ALP", PeriodLengthType.TARIFF_LENGTH),
+      Arguments.of(false, "DET", "CIVIL", PeriodLengthType.TERM_LENGTH),
+      Arguments.of(false, "DET", "DPP", PeriodLengthType.SENTENCE_LENGTH),
+      Arguments.of(false, "SUP", "VOO", PeriodLengthType.SENTENCE_LENGTH),
+      Arguments.of(false, "IMP", "EDS18", PeriodLengthType.CUSTODIAL_TERM),
+      Arguments.of(false, "IMP", "FTR_ORA", PeriodLengthType.SENTENCE_LENGTH),
+      Arguments.of(false, "LIC", "EDS18", PeriodLengthType.LICENCE_PERIOD),
+    )
   }
 }

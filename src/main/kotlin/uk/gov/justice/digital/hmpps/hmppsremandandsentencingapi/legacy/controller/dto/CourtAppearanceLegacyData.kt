@@ -15,28 +15,24 @@ data class CourtAppearanceLegacyData(
   val appearanceTime: LocalTime?,
 ) {
 
-  fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData {
-    return CourtAppearanceLegacyData(
-      eventId,
-      caseId,
+  fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
+    eventId,
+    caseId,
+    LocalDate.now().format(DateTimeFormatter.ISO_DATE),
+    nomisOutcomeCode,
+    outcomeDescription,
+    nextEventDateTime,
+    appearanceTime,
+  )
+  companion object {
+    fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
+      null,
+      null,
       LocalDate.now().format(DateTimeFormatter.ISO_DATE),
-      nomisOutcomeCode,
-      outcomeDescription,
-      nextEventDateTime,
+      null,
+      null,
+      null,
       appearanceTime,
     )
-  }
-  companion object {
-    fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData {
-      return CourtAppearanceLegacyData(
-        null,
-        null,
-        LocalDate.now().format(DateTimeFormatter.ISO_DATE),
-        null,
-        null,
-        null,
-        appearanceTime,
-      )
-    }
   }
 }

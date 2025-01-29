@@ -187,35 +187,31 @@ abstract class IntegrationTestBase {
     return response.lifetimeUuid to toCreateSentence
   }
 
-  protected fun createDraftCourtCase(draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase()): DraftCourtCaseCreatedResponse {
-    return webTestClient
-      .post()
-      .uri("/draft/court-case")
-      .bodyValue(draftCourtCase)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated.returnResult(DraftCourtCaseCreatedResponse::class.java)
-      .responseBody.blockFirst()!!
-  }
+  protected fun createDraftCourtCase(draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase()): DraftCourtCaseCreatedResponse = webTestClient
+    .post()
+    .uri("/draft/court-case")
+    .bodyValue(draftCourtCase)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated.returnResult(DraftCourtCaseCreatedResponse::class.java)
+    .responseBody.blockFirst()!!
 
-  protected fun createDraftAppearance(courtCaseUuid: String, draftAppearance: DraftCreateCourtAppearance = DraftDataCreator.draftCreateCourtAppearance()): DraftCourtAppearanceCreatedResponse {
-    return webTestClient
-      .post()
-      .uri("/draft/court-case/$courtCaseUuid/appearance")
-      .bodyValue(draftAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated.returnResult(DraftCourtAppearanceCreatedResponse::class.java)
-      .responseBody.blockFirst()!!
-  }
+  protected fun createDraftAppearance(courtCaseUuid: String, draftAppearance: DraftCreateCourtAppearance = DraftDataCreator.draftCreateCourtAppearance()): DraftCourtAppearanceCreatedResponse = webTestClient
+    .post()
+    .uri("/draft/court-case/$courtCaseUuid/appearance")
+    .bodyValue(draftAppearance)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated.returnResult(DraftCourtAppearanceCreatedResponse::class.java)
+    .responseBody.blockFirst()!!
 
   fun purgeQueues() {
     runBlocking {

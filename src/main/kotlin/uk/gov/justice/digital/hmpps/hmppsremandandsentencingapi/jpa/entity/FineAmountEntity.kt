@@ -26,21 +26,13 @@ class FineAmountEntity(
   @JoinColumn(name = "sentence_id")
   var sentenceEntity: SentenceEntity?,
 ) {
-  fun isSame(other: FineAmountEntity?): Boolean {
-    return other?.fineAmount?.compareTo(fineAmount) == 0
-  }
+  fun isSame(other: FineAmountEntity?): Boolean = other?.fineAmount?.compareTo(fineAmount) == 0
 
   companion object {
-    fun from(fineAmount: CreateFineAmount): FineAmountEntity {
-      return FineAmountEntity(fineAmount = fineAmount.fineAmount, sentenceEntity = null)
-    }
+    fun from(fineAmount: CreateFineAmount): FineAmountEntity = FineAmountEntity(fineAmount = fineAmount.fineAmount, sentenceEntity = null)
 
-    fun from(legacyCreateFine: LegacyCreateFine): FineAmountEntity {
-      return FineAmountEntity(fineAmount = legacyCreateFine.fineAmount, sentenceEntity = null)
-    }
+    fun from(legacyCreateFine: LegacyCreateFine): FineAmountEntity = FineAmountEntity(fineAmount = legacyCreateFine.fineAmount, sentenceEntity = null)
 
-    fun from(migrationCreateFine: MigrationCreateFine): FineAmountEntity {
-      return FineAmountEntity(fineAmount = migrationCreateFine.fineAmount, sentenceEntity = null)
-    }
+    fun from(migrationCreateFine: MigrationCreateFine): FineAmountEntity = FineAmountEntity(fineAmount = migrationCreateFine.fineAmount, sentenceEntity = null)
   }
 }

@@ -10,7 +10,5 @@ class ServiceUserService {
   fun getCurrentAuthentication(): AuthAwareAuthenticationToken = SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
     ?: throw IllegalStateException("User is not authenticated")
 
-  fun getUsername(): String {
-    return getCurrentAuthentication().principal
-  }
+  fun getUsername(): String = getCurrentAuthentication().principal
 }

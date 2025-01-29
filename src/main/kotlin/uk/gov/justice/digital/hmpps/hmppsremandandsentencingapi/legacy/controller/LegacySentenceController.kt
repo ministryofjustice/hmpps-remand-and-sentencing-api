@@ -45,10 +45,8 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
-  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
-    return legacySentenceService.create(sentence).also {
-      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), EventSource.NOMIS)
-    }
+  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).also {
+    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), EventSource.NOMIS)
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -85,9 +83,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")
-  fun get(@PathVariable lifetimeUuid: UUID): LegacySentence {
-    return legacySentenceService.get(lifetimeUuid)
-  }
+  fun get(@PathVariable lifetimeUuid: UUID): LegacySentence = legacySentenceService.get(lifetimeUuid)
 
   @DeleteMapping("/{lifetimeUuid}")
   @Operation(
