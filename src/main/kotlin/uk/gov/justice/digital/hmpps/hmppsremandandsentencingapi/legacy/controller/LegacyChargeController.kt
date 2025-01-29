@@ -46,10 +46,8 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse {
-    return legacyChargeService.create(charge).also {
-      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
-    }
+  fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse = legacyChargeService.create(charge).also {
+    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -103,9 +101,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW', 'ROLE_REMAND_AND_SENTENCING_CHARGE_RO')")
-  fun get(@PathVariable lifetimeUuid: UUID): LegacyCharge {
-    return legacyChargeService.get(lifetimeUuid)
-  }
+  fun get(@PathVariable lifetimeUuid: UUID): LegacyCharge = legacyChargeService.get(lifetimeUuid)
 
   @DeleteMapping("/{lifetimeUuid}")
   @Operation(

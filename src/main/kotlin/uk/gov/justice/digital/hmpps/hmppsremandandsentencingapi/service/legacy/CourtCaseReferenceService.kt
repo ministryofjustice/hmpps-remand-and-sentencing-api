@@ -18,36 +18,35 @@ import java.time.ZonedDateTime
 class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseRepository, private val objectMapper: ObjectMapper, val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
 
   @Transactional
-  fun updateCourtCaseReferences(caseUniqueIdentifier: String): UpdatedCourtCaseReferences? =
-    courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier)?.let { courtCaseEntity ->
-      val appearanceStatuses = courtCaseEntity.appearances.groupBy { it.statusId == EntityStatus.ACTIVE }
-      val activeCaseReferences = appearanceStatuses.getOrDefault(true, emptyList())
-        .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
-        .map {
-          CaseReferenceLegacyData(
-            it.courtCaseReference!!,
-            it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
-          )
-        }
-      val inactiveCaseReferences = appearanceStatuses.getOrDefault(false, emptyList())
-        .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
-        .filter { courtAppearance -> activeCaseReferences.none { it.offenderCaseReference == courtAppearance.courtCaseReference } }
-        .map {
-          CaseReferenceLegacyData(
-            it.courtCaseReference!!,
-            it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
-          )
-        }
-      val existingCaseReferences = courtCaseEntity.legacyData?.let { objectMapper.treeToValue<CourtCaseLegacyData>(it, CourtCaseLegacyData::class.java).caseReferences } ?: mutableListOf()
-      val toAddCaseReferences = activeCaseReferences
-        .filter { activeCaseReference -> existingCaseReferences.none { existingCaseReference -> existingCaseReference.offenderCaseReference == activeCaseReference.offenderCaseReference } }
-      existingCaseReferences.addAll(toAddCaseReferences)
-      val toRemoveCaseReferences = inactiveCaseReferences.filter { inactiveCaseReference -> existingCaseReferences.any { existingCaseReference -> inactiveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
+  fun updateCourtCaseReferences(caseUniqueIdentifier: String): UpdatedCourtCaseReferences? = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier)?.let { courtCaseEntity ->
+    val appearanceStatuses = courtCaseEntity.appearances.groupBy { it.statusId == EntityStatus.ACTIVE }
+    val activeCaseReferences = appearanceStatuses.getOrDefault(true, emptyList())
+      .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
+      .map {
+        CaseReferenceLegacyData(
+          it.courtCaseReference!!,
+          it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+        )
+      }
+    val inactiveCaseReferences = appearanceStatuses.getOrDefault(false, emptyList())
+      .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
+      .filter { courtAppearance -> activeCaseReferences.none { it.offenderCaseReference == courtAppearance.courtCaseReference } }
+      .map {
+        CaseReferenceLegacyData(
+          it.courtCaseReference!!,
+          it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+        )
+      }
+    val existingCaseReferences = courtCaseEntity.legacyData?.let { objectMapper.treeToValue<CourtCaseLegacyData>(it, CourtCaseLegacyData::class.java).caseReferences } ?: mutableListOf()
+    val toAddCaseReferences = activeCaseReferences
+      .filter { activeCaseReference -> existingCaseReferences.none { existingCaseReference -> existingCaseReference.offenderCaseReference == activeCaseReference.offenderCaseReference } }
+    existingCaseReferences.addAll(toAddCaseReferences)
+    val toRemoveCaseReferences = inactiveCaseReferences.filter { inactiveCaseReference -> existingCaseReferences.any { existingCaseReference -> inactiveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
 
-      val toStoreCaseReferences = existingCaseReferences.filter { existingCaseReference -> toRemoveCaseReferences.none { toRemoveCaseReference -> toRemoveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
-      courtCaseEntity.legacyData = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(toStoreCaseReferences.toMutableList()))
-      UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, caseUniqueIdentifier, ZonedDateTime.now(), toAddCaseReferences.isNotEmpty() || toRemoveCaseReferences.isNotEmpty())
-    }
+    val toStoreCaseReferences = existingCaseReferences.filter { existingCaseReference -> toRemoveCaseReferences.none { toRemoveCaseReference -> toRemoveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
+    courtCaseEntity.legacyData = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(toStoreCaseReferences.toMutableList()))
+    UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, caseUniqueIdentifier, ZonedDateTime.now(), toAddCaseReferences.isNotEmpty() || toRemoveCaseReferences.isNotEmpty())
+  }
 
   @Transactional
   fun refreshCaseReferences(courtCaseLegacyData: CourtCaseLegacyData, courtCaseUuid: String) {

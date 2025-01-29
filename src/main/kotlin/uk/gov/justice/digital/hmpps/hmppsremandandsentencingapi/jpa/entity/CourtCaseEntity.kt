@@ -60,20 +60,12 @@ class CourtCaseEntity(
   var latestCourtAppearance: CourtAppearanceEntity? = null
 
   companion object {
-    fun placeholderEntity(prisonerId: String, caseUniqueIdentifier: String = UUID.randomUUID().toString(), createdByUsername: String, legacyData: JsonNode?): CourtCaseEntity {
-      return CourtCaseEntity(prisonerId = prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdByUsername = createdByUsername, statusId = EntityStatus.ACTIVE, legacyData = legacyData)
-    }
+    fun placeholderEntity(prisonerId: String, caseUniqueIdentifier: String = UUID.randomUUID().toString(), createdByUsername: String, legacyData: JsonNode?): CourtCaseEntity = CourtCaseEntity(prisonerId = prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdByUsername = createdByUsername, statusId = EntityStatus.ACTIVE, legacyData = legacyData)
 
-    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity {
-      return CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
-    }
+    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
 
-    fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String): CourtCaseEntity {
-      return CourtCaseEntity(prisonerId = migrationCreateCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (migrationCreateCourtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
-    }
+    fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = migrationCreateCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (migrationCreateCourtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
 
-    fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity {
-      return CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = EntityStatus.DRAFT)
-    }
+    fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = EntityStatus.DRAFT)
   }
 }

@@ -40,8 +40,7 @@ class RecallController(private val recallService: RecallService) {
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createRecall(@RequestBody createRecall: CreateRecall): SaveRecallResponse =
-    recallService.createRecall(createRecall)
+  fun createRecall(@RequestBody createRecall: CreateRecall): SaveRecallResponse = recallService.createRecall(createRecall)
 
   @GetMapping("/{recallUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
@@ -88,6 +87,5 @@ class RecallController(private val recallService: RecallService) {
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun updateRecall(@RequestBody recall: CreateRecall, @PathVariable recallUuid: UUID): SaveRecallResponse =
-    recallService.updateRecall(recallUuid, recall)
+  fun updateRecall(@RequestBody recall: CreateRecall, @PathVariable recallUuid: UUID): SaveRecallResponse = recallService.updateRecall(recallUuid, recall)
 }

@@ -26,26 +26,24 @@ class LatestCourtAppearanceTests {
     Assertions.assertThat(latestCourtAppearance).isEqualTo(newerCourtAppearance)
   }
 
-  fun courtAppearanceEntity(appearanceDate: LocalDate, courtCase: CourtCaseEntity, createdAt: ZonedDateTime): CourtAppearanceEntity {
-    return CourtAppearanceEntity(
-      appearanceUuid = UUID.randomUUID(),
-      lifetimeUuid = UUID.randomUUID(),
-      appearanceOutcome = null,
-      courtCase = courtCase,
-      courtCode = "CODE1",
-      courtCaseReference = "REF1",
-      statusId = EntityStatus.ACTIVE,
-      previousAppearance = null,
-      warrantId = "1",
-      createdByUsername = "user",
-      createdPrison = "PR1",
-      warrantType = "TYPE",
-      taggedBail = null,
-      charges = mutableSetOf(),
-      nextCourtAppearance = null,
-      overallConvictionDate = LocalDate.now(),
-      appearanceDate = appearanceDate,
-      createdAt = createdAt,
-    )
-  }
+  fun courtAppearanceEntity(appearanceDate: LocalDate, courtCase: CourtCaseEntity, createdAt: ZonedDateTime): CourtAppearanceEntity = CourtAppearanceEntity(
+    appearanceUuid = UUID.randomUUID(),
+    lifetimeUuid = UUID.randomUUID(),
+    appearanceOutcome = null,
+    courtCase = courtCase,
+    courtCode = "CODE1",
+    courtCaseReference = "REF1",
+    statusId = EntityStatus.ACTIVE,
+    previousAppearance = null,
+    warrantId = "1",
+    createdByUsername = "user",
+    createdPrison = "PR1",
+    warrantType = "TYPE",
+    taggedBail = null,
+    charges = mutableSetOf(),
+    nextCourtAppearance = null,
+    overallConvictionDate = LocalDate.now(),
+    appearanceDate = appearanceDate,
+    createdAt = createdAt,
+  )
 }

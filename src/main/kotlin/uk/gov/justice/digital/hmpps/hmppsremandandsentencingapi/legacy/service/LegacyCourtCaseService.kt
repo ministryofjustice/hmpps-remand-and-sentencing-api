@@ -49,8 +49,6 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     draftAppearanceRepository.deleteAll(existingCourtCase.draftAppearances)
   }
 
-  private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity {
-    return courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
-  }
+  private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 }

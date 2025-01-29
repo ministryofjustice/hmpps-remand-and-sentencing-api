@@ -13,16 +13,14 @@ data class ChargeOutcome(
   val dispositionCode: String,
 ) {
   companion object {
-    fun from(chargeOutcomeEntity: ChargeOutcomeEntity): ChargeOutcome {
-      return ChargeOutcome(
-        chargeOutcomeEntity.outcomeUuid,
-        chargeOutcomeEntity.outcomeName,
-        chargeOutcomeEntity.nomisCode,
-        chargeOutcomeEntity.outcomeType,
-        chargeOutcomeEntity.displayOrder,
-        chargeOutcomeEntity.isSubList,
-        chargeOutcomeEntity.dispositionCode,
-      )
-    }
+    fun from(chargeOutcomeEntity: ChargeOutcomeEntity): ChargeOutcome = ChargeOutcome(
+      chargeOutcomeEntity.outcomeUuid,
+      chargeOutcomeEntity.outcomeName,
+      chargeOutcomeEntity.nomisCode,
+      chargeOutcomeEntity.outcomeType,
+      chargeOutcomeEntity.displayOrder,
+      chargeOutcomeEntity.isSubList,
+      chargeOutcomeEntity.dispositionCode,
+    )
   }
 }

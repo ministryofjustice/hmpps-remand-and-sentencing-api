@@ -79,9 +79,7 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   }
 
   @Transactional
-  fun get(lifetimeUuid: UUID): LegacyCourtAppearance {
-    return LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid), objectMapper)
-  }
+  fun get(lifetimeUuid: UUID): LegacyCourtAppearance = LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid), objectMapper)
 
   @Transactional
   fun delete(lifetimeUuid: UUID) {
@@ -121,10 +119,8 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
     return appearanceEntityChangeStatus to chargeEntityStatus
   }
 
-  private fun getUnlessDeleted(lifetimeUuid: UUID): CourtAppearanceEntity {
-    return courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $lifetimeUuid")
-  }
+  private fun getUnlessDeleted(lifetimeUuid: UUID): CourtAppearanceEntity = courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid)
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $lifetimeUuid")
 
   private fun getChargeUnlessDelete(lifetimeChargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeChargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
 }

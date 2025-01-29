@@ -31,20 +31,17 @@ class RecallEntity(
   val createdByPrison: String,
 ) {
 
-  fun copy(revocationDate: LocalDate?, returnToCustodyDate: LocalDate?, recallType: RecallTypeEntity): RecallEntity {
-    return RecallEntity(this.id, this.recallUuid, this.prisonerId, revocationDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername, this.createdByPrison)
-  }
+  fun copy(revocationDate: LocalDate?, returnToCustodyDate: LocalDate?, recallType: RecallTypeEntity): RecallEntity = RecallEntity(this.id, this.recallUuid, this.prisonerId, revocationDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername, this.createdByPrison)
 
   companion object {
-    fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity =
-      RecallEntity(
-        recallUuid = recallUuid ?: UUID.randomUUID(),
-        prisonerId = createRecall.prisonerId,
-        revocationDate = createRecall.revocationDate,
-        returnToCustodyDate = createRecall.returnToCustodyDate,
-        recallType = recallType,
-        createdByUsername = createRecall.createdByUsername,
-        createdByPrison = createRecall.createdByPrison,
-      )
+    fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
+      recallUuid = recallUuid ?: UUID.randomUUID(),
+      prisonerId = createRecall.prisonerId,
+      revocationDate = createRecall.revocationDate,
+      returnToCustodyDate = createRecall.returnToCustodyDate,
+      recallType = recallType,
+      createdByUsername = createRecall.createdByUsername,
+      createdByPrison = createRecall.createdByPrison,
+    )
   }
 }

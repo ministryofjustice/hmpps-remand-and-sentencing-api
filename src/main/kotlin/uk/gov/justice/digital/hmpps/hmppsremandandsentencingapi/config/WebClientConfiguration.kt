@@ -29,24 +29,20 @@ class WebClientConfiguration(
 ) {
 
   @Bean
-  fun prisonApiWebClient(webclientBuilder: WebClient.Builder): WebClient {
-    return webclientBuilder
-      .baseUrl(prisonApiUri)
-      .filter(addAuthHeaderFilterFunction())
-      .build()
-  }
+  fun prisonApiWebClient(webclientBuilder: WebClient.Builder): WebClient = webclientBuilder
+    .baseUrl(prisonApiUri)
+    .filter(addAuthHeaderFilterFunction())
+    .build()
 
-  private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction {
-    return ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
-      val authenticationToken: Jwt = SecurityContextHolder.getContext()
-        .authentication
-        .credentials as Jwt
-      val tokenString: String = authenticationToken.tokenValue
-      val filtered = ClientRequest.from(request)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer $tokenString")
-        .build()
-      next.exchange(filtered)
-    }
+  private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
+    val authenticationToken: Jwt = SecurityContextHolder.getContext()
+      .authentication
+      .credentials as Jwt
+    val tokenString: String = authenticationToken.tokenValue
+    val filtered = ClientRequest.from(request)
+      .header(HttpHeaders.AUTHORIZATION, "Bearer $tokenString")
+      .build()
+    next.exchange(filtered)
   }
 
   @Bean
@@ -54,20 +50,16 @@ class WebClientConfiguration(
   fun documentManagementApiWebClient(
     clientRegistrationRepository: ClientRegistrationRepository,
     builder: WebClient.Builder,
-  ): WebClient {
-    return getOAuthWebClient(authorizedClientManagerUserEnhanced(clientRegistrationRepository), builder.filter(addDocumentManagementHeadersFilterFunction()), documentManagementApiUri, "document-management-api")
-  }
+  ): WebClient = getOAuthWebClient(authorizedClientManagerUserEnhanced(clientRegistrationRepository), builder.filter(addDocumentManagementHeadersFilterFunction()), documentManagementApiUri, "document-management-api")
 
-  private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction {
-    return ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
-      val authentication: Authentication = SecurityContextHolder.getContext()
-        .authentication
-      val filtered = ClientRequest.from(request)
-        .header("Username", authentication.name)
-        .header("Service-Name", "Remand and Sentencing")
-        .build()
-      next.exchange(filtered)
-    }
+  private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
+    val authentication: Authentication = SecurityContextHolder.getContext()
+      .authentication
+    val filtered = ClientRequest.from(request)
+      .header("Username", authentication.name)
+      .header("Service-Name", "Remand and Sentencing")
+      .build()
+    next.exchange(filtered)
   }
 
   private fun authorizedClientManagerUserEnhanced(clients: ClientRegistrationRepository?): OAuth2AuthorizedClientManager {

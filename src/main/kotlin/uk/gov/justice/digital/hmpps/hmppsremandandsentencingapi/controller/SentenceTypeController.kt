@@ -36,9 +36,7 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun searchSentenceTypes(@RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate): List<SentenceType> {
-    return sentenceTypesService.search(age, convictionDate)
-  }
+  fun searchSentenceTypes(@RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate): List<SentenceType> = sentenceTypesService.search(age, convictionDate)
 
   @GetMapping("/{sentenceTypeUuid}")
   @Operation(
@@ -54,9 +52,7 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getSentenceTypeByUuid(@PathVariable sentenceTypeUuid: UUID): SentenceType {
-    return sentenceTypesService.findByUuid(sentenceTypeUuid) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeUuid")
-  }
+  fun getSentenceTypeByUuid(@PathVariable sentenceTypeUuid: UUID): SentenceType = sentenceTypesService.findByUuid(sentenceTypeUuid) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeUuid")
 
   @GetMapping("/uuid/multiple")
   @Operation(
@@ -71,7 +67,5 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getSentenceTypesByIds(@RequestParam("uuids") uuids: List<UUID>): List<SentenceType> {
-    return sentenceTypesService.findByUuids(uuids)
-  }
+  fun getSentenceTypesByIds(@RequestParam("uuids") uuids: List<UUID>): List<SentenceType> = sentenceTypesService.findByUuids(uuids)
 }

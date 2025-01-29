@@ -31,7 +31,5 @@ class PersonController(private val personService: PersonService) {
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getPersonDetails(@PathVariable prisonerId: String): PersonDetails {
-    return personService.getPersonDetailsByPrisonerId(prisonerId)
-  }
+  fun getPersonDetails(@PathVariable prisonerId: String): PersonDetails = personService.getPersonDetailsByPrisonerId(prisonerId)
 }

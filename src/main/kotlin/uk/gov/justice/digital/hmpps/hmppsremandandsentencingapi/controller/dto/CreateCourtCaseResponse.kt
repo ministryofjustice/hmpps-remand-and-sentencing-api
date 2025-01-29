@@ -6,12 +6,10 @@ data class CreateCourtCaseResponse(
   val charges: List<CreateChargeResponse>,
 ) {
   companion object {
-    fun from(courtCaseUuid: String, createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
-      return CreateCourtCaseResponse(
-        courtCaseUuid,
-        createCourtCase.appearances.map { CreateCourtAppearanceResponse.from(it.appearanceUuid, it) },
-        createCourtCase.appearances.flatMap { it.charges }.map { CreateChargeResponse.from(it) },
-      )
-    }
+    fun from(courtCaseUuid: String, createCourtCase: CreateCourtCase): CreateCourtCaseResponse = CreateCourtCaseResponse(
+      courtCaseUuid,
+      createCourtCase.appearances.map { CreateCourtAppearanceResponse.from(it.appearanceUuid, it) },
+      createCourtCase.appearances.flatMap { it.charges }.map { CreateChargeResponse.from(it) },
+    )
   }
 }

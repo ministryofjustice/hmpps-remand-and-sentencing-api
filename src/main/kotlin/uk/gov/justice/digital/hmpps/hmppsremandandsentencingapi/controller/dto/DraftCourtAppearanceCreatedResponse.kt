@@ -7,8 +7,6 @@ data class DraftCourtAppearanceCreatedResponse(
   val draftUuid: UUID,
 ) {
   companion object {
-    fun from(draftAppearanceEntity: DraftAppearanceEntity): DraftCourtAppearanceCreatedResponse {
-      return DraftCourtAppearanceCreatedResponse(draftAppearanceEntity.draftUuid)
-    }
+    fun from(draftAppearanceEntity: DraftAppearanceEntity): DraftCourtAppearanceCreatedResponse = DraftCourtAppearanceCreatedResponse(draftAppearanceEntity.draftUuid)
   }
 }

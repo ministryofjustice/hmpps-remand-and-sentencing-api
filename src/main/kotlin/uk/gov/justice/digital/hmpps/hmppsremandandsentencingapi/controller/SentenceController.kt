@@ -31,7 +31,5 @@ class SentenceController(private val sentenceService: SentenceService) {
       ApiResponse(responseCode = "404", description = "Not found if no charge at uuid"),
     ],
   )
-  fun getChargeDetails(@PathVariable sentenceUuid: UUID): Sentence {
-    return sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
-  }
+  fun getChargeDetails(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 }

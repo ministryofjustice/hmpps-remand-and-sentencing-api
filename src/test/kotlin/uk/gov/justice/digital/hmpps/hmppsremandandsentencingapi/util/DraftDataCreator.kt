@@ -8,10 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.D
 class DraftDataCreator {
   companion object Factory {
 
-    fun draftCreateCourtCase(prisonerId: String = "PRI123", draftAppearances: List<DraftCreateCourtAppearance> = listOf(draftCreateCourtAppearance())): DraftCreateCourtCase =
-      DraftCreateCourtCase(prisonerId, draftAppearances)
+    fun draftCreateCourtCase(prisonerId: String = "PRI123", draftAppearances: List<DraftCreateCourtAppearance> = listOf(draftCreateCourtAppearance())): DraftCreateCourtCase = DraftCreateCourtCase(prisonerId, draftAppearances)
 
-    fun draftCreateCourtAppearance(sessionBlob: JsonNode = jacksonObjectMapper().createObjectNode().put("aFieldKey", "aFieldValue")): DraftCreateCourtAppearance =
-      DraftCreateCourtAppearance(sessionBlob)
+    fun draftCreateCourtAppearance(sessionBlob: JsonNode = jacksonObjectMapper().createObjectNode().put("aFieldKey", "aFieldValue")): DraftCreateCourtAppearance = DraftCreateCourtAppearance(sessionBlob)
   }
 }
