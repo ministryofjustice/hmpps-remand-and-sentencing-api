@@ -43,7 +43,9 @@ class DataCreator {
       outcomeDescription: String? = "Outcome Description",
       nextEventDateTime: LocalDateTime? = LocalDateTime.now().plusDays(10),
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
-    ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime)
+      outcomeDispositionCode: String = "I",
+      outcomeConvictionFlag: Boolean = false,
+    ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime, outcomeDispositionCode, outcomeConvictionFlag)
 
     fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
 
