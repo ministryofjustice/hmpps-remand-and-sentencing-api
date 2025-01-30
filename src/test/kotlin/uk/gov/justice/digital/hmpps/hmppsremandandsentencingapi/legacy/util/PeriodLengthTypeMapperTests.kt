@@ -16,14 +16,14 @@ class PeriodLengthTypeMapperTests {
   @MethodSource("nomisToDpsPeriodLengthTypeParameters")
   fun `period length type mapper tests`(lifeSentence: Boolean, sentenceTermCode: String, sentenceCalc: String, expectedType: PeriodLengthType) {
     val periodLengthLegacyData = DataCreator.periodLengthLegacyData(lifeSentence, sentenceTermCode)
-    val result = PeriodLengthTypeMapper.convertNOMISToDps(periodLengthLegacyData, sentenceCalc)
+    val result = PeriodLengthTypeMapper.convertNomisToDps(periodLengthLegacyData, sentenceCalc)
     Assertions.assertThat(result).isEqualTo(expectedType)
   }
 
   @ParameterizedTest(name = "DPS to NOMIS when period length type is {0} and sentence type classification is {1} then life sentence is {2} and sentence term code is {3}")
   @MethodSource("dpsToNomisPeriodLengthTypeParameters")
   fun `DPS to NOMIS period length type mapper tests`(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification?, lifeSentence: Boolean, sentenceTermCode: String, periodLengthLegacyData: PeriodLengthLegacyData?) {
-    val (lifeSentenceResult, sentenceTermCodeResult) = PeriodLengthTypeMapper.convertDpsToNOMIS(periodLengthType, sentenceTypeClassification, periodLengthLegacyData)
+    val (lifeSentenceResult, sentenceTermCodeResult) = PeriodLengthTypeMapper.convertDpsToNomis(periodLengthType, sentenceTypeClassification, periodLengthLegacyData)
     Assertions.assertThat(lifeSentenceResult).isEqualTo(lifeSentence)
     Assertions.assertThat(sentenceTermCodeResult).isEqualTo(sentenceTermCode)
   }
@@ -50,6 +50,16 @@ class PeriodLengthTypeMapperTests {
       Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.DTO, false, "IMP", null),
       Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET", null),
       Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105")),
+    )
+
+    @JvmStatic
+    fun dpsToNomisPeriodLengthTypeParameters(): Stream<Arguments> = Stream.of(
+      Arguments.of(PeriodLengthType.TARIFF_LENGTH, SentenceTypeClassification.INDETERMINATE, true, "IMP"),
+      Arguments.of(PeriodLengthType.CUSTODIAL_TERM, SentenceTypeClassification.EXTENDED, false, "IMP"),
+      Arguments.of(PeriodLengthType.LICENCE_PERIOD, SentenceTypeClassification.EXTENDED, false, "LIC"),
+      Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "IMP"),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.DTO, false, "IMP"),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET"),
     )
   }
 }
