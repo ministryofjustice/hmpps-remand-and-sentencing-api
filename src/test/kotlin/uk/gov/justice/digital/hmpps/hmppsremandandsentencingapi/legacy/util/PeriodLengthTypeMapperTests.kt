@@ -51,15 +51,5 @@ class PeriodLengthTypeMapperTests {
       Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET", null),
       Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105")),
     )
-
-    @JvmStatic
-    fun dpsToNomisPeriodLengthTypeParameters(): Stream<Arguments> = Stream.of(
-      Arguments.of(PeriodLengthType.TARIFF_LENGTH, SentenceTypeClassification.INDETERMINATE, true, "IMP"),
-      Arguments.of(PeriodLengthType.CUSTODIAL_TERM, SentenceTypeClassification.EXTENDED, false, "IMP"),
-      Arguments.of(PeriodLengthType.LICENCE_PERIOD, SentenceTypeClassification.EXTENDED, false, "LIC"),
-      Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "IMP"),
-      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.DTO, false, "IMP"),
-      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET"),
-    )
   }
 }
