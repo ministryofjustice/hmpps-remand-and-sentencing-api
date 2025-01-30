@@ -3,4 +3,5 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 data class PeriodLengthLegacyData(
   val lifeSentence: Boolean?,
   val sentenceTermCode: String?,
+  val sentenceTermDescription: String?,
 )
