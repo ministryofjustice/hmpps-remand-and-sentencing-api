@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR_HDC
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -89,7 +90,7 @@ class RecallIntTests : IntegrationTestBase() {
       prisonerId = "A12345B",
       revocationDate = LocalDate.of(2024, 1, 2),
       returnToCustodyDate = LocalDate.of(2024, 2, 3),
-      recallTypeCode = RecallType.FTR_28,
+      recallTypeCode = FTR_28,
       createdByUsername = "user001",
       createdByPrison = "PRI",
     )
@@ -110,7 +111,7 @@ class RecallIntTests : IntegrationTestBase() {
           prisonerId = "A12345B",
           revocationDate = LocalDate.of(2024, 1, 2),
           returnToCustodyDate = LocalDate.of(2024, 2, 3),
-          recallType = FTR_14,
+          recallType = FTR_28,
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
