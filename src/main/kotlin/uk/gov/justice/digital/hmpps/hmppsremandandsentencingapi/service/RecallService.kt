@@ -30,20 +30,20 @@ class RecallService(
     val recallType = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
     val recallToUpdate = recallRepository.findOneByRecallUuid(recallUuid)
 
-      if (recallToUpdate == null) {
-        return SaveRecallResponse.from(createRecallAndEmitEvent(RecallEntity.placeholderEntity(recall, recallType, recallUuid)))
-      } else {
-        val savedRecall = recallRepository.save(
-          recallToUpdate.copy(
-            revocationDate = recall.revocationDate,
-            returnToCustodyDate = recall.returnToCustodyDate,
-            recallType = recallType,
-          ),
-        )
-        recallDomainEventService.update(recall.prisonerId, savedRecall.recallUuid.toString(), EventSource.DPS)
+    if (recallToUpdate == null) {
+      return SaveRecallResponse.from(createRecallAndEmitEvent(RecallEntity.placeholderEntity(recall, recallType, recallUuid)))
+    } else {
+      val savedRecall = recallRepository.save(
+        recallToUpdate.copy(
+          revocationDate = recall.revocationDate,
+          returnToCustodyDate = recall.returnToCustodyDate,
+          recallType = recallType,
+        ),
+      )
+      recallDomainEventService.update(recall.prisonerId, savedRecall.recallUuid.toString(), EventSource.DPS)
 
-        return SaveRecallResponse.from(savedRecall)
-      }
+      return SaveRecallResponse.from(savedRecall)
+    }
   }
 
   private fun createRecallAndEmitEvent(recallToSave: RecallEntity): RecallEntity {

@@ -101,7 +101,6 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(uuid).isEqualTo(createdRecall.recallUuid)
     val actualRecall = getRecallByUUID(createdRecall.recallUuid)
 
-
     assertThat(actualRecall)
       .usingRecursiveComparison()
       .ignoringFields("createdAt")
@@ -120,7 +119,6 @@ class RecallIntTests : IntegrationTestBase() {
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
   }
-
 
   @Sql("classpath:test_data/insert-recalls.sql")
   @Test
