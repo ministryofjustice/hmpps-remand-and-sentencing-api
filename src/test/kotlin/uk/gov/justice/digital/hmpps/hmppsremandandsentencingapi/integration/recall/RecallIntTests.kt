@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR_HDC
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -45,6 +46,8 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = "PRI",
         ),
       )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
   }
 
   @Test
@@ -76,6 +79,45 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = "PRI",
         ),
       )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+  }
+
+  @Test
+  fun `Create recall with a uuid via edit endpoint`() {
+    val recall = CreateRecall(
+      prisonerId = "A12345B",
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = LocalDate.of(2024, 2, 3),
+      recallTypeCode = FTR_28,
+      createdByUsername = "user001",
+      createdByPrison = "PRI",
+    )
+
+    val uuid = UUID.randomUUID()
+
+    val createdRecall = putRecall(recall, uuid)
+
+    assertThat(uuid).isEqualTo(createdRecall.recallUuid)
+    val actualRecall = getRecallByUUID(createdRecall.recallUuid)
+
+    assertThat(actualRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .isEqualTo(
+        Recall(
+          recallUuid = createdRecall.recallUuid,
+          prisonerId = "A12345B",
+          revocationDate = LocalDate.of(2024, 1, 2),
+          returnToCustodyDate = LocalDate.of(2024, 2, 3),
+          recallType = FTR_28,
+          createdByUsername = "user001",
+          createdAt = ZonedDateTime.now(),
+          createdByPrison = "PRI",
+        ),
+      )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
   }
 
   @Sql("classpath:test_data/insert-recalls.sql")
@@ -148,6 +190,9 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = originalRecall.createdByPrison,
         ),
       )
+
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.updated")
   }
 
   private fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
