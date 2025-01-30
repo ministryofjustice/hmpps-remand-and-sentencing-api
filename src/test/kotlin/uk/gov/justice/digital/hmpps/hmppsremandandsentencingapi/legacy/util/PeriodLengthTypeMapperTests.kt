@@ -15,14 +15,14 @@ class PeriodLengthTypeMapperTests {
   @MethodSource("nomisToDpsPeriodLengthTypeParameters")
   fun `period length type mapper tests`(lifeSentence: Boolean, sentenceTermCode: String, sentenceCalc: String, expectedType: PeriodLengthType) {
     val periodLengthLegacyData = DataCreator.periodLengthLegacyData(lifeSentence, sentenceTermCode)
-    val result = PeriodLengthTypeMapper.convertNOMISToDps(periodLengthLegacyData, sentenceCalc)
+    val result = PeriodLengthTypeMapper.convertNomisToDps(periodLengthLegacyData, sentenceCalc)
     Assertions.assertThat(result).isEqualTo(expectedType)
   }
 
   @ParameterizedTest(name = "DPS to NOMIS when period length type is {0} and sentence type classification is {1} then life sentence is {2} and sentence term code is {3}")
   @MethodSource("dpsToNomisPeriodLengthTypeParameters")
   fun `DPS to NOMIS period length type mapper tests`(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification, lifeSentence: Boolean, sentenceTermCode: String) {
-    val (lifeSentenceResult, sentenceTermCodeResult) = PeriodLengthTypeMapper.convertDpsToNOMIS(periodLengthType, sentenceTypeClassification)
+    val (lifeSentenceResult, sentenceTermCodeResult) = PeriodLengthTypeMapper.convertDpsToNomis(periodLengthType, sentenceTypeClassification)
     Assertions.assertThat(lifeSentenceResult).isEqualTo(lifeSentence)
     Assertions.assertThat(sentenceTermCodeResult).isEqualTo(sentenceTermCode)
   }

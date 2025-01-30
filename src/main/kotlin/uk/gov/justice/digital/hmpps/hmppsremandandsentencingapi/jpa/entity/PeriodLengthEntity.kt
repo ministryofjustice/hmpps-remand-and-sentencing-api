@@ -69,7 +69,7 @@ class PeriodLengthEntity(
 
     fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
-      val type = PeriodLengthTypeMapper.convertNOMISToDps(periodLength.legacyData, sentenceCalcType)
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       return PeriodLengthEntity(
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
@@ -85,7 +85,7 @@ class PeriodLengthEntity(
 
     fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
-      val type = PeriodLengthTypeMapper.convertNOMISToDps(periodLength.legacyData, sentenceCalcType)
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       return PeriodLengthEntity(
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
