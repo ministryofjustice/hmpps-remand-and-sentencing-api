@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import com.fasterxml.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -16,6 +17,7 @@ data class LegacySentence(
   val chargeNumber: String?,
   val fineAmount: BigDecimal?,
   val legacyData: SentenceLegacyData?,
+  val periodLengths: List<LegacyPeriodLength>,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity, objectMapper: ObjectMapper): LegacySentence {
@@ -35,6 +37,7 @@ data class LegacySentence(
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmountEntity?.fineAmount,
         legacyData,
+        sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
       )
     }
   }
