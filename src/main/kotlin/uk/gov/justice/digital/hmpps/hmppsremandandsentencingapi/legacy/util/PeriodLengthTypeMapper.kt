@@ -10,30 +10,33 @@ class PeriodLengthTypeMapper {
     val civilSentenceCalcTypes: Set<String> = setOf("CIVIL", "CIVILLT")
 
     val extendedSentenceCalcTypes: Set<String> = setOf("EDS18", "EDS21", "EDSU18", "EPP", "LASPO_AR", "LASPO_DR", "STS18", "STS21")
+    const val NOMIS_DETENTION_TERM_CODE: String = "DET"
+    const val NOMIS_IMPRISONMENT_TERM_CODE: String = "IMP"
+    const val NOMIS_LICENCE_TERM_CODE: String = "LIC"
+    const val NOMIS_SUPERVISION_TERM_CODE: String = "SUP"
+    val supportedNomisTermCodes: Set<String> = setOf(NOMIS_DETENTION_TERM_CODE, NOMIS_IMPRISONMENT_TERM_CODE, NOMIS_SUPERVISION_TERM_CODE)
 
     fun convertNOMISToDps(periodLengthLegacyData: PeriodLengthLegacyData, sentenceCalcType: String): PeriodLengthType {
-      var periodLengthType: PeriodLengthType = PeriodLengthType.SENTENCE_LENGTH
-      if (periodLengthLegacyData.lifeSentence == true) {
-        periodLengthType = PeriodLengthType.TARIFF_LENGTH
-      } else if (periodLengthLegacyData.sentenceTermCode == "DET" && civilSentenceCalcTypes.contains(sentenceCalcType)) {
-        periodLengthType = PeriodLengthType.TERM_LENGTH
-      } else if (periodLengthLegacyData.sentenceTermCode == "IMP" && extendedSentenceCalcTypes.contains(sentenceCalcType)) {
-        periodLengthType = PeriodLengthType.CUSTODIAL_TERM
-      } else if (periodLengthLegacyData.sentenceTermCode == "LIC") {
-        periodLengthType = PeriodLengthType.LICENCE_PERIOD
+      val periodLengthType = when {
+        periodLengthLegacyData.lifeSentence == true -> PeriodLengthType.TARIFF_LENGTH
+        periodLengthLegacyData.sentenceTermCode == NOMIS_DETENTION_TERM_CODE && civilSentenceCalcTypes.contains(sentenceCalcType) -> PeriodLengthType.TERM_LENGTH
+        periodLengthLegacyData.sentenceTermCode == NOMIS_IMPRISONMENT_TERM_CODE && extendedSentenceCalcTypes.contains(sentenceCalcType) -> PeriodLengthType.CUSTODIAL_TERM
+        periodLengthLegacyData.sentenceTermCode == NOMIS_LICENCE_TERM_CODE -> PeriodLengthType.LICENCE_PERIOD
+        supportedNomisTermCodes.contains(periodLengthLegacyData.sentenceTermCode) -> PeriodLengthType.SENTENCE_LENGTH
+        else -> PeriodLengthType.UNSUPPORTED
       }
 
       return periodLengthType
     }
 
-    fun convertDpsToNOMIS(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification): Pair<Boolean, String> {
+    fun convertDpsToNOMIS(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification?, periodLengthLegacyData: PeriodLengthLegacyData?): Pair<Boolean, String> {
       var lifeSentenceSentenceTermCode = when {
-        periodLengthType == PeriodLengthType.TARIFF_LENGTH -> true to "IMP"
-        periodLengthType == PeriodLengthType.CUSTODIAL_TERM || periodLengthType == PeriodLengthType.SENTENCE_LENGTH -> false to "IMP"
-        periodLengthType == PeriodLengthType.LICENCE_PERIOD -> false to "LIC"
-        periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.DTO -> false to "IMP"
-        periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.CIVIL -> false to "DET"
-        else -> false to ""
+        periodLengthType == PeriodLengthType.TARIFF_LENGTH -> true to NOMIS_IMPRISONMENT_TERM_CODE
+        periodLengthType == PeriodLengthType.CUSTODIAL_TERM || periodLengthType == PeriodLengthType.SENTENCE_LENGTH -> false to NOMIS_IMPRISONMENT_TERM_CODE
+        periodLengthType == PeriodLengthType.LICENCE_PERIOD -> false to NOMIS_LICENCE_TERM_CODE
+        periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.DTO -> false to NOMIS_IMPRISONMENT_TERM_CODE
+        periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.CIVIL -> false to NOMIS_DETENTION_TERM_CODE
+        else -> periodLengthLegacyData!!.lifeSentence!! to periodLengthLegacyData.sentenceTermCode!!
       }
       return lifeSentenceSentenceTermCode
     }
