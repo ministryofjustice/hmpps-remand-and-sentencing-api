@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
-import com.fasterxml.jackson.databind.JsonNode
-import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -12,11 +10,13 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 
 @Entity
@@ -44,9 +44,8 @@ class PeriodLengthEntity(
   @ManyToOne
   @JoinColumn(name = "appearance_id")
   var appearanceEntity: CourtAppearanceEntity?,
-  @Type(value = JsonType::class)
-  @Column(columnDefinition = "jsonb")
-  var legacyData: JsonNode? = null,
+  @JdbcTypeCode(SqlTypes.JSON)
+  var legacyData: PeriodLengthLegacyData? = null,
 
 ) {
   fun isSame(other: PeriodLengthEntity?): Boolean = years == other?.years &&
@@ -70,7 +69,8 @@ class PeriodLengthEntity(
 
     fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
-      val type = PeriodLengthTypeMapper.convert(periodLength.legacyData, sentenceCalcType)
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+      val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
@@ -80,12 +80,14 @@ class PeriodLengthEntity(
         periodOrder = order,
         sentenceEntity = null,
         appearanceEntity = null,
+        legacyData = legacyData,
       )
     }
 
     fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
-      val type = PeriodLengthTypeMapper.convert(periodLength.legacyData, sentenceCalcType)
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+      val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
@@ -95,6 +97,7 @@ class PeriodLengthEntity(
         periodOrder = order,
         sentenceEntity = null,
         appearanceEntity = null,
+        legacyData = legacyData,
       )
     }
 

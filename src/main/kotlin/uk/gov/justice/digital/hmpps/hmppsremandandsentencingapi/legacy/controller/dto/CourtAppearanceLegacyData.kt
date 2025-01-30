@@ -13,6 +13,8 @@ data class CourtAppearanceLegacyData(
   val outcomeDescription: String?,
   val nextEventDateTime: LocalDateTime?,
   val appearanceTime: LocalTime?,
+  val outcomeDispositionCode: String?,
+  val outcomeConvictionFlag: Boolean?,
 ) {
 
   fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
@@ -23,6 +25,8 @@ data class CourtAppearanceLegacyData(
     outcomeDescription,
     nextEventDateTime,
     appearanceTime,
+    outcomeDispositionCode,
+    outcomeConvictionFlag,
   )
   companion object {
     fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
@@ -33,6 +37,8 @@ data class CourtAppearanceLegacyData(
       null,
       null,
       appearanceTime,
+      null,
+      null,
     )
   }
 }

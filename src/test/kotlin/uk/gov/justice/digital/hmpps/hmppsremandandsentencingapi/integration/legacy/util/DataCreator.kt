@@ -43,7 +43,9 @@ class DataCreator {
       outcomeDescription: String? = "Outcome Description",
       nextEventDateTime: LocalDateTime? = LocalDateTime.now().plusDays(10),
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
-    ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime)
+      outcomeDispositionCode: String = "I",
+      outcomeConvictionFlag: Boolean = false,
+    ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime, outcomeDispositionCode, outcomeConvictionFlag)
 
     fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
 
@@ -96,7 +98,7 @@ class DataCreator {
 
     fun migrationSentenceId(offenderBookingId: Long = 1, sequence: Int = 1): MigrationSentenceId = MigrationSentenceId(offenderBookingId, sequence)
 
-    fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1"): PeriodLengthLegacyData = PeriodLengthLegacyData(lifeSentence, sentenceTermCode)
+    fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1", description: String = "Term description"): PeriodLengthLegacyData = PeriodLengthLegacyData(lifeSentence, sentenceTermCode, description)
 
     fun legacyCreatePeriodLength(periodType: String = "IMP", periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength = LegacyCreatePeriodLength(periodType, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
   }
