@@ -21,6 +21,7 @@ import org.hibernate.annotations.Type
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import java.time.LocalDate
@@ -124,7 +125,7 @@ class CourtAppearanceEntity(
     val courtAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
       if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE, this, warrantId,
-      ZonedDateTime.now(), createdByUsername, createdPrison, appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE, taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
+      ZonedDateTime.now(), createdByUsername, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
     )
     courtAppearance.periodLengths = periodLengths.toList()
     return courtAppearance
@@ -206,7 +207,7 @@ class CourtAppearanceEntity(
       createdPrison = null,
       createdByUsername = createdByUsername,
       nextCourtAppearance = null,
-      warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
+      warrantType = deriveWarrantType(appearanceOutcome, courtAppearance.legacyData),
       taggedBail = null,
       overallConvictionDate = null,
       lifetimeUuid = UUID.randomUUID(),
@@ -227,12 +228,14 @@ class CourtAppearanceEntity(
       createdPrison = null,
       createdByUsername = createdByUsername,
       nextCourtAppearance = null,
-      warrantType = appearanceOutcome?.outcomeType ?: UNKNOWN_WARRANT_TYPE,
+      warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData),
       taggedBail = null,
       overallConvictionDate = null,
       lifetimeUuid = UUID.randomUUID(),
       legacyData = legacyData,
     )
+
+    private fun deriveWarrantType(appearanceOutcome: AppearanceOutcomeEntity?, legacyData: CourtAppearanceLegacyData): String = appearanceOutcome?.outcomeType ?: if (legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") "SENTENCING" else "REMAND"
 
     fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
       compareBy(
