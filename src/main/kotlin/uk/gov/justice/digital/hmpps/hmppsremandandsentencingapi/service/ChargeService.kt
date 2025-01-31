@@ -24,26 +24,6 @@ import java.util.UUID
 @Service
 class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val chargeDomainEventService: ChargeDomainEventService, private val objectMapper: ObjectMapper, private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
 
-  @Transactional
-  fun createCharge(charge: CreateCharge): ChargeEntity? {
-    val appearance = charge.appearanceUuid?.let { courtAppearanceRepository.findByAppearanceUuid(it) }
-    var prisonerId = appearance?.courtCase?.prisonerId
-    var courtCaseId: String? = appearance?.courtCase?.caseUniqueIdentifier
-    if (appearance == null) {
-      courtCaseRepository.findFirstByAppearancesChargesChargeUuid(charge.chargeUuid)?.also {
-        prisonerId = it.prisonerId
-        courtCaseId = it.caseUniqueIdentifier
-      }
-    }
-    return prisonerId?.let {
-      val chargeEntity = createCharge(charge, emptyMap(), it, courtCaseId!!, appearance!!)
-      if (appearance.charges.none { it.chargeUuid == chargeEntity.chargeUuid }) {
-        appearance.charges.add(chargeEntity)
-      }
-      chargeEntity
-    }
-  }
-
   private fun createChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): ChargeEntity {
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
@@ -121,9 +101,6 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     }
     return charge
   }
-
-  @Transactional
-  fun deleteCharge(chargeUuid: UUID) = chargeRepository.findByChargeUuid(chargeUuid)?.let { deleteCharge(it, it.courtAppearances.firstOrNull()?.courtCase?.prisonerId, it.courtAppearances.firstOrNull()?.courtCase?.caseUniqueIdentifier) }
 
   @Transactional
   fun deleteCharge(charge: ChargeEntity, prisonerId: String?, courtCaseId: String?) {
