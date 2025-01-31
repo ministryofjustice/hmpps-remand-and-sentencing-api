@@ -18,13 +18,14 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/recall", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "recall-controller", description = "Recall")
-class RecallController(private val recallService: RecallService) {
+class RecallController(private val recallService: RecallService, private val dpsDomainEventService: DpsDomainEventService) {
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
@@ -40,7 +41,10 @@ class RecallController(private val recallService: RecallService) {
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createRecall(@RequestBody createRecall: CreateRecall): SaveRecallResponse = recallService.createRecall(createRecall)
+  fun createRecall(@RequestBody createRecall: CreateRecall): SaveRecallResponse = recallService.createRecall(createRecall).let { (response, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    response
+  }
 
   @GetMapping("/{recallUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
@@ -87,5 +91,8 @@ class RecallController(private val recallService: RecallService) {
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun updateRecall(@RequestBody recall: CreateRecall, @PathVariable recallUuid: UUID): SaveRecallResponse = recallService.updateRecall(recallUuid, recall)
+  fun updateRecall(@RequestBody recall: CreateRecall, @PathVariable recallUuid: UUID): SaveRecallResponse = recallService.updateRecall(recallUuid, recall).let { (response, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    response
+  }
 }

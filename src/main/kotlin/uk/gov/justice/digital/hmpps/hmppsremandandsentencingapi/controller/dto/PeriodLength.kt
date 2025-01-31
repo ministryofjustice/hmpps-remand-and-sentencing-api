@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 
 data class PeriodLength(
   val years: Int?,
@@ -10,6 +11,7 @@ data class PeriodLength(
   val days: Int?,
   val periodOrder: String,
   val periodLengthType: PeriodLengthType,
+  val legacyData: PeriodLengthLegacyData?,
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity): PeriodLength = PeriodLength(
@@ -19,6 +21,7 @@ data class PeriodLength(
       periodLengthEntity.days,
       periodLengthEntity.periodOrder,
       periodLengthEntity.periodLengthType,
+      periodLengthEntity.legacyData,
     )
   }
 }

@@ -23,16 +23,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-controller", description = "Court case")
-class CourtCaseController(private val courtCaseService: CourtCaseService, private val courtCaseReferenceService: CourtCaseReferenceService, private val courtCaseDomainEventService: CourtCaseDomainEventService) {
+class CourtCaseController(private val courtCaseService: CourtCaseService, private val courtCaseReferenceService: CourtCaseReferenceService, private val dpsDomainEventService: DpsDomainEventService) {
 
   @PostMapping("/court-case")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -49,12 +50,18 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
-    val courtCase = courtCaseService.createCourtCase(createCourtCase).also {
-      val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier)
-      updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
-      }
+    val (courtCase, eventsToEmit) = courtCaseService.createCourtCase(createCourtCase)
+    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    if (updatedCourtCaseReferences?.hasUpdated == true) {
+      eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(
+          updatedCourtCaseReferences.prisonerId,
+          updatedCourtCaseReferences.courtCaseId,
+          EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED,
+        ),
+      )
     }
+    dpsDomainEventService.emitEvents(eventsToEmit)
     return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
   }
 
@@ -73,12 +80,18 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   )
   @ResponseStatus(HttpStatus.OK)
   fun putCourtCase(@RequestBody createCourtCase: CreateCourtCase, @PathVariable courtCaseUuid: String): CreateCourtCaseResponse {
-    val courtCase = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid).also {
-      val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(it.caseUniqueIdentifier)
-      updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
-        courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
-      }
+    val (courtCase, eventsToEmit) = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid)
+    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    if (updatedCourtCaseReferences?.hasUpdated == true) {
+      eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(
+          updatedCourtCaseReferences.prisonerId,
+          updatedCourtCaseReferences.courtCaseId,
+          EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED,
+        ),
+      )
     }
+    dpsDomainEventService.emitEvents(eventsToEmit)
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
   }
 
