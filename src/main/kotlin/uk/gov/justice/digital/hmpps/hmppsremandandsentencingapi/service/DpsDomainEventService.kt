@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 
 @Service
-class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService, private val chargeDomainEventService: ChargeDomainEventService, private val sentenceDomainEventService: SentenceDomainEventService) {
+class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService, private val chargeDomainEventService: ChargeDomainEventService, private val sentenceDomainEventService: SentenceDomainEventService, private val recallDomainEventService: RecallDomainEventService) {
 
   fun emitEvents(eventsMetadata: List<EventMetadata>) {
     eventsMetadata.sortedBy { it.eventType.order }
@@ -86,6 +86,22 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
             eventMetaData.prisonerId,
             eventMetaData.sentenceId!!,
             eventMetaData.chargeId!!,
+            EventSource.DPS,
+          )
+
+          EventType.RECALL_INSERTED -> recallDomainEventService.create(
+            eventMetaData.prisonerId,
+            eventMetaData.recallId!!,
+            EventSource.DPS,
+          )
+          EventType.RECALL_UPDATED -> recallDomainEventService.update(
+            eventMetaData.prisonerId,
+            eventMetaData.recallId!!,
+            EventSource.DPS,
+          )
+          EventType.RECALL_DELETED -> recallDomainEventService.delete(
+            eventMetaData.prisonerId,
+            eventMetaData.recallId!!,
             EventSource.DPS,
           )
         }

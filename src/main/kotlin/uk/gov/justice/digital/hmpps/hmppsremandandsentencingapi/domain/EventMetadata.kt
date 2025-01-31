@@ -6,5 +6,6 @@ data class EventMetadata(
   val courtAppearanceId: String?,
   val chargeId: String?,
   val sentenceId: String?,
+  val recallId: String?,
   val eventType: EventType,
 )
