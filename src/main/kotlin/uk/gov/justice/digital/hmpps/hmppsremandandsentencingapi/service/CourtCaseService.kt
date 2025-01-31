@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.DraftAppearanceRepository
 
@@ -56,14 +55,4 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
   @Transactional(readOnly = true)
   fun getLatestAppearanceByCourtCaseUuid(courtCaseUUID: String): CourtAppearance? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let { CourtAppearance.from(it.latestCourtAppearance!!) }
-
-  @Transactional
-  fun deleteCourtCase(courtCaseUuid: String) {
-    courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { courtCaseEntity ->
-      courtCaseEntity.statusId = EntityStatus.DELETED
-      courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.forEach { courtAppearanceService.deleteCourtAppearance(it) }
-      draftAppearanceRepository.deleteAll(courtCaseEntity.draftAppearances)
-      courtCaseDomainEventService.delete(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, EventSource.DPS)
-    }
-  }
 }

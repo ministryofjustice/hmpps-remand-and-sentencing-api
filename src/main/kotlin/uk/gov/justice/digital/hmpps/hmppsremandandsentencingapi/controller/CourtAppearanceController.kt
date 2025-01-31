@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -85,43 +84,4 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     }
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
-
-  @PutMapping("/court-appearance/{lifetimeUuid}/lifetime")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  @Operation(
-    summary = "Create Court appearance",
-    description = "This endpoint will create a court appearance in a given court case",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "200", description = "Returns court case UUID"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @ResponseStatus(HttpStatus.OK)
-  fun updateCourtAppearanceByLifetime(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable lifetimeUuid: UUID): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearanceByLifetimeUuid(createCourtAppearance.copy(lifetimeUuid = lifetimeUuid), lifetimeUuid)?.let { appearance ->
-    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-      courtCaseDomainEventService.legacyCaseReferencesUpdated(it.courtCaseId, it.prisonerId, EventSource.DPS)
-    }
-    CreateCourtAppearanceResponse.from(lifetimeUuid, createCourtAppearance)
-  } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
-
-  @DeleteMapping("/court-appearance/{appearanceUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  @Operation(
-    summary = "Delete Appearance",
-    description = "This endpoint will delete an appearance",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "204"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun deleteAppearance(@PathVariable appearanceUuid: UUID) {
-    courtAppearanceService.deleteCourtAppearance(appearanceUuid)
-  }
 }

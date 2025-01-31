@@ -66,16 +66,6 @@ class CourtAppearanceService(
   }
 
   @Transactional
-  fun createCourtAppearanceByLifetimeUuid(createCourtAppearance: CreateCourtAppearance, lifetimeUuid: UUID): CourtAppearanceEntity? {
-    return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)?.let { courtCaseEntity ->
-      val existingCourtAppearance = courtAppearanceRepository.findFirstByLifetimeUuidOrderByCreatedAtDesc(lifetimeUuid)
-      val savedAppearance = if (existingCourtAppearance != null) updateCourtAppearanceEntity(createCourtAppearance, courtCaseEntity, existingCourtAppearance) else createCourtAppearanceEntity(createCourtAppearance, courtCaseEntity)
-      courtCaseEntity.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + savedAppearance)
-      return savedAppearance
-    }
-  }
-
-  @Transactional
   fun createCourtAppearance(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): CourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
     updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
   } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
@@ -266,9 +256,6 @@ class CourtAppearanceService(
     }
     return 0
   }
-
-  @Transactional
-  fun deleteCourtAppearance(appearanceUuid: UUID) = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let { deleteCourtAppearance(it) }
 
   @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity) {
