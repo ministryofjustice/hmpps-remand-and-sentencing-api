@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetaData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
@@ -20,21 +22,39 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.D
 class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val courtCaseDomainEventService: CourtCaseDomainEventService, private val objectMapper: ObjectMapper, private val draftAppearanceRepository: DraftAppearanceRepository) {
 
   @Transactional
-  fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): CourtCaseEntity {
+  fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(CourtCaseEntity.placeholderEntity(createCourtCase.prisonerId, caseUniqueIdentifier, serviceUserService.getUsername(), createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
 
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
     }
-    return saveCourtCaseAppearances(courtCase, createCourtCase)
+    val savedCourtCase = saveCourtCaseAppearances(courtCase, createCourtCase)
+    return RecordResponse(
+      savedCourtCase,
+      mutableListOf(
+        EventMetaData(
+          savedCourtCase.prisonerId,
+          savedCourtCase.caseUniqueIdentifier,
+          EventType.COURT_CASE_UPDATED,
+        ),
+      ),
+    )
   }
 
   @Transactional
-  fun createCourtCase(createCourtCase: CreateCourtCase): CourtCaseEntity {
+  fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.placeholderEntity(prisonerId = createCourtCase.prisonerId, createdByUsername = serviceUserService.getUsername(), legacyData = createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
-    return saveCourtCaseAppearances(courtCase, createCourtCase).also { savedCourtCase ->
-      courtCaseDomainEventService.create(savedCourtCase.caseUniqueIdentifier, savedCourtCase.prisonerId, EventSource.DPS)
-    }
+    val savedCourtCase = saveCourtCaseAppearances(courtCase, createCourtCase)
+    return RecordResponse(
+      savedCourtCase,
+      mutableListOf(
+        EventMetaData(
+          savedCourtCase.prisonerId,
+          savedCourtCase.caseUniqueIdentifier,
+          EventType.COURT_CASE_INSERTED,
+        ),
+      ),
+    )
   }
 
   private fun saveCourtCaseAppearances(courtCase: CourtCaseEntity, createCourtCase: CreateCourtCase): CourtCaseEntity {
