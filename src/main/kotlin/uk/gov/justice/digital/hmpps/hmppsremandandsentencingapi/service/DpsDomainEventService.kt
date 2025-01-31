@@ -13,22 +13,22 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
       .forEach { eventMetaData ->
         when (eventMetaData.eventType) {
           EventType.COURT_CASE_INSERTED -> courtCaseDomainEventService.create(
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             eventMetaData.prisonerId,
             EventSource.DPS,
           )
           EventType.COURT_CASE_UPDATED -> courtCaseDomainEventService.update(
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             eventMetaData.prisonerId,
             EventSource.DPS,
           )
           EventType.COURT_CASE_DELETED -> courtCaseDomainEventService.delete(
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             eventMetaData.prisonerId,
             EventSource.DPS,
           )
           EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED -> courtCaseDomainEventService.legacyCaseReferencesUpdated(
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             eventMetaData.prisonerId,
             EventSource.DPS,
           )
@@ -36,38 +36,38 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
           EventType.CHARGE_INSERTED -> chargeDomainEventService.create(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
             eventMetaData.courtAppearanceId!!,
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.CHARGE_DELETED -> chargeDomainEventService.delete(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
             eventMetaData.prisonerId,
             eventMetaData.courtAppearanceId!!,
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.COURT_APPEARANCE_UPDATED -> courtAppearanceDomainEventService.update(
             eventMetaData.prisonerId,
             eventMetaData.courtAppearanceId!!,
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.COURT_APPEARANCE_DELETED -> courtAppearanceDomainEventService.delete(
             eventMetaData.prisonerId,
             eventMetaData.courtAppearanceId!!,
-            eventMetaData.courtCaseId,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.SENTENCE_INSERTED -> sentenceDomainEventService.create(
