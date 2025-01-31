@@ -23,8 +23,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetaData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
@@ -54,7 +54,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     if (updatedCourtCaseReferences?.hasUpdated == true) {
       eventsToEmit.add(
-        EventMetaData(
+        EventMetadataCreator.courtCaseEventMetadata(
           updatedCourtCaseReferences.prisonerId,
           updatedCourtCaseReferences.courtCaseId,
           EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED,
@@ -84,7 +84,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     if (updatedCourtCaseReferences?.hasUpdated == true) {
       eventsToEmit.add(
-        EventMetaData(
+        EventMetadataCreator.courtCaseEventMetadata(
           updatedCourtCaseReferences.prisonerId,
           updatedCourtCaseReferences.courtCaseId,
           EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED,

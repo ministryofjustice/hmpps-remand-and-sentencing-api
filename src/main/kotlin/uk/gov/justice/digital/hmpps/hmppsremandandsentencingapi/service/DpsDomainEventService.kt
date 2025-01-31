@@ -1,14 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetaData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 
 @Service
-class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService) {
+class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService) {
 
-  fun emitEvents(eventsMetadata: List<EventMetaData>) {
+  fun emitEvents(eventsMetadata: List<EventMetadata>) {
     eventsMetadata.sortedBy { it.eventType.order }
       .forEach { eventMetaData ->
         when (eventMetaData.eventType) {
@@ -36,9 +36,24 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
           EventType.CHARGE_INSERTED -> TODO()
           EventType.CHARGE_UPDATED -> TODO()
           EventType.CHARGE_DELETED -> TODO()
-          EventType.COURT_APPEARANCE_INSERTED -> TODO()
-          EventType.COURT_APPEARANCE_UPDATED -> TODO()
-          EventType.COURT_APPEARANCE_DELETED -> TODO()
+          EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
+            eventMetaData.prisonerId,
+            eventMetaData.courtAppearanceId!!,
+            eventMetaData.courtCaseId,
+            EventSource.DPS,
+          )
+          EventType.COURT_APPEARANCE_UPDATED -> courtAppearanceDomainEventService.update(
+            eventMetaData.prisonerId,
+            eventMetaData.courtAppearanceId!!,
+            eventMetaData.courtCaseId,
+            EventSource.DPS,
+          )
+          EventType.COURT_APPEARANCE_DELETED -> courtAppearanceDomainEventService.delete(
+            eventMetaData.prisonerId,
+            eventMetaData.courtAppearanceId!!,
+            eventMetaData.courtCaseId,
+            EventSource.DPS,
+          )
           EventType.SENTENCE_INSERTED -> TODO()
           EventType.SENTENCE_UPDATED -> TODO()
         }

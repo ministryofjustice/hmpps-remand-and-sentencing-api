@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetaData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
@@ -28,41 +28,37 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
     }
-    val savedCourtCase = saveCourtCaseAppearances(courtCase, createCourtCase)
+    val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    eventsToEmit.add(
+      EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, EventType.COURT_CASE_UPDATED),
+    )
     return RecordResponse(
       savedCourtCase,
-      mutableListOf(
-        EventMetaData(
-          savedCourtCase.prisonerId,
-          savedCourtCase.caseUniqueIdentifier,
-          EventType.COURT_CASE_UPDATED,
-        ),
-      ),
+      eventsToEmit,
     )
   }
 
   @Transactional
   fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.placeholderEntity(prisonerId = createCourtCase.prisonerId, createdByUsername = serviceUserService.getUsername(), legacyData = createCourtCase.legacyData?.let { objectMapper.valueToTree<JsonNode>(it) }))
-    val savedCourtCase = saveCourtCaseAppearances(courtCase, createCourtCase)
+    val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    eventsToEmit.add(
+      EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, EventType.COURT_CASE_INSERTED),
+    )
     return RecordResponse(
       savedCourtCase,
-      mutableListOf(
-        EventMetaData(
-          savedCourtCase.prisonerId,
-          savedCourtCase.caseUniqueIdentifier,
-          EventType.COURT_CASE_INSERTED,
-        ),
-      ),
+      eventsToEmit,
     )
   }
 
-  private fun saveCourtCaseAppearances(courtCase: CourtCaseEntity, createCourtCase: CreateCourtCase): CourtCaseEntity {
+  private fun saveCourtCaseAppearances(courtCase: CourtCaseEntity, createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
     val toDeleteAppearances = courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
-    toDeleteAppearances.forEach { courtAppearanceService.deleteCourtAppearance(it) }
-    val appearances = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
+    val eventsToEmit = toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableList()
+    val appearanceRecords = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
+    val appearances = appearanceRecords.map { it.record }
+    eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
-    return courtCaseRepository.save(courtCase)
+    return RecordResponse(courtCaseRepository.save(courtCase), eventsToEmit)
   }
 
   @Transactional(readOnly = true)
