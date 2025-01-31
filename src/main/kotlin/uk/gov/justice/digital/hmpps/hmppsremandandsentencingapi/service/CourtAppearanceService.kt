@@ -84,8 +84,17 @@ class CourtAppearanceService(
       )
     }
     val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), legacyData))
-    val createdCharges = createCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, createdCourtAppearance)
-    createdCourtAppearance.charges.addAll(createdCharges)
+    val eventsToEmit = mutableListOf(
+      EventMetadataCreator.courtAppearanceEventMetadata(
+        createdCourtAppearance.courtCase.prisonerId,
+        createdCourtAppearance.courtCase.caseUniqueIdentifier,
+        createdCourtAppearance.lifetimeUuid.toString(),
+        EventType.COURT_APPEARANCE_INSERTED,
+      ),
+    )
+    val chargeRecords = createCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, createdCourtAppearance)
+    createdCourtAppearance.charges.addAll(chargeRecords.map { it.record })
+    eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
     courtAppearance.overallSentenceLength?.let { createPeriodLength ->
       val periodLength = PeriodLengthEntity.from(createPeriodLength)
@@ -95,14 +104,6 @@ class CourtAppearanceService(
     }
     updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
-    val eventsToEmit = mutableListOf(
-      EventMetadataCreator.courtAppearanceEventMetadata(
-        createdCourtAppearance.courtCase.prisonerId,
-        createdCourtAppearance.courtCase.caseUniqueIdentifier,
-        createdCourtAppearance.lifetimeUuid.toString(),
-        EventType.COURT_APPEARANCE_INSERTED,
-      ),
-    )
     nextCourtAppearance?.futureSkeletonAppearance?.also { courtAppearanceEntity ->
       eventsToEmit.add(
         EventMetadataCreator.courtAppearanceEventMetadata(
@@ -138,7 +139,8 @@ class CourtAppearanceService(
       }
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
-    val chargesChangedStatus = updateCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, activeRecord)
+    val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, activeRecord)
+    eventsToEmit.addAll(chargeEventsToEmit)
     val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord, existingCourtAppearanceEntity.nextCourtAppearance)
     updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
     if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
@@ -245,18 +247,21 @@ class CourtAppearanceService(
     } ?: (EntityChangeStatus.NO_CHANGE to null)
   }
 
-  private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity): EntityChangeStatus {
+  private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity): Pair<EntityChangeStatus, MutableList<EventMetadata>> {
+    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
     val toDeleteCharges = existingCourtAppearanceEntity.charges.filter { existingCharge -> charges.none { createCharge -> createCharge.chargeUuid == existingCharge.chargeUuid } }
     toDeleteCharges.forEach { chargeEntity ->
       chargeEntity.courtAppearances.removeIf { it.id == existingCourtAppearanceEntity.id }
-      chargeService.deleteChargeIfOrphan(chargeEntity, prisonerId, courtCaseUuid)
+      eventsToEmit.addAll(chargeService.deleteChargeIfOrphan(chargeEntity, prisonerId, courtCaseUuid).eventsToEmit)
     }
     existingCourtAppearanceEntity.charges.removeAll(toDeleteCharges)
-    val createdCharges = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity)
+    val chargeRecords = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity)
+    eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
+    val createdCharges = chargeRecords.map { it.record }
     val toAddCharges = createdCharges.filter { chargeEntity -> existingCourtAppearanceEntity.charges.none { existingCharge -> chargeEntity.chargeUuid == existingCharge.chargeUuid } }
     existingCourtAppearanceEntity.charges.addAll(toAddCharges)
 
-    return if (toAddCharges.isNotEmpty() || toDeleteCharges.isNotEmpty()) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
+    return (if (toAddCharges.isNotEmpty() || toDeleteCharges.isNotEmpty()) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE) to eventsToEmit
   }
 
   private fun createCharges(
@@ -264,11 +269,11 @@ class CourtAppearanceService(
     prisonerId: String,
     courtCaseUuid: String,
     courtAppearanceEntity: CourtAppearanceEntity,
-  ): MutableSet<ChargeEntity> {
+  ): MutableSet<RecordResponse<ChargeEntity>> {
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
     return charges.sortedWith(this::chargesByConsecutiveToLast).map {
       val charge = chargeService.createCharge(it, sentencesCreated, prisonerId, courtCaseUuid, courtAppearanceEntity)
-      charge.getActiveSentence()?.let { sentence -> sentence.chargeNumber?.let { it1 -> sentencesCreated.put(it1, sentence) } }
+      charge.record.getActiveSentence()?.let { sentence -> sentence.chargeNumber?.let { it1 -> sentencesCreated.put(it1, sentence) } }
       charge
     }.toMutableSet()
   }

@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 
 @Service
-class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService) {
+class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService, private val chargeDomainEventService: ChargeDomainEventService, private val sentenceDomainEventService: SentenceDomainEventService) {
 
   fun emitEvents(eventsMetadata: List<EventMetadata>) {
     eventsMetadata.sortedBy { it.eventType.order }
@@ -33,9 +33,25 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
             EventSource.DPS,
           )
 
-          EventType.CHARGE_INSERTED -> TODO()
-          EventType.CHARGE_UPDATED -> TODO()
-          EventType.CHARGE_DELETED -> TODO()
+          EventType.CHARGE_INSERTED -> chargeDomainEventService.create(
+            eventMetaData.prisonerId,
+            eventMetaData.chargeId!!,
+            eventMetaData.courtCaseId,
+            EventSource.DPS,
+          )
+          EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
+            eventMetaData.prisonerId,
+            eventMetaData.chargeId!!,
+            eventMetaData.courtAppearanceId!!,
+            eventMetaData.courtCaseId,
+            EventSource.DPS,
+          )
+          EventType.CHARGE_DELETED -> chargeDomainEventService.delete(
+            eventMetaData.prisonerId,
+            eventMetaData.chargeId!!,
+            eventMetaData.courtCaseId,
+            EventSource.DPS,
+          )
           EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
             eventMetaData.prisonerId,
             eventMetaData.courtAppearanceId!!,
@@ -54,8 +70,24 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
             eventMetaData.courtCaseId,
             EventSource.DPS,
           )
-          EventType.SENTENCE_INSERTED -> TODO()
-          EventType.SENTENCE_UPDATED -> TODO()
+          EventType.SENTENCE_INSERTED -> sentenceDomainEventService.create(
+            eventMetaData.prisonerId,
+            eventMetaData.sentenceId!!,
+            eventMetaData.chargeId!!,
+            EventSource.DPS,
+          )
+          EventType.SENTENCE_UPDATED -> sentenceDomainEventService.update(
+            eventMetaData.prisonerId,
+            eventMetaData.sentenceId!!,
+            eventMetaData.chargeId!!,
+            EventSource.DPS,
+          )
+          EventType.SENTENCE_DELETED -> sentenceDomainEventService.delete(
+            eventMetaData.prisonerId,
+            eventMetaData.sentenceId!!,
+            eventMetaData.chargeId!!,
+            EventSource.DPS,
+          )
         }
       }
   }

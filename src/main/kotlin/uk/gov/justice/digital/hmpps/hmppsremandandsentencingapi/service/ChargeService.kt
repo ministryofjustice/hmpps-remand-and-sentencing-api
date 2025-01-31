@@ -6,7 +6,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableChargeException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
@@ -16,26 +19,32 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.util.UUID
 
 @Service
-class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val chargeDomainEventService: ChargeDomainEventService, private val objectMapper: ObjectMapper, private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService) {
+class ChargeService(private val chargeRepository: ChargeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val sentenceService: SentenceService, private val objectMapper: ObjectMapper, private val serviceUserService: ServiceUserService) {
 
-  private fun createChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): ChargeEntity {
+  private fun createChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): RecordResponse<ChargeEntity> {
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val savedCharge = chargeRepository.save(ChargeEntity.from(charge, chargeOutcome, legacyData, serviceUserService.getUsername()))
+    val eventsToEmit = mutableListOf(
+      EventMetadataCreator.chargeEventMetadata(
+        prisonerId,
+        courtCaseId,
+        null,
+        savedCharge.lifetimeChargeUuid.toString(),
+        EventType.CHARGE_INSERTED,
+      ),
+    )
     charge.sentence?.let { createSentence ->
       savedCharge.sentences.add(sentenceService.createSentence(createSentence, savedCharge, sentencesCreated, prisonerId))
     }
-    chargeDomainEventService.create(prisonerId, savedCharge.lifetimeChargeUuid.toString(), courtCaseId, EventSource.DPS)
-    return savedCharge
+    return RecordResponse(savedCharge, eventsToEmit)
   }
 
-  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity, courtAppearance: CourtAppearanceEntity): ChargeEntity {
+  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity, courtAppearance: CourtAppearanceEntity): RecordResponse<ChargeEntity> {
     if (existingCharge.statusId == EntityStatus.EDITED) {
       throw ImmutableChargeException("Cannot edit an already edited charge")
     }
@@ -44,7 +53,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
     val compareCharge = existingCharge.copyFrom(charge, chargeOutcome, legacyData, serviceUserService.getUsername())
     var activeRecord = existingCharge
-
+    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
     if (!existingCharge.isSame(compareCharge)) {
       var chargeChangeStatus = EntityChangeStatus.EDITED
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
@@ -74,12 +83,28 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     }
     chargeChanges.forEach { (chargeChangeStatus, record) ->
       if (chargeChangeStatus == EntityChangeStatus.EDITED) {
-        chargeDomainEventService.update(prisonerId, record.lifetimeChargeUuid.toString(), courtAppearance.lifetimeUuid.toString(), courtCaseId, EventSource.DPS)
+        eventsToEmit.add(
+          EventMetadataCreator.chargeEventMetadata(
+            prisonerId,
+            courtCaseId,
+            courtAppearance.lifetimeUuid.toString(),
+            record.lifetimeChargeUuid.toString(),
+            EventType.CHARGE_UPDATED,
+          ),
+        )
       } else if (chargeChangeStatus == EntityChangeStatus.CREATED) {
-        chargeDomainEventService.create(prisonerId, record.lifetimeChargeUuid.toString(), courtCaseId, EventSource.DPS)
+        eventsToEmit.add(
+          EventMetadataCreator.chargeEventMetadata(
+            prisonerId,
+            courtCaseId,
+            courtAppearance.lifetimeUuid.toString(),
+            record.lifetimeChargeUuid.toString(),
+            EventType.CHARGE_INSERTED,
+          ),
+        )
       }
     }
-    return activeRecord
+    return RecordResponse(activeRecord, eventsToEmit)
   }
 
   private fun getChargeOutcome(charge: CreateCharge): Pair<ChargeLegacyData?, ChargeOutcomeEntity?> {
@@ -92,7 +117,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional
-  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity): ChargeEntity {
+  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity): RecordResponse<ChargeEntity> {
     val existingCharge = chargeRepository.findByChargeUuid(charge.chargeUuid)
     val charge = if (existingCharge != null) {
       updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge, courtAppearance)
@@ -103,20 +128,32 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional
-  fun deleteCharge(charge: ChargeEntity, prisonerId: String?, courtCaseId: String?) {
+  fun deleteCharge(charge: ChargeEntity, prisonerId: String?, courtCaseId: String?): RecordResponse<ChargeEntity> {
     val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.statusId = EntityStatus.DELETED
+    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
     charge.getActiveSentence()?.let { sentenceService.deleteSentence(it, charge, prisonerId!!) }
     if (changeStatus == EntityChangeStatus.DELETED) {
-      chargeDomainEventService.delete(prisonerId!!, charge.lifetimeChargeUuid.toString(), courtCaseId!!, EventSource.DPS)
+      eventsToEmit.add(
+        EventMetadataCreator.chargeEventMetadata(
+          prisonerId!!,
+          courtCaseId!!,
+          null,
+          charge.lifetimeChargeUuid.toString(),
+          EventType.CHARGE_DELETED,
+        ),
+      )
     }
+    return RecordResponse(charge, eventsToEmit)
   }
 
   @Transactional
-  fun deleteChargeIfOrphan(charge: ChargeEntity, prisonerId: String, courtCaseId: String) {
+  fun deleteChargeIfOrphan(charge: ChargeEntity, prisonerId: String, courtCaseId: String): RecordResponse<ChargeEntity> {
+    var recordResponse = RecordResponse(charge, mutableListOf())
     if (charge.courtAppearances.none { it.statusId == EntityStatus.ACTIVE }) {
-      deleteCharge(charge, prisonerId, courtCaseId)
+      recordResponse = deleteCharge(charge, prisonerId, courtCaseId)
     }
+    return recordResponse
   }
 
   @Transactional(readOnly = true)
