@@ -16,7 +16,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-  implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.0")
+  implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.1")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
