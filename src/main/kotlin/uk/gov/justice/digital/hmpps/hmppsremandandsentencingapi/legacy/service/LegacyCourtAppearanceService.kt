@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,19 +18,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
-import java.util.UUID
-import kotlin.collections.plus
+import java.util.*
 
 @Service
-class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtAppearanceRepository, private val courtCaseRepository: CourtCaseRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper, private val chargeRepository: ChargeRepository, private val appearanceTypeRepository: AppearanceTypeRepository, private val nextCourtAppearanceRepository: NextCourtAppearanceRepository) {
+class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtAppearanceRepository, private val courtCaseRepository: CourtCaseRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val serviceUserService: ServiceUserService, private val chargeRepository: ChargeRepository, private val appearanceTypeRepository: AppearanceTypeRepository, private val nextCourtAppearanceRepository: NextCourtAppearanceRepository) {
 
   @Transactional
   fun create(courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse {
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtAppearance.courtCaseUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at ${courtAppearance.courtCaseUuid}")
-    val legacyData = objectMapper.valueToTree<JsonNode>(courtAppearance.legacyData)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val createdCourtAppearance = courtAppearanceRepository.save(
-      CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, serviceUserService.getUsername(), legacyData),
+      CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, serviceUserService.getUsername()),
     )
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCase.appearances + createdCourtAppearance)
     if (createdCourtAppearance.statusId == EntityStatus.FUTURE) {
@@ -53,9 +49,8 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   fun update(lifetimeUuid: UUID, courtAppearance: LegacyCreateCourtAppearance): Pair<EntityChangeStatus, LegacyCourtAppearanceCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
-    val legacyData = objectMapper.valueToTree<JsonNode>(courtAppearance.legacyData)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
-    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, serviceUserService.getUsername(), legacyData)
+    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, serviceUserService.getUsername())
     if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
       existingCourtAppearance.statusId = EntityStatus.EDITED
       val savedRecord = courtAppearanceRepository.save(updatedCourtAppearance)
@@ -79,7 +74,7 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   }
 
   @Transactional
-  fun get(lifetimeUuid: UUID): LegacyCourtAppearance = LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid), objectMapper)
+  fun get(lifetimeUuid: UUID): LegacyCourtAppearance = LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid))
 
   @Transactional
   fun delete(lifetimeUuid: UUID) {
