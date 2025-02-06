@@ -34,7 +34,7 @@ data class LegacyCourtAppearance(
         courtAppearanceEntity.courtCode,
         courtAppearanceEntity.appearanceDate,
         legacyData?.appearanceTime ?: LocalTime.MIDNIGHT,
-        courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { chargeEntity -> LegacyCharge.from(chargeEntity, objectMapper) },
+        courtAppearanceEntity.charges.filter { it.statusId == EntityStatus.ACTIVE }.map { chargeEntity -> LegacyCharge.from(chargeEntity) },
         courtAppearanceEntity.nextCourtAppearance?.let { LegacyNextCourtAppearance.from(it) },
       )
     }

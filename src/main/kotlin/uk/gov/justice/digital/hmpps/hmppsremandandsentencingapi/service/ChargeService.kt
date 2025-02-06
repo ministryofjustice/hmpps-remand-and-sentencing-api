@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,8 +26,8 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
   private fun createChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): RecordResponse<ChargeEntity> {
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
-    val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
-    val savedCharge = chargeRepository.save(ChargeEntity.from(charge, chargeOutcome, legacyData, serviceUserService.getUsername()))
+    charge.legacyData = chargeLegacyData
+    val savedCharge = chargeRepository.save(ChargeEntity.from(charge, chargeOutcome, serviceUserService.getUsername()))
     val eventsToEmit = mutableListOf(
       EventMetadataCreator.chargeEventMetadata(
         prisonerId,
@@ -52,8 +51,8 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     }
     val chargeChanges = mutableListOf<Pair<EntityChangeStatus, ChargeEntity>>()
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
-    val legacyData = chargeLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
-    val compareCharge = existingCharge.copyFrom(charge, chargeOutcome, legacyData, serviceUserService.getUsername())
+    charge.legacyData = chargeLegacyData
+    val compareCharge = existingCharge.copyFrom(charge, chargeOutcome, serviceUserService.getUsername())
     var activeRecord = existingCharge
     val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
     if (!existingCharge.isSame(compareCharge)) {

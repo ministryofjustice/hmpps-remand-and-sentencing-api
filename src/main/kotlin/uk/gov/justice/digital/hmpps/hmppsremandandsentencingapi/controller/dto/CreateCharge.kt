@@ -21,5 +21,5 @@ data class CreateCharge(
   val outcomeUuid: UUID?,
   val terrorRelated: Boolean?,
   val sentence: CreateSentence?,
-  val legacyData: ChargeLegacyData?,
+  var legacyData: ChargeLegacyData?,
 )
