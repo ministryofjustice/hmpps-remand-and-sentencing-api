@@ -24,6 +24,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -122,7 +124,7 @@ class CourtAppearanceEntity(
   fun copyFrom(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, createdByUsername: String): CourtAppearanceEntity {
     val courtAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
-      if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE, this, warrantId,
+      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime), this, warrantId,
       ZonedDateTime.now(), createdByUsername, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, courtAppearance.legacyData,
     )
     courtAppearance.periodLengths = periodLengths.toList()
@@ -198,7 +200,7 @@ class CourtAppearanceEntity(
       courtCode = courtAppearance.courtCode,
       courtCaseReference = null,
       appearanceDate = courtAppearance.appearanceDate,
-      statusId = if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
+      statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
       warrantId = null,
       charges = mutableSetOf(),
       previousAppearance = null,
@@ -219,7 +221,7 @@ class CourtAppearanceEntity(
       courtCode = migrationCreateCourtAppearance.courtCode,
       courtCaseReference = courtCaseReference,
       appearanceDate = migrationCreateCourtAppearance.appearanceDate,
-      statusId = if (migrationCreateCourtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE,
+      statusId = getStatus(migrationCreateCourtAppearance.appearanceDate, migrationCreateCourtAppearance.legacyData.appearanceTime),
       warrantId = null,
       charges = mutableSetOf(),
       previousAppearance = null,
@@ -232,6 +234,11 @@ class CourtAppearanceEntity(
       lifetimeUuid = UUID.randomUUID(),
       legacyData = migrationCreateCourtAppearance.legacyData,
     )
+
+    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?): EntityStatus {
+      val compareDate = appearanceDate.atTime(appearanceTime ?: LocalTime.MIDNIGHT)
+      return if (compareDate.isAfter(LocalDateTime.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE
+    }
 
     private fun deriveWarrantType(appearanceOutcome: AppearanceOutcomeEntity?, legacyData: CourtAppearanceLegacyData): String = appearanceOutcome?.outcomeType ?: if (legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") "SENTENCING" else "REMAND"
 
