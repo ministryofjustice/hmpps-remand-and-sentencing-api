@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -20,25 +19,17 @@ data class LegacySentence(
   val periodLengths: List<LegacyPeriodLength>,
 ) {
   companion object {
-    fun from(sentenceEntity: SentenceEntity, objectMapper: ObjectMapper): LegacySentence {
-      val legacyData = sentenceEntity.legacyData?.let {
-        objectMapper.treeToValue<SentenceLegacyData>(
-          it,
-          SentenceLegacyData::class.java,
-        )
-      }
-      return LegacySentence(
-        sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId,
-        sentenceEntity.charge.lifetimeChargeUuid,
-        sentenceEntity.lifetimeSentenceUuid!!,
-        legacyData?.sentenceCalcType ?: sentenceEntity.sentenceType?.nomisSentenceCalcType,
-        legacyData?.sentenceCategory ?: sentenceEntity.sentenceType?.nomisCjaCode,
-        sentenceEntity.consecutiveTo?.lifetimeSentenceUuid,
-        sentenceEntity.chargeNumber,
-        sentenceEntity.fineAmountEntity?.fineAmount,
-        legacyData,
-        sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
-      )
-    }
+    fun from(sentenceEntity: SentenceEntity): LegacySentence = LegacySentence(
+      sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId,
+      sentenceEntity.charge.lifetimeChargeUuid,
+      sentenceEntity.lifetimeSentenceUuid!!,
+      sentenceEntity.legacyData?.sentenceCalcType ?: sentenceEntity.sentenceType?.nomisSentenceCalcType,
+      sentenceEntity.legacyData?.sentenceCategory ?: sentenceEntity.sentenceType?.nomisCjaCode,
+      sentenceEntity.consecutiveTo?.lifetimeSentenceUuid,
+      sentenceEntity.chargeNumber,
+      sentenceEntity.fineAmountEntity?.fineAmount,
+      sentenceEntity.legacyData,
+      sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
+    )
   }
 }

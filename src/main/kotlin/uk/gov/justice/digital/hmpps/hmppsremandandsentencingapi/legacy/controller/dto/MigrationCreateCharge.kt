@@ -7,6 +7,6 @@ data class MigrationCreateCharge(
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
-  val legacyData: ChargeLegacyData,
+  var legacyData: ChargeLegacyData,
   val sentence: MigrationCreateSentence?,
 )

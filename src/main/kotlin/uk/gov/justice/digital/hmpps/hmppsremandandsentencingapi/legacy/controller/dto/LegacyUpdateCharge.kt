@@ -5,5 +5,5 @@ import java.time.LocalDate
 data class LegacyUpdateCharge(
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
-  val legacyData: ChargeLegacyData,
+  var legacyData: ChargeLegacyData,
 )

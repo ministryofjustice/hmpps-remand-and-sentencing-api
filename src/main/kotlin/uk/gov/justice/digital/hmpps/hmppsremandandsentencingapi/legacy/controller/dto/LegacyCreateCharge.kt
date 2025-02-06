@@ -8,5 +8,5 @@ data class LegacyCreateCharge(
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
-  val legacyData: ChargeLegacyData,
+  var legacyData: ChargeLegacyData,
 )

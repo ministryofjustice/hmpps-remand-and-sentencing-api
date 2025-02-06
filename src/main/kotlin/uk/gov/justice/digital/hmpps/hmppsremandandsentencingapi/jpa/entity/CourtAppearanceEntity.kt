@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
-import com.fasterxml.jackson.databind.JsonNode
-import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -17,7 +15,8 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -89,9 +88,8 @@ class CourtAppearanceEntity(
 
   @Column
   val overallConvictionDate: LocalDate?,
-  @Type(value = JsonType::class)
-  @Column(columnDefinition = "jsonb")
-  var legacyData: JsonNode? = null,
+  @JdbcTypeCode(SqlTypes.JSON)
+  var legacyData: CourtAppearanceLegacyData? = null,
 ) {
 
   @OneToMany
@@ -121,26 +119,26 @@ class CourtAppearanceEntity(
     return courtAppearance
   }
 
-  fun copyFrom(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
+  fun copyFrom(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, createdByUsername: String): CourtAppearanceEntity {
     val courtAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
       if (courtAppearance.appearanceDate.isAfter(LocalDate.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE, this, warrantId,
-      ZonedDateTime.now(), createdByUsername, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
+      ZonedDateTime.now(), createdByUsername, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, courtAppearance.legacyData,
     )
     courtAppearance.periodLengths = periodLengths.toList()
     return courtAppearance
   }
 
-  fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
+  fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String): CourtAppearanceEntity {
     val courtAppearanceEntity = CourtAppearanceEntity(
       0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
-      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, legacyData,
+      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdByUsername, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, courtAppearance.legacyData,
     )
     courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
     return courtAppearanceEntity
   }
 
-  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity = CourtAppearanceEntity(
+  fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: CourtAppearanceLegacyData?): CourtAppearanceEntity = CourtAppearanceEntity(
     0, UUID.randomUUID(), lifetimeUuid, null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
     EntityStatus.FUTURE, this, null,
     ZonedDateTime.now(), createdByUsername, null, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, legacyData,
@@ -148,7 +146,7 @@ class CourtAppearanceEntity(
 
   companion object {
 
-    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity {
+    fun from(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String): CourtAppearanceEntity {
       val courtAppearanceEntity = CourtAppearanceEntity(
         appearanceUuid = courtAppearance.appearanceUuid,
         appearanceOutcome = appearanceOutcome,
@@ -166,13 +164,13 @@ class CourtAppearanceEntity(
         taggedBail = courtAppearance.taggedBail,
         overallConvictionDate = courtAppearance.overallConvictionDate,
         lifetimeUuid = courtAppearance.lifetimeUuid,
-        legacyData = legacyData,
+        legacyData = courtAppearance.legacyData,
         charges = mutableSetOf(),
       )
       return courtAppearanceEntity
     }
 
-    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: JsonNode?): CourtAppearanceEntity = CourtAppearanceEntity(
+    fun fromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?, legacyData: CourtAppearanceLegacyData?): CourtAppearanceEntity = CourtAppearanceEntity(
       appearanceUuid = UUID.randomUUID(),
       appearanceOutcome = null,
       courtCase = courtCase,
@@ -193,7 +191,7 @@ class CourtAppearanceEntity(
       legacyData = legacyData,
     )
 
-    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode?): CourtAppearanceEntity = CourtAppearanceEntity(
+    fun from(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String): CourtAppearanceEntity = CourtAppearanceEntity(
       appearanceUuid = UUID.randomUUID(),
       appearanceOutcome = appearanceOutcome,
       courtCase = courtCase,
@@ -211,10 +209,10 @@ class CourtAppearanceEntity(
       taggedBail = null,
       overallConvictionDate = null,
       lifetimeUuid = UUID.randomUUID(),
-      legacyData = legacyData,
+      legacyData = courtAppearance.legacyData,
     )
 
-    fun from(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, legacyData: JsonNode, courtCaseReference: String?): CourtAppearanceEntity = CourtAppearanceEntity(
+    fun from(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdByUsername: String, courtCaseReference: String?): CourtAppearanceEntity = CourtAppearanceEntity(
       appearanceUuid = UUID.randomUUID(),
       appearanceOutcome = appearanceOutcome,
       courtCase = courtCase,
@@ -232,7 +230,7 @@ class CourtAppearanceEntity(
       taggedBail = null,
       overallConvictionDate = null,
       lifetimeUuid = UUID.randomUUID(),
-      legacyData = legacyData,
+      legacyData = migrationCreateCourtAppearance.legacyData,
     )
 
     private fun deriveWarrantType(appearanceOutcome: AppearanceOutcomeEntity?, legacyData: CourtAppearanceLegacyData): String = appearanceOutcome?.outcomeType ?: if (legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") "SENTENCING" else "REMAND"

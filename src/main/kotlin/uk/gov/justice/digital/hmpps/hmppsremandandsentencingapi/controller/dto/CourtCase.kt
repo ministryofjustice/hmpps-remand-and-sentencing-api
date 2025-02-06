@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
-import com.fasterxml.jackson.databind.JsonNode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 
 data class CourtCase(
   val prisonerId: String,
@@ -10,7 +10,7 @@ data class CourtCase(
   val status: EntityStatus,
   val latestAppearance: CourtAppearance?,
   val appearances: List<CourtAppearance>,
-  val legacyData: JsonNode?,
+  val legacyData: CourtCaseLegacyData?,
   val draftAppearances: List<DraftCourtAppearance>,
 ) {
   companion object {

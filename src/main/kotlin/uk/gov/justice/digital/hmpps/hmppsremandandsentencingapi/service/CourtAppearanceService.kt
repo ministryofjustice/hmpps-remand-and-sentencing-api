@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -43,7 +41,6 @@ class CourtAppearanceService(
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
   private val documentManagementApiClient: DocumentManagementApiClient,
-  private val objectMapper: ObjectMapper,
   private val appearanceTypeRepository: AppearanceTypeRepository,
 ) {
 
@@ -74,16 +71,16 @@ class CourtAppearanceService(
 
   private fun createCourtAppearanceEntity(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity): RecordResponse<CourtAppearanceEntity> {
     val (appearanceLegacyData, appearanceOutcome) = getAppearanceOutcome(courtAppearance)
-    val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
+    courtAppearance.legacyData = appearanceLegacyData
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { nextCourtAppearance ->
-      val futureLegacyData = nextCourtAppearance.appearanceTime?.let { objectMapper.valueToTree<JsonNode>(CourtAppearanceLegacyData.from(it)) }
+      val futureLegacyData = nextCourtAppearance.appearanceTime?.let { CourtAppearanceLegacyData.from(it) }
       val futureCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.fromFuture(nextCourtAppearance, courtCaseEntity, serviceUserService.getUsername(), courtAppearance.courtCaseReference, futureLegacyData))
       val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nextCourtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type found at ${nextCourtAppearance.appearanceTypeUuid}")
       nextCourtAppearanceRepository.save(
         NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance, appearanceType),
       )
     }
-    val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), legacyData))
+    val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername()))
     val eventsToEmit = mutableListOf(
       EventMetadataCreator.courtAppearanceEventMetadata(
         createdCourtAppearance.courtCase.prisonerId,
@@ -124,8 +121,8 @@ class CourtAppearanceService(
     var appearanceChangeStatus = EntityChangeStatus.NO_CHANGE
 
     val (appearanceLegacyData, appearanceOutcome) = getAppearanceOutcome(courtAppearance)
-    val legacyData = appearanceLegacyData?.let { objectMapper.valueToTree<JsonNode>(it) }
-    val compareAppearance = existingCourtAppearanceEntity.copyFrom(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername(), legacyData)
+    courtAppearance.legacyData = appearanceLegacyData
+    val compareAppearance = existingCourtAppearanceEntity.copyFrom(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername())
     var activeRecord = existingCourtAppearanceEntity
     val eventsToEmit = mutableListOf<EventMetadata>()
     if (!existingCourtAppearanceEntity.isSame(compareAppearance)) {
@@ -194,10 +191,8 @@ class CourtAppearanceService(
     return existingNextCourtAppearance?.let { activeNextCourtAppearance ->
       if (courtAppearance.nextCourtAppearance != null) {
         val activeFutureSkeletonAppearance = activeNextCourtAppearance.futureSkeletonAppearance
-        val legacyData = activeFutureSkeletonAppearance.legacyData?.let {
-          val existingData = objectMapper.treeToValue<CourtAppearanceLegacyData>(it, CourtAppearanceLegacyData::class.java)
-          objectMapper.valueToTree<JsonNode>(existingData.copyFrom(courtAppearance.nextCourtAppearance.appearanceTime))
-        } ?: courtAppearance.nextCourtAppearance.appearanceTime?.let { objectMapper.valueToTree<JsonNode>(CourtAppearanceLegacyData.from(it)) }
+        val legacyData = activeFutureSkeletonAppearance.legacyData?.copyFrom(courtAppearance.nextCourtAppearance.appearanceTime)
+          ?: courtAppearance.nextCourtAppearance.appearanceTime?.let { CourtAppearanceLegacyData.from(it) }
         var futureCourtAppearance = activeFutureSkeletonAppearance.copyFromFuture(
           courtAppearance.nextCourtAppearance,
           activeRecord.courtCase,
@@ -228,7 +223,7 @@ class CourtAppearanceService(
         EntityChangeStatus.DELETED to activeNextCourtAppearance.futureSkeletonAppearance
       }
     } ?: courtAppearance.nextCourtAppearance?.let { toCreateNextCourtAppearance ->
-      val futureLegacyData = toCreateNextCourtAppearance.appearanceTime?.let { objectMapper.valueToTree<JsonNode>(CourtAppearanceLegacyData.from(it)) }
+      val futureLegacyData = toCreateNextCourtAppearance.appearanceTime?.let { CourtAppearanceLegacyData.from(it) }
       val futureCourtAppearance = courtAppearanceRepository.save(
         CourtAppearanceEntity.fromFuture(
           toCreateNextCourtAppearance,

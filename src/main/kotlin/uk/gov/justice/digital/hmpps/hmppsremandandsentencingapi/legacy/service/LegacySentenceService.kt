@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,7 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceU
 import java.util.UUID
 
 @Service
-class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val objectMapper: ObjectMapper, private val serviceUserService: ServiceUserService, private val fineAmountRepository: FineAmountRepository, private val periodLengthRepository: PeriodLengthRepository) {
+class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val serviceUserService: ServiceUserService, private val fineAmountRepository: FineAmountRepository, private val periodLengthRepository: PeriodLengthRepository) {
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
@@ -32,15 +30,14 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       throw ChargeAlreadySentencedException("charge at ${sentence.chargeLifetimeUuid} is already sentenced")
     }
     val dpsSentenceType = (sentence.legacyData.sentenceCategory to sentence.legacyData.sentenceCalcType).takeIf { (sentenceCategory, sentenceCalcType) -> sentenceCategory != null && sentenceCalcType != null }?.let { (sentenceCategory, sentenceCalcType) -> sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(sentenceCategory!!, sentenceCalcType!!) }
-    val sentenceLegacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
-    val legacyData = objectMapper.valueToTree<JsonNode>(sentenceLegacyData)
+    sentence.legacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
-    val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, legacyData, consecutiveToSentence))
+    val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, consecutiveToSentence))
     charge.sentences.add(createdSentence)
     sentence.fine?.let { createdSentence.fineAmountEntity = fineAmountRepository.save(FineAmountEntity.from(it)) }
     createdSentence.periodLengths = sentence.periodLengths.map { legacyPeriodLength ->
       val createdPeriodLength = periodLengthRepository.save(
-        PeriodLengthEntity.from(legacyPeriodLength, dpsSentenceType?.nomisSentenceCalcType ?: sentenceLegacyData.sentenceCalcType!!),
+        PeriodLengthEntity.from(legacyPeriodLength, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!),
       )
       createdPeriodLength.sentenceEntity = createdSentence
       createdPeriodLength
@@ -55,10 +52,9 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     val existingSentence = getUnlessDeleted(lifetimeUuid)
     var activeRecord = existingSentence
     val dpsSentenceType = (sentence.legacyData.sentenceCategory to sentence.legacyData.sentenceCalcType).takeIf { (sentenceCategory, sentenceCalcType) -> sentenceCategory != null && sentenceCalcType != null }?.let { (sentenceCategory, sentenceCalcType) -> sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(sentenceCategory!!, sentenceCalcType!!) }
-    val sentenceLegacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
-    val legacyData = objectMapper.valueToTree<JsonNode>(sentenceLegacyData)
+    sentence.legacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
-    val updatedSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), dpsSentenceType, legacyData, consecutiveToSentence)
+    val updatedSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), dpsSentenceType, consecutiveToSentence)
     if (!existingSentence.isSame(updatedSentence)) {
       existingSentence.statusId = EntityStatus.EDITED
       entityChangeStatus = EntityChangeStatus.EDITED
@@ -79,7 +75,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
   }
 
   @Transactional(readOnly = true)
-  fun get(lifetimeUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(lifetimeUuid), objectMapper)
+  fun get(lifetimeUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(lifetimeUuid))
 
   @Transactional
   fun delete(lifetimeUuid: UUID) {

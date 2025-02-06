@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
-import com.fasterxml.jackson.databind.JsonNode
-import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -15,11 +13,13 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -63,9 +63,8 @@ class SentenceEntity(
   val charge: ChargeEntity,
   @Column
   val convictionDate: LocalDate?,
-  @Type(value = JsonType::class)
-  @Column(columnDefinition = "jsonb")
-  var legacyData: JsonNode? = null,
+  @JdbcTypeCode(SqlTypes.JSON)
+  var legacyData: SentenceLegacyData? = null,
 
 ) {
   @OneToMany
@@ -104,7 +103,7 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity {
+  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
@@ -118,7 +117,7 @@ class SentenceEntity(
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceTypeEntity,
       convictionDate = convictionDate,
-      legacyData = legacyData,
+      legacyData = sentence.legacyData,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }
     sentenceEntity.fineAmountEntity = sentence.fine?.let { FineAmountEntity.from(it) }
@@ -144,7 +143,7 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
@@ -157,10 +156,10 @@ class SentenceEntity(
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceTypeEntity,
       convictionDate = null,
-      legacyData = legacyData,
+      legacyData = sentence.legacyData,
     )
 
-    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, legacyData: JsonNode, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
@@ -173,7 +172,7 @@ class SentenceEntity(
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceTypeEntity,
       convictionDate = null,
-      legacyData = legacyData,
+      legacyData = sentence.legacyData,
     )
   }
 }
