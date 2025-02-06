@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,7 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 
 @Service
-class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper, private val draftAppearanceRepository: DraftAppearanceRepository) {
+class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val serviceUserService: ServiceUserService, private val draftAppearanceRepository: DraftAppearanceRepository) {
 
   @Transactional
   fun create(courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
@@ -37,8 +36,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   @Transactional(readOnly = true)
   fun getTest(courtCaseUuid: String): TestCourtCase {
     val courtCase = getUnlessDeleted(courtCaseUuid)
-    val courtCaseLegacyData = courtCase.legacyData?.let { legacyData -> objectMapper.treeToValue(legacyData, CourtCaseLegacyData::class.java) }
-    return TestCourtCase.from(courtCase, courtCaseLegacyData, objectMapper)
+    return TestCourtCase.from(courtCase)
   }
 
   @Transactional
