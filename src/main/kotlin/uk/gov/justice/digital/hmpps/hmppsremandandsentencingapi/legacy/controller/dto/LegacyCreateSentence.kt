@@ -9,6 +9,6 @@ data class LegacyCreateSentence(
   val consecutiveToLifetimeUuid: UUID?,
   val active: Boolean,
   val prisonId: String,
-  val legacyData: SentenceLegacyData,
+  var legacyData: SentenceLegacyData,
   val periodLengths: List<LegacyCreatePeriodLength>,
 )

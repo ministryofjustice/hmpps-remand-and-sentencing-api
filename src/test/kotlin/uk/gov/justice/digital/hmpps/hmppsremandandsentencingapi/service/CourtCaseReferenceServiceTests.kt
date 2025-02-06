@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -21,10 +18,9 @@ import java.util.UUID
 
 class CourtCaseReferenceServiceTests {
   private val courtCaseRepository = mockk<CourtCaseRepository>()
-  private val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
   private val courtAppearanceRepository = mockk<CourtAppearanceRepository>()
   private val serviceUserService = mockk<ServiceUserService>()
-  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, objectMapper, courtAppearanceRepository, serviceUserService)
+  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, courtAppearanceRepository, serviceUserService)
 
   @Test
   fun `insert new active case references`() {
@@ -34,7 +30,7 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = listOf(activeCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
-    val caseReferences = objectMapper.treeToValue(courtCase.legacyData, CourtCaseLegacyData::class.java).caseReferences
+    val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(1).extracting<String> { it.offenderCaseReference }.contains(activeCourtAppearance.courtCaseReference!!)
   }
 
@@ -46,7 +42,7 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = listOf(deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
-    val caseReferences = objectMapper.treeToValue(courtCase.legacyData, CourtCaseLegacyData::class.java).caseReferences
+    val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(0).extracting<String> { it.offenderCaseReference }.doesNotContain(deletedCourtAppearance.courtCaseReference!!)
   }
 
@@ -60,11 +56,11 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = listOf(activeCourtAppearance, deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
-    val caseReferences = objectMapper.treeToValue(courtCase.legacyData, CourtCaseLegacyData::class.java).caseReferences
+    val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(5).extracting<String> { it.offenderCaseReference }.containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
   }
 
-  private fun generateLegacyData(caseReferences: List<String>): JsonNode = objectMapper.valueToTree<JsonNode>(CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList()))
+  private fun generateLegacyData(caseReferences: List<String>): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList())
 
   private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(appearanceUuid = UUID.randomUUID(), lifetimeUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdByUsername = "U", createdPrison = "P", warrantType = "W", taggedBail = null, charges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
 }

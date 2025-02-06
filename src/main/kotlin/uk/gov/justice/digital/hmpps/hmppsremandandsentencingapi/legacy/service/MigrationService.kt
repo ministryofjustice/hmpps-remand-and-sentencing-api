@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
@@ -142,8 +141,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
 
   fun createSentence(migrationCreateSentence: MigrationCreateSentence, chargeEntity: ChargeEntity, createdByUsername: String, dpsSentenceTypes: Map<Pair<String, String>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>): SentenceEntity {
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { dpsSentenceTypes[it] }
-    val sentenceLegacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
-    val legacyData = objectMapper.valueToTree<JsonNode>(sentenceLegacyData)
+    migrationCreateSentence.legacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
     var consecutiveToSentence: SentenceEntity? = null
     if (migrationCreateSentence.consecutiveToSentenceId != null) {
       consecutiveToSentence = createdSentencesMap[migrationCreateSentence.consecutiveToSentenceId]
@@ -152,7 +150,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
       consecutiveToSentence = sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
     }
 
-    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, legacyData, consecutiveToSentence)
+    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, consecutiveToSentence)
     val createdSentence = sentenceRepository.save(toCreateSentence)
     createdSentence.fineAmountEntity = migrationCreateSentence.fine?.let { fineAmountRepository.save(FineAmountEntity.from(it)) }
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {

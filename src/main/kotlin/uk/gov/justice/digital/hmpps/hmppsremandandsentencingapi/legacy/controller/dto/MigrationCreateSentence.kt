@@ -8,7 +8,7 @@ data class MigrationCreateSentence(
   val chargeNumber: String?,
   val fine: MigrationCreateFine?,
   val active: Boolean,
-  val legacyData: SentenceLegacyData,
+  var legacyData: SentenceLegacyData,
   @Schema(description = "The consecutive to sentence Id if the sentence is in the same court case")
   val consecutiveToSentenceId: MigrationSentenceId?,
   @Schema(description = "The consecutive to lifetime uuid if the sentence is not in the same court case")

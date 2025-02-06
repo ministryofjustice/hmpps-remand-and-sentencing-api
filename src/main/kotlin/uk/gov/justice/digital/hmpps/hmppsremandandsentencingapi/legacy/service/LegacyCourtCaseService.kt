@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.DraftAppearanceRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
@@ -32,8 +31,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   @Transactional(readOnly = true)
   fun get(courtCaseUuid: String): LegacyCourtCase {
     val courtCase = getUnlessDeleted(courtCaseUuid)
-    val courtCaseLegacyData = courtCase.legacyData?.let { legacyData -> objectMapper.treeToValue(legacyData, CourtCaseLegacyData::class.java) }
-    return LegacyCourtCase.from(courtCase, courtCaseLegacyData)
+    return LegacyCourtCase.from(courtCase)
   }
 
   @Transactional(readOnly = true)
