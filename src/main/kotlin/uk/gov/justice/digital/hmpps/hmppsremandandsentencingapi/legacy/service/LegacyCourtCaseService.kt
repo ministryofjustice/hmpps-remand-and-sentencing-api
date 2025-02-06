@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.TestCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 
 @Service
@@ -33,6 +34,13 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     val courtCase = getUnlessDeleted(courtCaseUuid)
     val courtCaseLegacyData = courtCase.legacyData?.let { legacyData -> objectMapper.treeToValue(legacyData, CourtCaseLegacyData::class.java) }
     return LegacyCourtCase.from(courtCase, courtCaseLegacyData)
+  }
+
+  @Transactional(readOnly = true)
+  fun getTest(courtCaseUuid: String): TestCourtCase {
+    val courtCase = getUnlessDeleted(courtCaseUuid)
+    val courtCaseLegacyData = courtCase.legacyData?.let { legacyData -> objectMapper.treeToValue(legacyData, CourtCaseLegacyData::class.java) }
+    return TestCourtCase.from(courtCase, courtCaseLegacyData, objectMapper)
   }
 
   @Transactional
