@@ -11,4 +11,5 @@ enum class SentenceTypeClassification {
   FINE,
   LEGACY,
   NON_CUSTODIAL,
+  LEGACY_RECALL,
 }

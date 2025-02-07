@@ -1,0 +1,2 @@
+INSERT INTO sentence_type (sentence_type_uuid, description, min_age_inclusive, max_age_exclusive, min_date_inclusive, max_date_exclusive, classification, hint_text, nomis_cja_code, nomis_sentence_calc_type, display_order)
+VALUES('f9a1551e-86b1-425b-96f7-23465a0f05fc', 'Unknown pre-recall sentence', null, null, null, null, 'LEGACY_RECALL', null, 'UNKNOWN', 'UNKNOWN', 0);
