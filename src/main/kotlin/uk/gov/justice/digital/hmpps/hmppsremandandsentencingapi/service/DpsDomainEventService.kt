@@ -74,18 +74,21 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
             eventMetaData.prisonerId,
             eventMetaData.sentenceId!!,
             eventMetaData.chargeId!!,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.SENTENCE_UPDATED -> sentenceDomainEventService.update(
             eventMetaData.prisonerId,
             eventMetaData.sentenceId!!,
             eventMetaData.chargeId!!,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
           EventType.SENTENCE_DELETED -> sentenceDomainEventService.delete(
             eventMetaData.prisonerId,
             eventMetaData.sentenceId!!,
             eventMetaData.chargeId!!,
+            eventMetaData.courtCaseId!!,
             EventSource.DPS,
           )
 

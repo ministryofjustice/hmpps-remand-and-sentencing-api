@@ -46,8 +46,8 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       createdPeriodLength.sentenceEntity = createdSentence
       createdPeriodLength
     }
-
-    return LegacySentenceCreatedResponse(charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId, createdSentence.lifetimeSentenceUuid!!, charge.lifetimeChargeUuid)
+    val courtCase = charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
+    return LegacySentenceCreatedResponse(courtCase.prisonerId, createdSentence.lifetimeSentenceUuid!!, charge.lifetimeChargeUuid, courtCase.caseUniqueIdentifier)
   }
 
   @Transactional
@@ -75,7 +75,8 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       }
       existingSentence.charge.sentences.add(activeRecord)
     }
-    return entityChangeStatus to LegacySentenceCreatedResponse(activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId, activeRecord.lifetimeSentenceUuid!!, activeRecord.charge.lifetimeChargeUuid)
+    val courtCase = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
+    return entityChangeStatus to LegacySentenceCreatedResponse(courtCase.prisonerId, activeRecord.lifetimeSentenceUuid!!, activeRecord.charge.lifetimeChargeUuid, courtCase.caseUniqueIdentifier)
   }
 
   @Transactional(readOnly = true)

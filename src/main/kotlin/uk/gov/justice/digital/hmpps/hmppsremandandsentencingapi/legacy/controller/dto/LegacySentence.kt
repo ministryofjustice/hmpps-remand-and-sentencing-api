@@ -8,6 +8,7 @@ import java.util.UUID
 
 data class LegacySentence(
   val prisonerId: String,
+  val courtCaseId: String,
   val chargeLifetimeUuid: UUID,
   val lifetimeUuid: UUID,
   val sentenceCalcType: String?,
@@ -19,17 +20,21 @@ data class LegacySentence(
   val periodLengths: List<LegacyPeriodLength>,
 ) {
   companion object {
-    fun from(sentenceEntity: SentenceEntity): LegacySentence = LegacySentence(
-      sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase.prisonerId,
-      sentenceEntity.charge.lifetimeChargeUuid,
-      sentenceEntity.lifetimeSentenceUuid!!,
-      sentenceEntity.legacyData?.sentenceCalcType ?: sentenceEntity.sentenceType?.nomisSentenceCalcType,
-      sentenceEntity.legacyData?.sentenceCategory ?: sentenceEntity.sentenceType?.nomisCjaCode,
-      sentenceEntity.consecutiveTo?.lifetimeSentenceUuid,
-      sentenceEntity.chargeNumber,
-      sentenceEntity.fineAmountEntity?.fineAmount,
-      sentenceEntity.legacyData,
-      sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
-    )
+    fun from(sentenceEntity: SentenceEntity): LegacySentence {
+      val courtCase = sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
+      return LegacySentence(
+        courtCase.prisonerId,
+        courtCase.caseUniqueIdentifier,
+        sentenceEntity.charge.lifetimeChargeUuid,
+        sentenceEntity.lifetimeSentenceUuid,
+        sentenceEntity.legacyData?.sentenceCalcType ?: sentenceEntity.sentenceType?.nomisSentenceCalcType,
+        sentenceEntity.legacyData?.sentenceCategory ?: sentenceEntity.sentenceType?.nomisCjaCode,
+        sentenceEntity.consecutiveTo?.lifetimeSentenceUuid,
+        sentenceEntity.chargeNumber,
+        sentenceEntity.fineAmountEntity?.fineAmount,
+        sentenceEntity.legacyData,
+        sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
+      )
+    }
   }
 }

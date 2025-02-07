@@ -15,35 +15,35 @@ class SentenceDomainEventService(
   @Value("\${ingress.url}") private val ingressUrl: String,
   @Value("\${court.sentence.getByIdPath}") private val sentenceLookupPath: String,
 ) {
-  fun create(prisonerId: String, sentenceId: String, courtChargeId: String, source: EventSource) {
+  fun create(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "sentence.inserted",
       "Sentence inserted",
       generateDetailsUri(sentenceLookupPath, sentenceId),
       ZonedDateTime.now(),
-      HmppsSentenceMessage(sentenceId, courtChargeId, source),
+      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun update(prisonerId: String, sentenceId: String, courtChargeId: String, source: EventSource) {
+  fun update(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "sentence.updated",
       "Sentence updated",
       generateDetailsUri(sentenceLookupPath, sentenceId),
       ZonedDateTime.now(),
-      HmppsSentenceMessage(sentenceId, courtChargeId, source),
+      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun delete(prisonerId: String, sentenceId: String, courtChargeId: String, source: EventSource) {
+  fun delete(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "sentence.deleted",
       "Sentence deleted",
       generateDetailsUri(sentenceLookupPath, sentenceId),
       ZonedDateTime.now(),
-      HmppsSentenceMessage(sentenceId, courtChargeId, source),
+      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }

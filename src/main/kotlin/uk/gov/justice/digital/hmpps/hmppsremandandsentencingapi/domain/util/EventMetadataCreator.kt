@@ -28,10 +28,11 @@ class EventMetadataCreator {
 
     fun sentenceEventMetadata(
       prisonerId: String,
+      courtCaseId: String,
       chargeId: String,
       sentenceId: String,
       eventType: EventType,
-    ): EventMetadata = EventMetadata(prisonerId, null, null, chargeId, sentenceId, null, eventType)
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, null, chargeId, sentenceId, null, eventType)
 
     fun recallEventMetadata(
       prisonerId: String,
