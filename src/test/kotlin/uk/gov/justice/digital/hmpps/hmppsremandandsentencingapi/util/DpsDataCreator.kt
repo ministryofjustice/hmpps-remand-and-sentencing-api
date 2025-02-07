@@ -65,7 +65,7 @@ class DpsDataCreator {
       offenceEndDate: LocalDate? = null,
       outcomeUuid: UUID? = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
       terrorRelated: Boolean? = true,
-      sentence: CreateSentence = dpsCreateSentence(),
+      sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
     ): CreateCharge = CreateCharge(appearanceUuid, chargeUuid, chargeLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, terrorRelated, sentence, legacyData)
 
