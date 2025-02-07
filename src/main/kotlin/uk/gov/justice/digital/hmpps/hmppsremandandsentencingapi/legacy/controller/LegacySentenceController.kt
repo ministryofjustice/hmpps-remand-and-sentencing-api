@@ -46,7 +46,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).also {
-    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), EventSource.NOMIS)
+    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), it.courtCaseId, EventSource.NOMIS)
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -65,7 +65,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence) {
     legacySentenceService.update(lifetimeUuid, sentence).also { (entityChangeStatus, legacySentenceCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), EventSource.NOMIS)
+        eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, EventSource.NOMIS)
       }
     }
   }
@@ -101,7 +101,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   fun delete(@PathVariable lifetimeUuid: UUID) {
     legacySentenceService.get(lifetimeUuid).also { legacySentence ->
       legacySentenceService.delete(lifetimeUuid)
-      eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), EventSource.NOMIS)
+      eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), legacySentence.courtCaseId, EventSource.NOMIS)
     }
   }
 }

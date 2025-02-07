@@ -38,7 +38,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       ),
     )
     charge.sentence?.let { createSentence ->
-      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(createSentence, savedCharge, sentencesCreated, prisonerId)
+      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(createSentence, savedCharge, sentencesCreated, prisonerId, courtCaseId)
       savedCharge.sentences.add(sentence)
       eventsToEmit.addAll(sentenceEventsToEmit)
     }
@@ -78,11 +78,11 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       chargeChanges.add(chargeChangeStatus to activeRecord)
     }
     if (charge.sentence != null) {
-      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(charge.sentence, activeRecord, sentencesCreated, prisonerId)
+      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(charge.sentence, activeRecord, sentencesCreated, prisonerId, courtCaseId)
       activeRecord.sentences.add(sentence)
       eventsToEmit.addAll(sentenceEventsToEmit)
     } else {
-      activeRecord.getActiveSentence()?.let { sentenceEntity -> eventsToEmit.addAll(sentenceService.deleteSentence(sentenceEntity, activeRecord, prisonerId).eventsToEmit) }
+      activeRecord.getActiveSentence()?.let { sentenceEntity -> eventsToEmit.addAll(sentenceService.deleteSentence(sentenceEntity, activeRecord, prisonerId, courtCaseId).eventsToEmit) }
     }
     chargeChanges.forEach { (chargeChangeStatus, record) ->
       if (chargeChangeStatus == EntityChangeStatus.EDITED) {
@@ -135,7 +135,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.statusId = EntityStatus.DELETED
     val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
-    charge.getActiveSentence()?.let { eventsToEmit.addAll(sentenceService.deleteSentence(it, charge, prisonerId!!).eventsToEmit) }
+    charge.getActiveSentence()?.let { eventsToEmit.addAll(sentenceService.deleteSentence(it, charge, prisonerId!!, courtCaseId!!).eventsToEmit) }
     if (changeStatus == EntityChangeStatus.DELETED) {
       eventsToEmit.add(
         EventMetadataCreator.chargeEventMetadata(

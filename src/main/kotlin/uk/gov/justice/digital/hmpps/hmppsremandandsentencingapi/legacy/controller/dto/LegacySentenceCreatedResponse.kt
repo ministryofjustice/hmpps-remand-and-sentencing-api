@@ -6,4 +6,5 @@ data class LegacySentenceCreatedResponse(
   val prisonerId: String,
   val lifetimeUuid: UUID,
   val chargeLifetimeUuid: UUID,
+  val courtCaseId: String,
 )
