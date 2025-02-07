@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class LegacyCreateSentenceTests : IntegrationTestBase() {
 
@@ -33,6 +34,43 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("sentence.inserted")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+  }
+
+  @Test
+  fun `creating a sentence with recall sentence type uses the DPS recall sentence type bucket`() {
+    val (_, courtCaseCreated) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(DpsDataCreator.dpsCreateCharge(sentence = null))),
+        ),
+      ),
+    )
+    val charge = courtCaseCreated.appearances.first().charges.first()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = charge.lifetimeChargeUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+
+    webTestClient
+      .get()
+      .uri("/charge/${charge.chargeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.sentence.sentenceType.sentenceTypeUuid")
+      .isEqualTo("f9a1551e-86b1-425b-96f7-23465a0f05fc")
   }
 
   @Test
