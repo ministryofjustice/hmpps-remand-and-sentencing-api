@@ -6,6 +6,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -145,7 +146,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `can create sentence when consecutive to another in the same court case`() {
-    val firstSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 1))
+    val firstSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 1), legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
     val consecutiveToSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 5), consecutiveToSentenceId = firstSentence.sentenceId)
     val charge = DataCreator.migrationCreateCharge(chargeNOMISId = "11", sentence = firstSentence)
     val consecutiveToCharge = DataCreator.migrationCreateCharge(chargeNOMISId = "22", sentence = consecutiveToSentence)
@@ -166,7 +167,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     val consecutiveToSentenceLifetimeUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == consecutiveToSentence.sentenceId }.lifetimeSentenceUuid
-
+    val firstSentenceLifetimeUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == firstSentence.sentenceId }.lifetimeSentenceUuid
     webTestClient
       .get()
       .uri("/court-case/${response.courtCaseUuid}")
@@ -179,6 +180,8 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceLifetimeUuid == '$consecutiveToSentenceLifetimeUuid')].consecutiveToChargeNumber")
       .isEqualTo(firstSentence.chargeNumber!!)
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceLifetimeUuid == '$firstSentenceLifetimeUuid')].sentenceType.sentenceTypeUuid")
+      .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
   }
 
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
