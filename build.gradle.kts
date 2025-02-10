@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "7.0.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "7.1.0"
   kotlin("plugin.spring") version "2.1.10"
   kotlin("plugin.jpa") version "2.1.10"
 }
@@ -23,7 +23,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.2.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.3.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
   // Database dependencies
