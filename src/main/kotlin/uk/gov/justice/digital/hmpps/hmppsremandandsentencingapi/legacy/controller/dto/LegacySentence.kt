@@ -11,12 +11,12 @@ data class LegacySentence(
   val courtCaseId: String,
   val chargeLifetimeUuid: UUID,
   val lifetimeUuid: UUID,
-  val sentenceCalcType: String?,
-  val sentenceCategory: String?,
+  val active: Boolean,
+  val sentenceCalcType: String,
+  val sentenceCategory: String,
   val consecutiveToLifetimeUuid: UUID?,
   val chargeNumber: String?,
   val fineAmount: BigDecimal?,
-  val legacyData: SentenceLegacyData?,
   val periodLengths: List<LegacyPeriodLength>,
 ) {
   companion object {
@@ -27,12 +27,12 @@ data class LegacySentence(
         courtCase.caseUniqueIdentifier,
         sentenceEntity.charge.lifetimeChargeUuid,
         sentenceEntity.lifetimeSentenceUuid,
-        sentenceEntity.legacyData?.sentenceCalcType ?: sentenceEntity.sentenceType?.nomisSentenceCalcType,
-        sentenceEntity.legacyData?.sentenceCategory ?: sentenceEntity.sentenceType?.nomisCjaCode,
+        sentenceEntity.statusId == EntityStatus.ACTIVE,
+        sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData!!.sentenceCalcType!!,
+        sentenceEntity.sentenceType?.nomisCjaCode ?: sentenceEntity.legacyData!!.sentenceCategory!!,
         sentenceEntity.consecutiveTo?.lifetimeSentenceUuid,
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmountEntity?.fineAmount,
-        sentenceEntity.legacyData,
         sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
       )
     }

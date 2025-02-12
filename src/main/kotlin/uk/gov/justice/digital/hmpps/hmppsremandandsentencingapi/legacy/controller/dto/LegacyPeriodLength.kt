@@ -10,14 +10,14 @@ data class LegacyPeriodLength(
   val periodWeeks: Int?,
   val periodDays: Int?,
   val isLifeSentence: Boolean?,
-  val sentenceTermCode: String?,
+  val sentenceTermCode: String,
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity, sentenceTypeClassification: SentenceTypeClassification?): LegacyPeriodLength {
       val (isLifeSentence, sentenceTermCode) = if (sentenceTypeClassification != null) {
         PeriodLengthTypeMapper.convertDpsToNomis(periodLengthEntity.periodLengthType, sentenceTypeClassification, periodLengthEntity.legacyData)
       } else {
-        periodLengthEntity.legacyData?.lifeSentence to periodLengthEntity.legacyData?.sentenceTermCode
+        periodLengthEntity.legacyData?.lifeSentence to periodLengthEntity.legacyData!!.sentenceTermCode!!
       }
       return LegacyPeriodLength(
         periodLengthEntity.years,
