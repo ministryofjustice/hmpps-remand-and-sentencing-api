@@ -2,13 +2,18 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class LegacyGetSentenceTests : IntegrationTestBase() {
 
   @Test
   fun `get sentence by lifetime uuid`() {
-    val (_, createdCourtCase) = createCourtCase()
+    val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      outcomeUuid = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
+      warrantType = "SENTENCING",
+    )
+    val (_, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencedAppearance)))
     val sentence = createdCourtCase.appearances.first().charges.first().sentence!!
 
     webTestClient

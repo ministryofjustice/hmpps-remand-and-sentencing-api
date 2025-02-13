@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.util.UUID
 
 data class LegacySentence(
@@ -18,10 +19,13 @@ data class LegacySentence(
   val chargeNumber: String?,
   val fineAmount: BigDecimal?,
   val periodLengths: List<LegacyPeriodLength>,
+  val sentenceStartDate: LocalDate,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
-      val courtCase = sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
+      val activeAppearances = sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }
+      val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
+      val firstSentenceAppearanceDate = activeAppearances.filter { it.warrantType == "SENTENCING" }.minOf { it.appearanceDate }
       return LegacySentence(
         courtCase.prisonerId,
         courtCase.caseUniqueIdentifier,
@@ -34,6 +38,7 @@ data class LegacySentence(
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmountEntity?.fineAmount,
         sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
+        firstSentenceAppearanceDate,
       )
     }
   }

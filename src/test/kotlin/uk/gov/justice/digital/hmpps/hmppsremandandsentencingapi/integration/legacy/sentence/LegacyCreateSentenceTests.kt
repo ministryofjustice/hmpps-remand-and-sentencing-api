@@ -93,7 +93,14 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   @Test
   fun `must be able to create a consecutive to sentence`() {
     val (lifetimeUuid) = createLegacySentence()
-    val (chargeLifetimeUuid) = createLegacyCharge()
+    val (chargeLifetimeUuid) = createLegacyCharge(
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+        legacyData = DataCreator.courtAppearanceLegacyData(
+          outcomeConvictionFlag = true,
+          outcomeDispositionCode = "F",
+        ),
+      ),
+    )
     val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = chargeLifetimeUuid, consecutiveToLifetimeUuid = lifetimeUuid)
     val response = webTestClient
       .post()
