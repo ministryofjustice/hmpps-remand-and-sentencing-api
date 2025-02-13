@@ -27,12 +27,12 @@ import java.util.UUID
 class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val fineAmountRepository: FineAmountRepository) {
 
   @Transactional(TxType.REQUIRED)
-  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
+  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean): RecordResponse<SentenceEntity> {
     val existingSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
-    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId)
+    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceDateChanged) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId)
   }
 
-  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
+  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean): RecordResponse<SentenceEntity> {
     if (existingSentence.statusId == EntityStatus.EDITED) {
       throw ImmutableSentenceException("Cannot edit and already edited sentence")
     }
@@ -40,7 +40,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
     var activeRecord = existingSentence
-    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     if (!existingSentence.isSame(compareSentence)) {
       existingSentence.statusId = EntityStatus.EDITED
       val toCreatePeriodLengths = compareSentence.periodLengths.toList()
@@ -50,6 +50,16 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       activeRecord = sentenceRepository.save(compareSentence)
       activeRecord.periodLengths = toCreatePeriodLengths.map { periodLengthRepository.save(it) }
       activeRecord.fineAmountEntity = toCreateFineAmount?.let { fineAmountRepository.save(it) }
+      eventsToEmit.add(
+        EventMetadataCreator.sentenceEventMetadata(
+          prisonerId,
+          courtCaseId,
+          chargeEntity.lifetimeChargeUuid.toString(),
+          activeRecord.lifetimeSentenceUuid.toString(),
+          EventType.SENTENCE_UPDATED,
+        ),
+      )
+    } else if (courtAppearanceDateChanged) {
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
@@ -72,7 +82,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
     return RecordResponse(
       createdSentence,
-      mutableListOf(
+      mutableSetOf(
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
           courtCaseId,
@@ -93,7 +103,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.statusId = EntityStatus.DELETED
-    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     if (changeStatus == EntityChangeStatus.DELETED) {
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(

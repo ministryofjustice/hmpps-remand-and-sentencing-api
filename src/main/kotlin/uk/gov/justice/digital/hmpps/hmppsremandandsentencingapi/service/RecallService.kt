@@ -25,7 +25,7 @@ class RecallService(
     val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!))
     return RecordResponse(
       SaveRecallResponse.from(recall),
-      mutableListOf(
+      mutableSetOf(
         EventMetadataCreator.recallEventMetadata(
           recall.prisonerId,
           recall.recallUuid.toString(),
@@ -45,7 +45,7 @@ class RecallService(
 
       return RecordResponse(
         SaveRecallResponse.from(savedRecall),
-        mutableListOf(
+        mutableSetOf(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
@@ -64,7 +64,7 @@ class RecallService(
 
       return RecordResponse(
         SaveRecallResponse.from(savedRecall),
-        mutableListOf(
+        mutableSetOf(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
