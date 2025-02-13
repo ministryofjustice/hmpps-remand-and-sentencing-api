@@ -7,6 +7,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -66,6 +67,32 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.nextCourtAppearance")
       .exists()
+  }
+
+  @Test
+  fun `updating the appearance date results in sentence updated events`() {
+    val appearanceDate = LocalDate.now()
+    val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      outcomeUuid = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
+      warrantType = "SENTENCING",
+      appearanceDate = appearanceDate,
+    )
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencedAppearance)))
+    val createdAppearance = createdCourtCase.appearances.first().copy(courtCaseUuid = courtCaseUuid, appearanceDate = appearanceDate.minusDays(10))
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(createdAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val messages = getMessages(2)
+    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("sentence.updated")
   }
 
   @Test

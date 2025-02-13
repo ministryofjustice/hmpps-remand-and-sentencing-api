@@ -28,7 +28,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     charge.legacyData = chargeLegacyData
     val savedCharge = chargeRepository.save(ChargeEntity.from(charge, chargeOutcome, serviceUserService.getUsername()))
-    val eventsToEmit = mutableListOf(
+    val eventsToEmit = mutableSetOf(
       EventMetadataCreator.chargeEventMetadata(
         prisonerId,
         courtCaseId,
@@ -38,14 +38,14 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       ),
     )
     charge.sentence?.let { createSentence ->
-      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(createSentence, savedCharge, sentencesCreated, prisonerId, courtCaseId)
+      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(createSentence, savedCharge, sentencesCreated, prisonerId, courtCaseId, false)
       savedCharge.sentences.add(sentence)
       eventsToEmit.addAll(sentenceEventsToEmit)
     }
     return RecordResponse(savedCharge, eventsToEmit)
   }
 
-  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity, courtAppearance: CourtAppearanceEntity): RecordResponse<ChargeEntity> {
+  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity, courtAppearance: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): RecordResponse<ChargeEntity> {
     if (existingCharge.statusId == EntityStatus.EDITED) {
       throw ImmutableChargeException("Cannot edit an already edited charge")
     }
@@ -54,7 +54,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     charge.legacyData = chargeLegacyData
     val compareCharge = existingCharge.copyFrom(charge, chargeOutcome, serviceUserService.getUsername())
     var activeRecord = existingCharge
-    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     if (!existingCharge.isSame(compareCharge)) {
       var chargeChangeStatus = EntityChangeStatus.EDITED
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
@@ -78,7 +78,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
       chargeChanges.add(chargeChangeStatus to activeRecord)
     }
     if (charge.sentence != null) {
-      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(charge.sentence, activeRecord, sentencesCreated, prisonerId, courtCaseId)
+      val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(charge.sentence, activeRecord, sentencesCreated, prisonerId, courtCaseId, courtAppearanceDateChanged)
       activeRecord.sentences.add(sentence)
       eventsToEmit.addAll(sentenceEventsToEmit)
     } else {
@@ -120,10 +120,10 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional
-  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity): RecordResponse<ChargeEntity> {
+  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): RecordResponse<ChargeEntity> {
     val existingCharge = chargeRepository.findByChargeUuid(charge.chargeUuid)
     val charge = if (existingCharge != null) {
-      updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge, courtAppearance)
+      updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge, courtAppearance, courtAppearanceDateChanged)
     } else {
       createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId)
     }
@@ -134,7 +134,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   fun deleteCharge(charge: ChargeEntity, prisonerId: String?, courtCaseId: String?): RecordResponse<ChargeEntity> {
     val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.statusId = EntityStatus.DELETED
-    val eventsToEmit: MutableList<EventMetadata> = mutableListOf()
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     charge.getActiveSentence()?.let { eventsToEmit.addAll(sentenceService.deleteSentence(it, charge, prisonerId!!, courtCaseId!!).eventsToEmit) }
     if (changeStatus == EntityChangeStatus.DELETED) {
       eventsToEmit.add(
@@ -152,7 +152,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
   @Transactional
   fun deleteChargeIfOrphan(charge: ChargeEntity, prisonerId: String, courtCaseId: String): RecordResponse<ChargeEntity> {
-    var recordResponse = RecordResponse(charge, mutableListOf())
+    var recordResponse = RecordResponse(charge, mutableSetOf())
     if (charge.courtAppearances.none { it.statusId == EntityStatus.ACTIVE }) {
       recordResponse = deleteCharge(charge, prisonerId, courtCaseId)
     }

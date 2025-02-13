@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 @Service
 class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService, private val chargeDomainEventService: ChargeDomainEventService, private val sentenceDomainEventService: SentenceDomainEventService, private val recallDomainEventService: RecallDomainEventService) {
 
-  fun emitEvents(eventsMetadata: List<EventMetadata>) {
+  fun emitEvents(eventsMetadata: Set<EventMetadata>) {
     eventsMetadata.sortedBy { it.eventType.order }
       .forEach { eventMetaData ->
         when (eventMetaData.eventType) {
