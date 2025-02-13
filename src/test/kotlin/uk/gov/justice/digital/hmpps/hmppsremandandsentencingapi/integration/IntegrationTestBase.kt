@@ -164,7 +164,12 @@ abstract class IntegrationTestBase {
 
   protected fun createLegacySentence(
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
-    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
+    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+      legacyData = DataCreator.courtAppearanceLegacyData(
+        outcomeConvictionFlag = true,
+        outcomeDispositionCode = "F",
+      ),
+    ),
     legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
     legacySentence: LegacyCreateSentence =
       DataCreator.legacyCreateSentence(),
