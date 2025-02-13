@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -15,9 +16,10 @@ data class Recall(
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
   val createdByPrison: String,
+  val sentences: List<Sentence>? = emptyList(),
 ) {
   companion object {
-    fun from(recall: RecallEntity): Recall = Recall(
+    fun from(recall: RecallEntity, sentences: List<RecallSentenceEntity>): Recall = Recall(
       recallUuid = recall.recallUuid,
       prisonerId = recall.prisonerId,
       revocationDate = recall.revocationDate,
@@ -26,6 +28,7 @@ data class Recall(
       createdByUsername = recall.createdByUsername,
       createdAt = recall.createdAt,
       createdByPrison = recall.createdByPrison,
+      sentences = sentences.map { Sentence.from(it.sentence) },
     )
   }
 }

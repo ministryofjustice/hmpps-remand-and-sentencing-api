@@ -10,19 +10,30 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import java.util.UUID
 
 @Service
 class RecallService(
   private val recallRepository: RecallRepository,
+  private val recallSentenceRepository: RecallSentenceRepository,
   private val recallTypeRepository: RecallTypeRepository,
+  private val sentenceRepository: SentenceRepository,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall): RecordResponse<SaveRecallResponse> {
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
     val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!))
+    // TODO Do we need a domain event for these?
+    val recallSentences: List<RecallSentenceEntity> = createRecall.sentenceIds
+      ?.map { sentenceRepository.findBySentenceUuid(it)!! }
+      ?.map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it)) }
+      ?: emptyList()
+
     return RecordResponse(
       SaveRecallResponse.from(recall),
       mutableSetOf(
@@ -79,9 +90,13 @@ class RecallService(
   fun findRecallByUuid(recallUuid: UUID): Recall {
     val recall = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
-    return Recall.from(recall)
+    val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
+    return Recall.from(recall, recallSentences)
   }
 
   @Transactional(readOnly = true)
-  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerId(prisonerId).map { Recall.from(it) }
+  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerId(prisonerId).map {
+    val recallSentences = recallSentenceRepository.findByRecallId(it.id).orEmpty()
+    Recall.from(it, recallSentences)
+  }
 }
