@@ -100,6 +100,9 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findBySentenceUuid(sentenceUuid)?.let { Sentence.from(it) }
 
   @Transactional(TxType.REQUIRED)
+  fun findSentenceByCourtCaseUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findBySentenceUuid(sentenceUuid)?.let { Sentence.from(it) }
+
+  @Transactional(TxType.REQUIRED)
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.statusId = EntityStatus.DELETED

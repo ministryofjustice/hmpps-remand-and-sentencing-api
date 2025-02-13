@@ -7,6 +7,7 @@ import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
@@ -44,6 +45,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          sentences = emptyList(),
         ),
       )
     val messages = getMessages(1)
@@ -77,6 +79,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          sentences = emptyList(),
         ),
       )
     val messages = getMessages(1)
@@ -114,6 +117,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          sentences = emptyList(),
         ),
       )
     val messages = getMessages(1)
@@ -140,6 +144,7 @@ class RecallIntTests : IntegrationTestBase() {
             createdByUsername = "admin_user",
             createdAt = ZonedDateTime.now(),
             createdByPrison = "HMI",
+            sentences = emptyList(),
           ),
           Recall(
             recallUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440001"),
@@ -150,6 +155,7 @@ class RecallIntTests : IntegrationTestBase() {
             createdByUsername = "admin_user",
             createdAt = ZonedDateTime.now(),
             createdByPrison = "HMI",
+            sentences = emptyList(),
           ),
         ),
       )
@@ -188,6 +194,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = originalRecall.createdByUsername,
           createdAt = originalRecall.createdAt,
           createdByPrison = originalRecall.createdByPrison,
+          sentences = emptyList(),
         ),
       )
 
@@ -195,6 +202,152 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.updated")
   }
 
+  @Test
+  @Sql("classpath:test_data/insert-sentences-to-recall.sql")
+  fun `Create recall with a sentence and fetch it based on returned UUID`() {
+    val recall = CreateRecall(
+      prisonerId = "A12345B",
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = LocalDate.of(2024, 2, 3),
+      recallTypeCode = FTR_14,
+      createdByUsername = "user001",
+      createdByPrison = "PRI",
+      sentenceIds = listOf(
+        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+      ),
+    )
+
+    val createRecall = postRecall(recall)
+    val actualRecall = getRecallByUUID(createRecall.recallUuid)
+    val expectedSentence = Sentence(
+      sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+      sentenceLifetimeUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+      chargeNumber = "1",
+      periodLengths = emptyList(),
+      sentenceServeType = "FORTHWITH",
+      consecutiveToChargeNumber = null,
+      sentenceType = null,
+      convictionDate = null,
+      fineAmount = null,
+      legacyData = null,
+    )
+    assertThat(actualRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .isEqualTo(
+        Recall(
+          recallUuid = createRecall.recallUuid,
+          prisonerId = "A12345B",
+          revocationDate = LocalDate.of(2024, 1, 2),
+          returnToCustodyDate = LocalDate.of(2024, 2, 3),
+          recallType = FTR_14,
+          createdByUsername = "user001",
+          createdAt = ZonedDateTime.now(),
+          createdByPrison = "PRI",
+          sentences = listOf(expectedSentence),
+        ),
+      )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+  }
+
+  @Test
+  @Sql("classpath:test_data/insert-sentences-to-recall.sql")
+  fun `Create recall with two sentences and fetch it based on returned UUID`() {
+    val recall = CreateRecall(
+      prisonerId = "A12345B",
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = LocalDate.of(2024, 2, 3),
+      recallTypeCode = FTR_14,
+      createdByUsername = "user001",
+      createdByPrison = "PRI",
+      sentenceIds = listOf(
+        UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+        UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
+      ),
+    )
+
+    val createRecall = postRecall(recall)
+    val actualRecall = getRecallByUUID(createRecall.recallUuid)
+    val expectedSentence = Sentence(
+      sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+      sentenceLifetimeUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+      chargeNumber = "1",
+      periodLengths = emptyList(),
+      sentenceServeType = "FORTHWITH",
+      consecutiveToChargeNumber = null,
+      sentenceType = null,
+      convictionDate = null,
+      fineAmount = null,
+      legacyData = null,
+    )
+    val secondExpectedSentence = Sentence(
+      sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
+      sentenceLifetimeUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
+      chargeNumber = "2",
+      periodLengths = emptyList(),
+      sentenceServeType = "CONCURRENT",
+      consecutiveToChargeNumber = null,
+      sentenceType = null,
+      convictionDate = null,
+      fineAmount = null,
+      legacyData = null,
+    )
+    assertThat(actualRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .isEqualTo(
+        Recall(
+          recallUuid = createRecall.recallUuid,
+          prisonerId = "A12345B",
+          revocationDate = LocalDate.of(2024, 1, 2),
+          returnToCustodyDate = LocalDate.of(2024, 2, 3),
+          recallType = FTR_14,
+          createdByUsername = "user001",
+          createdAt = ZonedDateTime.now(),
+          createdByPrison = "PRI",
+          sentences = listOf(expectedSentence, secondExpectedSentence),
+        ),
+      )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+  }
+
+  @Test
+  @Sql("classpath:test_data/insert-sentences-to-recall.sql")
+  fun `Fetch created recall by UUID ignoring unrelated recall_sentences`() {
+    val recall = CreateRecall(
+      prisonerId = "A12345B",
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = LocalDate.of(2024, 2, 3),
+      recallTypeCode = FTR_14,
+      createdByUsername = "user001",
+      createdByPrison = "PRI",
+      sentenceIds = emptyList(),
+    )
+
+    val createRecall = postRecall(recall)
+    val actualRecall = getRecallByUUID(createRecall.recallUuid)
+
+    assertThat(actualRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .isEqualTo(
+        Recall(
+          recallUuid = createRecall.recallUuid,
+          prisonerId = "A12345B",
+          revocationDate = LocalDate.of(2024, 1, 2),
+          returnToCustodyDate = LocalDate.of(2024, 2, 3),
+          recallType = FTR_14,
+          createdByUsername = "user001",
+          createdAt = ZonedDateTime.now(),
+          createdByPrison = "PRI",
+          sentences = emptyList(),
+        ),
+      )
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+  }
   private fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
     .get()
     .uri("/recall/$recallUuid")
