@@ -63,6 +63,9 @@ class ChargeEntity(
   var legacyData: ChargeLegacyData? = null,
   @ManyToMany(mappedBy = "charges")
   val courtAppearances: MutableSet<CourtAppearanceEntity>,
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "merged_from_case_id")
+  val mergedFromCourtCase: CourtCaseEntity? = null,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableList<SentenceEntity> = mutableListOf()
