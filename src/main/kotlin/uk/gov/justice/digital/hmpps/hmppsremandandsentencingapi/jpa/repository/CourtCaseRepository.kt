@@ -5,7 +5,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import java.util.UUID
 
 interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
@@ -14,5 +13,5 @@ interface CourtCaseRepository :
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 
-  fun findFirstByAppearancesChargesChargeUuid(chargeUuid: UUID): CourtCaseEntity?
+  fun findByCaseUniqueIdentifierIn(caseUniqueIdentifiers: List<String>): List<CourtCaseEntity>
 }

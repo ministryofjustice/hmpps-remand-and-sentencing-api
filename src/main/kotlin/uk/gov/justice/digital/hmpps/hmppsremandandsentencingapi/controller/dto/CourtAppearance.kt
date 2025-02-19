@@ -25,7 +25,7 @@ data class CourtAppearance(
 ) {
   companion object {
 
-    val returnChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE)
+    val returnChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE, EntityStatus.MERGED)
 
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance = CourtAppearance(
       courtAppearanceEntity.appearanceUuid,
