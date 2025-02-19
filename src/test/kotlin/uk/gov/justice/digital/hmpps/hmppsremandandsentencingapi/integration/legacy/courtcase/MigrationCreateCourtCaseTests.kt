@@ -184,6 +184,82 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
   }
 
+  @Test
+  fun `create source court case for a linked case`() {
+    val sourceResponse = createSourceMergedCourtCase()
+    val sourceCourtCaseUuid = sourceResponse.courtCaseUuid
+    val sourceChargeUuid = sourceResponse.charges.first().lifetimeChargeUuid.toString()
+    webTestClient
+      .get()
+      .uri("/court-case/$sourceCourtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.status")
+      .isEqualTo("MERGED")
+      .jsonPath("$.appearances[*].charges[?(@.lifetimeUuid == '$sourceChargeUuid')]")
+      .exists()
+  }
+
+  @Test
+  fun `create target court case for a linked case`() {
+    val sourceResponse = createSourceMergedCourtCase()
+    val sourceCourtCaseUuid = sourceResponse.courtCaseUuid
+    val sourceChargeUuid = sourceResponse.charges.first().lifetimeChargeUuid
+    val targetCharge = DataCreator.migrationCreateCharge(sentence = null, mergedFromCourtCaseUuid = sourceCourtCaseUuid, mergedChargeLifetimeUuid = sourceChargeUuid)
+    val targetAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(targetCharge))
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(targetAppearance))
+    val targetResponse = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(targetCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCaseResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient
+      .get()
+      .uri("/court-case/${targetResponse.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[?(@.lifetimeUuid == '$sourceChargeUuid')]")
+      .exists()
+  }
+
+  private fun createSourceMergedCourtCase(): MigrationCreateCourtCaseResponse {
+    val charge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(charge))
+    val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance), merged = true)
+    return webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(sourceCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCaseResponse::class.java)
+      .responseBody.blockFirst()!!
+  }
+
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
     webTestClient
       .get()

@@ -7,4 +7,5 @@ enum class EntityStatus {
   DELETED,
   DRAFT,
   FUTURE,
+  MERGED,
 }

@@ -63,7 +63,19 @@ class CourtCaseEntity(
 
     fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
 
-    fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = migrationCreateCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = if (migrationCreateCourtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, legacyData = migrationCreateCourtCase.courtCaseLegacyData)
+    fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(
+      prisonerId = migrationCreateCourtCase.prisonerId,
+      caseUniqueIdentifier = UUID.randomUUID().toString(),
+      createdByUsername = createdByUsername,
+      statusId = if (migrationCreateCourtCase.merged) {
+        EntityStatus.MERGED
+      } else if (migrationCreateCourtCase.active) {
+        EntityStatus.ACTIVE
+      } else {
+        EntityStatus.INACTIVE
+      },
+      legacyData = migrationCreateCourtCase.courtCaseLegacyData,
+    )
 
     fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdByUsername = createdByUsername, statusId = EntityStatus.DRAFT)
   }

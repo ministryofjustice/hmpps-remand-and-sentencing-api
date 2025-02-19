@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -36,10 +35,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentenceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationSentenceId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.util.UUID
 import kotlin.collections.filter
 
 @Service
-class MigrationService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val chargeRepository: ChargeRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper, private val nextCourtAppearanceRepository: NextCourtAppearanceRepository, private val appearanceTypeRepository: AppearanceTypeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceRepository: SentenceRepository, private val fineAmountRepository: FineAmountRepository, private val periodLengthRepository: PeriodLengthRepository) {
+class MigrationService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val chargeRepository: ChargeRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val serviceUserService: ServiceUserService, private val nextCourtAppearanceRepository: NextCourtAppearanceRepository, private val appearanceTypeRepository: AppearanceTypeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceRepository: SentenceRepository, private val fineAmountRepository: FineAmountRepository, private val periodLengthRepository: PeriodLengthRepository) {
 
   @Transactional
   fun create(migrationCreateCourtCase: MigrationCreateCourtCase): MigrationCreateCourtCaseResponse {
@@ -99,14 +99,23 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     val nomisChargeOutcomeIds = migrationCreateAppearances.flatMap { courtAppearance -> courtAppearance.charges }.filter { charge -> charge.legacyData.nomisOutcomeCode != null }.map { charge -> charge.legacyData.nomisOutcomeCode!! }.distinct()
     val dpsChargeOutcomes = chargeOutcomeRepository.findByNomisCodeIn(nomisChargeOutcomeIds).associate { entity -> entity.nomisCode to entity }
     val dpsSentenceTypes = getDpsSentenceTypesMap(migrationCreateAppearances)
-    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap) }
+    val sourceMergedCourtCases = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedFromCourtCaseUuid != null }.map { it.mergedFromCourtCaseUuid!! }.takeUnless { it.isEmpty() }?.let { courtCaseRepository.findByCaseUniqueIdentifierIn(it).associateBy { it.caseUniqueIdentifier } } ?: emptyMap()
+    val sourceMergedCharges = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedChargeLifetimeUuid != null }.map { it.mergedChargeLifetimeUuid!! }.takeUnless { it.isEmpty() }?.let {
+      chargeRepository.findByLifetimeChargeUuidInAndStatusId(
+        it,
+        EntityStatus.MERGED,
+      ).sortedBy {
+        it.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxOf { it.appearanceDate }
+      }.associateBy { it.lifetimeChargeUuid }
+    } ?: emptyMap()
+    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges) }
   }
 
-  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>): CourtAppearanceEntity {
+  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, sourceMergedCourtCases: Map<String, CourtCaseEntity>, sourceMergedCharges: Map<UUID, ChargeEntity>): CourtAppearanceEntity {
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { dpsAppearanceOutcomes[it] }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, courtCaseReference))
 
-    val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap) }
+    val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges) }
     createdAppearance.charges.addAll(charges)
     return createdAppearance
   }
@@ -121,13 +130,18 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
     return 0
   }
 
-  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>): ChargeEntity {
+  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, sourceMergedCourtCases: Map<String, CourtCaseEntity>, sourceMergedCharges: Map<UUID, ChargeEntity>): ChargeEntity {
     val dpsChargeOutcome = migrationCreateCharge.legacyData.nomisOutcomeCode?.let { dpsChargeOutcomes[it] }
     migrationCreateCharge.legacyData = dpsChargeOutcome?.let { migrationCreateCharge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: migrationCreateCharge.legacyData
-    val toCreateCharge = createdChargesMap[migrationCreateCharge.chargeNOMISId]?.let { existingCharge ->
-      val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, createdByUsername)
+    val dpsMergedFromCourtCase = migrationCreateCharge.mergedFromCourtCaseUuid?.let { sourceMergedCourtCases[it] }
+    val dpsMergedFromCharge = migrationCreateCharge.mergedChargeLifetimeUuid?.let { sourceMergedCharges[it] }
+    val existingCharge = createdChargesMap[migrationCreateCharge.chargeNOMISId] ?: dpsMergedFromCharge
+    val toCreateCharge = if (existingCharge != null) {
+      val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase)
       if (existingCharge.isSame(chargeInAppearance)) existingCharge else chargeInAppearance
-    } ?: ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, createdByUsername)
+    } else {
+      ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase)
+    }
     val createdCharge = chargeRepository.save(toCreateCharge)
     migrationCreateCharge.sentence?.let { migrationSentence -> createdCharge.sentences.add(createSentence(migrationSentence, createdCharge, createdByUsername, dpsSentenceTypes, createdSentencesMap)) }
     createdChargesMap.put(migrationCreateCharge.chargeNOMISId, createdCharge)
