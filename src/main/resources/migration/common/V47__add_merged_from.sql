@@ -1,0 +1,1 @@
+ALTER TABLE charge ADD COLUMN merged_from_case_id int references court_case(id);
