@@ -1,0 +1,20 @@
+CREATE TABLE sentence_history (
+	id SERIAL PRIMARY KEY,
+	sentence_uuid uuid NOT NULL,
+	charge_number varchar NULL,
+	status_id smallint NOT NULL,
+	created_at timestamp with time zone NOT NULL,
+	created_by varchar NOT NULL,
+	created_prison varchar NULL,
+	updated_at timestamp with time zone NOT NULL,
+	updated_by varchar NOT NULL,
+	updated_prison varchar NULL,
+	superseding_sentence_id int NULL,
+	charge_id int NULL,
+	sentence_serve_type varchar NOT NULL,
+	consecutive_to_id int NULL,
+	conviction_date date NULL,
+	sentence_type_id int NULL,
+	legacy_data jsonb NULL,
+	original_sentence_id int references sentence(id)
+);
