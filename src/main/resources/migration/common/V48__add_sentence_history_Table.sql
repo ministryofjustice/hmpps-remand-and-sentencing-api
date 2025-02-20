@@ -7,7 +7,7 @@ CREATE TABLE sentence_history (
 	created_by varchar NOT NULL,
 	created_prison varchar NULL,
 	updated_at timestamp with time zone NOT NULL,
-	updated_by varchar NOT NULL,
+	updated_by varchar NULL,
 	updated_prison varchar NULL,
 	superseding_sentence_id int NULL,
 	charge_id int NULL,
