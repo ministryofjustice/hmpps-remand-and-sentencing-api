@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -24,7 +25,7 @@ class CourtCaseReferenceServiceTests {
 
   @Test
   fun `insert new active case references`() {
-    val courtCase = CourtCaseEntity.placeholderEntity(prisonerId = "1", createdByUsername = "U", legacyData = null)
+    val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
 
     val activeCourtAppearance = generateCourtAppearance("REFERENCE1", EntityStatus.ACTIVE, courtCase)
     courtCase.appearances = listOf(activeCourtAppearance)
@@ -37,7 +38,8 @@ class CourtCaseReferenceServiceTests {
   @Test
   fun `remove deleted case references`() {
     val oldCaseReference = "OLDCASEREFERENCE"
-    val courtCase = CourtCaseEntity.placeholderEntity(prisonerId = "1", createdByUsername = "U", legacyData = generateLegacyData(listOf(oldCaseReference)))
+    val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
+    courtCase.legacyData = generateLegacyData(listOf(oldCaseReference))
     val deletedCourtAppearance = generateCourtAppearance(oldCaseReference, EntityStatus.DELETED, courtCase)
     courtCase.appearances = listOf(deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
@@ -50,7 +52,8 @@ class CourtCaseReferenceServiceTests {
   fun `keep other case references not in appearance list (legacy NOMIS case references)`() {
     val oldCaseReference = "OLDCASEREFERENCE"
     val existingReferences = listOf("A", "B", "C", "D")
-    val courtCase = CourtCaseEntity.placeholderEntity(prisonerId = "1", createdByUsername = "U", legacyData = generateLegacyData(existingReferences + oldCaseReference))
+    val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
+    courtCase.legacyData = generateLegacyData(existingReferences + oldCaseReference)
     val activeCourtAppearance = generateCourtAppearance("ANEWREFERENCE", EntityStatus.ACTIVE, courtCase)
     val deletedCourtAppearance = generateCourtAppearance("OLDCASEREFERENCE", EntityStatus.DELETED, courtCase)
     courtCase.appearances = listOf(activeCourtAppearance, deletedCourtAppearance)
