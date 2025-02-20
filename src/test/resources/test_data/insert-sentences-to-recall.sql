@@ -10,7 +10,6 @@ INSERT INTO charge(
 VALUES (1,'6b797db7-fc1b-4c6e-8e6b-c34eb8cf68db', 'c923b281-b64d-435d-bec8-da6c1cdcb7d0', 'ABC' , now(), 0, 1, false, now(), 'testuser'),
        (2, 'b59dcbf9-5be2-4a4f-aa9c-2db15b24ca43', '11ce3609-c16b-4f23-947a-30ae75dafd7b', 'ABC' , now(), 0, 1, false, now(), 'testuser');
 
-BEGIN;
 INSERT INTO court_case(
     id, prisoner_id, case_unique_identifier, created_at, created_by_username, status_id)
 VALUES (1,'A12345B', '5725bfeb-23db-439f-ab4b-2ea4e74cd2b5', now(), 'testuser', 0),
@@ -30,4 +29,3 @@ VALUES (1, 1, 1), (2, 2, 2);
 INSERT INTO sentence (lifetime_sentence_uuid, sentence_uuid, charge_number, charge_id, status_id, created_by_username, created_prison, created_at, sentence_serve_type)
 VALUES ('550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440000', '1', 1,  '0', 'testuser', 'HMI', now(), 'FORTHWITH'),
 ('550e8400-e29b-41d4-a716-446655449999', '550e8400-e29b-41d4-a716-446655449999', '2', 2, '0', 'testuser2', 'PRI', now(), 'CONCURRENT');
-COMMIT;
