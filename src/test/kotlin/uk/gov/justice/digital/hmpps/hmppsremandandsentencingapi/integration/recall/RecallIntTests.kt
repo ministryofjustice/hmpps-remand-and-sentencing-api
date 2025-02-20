@@ -245,6 +245,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
           sentences = listOf(expectedSentence),
+          courtCaseIds = listOf("5725bfeb-23db-439f-ab4b-2ea4e74cd2b5"),
         ),
       )
     val messages = getMessages(1)
@@ -265,6 +266,7 @@ class RecallIntTests : IntegrationTestBase() {
         UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
         UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
       ),
+
     )
 
     val createRecall = postRecall(recall)
@@ -307,6 +309,10 @@ class RecallIntTests : IntegrationTestBase() {
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
           sentences = listOf(expectedSentence, secondExpectedSentence),
+          courtCaseIds = listOf(
+            "5725bfeb-23db-439f-ab4b-2ea4e74cd2b5",
+            "846799d8-ce70-4a29-a630-382c904349ae",
+          ),
         ),
       )
     val messages = getMessages(1)

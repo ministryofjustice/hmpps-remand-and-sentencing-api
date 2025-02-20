@@ -17,6 +17,7 @@ data class Recall(
   val createdByUsername: String,
   val createdByPrison: String,
   val sentences: List<Sentence>? = emptyList(),
+  val courtCaseIds: List<String>? = emptyList(),
 ) {
   companion object {
     fun from(recall: RecallEntity, sentences: List<RecallSentenceEntity>): Recall = Recall(
@@ -29,6 +30,7 @@ data class Recall(
       createdAt = recall.createdAt,
       createdByPrison = recall.createdByPrison,
       sentences = sentences.map { Sentence.from(it.sentence) },
+      courtCaseIds = sentences.flatMap { it.sentence.charge.courtAppearances.map { ca -> ca.courtCase.caseUniqueIdentifier } },
     )
   }
 }
