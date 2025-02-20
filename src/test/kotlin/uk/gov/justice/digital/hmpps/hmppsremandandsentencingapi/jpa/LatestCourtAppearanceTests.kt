@@ -36,7 +36,7 @@ class LatestCourtAppearanceTests {
     statusId = EntityStatus.ACTIVE,
     previousAppearance = null,
     warrantId = "1",
-    createdByUsername = "user",
+    createdBy = "user",
     createdPrison = "PR1",
     warrantType = "TYPE",
     taggedBail = null,

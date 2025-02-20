@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 
 data class CreateCourtCase(
   val prisonerId: String,
+  val prisonId: String,
   val appearances: List<CreateCourtAppearance>,
   val legacyData: CourtCaseLegacyData?,
 )

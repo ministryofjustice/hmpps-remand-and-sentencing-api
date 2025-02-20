@@ -9,4 +9,5 @@ data class CreateNextCourtAppearance(
   val appearanceTime: LocalTime?,
   val courtCode: String,
   val appearanceTypeUuid: UUID,
+  val prisonId: String,
 )
