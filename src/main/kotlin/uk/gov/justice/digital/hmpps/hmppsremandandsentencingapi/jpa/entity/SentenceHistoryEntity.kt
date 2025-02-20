@@ -30,6 +30,7 @@ class SentenceHistoryEntity(
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,
+  val updatedAt: ZonedDateTime?,
   val updatedBy: String?,
   val updatedPrison: String?,
   val sentenceServeType: String,
