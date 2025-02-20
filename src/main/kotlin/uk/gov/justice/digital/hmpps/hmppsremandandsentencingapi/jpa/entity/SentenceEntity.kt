@@ -44,7 +44,7 @@ class SentenceEntity(
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   @Column
-  val createdByUsername: String,
+  val createdBy: String,
   @Column
   val createdPrison: String?,
   @Column
@@ -83,13 +83,13 @@ class SentenceEntity(
     convictionDate == other.convictionDate &&
     ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
 
-  fun copyFrom(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
+  fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = EntityStatus.ACTIVE,
-      createdByUsername = createdByUsername,
+      createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
       charge = chargeEntity,
@@ -103,13 +103,13 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdByUsername: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity {
+  fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
-      createdByUsername = createdByUsername,
+      createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
       charge = charge,
@@ -125,13 +125,13 @@ class SentenceEntity(
   }
 
   companion object {
-    fun from(sentence: CreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
+    fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
         lifetimeSentenceUuid = sentence.lifetimeSentenceUuid,
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         chargeNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,
-        createdByUsername = createdByUsername,
+        createdBy = createdBy,
         createdPrison = sentence.prisonId,
         supersedingSentence = null,
         charge = chargeEntity,
@@ -143,12 +143,12 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+    fun from(sentence: LegacyCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
-      createdByUsername = createdByUsername,
+      createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = null,
       charge = chargeEntity,
@@ -159,12 +159,12 @@ class SentenceEntity(
       legacyData = sentence.legacyData,
     )
 
-    fun from(sentence: MigrationCreateSentence, createdByUsername: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+    fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
       lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
-      createdByUsername = createdByUsername,
+      createdBy = createdBy,
       createdPrison = null,
       supersedingSentence = null,
       charge = chargeEntity,

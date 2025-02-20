@@ -22,4 +22,5 @@ data class CreateCharge(
   val terrorRelated: Boolean?,
   val sentence: CreateSentence?,
   var legacyData: ChargeLegacyData?,
+  val prisonId: String,
 )

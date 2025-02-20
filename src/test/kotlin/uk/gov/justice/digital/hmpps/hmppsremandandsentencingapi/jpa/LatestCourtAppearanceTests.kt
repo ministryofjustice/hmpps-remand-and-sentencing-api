@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -13,12 +14,7 @@ class LatestCourtAppearanceTests {
 
   @Test
   fun `must fall back to created at when appearance dates are the same`() {
-    val courtCase = CourtCaseEntity(
-      prisonerId = "12345",
-      caseUniqueIdentifier = UUID.randomUUID().toString(),
-      createdByUsername = "user",
-      statusId = EntityStatus.ACTIVE,
-    )
+    val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val appearanceDate = LocalDate.now()
     val courtAppearance = courtAppearanceEntity(appearanceDate, courtCase, ZonedDateTime.now().minusDays(10))
     val newerCourtAppearance = courtAppearanceEntity(appearanceDate, courtCase, ZonedDateTime.now())
@@ -36,7 +32,7 @@ class LatestCourtAppearanceTests {
     statusId = EntityStatus.ACTIVE,
     previousAppearance = null,
     warrantId = "1",
-    createdByUsername = "user",
+    createdBy = "user",
     createdPrison = "PR1",
     warrantType = "TYPE",
     taggedBail = null,

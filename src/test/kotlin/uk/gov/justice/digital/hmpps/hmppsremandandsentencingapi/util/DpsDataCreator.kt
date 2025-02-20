@@ -19,7 +19,8 @@ class DpsDataCreator {
     fun dpsCreateCourtCase(
       prisonerId: String = "PRI123",
       appearances: List<CreateCourtAppearance> = listOf(dpsCreateCourtAppearance()),
-    ): CreateCourtCase = CreateCourtCase(prisonerId, appearances, null)
+      prisonId: String = "PRISON1",
+    ): CreateCourtCase = CreateCourtCase(prisonerId, prisonId, appearances, null)
 
     fun dpsCreatePeriodLength(
       years: Int? = 1,
@@ -35,7 +36,8 @@ class DpsDataCreator {
       appearanceTime: LocalTime? = LocalTime.of(10, 15, 0, 0),
       courtCode: String = "COURT1",
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
-    ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid)
+      prisonId: String = "PRISON1",
+    ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid, prisonId)
 
     fun dpsCreateCourtAppearance(
       courtCaseUuid: String? = null,
@@ -67,7 +69,8 @@ class DpsDataCreator {
       terrorRelated: Boolean? = true,
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
-    ): CreateCharge = CreateCharge(appearanceUuid, chargeUuid, chargeLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, terrorRelated, sentence, legacyData)
+      prisonId: String = "PRISON1",
+    ): CreateCharge = CreateCharge(appearanceUuid, chargeUuid, chargeLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, terrorRelated, sentence, legacyData, prisonId)
 
     fun dpsCreateSentence(
       sentenceUuid: UUID? = UUID.randomUUID(),
