@@ -7,5 +7,5 @@ import java.util.UUID
 interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun findBySentenceUuid(sentenceUuid: UUID): SentenceEntity?
 
-  fun findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(lifetimeUuid: UUID): SentenceEntity?
+  fun findFirstBySentenceUuidOrderByCreatedAtDesc(lifetimeUuid: UUID): SentenceEntity?
 }

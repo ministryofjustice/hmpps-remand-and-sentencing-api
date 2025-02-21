@@ -55,7 +55,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           prisonerId,
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
-          activeRecord.lifetimeSentenceUuid.toString(),
+          activeRecord.sentenceUuid.toString(),
           EventType.SENTENCE_UPDATED,
         ),
       )
@@ -65,7 +65,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           prisonerId,
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
-          activeRecord.lifetimeSentenceUuid.toString(),
+          activeRecord.sentenceUuid.toString(),
           EventType.SENTENCE_UPDATED,
         ),
       )
@@ -87,7 +87,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           prisonerId,
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
-          createdSentence.lifetimeSentenceUuid.toString(),
+          createdSentence.sentenceUuid.toString(),
           EventType.SENTENCE_INSERTED,
         ),
       ),
@@ -110,7 +110,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           prisonerId,
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
-          sentence.lifetimeSentenceUuid.toString(),
+          sentence.sentenceUuid.toString(),
           EventType.SENTENCE_DELETED,
         ),
       )

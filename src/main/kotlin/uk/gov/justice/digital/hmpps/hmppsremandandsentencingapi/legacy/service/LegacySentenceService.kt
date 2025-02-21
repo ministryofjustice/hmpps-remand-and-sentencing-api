@@ -44,7 +44,12 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       createdPeriodLength
     }
     val courtCase = charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
-    return LegacySentenceCreatedResponse(courtCase.prisonerId, createdSentence.lifetimeSentenceUuid!!, charge.lifetimeChargeUuid, courtCase.caseUniqueIdentifier)
+    return LegacySentenceCreatedResponse(
+      courtCase.prisonerId,
+      createdSentence.sentenceUuid,
+      charge.lifetimeChargeUuid,
+      courtCase.caseUniqueIdentifier,
+    )
   }
 
   @Transactional
@@ -73,7 +78,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       existingSentence.charge.sentences.add(activeRecord)
     }
     val courtCase = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
-    return entityChangeStatus to LegacySentenceCreatedResponse(courtCase.prisonerId, activeRecord.lifetimeSentenceUuid!!, activeRecord.charge.lifetimeChargeUuid, courtCase.caseUniqueIdentifier)
+    return entityChangeStatus to LegacySentenceCreatedResponse(courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.lifetimeChargeUuid, courtCase.caseUniqueIdentifier)
   }
 
   @Transactional(readOnly = true)
@@ -95,7 +100,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     return null
   }
 
-  private fun getUnlessDeleted(lifetimeUuid: UUID): SentenceEntity = sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(lifetimeUuid)
+  private fun getUnlessDeleted(lifetimeUuid: UUID): SentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByCreatedAtDesc(lifetimeUuid)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No sentence found at $lifetimeUuid")
 
   companion object {

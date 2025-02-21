@@ -33,8 +33,6 @@ class SentenceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  var lifetimeSentenceUuid: UUID,
-  @Column
   var sentenceUuid: UUID,
   @Column
   val chargeNumber: String?,
@@ -47,6 +45,9 @@ class SentenceEntity(
   val createdBy: String,
   @Column
   val createdPrison: String?,
+  val updatedAt: ZonedDateTime? = null,
+  val updatedBy: String? = null,
+  val updatedPrison: String? = null,
   @Column
   val sentenceServeType: String,
   @OneToOne
@@ -85,7 +86,6 @@ class SentenceEntity(
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = EntityStatus.ACTIVE,
@@ -97,6 +97,9 @@ class SentenceEntity(
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceType,
       convictionDate = sentence.convictionDate,
+      updatedAt = ZonedDateTime.now(),
+      updatedBy = createdBy,
+      updatedPrison = sentence.prisonId,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }
     sentenceEntity.fineAmountEntity = sentence.fineAmount?.let { FineAmountEntity.from(it) }
@@ -105,7 +108,6 @@ class SentenceEntity(
 
   fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
@@ -118,6 +120,9 @@ class SentenceEntity(
       sentenceType = sentenceTypeEntity,
       convictionDate = convictionDate,
       legacyData = sentence.legacyData,
+      updatedAt = ZonedDateTime.now(),
+      updatedBy = createdBy,
+      updatedPrison = sentence.prisonId,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }
     sentenceEntity.fineAmountEntity = sentence.fine?.let { FineAmountEntity.from(it) }
@@ -127,7 +132,6 @@ class SentenceEntity(
   companion object {
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
-        lifetimeSentenceUuid = sentence.lifetimeSentenceUuid,
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         chargeNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,
@@ -144,7 +148,6 @@ class SentenceEntity(
     }
 
     fun from(sentence: LegacyCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
@@ -160,7 +163,6 @@ class SentenceEntity(
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,

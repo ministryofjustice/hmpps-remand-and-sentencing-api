@@ -58,7 +58,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
       createdCourtCase.caseUniqueIdentifier,
       createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.lifetimeUuid, eventId) },
       createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.lifetimeChargeUuid, chargeNOMISId) },
-      createdSentencesMap.map { (id, createdSentence) -> MigrationCreateSentenceResponse(createdSentence.lifetimeSentenceUuid, id) },
+      createdSentencesMap.map { (id, createdSentence) -> MigrationCreateSentenceResponse(createdSentence.sentenceUuid, id) },
     )
   }
 
@@ -177,7 +177,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
       consecutiveToSentence = createdSentencesMap[migrationCreateSentence.consecutiveToSentenceId]
         ?: throw EntityNotFoundException("Cannot find sentence with booking id ${migrationCreateSentence.consecutiveToSentenceId.offenderBookingId} and sequence ${migrationCreateSentence.consecutiveToSentenceId.sequence}")
     } else if (migrationCreateSentence.consecutiveToSentenceLifetimeUuid != null) {
-      consecutiveToSentence = sentenceRepository.findFirstByLifetimeSentenceUuidOrderByCreatedAtDesc(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
+      consecutiveToSentence = sentenceRepository.findFirstBySentenceUuidOrderByCreatedAtDesc(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
     }
 
     val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, consecutiveToSentence)
