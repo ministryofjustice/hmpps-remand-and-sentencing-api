@@ -77,7 +77,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findBySentenceUuid(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
-    createdSentence.periodLengths = sentence.periodLengths.map { periodLengthRepository.save(PeriodLengthEntity.from(it)) }
+    createdSentence.periodLengths = sentence.periodLengths.map { periodLengthRepository.save(PeriodLengthEntity.from(it)) }.toMutableList()
     sentence.fineAmount?.let { createdSentence.fineAmountEntity = fineAmountRepository.save(FineAmountEntity.from(it)) }
 
     return RecordResponse(
@@ -92,6 +92,35 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         ),
       ),
     )
+  }
+
+  private fun updateFineAmount(sentenceEntity: SentenceEntity, updatedFineAmount: FineAmountEntity?) {
+    sentenceEntity.fineAmountEntity = sentenceEntity.fineAmountEntity?.let { existingFineAmount ->
+      updatedFineAmount?.let {
+        existingFineAmount.fineAmount = updatedFineAmount.fineAmount
+        existingFineAmount
+      }
+    } ?: updatedFineAmount?.let { fineAmountRepository.save(it) }
+  }
+
+  private fun updatePeriodLengths(sentenceEntity: SentenceEntity, periodLengths: List<PeriodLengthEntity>) {
+    sentenceEntity.periodLengths = sentenceEntity.periodLengths.map { existingPeriodLength ->
+      val updatedPeriodLength = periodLengths.firstOrNull { it.periodLengthType == existingPeriodLength.periodLengthType }
+      if (updatedPeriodLength != null) {
+        existingPeriodLength.updateFrom(updatedPeriodLength)
+        existingPeriodLength
+      } else {
+        existingPeriodLength.sentenceEntity = null
+        null
+      }
+    }.filter { it != null }
+      .map { it!! }.toMutableList()
+    val toAddPeriodLengths = periodLengths.filter { toAddLength -> sentenceEntity.periodLengths.none { existingLength -> existingLength.periodLengthType == toAddLength.periodLengthType } }
+      .map {
+        it.sentenceEntity = sentenceEntity
+        periodLengthRepository.save(it)
+      }
+    sentenceEntity.periodLengths.addAll(toAddPeriodLengths)
   }
 
   fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getActiveSentence() ?: sentenceUuid?.let { sentenceRepository.findBySentenceUuid(sentenceUuid) }

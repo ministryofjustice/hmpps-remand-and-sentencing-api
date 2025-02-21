@@ -177,7 +177,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
       consecutiveToSentence = createdSentencesMap[migrationCreateSentence.consecutiveToSentenceId]
         ?: throw EntityNotFoundException("Cannot find sentence with booking id ${migrationCreateSentence.consecutiveToSentenceId.offenderBookingId} and sequence ${migrationCreateSentence.consecutiveToSentenceId.sequence}")
     } else if (migrationCreateSentence.consecutiveToSentenceLifetimeUuid != null) {
-      consecutiveToSentence = sentenceRepository.findFirstBySentenceUuidOrderByCreatedAtDesc(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
+      consecutiveToSentence = sentenceRepository.findBySentenceUuid(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
     }
 
     val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, consecutiveToSentence)
@@ -187,7 +187,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
       val createdPeriodLength = periodLengthRepository.save(PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: migrationCreateSentence.legacyData.sentenceCalcType!!))
       createdPeriodLength.sentenceEntity = createdSentence
       createdPeriodLength
-    }
+    }.toMutableList()
     createdSentencesMap.put(migrationCreateSentence.sentenceId, createdSentence)
     return createdSentence
   }

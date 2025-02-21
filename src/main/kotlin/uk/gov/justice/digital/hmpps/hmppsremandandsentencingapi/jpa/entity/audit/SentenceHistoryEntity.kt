@@ -45,4 +45,12 @@ class SentenceHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_sentence_id")
   val originalSentence: SentenceEntity?,
-)
+) {
+  companion object {
+    fun from(sentenceEntity: SentenceEntity): SentenceHistoryEntity = SentenceHistoryEntity(
+      0, sentenceEntity.sentenceUuid, sentenceEntity.chargeNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
+      sentenceEntity.updatedAt, sentenceEntity.updatedBy, sentenceEntity.updatedPrison, sentenceEntity.sentenceServeType, sentenceEntity.supersedingSentence?.id, sentenceEntity.charge.id, sentenceEntity.consecutiveTo?.id,
+      sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity,
+    )
+  }
+}
