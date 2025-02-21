@@ -36,7 +36,7 @@ data class LegacySentence(
         sentenceEntity.sentenceType?.nomisCjaCode ?: sentenceEntity.legacyData!!.sentenceCategory!!,
         sentenceEntity.consecutiveTo?.sentenceUuid,
         sentenceEntity.chargeNumber,
-        sentenceEntity.fineAmountEntity?.fineAmount,
+        sentenceEntity.fineAmount,
         sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
         firstSentenceAppearanceDate,
       )

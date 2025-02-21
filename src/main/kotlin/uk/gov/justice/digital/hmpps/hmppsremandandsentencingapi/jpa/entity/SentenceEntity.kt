@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -66,14 +67,11 @@ class SentenceEntity(
   var convictionDate: LocalDate?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: SentenceLegacyData? = null,
-
+  var fineAmount: BigDecimal?,
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
   var periodLengths: MutableList<PeriodLengthEntity> = mutableListOf()
-
-  @OneToOne(mappedBy = "sentenceEntity")
-  var fineAmountEntity: FineAmountEntity? = null
 
   fun isSame(other: SentenceEntity?): Boolean = chargeNumber == other?.chargeNumber &&
     periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
@@ -82,7 +80,7 @@ class SentenceEntity(
     createdPrison == other.createdPrison &&
     ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
     convictionDate == other.convictionDate &&
-    ((fineAmountEntity == null && other.fineAmountEntity == null) || fineAmountEntity?.isSame(other.fineAmountEntity) == true)
+    ((fineAmount == null && other.fineAmount == null) || other.fineAmount?.compareTo(fineAmount) == 0)
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
@@ -100,9 +98,9 @@ class SentenceEntity(
       updatedAt = ZonedDateTime.now(),
       updatedBy = createdBy,
       updatedPrison = sentence.prisonId,
+      fineAmount = sentence.fineAmount?.fineAmount,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }.toMutableList()
-    sentenceEntity.fineAmountEntity = sentence.fineAmount?.let { FineAmountEntity.from(it) }
     return sentenceEntity
   }
 
@@ -123,9 +121,9 @@ class SentenceEntity(
       updatedAt = ZonedDateTime.now(),
       updatedBy = createdBy,
       updatedPrison = sentence.prisonId,
+      fineAmount = sentence.fine?.fineAmount,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }.toMutableList()
-    sentenceEntity.fineAmountEntity = sentence.fine?.let { FineAmountEntity.from(it) }
     return sentenceEntity
   }
 
@@ -142,6 +140,7 @@ class SentenceEntity(
     charge = sentence.charge
     convictionDate = sentence.convictionDate
     legacyData = sentence.legacyData
+    fineAmount = sentence.fineAmount
   }
 
   companion object {
@@ -158,6 +157,7 @@ class SentenceEntity(
         consecutiveTo = consecutiveTo,
         sentenceType = sentenceType,
         convictionDate = sentence.convictionDate,
+        fineAmount = sentence.fineAmount?.fineAmount,
       )
       return sentenceEntity
     }
@@ -175,6 +175,7 @@ class SentenceEntity(
       sentenceType = sentenceTypeEntity,
       convictionDate = null,
       legacyData = sentence.legacyData,
+      fineAmount = sentence.fine?.fineAmount,
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
@@ -190,6 +191,7 @@ class SentenceEntity(
       sentenceType = sentenceTypeEntity,
       convictionDate = null,
       legacyData = sentence.legacyData,
+      fineAmount = sentence.fine?.fineAmount,
     )
   }
 }
