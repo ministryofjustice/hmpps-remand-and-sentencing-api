@@ -12,13 +12,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableSentenceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.FineAmountEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.FineAmountRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
@@ -26,7 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import java.util.UUID
 
 @Service
-class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val fineAmountRepository: FineAmountRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
+class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean): RecordResponse<SentenceEntity> {
@@ -46,7 +44,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     if (!existingSentence.isSame(compareSentence)) {
       existingSentence.updateFrom(compareSentence)
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
-      updateFineAmount(existingSentence, compareSentence.fineAmountEntity)
       updatePeriodLengths(existingSentence, compareSentence.periodLengths)
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
@@ -77,7 +74,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
     createdSentence.periodLengths = sentence.periodLengths.map { periodLengthRepository.save(PeriodLengthEntity.from(it)) }.toMutableList()
-    sentence.fineAmount?.let { createdSentence.fineAmountEntity = fineAmountRepository.save(FineAmountEntity.from(it)) }
 
     return RecordResponse(
       createdSentence,
@@ -91,15 +87,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         ),
       ),
     )
-  }
-
-  private fun updateFineAmount(sentenceEntity: SentenceEntity, updatedFineAmount: FineAmountEntity?) {
-    sentenceEntity.fineAmountEntity = sentenceEntity.fineAmountEntity?.let { existingFineAmount ->
-      updatedFineAmount?.let {
-        existingFineAmount.fineAmount = updatedFineAmount.fineAmount
-        existingFineAmount
-      }
-    } ?: updatedFineAmount?.let { fineAmountRepository.save(it) }
   }
 
   private fun updatePeriodLengths(sentenceEntity: SentenceEntity, periodLengths: List<PeriodLengthEntity>) {

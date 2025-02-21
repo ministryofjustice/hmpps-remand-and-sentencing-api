@@ -25,7 +25,7 @@ data class Sentence(
       sentenceEntity.consecutiveTo?.chargeNumber,
       sentenceEntity.sentenceType?.let { SentenceType.from(it) },
       sentenceEntity.convictionDate,
-      sentenceEntity.fineAmountEntity?.let { FineAmount.from(it) },
+      sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
     )
   }
