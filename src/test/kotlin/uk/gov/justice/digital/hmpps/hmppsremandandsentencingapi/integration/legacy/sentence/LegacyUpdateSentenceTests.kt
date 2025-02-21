@@ -2,16 +2,21 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import java.util.UUID
 
 class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
+  @Autowired
+  private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
+
   @Test
   fun `update sentence for existing charge`() {
-    val (sentenceLifetimeUuid) = createLegacySentence()
+    val (sentenceLifetimeUuid, createdSentence) = createLegacySentence()
     val toUpdate = DataCreator.legacyCreateSentence(chargeNumber = "6")
     webTestClient
       .put()
@@ -27,6 +32,8 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("sentence.updated")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+    val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentenceLifetimeUuid }
+    Assertions.assertThat(historyRecords).extracting<String> { it.chargeNumber!! }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
   }
 
   @Test

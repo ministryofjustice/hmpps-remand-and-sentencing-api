@@ -27,15 +27,15 @@ class PeriodLengthEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  val years: Int?,
+  var years: Int?,
   @Column
-  val months: Int?,
+  var months: Int?,
   @Column
-  val weeks: Int?,
+  var weeks: Int?,
   @Column
-  val days: Int?,
+  var days: Int?,
   @Column
-  val periodOrder: String,
+  var periodOrder: String,
   @Enumerated(EnumType.STRING)
   val periodLengthType: PeriodLengthType,
   @ManyToOne
@@ -55,6 +55,14 @@ class PeriodLengthEntity(
     periodOrder == other?.periodOrder &&
     periodLengthType == other.periodLengthType
 
+  fun updateFrom(periodLength: PeriodLengthEntity) {
+    years = periodLength.years
+    months = periodLength.months
+    weeks = periodLength.weeks
+    days = periodLength.days
+    periodOrder = getPeriodOrder(years, months, weeks, days)
+    legacyData = periodLength.legacyData
+  }
   companion object {
     fun from(periodLength: CreatePeriodLength): PeriodLengthEntity = PeriodLengthEntity(
       years = periodLength.years,

@@ -221,7 +221,6 @@ class RecallIntTests : IntegrationTestBase() {
     val actualRecall = getRecallByUUID(createRecall.recallUuid)
     val expectedSentence = Sentence(
       sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
-      sentenceLifetimeUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
       chargeNumber = "1",
       periodLengths = emptyList(),
       sentenceServeType = "FORTHWITH",
@@ -273,7 +272,6 @@ class RecallIntTests : IntegrationTestBase() {
     val actualRecall = getRecallByUUID(createRecall.recallUuid)
     val expectedSentence = Sentence(
       sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
-      sentenceLifetimeUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
       chargeNumber = "1",
       periodLengths = emptyList(),
       sentenceServeType = "FORTHWITH",
@@ -285,7 +283,6 @@ class RecallIntTests : IntegrationTestBase() {
     )
     val secondExpectedSentence = Sentence(
       sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
-      sentenceLifetimeUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
       chargeNumber = "2",
       periodLengths = emptyList(),
       sentenceServeType = "CONCURRENT",

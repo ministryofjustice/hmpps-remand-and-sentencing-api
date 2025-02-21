@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -11,6 +11,7 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.time.LocalDate
@@ -23,10 +24,10 @@ class SentenceHistoryEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  var sentenceUuid: UUID,
+  val sentenceUuid: UUID,
   val chargeNumber: String?,
   @Enumerated(EnumType.ORDINAL)
-  var statusId: EntityStatus,
+  val statusId: EntityStatus,
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,
@@ -40,8 +41,16 @@ class SentenceHistoryEntity(
   val convictionDate: LocalDate?,
   val sentenceTypeId: Int?,
   @JdbcTypeCode(SqlTypes.JSON)
-  var legacyData: SentenceLegacyData?,
+  val legacyData: SentenceLegacyData?,
   @OneToOne
   @JoinColumn(name = "original_sentence_id")
   val originalSentence: SentenceEntity?,
-)
+) {
+  companion object {
+    fun from(sentenceEntity: SentenceEntity): SentenceHistoryEntity = SentenceHistoryEntity(
+      0, sentenceEntity.sentenceUuid, sentenceEntity.chargeNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
+      sentenceEntity.updatedAt, sentenceEntity.updatedBy, sentenceEntity.updatedPrison, sentenceEntity.sentenceServeType, sentenceEntity.supersedingSentence?.id, sentenceEntity.charge.id, sentenceEntity.consecutiveTo?.id,
+      sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity,
+    )
+  }
+}

@@ -18,7 +18,7 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/legacy/sentence/${sentence.lifetimeSentenceUuid}")
+      .uri("/legacy/sentence/${sentence.sentenceUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
       }
@@ -27,7 +27,7 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.lifetimeUuid")
-      .isEqualTo(sentence.lifetimeSentenceUuid.toString())
+      .isEqualTo(sentence.sentenceUuid.toString())
   }
 
   @Test
@@ -46,11 +46,11 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
   @Test
   fun `no token results in unauthorized`() {
     val (_, createdCourtCase) = createCourtCase()
-    val lifetimeUuid = createdCourtCase.appearances.first().charges.first().sentence!!.lifetimeSentenceUuid
+    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence!!.sentenceUuid
 
     webTestClient
       .get()
-      .uri("/legacy/sentence/$lifetimeUuid")
+      .uri("/legacy/sentence/$sentenceUuid")
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -59,10 +59,10 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
   @Test
   fun `token with incorrect role is forbidden`() {
     val (_, createdCourtCase) = createCourtCase()
-    val lifetimeUuid = createdCourtCase.appearances.first().charges.first().sentence!!.lifetimeSentenceUuid
+    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence!!.sentenceUuid
     webTestClient
       .get()
-      .uri("/legacy/sentence/$lifetimeUuid")
+      .uri("/legacy/sentence/$sentenceUuid")
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
       }

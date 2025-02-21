@@ -26,6 +26,6 @@ INSERT INTO appearance_charge(
     id, appearance_id, charge_id)
 VALUES (1, 1, 1), (2, 2, 2);
 
-INSERT INTO sentence (lifetime_sentence_uuid, sentence_uuid, charge_number, charge_id, status_id, created_by, created_prison, created_at, sentence_serve_type)
-VALUES ('550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440000', '1', 1,  '0', 'testuser', 'HMI', now(), 'FORTHWITH'),
-('550e8400-e29b-41d4-a716-446655449999', '550e8400-e29b-41d4-a716-446655449999', '2', 2, '0', 'testuser2', 'HMI', now(), 'CONCURRENT');
+INSERT INTO sentence (sentence_uuid, charge_number, charge_id, status_id, created_by, created_prison, created_at, sentence_serve_type)
+VALUES ('550e8400-e29b-41d4-a716-446655440000', '1', 1,  '0', 'testuser', 'HMI', now(), 'FORTHWITH'),
+('550e8400-e29b-41d4-a716-446655449999', '2', 2, '0', 'testuser2', 'HMI', now(), 'CONCURRENT');

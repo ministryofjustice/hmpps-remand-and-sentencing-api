@@ -178,9 +178,9 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceLifetimeUuid == '$consecutiveToSentenceLifetimeUuid')].consecutiveToChargeNumber")
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceLifetimeUuid')].consecutiveToChargeNumber")
       .isEqualTo(firstSentence.chargeNumber!!)
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceLifetimeUuid == '$firstSentenceLifetimeUuid')].sentenceType.sentenceTypeUuid")
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$firstSentenceLifetimeUuid')].sentenceType.sentenceTypeUuid")
       .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
   }
 

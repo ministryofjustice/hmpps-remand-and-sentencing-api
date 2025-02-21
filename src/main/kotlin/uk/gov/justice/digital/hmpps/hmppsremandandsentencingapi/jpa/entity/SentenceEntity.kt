@@ -33,11 +33,9 @@ class SentenceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  var lifetimeSentenceUuid: UUID,
-  @Column
   var sentenceUuid: UUID,
   @Column
-  val chargeNumber: String?,
+  var chargeNumber: String?,
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
@@ -47,29 +45,32 @@ class SentenceEntity(
   val createdBy: String,
   @Column
   val createdPrison: String?,
+  var updatedAt: ZonedDateTime? = null,
+  var updatedBy: String? = null,
+  var updatedPrison: String? = null,
   @Column
-  val sentenceServeType: String,
+  var sentenceServeType: String,
   @OneToOne
   @JoinColumn(name = "consecutive_to_id")
-  val consecutiveTo: SentenceEntity?,
+  var consecutiveTo: SentenceEntity?,
   @OneToOne
   @JoinColumn(name = "sentence_type_id")
-  val sentenceType: SentenceTypeEntity?,
+  var sentenceType: SentenceTypeEntity?,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "superseding_sentence_id")
   var supersedingSentence: SentenceEntity?,
   @ManyToOne
   @JoinColumn(name = "charge_id")
-  val charge: ChargeEntity,
+  var charge: ChargeEntity,
   @Column
-  val convictionDate: LocalDate?,
+  var convictionDate: LocalDate?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: SentenceLegacyData? = null,
 
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
-  var periodLengths: List<PeriodLengthEntity> = emptyList()
+  var periodLengths: MutableList<PeriodLengthEntity> = mutableListOf()
 
   @OneToOne(mappedBy = "sentenceEntity")
   var fineAmountEntity: FineAmountEntity? = null
@@ -85,7 +86,6 @@ class SentenceEntity(
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = EntityStatus.ACTIVE,
@@ -97,15 +97,17 @@ class SentenceEntity(
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceType,
       convictionDate = sentence.convictionDate,
+      updatedAt = ZonedDateTime.now(),
+      updatedBy = createdBy,
+      updatedPrison = sentence.prisonId,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }.toMutableList()
     sentenceEntity.fineAmountEntity = sentence.fineAmount?.let { FineAmountEntity.from(it) }
     return sentenceEntity
   }
 
   fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = lifetimeSentenceUuid,
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
@@ -118,16 +120,33 @@ class SentenceEntity(
       sentenceType = sentenceTypeEntity,
       convictionDate = convictionDate,
       legacyData = sentence.legacyData,
+      updatedAt = ZonedDateTime.now(),
+      updatedBy = createdBy,
+      updatedPrison = sentence.prisonId,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }.toMutableList()
     sentenceEntity.fineAmountEntity = sentence.fine?.let { FineAmountEntity.from(it) }
     return sentenceEntity
+  }
+
+  fun updateFrom(sentence: SentenceEntity) {
+    chargeNumber = sentence.chargeNumber
+    statusId = sentence.statusId
+    updatedAt = sentence.updatedAt
+    updatedBy = sentence.updatedBy
+    updatedPrison = sentence.updatedPrison
+    sentenceServeType = sentence.sentenceServeType
+    consecutiveTo = sentence.consecutiveTo
+    sentenceType = sentence.sentenceType
+    supersedingSentence = sentence.supersedingSentence
+    charge = sentence.charge
+    convictionDate = sentence.convictionDate
+    legacyData = sentence.legacyData
   }
 
   companion object {
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
-        lifetimeSentenceUuid = sentence.lifetimeSentenceUuid,
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         chargeNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,
@@ -144,7 +163,6 @@ class SentenceEntity(
     }
 
     fun from(sentence: LegacyCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
@@ -160,7 +178,6 @@ class SentenceEntity(
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
-      lifetimeSentenceUuid = UUID.randomUUID(),
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
