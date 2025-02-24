@@ -98,7 +98,8 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
   @Transactional
   fun delete(lifetimeUuid: UUID) {
     val sentence = getUnlessDeleted(lifetimeUuid)
-    sentence.statusId = EntityStatus.DELETED
+    sentence.delete(serviceUserService.getUsername())
+    sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
   }
 
   private fun getDpsSentenceType(sentenceCategory: String?, sentenceCalcType: String?): SentenceTypeEntity? {

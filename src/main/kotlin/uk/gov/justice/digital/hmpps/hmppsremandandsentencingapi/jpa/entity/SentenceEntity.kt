@@ -143,6 +143,12 @@ class SentenceEntity(
     fineAmount = sentence.fineAmount
   }
 
+  fun delete(updatedUser: String) {
+    updatedAt = ZonedDateTime.now()
+    updatedBy = updatedUser
+    statusId = EntityStatus.DELETED
+  }
+
   companion object {
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
