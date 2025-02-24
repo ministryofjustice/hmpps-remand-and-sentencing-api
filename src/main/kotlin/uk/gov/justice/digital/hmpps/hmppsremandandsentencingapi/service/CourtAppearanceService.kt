@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -22,7 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -120,9 +118,6 @@ class CourtAppearanceService(
   }
 
   private fun updateCourtAppearanceEntity(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity, existingCourtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
-    if (existingCourtAppearanceEntity.statusId == EntityStatus.EDITED) {
-      throw ImmutableCourtAppearanceException("Cannot edit an already edited court appearance")
-    }
     var appearanceChangeStatus = EntityChangeStatus.NO_CHANGE
 
     val (appearanceLegacyData, appearanceOutcome) = getAppearanceOutcome(courtAppearance)
@@ -219,7 +214,8 @@ class CourtAppearanceService(
         activeRecord.nextCourtAppearance = existingNextCourtAppearance
         EntityChangeStatus.NO_CHANGE to null
       } else {
-        activeNextCourtAppearance.futureSkeletonAppearance.statusId = EntityStatus.DELETED
+        activeNextCourtAppearance.futureSkeletonAppearance.delete(serviceUserService.getUsername())
+        courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeNextCourtAppearance.futureSkeletonAppearance))
         activeRecord.nextCourtAppearance = null
         EntityChangeStatus.DELETED to activeNextCourtAppearance.futureSkeletonAppearance
       }
@@ -325,7 +321,6 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
     courtAppearanceEntity.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity))
-    courtAppearanceEntity.statusId = EntityStatus.DELETED
     courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
     return RecordResponse(
       courtAppearanceEntity,
