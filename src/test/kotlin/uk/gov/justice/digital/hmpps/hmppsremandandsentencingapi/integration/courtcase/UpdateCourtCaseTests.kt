@@ -13,7 +13,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `update court case`() {
     val courtCase = createCourtCase()
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, lifetimeUuid = courtCase.second.appearances.first().lifetimeUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
     webTestClient
       .put()

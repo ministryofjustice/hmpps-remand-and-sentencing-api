@@ -108,7 +108,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
       .returnResult(CourtCase::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(result.appearances.filter { it.lifetimeUuid == toUpdateAppearance.lifetimeUuid }).hasSize(1)
+    Assertions.assertThat(result.appearances.filter { it.appearanceUuid == toUpdateAppearance.appearanceUuid }).hasSize(1)
   }
 
   @Test

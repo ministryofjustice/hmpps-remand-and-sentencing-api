@@ -32,7 +32,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update future dated appearance`() {
-    val (lifetimeUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
+    val (appearanceUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
     val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "99", nextEventDateTime = null))
     val response = webTestClient
       .post()
@@ -70,7 +70,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.courtCode")
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.courtCode")
       .isEqualTo(editedFutureCourtAppearance.courtCode)
   }
 

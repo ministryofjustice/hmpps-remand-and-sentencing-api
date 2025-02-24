@@ -90,7 +90,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
           EventMetadataCreator.chargeEventMetadata(
             prisonerId,
             courtCaseId,
-            courtAppearance.lifetimeUuid.toString(),
+            courtAppearance.appearanceUuid.toString(),
             record.lifetimeChargeUuid.toString(),
             EventType.CHARGE_UPDATED,
           ),
@@ -100,7 +100,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
           EventMetadataCreator.chargeEventMetadata(
             prisonerId,
             courtCaseId,
-            courtAppearance.lifetimeUuid.toString(),
+            courtAppearance.appearanceUuid.toString(),
             record.lifetimeChargeUuid.toString(),
             EventType.CHARGE_INSERTED,
           ),

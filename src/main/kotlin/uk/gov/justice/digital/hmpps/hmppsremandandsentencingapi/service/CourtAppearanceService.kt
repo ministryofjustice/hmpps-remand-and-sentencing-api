@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -28,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.util.UUID
 
@@ -42,6 +44,7 @@ class CourtAppearanceService(
   private val courtCaseRepository: CourtCaseRepository,
   private val documentManagementApiClient: DocumentManagementApiClient,
   private val appearanceTypeRepository: AppearanceTypeRepository,
+  private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
 ) {
 
   @Transactional
@@ -75,17 +78,19 @@ class CourtAppearanceService(
     val nextCourtAppearance = courtAppearance.nextCourtAppearance?.let { nextCourtAppearance ->
       val futureLegacyData = nextCourtAppearance.appearanceTime?.let { CourtAppearanceLegacyData.from(it) }
       val futureCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.fromFuture(nextCourtAppearance, courtCaseEntity, serviceUserService.getUsername(), courtAppearance.courtCaseReference, futureLegacyData))
+      courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(futureCourtAppearance))
       val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nextCourtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type found at ${nextCourtAppearance.appearanceTypeUuid}")
       nextCourtAppearanceRepository.save(
         NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance, appearanceType),
       )
     }
     val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername()))
+    courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
     val eventsToEmit = mutableSetOf(
       EventMetadataCreator.courtAppearanceEventMetadata(
         createdCourtAppearance.courtCase.prisonerId,
         createdCourtAppearance.courtCase.caseUniqueIdentifier,
-        createdCourtAppearance.lifetimeUuid.toString(),
+        createdCourtAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
       ),
     )
@@ -97,7 +102,7 @@ class CourtAppearanceService(
       val periodLength = PeriodLengthEntity.from(createPeriodLength)
       periodLength.appearanceEntity = createdCourtAppearance
       val createdPeriodLength = periodLengthRepository.save(periodLength)
-      createdCourtAppearance.periodLengths = listOf(createdPeriodLength)
+      createdCourtAppearance.periodLengths = mutableListOf(createdPeriodLength)
     }
     updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
@@ -106,7 +111,7 @@ class CourtAppearanceService(
         EventMetadataCreator.courtAppearanceEventMetadata(
           courtAppearanceEntity.courtCase.prisonerId,
           courtAppearanceEntity.courtCase.caseUniqueIdentifier,
-          courtAppearanceEntity.lifetimeUuid.toString(),
+          courtAppearanceEntity.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_INSERTED,
         ),
       )
@@ -127,14 +132,9 @@ class CourtAppearanceService(
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var appearanceDateChanged = !existingCourtAppearanceEntity.appearanceDate.isEqual(compareAppearance.appearanceDate)
     if (!existingCourtAppearanceEntity.isSame(compareAppearance)) {
-      existingCourtAppearanceEntity.statusId = EntityStatus.EDITED
-      val toCreatePeriodLengths = compareAppearance.periodLengths.toList()
-      compareAppearance.periodLengths = emptyList()
-      activeRecord = courtAppearanceRepository.save(compareAppearance)
-      toCreatePeriodLengths.forEach { periodLengthEntity ->
-        periodLengthEntity.appearanceEntity = activeRecord
-        periodLengthRepository.save(periodLengthEntity)
-      }
+      existingCourtAppearanceEntity.updateFrom(compareAppearance)
+      courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearanceEntity))
+      updatePeriodLengths(existingCourtAppearanceEntity, compareAppearance.periodLengths)
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
     val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, activeRecord, appearanceDateChanged)
@@ -146,7 +146,7 @@ class CourtAppearanceService(
         EventMetadataCreator.courtAppearanceEventMetadata(
           activeRecord.courtCase.prisonerId,
           activeRecord.courtCase.caseUniqueIdentifier,
-          activeRecord.lifetimeUuid.toString(),
+          activeRecord.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
         ),
       )
@@ -157,7 +157,7 @@ class CourtAppearanceService(
         EventMetadataCreator.courtAppearanceEventMetadata(
           futureSkeletonAppearance!!.courtCase.prisonerId,
           futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
-          futureSkeletonAppearance.lifetimeUuid.toString(),
+          futureSkeletonAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_INSERTED,
         ),
       )
@@ -166,7 +166,7 @@ class CourtAppearanceService(
         EventMetadataCreator.courtAppearanceEventMetadata(
           futureSkeletonAppearance!!.courtCase.prisonerId,
           futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
-          futureSkeletonAppearance.lifetimeUuid.toString(),
+          futureSkeletonAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
         ),
       )
@@ -175,7 +175,7 @@ class CourtAppearanceService(
         EventMetadataCreator.courtAppearanceEventMetadata(
           futureSkeletonAppearance!!.courtCase.prisonerId,
           futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
-          futureSkeletonAppearance.lifetimeUuid.toString(),
+          futureSkeletonAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_DELETED,
         ),
       )
@@ -205,16 +205,16 @@ class CourtAppearanceService(
         val nextCourtAppearance =
           NextCourtAppearanceEntity.from(courtAppearance.nextCourtAppearance, futureCourtAppearance, appearanceType)
         if (!activeNextCourtAppearance.isSame(nextCourtAppearance)) {
-          val savedFutureCourtAppearance = courtAppearanceRepository.save(futureCourtAppearance)
-          activeFutureSkeletonAppearance.statusId = EntityStatus.EDITED
+          activeFutureSkeletonAppearance.updateFrom(futureCourtAppearance)
+          courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeFutureSkeletonAppearance))
           activeRecord.nextCourtAppearance = nextCourtAppearanceRepository.save(
             NextCourtAppearanceEntity.from(
               courtAppearance.nextCourtAppearance,
-              savedFutureCourtAppearance,
+              activeFutureSkeletonAppearance,
               appearanceType,
             ),
           )
-          return@let EntityChangeStatus.EDITED to savedFutureCourtAppearance
+          return@let EntityChangeStatus.EDITED to activeFutureSkeletonAppearance
         }
         activeRecord.nextCourtAppearance = existingNextCourtAppearance
         EntityChangeStatus.NO_CHANGE to null
@@ -234,6 +234,7 @@ class CourtAppearanceService(
           futureLegacyData,
         ),
       )
+      courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(futureCourtAppearance))
       val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(toCreateNextCourtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type found at ${courtAppearance.nextCourtAppearance.appearanceTypeUuid}")
       val savedNextCourtAppearance = nextCourtAppearanceRepository.save(
         NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance, appearanceType),
@@ -241,6 +242,26 @@ class CourtAppearanceService(
       activeRecord.nextCourtAppearance = savedNextCourtAppearance
       EntityChangeStatus.CREATED to futureCourtAppearance
     } ?: (EntityChangeStatus.NO_CHANGE to null)
+  }
+
+  private fun updatePeriodLengths(courtAppearanceEntity: CourtAppearanceEntity, periodLengths: List<PeriodLengthEntity>) {
+    courtAppearanceEntity.periodLengths = courtAppearanceEntity.periodLengths.map { existingPeriodLength ->
+      val updatedPeriodLength = periodLengths.firstOrNull { it.periodLengthType == existingPeriodLength.periodLengthType }
+      if (updatedPeriodLength != null) {
+        existingPeriodLength.updateFrom(updatedPeriodLength)
+        existingPeriodLength
+      } else {
+        existingPeriodLength.sentenceEntity = null
+        null
+      }
+    }.filter { it != null }
+      .map { it!! }.toMutableList()
+    val toAddPeriodLengths = periodLengths.filter { toAddLength -> courtAppearanceEntity.periodLengths.none { existingLength -> existingLength.periodLengthType == toAddLength.periodLengthType } }
+      .map {
+        it.appearanceEntity = courtAppearanceEntity
+        periodLengthRepository.save(it)
+      }
+    courtAppearanceEntity.periodLengths.addAll(toAddPeriodLengths)
   }
 
   private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): Pair<EntityChangeStatus, MutableSet<EventMetadata>> {
@@ -302,6 +323,8 @@ class CourtAppearanceService(
 
   @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
+    courtAppearanceEntity.delete(serviceUserService.getUsername())
+    courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity))
     courtAppearanceEntity.statusId = EntityStatus.DELETED
     courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
     return RecordResponse(
@@ -310,7 +333,7 @@ class CourtAppearanceService(
         EventMetadataCreator.courtAppearanceEventMetadata(
           courtAppearanceEntity.courtCase.prisonerId,
           courtAppearanceEntity.courtCase.caseUniqueIdentifier,
-          courtAppearanceEntity.lifetimeUuid.toString(),
+          courtAppearanceEntity.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_DELETED,
         ),
       ),

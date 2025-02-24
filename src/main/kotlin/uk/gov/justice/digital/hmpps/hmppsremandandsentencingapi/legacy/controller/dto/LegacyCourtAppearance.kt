@@ -22,7 +22,7 @@ data class LegacyCourtAppearance(
     val returnChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE)
 
     fun from(courtAppearanceEntity: CourtAppearanceEntity): LegacyCourtAppearance = LegacyCourtAppearance(
-      courtAppearanceEntity.lifetimeUuid,
+      courtAppearanceEntity.appearanceUuid,
       courtAppearanceEntity.courtCase.caseUniqueIdentifier,
       courtAppearanceEntity.courtCase.prisonerId,
       courtAppearanceEntity.legacyData?.nomisOutcomeCode ?: courtAppearanceEntity.appearanceOutcome?.nomisCode,

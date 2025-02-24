@@ -93,7 +93,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .returnResult(MigrationCreateCourtCaseResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val firstAppearanceLifetimeUuid = response.appearances.first { appearanceResponse -> firstAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
+    val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
 
     webTestClient
       .get()
@@ -105,7 +105,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[?(@.lifetimeUuid == '$firstAppearanceLifetimeUuid')].nextCourtAppearance.courtCode")
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].nextCourtAppearance.courtCode")
       .isEqualTo(futureAppearance.courtCode)
   }
 
@@ -128,7 +128,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .returnResult(MigrationCreateCourtCaseResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val firstAppearanceLifetimeUuid = response.appearances.first { appearanceResponse -> firstAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
+    val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.legacyData.eventId == appearanceResponse.eventId }.lifetimeUuid
 
     webTestClient
       .get()
@@ -140,7 +140,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[?(@.lifetimeUuid == '$firstAppearanceLifetimeUuid')].nextCourtAppearance.courtCode")
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].nextCourtAppearance.courtCode")
       .isEqualTo(futureAppearance.courtCode)
   }
 
