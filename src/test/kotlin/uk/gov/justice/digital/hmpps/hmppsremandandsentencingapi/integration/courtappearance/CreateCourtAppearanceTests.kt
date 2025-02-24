@@ -29,6 +29,9 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearanceUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+
+    val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == createCourtAppearance.appearanceUuid }
+    Assertions.assertThat(historyRecords).hasSize(1)
   }
 
   @Test

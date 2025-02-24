@@ -34,6 +34,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val messages = getMessages(6)
     Assertions.assertThat(messages).hasSize(6).extracting<String> { it.eventType }.contains("court-appearance.updated")
+
+    val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
+    Assertions.assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
   }
 
   @Test
