@@ -117,7 +117,8 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   @Transactional(TxType.REQUIRED)
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
-    sentence.statusId = EntityStatus.DELETED
+    sentence.delete(serviceUserService.getUsername())
+    sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     if (changeStatus == EntityChangeStatus.DELETED) {
       eventsToEmit.add(
