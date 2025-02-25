@@ -1,4 +1,4 @@
-CREATE TABLE charge (
+CREATE TABLE charge_history (
 	id SERIAL PRIMARY KEY,
 	charge_uuid uuid NOT NULL,
 	offence_code varchar NOT NULL,
