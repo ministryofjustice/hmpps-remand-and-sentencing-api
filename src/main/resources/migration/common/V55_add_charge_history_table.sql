@@ -1,0 +1,20 @@
+CREATE TABLE charge (
+	id SERIAL PRIMARY KEY,
+	charge_uuid uuid NOT NULL,
+	offence_code varchar NOT NULL,
+	offence_start_date date NULL,
+	offence_end_date date NULL,
+	status_id smallint NOT NULL,
+	charge_outcome_id int NULL,
+	superseding_charge_id int NULL,
+	terror_related bool NULL,
+	created_at timestamp with time zone NOT NULL,
+	created_by varchar NOT NULL,
+	created_prison varchar NULL,
+	updated_at timestamp with time zone NULL,
+    updated_by varchar NULL,
+    updated_prison varchar NULL,
+	legacy_data jsonb NULL,
+	merged_from_case_id int NULL,
+	original_charge_id int references charge(id)
+);
