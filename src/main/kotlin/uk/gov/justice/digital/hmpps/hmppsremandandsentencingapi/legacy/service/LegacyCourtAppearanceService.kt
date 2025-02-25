@@ -42,7 +42,8 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
         )
         )?.let { nextEventAppearance ->
         val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(courtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${courtAppearance.appearanceTypeUuid}")
-        nextEventAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(NextCourtAppearanceEntity.from(courtAppearance, createdCourtAppearance, appearanceType))
+        nextEventAppearance.updateNextCourtAppearance(serviceUserService.getUsername(), nextCourtAppearanceRepository.save(NextCourtAppearanceEntity.from(courtAppearance, createdCourtAppearance, appearanceType)))
+        courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(nextEventAppearance))
       }
     }
     return LegacyCourtAppearanceCreatedResponse(createdCourtAppearance.appearanceUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
@@ -68,7 +69,8 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
           val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(courtAppearance.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${courtAppearance.appearanceTypeUuid}")
           val toSaveNextCourtAppearance = nextEventAppearance.nextCourtAppearance?.copyFrom(courtAppearance, existingCourtAppearance, appearanceType)
             ?: NextCourtAppearanceEntity.from(courtAppearance, existingCourtAppearance, appearanceType)
-          nextEventAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(toSaveNextCourtAppearance)
+          nextEventAppearance.updateNextCourtAppearance(serviceUserService.getUsername(), nextCourtAppearanceRepository.save(toSaveNextCourtAppearance))
+          courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(nextEventAppearance))
         }
       }
       existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances + existingCourtAppearance)

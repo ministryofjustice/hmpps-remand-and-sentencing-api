@@ -32,6 +32,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
 
     val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == createCourtAppearance.appearanceUuid }
     Assertions.assertThat(historyRecords).hasSize(1)
+    val historyRecord = historyRecords[0]
+    Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
   }
 
   @Test

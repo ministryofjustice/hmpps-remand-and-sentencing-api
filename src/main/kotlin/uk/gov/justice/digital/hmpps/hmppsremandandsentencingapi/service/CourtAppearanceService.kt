@@ -83,7 +83,7 @@ class CourtAppearanceService(
       )
     }
     val createdCourtAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(courtAppearance, appearanceOutcome, courtCaseEntity, serviceUserService.getUsername()))
-    courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
+
     val eventsToEmit = mutableSetOf(
       EventMetadataCreator.courtAppearanceEventMetadata(
         createdCourtAppearance.courtCase.prisonerId,
@@ -114,6 +114,7 @@ class CourtAppearanceService(
         ),
       )
     }
+    courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
     return RecordResponse(createdCourtAppearance, eventsToEmit)
   }
 
@@ -128,7 +129,7 @@ class CourtAppearanceService(
     var appearanceDateChanged = !existingCourtAppearanceEntity.appearanceDate.isEqual(compareAppearance.appearanceDate)
     if (!existingCourtAppearanceEntity.isSame(compareAppearance)) {
       existingCourtAppearanceEntity.updateFrom(compareAppearance)
-      courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearanceEntity))
+
       updatePeriodLengths(existingCourtAppearanceEntity, compareAppearance.periodLengths)
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
@@ -175,7 +176,9 @@ class CourtAppearanceService(
         ),
       )
     }
-
+    if (appearanceChangeStatus != EntityChangeStatus.NO_CHANGE || setOf(EntityChangeStatus.CREATED, EntityChangeStatus.DELETED).contains(nextCourtAppearanceEntityChangeStatus)) {
+      courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearanceEntity))
+    }
     return RecordResponse(activeRecord, eventsToEmit)
   }
 
