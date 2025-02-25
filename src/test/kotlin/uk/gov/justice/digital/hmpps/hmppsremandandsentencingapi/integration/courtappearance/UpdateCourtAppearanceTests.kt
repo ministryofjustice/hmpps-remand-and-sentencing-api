@@ -17,7 +17,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   fun `update appearance in existing court case`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, lifetimeUuid = createdAppearance.lifetimeUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
     webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -34,13 +34,16 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val messages = getMessages(6)
     Assertions.assertThat(messages).hasSize(6).extracting<String> { it.eventType }.contains("court-appearance.updated")
+
+    val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
+    Assertions.assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
   }
 
   @Test
   fun `updating only a court appearance keeps the next court appearance`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, lifetimeUuid = createdAppearance.lifetimeUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
     val response = webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -101,7 +104,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val createdAppearance = courtCase.second.appearances.first()
     val createdNextAppearance = createdAppearance.nextCourtAppearance!!
     val updateNextAppearance = createdNextAppearance.copy(appearanceTime = createdNextAppearance.appearanceTime!!.plusHours(2).withSecond(0).withNano(0))
-    val updateCourtAppearance = createdAppearance.copy(courtCaseUuid = courtCase.first, appearanceUuid = createdAppearance.appearanceUuid, lifetimeUuid = createdAppearance.lifetimeUuid, nextCourtAppearance = updateNextAppearance)
+    val updateCourtAppearance = createdAppearance.copy(courtCaseUuid = courtCase.first, appearanceUuid = createdAppearance.appearanceUuid, nextCourtAppearance = updateNextAppearance)
     val response = webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -212,37 +215,6 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .doesNotExist()
       .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')]")
       .exists()
-  }
-
-  @Test
-  fun `cannot edit an already edited court appearance`() {
-    val courtCase = createCourtCase()
-    val createdAppearance = courtCase.second.appearances.first()
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, lifetimeUuid = createdAppearance.lifetimeUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-
-    val editedAppearance = updateCourtAppearance.copy(courtCode = "DIFFERENTCOURT1")
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(editedAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isBadRequest
   }
 
   @Test

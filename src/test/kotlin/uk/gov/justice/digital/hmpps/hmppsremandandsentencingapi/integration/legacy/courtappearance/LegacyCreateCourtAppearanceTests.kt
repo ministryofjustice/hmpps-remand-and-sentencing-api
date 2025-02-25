@@ -60,7 +60,7 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `create future dated appearance with existing appearance`() {
-    val (lifetimeUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
+    val (appearanceUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
     val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(eventId = "99", nextEventDateTime = null))
     webTestClient
       .post()
@@ -87,9 +87,9 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.appearanceDate")
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceDate")
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
-      .jsonPath("$.appearances[?(@.lifetimeUuid == '$lifetimeUuid')].nextCourtAppearance.appearanceTime")
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
       .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
   }
 

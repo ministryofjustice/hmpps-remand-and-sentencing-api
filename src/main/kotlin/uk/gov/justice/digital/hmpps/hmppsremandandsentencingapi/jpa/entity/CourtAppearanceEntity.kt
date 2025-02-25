@@ -39,24 +39,22 @@ class CourtAppearanceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  var appearanceUuid: UUID,
-  @Column
-  var lifetimeUuid: UUID,
+  val appearanceUuid: UUID,
 
   @ManyToOne
   @JoinColumn(name = "appearance_outcome_id")
-  val appearanceOutcome: AppearanceOutcomeEntity?,
+  var appearanceOutcome: AppearanceOutcomeEntity?,
 
   @ManyToOne
   @JoinColumn(name = "court_case_id")
   val courtCase: CourtCaseEntity,
 
   @Column
-  val courtCode: String,
+  var courtCode: String,
   @Column
-  val courtCaseReference: String?,
+  var courtCaseReference: String?,
   @Column
-  val appearanceDate: LocalDate,
+  var appearanceDate: LocalDate,
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
@@ -65,17 +63,20 @@ class CourtAppearanceEntity(
   var previousAppearance: CourtAppearanceEntity?,
 
   @Column
-  val warrantId: String?,
+  var warrantId: String?,
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   @Column
   val createdBy: String,
   @Column
   val createdPrison: String?,
+  var updatedAt: ZonedDateTime? = null,
+  var updatedBy: String? = null,
+  var updatedPrison: String? = null,
   @Column
-  val warrantType: String,
+  var warrantType: String,
   @Column
-  val taggedBail: Int?,
+  var taggedBail: Int?,
   @ManyToMany
   @JoinTable(
     name = "appearance_charge",
@@ -89,14 +90,14 @@ class CourtAppearanceEntity(
   var nextCourtAppearance: NextCourtAppearanceEntity?,
 
   @Column
-  val overallConvictionDate: LocalDate?,
+  var overallConvictionDate: LocalDate?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtAppearanceLegacyData? = null,
 ) {
 
   @OneToMany
   @JoinColumn(name = "appearance_id")
-  var periodLengths: List<PeriodLengthEntity> = emptyList()
+  var periodLengths: MutableList<PeriodLengthEntity> = mutableListOf()
 
   fun isSame(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
     this.courtCase == other.courtCase &&
@@ -111,40 +112,60 @@ class CourtAppearanceEntity(
     this.legacyData == other.legacyData &&
     this.createdPrison == other.createdPrison
 
-  fun copyAndRemoveCaseReference(createdBy: String): CourtAppearanceEntity {
-    val courtAppearance = CourtAppearanceEntity(
-      0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtCode, null, appearanceDate,
-      EntityStatus.ACTIVE, this, warrantId,
-      ZonedDateTime.now(), createdBy, createdPrison, warrantType, taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, legacyData,
-    )
-    courtAppearance.periodLengths = periodLengths.toList()
-    return courtAppearance
-  }
-
   fun copyFrom(courtAppearance: LegacyCreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, createdBy: String): CourtAppearanceEntity {
     val courtAppearance = CourtAppearanceEntity(
-      0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
+      0, UUID.randomUUID(), appearanceOutcome, courtCase, courtAppearance.courtCode, courtCaseReference, courtAppearance.appearanceDate,
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime), this, warrantId,
-      ZonedDateTime.now(), createdBy, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, courtAppearance.legacyData,
+      ZonedDateTime.now(), createdBy, createdPrison, ZonedDateTime.now(), createdBy, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, charges.toMutableSet(), nextCourtAppearance, overallConvictionDate, courtAppearance.legacyData,
     )
-    courtAppearance.periodLengths = periodLengths.toList()
+    courtAppearance.periodLengths = periodLengths.toMutableList()
     return courtAppearance
   }
 
   fun copyFrom(courtAppearance: CreateCourtAppearance, appearanceOutcome: AppearanceOutcomeEntity?, courtCase: CourtCaseEntity, createdBy: String): CourtAppearanceEntity {
     val courtAppearanceEntity = CourtAppearanceEntity(
-      0, UUID.randomUUID(), lifetimeUuid, appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
-      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, courtAppearance.legacyData,
+      0, UUID.randomUUID(), appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
+      EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, courtAppearance.legacyData,
     )
-    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = listOf(PeriodLengthEntity.from(it)) }
+    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = mutableListOf(PeriodLengthEntity.from(it)) }
     return courtAppearanceEntity
   }
 
   fun copyFromFuture(nextCourtAppearance: CreateNextCourtAppearance, courtCase: CourtCaseEntity, createdBy: String, courtCaseReference: String?, legacyData: CourtAppearanceLegacyData?): CourtAppearanceEntity = CourtAppearanceEntity(
-    0, UUID.randomUUID(), lifetimeUuid, null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
+    0, UUID.randomUUID(), null, courtCase, nextCourtAppearance.courtCode, courtCaseReference, nextCourtAppearance.appearanceDate,
     EntityStatus.FUTURE, this, null,
+    ZonedDateTime.now(), createdBy, nextCourtAppearance.prisonId,
     ZonedDateTime.now(), createdBy, nextCourtAppearance.prisonId, UNKNOWN_WARRANT_TYPE, null, mutableSetOf(), null, null, legacyData,
   )
+
+  fun updateFrom(courtAppearanceEntity: CourtAppearanceEntity) {
+    appearanceOutcome = courtAppearanceEntity.appearanceOutcome
+    courtCode = courtAppearanceEntity.courtCode
+    courtCaseReference = courtAppearanceEntity.courtCaseReference
+    appearanceDate = courtAppearanceEntity.appearanceDate
+    statusId = courtAppearanceEntity.statusId
+    previousAppearance = courtAppearanceEntity.previousAppearance
+    warrantId = courtAppearanceEntity.warrantId
+    updatedAt = courtAppearanceEntity.updatedAt
+    updatedBy = courtAppearanceEntity.updatedBy
+    updatedPrison = courtAppearanceEntity.updatedPrison
+    warrantType = courtAppearanceEntity.warrantType
+    taggedBail = courtAppearanceEntity.taggedBail
+    overallConvictionDate = courtAppearanceEntity.overallConvictionDate
+    legacyData = courtAppearanceEntity.legacyData
+  }
+
+  fun updatedAndRemoveCaseReference(username: String) {
+    courtCaseReference = null
+    updatedBy = username
+    updatedAt = ZonedDateTime.now()
+  }
+
+  fun delete(username: String) {
+    statusId = EntityStatus.DELETED
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+  }
 
   companion object {
 
@@ -165,7 +186,6 @@ class CourtAppearanceEntity(
         warrantType = courtAppearance.warrantType,
         taggedBail = courtAppearance.taggedBail,
         overallConvictionDate = courtAppearance.overallConvictionDate,
-        lifetimeUuid = courtAppearance.lifetimeUuid,
         legacyData = courtAppearance.legacyData,
         charges = mutableSetOf(),
       )
@@ -189,7 +209,6 @@ class CourtAppearanceEntity(
       warrantType = UNKNOWN_WARRANT_TYPE,
       taggedBail = null,
       overallConvictionDate = null,
-      lifetimeUuid = UUID.randomUUID(),
       legacyData = legacyData,
     )
 
@@ -210,7 +229,6 @@ class CourtAppearanceEntity(
       warrantType = deriveWarrantType(appearanceOutcome, courtAppearance.legacyData),
       taggedBail = null,
       overallConvictionDate = null,
-      lifetimeUuid = UUID.randomUUID(),
       legacyData = courtAppearance.legacyData,
     )
 
@@ -231,7 +249,6 @@ class CourtAppearanceEntity(
       warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData),
       taggedBail = null,
       overallConvictionDate = null,
-      lifetimeUuid = UUID.randomUUID(),
       legacyData = migrationCreateCourtAppearance.legacyData,
     )
 

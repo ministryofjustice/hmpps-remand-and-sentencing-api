@@ -12,6 +12,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
@@ -23,6 +25,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateChargeResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
@@ -37,7 +41,21 @@ import java.util.UUID
 import kotlin.collections.filter
 
 @Service
-class MigrationService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val chargeRepository: ChargeRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val serviceUserService: ServiceUserService, private val nextCourtAppearanceRepository: NextCourtAppearanceRepository, private val appearanceTypeRepository: AppearanceTypeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository) {
+class MigrationService(
+  private val courtCaseRepository: CourtCaseRepository,
+  private val courtAppearanceRepository: CourtAppearanceRepository,
+  private val chargeRepository: ChargeRepository,
+  private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
+  private val chargeOutcomeRepository: ChargeOutcomeRepository,
+  private val serviceUserService: ServiceUserService,
+  private val nextCourtAppearanceRepository: NextCourtAppearanceRepository,
+  private val appearanceTypeRepository: AppearanceTypeRepository,
+  private val sentenceTypeRepository: SentenceTypeRepository,
+  private val sentenceRepository: SentenceRepository,
+  private val periodLengthRepository: PeriodLengthRepository,
+  private val sentenceHistoryRepository: SentenceHistoryRepository,
+  private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
+) {
 
   @Transactional
   fun create(migrationCreateCourtCase: MigrationCreateCourtCase): MigrationCreateCourtCaseResponse {
@@ -54,7 +72,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
 
     return MigrationCreateCourtCaseResponse(
       createdCourtCase.caseUniqueIdentifier,
-      createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.lifetimeUuid, eventId) },
+      createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
       createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.lifetimeChargeUuid, chargeNOMISId) },
       createdSentencesMap.map { (id, createdSentence) -> MigrationCreateSentenceResponse(createdSentence.sentenceUuid, id) },
     )
@@ -112,7 +130,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
   fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, sourceMergedCourtCases: Map<String, CourtCaseEntity>, sourceMergedCharges: Map<UUID, ChargeEntity>): CourtAppearanceEntity {
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { dpsAppearanceOutcomes[it] }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, courtCaseReference))
-
+    courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdAppearance))
     val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges) }
     createdAppearance.charges.addAll(charges)
     return createdAppearance
@@ -180,6 +198,7 @@ class MigrationService(private val courtCaseRepository: CourtCaseRepository, pri
 
     val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, consecutiveToSentence)
     val createdSentence = sentenceRepository.save(toCreateSentence)
+    sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
       val createdPeriodLength = periodLengthRepository.save(PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: migrationCreateSentence.legacyData.sentenceCalcType!!))
       createdPeriodLength.sentenceEntity = createdSentence

@@ -42,7 +42,6 @@ class DpsDataCreator {
     fun dpsCreateCourtAppearance(
       courtCaseUuid: String? = null,
       appearanceUUID: UUID = UUID.randomUUID(),
-      lifetimeUuid: UUID = UUID.randomUUID(),
       outcomeUuid: UUID = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
       courtCode: String = "COURT1",
       courtCaseReference: String? = "GH123456789",
@@ -56,7 +55,7 @@ class DpsDataCreator {
       overallConvictionDate: LocalDate? = LocalDate.now().minusDays(7),
       legacyData: CourtAppearanceLegacyData? = null,
       prisonId: String = "PRISON1",
-    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, lifetimeUuid, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, taggedBail, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData, prisonId)
+    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, taggedBail, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData, prisonId)
 
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,

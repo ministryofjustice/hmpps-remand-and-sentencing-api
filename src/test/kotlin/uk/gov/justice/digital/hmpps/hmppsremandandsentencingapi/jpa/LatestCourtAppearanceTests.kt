@@ -24,7 +24,6 @@ class LatestCourtAppearanceTests {
 
   fun courtAppearanceEntity(appearanceDate: LocalDate, courtCase: CourtCaseEntity, createdAt: ZonedDateTime): CourtAppearanceEntity = CourtAppearanceEntity(
     appearanceUuid = UUID.randomUUID(),
-    lifetimeUuid = UUID.randomUUID(),
     appearanceOutcome = null,
     courtCase = courtCase,
     courtCode = "CODE1",

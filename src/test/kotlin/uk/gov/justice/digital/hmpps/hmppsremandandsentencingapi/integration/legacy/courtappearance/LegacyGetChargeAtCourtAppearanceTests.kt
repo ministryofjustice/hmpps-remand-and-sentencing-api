@@ -35,7 +35,7 @@ class LegacyGetChargeAtCourtAppearanceTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/legacy/court-appearance/${appearance.lifetimeUuid}/charge/${charge.lifetimeChargeUuid}")
+      .uri("/legacy/court-appearance/${appearance.appearanceUuid}/charge/${charge.lifetimeChargeUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -49,7 +49,7 @@ class LegacyGetChargeAtCourtAppearanceTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/legacy/court-appearance/${newAppearance.lifetimeUuid}/charge/${charge.lifetimeChargeUuid}")
+      .uri("/legacy/court-appearance/${newAppearance.appearanceUuid}/charge/${charge.lifetimeChargeUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -81,7 +81,7 @@ class LegacyGetChargeAtCourtAppearanceTests : IntegrationTestBase() {
     val charge = createdAppearance.charges.first()
     webTestClient
       .get()
-      .uri("/legacy/court-appearance/${createdAppearance.lifetimeUuid}/charge/${charge.lifetimeChargeUuid}")
+      .uri("/legacy/court-appearance/${createdAppearance.appearanceUuid}/charge/${charge.lifetimeChargeUuid}")
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -93,7 +93,7 @@ class LegacyGetChargeAtCourtAppearanceTests : IntegrationTestBase() {
     val charge = createdAppearance.charges.first()
     webTestClient
       .get()
-      .uri("/legacy/court-appearance/${createdAppearance.lifetimeUuid}/charge/${charge.lifetimeChargeUuid}")
+      .uri("/legacy/court-appearance/${createdAppearance.appearanceUuid}/charge/${charge.lifetimeChargeUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
       }

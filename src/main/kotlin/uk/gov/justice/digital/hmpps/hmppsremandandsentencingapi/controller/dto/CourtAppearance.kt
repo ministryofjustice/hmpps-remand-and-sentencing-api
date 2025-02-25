@@ -9,7 +9,6 @@ import java.util.UUID
 
 data class CourtAppearance(
   val appearanceUuid: UUID,
-  val lifetimeUuid: UUID,
   val outcome: CourtAppearanceOutcome?,
   val courtCode: String,
   val courtCaseReference: String?,
@@ -29,7 +28,6 @@ data class CourtAppearance(
 
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance = CourtAppearance(
       courtAppearanceEntity.appearanceUuid,
-      courtAppearanceEntity.lifetimeUuid,
       courtAppearanceEntity.appearanceOutcome?.let { CourtAppearanceOutcome.from(it) },
       courtAppearanceEntity.courtCode,
       courtAppearanceEntity.courtCaseReference,

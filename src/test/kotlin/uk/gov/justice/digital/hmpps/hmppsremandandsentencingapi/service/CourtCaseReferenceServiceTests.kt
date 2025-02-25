@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
@@ -21,7 +22,8 @@ class CourtCaseReferenceServiceTests {
   private val courtCaseRepository = mockk<CourtCaseRepository>()
   private val courtAppearanceRepository = mockk<CourtAppearanceRepository>()
   private val serviceUserService = mockk<ServiceUserService>()
-  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, courtAppearanceRepository, serviceUserService)
+  private val courtAppearanceHistoryRepository = mockk<CourtAppearanceHistoryRepository>()
+  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, courtAppearanceRepository, serviceUserService, courtAppearanceHistoryRepository)
 
   @Test
   fun `insert new active case references`() {
@@ -65,5 +67,5 @@ class CourtCaseReferenceServiceTests {
 
   private fun generateLegacyData(caseReferences: List<String>): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList())
 
-  private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(appearanceUuid = UUID.randomUUID(), lifetimeUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdBy = "U", createdPrison = "P", warrantType = "W", taggedBail = null, charges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
+  private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(appearanceUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdBy = "U", createdPrison = "P", warrantType = "W", taggedBail = null, charges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
 }

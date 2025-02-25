@@ -65,7 +65,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
     val createdAppearance = createCourtCase().second.appearances.first()
     webTestClient
       .get()
-      .uri("/legacy/court-appearance/${createdAppearance.lifetimeUuid}")
+      .uri("/legacy/court-appearance/${createdAppearance.appearanceUuid}")
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -76,7 +76,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
     val createdAppearance = createCourtCase().second.appearances.first()
     webTestClient
       .get()
-      .uri("/legacy/court-appearance/${createdAppearance.lifetimeUuid}")
+      .uri("/legacy/court-appearance/${createdAppearance.appearanceUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
       }

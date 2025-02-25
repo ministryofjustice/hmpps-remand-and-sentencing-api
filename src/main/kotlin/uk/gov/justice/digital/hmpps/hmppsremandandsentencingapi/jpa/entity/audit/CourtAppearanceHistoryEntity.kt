@@ -51,4 +51,14 @@ class CourtAppearanceHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_appearance_id")
   val originalAppearance: CourtAppearanceEntity,
-)
+) {
+  companion object {
+    fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearanceHistoryEntity = CourtAppearanceHistoryEntity(
+      0, courtAppearanceEntity.appearanceUuid, courtAppearanceEntity.appearanceOutcome?.id, courtAppearanceEntity.courtCase.id, courtAppearanceEntity.courtCode,
+      courtAppearanceEntity.courtCaseReference, courtAppearanceEntity.appearanceDate, courtAppearanceEntity.statusId, courtAppearanceEntity.previousAppearance?.id, courtAppearanceEntity.warrantId,
+      courtAppearanceEntity.createdAt, courtAppearanceEntity.createdBy, courtAppearanceEntity.createdPrison, courtAppearanceEntity.updatedAt, courtAppearanceEntity.updatedBy,
+      courtAppearanceEntity.updatedPrison, courtAppearanceEntity.warrantType, courtAppearanceEntity.taggedBail, courtAppearanceEntity.nextCourtAppearance?.id, courtAppearanceEntity.overallConvictionDate,
+      courtAppearanceEntity.legacyData, courtAppearanceEntity,
+    )
+  }
+}
