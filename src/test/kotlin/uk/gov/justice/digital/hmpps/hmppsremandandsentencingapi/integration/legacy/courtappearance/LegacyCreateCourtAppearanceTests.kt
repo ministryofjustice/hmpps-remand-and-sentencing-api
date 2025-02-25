@@ -91,6 +91,11 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
       .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+
+    val appearanceHistories = courtAppearanceHistoryRepository.findAll()
+    val existingAppearanceHistories = appearanceHistories.filter { it.appearanceUuid == appearanceUuid }.sortedBy { it.updatedAt ?: it.createdAt }
+    Assertions.assertThat(existingAppearanceHistories[0].nextCourtAppearanceId).isNull()
+    Assertions.assertThat(existingAppearanceHistories[1].nextCourtAppearanceId).isNotNull
   }
 
   @Test

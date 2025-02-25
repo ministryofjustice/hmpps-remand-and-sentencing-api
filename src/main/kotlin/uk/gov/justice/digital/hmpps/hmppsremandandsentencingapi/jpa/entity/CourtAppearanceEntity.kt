@@ -161,6 +161,12 @@ class CourtAppearanceEntity(
     updatedAt = ZonedDateTime.now()
   }
 
+  fun updateNextCourtAppearance(username: String, nextCourtAppearance: NextCourtAppearanceEntity) {
+    this.nextCourtAppearance = nextCourtAppearance
+    updatedBy = username
+    updatedAt = ZonedDateTime.now()
+  }
+
   fun delete(username: String) {
     statusId = EntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
