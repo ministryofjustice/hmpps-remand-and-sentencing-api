@@ -39,7 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
 import kotlin.collections.filter
-
+// TODO: audit changes here
 @Service
 class MigrationService(
   private val courtCaseRepository: CourtCaseRepository,
@@ -73,7 +73,7 @@ class MigrationService(
     return MigrationCreateCourtCaseResponse(
       createdCourtCase.caseUniqueIdentifier,
       createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
-      createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.lifetimeChargeUuid, chargeNOMISId) },
+      createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.chargeUuid, chargeNOMISId) },
       createdSentencesMap.map { (id, createdSentence) -> MigrationCreateSentenceResponse(createdSentence.sentenceUuid, id) },
     )
   }
@@ -117,12 +117,12 @@ class MigrationService(
     val dpsSentenceTypes = getDpsSentenceTypesMap(migrationCreateAppearances)
     val sourceMergedCourtCases = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedFromCourtCaseUuid != null }.map { it.mergedFromCourtCaseUuid!! }.takeUnless { it.isEmpty() }?.let { courtCaseRepository.findByCaseUniqueIdentifierIn(it).associateBy { it.caseUniqueIdentifier } } ?: emptyMap()
     val sourceMergedCharges = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedChargeLifetimeUuid != null }.map { it.mergedChargeLifetimeUuid!! }.takeUnless { it.isEmpty() }?.let {
-      chargeRepository.findByLifetimeChargeUuidInAndStatusId(
+      chargeRepository.findByChargeUuidInAndStatusId(
         it,
         EntityStatus.MERGED,
       ).sortedBy {
         it.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxOf { it.appearanceDate }
-      }.associateBy { it.lifetimeChargeUuid }
+      }.associateBy { it.chargeUuid }
     } ?: emptyMap()
     return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges) }
   }

@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
-
+// TODO: audit changes here
 @Service
 class LegacyChargeService(private val chargeRepository: ChargeRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val serviceUserService: ServiceUserService, private val objectMapper: ObjectMapper) {
 
@@ -29,12 +29,12 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, serviceUserService.getUsername()))
     courtAppearance.charges.add(createdCharge)
     createdCharge.courtAppearances.add(courtAppearance)
-    return LegacyChargeCreatedResponse(createdCharge.lifetimeChargeUuid, courtAppearance.courtCase.caseUniqueIdentifier, courtAppearance.courtCase.prisonerId)
+    return LegacyChargeCreatedResponse(createdCharge.chargeUuid, courtAppearance.courtCase.caseUniqueIdentifier, courtAppearance.courtCase.prisonerId)
   }
 
   @Transactional
   fun updateInAllAppearances(lifetimeUUID: UUID, charge: LegacyUpdateWholeCharge) {
-    val existingChargeRecords = chargeRepository.findByLifetimeChargeUuidAndStatusId(lifetimeUUID, EntityStatus.ACTIVE)
+    val existingChargeRecords = chargeRepository.findByChargeUuidAndStatusId(lifetimeUUID, EntityStatus.ACTIVE)
     if (existingChargeRecords.isEmpty()) {
       throw EntityNotFoundException("No charge found at $lifetimeUUID")
     }
@@ -53,7 +53,7 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   @Transactional
   fun updateInAppearance(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    val existingCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(appearanceUuid, lifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUuid")
+    val existingCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(appearanceUuid, lifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUuid")
     val appearance = existingCharge.courtAppearances.first { it.appearanceUuid == appearanceUuid }
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
@@ -76,7 +76,7 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   fun get(lifetimeUUID: UUID): LegacyCharge = LegacyCharge.from(getUnlessDeleted(lifetimeUUID))
 
   @Transactional(readOnly = true)
-  fun getChargeAtAppearance(appearanceLifetimeUuid: UUID, lifetimeUUID: UUID): LegacyCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndLifetimeChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUUID)
+  fun getChargeAtAppearance(appearanceLifetimeUuid: UUID, lifetimeUUID: UUID): LegacyCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUUID)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { chargeEntity -> LegacyCharge.from(chargeEntity) } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID for appearance $appearanceLifetimeUuid")
 
   @Transactional
@@ -85,6 +85,6 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     charge.statusId = EntityStatus.DELETED
   }
 
-  private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(lifetimeUUID)
+  private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidOrderByCreatedAtDesc(lifetimeUUID)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
 }

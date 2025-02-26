@@ -18,7 +18,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
     val toUpdate = DataCreator.legacyUpdateCharge()
     webTestClient
       .put()
-      .uri("/legacy/charge/${charge.lifetimeChargeUuid}/appearance/${appearance.appearanceUuid}")
+      .uri("/legacy/charge/${charge.chargeUuid}/appearance/${appearance.appearanceUuid}")
       .bodyValue(toUpdate)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
@@ -40,8 +40,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges[0].lifetimeUuid")
-      .isEqualTo(charge.lifetimeChargeUuid)
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid)
   }
 
   @Test
@@ -53,7 +53,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
     val legacyUpdateCharge = DataCreator.legacyUpdateCharge()
     webTestClient
       .put()
-      .uri("/legacy/charge/${charge.lifetimeChargeUuid}/appearance/${secondAppearance.appearanceUuid}")
+      .uri("/legacy/charge/${charge.chargeUuid}/appearance/${secondAppearance.appearanceUuid}")
       .bodyValue(legacyUpdateCharge)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
@@ -73,8 +73,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges[0].lifetimeUuid")
-      .isEqualTo(charge.lifetimeChargeUuid)
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid)
 
     webTestClient
       .get()
@@ -86,8 +86,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges[0].lifetimeUuid")
-      .isEqualTo(charge.lifetimeChargeUuid)
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid)
   }
 
   @Test

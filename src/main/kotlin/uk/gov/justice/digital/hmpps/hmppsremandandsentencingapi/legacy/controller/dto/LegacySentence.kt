@@ -29,7 +29,7 @@ data class LegacySentence(
       return LegacySentence(
         courtCase.prisonerId,
         courtCase.caseUniqueIdentifier,
-        sentenceEntity.charge.lifetimeChargeUuid,
+        sentenceEntity.charge.chargeUuid,
         sentenceEntity.sentenceUuid,
         sentenceEntity.statusId == EntityStatus.ACTIVE,
         sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData!!.sentenceCalcType!!,

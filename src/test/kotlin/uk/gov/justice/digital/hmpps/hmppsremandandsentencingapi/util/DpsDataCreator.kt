@@ -60,7 +60,6 @@ class DpsDataCreator {
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
       chargeUuid: UUID = UUID.randomUUID(),
-      chargeLifetimeUuid: UUID = UUID.randomUUID(),
       offenceCode: String = "OFF123",
       offenceStartDate: LocalDate = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
@@ -69,7 +68,7 @@ class DpsDataCreator {
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
       prisonId: String = "PRISON1",
-    ): CreateCharge = CreateCharge(appearanceUuid, chargeUuid, chargeLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, terrorRelated, sentence, legacyData, prisonId)
+    ): CreateCharge = CreateCharge(appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, terrorRelated, sentence, legacyData, prisonId)
 
     fun dpsCreateSentence(
       sentenceUuid: UUID? = UUID.randomUUID(),
