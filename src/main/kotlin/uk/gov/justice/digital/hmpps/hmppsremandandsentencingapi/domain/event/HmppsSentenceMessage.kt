@@ -4,5 +4,6 @@ data class HmppsSentenceMessage(
   val sentenceId: String,
   val courtChargeId: String,
   val courtCaseId: String,
+  val courtAppearanceId: String,
   val source: EventSource = EventSource.DPS,
 )
