@@ -33,7 +33,7 @@ class ChargeEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   val chargeUuid: UUID,
-  val offenceCode: String,
+  var offenceCode: String,
   var offenceStartDate: LocalDate?,
   var offenceEndDate: LocalDate?,
   @Enumerated(EnumType.ORDINAL)
@@ -129,6 +129,7 @@ class ChargeEntity(
   }
 
   fun updateFrom(chargeEntity: ChargeEntity) {
+    offenceCode = chargeEntity.offenceCode
     offenceStartDate = chargeEntity.offenceStartDate
     offenceEndDate = chargeEntity.offenceEndDate
     statusId = chargeEntity.statusId

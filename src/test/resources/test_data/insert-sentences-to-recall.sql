@@ -6,9 +6,9 @@ TRUNCATE TABLE court_appearance CASCADE;
 TRUNCATE TABLE appearance_charge CASCADE;
 
 INSERT INTO charge(
-     id, lifetime_charge_uuid, charge_uuid, offence_code, offence_start_date, status_id, charge_outcome_id, terror_related, created_at, created_by, created_prison)
-VALUES (1,'6b797db7-fc1b-4c6e-8e6b-c34eb8cf68db', 'c923b281-b64d-435d-bec8-da6c1cdcb7d0', 'ABC' , now(), 0, 1, false, now(), 'testuser', 'HMI'),
-       (2, 'b59dcbf9-5be2-4a4f-aa9c-2db15b24ca43', '11ce3609-c16b-4f23-947a-30ae75dafd7b', 'ABC' , now(), 0, 1, false, now(), 'testuser', 'HMI');
+     id, charge_uuid, offence_code, offence_start_date, status_id, charge_outcome_id, terror_related, created_at, created_by, created_prison)
+VALUES (1, 'c923b281-b64d-435d-bec8-da6c1cdcb7d0', 'ABC' , now(), 0, 1, false, now(), 'testuser', 'HMI'),
+       (2, '11ce3609-c16b-4f23-947a-30ae75dafd7b', 'ABC' , now(), 0, 1, false, now(), 'testuser', 'HMI');
 
 INSERT INTO court_case(
     id, prisoner_id, case_unique_identifier, created_at, created_by, status_id, created_prison)
