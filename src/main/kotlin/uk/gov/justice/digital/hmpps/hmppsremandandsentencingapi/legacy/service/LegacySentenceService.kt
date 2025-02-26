@@ -43,12 +43,13 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       createdPeriodLength.sentenceEntity = createdSentence
       createdPeriodLength
     }.toMutableList()
-    val courtCase = charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
+    val courtAppearance = charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
     return LegacySentenceCreatedResponse(
-      courtCase.prisonerId,
+      courtAppearance.courtCase.prisonerId,
       createdSentence.sentenceUuid,
       charge.lifetimeChargeUuid,
-      courtCase.caseUniqueIdentifier,
+      courtAppearance.appearanceUuid,
+      courtAppearance.courtCase.caseUniqueIdentifier,
     )
   }
 
@@ -68,8 +69,8 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       updatePeriodLengths(existingSentence, updatedSentence.periodLengths)
       existingSentence.charge.sentences.add(activeRecord)
     }
-    val courtCase = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }.courtCase
-    return entityChangeStatus to LegacySentenceCreatedResponse(courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.lifetimeChargeUuid, courtCase.caseUniqueIdentifier)
+    val courtAppearance = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
+    return entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.lifetimeChargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier)
   }
 
   private fun updatePeriodLengths(sentenceEntity: SentenceEntity, periodLengths: List<PeriodLengthEntity>) {

@@ -26,12 +26,12 @@ import java.util.UUID
 class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
 
   @Transactional(TxType.REQUIRED)
-  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean): RecordResponse<SentenceEntity> {
+  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val existingSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
-    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceDateChanged) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId)
+    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceDateChanged, courtAppearanceId) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceId)
   }
 
-  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean): RecordResponse<SentenceEntity> {
+  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findBySentenceUuid(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
@@ -47,6 +47,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
           activeRecord.sentenceUuid.toString(),
+          courtAppearanceId,
           EventType.SENTENCE_UPDATED,
         ),
       )
@@ -57,6 +58,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
           activeRecord.sentenceUuid.toString(),
+          courtAppearanceId,
           EventType.SENTENCE_UPDATED,
         ),
       )
@@ -64,7 +66,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     return RecordResponse(activeRecord, eventsToEmit)
   }
 
-  private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
+  private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findBySentenceUuid(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
@@ -79,6 +81,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
           createdSentence.sentenceUuid.toString(),
+          courtAppearanceId,
           EventType.SENTENCE_INSERTED,
         ),
       ),
@@ -111,7 +114,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findBySentenceUuid(sentenceUuid)?.let { Sentence.from(it) }
 
   @Transactional(TxType.REQUIRED)
-  fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String): RecordResponse<SentenceEntity> {
+  fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.delete(serviceUserService.getUsername())
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
@@ -123,6 +126,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
           courtCaseId,
           chargeEntity.lifetimeChargeUuid.toString(),
           sentence.sentenceUuid.toString(),
+          courtAppearanceId,
           EventType.SENTENCE_DELETED,
         ),
       )

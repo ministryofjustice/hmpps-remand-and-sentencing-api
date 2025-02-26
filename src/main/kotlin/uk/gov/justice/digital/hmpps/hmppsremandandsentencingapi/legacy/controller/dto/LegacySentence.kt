@@ -12,6 +12,7 @@ data class LegacySentence(
   val courtCaseId: String,
   val chargeLifetimeUuid: UUID,
   val lifetimeUuid: UUID,
+  val appearanceUuid: UUID,
   val active: Boolean,
   val sentenceCalcType: String,
   val sentenceCategory: String,
@@ -25,12 +26,13 @@ data class LegacySentence(
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
       val activeAppearances = sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }
       val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
-      val firstSentenceAppearanceDate = activeAppearances.filter { it.warrantType == "SENTENCING" }.minOf { it.appearanceDate }
+      val firstSentenceAppearance = activeAppearances.filter { it.warrantType == "SENTENCING" }.minBy { it.appearanceDate }
       return LegacySentence(
         courtCase.prisonerId,
         courtCase.caseUniqueIdentifier,
         sentenceEntity.charge.lifetimeChargeUuid,
         sentenceEntity.sentenceUuid,
+        firstSentenceAppearance.appearanceUuid,
         sentenceEntity.statusId == EntityStatus.ACTIVE,
         sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData!!.sentenceCalcType!!,
         sentenceEntity.sentenceType?.nomisCjaCode ?: sentenceEntity.legacyData!!.sentenceCategory!!,
@@ -38,7 +40,7 @@ data class LegacySentence(
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmount,
         sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
-        firstSentenceAppearanceDate,
+        firstSentenceAppearance.appearanceDate,
       )
     }
   }
