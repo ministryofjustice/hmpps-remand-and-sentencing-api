@@ -268,7 +268,7 @@ class CourtAppearanceService(
     val toDeleteCharges = existingCourtAppearanceEntity.charges.filter { existingCharge -> charges.none { createCharge -> createCharge.chargeUuid == existingCharge.chargeUuid } }
     toDeleteCharges.forEach { chargeEntity ->
       chargeEntity.courtAppearances.removeIf { it.id == existingCourtAppearanceEntity.id }
-      eventsToEmit.addAll(chargeService.deleteChargeIfOrphan(chargeEntity, prisonerId, courtCaseUuid).eventsToEmit)
+      eventsToEmit.addAll(chargeService.deleteChargeIfOrphan(chargeEntity, prisonerId, courtCaseUuid, existingCourtAppearanceEntity.appearanceUuid.toString()).eventsToEmit)
     }
     existingCourtAppearanceEntity.charges.removeAll(toDeleteCharges)
     val chargeRecords = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity, courtAppearanceDateChanged)
@@ -324,7 +324,7 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
     courtAppearanceEntity.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity))
-    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier) }
+    courtAppearanceEntity.charges.filter { it.hasNoActiveCourtAppearances() }.forEach { charge -> chargeService.deleteCharge(charge, courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity.appearanceUuid.toString()) }
     return RecordResponse(
       courtAppearanceEntity,
       mutableSetOf(

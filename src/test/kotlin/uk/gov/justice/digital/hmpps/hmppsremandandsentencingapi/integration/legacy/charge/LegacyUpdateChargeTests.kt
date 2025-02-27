@@ -35,7 +35,7 @@ class LegacyUpdateChargeTests : IntegrationTestBase() {
     val toUpdate = DataCreator.legacyUpdateWholeCharge(offenceCode = "ANOTHERCODE")
     webTestClient
       .put()
-      .uri("/legacy/charge/${dpsCharge.lifetimeChargeUuid}")
+      .uri("/legacy/charge/${dpsCharge.chargeUuid}")
       .bodyValue(toUpdate)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))

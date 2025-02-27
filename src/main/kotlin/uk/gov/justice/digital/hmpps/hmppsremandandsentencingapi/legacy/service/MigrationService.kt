@@ -12,8 +12,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
@@ -25,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
@@ -55,6 +58,7 @@ class MigrationService(
   private val periodLengthRepository: PeriodLengthRepository,
   private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
+  private val chargeHistoryRepository: ChargeHistoryRepository,
 ) {
 
   @Transactional
@@ -73,7 +77,7 @@ class MigrationService(
     return MigrationCreateCourtCaseResponse(
       createdCourtCase.caseUniqueIdentifier,
       createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
-      createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.lifetimeChargeUuid, chargeNOMISId) },
+      createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.chargeUuid, chargeNOMISId) },
       createdSentencesMap.map { (id, createdSentence) -> MigrationCreateSentenceResponse(createdSentence.sentenceUuid, id) },
     )
   }
@@ -117,12 +121,12 @@ class MigrationService(
     val dpsSentenceTypes = getDpsSentenceTypesMap(migrationCreateAppearances)
     val sourceMergedCourtCases = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedFromCourtCaseUuid != null }.map { it.mergedFromCourtCaseUuid!! }.takeUnless { it.isEmpty() }?.let { courtCaseRepository.findByCaseUniqueIdentifierIn(it).associateBy { it.caseUniqueIdentifier } } ?: emptyMap()
     val sourceMergedCharges = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedChargeLifetimeUuid != null }.map { it.mergedChargeLifetimeUuid!! }.takeUnless { it.isEmpty() }?.let {
-      chargeRepository.findByLifetimeChargeUuidInAndStatusId(
+      chargeRepository.findByChargeUuidInAndStatusId(
         it,
         EntityStatus.MERGED,
       ).sortedBy {
         it.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxOf { it.appearanceDate }
-      }.associateBy { it.lifetimeChargeUuid }
+      }.associateBy { it.chargeUuid }
     } ?: emptyMap()
     return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges) }
   }
@@ -152,13 +156,16 @@ class MigrationService(
     val dpsMergedFromCourtCase = migrationCreateCharge.mergedFromCourtCaseUuid?.let { sourceMergedCourtCases[it] }
     val dpsMergedFromCharge = migrationCreateCharge.mergedChargeLifetimeUuid?.let { sourceMergedCharges[it] }
     val existingCharge = createdChargesMap[migrationCreateCharge.chargeNOMISId] ?: dpsMergedFromCharge
-    val toCreateCharge = if (existingCharge != null) {
+    val (toCreateCharge, toCreateChangeStatus) = if (existingCharge != null) {
       val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase)
-      if (existingCharge.isSame(chargeInAppearance)) existingCharge else chargeInAppearance
+      if (existingCharge.isSame(chargeInAppearance)) existingCharge to EntityChangeStatus.NO_CHANGE else chargeInAppearance to EntityChangeStatus.EDITED
     } else {
-      ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase)
+      ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase) to EntityChangeStatus.CREATED
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
+    if (toCreateChangeStatus != EntityChangeStatus.NO_CHANGE) {
+      chargeHistoryRepository.save(ChargeHistoryEntity.from(createdCharge))
+    }
     migrationCreateCharge.sentence?.let { migrationSentence -> createdCharge.sentences.add(createSentence(migrationSentence, createdCharge, createdByUsername, dpsSentenceTypes, createdSentencesMap)) }
     createdChargesMap.put(migrationCreateCharge.chargeNOMISId, createdCharge)
     return createdCharge

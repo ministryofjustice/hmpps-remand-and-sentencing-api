@@ -149,8 +149,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges[0].lifetimeUuid")
-      .isEqualTo(charge.lifetimeChargeUuid)
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid)
 
     webTestClient
       .get()
@@ -163,11 +163,11 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.charges[?(@.lifetimeUuid == '${charge.lifetimeChargeUuid}')].offenceCode")
+      .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].offenceCode")
       .isEqualTo(charge.offenceCode)
-      .jsonPath("$.charges[?(@.lifetimeUuid == '${charge.lifetimeChargeUuid}')].outcome.outcomeUuid")
+      .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].outcome.outcomeUuid")
       .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced by another outcome
-      .jsonPath("$.charges[?(@.lifetimeUuid != '${charge.lifetimeChargeUuid}')].offenceCode")
+      .jsonPath("$.charges[?(@.chargeUuid != '${charge.chargeUuid}')].offenceCode")
       .isEqualTo(chargeWithOffenceCode.offenceCode)
   }
 

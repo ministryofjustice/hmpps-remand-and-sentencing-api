@@ -18,7 +18,7 @@ data class LegacyCharge(
     fun from(chargeEntity: ChargeEntity): LegacyCharge = LegacyCharge(
       chargeEntity.courtAppearances.first().courtCase.prisonerId,
       chargeEntity.courtAppearances.first().courtCase.caseUniqueIdentifier,
-      chargeEntity.lifetimeChargeUuid,
+      chargeEntity.chargeUuid,
       chargeEntity.legacyData?.nomisOutcomeCode ?: chargeEntity.chargeOutcome?.nomisCode,
       chargeEntity.offenceCode,
       chargeEntity.offenceStartDate,

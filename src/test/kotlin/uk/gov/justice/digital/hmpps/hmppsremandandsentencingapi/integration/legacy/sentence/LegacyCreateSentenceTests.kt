@@ -46,7 +46,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       ),
     )
     val charge = courtCaseCreated.appearances.first().charges.first()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = charge.lifetimeChargeUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = charge.chargeUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
     webTestClient
       .post()
       .uri("/legacy/sentence")

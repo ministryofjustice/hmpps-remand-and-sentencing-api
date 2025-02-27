@@ -27,21 +27,6 @@ class LegacyUnlinkAppearanceWithChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `not found when no charge exists`() {
-    val (lifetimeUuid) = createLegacyCourtAppearance()
-    webTestClient
-      .delete()
-      .uri("/legacy/court-appearance/$lifetimeUuid/charge/${UUID.randomUUID()}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNotFound
-  }
-
-  @Test
   fun `not found when no court appearance exists`() {
     webTestClient
       .delete()

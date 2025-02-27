@@ -7,7 +7,6 @@ import java.util.UUID
 
 data class Charge(
   val chargeUuid: UUID,
-  val lifetimeUuid: UUID,
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
@@ -19,7 +18,6 @@ data class Charge(
   companion object {
     fun from(chargeEntity: ChargeEntity): Charge = Charge(
       chargeEntity.chargeUuid,
-      chargeEntity.lifetimeChargeUuid,
       chargeEntity.offenceCode,
       chargeEntity.offenceStartDate,
       chargeEntity.offenceEndDate,
