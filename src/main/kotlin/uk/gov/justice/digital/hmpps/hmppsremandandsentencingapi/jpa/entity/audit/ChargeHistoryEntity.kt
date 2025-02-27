@@ -31,7 +31,7 @@ class ChargeHistoryEntity(
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
   val chargeOutcomeId: Int?,
-  var supersedingChargeId: Int,
+  var supersedingChargeId: Int?,
   val terrorRelated: Boolean?,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
@@ -45,4 +45,13 @@ class ChargeHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_charge_id")
   val originalCharge: ChargeEntity,
-)
+) {
+  companion object {
+    fun from(chargeEntity: ChargeEntity): ChargeHistoryEntity = ChargeHistoryEntity(
+      0, chargeEntity.chargeUuid, chargeEntity.offenceCode, chargeEntity.offenceStartDate, chargeEntity.offenceEndDate,
+      chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.terrorRelated,
+      chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
+      chargeEntity.updatedPrison, chargeEntity.legacyData, chargeEntity.mergedFromCourtCase?.id, chargeEntity,
+    )
+  }
+}

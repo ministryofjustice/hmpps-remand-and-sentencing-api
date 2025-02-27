@@ -45,7 +45,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
           courtCaseId,
-          chargeEntity.lifetimeChargeUuid.toString(),
+          chargeEntity.chargeUuid.toString(),
           activeRecord.sentenceUuid.toString(),
           courtAppearanceId,
           EventType.SENTENCE_UPDATED,
@@ -56,7 +56,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
           courtCaseId,
-          chargeEntity.lifetimeChargeUuid.toString(),
+          chargeEntity.chargeUuid.toString(),
           activeRecord.sentenceUuid.toString(),
           courtAppearanceId,
           EventType.SENTENCE_UPDATED,
@@ -79,7 +79,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
           courtCaseId,
-          chargeEntity.lifetimeChargeUuid.toString(),
+          chargeEntity.chargeUuid.toString(),
           createdSentence.sentenceUuid.toString(),
           courtAppearanceId,
           EventType.SENTENCE_INSERTED,
@@ -124,7 +124,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
           courtCaseId,
-          chargeEntity.lifetimeChargeUuid.toString(),
+          chargeEntity.chargeUuid.toString(),
           sentence.sentenceUuid.toString(),
           courtAppearanceId,
           EventType.SENTENCE_DELETED,

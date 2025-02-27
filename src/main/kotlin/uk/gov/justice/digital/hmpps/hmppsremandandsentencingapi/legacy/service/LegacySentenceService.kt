@@ -26,7 +26,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
-    val charge = chargeRepository.findFirstByLifetimeChargeUuidOrderByCreatedAtDesc(sentence.chargeLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at ${sentence.chargeLifetimeUuid}")
+    val charge = chargeRepository.findFirstByChargeUuidOrderByCreatedAtDesc(sentence.chargeLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at ${sentence.chargeLifetimeUuid}")
     if (charge.getActiveOrInactiveSentence() != null) {
       throw ChargeAlreadySentencedException("charge at ${sentence.chargeLifetimeUuid} is already sentenced")
     }
@@ -47,7 +47,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     return LegacySentenceCreatedResponse(
       courtAppearance.courtCase.prisonerId,
       createdSentence.sentenceUuid,
-      charge.lifetimeChargeUuid,
+      charge.chargeUuid,
       courtAppearance.appearanceUuid,
       courtAppearance.courtCase.caseUniqueIdentifier,
     )
@@ -70,7 +70,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       existingSentence.charge.sentences.add(activeRecord)
     }
     val courtAppearance = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
-    return entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.lifetimeChargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier)
+    return entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.chargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier)
   }
 
   private fun updatePeriodLengths(sentenceEntity: SentenceEntity, periodLengths: List<PeriodLengthEntity>) {

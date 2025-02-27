@@ -201,7 +201,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.status")
       .isEqualTo("MERGED")
-      .jsonPath("$.appearances[*].charges[?(@.lifetimeUuid == '$sourceChargeUuid')]")
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$sourceChargeUuid')]")
       .exists()
   }
 
@@ -237,7 +237,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[?(@.lifetimeUuid == '$sourceChargeUuid')]")
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$sourceChargeUuid')]")
       .exists()
   }
 
