@@ -121,7 +121,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
 
   @Transactional
   fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): RecordResponse<ChargeEntity> {
-    val existingCharge = chargeRepository.findByChargeUuid(charge.chargeUuid)
+    val existingCharge = chargeRepository.findFirstByChargeUuidOrderByCreatedAtDesc(charge.chargeUuid)
     val charge = if (existingCharge != null) {
       updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge, courtAppearance, courtAppearanceDateChanged)
     } else {
@@ -160,7 +160,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   }
 
   @Transactional(readOnly = true)
-  fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findByChargeUuid(chargeUuid)?.let { Charge.from(it) }
+  fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findFirstByChargeUuidOrderByCreatedAtDesc(chargeUuid)?.let { Charge.from(it) }
 
   companion object {
     val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")

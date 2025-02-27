@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import java.util.UUID
 
 interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
-  fun findByChargeUuid(chargeUuid: UUID): ChargeEntity?
 
   fun findFirstByChargeUuidOrderByCreatedAtDesc(lifetimeUUID: UUID): ChargeEntity?
 
