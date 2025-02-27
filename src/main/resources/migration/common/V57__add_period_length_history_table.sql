@@ -1,0 +1,21 @@
+CREATE TABLE period_length_history (
+	id serial4 SERIAL PRIMARY KEY,
+	period_length_uuid uuid NOT NULL,
+	years int NULL,
+	months int NULL,
+	weeks int NULL,
+	days int NULL,
+	period_order varchar NULL,
+	period_length_type varchar NULL,
+	sentence_id int4 NULL,
+	appearance_id int4 NULL,
+	legacy_data jsonb NULL,
+	status_id smallint NOT NULL,
+	created_at timestamp with time zone NOT NULL,
+	created_by varchar NOT NULL,
+	created_prison varchar NULL,
+	updated_at timestamp with time zone NULL,
+	updated_by varchar NULL,
+	updated_prison varchar NULL,
+	original_period_length_id int references period_length(id)
+);
