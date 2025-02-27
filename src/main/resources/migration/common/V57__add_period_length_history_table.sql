@@ -1,5 +1,5 @@
 CREATE TABLE period_length_history (
-	id serial4 SERIAL PRIMARY KEY,
+	id SERIAL PRIMARY KEY,
 	period_length_uuid uuid NOT NULL,
 	years int NULL,
 	months int NULL,
