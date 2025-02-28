@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -13,31 +12,37 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
+import java.time.ZonedDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "period_length")
 class PeriodLengthEntity(
   @Id
-  @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  @Column
+  val periodLengthUuid: UUID,
   var years: Int?,
-  @Column
   var months: Int?,
-  @Column
   var weeks: Int?,
-  @Column
   var days: Int?,
-  @Column
   var periodOrder: String,
   @Enumerated(EnumType.STRING)
-  val periodLengthType: PeriodLengthType,
+  var periodLengthType: PeriodLengthType,
+  @Enumerated(EnumType.ORDINAL)
+  var statusId: EntityStatus,
+  val createdAt: ZonedDateTime = ZonedDateTime.now(),
+  val createdBy: String,
+  val createdPrison: String?,
+  var updatedAt: ZonedDateTime? = null,
+  var updatedBy: String? = null,
+  var updatedPrison: String? = null,
   @ManyToOne
   @JoinColumn(name = "sentence_id")
   var sentenceEntity: SentenceEntity?,
@@ -53,59 +58,83 @@ class PeriodLengthEntity(
     weeks == other?.weeks &&
     days == other?.days &&
     periodOrder == other?.periodOrder &&
-    periodLengthType == other.periodLengthType
+    periodLengthType == other.periodLengthType &&
+    legacyData == other.legacyData
 
-  fun updateFrom(periodLength: PeriodLengthEntity) {
+  fun updateFrom(periodLength: PeriodLengthEntity, username: String) {
     years = periodLength.years
     months = periodLength.months
     weeks = periodLength.weeks
     days = periodLength.days
     periodOrder = getPeriodOrder(years, months, weeks, days)
+    periodLengthType = periodLength.periodLengthType
+    statusId = periodLength.statusId
     legacyData = periodLength.legacyData
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+    updatedPrison = periodLength.createdPrison
+  }
+
+  fun delete(username: String) {
+    statusId = EntityStatus.DELETED
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
   }
   companion object {
-    fun from(periodLength: CreatePeriodLength): PeriodLengthEntity = PeriodLengthEntity(
+    fun from(periodLength: CreatePeriodLength, createdBy: String): PeriodLengthEntity = PeriodLengthEntity(
+      periodLengthUuid = periodLength.periodLengthUuid,
       years = periodLength.years,
       months = periodLength.months,
       weeks = periodLength.weeks,
       days = periodLength.days,
       periodOrder = periodLength.periodOrder,
       periodLengthType = periodLength.type,
+      statusId = EntityStatus.ACTIVE,
       sentenceEntity = null,
       appearanceEntity = null,
+      createdBy = createdBy,
+      createdPrison = periodLength.prisonId,
     )
 
-    fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
+    fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
+        periodLengthUuid = UUID.randomUUID(),
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
         weeks = periodLength.periodWeeks,
         days = periodLength.periodDays,
-        periodLengthType = type,
         periodOrder = order,
+        periodLengthType = type,
+        statusId = EntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = legacyData,
+        createdBy = createdBy,
+        createdPrison = null,
       )
     }
 
-    fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String): PeriodLengthEntity {
+    fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
+        periodLengthUuid = UUID.randomUUID(),
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
         weeks = periodLength.periodWeeks,
         days = periodLength.periodDays,
-        periodLengthType = type,
         periodOrder = order,
+        periodLengthType = type,
+        statusId = EntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = legacyData,
+        createdBy = createdBy,
+        createdPrison = null,
       )
     }
 

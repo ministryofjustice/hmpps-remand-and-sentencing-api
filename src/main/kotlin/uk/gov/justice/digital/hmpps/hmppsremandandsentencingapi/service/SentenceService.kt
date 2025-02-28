@@ -16,14 +16,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import java.util.UUID
 
 @Service
-class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthRepository: PeriodLengthRepository, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
+class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthService: PeriodLengthService, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
@@ -37,21 +36,16 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
     var activeRecord = existingSentence
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+    var sentenceChangeStatus = if (courtAppearanceDateChanged) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
     if (!existingSentence.isSame(compareSentence)) {
       existingSentence.updateFrom(compareSentence)
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
-      updatePeriodLengths(existingSentence, compareSentence.periodLengths)
-      eventsToEmit.add(
-        EventMetadataCreator.sentenceEventMetadata(
-          prisonerId,
-          courtCaseId,
-          chargeEntity.chargeUuid.toString(),
-          activeRecord.sentenceUuid.toString(),
-          courtAppearanceId,
-          EventType.SENTENCE_UPDATED,
-        ),
-      )
-    } else if (courtAppearanceDateChanged) {
+      sentenceChangeStatus = EntityChangeStatus.EDITED
+    }
+    val periodLengthChangeStatus = periodLengthService.upsert(sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }, existingSentence.periodLengths) { toCreatePeriodLength ->
+      toCreatePeriodLength.sentenceEntity = existingSentence
+    }
+    if (sentenceChangeStatus == EntityChangeStatus.EDITED || periodLengthChangeStatus != EntityChangeStatus.NO_CHANGE) {
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
@@ -71,8 +65,9 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
-    createdSentence.periodLengths = sentence.periodLengths.map { periodLengthRepository.save(PeriodLengthEntity.from(it)) }.toMutableList()
-
+    periodLengthService.upsert(sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }, createdSentence.periodLengths) { toCreatePeriodLength ->
+      toCreatePeriodLength.sentenceEntity = createdSentence
+    }
     return RecordResponse(
       createdSentence,
       mutableSetOf(
@@ -86,26 +81,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         ),
       ),
     )
-  }
-
-  private fun updatePeriodLengths(sentenceEntity: SentenceEntity, periodLengths: List<PeriodLengthEntity>) {
-    sentenceEntity.periodLengths = sentenceEntity.periodLengths.map { existingPeriodLength ->
-      val updatedPeriodLength = periodLengths.firstOrNull { it.periodLengthType == existingPeriodLength.periodLengthType }
-      if (updatedPeriodLength != null) {
-        existingPeriodLength.updateFrom(updatedPeriodLength)
-        existingPeriodLength
-      } else {
-        existingPeriodLength.sentenceEntity = null
-        null
-      }
-    }.filter { it != null }
-      .map { it!! }.toMutableList()
-    val toAddPeriodLengths = periodLengths.filter { toAddLength -> sentenceEntity.periodLengths.none { existingLength -> existingLength.periodLengthType == toAddLength.periodLengthType } }
-      .map {
-        it.sentenceEntity = sentenceEntity
-        periodLengthRepository.save(it)
-      }
-    sentenceEntity.periodLengths.addAll(toAddPeriodLengths)
   }
 
   fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getActiveSentence() ?: sentenceUuid?.let { sentenceRepository.findBySentenceUuid(sentenceUuid) }

@@ -23,13 +23,15 @@ class DpsDataCreator {
     ): CreateCourtCase = CreateCourtCase(prisonerId, prisonId, appearances, null)
 
     fun dpsCreatePeriodLength(
+      periodLengthUuid: UUID = UUID.randomUUID(),
       years: Int? = 1,
       months: Int? = null,
       weeks: Int? = null,
       days: Int? = null,
       periodOrder: String = "years",
       type: PeriodLengthType = PeriodLengthType.OVERALL_SENTENCE_LENGTH,
-    ): CreatePeriodLength = CreatePeriodLength(years, months, weeks, days, periodOrder, type)
+      prisonId: String = "PRISON1",
+    ): CreatePeriodLength = CreatePeriodLength(periodLengthUuid, years, months, weeks, days, periodOrder, type, prisonId)
 
     fun dpsCreateNextCourtAppearance(
       appearanceDate: LocalDate = LocalDate.now().plusDays(2),
