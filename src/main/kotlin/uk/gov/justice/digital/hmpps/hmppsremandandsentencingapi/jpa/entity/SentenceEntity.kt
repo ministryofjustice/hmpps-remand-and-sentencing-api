@@ -74,7 +74,6 @@ class SentenceEntity(
   var periodLengths: MutableList<PeriodLengthEntity> = mutableListOf()
 
   fun isSame(other: SentenceEntity?): Boolean = chargeNumber == other?.chargeNumber &&
-    periodLengths.all { periodLength -> other?.periodLengths?.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } == true } &&
     sentenceServeType == other?.sentenceServeType &&
     sentenceType == other.sentenceType &&
     createdPrison == other.createdPrison &&
@@ -100,7 +99,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fineAmount?.fineAmount,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it) }.toMutableList()
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableList()
     return sentenceEntity
   }
 
@@ -123,7 +122,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fine?.fineAmount,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!) }.toMutableList()
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, createdBy) }.toMutableList()
     return sentenceEntity
   }
 

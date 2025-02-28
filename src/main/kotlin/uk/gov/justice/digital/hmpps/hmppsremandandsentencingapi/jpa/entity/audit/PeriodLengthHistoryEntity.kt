@@ -47,4 +47,13 @@ class PeriodLengthHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_period_length_id")
   val originalPeriodLength: PeriodLengthEntity,
-)
+) {
+  companion object {
+    fun from(periodLength: PeriodLengthEntity) = PeriodLengthHistoryEntity(
+      0, periodLength.periodLengthUuid, periodLength.years, periodLength.months, periodLength.weeks, periodLength.days,
+      periodLength.periodOrder, periodLength.periodLengthType, periodLength.sentenceEntity?.id, periodLength.appearanceEntity?.id,
+      periodLength.legacyData, periodLength.statusId, periodLength.createdAt, periodLength.createdBy, periodLength.createdPrison,
+      periodLength.updatedAt, periodLength.updatedBy, periodLength.updatedPrison, periodLength,
+    )
+  }
+}
