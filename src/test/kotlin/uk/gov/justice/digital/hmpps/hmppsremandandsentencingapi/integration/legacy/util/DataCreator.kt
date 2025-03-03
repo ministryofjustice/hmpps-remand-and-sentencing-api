@@ -103,6 +103,6 @@ class DataCreator {
 
     fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1", description: String = "Term description"): PeriodLengthLegacyData = PeriodLengthLegacyData(lifeSentence, sentenceTermCode, description)
 
-    fun legacyCreatePeriodLength(periodLengthId: NomisPeriodLengthId = nomisPeriodLengthId(), periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength = LegacyCreatePeriodLength(periodLengthId, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
+    fun legacyCreatePeriodLength(periodLengthId: NomisPeriodLengthId = nomisPeriodLengthId(), periodLengthUuid: UUID = UUID.randomUUID(), periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength = LegacyCreatePeriodLength(periodLengthId, periodLengthUuid, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
   }
 }
