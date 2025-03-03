@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
+import java.util.UUID
 
 data class LegacyPeriodLength(
   val periodYears: Int?,
@@ -11,6 +12,7 @@ data class LegacyPeriodLength(
   val periodDays: Int?,
   val isLifeSentence: Boolean?,
   val sentenceTermCode: String,
+  val periodLengthUuid: UUID,
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity, sentenceTypeClassification: SentenceTypeClassification?): LegacyPeriodLength {
@@ -26,6 +28,7 @@ data class LegacyPeriodLength(
         periodLengthEntity.days,
         isLifeSentence,
         sentenceTermCode,
+        periodLengthEntity.periodLengthUuid,
       )
     }
   }
