@@ -11,18 +11,18 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
 
 @Service
-class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val serviceUserService: ServiceUserService, private val periodLengthRepository: PeriodLengthRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
+class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val serviceUserService: ServiceUserService, private val legacyPeriodLengthService: LegacyPeriodLengthService, private val sentenceHistoryRepository: SentenceHistoryRepository) {
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
@@ -36,13 +36,11 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, consecutiveToSentence))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
     charge.sentences.add(createdSentence)
-    createdSentence.periodLengths = sentence.periodLengths.map { legacyPeriodLength ->
-      val createdPeriodLength = periodLengthRepository.save(
-        PeriodLengthEntity.from(legacyPeriodLength, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!),
-      )
-      createdPeriodLength.sentenceEntity = createdSentence
-      createdPeriodLength
-    }.toMutableList()
+    val (_, createdPeriodLengths) = legacyPeriodLengthService.upsert(
+      sentence.periodLengths
+        .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername()) },
+      createdSentence,
+    )
     val courtAppearance = charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
     return LegacySentenceCreatedResponse(
       courtAppearance.courtCase.prisonerId,
@@ -50,6 +48,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       charge.chargeUuid,
       courtAppearance.appearanceUuid,
       courtAppearance.courtCase.caseUniqueIdentifier,
+      createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) },
     )
   }
 
@@ -66,31 +65,16 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       existingSentence.updateFrom(updatedSentence)
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
       entityChangeStatus = EntityChangeStatus.EDITED
-      updatePeriodLengths(existingSentence, updatedSentence.periodLengths)
       existingSentence.charge.sentences.add(activeRecord)
     }
+    val (periodLengthChangeStatus, createdPeriodLengths) = legacyPeriodLengthService.upsert(
+      sentence.periodLengths
+        .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername()) },
+      existingSentence,
+    )
+    entityChangeStatus = if (periodLengthChangeStatus == EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
     val courtAppearance = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
-    return entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.chargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier)
-  }
-
-  private fun updatePeriodLengths(sentenceEntity: SentenceEntity, periodLengths: List<PeriodLengthEntity>) {
-    sentenceEntity.periodLengths = sentenceEntity.periodLengths.map { existingPeriodLength ->
-      val updatedPeriodLength = periodLengths.firstOrNull { it.periodLengthType == existingPeriodLength.periodLengthType }
-      if (updatedPeriodLength != null) {
-        existingPeriodLength.updateFrom(updatedPeriodLength)
-        existingPeriodLength
-      } else {
-        existingPeriodLength.sentenceEntity = null
-        null
-      }
-    }.filter { it != null }
-      .map { it!! }.toMutableList()
-    val toAddPeriodLengths = periodLengths.filter { toAddLength -> sentenceEntity.periodLengths.none { existingLength -> existingLength.periodLengthType == toAddLength.periodLengthType } }
-      .map {
-        it.sentenceEntity = sentenceEntity
-        periodLengthRepository.save(it)
-      }
-    sentenceEntity.periodLengths.addAll(toAddPeriodLengths)
+    return entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.chargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier, createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) })
   }
 
   @Transactional(readOnly = true)

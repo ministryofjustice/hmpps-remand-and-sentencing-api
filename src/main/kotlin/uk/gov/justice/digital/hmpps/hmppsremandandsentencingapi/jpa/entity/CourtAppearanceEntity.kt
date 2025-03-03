@@ -107,7 +107,6 @@ class CourtAppearanceEntity(
     this.statusId == other.statusId &&
     this.warrantType == other.warrantType &&
     this.taggedBail == other.taggedBail &&
-    periodLengths.all { periodLength -> other.periodLengths.any { otherPeriodLength -> periodLength.isSame(otherPeriodLength) } } &&
     this.overallConvictionDate == other.overallConvictionDate &&
     this.legacyData == other.legacyData &&
     this.createdPrison == other.createdPrison
@@ -127,7 +126,7 @@ class CourtAppearanceEntity(
       0, UUID.randomUUID(), appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
       EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, charges.toMutableSet(), null, courtAppearance.overallConvictionDate, courtAppearance.legacyData,
     )
-    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = mutableListOf(PeriodLengthEntity.from(it)) }
+    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = mutableListOf(PeriodLengthEntity.from(it, createdBy)) }
     return courtAppearanceEntity
   }
 

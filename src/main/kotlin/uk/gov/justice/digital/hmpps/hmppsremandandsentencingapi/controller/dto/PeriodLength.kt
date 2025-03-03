@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
+import java.util.UUID
 
 data class PeriodLength(
   val years: Int?,
@@ -12,6 +13,7 @@ data class PeriodLength(
   val periodOrder: String,
   val periodLengthType: PeriodLengthType,
   val legacyData: PeriodLengthLegacyData?,
+  val periodLengthUuid: UUID,
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity): PeriodLength = PeriodLength(
@@ -22,6 +24,7 @@ data class PeriodLength(
       periodLengthEntity.periodOrder,
       periodLengthEntity.periodLengthType,
       periodLengthEntity.legacyData,
+      periodLengthEntity.periodLengthUuid,
     )
   }
 }
