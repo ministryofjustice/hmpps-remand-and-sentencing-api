@@ -39,7 +39,7 @@ data class LegacySentence(
         sentenceEntity.consecutiveTo?.sentenceUuid,
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmount,
-        sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
+        sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.filter { it.statusId == EntityStatus.ACTIVE }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
         firstSentenceAppearance.appearanceDate,
       )
     }
