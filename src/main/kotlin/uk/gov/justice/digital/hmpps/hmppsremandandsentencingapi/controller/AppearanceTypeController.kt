@@ -9,8 +9,10 @@ import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AppearanceTypeService
 import java.util.UUID
 
@@ -19,10 +21,10 @@ import java.util.UUID
 @Tag(name = "appearance-type-controller", description = "Appearance Type")
 class AppearanceTypeController(private val appearanceTypeService: AppearanceTypeService) {
 
-  @GetMapping("/all")
+  @GetMapping("/status")
   @Operation(
-    summary = "Get all appearance types",
-    description = "This endpoint will get all appearance types",
+    summary = "Get all appearance types by statuses",
+    description = "This endpoint will get all appearance types by statuses",
   )
   @ApiResponses(
     value = [
@@ -30,7 +32,7 @@ class AppearanceTypeController(private val appearanceTypeService: AppearanceType
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
     ],
   )
-  fun getAllAppearanceTypes(): List<AppearanceType> = appearanceTypeService.getAll()
+  fun getAllAppearanceTypes(@RequestParam("statuses") statuses: List<ReferenceEntityStatus>): List<AppearanceType> = appearanceTypeService.getAllByStatus(statuses)
 
   @GetMapping("/{appearanceTypeUuid}")
   @Operation(
