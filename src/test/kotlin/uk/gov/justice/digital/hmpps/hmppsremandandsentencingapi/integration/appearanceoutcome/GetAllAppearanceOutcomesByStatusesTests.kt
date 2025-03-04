@@ -11,7 +11,7 @@ import java.util.UUID
 class GetAllAppearanceOutcomesByStatusesTests : IntegrationTestBase() {
 
   @Autowired
-  protected lateinit var appearanceOutcomeRepository: AppearanceOutcomeRepository
+  private lateinit var appearanceOutcomeRepository: AppearanceOutcomeRepository
 
   @Test
   fun `return all active outcomes`() {
