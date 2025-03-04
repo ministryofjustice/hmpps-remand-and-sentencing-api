@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeOutcomeService
 import java.util.UUID
 
@@ -22,10 +23,10 @@ import java.util.UUID
 @Tag(name = "charge-outcome-controller", description = "Charge outcome")
 class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeService) {
 
-  @GetMapping("/all")
+  @GetMapping("/status")
   @Operation(
-    summary = "Get all charge outcomes",
-    description = "This endpoint will get all charge outcomes",
+    summary = "Get all charge outcomes by statuses",
+    description = "This endpoint will get all charge outcomes by statuses",
   )
   @ApiResponses(
     value = [
@@ -35,7 +36,7 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getAllChargeOutcomes(): List<ChargeOutcome> = chargeOutcomeService.getAll()
+  fun getAllChargeOutcomes(@RequestParam("statuses") statuses: List<ReferenceEntityStatus>): List<ChargeOutcome> = chargeOutcomeService.getAllByStatus(statuses)
 
   @GetMapping("/{outcomeUuid}")
   @Operation(
