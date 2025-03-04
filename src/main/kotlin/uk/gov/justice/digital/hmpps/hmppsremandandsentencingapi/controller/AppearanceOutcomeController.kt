@@ -10,9 +10,11 @@ import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearanceOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AppearanceOutcomeService
 import java.util.UUID
 
@@ -21,10 +23,10 @@ import java.util.UUID
 @Tag(name = "appearance-outcome-controller", description = "Appearance outcome")
 class AppearanceOutcomeController(private val appearanceOutcomeService: AppearanceOutcomeService) {
 
-  @GetMapping("/all")
+  @GetMapping("/status")
   @Operation(
-    summary = "Get all appearance outcomes",
-    description = "This endpoint will get all appearance outcomes",
+    summary = "Get all appearance outcomes by status",
+    description = "This endpoint will get all appearance outcomes by status",
   )
   @ApiResponses(
     value = [
@@ -34,7 +36,7 @@ class AppearanceOutcomeController(private val appearanceOutcomeService: Appearan
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getAllAppearanceOutcomes(): List<CourtAppearanceOutcome> = appearanceOutcomeService.getAll()
+  fun getAllAppearanceOutcomes(@RequestParam("statuses") statuses: List<ReferenceEntityStatus>): List<CourtAppearanceOutcome> = appearanceOutcomeService.getAllByStatus(statuses)
 
   @GetMapping("/{outcomeUuid}")
   @Operation(
