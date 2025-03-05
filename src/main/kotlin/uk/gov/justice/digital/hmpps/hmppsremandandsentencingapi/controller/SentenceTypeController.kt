@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceTypeService
 import java.time.LocalDate
 import java.util.UUID
@@ -36,7 +37,7 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun searchSentenceTypes(@RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate): List<SentenceType> = sentenceTypesService.search(age, convictionDate)
+  fun searchSentenceTypes(@RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate, @RequestParam(name = "statuses", defaultValue = "ACTIVE", required = false) statuses: List<ReferenceEntityStatus>): List<SentenceType> = sentenceTypesService.search(age, convictionDate, statuses)
 
   @GetMapping("/{sentenceTypeUuid}")
   @Operation(
