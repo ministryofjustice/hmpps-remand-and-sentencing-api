@@ -5,16 +5,25 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import java.util.stream.Stream
 
 class SearchSentenceTypesTests : IntegrationTestBase() {
 
   private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
+
+  @Autowired
+  private lateinit var sentenceTypeRepository: SentenceTypeRepository
 
   @Test
   fun `providing no parameters results in bad request`() {
@@ -24,6 +33,38 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isBadRequest
+  }
+
+  @Test
+  fun `return inactive sentence types`() {
+    val convictionDate = LocalDate.now()
+    val inactiveSentenceType = sentenceTypeRepository.save(
+      SentenceTypeEntity(
+        sentenceTypeUuid = UUID.randomUUID(),
+        description = "Inactive sentence type",
+        minAgeInclusive = 1,
+        maxAgeExclusive = 99,
+        minDateInclusive = convictionDate.minusDays(10),
+        maxDateExclusive = convictionDate.plusDays(10),
+        classification = SentenceTypeClassification.STANDARD,
+        hintText = null,
+        nomisCjaCode = "CJA",
+        nomisSentenceCalcType = "CalcType",
+        displayOrder = 1000,
+        status = ReferenceEntityStatus.INACTIVE,
+      ),
+    )
+    val result = webTestClient.get()
+      .uri("/sentence-type/search?age=18&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&statuses=INACTIVE")
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceType>>())
+      .returnResult().responseBody!!
+
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.containsOnly(inactiveSentenceType.sentenceTypeUuid)
+    sentenceTypeRepository.delete(inactiveSentenceType)
   }
 
   @ParameterizedTest(name = "Sentence type bucket test, age {0} on date {1}")
