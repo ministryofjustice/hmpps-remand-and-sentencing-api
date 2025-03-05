@@ -33,10 +33,8 @@ class AppearanceChargeEntity(
     if (other !is AppearanceChargeEntity) return false
 
     return this.courtAppearance.appearanceUuid == other.courtAppearance.appearanceUuid &&
-        this.charge.chargeUuid == other.charge.chargeUuid
+      this.charge.chargeUuid == other.charge.chargeUuid
   }
 
-  override fun hashCode(): Int {
-    return 31 * (courtAppearance.appearanceUuid.hashCode() ?: 0) + charge.chargeUuid.hashCode()
-  }
+  override fun hashCode(): Int = 31 * (courtAppearance.appearanceUuid.hashCode() ?: 0) + charge.chargeUuid.hashCode()
 }
