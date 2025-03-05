@@ -257,19 +257,23 @@ class CourtAppearanceService(
   private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): Pair<EntityChangeStatus, MutableSet<EventMetadata>> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val toDeleteCharges = existingCourtAppearanceEntity.appearanceCharges
-      .filter { appearanceCharge -> charges.none { createCharge -> createCharge.chargeUuid == appearanceCharge.charge.chargeUuid } }
+      .map { it.charge }
+      .filter { charge -> charges.none { createCharge -> createCharge.chargeUuid == charge.chargeUuid } }
 
-    toDeleteCharges.forEach { appearanceCharge ->
+    toDeleteCharges.forEach { charge ->
+      existingCourtAppearanceEntity.appearanceCharges.removeIf { it.id == charge.id }
+      charge.appearanceCharges.removeIf { it.courtAppearance.id == existingCourtAppearanceEntity.id }
       eventsToEmit.addAll(
         chargeService.deleteChargeIfOrphan(
-          appearanceCharge.charge,
+          charge,
           prisonerId,
           courtCaseUuid,
           existingCourtAppearanceEntity.appearanceUuid.toString(),
         ).eventsToEmit,
       )
     }
-    existingCourtAppearanceEntity.appearanceCharges.removeAll(toDeleteCharges)
+
+    existingCourtAppearanceEntity.appearanceCharges.removeIf { appearanceCharge -> toDeleteCharges.any { appearanceCharge.charge.id == it.id } }
     val chargeRecords = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity, courtAppearanceDateChanged)
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     val createdCharges = chargeRecords.map { it.record }
