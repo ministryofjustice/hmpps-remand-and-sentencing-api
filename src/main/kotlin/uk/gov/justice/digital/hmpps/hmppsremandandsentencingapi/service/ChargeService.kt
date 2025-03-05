@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -46,28 +47,45 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
     return RecordResponse(savedCharge, eventsToEmit)
   }
 
-  private fun updateChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, existingCharge: ChargeEntity, courtAppearance: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): RecordResponse<ChargeEntity> {
+  private fun updateChargeEntity(
+    charge: CreateCharge,
+    sentencesCreated: Map<String, SentenceEntity>,
+    prisonerId: String,
+    courtCaseId: String,
+    existingCharge: ChargeEntity,
+    courtAppearance: CourtAppearanceEntity,
+    courtAppearanceDateChanged: Boolean,
+  ): RecordResponse<ChargeEntity> {
     val chargeChanges = mutableListOf<Pair<EntityChangeStatus, ChargeEntity>>()
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     charge.legacyData = chargeLegacyData
     var compareCharge = existingCharge.copyFrom(charge, chargeOutcome, serviceUserService.getUsername())
     var activeRecord = existingCharge
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+
     if (!existingCharge.isSame(compareCharge)) {
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
         val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
         existingCharge.updateFrom(replacedWithAnotherOutcome, serviceUserService.getUsername(), charge.prisonId)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
-        courtAppearance.charges.add(existingCharge)
-        existingCharge.courtAppearances.add(courtAppearance)
+
+        courtAppearance.appearanceCharges.add(
+          AppearanceChargeEntity(
+            courtAppearance = courtAppearance,
+            charge = existingCharge,
+            createdBy = serviceUserService.getUsername(),
+            createdPrison = charge.prisonId,
+          ),
+        )
+
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
+
         val newChargeRecord = chargeRepository.save(compareCharge.copyFromReplacedCharge(existingCharge))
         chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord))
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
       } else if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
-        existingCharge.courtAppearances.remove(courtAppearance)
-        courtAppearance.charges.remove(existingCharge)
+        courtAppearance.appearanceCharges.removeIf { it.charge == existingCharge }
         activeRecord = chargeRepository.save(compareCharge)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord))
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
@@ -153,7 +171,7 @@ class ChargeService(private val chargeRepository: ChargeRepository, private val 
   @Transactional
   fun deleteChargeIfOrphan(charge: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<ChargeEntity> {
     var recordResponse = RecordResponse(charge, mutableSetOf())
-    if (charge.courtAppearances.none { it.statusId == EntityStatus.ACTIVE }) {
+    if (charge.appearanceCharges.none { it.courtAppearance.statusId == EntityStatus.ACTIVE }) {
       recordResponse = deleteCharge(charge, prisonerId, courtCaseId, courtAppearanceId)
     }
     return recordResponse

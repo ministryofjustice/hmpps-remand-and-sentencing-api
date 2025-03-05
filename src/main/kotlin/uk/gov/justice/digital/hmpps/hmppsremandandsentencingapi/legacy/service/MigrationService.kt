@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
@@ -127,14 +128,20 @@ class MigrationService(
     val dpsChargeOutcomes = chargeOutcomeRepository.findByNomisCodeIn(nomisChargeOutcomeIds).associate { entity -> entity.nomisCode to entity }
     val dpsSentenceTypes = getDpsSentenceTypesMap(migrationCreateAppearances)
     val sourceMergedCourtCases = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedFromCourtCaseUuid != null }.map { it.mergedFromCourtCaseUuid!! }.takeUnless { it.isEmpty() }?.let { courtCaseRepository.findByCaseUniqueIdentifierIn(it).associateBy { it.caseUniqueIdentifier } } ?: emptyMap()
-    val sourceMergedCharges = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedChargeLifetimeUuid != null }.map { it.mergedChargeLifetimeUuid!! }.takeUnless { it.isEmpty() }?.let {
-      chargeRepository.findByChargeUuidInAndStatusId(
-        it,
-        EntityStatus.MERGED,
-      ).sortedBy {
-        it.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxOf { it.appearanceDate }
-      }.associateBy { it.chargeUuid }
-    } ?: emptyMap()
+    val sourceMergedCharges = migrationCreateAppearances
+      .flatMap { appearance -> appearance.charges }
+      .mapNotNull { charge -> charge.mergedChargeLifetimeUuid }
+      .takeUnless { it.isEmpty() }
+      ?.let { chargeIds ->
+        chargeRepository.findByChargeUuidInAndStatusId(chargeIds, EntityStatus.MERGED)
+          .sortedBy { charge ->
+            charge.appearanceCharges.map { ac -> ac.courtAppearance }
+              .filter { appearance -> appearance.statusId == EntityStatus.ACTIVE }
+              .maxOf { activeAppearance -> activeAppearance.appearanceDate }
+          }
+          .associateBy { charge -> charge.chargeUuid }
+      }
+      ?: emptyMap()
     return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges, createdPeriodLengthsMap) }
   }
 
@@ -143,7 +150,16 @@ class MigrationService(
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, courtCaseReference))
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdAppearance))
     val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges, createdPeriodLengthsMap) }
-    createdAppearance.charges.addAll(charges)
+    charges.forEach { charge ->
+      createdAppearance.appearanceCharges.add(
+        AppearanceChargeEntity(
+          courtAppearance = createdAppearance,
+          charge = charge,
+          createdBy = createdByUsername,
+          createdPrison = null, // TODO Replace with actual prison ID?
+        ),
+      )
+    }
     return createdAppearance
   }
 

@@ -41,7 +41,11 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
         .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername()) },
       createdSentence,
     )
-    val courtAppearance = charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
+    val courtAppearance = charge.appearanceCharges
+      .map { it.courtAppearance }
+      .filter { it.statusId == EntityStatus.ACTIVE }
+      .maxByOrNull { it.appearanceDate }
+      ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
     return LegacySentenceCreatedResponse(
       courtAppearance.courtCase.prisonerId,
       createdSentence.sentenceUuid,
@@ -73,7 +77,11 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       existingSentence,
     )
     entityChangeStatus = if (periodLengthChangeStatus == EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
-    val courtAppearance = activeRecord.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxBy { it.appearanceDate }
+    val courtAppearance = activeRecord.charge.appearanceCharges
+      .map { it.courtAppearance }
+      .filter { it.statusId == EntityStatus.ACTIVE }
+      .maxByOrNull { it.appearanceDate }
+      ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")
     return entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.chargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier, createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) })
   }
 

@@ -3,13 +3,16 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
@@ -20,7 +23,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceU
 import java.util.UUID
 
 @Service
-class LegacyChargeService(private val chargeRepository: ChargeRepository, private val courtAppearanceRepository: CourtAppearanceRepository, private val chargeOutcomeRepository: ChargeOutcomeRepository, private val serviceUserService: ServiceUserService, private val chargeHistoryRepository: ChargeHistoryRepository) {
+class LegacyChargeService(
+  private val chargeRepository: ChargeRepository,
+  private val courtAppearanceRepository: CourtAppearanceRepository,
+  private val chargeOutcomeRepository: ChargeOutcomeRepository,
+  private val serviceUserService: ServiceUserService,
+  private val chargeHistoryRepository: ChargeHistoryRepository,
+  private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+) {
 
   @Transactional
   fun create(charge: LegacyCreateCharge): LegacyChargeCreatedResponse {
@@ -29,8 +39,15 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, serviceUserService.getUsername()))
     chargeHistoryRepository.save(ChargeHistoryEntity.from(createdCharge))
-    courtAppearance.charges.add(createdCharge)
-    createdCharge.courtAppearances.add(courtAppearance)
+    val appearanceCharge = AppearanceChargeEntity(
+      courtAppearance = courtAppearance,
+      charge = createdCharge,
+      createdBy = serviceUserService.getUsername(),
+      createdPrison = null,
+    )
+    courtAppearance.appearanceCharges.add(appearanceCharge)
+    createdCharge.appearanceCharges.add(appearanceCharge)
+    appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
     return LegacyChargeCreatedResponse(createdCharge.chargeUuid, courtAppearance.courtCase.caseUniqueIdentifier, courtAppearance.courtCase.prisonerId)
   }
 
@@ -52,18 +69,29 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
   @Transactional
   fun updateInAppearance(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    val existingCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(appearanceUuid, lifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUuid")
-    val appearance = existingCharge.courtAppearances.first { it.appearanceUuid == appearanceUuid }
+    val existingCharge = chargeRepository.findFirstByAppearanceChargesCourtAppearanceAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(
+      appearanceUuid,
+      lifetimeUuid,
+    )?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
+      ?: throw EntityNotFoundException("No charge found at $lifetimeUuid")
+    val appearance = existingCharge.appearanceCharges.first { it.courtAppearance.appearanceUuid == appearanceUuid }.courtAppearance
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
     val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, serviceUserService.getUsername())
     if (!existingCharge.isSame(updatedCharge)) {
       var chargeRecord = existingCharge
       if (existingCharge.hasTwoOrMoreActiveCourtAppearance(appearance)) {
-        existingCharge.courtAppearances.remove(appearance)
-        appearance.charges.remove(existingCharge)
+        existingCharge.appearanceCharges.removeIf { it.courtAppearance == appearance }
+        appearance.appearanceCharges.removeIf { it.charge == existingCharge }
         chargeRecord = chargeRepository.save(updatedCharge)
-        appearance.charges.add(chargeRecord)
+        val appearanceCharge = AppearanceChargeEntity(
+          courtAppearance = appearance,
+          charge = chargeRecord,
+          createdBy = serviceUserService.getUsername(),
+          createdPrison = null,
+        )
+        appearance.appearanceCharges.add(appearanceCharge)
+        appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
       } else {
         existingCharge.updateFrom(updatedCharge)
       }
@@ -71,15 +99,21 @@ class LegacyChargeService(private val chargeRepository: ChargeRepository, privat
 
       entityChangeStatus = EntityChangeStatus.EDITED
     }
-    return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, existingCharge.courtAppearances.first().courtCase.caseUniqueIdentifier, existingCharge.courtAppearances.first().courtCase.prisonerId)
+    val courtCase = existingCharge.appearanceCharges.first().courtAppearance.courtCase
+    return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
   }
 
   @Transactional(readOnly = true)
   fun get(lifetimeUUID: UUID): LegacyCharge = LegacyCharge.from(getUnlessDeleted(lifetimeUUID))
 
   @Transactional(readOnly = true)
-  fun getChargeAtAppearance(appearanceLifetimeUuid: UUID, lifetimeUUID: UUID): LegacyCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(appearanceLifetimeUuid, lifetimeUUID)
-    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { chargeEntity -> LegacyCharge.from(chargeEntity) } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID for appearance $appearanceLifetimeUuid")
+  fun getChargeAtAppearance(appearanceLifetimeUuid: UUID, lifetimeUUID: UUID): LegacyCharge = chargeRepository.findFirstByAppearanceChargesCourtAppearanceAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(
+    appearanceLifetimeUuid,
+    lifetimeUUID,
+  )
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
+    ?.let { chargeEntity -> LegacyCharge.from(chargeEntity) }
+    ?: throw EntityNotFoundException("No charge found at $lifetimeUUID for appearance $appearanceLifetimeUuid")
 
   @Transactional
   fun delete(lifetimeUUID: UUID) {
