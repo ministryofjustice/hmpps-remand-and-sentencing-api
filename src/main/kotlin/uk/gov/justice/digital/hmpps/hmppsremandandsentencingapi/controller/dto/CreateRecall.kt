@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
+import java.util.Collections.emptyList
 import java.util.UUID
 
 data class CreateRecall(
