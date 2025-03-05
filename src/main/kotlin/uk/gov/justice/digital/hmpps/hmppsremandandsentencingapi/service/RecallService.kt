@@ -29,10 +29,12 @@ class RecallService(
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
     val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!))
     // TODO Do we need a domain event for these?
-    val recallSentences: List<RecallSentenceEntity> = createRecall.sentenceIds
-      ?.map { sentenceRepository.findBySentenceUuid(it)!! }
-      ?.map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it)) }
-      ?: emptyList()
+    // Temporarily nullable because CRDS data doesn't have sentence Ids
+    val recallSentences: List<RecallSentenceEntity>? =
+      createRecall.sentenceIds?.let { sentenceIds ->
+        sentenceRepository.findBySentenceUuidIn(sentenceIds)
+          .map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it)) }
+      }
 
     return RecordResponse(
       SaveRecallResponse.from(recall),
