@@ -49,6 +49,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertEquals(2, newEntries.size)
     assertThat(newEntries).extracting<String> { it.removedBy }.containsExactlyInAnyOrder(null, "SOME_USER")
     assertThat(newEntries).extracting<String> { it.createdBy }.containsExactly("SOME_USER", "SOME_USER")
+    assertThat(newEntries).extracting<String> { it.createdPrison }.containsExactlyInAnyOrder("PRISON1", "PRISON1")
+    assertThat(newEntries).extracting<String> { it.removedPrison }.containsExactlyInAnyOrder(null, "PRISON1")
   }
 
   @Test

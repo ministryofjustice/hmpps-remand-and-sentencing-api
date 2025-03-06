@@ -147,7 +147,7 @@ class CourtAppearanceService(
     val periodLengthChangeStatus = periodLengthService.upsert(toCreatePeriodLengths, existingCourtAppearanceEntity.periodLengths) { createdPeriodLength ->
       createdPeriodLength.appearanceEntity = existingCourtAppearanceEntity
     }
-    val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, activeRecord, appearanceDateChanged)
+    val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, activeRecord, appearanceDateChanged, courtAppearance.prisonId)
     eventsToEmit.addAll(chargeEventsToEmit)
     val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord, existingCourtAppearanceEntity.nextCourtAppearance)
     updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
@@ -257,7 +257,14 @@ class CourtAppearanceService(
     } ?: (EntityChangeStatus.NO_CHANGE to null)
   }
 
-  private fun updateCharges(charges: List<CreateCharge>, prisonerId: String, courtCaseUuid: String, existingCourtAppearanceEntity: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): Pair<EntityChangeStatus, MutableSet<EventMetadata>> {
+  private fun updateCharges(
+    charges: List<CreateCharge>,
+    prisonerId: String,
+    courtCaseUuid: String,
+    existingCourtAppearanceEntity: CourtAppearanceEntity,
+    courtAppearanceDateChanged: Boolean,
+    prisonIdForUpdate: String,
+  ): Pair<EntityChangeStatus, MutableSet<EventMetadata>> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val toDeleteCharges = existingCourtAppearanceEntity.appearanceCharges
       .map { it.charge }
@@ -292,7 +299,7 @@ class CourtAppearanceService(
         AppearanceChargeHistoryEntity.removedFrom(
           appearanceCharge = removedCharge,
           removedBy = serviceUserService.getUsername(),
-          removedPrison = null, // TODO Replace with actual prison ID - to be passed in
+          removedPrison = prisonIdForUpdate,
         ),
       )
     }
@@ -308,7 +315,7 @@ class CourtAppearanceService(
         courtAppearance = existingCourtAppearanceEntity,
         charge = charge,
         createdBy = serviceUserService.getUsername(),
-        createdPrison = null, // TODO Replace with actual prison ID - to be passed in
+        createdPrison = prisonIdForUpdate,
       )
       existingCourtAppearanceEntity.appearanceCharges.add(appearanceChargeEntity)
       appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
