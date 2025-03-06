@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
@@ -17,7 +19,10 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   fun `update appearance in existing court case`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
+    val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
+    val appearanceChargeHistoryBefore = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
     val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+
     webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -37,6 +42,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
     val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
     Assertions.assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
+
+    val appearanceChargeHistoryAfter = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
+    val beforeIds = appearanceChargeHistoryBefore.map { it.id }.toSet()
+    val newEntries = appearanceChargeHistoryAfter.filter { it.id !in beforeIds }
+    assertEquals(2, newEntries.size)
+    assertThat(newEntries).extracting<String> { it.removedBy }.containsExactlyInAnyOrder(null, "SOME_USER")
+    assertThat(newEntries).extracting<String> { it.createdBy }.containsExactly("SOME_USER", "SOME_USER")
   }
 
   @Test

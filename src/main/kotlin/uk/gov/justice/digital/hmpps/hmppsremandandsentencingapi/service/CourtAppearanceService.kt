@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -27,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.util.UUID
@@ -43,6 +45,7 @@ class CourtAppearanceService(
   private val documentManagementApiClient: DocumentManagementApiClient,
   private val appearanceTypeRepository: AppearanceTypeRepository,
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
+  private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
 ) {
 
   @Transactional
@@ -95,14 +98,14 @@ class CourtAppearanceService(
     val chargeRecords = createCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, createdCourtAppearance, false)
 
     chargeRecords.forEach { chargeRecord ->
-      createdCourtAppearance.appearanceCharges.add(
-        AppearanceChargeEntity(
-          courtAppearance = createdCourtAppearance,
-          charge = chargeRecord.record,
-          createdBy = serviceUserService.getUsername(),
-          createdPrison = "TODO", // TODO Replace with actual prison ID or set tu null??
-        ),
+      val appearanceChargeEntity = AppearanceChargeEntity(
+        courtAppearance = createdCourtAppearance,
+        charge = chargeRecord.record,
+        createdBy = serviceUserService.getUsername(),
+        createdPrison = createdCourtAppearance.createdPrison,
       )
+      createdCourtAppearance.appearanceCharges.add(appearanceChargeEntity)
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
     }
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
@@ -260,7 +263,11 @@ class CourtAppearanceService(
       .map { it.charge }
       .filter { charge -> charges.none { createCharge -> createCharge.chargeUuid == charge.chargeUuid } }
 
+    val removedCharges = mutableSetOf<AppearanceChargeEntity>()
     toDeleteCharges.forEach { charge ->
+      removedCharges.addAll(existingCourtAppearanceEntity.appearanceCharges.filter { it.id == charge.id })
+      removedCharges.addAll(charge.appearanceCharges.filter { it.courtAppearance.id == existingCourtAppearanceEntity.id })
+
       existingCourtAppearanceEntity.appearanceCharges.removeIf { it.id == charge.id }
       charge.appearanceCharges.removeIf { it.courtAppearance.id == existingCourtAppearanceEntity.id }
       eventsToEmit.addAll(
@@ -273,7 +280,23 @@ class CourtAppearanceService(
       )
     }
 
+    removedCharges.addAll(
+      existingCourtAppearanceEntity.appearanceCharges.filter { appearanceCharge ->
+        toDeleteCharges.any { appearanceCharge.charge.id == it.id }
+      }
+    )
     existingCourtAppearanceEntity.appearanceCharges.removeIf { appearanceCharge -> toDeleteCharges.any { appearanceCharge.charge.id == it.id } }
+    serviceUserService.getUsername()
+    removedCharges.forEach { removedCharge ->
+      appearanceChargeHistoryRepository.save(
+        AppearanceChargeHistoryEntity.removedFrom(
+          appearanceCharge = removedCharge,
+          removedBy = serviceUserService.getUsername(),
+          removedPrison = null // TODO Replace with actual prison ID - to be passed in
+        )
+      )
+    }
+
     val chargeRecords = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity, courtAppearanceDateChanged)
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     val createdCharges = chargeRecords.map { it.record }
@@ -281,14 +304,14 @@ class CourtAppearanceService(
       existingCourtAppearanceEntity.appearanceCharges.none { it.charge.chargeUuid == chargeEntity.chargeUuid }
     }
     toAddCharges.forEach { charge ->
-      existingCourtAppearanceEntity.appearanceCharges.add(
-        AppearanceChargeEntity(
-          courtAppearance = existingCourtAppearanceEntity,
-          charge = charge,
-          createdBy = serviceUserService.getUsername(),
-          createdPrison = "TODO", // TODO Replace with actual prison ID or null
-        ),
+      val appearanceChargeEntity = AppearanceChargeEntity(
+        courtAppearance = existingCourtAppearanceEntity,
+        charge = charge,
+        createdBy = serviceUserService.getUsername(),
+        createdPrison = null, // TODO Replace with actual prison ID - to be passed in
       )
+      existingCourtAppearanceEntity.appearanceCharges.add(appearanceChargeEntity)
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
     }
 
     return (if (toAddCharges.isNotEmpty() || toDeleteCharges.isNotEmpty()) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE) to eventsToEmit

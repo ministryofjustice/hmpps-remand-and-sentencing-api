@@ -116,7 +116,7 @@ class LegacyCourtAppearanceService(
         courtAppearance = existingCourtAppearance,
         charge = existingCharge,
         createdBy = serviceUserService.getUsername(),
-        createdPrison = null, // TODO the prison will be passed in
+        createdPrison = null,
       )
       existingCourtAppearance.appearanceCharges.add(appearanceCharge)
       existingCharge.appearanceCharges.add(appearanceCharge)
@@ -147,7 +147,7 @@ class LegacyCourtAppearanceService(
         AppearanceChargeHistoryEntity.removedFrom(
           appearanceCharge = appearanceCharge,
           removedBy = serviceUserService.getUsername(),
-          removedPrison = null, // TODO the prison will be passed in
+          removedPrison = null,
         ),
       )
     }

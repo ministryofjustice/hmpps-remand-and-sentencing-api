@@ -81,8 +81,24 @@ class LegacyChargeService(
     if (!existingCharge.isSame(updatedCharge)) {
       var chargeRecord = existingCharge
       if (existingCharge.hasTwoOrMoreActiveCourtAppearance(appearance)) {
-        existingCharge.appearanceCharges.removeIf { it.courtAppearance == appearance }
-        appearance.appearanceCharges.removeIf { it.charge == existingCharge }
+        val removedCharges = (existingCharge.appearanceCharges.filter { it.courtAppearance == appearance } +
+            appearance.appearanceCharges.filter { it.charge == existingCharge }).toSet()
+
+        if (removedCharges.isNotEmpty()) {
+          existingCharge.appearanceCharges.removeIf { it.courtAppearance == appearance }
+          appearance.appearanceCharges.removeIf { it.charge == existingCharge }
+
+          removedCharges.forEach { removedCharge ->
+            appearanceChargeHistoryRepository.save(
+              AppearanceChargeHistoryEntity.removedFrom(
+                appearanceCharge = removedCharge,
+                removedBy = serviceUserService.getUsername(),
+                removedPrison = null,
+              )
+            )
+          }
+        }
+
         chargeRecord = chargeRepository.save(updatedCharge)
         val appearanceCharge = AppearanceChargeEntity(
           courtAppearance = appearance,

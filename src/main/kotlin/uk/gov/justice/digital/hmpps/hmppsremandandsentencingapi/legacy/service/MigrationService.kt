@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
@@ -29,6 +30,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
@@ -65,6 +67,7 @@ class MigrationService(
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
+  private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
 ) {
 
   @Transactional
@@ -151,14 +154,14 @@ class MigrationService(
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdAppearance))
     val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges, createdPeriodLengthsMap) }
     charges.forEach { charge ->
-      createdAppearance.appearanceCharges.add(
-        AppearanceChargeEntity(
-          courtAppearance = createdAppearance,
-          charge = charge,
-          createdBy = createdByUsername,
-          createdPrison = null, // TODO Replace with actual prison ID?
-        ),
+      val appearanceChargeEntity = AppearanceChargeEntity(
+        courtAppearance = createdAppearance,
+        charge = charge,
+        createdBy = createdByUsername,
+        createdPrison = null,
       )
+      createdAppearance.appearanceCharges.add(appearanceChargeEntity)
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
     }
     return createdAppearance
   }

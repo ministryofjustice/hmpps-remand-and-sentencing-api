@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions
 import org.hamcrest.text.MatchesPattern
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -13,6 +15,8 @@ class LegacyCreateChargeTests : IntegrationTestBase() {
   fun `create charge in existing court case`() {
     val (appearanceLifetimeUuid) = createLegacyCourtAppearance()
     val legacyCharge = DataCreator.legacyCreateCharge(appearanceLifetimeUuid = appearanceLifetimeUuid)
+    val appearanceId = courtAppearanceRepository.findByAppearanceUuid(appearanceLifetimeUuid)!!.id
+    val appearanceChargeHistoryBefore = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
 
     webTestClient
       .post()
@@ -31,6 +35,13 @@ class LegacyCreateChargeTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("charge.inserted")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+
+    val appearanceChargeHistoryAfter = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
+    val beforeIds = appearanceChargeHistoryBefore.map { it.id }.toSet()
+    val newEntries = appearanceChargeHistoryAfter.filter { it.id !in beforeIds }
+    assertEquals(1, newEntries.size)
+    assertNull(newEntries[0].removedBy)
+    assertEquals("SOME_USER", newEntries[0].createdBy)
   }
 
   @Test

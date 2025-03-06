@@ -5,6 +5,7 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
+import java.util.concurrent.TimeUnit
 
 fun numberOfMessagesCurrentlyOnQueue(client: SqsAsyncClient, queueUrl: String, count: Int) {
   await untilCallTo {
