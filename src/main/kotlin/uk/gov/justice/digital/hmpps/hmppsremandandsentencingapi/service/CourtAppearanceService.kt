@@ -283,7 +283,7 @@ class CourtAppearanceService(
     removedCharges.addAll(
       existingCourtAppearanceEntity.appearanceCharges.filter { appearanceCharge ->
         toDeleteCharges.any { appearanceCharge.charge.id == it.id }
-      }
+      },
     )
     existingCourtAppearanceEntity.appearanceCharges.removeIf { appearanceCharge -> toDeleteCharges.any { appearanceCharge.charge.id == it.id } }
     serviceUserService.getUsername()
@@ -292,8 +292,8 @@ class CourtAppearanceService(
         AppearanceChargeHistoryEntity.removedFrom(
           appearanceCharge = removedCharge,
           removedBy = serviceUserService.getUsername(),
-          removedPrison = null // TODO Replace with actual prison ID - to be passed in
-        )
+          removedPrison = null, // TODO Replace with actual prison ID - to be passed in
+        ),
       )
     }
 

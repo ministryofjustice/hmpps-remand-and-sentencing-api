@@ -102,8 +102,8 @@ class ChargeService(
               AppearanceChargeHistoryEntity.removedFrom(
                 appearanceCharge = removedCharge,
                 removedBy = serviceUserService.getUsername(),
-                removedPrison = null // TODO get the removed prison = to be passed in
-              )
+                removedPrison = null, // TODO get the removed prison = to be passed in
+              ),
             )
           }
         }
