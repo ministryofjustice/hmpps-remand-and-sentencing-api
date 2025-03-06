@@ -16,8 +16,8 @@ data class LegacyCharge(
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): LegacyCharge = LegacyCharge(
-      chargeEntity.courtAppearances.first().courtCase.prisonerId,
-      chargeEntity.courtAppearances.first().courtCase.caseUniqueIdentifier,
+      chargeEntity.appearanceCharges.first().courtAppearance.courtCase.prisonerId,
+      chargeEntity.appearanceCharges.first().courtAppearance.courtCase.caseUniqueIdentifier,
       chargeEntity.chargeUuid,
       chargeEntity.legacyData?.nomisOutcomeCode ?: chargeEntity.chargeOutcome?.nomisCode,
       chargeEntity.offenceCode,

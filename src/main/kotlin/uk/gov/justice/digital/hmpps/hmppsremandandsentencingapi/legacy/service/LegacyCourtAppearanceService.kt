@@ -3,9 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
@@ -16,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
@@ -25,7 +28,18 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceU
 import java.util.*
 
 @Service
-class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtAppearanceRepository, private val courtCaseRepository: CourtCaseRepository, private val appearanceOutcomeRepository: AppearanceOutcomeRepository, private val serviceUserService: ServiceUserService, private val chargeRepository: ChargeRepository, private val appearanceTypeRepository: AppearanceTypeRepository, private val nextCourtAppearanceRepository: NextCourtAppearanceRepository, private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository, private val chargeHistoryRepository: ChargeHistoryRepository) {
+class LegacyCourtAppearanceService(
+  private val courtAppearanceRepository: CourtAppearanceRepository,
+  private val courtCaseRepository: CourtCaseRepository,
+  private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
+  private val serviceUserService: ServiceUserService,
+  private val chargeRepository: ChargeRepository,
+  private val appearanceTypeRepository: AppearanceTypeRepository,
+  private val nextCourtAppearanceRepository: NextCourtAppearanceRepository,
+  private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
+  private val chargeHistoryRepository: ChargeHistoryRepository,
+  private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+) {
 
   @Transactional
   fun create(courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse {
@@ -97,9 +111,16 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    if (!existingCourtAppearance.charges.contains(existingCharge)) {
-      existingCourtAppearance.charges.add(existingCharge)
-      existingCharge.courtAppearances.add(existingCourtAppearance)
+    if (existingCourtAppearance.appearanceCharges.none { it.charge == existingCharge }) {
+      val appearanceCharge = AppearanceChargeEntity(
+        courtAppearance = existingCourtAppearance,
+        charge = existingCharge,
+        createdBy = serviceUserService.getUsername(),
+        createdPrison = null,
+      )
+      existingCourtAppearance.appearanceCharges.add(appearanceCharge)
+      existingCharge.appearanceCharges.add(appearanceCharge)
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     return entityChangeStatus
@@ -108,18 +129,27 @@ class LegacyCourtAppearanceService(private val courtAppearanceRepository: CourtA
   @Transactional
   fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): Pair<EntityChangeStatus, EntityChangeStatus> {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
-    val existingCharge = chargeRepository.findFirstByCourtAppearancesAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(lifetimeUuid, lifetimeChargeUuid)
+    val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
     var appearanceEntityChangeStatus = EntityChangeStatus.NO_CHANGE
     var chargeEntityStatus = EntityChangeStatus.NO_CHANGE
-    if (existingCourtAppearance.charges.contains(existingCharge)) {
-      existingCourtAppearance.charges.remove(existingCharge)
-      existingCharge!!.courtAppearances.remove(existingCourtAppearance)
+    val appearanceCharge = existingCourtAppearance.appearanceCharges.find { it.charge == existingCharge }
+
+    if (appearanceCharge != null) {
+      existingCourtAppearance.appearanceCharges.remove(appearanceCharge)
+      existingCharge.appearanceCharges.remove(appearanceCharge)
       appearanceEntityChangeStatus = EntityChangeStatus.EDITED
       if (existingCharge.hasNoActiveCourtAppearances()) {
         existingCharge.delete(serviceUserService.getUsername())
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
         chargeEntityStatus = EntityChangeStatus.DELETED
       }
+      appearanceChargeHistoryRepository.save(
+        AppearanceChargeHistoryEntity.removedFrom(
+          appearanceCharge = appearanceCharge,
+          removedBy = serviceUserService.getUsername(),
+          removedPrison = null,
+        ),
+      )
     }
     return appearanceEntityChangeStatus to chargeEntityStatus
   }

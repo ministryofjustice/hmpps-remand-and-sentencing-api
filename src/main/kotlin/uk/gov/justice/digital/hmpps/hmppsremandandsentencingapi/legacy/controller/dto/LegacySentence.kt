@@ -24,9 +24,15 @@ data class LegacySentence(
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
-      val activeAppearances = sentenceEntity.charge.courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }
+      val activeAppearances = sentenceEntity.charge.appearanceCharges
+        .map { it.courtAppearance }
+        .filter { it.statusId == EntityStatus.ACTIVE }
+
       val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
-      val firstSentenceAppearance = activeAppearances.filter { it.warrantType == "SENTENCING" }.minBy { it.appearanceDate }
+      val firstSentenceAppearance = activeAppearances
+        .filter { it.warrantType == "SENTENCING" }
+        .minBy { it.appearanceDate }
+
       return LegacySentence(
         courtCase.prisonerId,
         courtCase.caseUniqueIdentifier,
