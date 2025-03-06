@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import java.time.LocalDate
 import java.util.UUID
@@ -29,4 +30,6 @@ class SentenceTypeEntity(
   val nomisCjaCode: String,
   val nomisSentenceCalcType: String,
   val displayOrder: Int,
+  @Enumerated(EnumType.STRING)
+  val status: ReferenceEntityStatus,
 )
