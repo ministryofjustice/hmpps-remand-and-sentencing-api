@@ -179,11 +179,11 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val migrationCourtCase = DataCreator.migrationCreateCourtCase()
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases()
     webTestClient
       .post()
       .uri("/legacy/court-case/migration")
-      .bodyValue(migrationCourtCase)
+      .bodyValue(migrationCourtCases)
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
         it.contentType = MediaType.APPLICATION_JSON
