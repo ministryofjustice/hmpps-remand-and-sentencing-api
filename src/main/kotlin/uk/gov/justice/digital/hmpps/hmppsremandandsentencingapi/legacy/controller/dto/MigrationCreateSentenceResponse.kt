@@ -3,6 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import java.util.UUID
 
 data class MigrationCreateSentenceResponse(
-  val lifetimeSentenceUuid: UUID,
+  val sentenceUuid: UUID,
   val sentenceNOMISId: MigrationSentenceId,
 )

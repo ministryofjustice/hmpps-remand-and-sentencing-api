@@ -183,7 +183,7 @@ class SentenceEntity(
       fineAmount = sentence.fine?.fineAmount,
     )
 
-    fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
+    fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
       statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
@@ -191,8 +191,8 @@ class SentenceEntity(
       createdPrison = null,
       supersedingSentence = null,
       charge = chargeEntity,
-      sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
-      consecutiveTo = consecutiveTo,
+      sentenceServeType = "UNKNOWN",
+      consecutiveTo = null,
       sentenceType = sentenceTypeEntity,
       convictionDate = null,
       legacyData = sentence.legacyData,

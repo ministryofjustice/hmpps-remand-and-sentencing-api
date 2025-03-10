@@ -2,8 +2,5 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 
 data class MigrationCreateCourtCaseResponse(
   val courtCaseUuid: String,
-  val appearances: List<MigrationCreateCourtAppearanceResponse>,
-  val charges: List<MigrationCreateChargeResponse>,
-  val sentences: List<MigrationCreateSentenceResponse>,
-  val sentenceTerms: List<MigrationCreatePeriodLengthResponse>,
+  val caseId: Long,
 )

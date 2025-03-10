@@ -6,8 +6,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 data class CourtAppearanceLegacyData(
-  val eventId: String?,
-  val caseId: String?,
   val postedDate: String?,
   val nomisOutcomeCode: String?,
   val outcomeDescription: String?,
@@ -18,8 +16,6 @@ data class CourtAppearanceLegacyData(
 ) {
 
   fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
-    eventId,
-    caseId,
     LocalDate.now().format(DateTimeFormatter.ISO_DATE),
     nomisOutcomeCode,
     outcomeDescription,
@@ -30,8 +26,6 @@ data class CourtAppearanceLegacyData(
   )
   companion object {
     fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
-      null,
-      null,
       LocalDate.now().format(DateTimeFormatter.ISO_DATE),
       null,
       null,

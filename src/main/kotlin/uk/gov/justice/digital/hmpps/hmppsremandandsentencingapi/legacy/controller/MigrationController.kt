@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.MigrationService
 
 @RestController
@@ -35,5 +35,5 @@ class MigrationController(private val migrationService: MigrationService) {
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun create(@RequestBody migrationCreateCourtCase: MigrationCreateCourtCase): MigrationCreateCourtCaseResponse = migrationService.create(migrationCreateCourtCase)
+  fun create(@RequestBody migrationCreateCourtCases: MigrationCreateCourtCases): MigrationCreateCourtCasesResponse = migrationService.create(migrationCreateCourtCases)
 }

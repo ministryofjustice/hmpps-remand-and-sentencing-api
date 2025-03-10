@@ -3,6 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import java.util.UUID
 
 data class MigrationCreateCourtAppearanceResponse(
-  val lifetimeUuid: UUID,
-  val eventId: String,
+  val appearanceUuid: UUID,
+  val eventId: Long,
 )

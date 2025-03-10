@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
@@ -41,13 +40,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLengthResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentenceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationSentenceId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
-import java.util.UUID
 import kotlin.collections.filter
 
 @Service
@@ -71,34 +71,32 @@ class MigrationService(
 ) {
 
   @Transactional
-  fun create(migrationCreateCourtCase: MigrationCreateCourtCase): MigrationCreateCourtCaseResponse {
-    val createdByUsername = serviceUserService.getUsername()
-    val createdCourtCase = courtCaseRepository.save(CourtCaseEntity.from(migrationCreateCourtCase, createdByUsername))
-    val latestCourtCaseReference = migrationCreateCourtCase.courtCaseLegacyData.caseReferences.maxByOrNull { caseReferenceLegacyData -> caseReferenceLegacyData.updatedDate }?.offenderCaseReference
-    val createdChargesMap: MutableMap<String, ChargeEntity> = HashMap()
+  fun create(migrationCreateCourtCases: MigrationCreateCourtCases): MigrationCreateCourtCasesResponse {
+    val createdCourtCasesMap: MutableMap<Long, CourtCaseEntity> = HashMap()
+    val createdCourtAppearancesMap: MutableMap<Long, CourtAppearanceEntity> = HashMap()
+    val createdChargesMap: MutableMap<Long, ChargeEntity> = HashMap()
     val createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity> = HashMap()
     val createdPeriodLengthMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity> = HashMap()
-    val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdCourtCase, latestCourtCaseReference, createdChargesMap, createdSentencesMap, createdPeriodLengthMap)
-    manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase, createdAppearances)
-    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
-    createdCourtCase.latestCourtAppearance = latestCourtAppearance
-    latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, migrationCreateCourtCase, createdAppearances) }
 
-    return MigrationCreateCourtCaseResponse(
-      createdCourtCase.caseUniqueIdentifier,
-      createdAppearances.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
+    migrationCreateCourtCases.courtCases.forEach { migrationCreateCourtCase ->
+      createCourtCase(migrationCreateCourtCase, migrationCreateCourtCases.prisonerId, serviceUserService.getUsername(), createdCourtCasesMap, createdCourtAppearancesMap, createdChargesMap, createdSentencesMap, createdPeriodLengthMap)
+    }
+
+    return MigrationCreateCourtCasesResponse(
+      createdCourtCasesMap.map { (caseId, createdCourtCase) -> MigrationCreateCourtCaseResponse(createdCourtCase.caseUniqueIdentifier, caseId) },
+      createdCourtAppearancesMap.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
       createdChargesMap.map { (chargeNOMISId, createdCharge) -> MigrationCreateChargeResponse(createdCharge.chargeUuid, chargeNOMISId) },
       createdSentencesMap.map { (id, createdSentence) -> MigrationCreateSentenceResponse(createdSentence.sentenceUuid, id) },
       createdPeriodLengthMap.map { (id, createdPeriodLength) -> MigrationCreatePeriodLengthResponse(createdPeriodLength.periodLengthUuid, id) },
     )
   }
 
-  fun manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<String, CourtAppearanceEntity>) {
-    val nomisAppearances = migrationCreateCourtCase.appearances.associateBy { appearance -> appearance.legacyData.eventId!! }
+  fun manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<Long, CourtAppearanceEntity>) {
+    val nomisAppearances = migrationCreateCourtCase.appearances.associateBy { appearance -> appearance.eventId }
     val matchedNomisAppearances = migrationCreateCourtCase.appearances.filter { appearance -> appearance.legacyData.nextEventDateTime != null }.map { appearance ->
-      appearance.legacyData.eventId!! to migrationCreateCourtCase.appearances.firstOrNull { potentialAppearance ->
+      appearance.eventId to migrationCreateCourtCase.appearances.firstOrNull { potentialAppearance ->
         appearance.legacyData.nextEventDateTime!!.toLocalDate().isEqual(potentialAppearance.appearanceDate)
-      }?.legacyData?.eventId
+      }?.eventId
     }.filter { matchedNomisAppearance -> matchedNomisAppearance.second != null }
 
     matchedNomisAppearances.forEach { (appearanceId, nextAppearanceId) ->
@@ -113,10 +111,10 @@ class MigrationService(
     }
   }
 
-  fun managedNoMatchedDpsNextCourtAppearance(latestCourtAppearance: CourtAppearanceEntity, migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<String, CourtAppearanceEntity>) {
+  fun managedNoMatchedDpsNextCourtAppearance(latestCourtAppearance: CourtAppearanceEntity, migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<Long, CourtAppearanceEntity>) {
     if (latestCourtAppearance.nextCourtAppearance == null && createdAppearances.values.any { it.statusId == EntityStatus.FUTURE }) {
       val (nextFutureDatedEventId, nextFutureDatedAppearance) = createdAppearances.filter { (_, courtAppearanceEntity) -> courtAppearanceEntity.statusId == EntityStatus.FUTURE }.minBy { (_, courtAppearanceEntity) -> courtAppearanceEntity.appearanceDate }
-      val nomisNextFutureDatedAppearance = migrationCreateCourtCase.appearances.first { it.legacyData.eventId == nextFutureDatedEventId }
+      val nomisNextFutureDatedAppearance = migrationCreateCourtCase.appearances.first { it.eventId == nextFutureDatedEventId }
       val nextAppearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nomisNextFutureDatedAppearance.appearanceTypeUuid)!!
       latestCourtAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
         NextCourtAppearanceEntity.from(nextFutureDatedAppearance, nextAppearanceType),
@@ -124,35 +122,32 @@ class MigrationService(
     }
   }
 
-  fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, createdChargesMap: MutableMap<String, ChargeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): Map<String, CourtAppearanceEntity> {
+  fun createCourtCase(migrationCreateCourtCase: MigrationCreateCourtCase, prisonerId: String, createdByUsername: String, createdCourtCaseMap: MutableMap<Long, CourtCaseEntity>, createdCourtAppearancesMap: MutableMap<Long, CourtAppearanceEntity>, createdChargesMap: MutableMap<Long, ChargeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>) {
+    val createdCourtCase = courtCaseRepository.save(CourtCaseEntity.from(migrationCreateCourtCase, createdByUsername, prisonerId))
+    val latestCourtCaseReference = migrationCreateCourtCase.courtCaseLegacyData.caseReferences.maxByOrNull { caseReferenceLegacyData -> caseReferenceLegacyData.updatedDate }?.offenderCaseReference
+    val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdCourtCase, latestCourtCaseReference, createdChargesMap, createdSentencesMap, createdPeriodLengthsMap)
+    createdCourtAppearancesMap.putAll(createdAppearances)
+    manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase, createdAppearances)
+    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
+    createdCourtCase.latestCourtAppearance = latestCourtAppearance
+    latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, migrationCreateCourtCase, createdAppearances) }
+    createdCourtCaseMap.put(migrationCreateCourtCase.caseId, createdCourtCase)
+  }
+
+  fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, createdChargesMap: MutableMap<Long, ChargeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): Map<Long, CourtAppearanceEntity> {
     val nomisAppearanceOutcomeIds = migrationCreateAppearances.filter { appearance -> appearance.legacyData.nomisOutcomeCode != null }.map { appearance -> appearance.legacyData.nomisOutcomeCode!! }.distinct()
     val dpsAppearanceOutcomes = appearanceOutcomeRepository.findByNomisCodeIn(nomisAppearanceOutcomeIds).associate { entity -> entity.nomisCode to entity }
     val nomisChargeOutcomeIds = migrationCreateAppearances.flatMap { courtAppearance -> courtAppearance.charges }.filter { charge -> charge.legacyData.nomisOutcomeCode != null }.map { charge -> charge.legacyData.nomisOutcomeCode!! }.distinct()
     val dpsChargeOutcomes = chargeOutcomeRepository.findByNomisCodeIn(nomisChargeOutcomeIds).associate { entity -> entity.nomisCode to entity }
     val dpsSentenceTypes = getDpsSentenceTypesMap(migrationCreateAppearances)
-    val sourceMergedCourtCases = migrationCreateAppearances.flatMap { it.charges }.filter { it.mergedFromCourtCaseUuid != null }.map { it.mergedFromCourtCaseUuid!! }.takeUnless { it.isEmpty() }?.let { courtCaseRepository.findByCaseUniqueIdentifierIn(it).associateBy { it.caseUniqueIdentifier } } ?: emptyMap()
-    val sourceMergedCharges = migrationCreateAppearances
-      .flatMap { appearance -> appearance.charges }
-      .mapNotNull { charge -> charge.mergedChargeLifetimeUuid }
-      .takeUnless { it.isEmpty() }
-      ?.let { chargeIds ->
-        chargeRepository.findByChargeUuidInAndStatusId(chargeIds, EntityStatus.MERGED)
-          .sortedBy { charge ->
-            charge.appearanceCharges.map { ac -> ac.courtAppearance }
-              .filter { appearance -> appearance.statusId == EntityStatus.ACTIVE }
-              .maxOf { activeAppearance -> activeAppearance.appearanceDate }
-          }
-          .associateBy { charge -> charge.chargeUuid }
-      }
-      ?: emptyMap()
-    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.legacyData.eventId!! to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges, createdPeriodLengthsMap) }
+    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.eventId to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, createdPeriodLengthsMap) }
   }
 
-  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, sourceMergedCourtCases: Map<String, CourtCaseEntity>, sourceMergedCharges: Map<UUID, ChargeEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): CourtAppearanceEntity {
+  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<Long, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): CourtAppearanceEntity {
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { dpsAppearanceOutcomes[it] }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, courtCaseReference))
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdAppearance))
-    val charges = migrationCreateCourtAppearance.charges.sortedWith(this::chargesByConsecutiveToLast).map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, sourceMergedCourtCases, sourceMergedCharges, createdPeriodLengthsMap) }
+    val charges = migrationCreateCourtAppearance.charges.map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, createdPeriodLengthsMap) }
     charges.forEach { charge ->
       val appearanceChargeEntity = AppearanceChargeEntity(
         courtAppearance = createdAppearance,
@@ -166,27 +161,16 @@ class MigrationService(
     return createdAppearance
   }
 
-  private fun chargesByConsecutiveToLast(first: MigrationCreateCharge, second: MigrationCreateCharge): Int {
-    if (first.sentence?.consecutiveToSentenceId == null) {
-      return -1
-    }
-    if (first.sentence.consecutiveToSentenceId == second.sentence?.sentenceId) {
-      return 1
-    }
-    return 0
-  }
-
-  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<String, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, sourceMergedCourtCases: Map<String, CourtCaseEntity>, sourceMergedCharges: Map<UUID, ChargeEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): ChargeEntity {
+  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<Long, ChargeEntity>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): ChargeEntity {
     val dpsChargeOutcome = migrationCreateCharge.legacyData.nomisOutcomeCode?.let { dpsChargeOutcomes[it] }
     migrationCreateCharge.legacyData = dpsChargeOutcome?.let { migrationCreateCharge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: migrationCreateCharge.legacyData
-    val dpsMergedFromCourtCase = migrationCreateCharge.mergedFromCourtCaseUuid?.let { sourceMergedCourtCases[it] }
-    val dpsMergedFromCharge = migrationCreateCharge.mergedChargeLifetimeUuid?.let { sourceMergedCharges[it] }
-    val existingCharge = createdChargesMap[migrationCreateCharge.chargeNOMISId] ?: dpsMergedFromCharge
+
+    val existingCharge = createdChargesMap[migrationCreateCharge.chargeNOMISId]
     val (toCreateCharge, toCreateChangeStatus) = if (existingCharge != null) {
-      val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase)
+      val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, createdByUsername)
       if (existingCharge.isSame(chargeInAppearance)) existingCharge to EntityChangeStatus.NO_CHANGE else chargeInAppearance to EntityChangeStatus.EDITED
     } else {
-      ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, createdByUsername, dpsMergedFromCourtCase) to EntityChangeStatus.CREATED
+      ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, createdByUsername) to EntityChangeStatus.CREATED
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
     if (toCreateChangeStatus != EntityChangeStatus.NO_CHANGE) {
@@ -221,15 +205,8 @@ class MigrationService(
   fun createSentence(migrationCreateSentence: MigrationCreateSentence, chargeEntity: ChargeEntity, createdByUsername: String, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, PeriodLengthEntity>): SentenceEntity {
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(dpsSentenceTypes, it) }
     migrationCreateSentence.legacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
-    var consecutiveToSentence: SentenceEntity? = null
-    if (migrationCreateSentence.consecutiveToSentenceId != null) {
-      consecutiveToSentence = createdSentencesMap[migrationCreateSentence.consecutiveToSentenceId]
-        ?: throw EntityNotFoundException("Cannot find sentence with booking id ${migrationCreateSentence.consecutiveToSentenceId.offenderBookingId} and sequence ${migrationCreateSentence.consecutiveToSentenceId.sequence}")
-    } else if (migrationCreateSentence.consecutiveToSentenceLifetimeUuid != null) {
-      consecutiveToSentence = sentenceRepository.findBySentenceUuid(migrationCreateSentence.consecutiveToSentenceLifetimeUuid) ?: throw EntityNotFoundException("Cannot find sentence with lifetime uuid ${migrationCreateSentence.consecutiveToSentenceLifetimeUuid}")
-    }
 
-    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType, consecutiveToSentence)
+    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
