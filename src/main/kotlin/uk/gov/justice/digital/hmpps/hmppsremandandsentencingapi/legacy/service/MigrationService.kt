@@ -80,9 +80,8 @@ class MigrationService(
     migrationCreateCourtCases.courtCases.forEach { migrationCreateCourtCase ->
       createCourtCase(migrationCreateCourtCase, migrationCreateCourtCases.prisonerId, serviceUserService.getUsername(), createdCourtCasesMap, createdCourtAppearancesMap, createdChargesMap, createdSentencesMap, createdPeriodLengthMap)
     }
-
     linkMergedCases(migrationCreateCourtCases, createdCourtCasesMap, createdChargesMap)
-
+    linkConsecutiveToSentences(migrationCreateCourtCases, createdSentencesMap)
     auditCreatedRecords(
       createdCourtAppearancesMap.values,
       createdChargesMap.values.flatMap { it.map { it.second } }.distinct(),
@@ -143,6 +142,16 @@ class MigrationService(
             targetCharge.mergedFromCourtCase = sourceCourtCase
             targetCharge.supersedingCharge = sourceCharge
           }
+      }
+  }
+
+  fun linkConsecutiveToSentences(migrationCreateCourtCases: MigrationCreateCourtCases, createdSentencesMap: MutableMap<MigrationSentenceId, SentenceEntity>) {
+    migrationCreateCourtCases.courtCases.flatMap { it.appearances }.flatMap { it.charges }.filter { it.sentence?.consecutiveToSentenceId != null }
+      .map { it.sentence!! }
+      .forEach { nomisSentence ->
+        val consecutiveToSentence = createdSentencesMap[nomisSentence.consecutiveToSentenceId]!!
+        val sentence = createdSentencesMap[nomisSentence.sentenceId]!!
+        sentence.consecutiveTo = consecutiveToSentence
       }
   }
 
