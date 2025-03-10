@@ -24,7 +24,6 @@ class ChargeOutcomeEntity(
   val nomisCode: String,
   val outcomeType: String,
   val displayOrder: Int,
-  val isSubList: Boolean,
   val dispositionCode: String,
   @Enumerated(EnumType.STRING)
   val status: ReferenceEntityStatus,

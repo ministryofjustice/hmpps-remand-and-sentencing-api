@@ -37,7 +37,6 @@ class GetAllChargeOutcomesByStatusesTests : IntegrationTestBase() {
         nomisCode = "123456",
         outcomeType = "REMAND",
         displayOrder = 1000,
-        isSubList = false,
         dispositionCode = "F",
         status = ReferenceEntityStatus.INACTIVE,
       ),
