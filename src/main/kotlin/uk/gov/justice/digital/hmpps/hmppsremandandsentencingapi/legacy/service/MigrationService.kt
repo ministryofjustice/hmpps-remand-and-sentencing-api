@@ -89,15 +89,6 @@ class MigrationService(
       createdPeriodLengthMap.values,
     )
 
-    linkMergedCases(migrationCreateCourtCases, createdCourtCasesMap, createdChargesMap)
-
-    auditCreatedRecords(
-      createdCourtAppearancesMap.values,
-      createdChargesMap.values.flatMap { it.map { it.second } }.distinct(),
-      createdSentencesMap.values,
-      createdPeriodLengthMap.values,
-    )
-
     return MigrationCreateCourtCasesResponse(
       createdCourtCasesMap.map { (caseId, createdCourtCase) -> MigrationCreateCourtCaseResponse(createdCourtCase.caseUniqueIdentifier, caseId) },
       createdCourtAppearancesMap.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
