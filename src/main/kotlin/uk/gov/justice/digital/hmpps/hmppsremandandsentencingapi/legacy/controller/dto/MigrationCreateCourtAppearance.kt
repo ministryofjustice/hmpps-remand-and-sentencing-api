@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class MigrationCreateCourtAppearance(
+  val eventId: Long,
   val courtCode: String,
   val appearanceDate: LocalDate,
   val appearanceTypeUuid: UUID,

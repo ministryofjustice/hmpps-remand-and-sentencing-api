@@ -4,10 +4,9 @@ import com.fasterxml.jackson.annotation.JsonSetter
 import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
-import java.util.UUID
 
 data class MigrationCreateCharge(
-  val chargeNOMISId: String,
+  val chargeNOMISId: Long,
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
@@ -16,6 +15,6 @@ data class MigrationCreateCharge(
   @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonSetter(nulls = Nulls.SKIP)
   var merged: Boolean = false,
-  val mergedFromCourtCaseUuid: String?,
-  val mergedChargeLifetimeUuid: UUID?,
+  val mergedFromCaseId: Long?,
+  val mergedChargeNOMISId: Long?,
 )

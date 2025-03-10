@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
@@ -35,8 +36,6 @@ class DataCreator {
     fun legacyCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active)
 
     fun courtAppearanceLegacyData(
-      eventId: String = "1",
-      caseId: String = "1",
       postedDate: String = LocalDate.now().format(
         DateTimeFormatter.ISO_DATE,
       ),
@@ -46,7 +45,7 @@ class DataCreator {
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
       outcomeDispositionCode: String = "I",
       outcomeConvictionFlag: Boolean = false,
-    ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(eventId, caseId, postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime, outcomeDispositionCode, outcomeConvictionFlag)
+    ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(postedDate, nomisOutcomeCode, outcomeDescription, nextEventDateTime, appearanceTime, outcomeDispositionCode, outcomeConvictionFlag)
 
     fun legacyCreateCourtAppearance(courtCaseUuid: String = UUID.randomUUID().toString(), courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData()): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
 
@@ -85,13 +84,15 @@ class DataCreator {
 
     fun courtCaseLegacyData(caseReferences: MutableList<CaseReferenceLegacyData> = mutableListOf(caseReferenceLegacyData())): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences)
 
-    fun migrationCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true, courtCaseLegacyData: CourtCaseLegacyData = courtCaseLegacyData(), appearances: List<MigrationCreateCourtAppearance> = listOf(migrationCreateCourtAppearance()), merged: Boolean = false): MigrationCreateCourtCase = MigrationCreateCourtCase(prisonerId, active, courtCaseLegacyData, appearances, merged)
+    fun migrationCreateCourtCases(prisonerId: String = "PRI123", courtCases: List<MigrationCreateCourtCase> = listOf(migrationCreateCourtCase())): MigrationCreateCourtCases = MigrationCreateCourtCases(prisonerId, courtCases)
 
-    fun migrationCreateCourtAppearance(courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(), charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge())): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
+    fun migrationCreateCourtCase(caseId: Long = 1, active: Boolean = true, courtCaseLegacyData: CourtCaseLegacyData = courtCaseLegacyData(), appearances: List<MigrationCreateCourtAppearance> = listOf(migrationCreateCourtAppearance()), merged: Boolean = false): MigrationCreateCourtCase = MigrationCreateCourtCase(caseId, active, courtCaseLegacyData, appearances, merged)
 
-    fun migrationCreateCharge(chargeNOMISId: String = "5453", offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData(), sentence: MigrationCreateSentence? = migrationCreateSentence(), merged: Boolean = false, mergedFromCourtCaseUuid: String? = null, mergedChargeLifetimeUuid: UUID? = null): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, legacyData, sentence, merged, mergedFromCourtCaseUuid, mergedChargeLifetimeUuid)
+    fun migrationCreateCourtAppearance(eventId: Long = 1, courtCode: String = "COURT1", appearanceDate: LocalDate = LocalDate.now(), appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"), legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(), charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge())): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(eventId, courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
 
-    fun migrationCreateSentence(sentenceId: MigrationSentenceId = migrationSentenceId(), chargeNumber: String = "1", fine: MigrationCreateFine = migrationCreateFine(), active: Boolean = true, legacyData: SentenceLegacyData = sentenceLegacyData(), consecutiveToSentenceId: MigrationSentenceId? = null, consecutiveToSentenceLifetimeUuid: UUID? = null, periodLengths: List<MigrationCreatePeriodLength> = listOf(migrationCreatePeriodLength())): MigrationCreateSentence = MigrationCreateSentence(sentenceId, chargeNumber, fine, active, legacyData, consecutiveToSentenceId, consecutiveToSentenceLifetimeUuid, periodLengths)
+    fun migrationCreateCharge(chargeNOMISId: Long = 5453, offenceCode: String = "OFF1", offenceStartDate: LocalDate = LocalDate.now(), offenceEndDate: LocalDate? = null, legacyData: ChargeLegacyData = chargeLegacyData(), sentence: MigrationCreateSentence? = migrationCreateSentence(), merged: Boolean = false, mergedFromCaseId: Long? = null, mergedChargeNOMISId: Long? = null): MigrationCreateCharge = MigrationCreateCharge(chargeNOMISId, offenceCode, offenceStartDate, offenceEndDate, legacyData, sentence, merged, mergedFromCaseId, mergedChargeNOMISId)
+
+    fun migrationCreateSentence(sentenceId: MigrationSentenceId = migrationSentenceId(), chargeNumber: String = "1", fine: MigrationCreateFine = migrationCreateFine(), active: Boolean = true, legacyData: SentenceLegacyData = sentenceLegacyData(), consecutiveToSentenceId: MigrationSentenceId? = null, consecutiveToSentenceLifetimeUuid: UUID? = null, periodLengths: List<MigrationCreatePeriodLength> = listOf(migrationCreatePeriodLength())): MigrationCreateSentence = MigrationCreateSentence(sentenceId, chargeNumber, fine, active, legacyData, consecutiveToSentenceId, periodLengths)
 
     fun migrationCreatePeriodLength(periodLengthId: NomisPeriodLengthId = nomisPeriodLengthId(), periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): MigrationCreatePeriodLength = MigrationCreatePeriodLength(periodLengthId, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
 

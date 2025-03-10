@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class MigrationCreateCourtCase(
-  val prisonerId: String,
+  val caseId: Long,
   val active: Boolean,
   val courtCaseLegacyData: CourtCaseLegacyData,
   val appearances: List<MigrationCreateCourtAppearance>,

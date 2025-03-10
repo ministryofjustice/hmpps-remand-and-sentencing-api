@@ -66,8 +66,8 @@ class CourtCaseEntity(
 
     fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE)
 
-    fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(
-      prisonerId = migrationCreateCourtCase.prisonerId,
+    fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
+      prisonerId = prisonerId,
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
       statusId = if (migrationCreateCourtCase.merged) {
