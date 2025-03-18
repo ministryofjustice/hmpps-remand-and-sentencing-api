@@ -1,11 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 
 class MigrationMergedCasesTests : IntegrationTestBase() {
@@ -32,19 +30,26 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
   }
 
   @Test
-  @Disabled("Will do this as a follow on PR")
   fun `create target court case for a linked case`() {
-    val sourceResponse = createSourceMergedCourtCase()
-    val sourceCourtCaseId = sourceResponse.courtCases.first().caseId
-    val sourceChargeId = sourceResponse.charges.first().chargeNOMISId
-    val sourceChargeUuid = sourceResponse.charges.first().chargeUuid
-    val targetCharge = DataCreator.migrationCreateCharge(sentence = null, mergedFromCaseId = sourceCourtCaseId, mergedChargeNOMISId = sourceChargeId)
-    val targetAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(targetCharge))
-    val targetCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(targetAppearance))
-    val targetResponse = webTestClient
+    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
+    val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
+
+    val targetCharge = DataCreator.migrationCreateCharge(
+      chargeNOMISId = sourceCharge.chargeNOMISId,
+      sentence = null,
+      mergedFromCaseId = sourceCourtCase.caseId,
+      mergedFromEventId = sourceAppearance.eventId,
+      mergedChargeNOMISId = sourceCharge.chargeNOMISId,
+    )
+
+    val targetAppearance = DataCreator.migrationCreateCourtAppearance(eventId = sourceAppearance.eventId + 1, charges = listOf(targetCharge))
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(caseId = sourceCourtCase.caseId + 1, appearances = listOf(targetAppearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCourtCase, targetCourtCase))
+    val response = webTestClient
       .post()
       .uri("/legacy/court-case/migration")
-      .bodyValue(targetCourtCase)
+      .bodyValue(courtCases)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -52,12 +57,15 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isCreated
-      .returnResult(MigrationCreateCourtCaseResponse::class.java)
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
+
+    val targetCourtCaseUuid = response.courtCases.first { it.caseId == targetCourtCase.caseId }.courtCaseUuid
+    val sourceChargeUuid = response.charges.first { it.chargeNOMISId == sourceCharge.chargeNOMISId }.chargeUuid
 
     webTestClient
       .get()
-      .uri("/court-case/${targetResponse.courtCaseUuid}")
+      .uri("/court-case/$targetCourtCaseUuid")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
       }

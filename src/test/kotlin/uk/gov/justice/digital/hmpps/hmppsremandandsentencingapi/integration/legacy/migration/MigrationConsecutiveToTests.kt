@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -11,7 +10,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.L
 class MigrationConsecutiveToTests : IntegrationTestBase() {
 
   @Test
-  @Disabled("Will do in a separate PR")
   fun `can create sentence when consecutive to another in the same court case`() {
     val firstSentence = DataCreator.Factory.migrationCreateSentence(sentenceId = DataCreator.Factory.migrationSentenceId(1, 1), legacyData = DataCreator.Factory.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
     val consecutiveToSentence = DataCreator.Factory.migrationCreateSentence(sentenceId = DataCreator.Factory.migrationSentenceId(1, 5), consecutiveToSentenceId = firstSentence.sentenceId)
