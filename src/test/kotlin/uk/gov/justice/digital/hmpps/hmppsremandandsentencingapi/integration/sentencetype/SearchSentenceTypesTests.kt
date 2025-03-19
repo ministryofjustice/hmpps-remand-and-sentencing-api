@@ -38,6 +38,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
   @Test
   fun `return inactive sentence types`() {
     val convictionDate = LocalDate.now()
+    val offenceDate = LocalDate.now()
     val inactiveSentenceType = sentenceTypeRepository.save(
       SentenceTypeEntity(
         sentenceTypeUuid = UUID.randomUUID(),
@@ -52,12 +53,16 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         nomisSentenceCalcType = "CalcType",
         displayOrder = 1000,
         status = ReferenceEntityStatus.INACTIVE,
-        minOffenceDateInclusive = null,
-        maxOffenceDateExclusive = null,
+        minOffenceDateInclusive = offenceDate.minusDays(10),
+        maxOffenceDateExclusive = offenceDate.plusDays(10),
       ),
     )
     val result = webTestClient.get()
-      .uri("/sentence-type/search?age=18&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&statuses=INACTIVE")
+      .uri(
+        "/sentence-type/search?age=18&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&statuses=INACTIVE&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}",
+      )
       .headers { it.authToken() }
       .exchange()
       .expectStatus()
@@ -71,9 +76,13 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Sentence type bucket test, age {0} on date {1}")
   @MethodSource("sentenceTypeParameters")
-  fun `sentence type bucket tests`(age: Int, convictionDate: LocalDate, expectedDescriptions: List<String>) {
+  fun `sentence type bucket tests`(age: Int, convictionDate: LocalDate, expectedDescriptions: List<String>, offenceDate: LocalDate) {
     val result = webTestClient.get()
-      .uri("/sentence-type/search?age=$age&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}")
+      .uri(
+        "/sentence-type/search?age=$age&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}",
+      )
       .headers { it.authToken() }
       .exchange()
       .expectStatus()
@@ -92,7 +101,6 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         LocalDate.parse("2020-12-15"),
         listOf(
           "Imprisonment in Default of Fine",
-          "SDS (Standard Determinate Sentence)",
           "ORA SDS (Offender rehabilitation act standard determinate sentence)",
           "Automatic Life",
           "ORA Breach Top Up Supervision",
@@ -103,6 +111,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
           "SOPC (offenders of a particular concern)",
           "Serious Terrorism Sentence",
         ),
+        LocalDate.parse("2020-12-15"),
       ),
       Arguments.of(
         19,
@@ -120,9 +129,9 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
           "Custody For Life Sec 275 Sentencing Code (Murder) (U21)",
           "SOPC (offenders of a particular concern)",
           "Serious Terrorism Sentence",
-          "YOI (Young offender institution)",
           "YOI ORA (Young offender Institution offender rehabilitation act)",
         ),
+        LocalDate.parse("2020-12-15"),
       ),
       Arguments.of(
         17,
@@ -130,21 +139,19 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         listOf(
           "Imprisonment in Default of Fine",
           "Detention For Life",
-          "Detention and Training Order",
           "ORA Detention and Training Order",
           "EDS (Extended Determinate Sentence)",
           "Detention During His Majesty's Pleasure",
           "SDOPC (Special sentence of detention for terrorist offenders of particular concern)",
-          "Serious Offence Sec 250 Sentencing Code (U18)",
           "ORA Serious Offence Sec 250 Sentencing Code (U18)",
           "Custody For Life Sec 275 Sentencing Code (Murder) (U21)",
         ),
+        LocalDate.parse("2020-12-15"),
       ),
       Arguments.of(
         20,
         LocalDate.parse("2020-11-15"),
         listOf(
-          "SDS (Standard Determinate Sentence)",
           "ORA SDS (Offender rehabilitation act standard determinate sentence)",
           "Automatic Life",
           "Automatic Life Sec 224A 03",
@@ -164,6 +171,7 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
           "Legacy (1967 Act)",
           "Legacy (1991 Act)",
         ),
+        LocalDate.parse("2020-12-15"),
       ),
       Arguments.of(
         17,
@@ -171,18 +179,17 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         listOf(
           "Detention For Life",
           "Detention For Public Protection",
-          "Detention and Training Order",
           "ORA Detention and Training Order",
           "Extended Sentence for Public Protection",
           "Detention During His Majesty's Pleasure",
           "Serious Offence -18 CJA03 POCCA 2000",
           "ORA (Offender rehabilitation act)",
           "Custody For Life - Under 21 CJA03",
-          "YOI (Young offender institution)",
           "YOI ORA (Young offender Institution offender rehabilitation act)",
           "Legacy (1967 Act)",
           "Legacy (1991 Act)",
         ),
+        LocalDate.parse("2020-12-15"),
       ),
     )
   }
