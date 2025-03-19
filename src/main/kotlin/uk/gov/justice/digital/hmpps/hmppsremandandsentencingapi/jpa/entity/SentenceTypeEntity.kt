@@ -24,6 +24,8 @@ class SentenceTypeEntity(
   val maxAgeExclusive: Int?,
   val minDateInclusive: LocalDate?,
   val maxDateExclusive: LocalDate?,
+  val minOffenceDateInclusive: LocalDate?,
+  val maxOffenceDateExclusive: LocalDate?,
   @Enumerated(EnumType.STRING)
   val classification: SentenceTypeClassification,
   val hintText: String?,
