@@ -52,6 +52,8 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
         nomisSentenceCalcType = "CalcType",
         displayOrder = 1000,
         status = ReferenceEntityStatus.INACTIVE,
+        minOffenceDateInclusive = null,
+        maxOffenceDateExclusive = null,
       ),
     )
     val result = webTestClient.get()
@@ -133,8 +135,8 @@ class SearchSentenceTypesTests : IntegrationTestBase() {
           "EDS (Extended Determinate Sentence)",
           "Detention During His Majesty's Pleasure",
           "SDOPC (Special sentence of detention for terrorist offenders of particular concern)",
-          "SDS (Standard Determinate Sentence)",
-          "ORA (Offender rehabilitation act)",
+          "Serious Offence Sec 250 Sentencing Code (U18)",
+          "ORA Serious Offence Sec 250 Sentencing Code (U18)",
           "Custody For Life Sec 275 Sentencing Code (Murder) (U21)",
         ),
       ),
