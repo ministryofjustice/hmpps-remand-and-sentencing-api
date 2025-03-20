@@ -26,8 +26,8 @@ class AppearanceChargeHistoryEntity(
   companion object {
     fun from(appearanceCharge: AppearanceChargeEntity) = AppearanceChargeHistoryEntity(
       id = 0,
-      appearanceId = appearanceCharge.courtAppearance.id,
-      chargeId = appearanceCharge.charge.id,
+      appearanceId = appearanceCharge.appearance!!.id,
+      chargeId = appearanceCharge.charge!!.id,
       createdAt = appearanceCharge.createdAt,
       createdBy = appearanceCharge.createdBy,
       createdPrison = appearanceCharge.createdPrison,
@@ -35,8 +35,8 @@ class AppearanceChargeHistoryEntity(
 
     fun removedFrom(appearanceCharge: AppearanceChargeEntity, removedBy: String, removedPrison: String?) = AppearanceChargeHistoryEntity(
       id = 0,
-      appearanceId = appearanceCharge.courtAppearance.id,
-      chargeId = appearanceCharge.charge.id,
+      appearanceId = appearanceCharge.appearance!!.id,
+      chargeId = appearanceCharge.charge!!.id,
       createdAt = appearanceCharge.createdAt,
       createdBy = appearanceCharge.createdBy,
       createdPrison = appearanceCharge.createdPrison,

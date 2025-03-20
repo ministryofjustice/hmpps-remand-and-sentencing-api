@@ -79,12 +79,13 @@ class ChargeService(
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
 
         val appearanceChargeEntity = AppearanceChargeEntity(
-          courtAppearance = courtAppearance,
-          charge = existingCharge,
-          createdBy = serviceUserService.getUsername(),
-          createdPrison = charge.prisonId,
+          courtAppearance,
+          existingCharge,
+          serviceUserService.getUsername(),
+          charge.prisonId,
         )
         courtAppearance.appearanceCharges.add(appearanceChargeEntity)
+        existingCharge.appearanceCharges.add(appearanceChargeEntity)
         appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
 
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
@@ -94,19 +95,20 @@ class ChargeService(
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
       } else if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
-        val removedAppearanceCharges = courtAppearance.appearanceCharges.filter { it.charge == existingCharge }
-        if (removedAppearanceCharges.isNotEmpty()) {
-          courtAppearance.appearanceCharges.removeIf { it.charge == existingCharge }
-          removedAppearanceCharges.forEach { removedCharge ->
+        courtAppearance.appearanceCharges.filter { it.charge == existingCharge }
+          .forEach { appearanceCharge ->
+            appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
+            appearanceCharge.appearance!!.appearanceCharges.remove(appearanceCharge)
             appearanceChargeHistoryRepository.save(
               AppearanceChargeHistoryEntity.removedFrom(
-                appearanceCharge = removedCharge,
+                appearanceCharge = appearanceCharge,
                 removedBy = serviceUserService.getUsername(),
                 removedPrison = charge.prisonId,
               ),
             )
+            appearanceCharge.charge = null
+            appearanceCharge.appearance = null
           }
-        }
 
         activeRecord = chargeRepository.save(compareCharge)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord))
@@ -193,7 +195,7 @@ class ChargeService(
   @Transactional
   fun deleteChargeIfOrphan(charge: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<ChargeEntity> {
     var recordResponse = RecordResponse(charge, mutableSetOf())
-    if (charge.appearanceCharges.none { it.courtAppearance.statusId == EntityStatus.ACTIVE }) {
+    if (charge.appearanceCharges.none { it.appearance!!.statusId == EntityStatus.ACTIVE }) {
       recordResponse = deleteCharge(charge, prisonerId, courtCaseId, courtAppearanceId)
     }
     return recordResponse

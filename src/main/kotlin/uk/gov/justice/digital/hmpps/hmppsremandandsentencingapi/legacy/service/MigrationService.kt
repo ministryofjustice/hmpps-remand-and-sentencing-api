@@ -195,10 +195,10 @@ class MigrationService(
     val charges = migrationCreateCourtAppearance.charges.map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, createdPeriodLengthsMap, migrationCreateCourtAppearance.eventId) }
     charges.forEach { charge ->
       val appearanceChargeEntity = AppearanceChargeEntity(
-        courtAppearance = createdAppearance,
-        charge = charge,
-        createdBy = createdByUsername,
-        createdPrison = null,
+        createdAppearance,
+        charge,
+        createdByUsername,
+        null,
       )
       createdAppearance.appearanceCharges.add(appearanceChargeEntity)
     }

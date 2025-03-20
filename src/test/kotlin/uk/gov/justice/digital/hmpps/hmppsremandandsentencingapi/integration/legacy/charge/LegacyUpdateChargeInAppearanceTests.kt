@@ -75,6 +75,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(charge.chargeUuid)
+      .jsonPath("$.charges[0].outcome.outcomeUuid")
+      .isEqualTo(charge.outcomeUuid.toString())
 
     webTestClient
       .get()
@@ -88,6 +90,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(charge.chargeUuid)
+      .jsonPath("$.charges[0].legacyData.nomisOutcomeCode")
+      .isEqualTo(legacyUpdateCharge.legacyData.nomisOutcomeCode!!)
   }
 
   @Test

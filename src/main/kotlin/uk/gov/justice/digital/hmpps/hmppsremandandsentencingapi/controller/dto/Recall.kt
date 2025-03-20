@@ -30,7 +30,7 @@ data class Recall(
       createdAt = recall.createdAt,
       createdByPrison = recall.createdByPrison,
       sentences = sentences.map { Sentence.from(it.sentence) },
-      courtCaseIds = sentences.flatMap { it.sentence.charge.appearanceCharges.map { ac -> ac.courtAppearance.courtCase.caseUniqueIdentifier } },
+      courtCaseIds = sentences.flatMap { it.sentence.charge.appearanceCharges.map { ac -> ac.appearance!!.courtCase.caseUniqueIdentifier } },
     )
   }
 }

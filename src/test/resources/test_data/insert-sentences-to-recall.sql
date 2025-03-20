@@ -23,8 +23,8 @@ VALUES (1, '11158e7c-fbf1-4b1b-b62a-af82f7b5c1ab', 1, 1, 'ABC', 'CASEREF1', now(
 
 
 INSERT INTO appearance_charge(
-    id, appearance_id, charge_id, created_at, created_by)
-VALUES (1, 1, 1, now(),'testuser2'), (2, 2, 2, now(),'testuser2');
+    appearance_id, charge_id, created_at, created_by)
+VALUES (1, 1, now(),'testuser2'), (2, 2, now(),'testuser2');
 
 INSERT INTO sentence (sentence_uuid, charge_number, charge_id, status_id, created_by, created_prison, created_at, sentence_serve_type)
 VALUES ('550e8400-e29b-41d4-a716-446655440000', '1', 1,  '0', 'testuser', 'HMI', now(), 'FORTHWITH'),

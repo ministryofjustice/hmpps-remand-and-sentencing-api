@@ -42,7 +42,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       createdSentence,
     )
     val courtAppearance = charge.appearanceCharges
-      .map { it.courtAppearance }
+      .map { it.appearance!! }
       .filter { it.statusId == EntityStatus.ACTIVE }
       .maxByOrNull { it.appearanceDate }
       ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
@@ -78,7 +78,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     )
     entityChangeStatus = if (periodLengthChangeStatus == EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
     val courtAppearance = activeRecord.charge.appearanceCharges
-      .map { it.courtAppearance }
+      .map { it.appearance!! }
       .filter { it.statusId == EntityStatus.ACTIVE }
       .maxByOrNull { it.appearanceDate }
       ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")

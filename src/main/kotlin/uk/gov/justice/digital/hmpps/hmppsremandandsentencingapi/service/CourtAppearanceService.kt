@@ -99,12 +99,13 @@ class CourtAppearanceService(
 
     chargeRecords.forEach { chargeRecord ->
       val appearanceChargeEntity = AppearanceChargeEntity(
-        courtAppearance = createdCourtAppearance,
-        charge = chargeRecord.record,
-        createdBy = serviceUserService.getUsername(),
-        createdPrison = createdCourtAppearance.createdPrison,
+        createdCourtAppearance,
+        chargeRecord.record,
+        serviceUserService.getUsername(),
+        createdCourtAppearance.createdPrison,
       )
       createdCourtAppearance.appearanceCharges.add(appearanceChargeEntity)
+      chargeRecord.record.appearanceCharges.add(appearanceChargeEntity)
       appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
     }
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
@@ -267,16 +268,27 @@ class CourtAppearanceService(
   ): Pair<EntityChangeStatus, MutableSet<EventMetadata>> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val toDeleteCharges = existingCourtAppearanceEntity.appearanceCharges
-      .map { it.charge }
+      .map { it.charge!! }
       .filter { charge -> charges.none { createCharge -> createCharge.chargeUuid == charge.chargeUuid } }
+
+    val toDeleteLinks = existingCourtAppearanceEntity.appearanceCharges.filter { toDeleteCharges.contains(it.charge!!) }
+
+    toDeleteLinks.forEach { appearanceCharge ->
+      appearanceChargeHistoryRepository.save(
+        AppearanceChargeHistoryEntity.removedFrom(
+          appearanceCharge = appearanceCharge,
+          removedBy = serviceUserService.getUsername(),
+          removedPrison = prisonIdForUpdate,
+        ),
+      )
+      appearanceCharge.appearance!!.appearanceCharges.remove(appearanceCharge)
+      appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
+      appearanceCharge.charge = null
+      appearanceCharge.appearance = null
+    }
 
     val removedCharges = mutableSetOf<AppearanceChargeEntity>()
     toDeleteCharges.forEach { charge ->
-      removedCharges.addAll(existingCourtAppearanceEntity.appearanceCharges.filter { it.id == charge.id })
-      removedCharges.addAll(charge.appearanceCharges.filter { it.courtAppearance.id == existingCourtAppearanceEntity.id })
-
-      existingCourtAppearanceEntity.appearanceCharges.removeIf { it.id == charge.id }
-      charge.appearanceCharges.removeIf { it.courtAppearance.id == existingCourtAppearanceEntity.id }
       eventsToEmit.addAll(
         chargeService.deleteChargeIfOrphan(
           charge,
@@ -287,37 +299,21 @@ class CourtAppearanceService(
       )
     }
 
-    removedCharges.addAll(
-      existingCourtAppearanceEntity.appearanceCharges.filter { appearanceCharge ->
-        toDeleteCharges.any { appearanceCharge.charge.id == it.id }
-      },
-    )
-    existingCourtAppearanceEntity.appearanceCharges.removeIf { appearanceCharge -> toDeleteCharges.any { appearanceCharge.charge.id == it.id } }
-    serviceUserService.getUsername()
-    removedCharges.forEach { removedCharge ->
-      appearanceChargeHistoryRepository.save(
-        AppearanceChargeHistoryEntity.removedFrom(
-          appearanceCharge = removedCharge,
-          removedBy = serviceUserService.getUsername(),
-          removedPrison = prisonIdForUpdate,
-        ),
-      )
-    }
-
     val chargeRecords = createCharges(charges, prisonerId, courtCaseUuid, existingCourtAppearanceEntity, courtAppearanceDateChanged)
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     val createdCharges = chargeRecords.map { it.record }
     val toAddCharges = createdCharges.filter { chargeEntity ->
-      existingCourtAppearanceEntity.appearanceCharges.none { it.charge.chargeUuid == chargeEntity.chargeUuid }
+      existingCourtAppearanceEntity.appearanceCharges.none { it.charge!!.chargeUuid == chargeEntity.chargeUuid }
     }
     toAddCharges.forEach { charge ->
       val appearanceChargeEntity = AppearanceChargeEntity(
-        courtAppearance = existingCourtAppearanceEntity,
-        charge = charge,
-        createdBy = serviceUserService.getUsername(),
-        createdPrison = prisonIdForUpdate,
+        existingCourtAppearanceEntity,
+        charge,
+        serviceUserService.getUsername(),
+        prisonIdForUpdate,
       )
       existingCourtAppearanceEntity.appearanceCharges.add(appearanceChargeEntity)
+      charge.appearanceCharges.add(appearanceChargeEntity)
       appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
     }
 
@@ -369,7 +365,7 @@ class CourtAppearanceService(
     courtAppearanceEntity.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity))
     courtAppearanceEntity.appearanceCharges
-      .map { it.charge }
+      .map { it.charge!! }
       .filter { it.hasNoActiveCourtAppearances() }
       .forEach { charge ->
         chargeService.deleteCharge(
