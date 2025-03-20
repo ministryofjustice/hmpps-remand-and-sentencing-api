@@ -11,11 +11,12 @@ import java.util.UUID
 @Service
 class SentenceTypeService(private val sentenceTypeRepository: SentenceTypeRepository) {
 
-  fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>): List<SentenceType> = sentenceTypeRepository.findByAgeInAndConvictionDateInAndClassificationNotAndStatusIn(
+  fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): List<SentenceType> = sentenceTypeRepository.searchSentenceTypes(
     age,
     convictionDate,
     SentenceTypeClassification.LEGACY_RECALL,
     statuses,
+    offenceDate,
   ).map { SentenceType.from(it) }
 
   fun findByUuid(sentenceTypeUuid: UUID): SentenceType? = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)?.let { SentenceType.from(it) }
