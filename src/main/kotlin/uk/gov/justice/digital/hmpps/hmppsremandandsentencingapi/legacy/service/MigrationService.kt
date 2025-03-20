@@ -201,7 +201,6 @@ class MigrationService(
         null,
       )
       createdAppearance.appearanceCharges.add(appearanceChargeEntity)
-      charge.appearanceCharges.add(appearanceChargeEntity)
     }
     return createdAppearance
   }
