@@ -29,7 +29,7 @@ data class LegacyCourtAppearance(
       courtAppearanceEntity.courtCode,
       courtAppearanceEntity.appearanceDate,
       courtAppearanceEntity.legacyData?.appearanceTime ?: LocalTime.MIDNIGHT,
-      courtAppearanceEntity.appearanceCharges.filter { returnChargeStatuses.contains(it.charge.statusId) }.map { appearanceCharge -> LegacyCharge.from(appearanceCharge.charge) },
+      courtAppearanceEntity.appearanceCharges.filter { returnChargeStatuses.contains(it.charge!!.statusId) }.map { appearanceCharge -> LegacyCharge.from(appearanceCharge.charge!!) },
       courtAppearanceEntity.nextCourtAppearance?.let { LegacyNextCourtAppearance.from(it) },
     )
   }

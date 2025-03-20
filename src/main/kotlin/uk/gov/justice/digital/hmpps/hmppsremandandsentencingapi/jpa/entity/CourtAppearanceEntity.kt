@@ -77,7 +77,7 @@ class CourtAppearanceEntity(
   @Column
   var taggedBail: Int?,
 
-  @OneToMany(mappedBy = "courtAppearance", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "appearance", cascade = [CascadeType.ALL], orphanRemoval = true)
   val appearanceCharges: MutableSet<AppearanceChargeEntity> = mutableSetOf(),
 
   @OneToOne
@@ -166,6 +166,17 @@ class CourtAppearanceEntity(
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as CourtAppearanceEntity
+
+    return id == other.id
+  }
+
+  override fun hashCode(): Int = id
 
   companion object {
 

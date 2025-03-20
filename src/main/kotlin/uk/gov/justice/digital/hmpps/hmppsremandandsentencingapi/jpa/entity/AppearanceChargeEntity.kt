@@ -1,40 +1,47 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.MapsId
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.embeddable.AppearanceChargeId
 import java.time.ZonedDateTime
 
 @Entity
 @Table(name = "appearance_charge")
-class AppearanceChargeEntity(
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val id: Int = 0,
+class AppearanceChargeEntity {
+
+  @EmbeddedId
+  val id: AppearanceChargeId
 
   @ManyToOne
-  @JoinColumn(name = "appearance_id")
-  val courtAppearance: CourtAppearanceEntity,
+  @MapsId("appearanceId")
+  var appearance: CourtAppearanceEntity?
 
   @ManyToOne
-  @JoinColumn(name = "charge_id")
-  val charge: ChargeEntity,
+  @MapsId("chargeId")
+  var charge: ChargeEntity?
 
-  val createdAt: ZonedDateTime = ZonedDateTime.now(),
-  val createdBy: String,
-  val createdPrison: String?,
-) {
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is AppearanceChargeEntity) return false
+  val createdAt: ZonedDateTime = ZonedDateTime.now()
+  val createdBy: String
+  val createdPrison: String?
 
-    return this.courtAppearance.appearanceUuid == other.courtAppearance.appearanceUuid &&
-      this.charge.chargeUuid == other.charge.chargeUuid
+  constructor(courtAppearanceEntity: CourtAppearanceEntity, chargeEntity: ChargeEntity, createdBy: String, createdPrison: String?) {
+    this.appearance = courtAppearanceEntity
+    this.charge = chargeEntity
+    this.createdBy = createdBy
+    this.createdPrison = createdPrison
+    this.id = AppearanceChargeId(courtAppearanceEntity.id, chargeEntity.id)
   }
 
-  override fun hashCode(): Int = 31 * (courtAppearance.appearanceUuid.hashCode() ?: 0) + charge.chargeUuid.hashCode()
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as AppearanceChargeEntity
+    return appearance == other.appearance && charge == other.charge
+  }
+
+  override fun hashCode(): Int = 31 * appearance.hashCode() + charge.hashCode()
 }

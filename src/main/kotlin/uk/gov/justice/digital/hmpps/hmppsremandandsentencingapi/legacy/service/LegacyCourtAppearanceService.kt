@@ -113,10 +113,10 @@ class LegacyCourtAppearanceService(
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     if (existingCourtAppearance.appearanceCharges.none { it.charge == existingCharge }) {
       val appearanceCharge = AppearanceChargeEntity(
-        courtAppearance = existingCourtAppearance,
-        charge = existingCharge,
-        createdBy = serviceUserService.getUsername(),
-        createdPrison = null,
+        existingCourtAppearance,
+        existingCharge,
+        serviceUserService.getUsername(),
+        null,
       )
       existingCourtAppearance.appearanceCharges.add(appearanceCharge)
       existingCharge.appearanceCharges.add(appearanceCharge)

@@ -64,9 +64,9 @@ class ChargeEntity(
   @OneToMany(mappedBy = "charge")
   var sentences: MutableList<SentenceEntity> = mutableListOf()
 
-  fun hasNoActiveCourtAppearances(): Boolean = appearanceCharges.none { it.courtAppearance.statusId == EntityStatus.ACTIVE }
+  fun hasNoActiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId == EntityStatus.ACTIVE }
 
-  fun hasTwoOrMoreActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.courtAppearance } + courtAppearance).toSet().count { it.statusId == EntityStatus.ACTIVE } >= 2
+  fun hasTwoOrMoreActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId == EntityStatus.ACTIVE } >= 2
 
   fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
 
@@ -170,6 +170,15 @@ class ChargeEntity(
     updatedAt = ZonedDateTime.now()
     updatedBy = deletedBy
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as ChargeEntity
+    return id == other.id
+  }
+
+  override fun hashCode(): Int = id
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = charge.prisonId)

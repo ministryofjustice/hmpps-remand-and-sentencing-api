@@ -64,6 +64,18 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .isOk
 
     webTestClient
+      .put()
+      .uri("/legacy/charge/${charge.chargeUuid}/appearance/${secondAppearance.appearanceUuid}")
+      .bodyValue(legacyUpdateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
       .get()
       .uri("/court-appearance/${firstAppearance.appearanceUuid}")
       .headers {
@@ -75,6 +87,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(charge.chargeUuid)
+      .jsonPath("$.charges[0].outcome.outcomeUuid")
+      .isEqualTo(charge.outcomeUuid.toString())
 
     webTestClient
       .get()
@@ -88,6 +102,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(charge.chargeUuid)
+      .jsonPath("$.charges[0].legacyData.nomisOutcomeCode")
+      .isEqualTo(legacyUpdateCharge.legacyData.nomisOutcomeCode!!)
   }
 
   @Test

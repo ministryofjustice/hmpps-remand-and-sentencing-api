@@ -36,7 +36,7 @@ data class CourtAppearance(
       courtAppearanceEntity.warrantType,
       courtAppearanceEntity.taggedBail,
       courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
-      courtAppearanceEntity.appearanceCharges.filter { returnChargeStatuses.contains(it.charge.statusId) }.map { Charge.from(it.charge) },
+      courtAppearanceEntity.appearanceCharges.filter { returnChargeStatuses.contains(it.charge!!.statusId) }.map { Charge.from(it.charge!!) },
       courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
       courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData,
