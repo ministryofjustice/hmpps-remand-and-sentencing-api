@@ -64,18 +64,6 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .isOk
 
     webTestClient
-      .put()
-      .uri("/legacy/charge/${charge.chargeUuid}/appearance/${secondAppearance.appearanceUuid}")
-      .bodyValue(legacyUpdateCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-
-    webTestClient
       .get()
       .uri("/court-appearance/${firstAppearance.appearanceUuid}")
       .headers {
