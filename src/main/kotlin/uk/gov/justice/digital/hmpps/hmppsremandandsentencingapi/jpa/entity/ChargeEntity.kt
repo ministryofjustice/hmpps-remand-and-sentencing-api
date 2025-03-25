@@ -73,7 +73,7 @@ class ChargeEntity(
   fun getActiveOrInactiveSentence(): SentenceEntity? = sentences.firstOrNull { setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE).contains(it.statusId) }
   fun isSame(other: ChargeEntity): Boolean = this.offenceCode == other.offenceCode &&
     ((this.offenceStartDate == null && other.offenceStartDate == null) || (other.offenceStartDate != null && this.offenceStartDate?.isEqual(other.offenceStartDate) == true)) &&
-    ((this.offenceEndDate == null && other.offenceEndDate == null) || this.offenceEndDate?.isEqual(other.offenceEndDate) == true) &&
+    ((this.offenceEndDate == null && other.offenceEndDate == null) || (other.offenceEndDate != null && this.offenceEndDate?.isEqual(other.offenceEndDate) == true)) &&
     this.statusId == other.statusId &&
     this.chargeOutcome == other.chargeOutcome &&
     this.terrorRelated == other.terrorRelated &&
