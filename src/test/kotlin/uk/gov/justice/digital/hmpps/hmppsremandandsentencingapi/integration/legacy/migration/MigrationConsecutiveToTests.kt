@@ -11,12 +11,12 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
 
   @Test
   fun `can create sentence when consecutive to another in the same court case`() {
-    val firstSentence = DataCreator.Factory.migrationCreateSentence(sentenceId = DataCreator.Factory.migrationSentenceId(1, 1), legacyData = DataCreator.Factory.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
-    val consecutiveToSentence = DataCreator.Factory.migrationCreateSentence(sentenceId = DataCreator.Factory.migrationSentenceId(1, 5), consecutiveToSentenceId = firstSentence.sentenceId)
-    val charge = DataCreator.Factory.migrationCreateCharge(chargeNOMISId = 11, sentence = firstSentence)
-    val consecutiveToCharge = DataCreator.Factory.migrationCreateCharge(chargeNOMISId = 22, sentence = consecutiveToSentence)
-    val appearance = DataCreator.Factory.migrationCreateCourtAppearance(charges = listOf(consecutiveToCharge, charge))
-    val migrationCourtCase = DataCreator.Factory.migrationCreateCourtCase(appearances = listOf(appearance))
+    val firstSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 1), legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    val consecutiveToSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 5), consecutiveToSentenceId = firstSentence.sentenceId)
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = 11, sentence = firstSentence)
+    val consecutiveToCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 22, sentence = consecutiveToSentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(consecutiveToCharge, charge))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
     val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
     val response = webTestClient
       .post()
@@ -47,6 +47,41 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
       .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].consecutiveToChargeNumber")
       .isEqualTo(firstSentence.chargeNumber!!)
       .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$firstSentenceUuid')].sentenceType.sentenceTypeUuid")
+      .isEqualTo(LegacySentenceService.Companion.recallSentenceTypeBucketUuid.toString())
+  }
+
+  @Test
+  fun `can still process a sentence where the consecutive to sentence is non existent (A NOMIS data issue)`() {
+    val sentenceWithNonExistentConsecutiveTo = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 1), consecutiveToSentenceId = DataCreator.migrationSentenceId(66, 99), legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = 11, sentence = sentenceWithNonExistentConsecutiveTo)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(charge))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val sentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == sentenceWithNonExistentConsecutiveTo.sentenceId }.sentenceUuid
+    webTestClient
+      .get()
+      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$sentenceUuid')].sentenceType.sentenceTypeUuid")
       .isEqualTo(LegacySentenceService.Companion.recallSentenceTypeBucketUuid.toString())
   }
 }

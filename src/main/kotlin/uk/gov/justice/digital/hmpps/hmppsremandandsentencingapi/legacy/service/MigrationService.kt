@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
@@ -149,9 +150,13 @@ class MigrationService(
     migrationCreateCourtCases.courtCases.flatMap { it.appearances }.flatMap { it.charges }.filter { it.sentence?.consecutiveToSentenceId != null }
       .map { it.sentence!! }
       .forEach { nomisSentence ->
-        val consecutiveToSentence = createdSentencesMap[nomisSentence.consecutiveToSentenceId]!!
-        val sentence = createdSentencesMap[nomisSentence.sentenceId]!!
-        sentence.consecutiveTo = consecutiveToSentence
+        if (createdSentencesMap.contains(nomisSentence.consecutiveToSentenceId)) {
+          val consecutiveToSentence = createdSentencesMap[nomisSentence.consecutiveToSentenceId]!!
+          val sentence = createdSentencesMap[nomisSentence.sentenceId]!!
+          sentence.consecutiveTo = consecutiveToSentence
+        } else {
+          log.info("sentence with id {} {} has a non existent consecutive to sentence at id {} {}", nomisSentence.sentenceId.offenderBookingId, nomisSentence.sentenceId.sequence, nomisSentence.consecutiveToSentenceId!!.offenderBookingId, nomisSentence.consecutiveToSentenceId.sequence)
+        }
       }
   }
 
@@ -258,5 +263,9 @@ class MigrationService(
     }.toMutableList()
     createdSentencesMap.put(migrationCreateSentence.sentenceId, createdSentence)
     return createdSentence
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
