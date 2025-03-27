@@ -49,6 +49,8 @@ class PeriodTypeMapperTests {
       Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "IMP", null),
       Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.DTO, false, "IMP", null),
       Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET", null),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.FINE, false, "IMP", null),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.BOTUS, false, "IMP", null),
       Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105")),
     )
   }

@@ -34,8 +34,8 @@ class PeriodLengthTypeMapper {
         periodLengthType == PeriodLengthType.TARIFF_LENGTH -> true to NOMIS_IMPRISONMENT_TERM_CODE
         periodLengthType == PeriodLengthType.CUSTODIAL_TERM || periodLengthType == PeriodLengthType.SENTENCE_LENGTH -> false to NOMIS_IMPRISONMENT_TERM_CODE
         periodLengthType == PeriodLengthType.LICENCE_PERIOD -> false to NOMIS_LICENCE_TERM_CODE
-        periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.DTO -> false to NOMIS_IMPRISONMENT_TERM_CODE
         periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.CIVIL -> false to NOMIS_DETENTION_TERM_CODE
+        periodLengthType == PeriodLengthType.TERM_LENGTH -> false to NOMIS_IMPRISONMENT_TERM_CODE
         else -> periodLengthLegacyData!!.lifeSentence!! to periodLengthLegacyData.sentenceTermCode!!
       }
       return lifeSentenceSentenceTermCode
