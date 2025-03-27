@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions
@@ -24,7 +23,6 @@ class SentenceTypesServiceTests {
 
   private val sentenceTypeRepository = mockk<SentenceTypeRepository>()
   private val legacySentenceTypeRepository = mockk<LegacySentenceTypeRepository>()
-  private val objectMapper = ObjectMapper()
 
   private val sentenceTypeService = SentenceTypeService(
     sentenceTypeRepository,
