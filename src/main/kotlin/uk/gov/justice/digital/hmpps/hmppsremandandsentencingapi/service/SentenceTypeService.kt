@@ -137,7 +137,7 @@ class SentenceTypeService(
       nomisSentenceTypeReference = nomisSentenceTypeReference,
       nomisDescription = nomisDescription,
       isIndeterminate = classification == SentenceTypeClassification.INDETERMINATE,
-      recall = recallType,
+      recall = recallType ?: RecallType.NONE,
     )
   }
 }
