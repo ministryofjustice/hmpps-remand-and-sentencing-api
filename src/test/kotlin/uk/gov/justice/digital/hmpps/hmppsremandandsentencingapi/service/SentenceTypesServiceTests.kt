@@ -29,7 +29,6 @@ class SentenceTypesServiceTests {
   private val sentenceTypeService = SentenceTypeService(
     sentenceTypeRepository,
     legacySentenceTypeRepository,
-    objectMapper,
   )
 
   @Test

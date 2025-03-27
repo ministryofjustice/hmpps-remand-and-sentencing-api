@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
@@ -18,7 +17,7 @@ import java.util.UUID
 @Service
 class SentenceTypeService(
   private val sentenceTypeRepository: SentenceTypeRepository,
-  private val legacySentenceTypeRepository: LegacySentenceTypeRepository
+  private val legacySentenceTypeRepository: LegacySentenceTypeRepository,
 ) {
 
   fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): List<SentenceType> = sentenceTypeRepository.searchSentenceTypes(
