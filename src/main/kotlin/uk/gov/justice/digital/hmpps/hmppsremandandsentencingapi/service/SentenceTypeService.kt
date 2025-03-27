@@ -11,19 +11,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.LegacySentenceTypeGroupingSummary
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.NomisTermType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SDSPlusEligibilityType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SentenceEligibility
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.ToreraEligibilityType
 import java.time.LocalDate
 import java.util.UUID
 
 @Service
 class SentenceTypeService(
   private val sentenceTypeRepository: SentenceTypeRepository,
-  private val legacySentenceTypeRepository: LegacySentenceTypeRepository,
-  private val objectMapper: ObjectMapper,
+  private val legacySentenceTypeRepository: LegacySentenceTypeRepository
 ) {
 
   fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): List<SentenceType> = sentenceTypeRepository.searchSentenceTypes(
@@ -64,52 +59,11 @@ class SentenceTypeService(
       nomisSentenceTypeReference = nomisSentenceTypeReference,
       nomisActive = nomisActive,
       nomisExpiryDate = nomisExpiryDate,
-      eligibility = parseEligibility(eligibility),
+      eligibility = eligibility,
       recallType = recallType?.let(RecallType::from),
       inputSentenceType = sentenceType?.let { SentenceType.from(it) },
-      nomisTermType = parseTerms(nomisTerms),
+      nomisTermTypes = safeNomisTerms.associate { it.name to it.description },
       sentencingAct = sentencingAct,
-    )
-  }
-  private fun parseTerms(json: String): Map<String, String> = objectMapper.readTree(json)
-    .takeIf { it.isArray && !it.isEmpty }
-    ?.mapNotNull {
-      runCatching {
-        val type = NomisTermType.valueOf(it.asText().uppercase())
-        type.name to type.description
-      }.getOrNull()
-    }
-    ?.toMap()
-    .orEmpty()
-
-  private fun parseEligibility(json: String): SentenceEligibility? {
-    if (json.isBlank() || json.trim() == "{}") {
-      return null
-    }
-
-    val node = objectMapper.readTree(json)
-
-    val toreraEligibility = node
-      .takeIf { it.has("toreraEligibilityType") }
-      ?.get("toreraEligibilityType")
-      ?.asText()
-      ?.uppercase()
-      ?.let {
-        runCatching { ToreraEligibilityType.valueOf(it) }.getOrDefault(ToreraEligibilityType.NONE)
-      } ?: ToreraEligibilityType.NONE
-
-    val sdsPlusEligibility = node
-      .takeIf { it.has("sdsPlusEligibilityType") }
-      ?.get("sdsPlusEligibilityType")
-      ?.asText()
-      ?.uppercase()
-      ?.let {
-        runCatching { SDSPlusEligibilityType.valueOf(it) }.getOrDefault(SDSPlusEligibilityType.NONE)
-      } ?: SDSPlusEligibilityType.NONE
-
-    return SentenceEligibility(
-      toreraEligibilityType = toreraEligibility,
-      sdsPlusEligibilityType = sdsPlusEligibility,
     )
   }
 

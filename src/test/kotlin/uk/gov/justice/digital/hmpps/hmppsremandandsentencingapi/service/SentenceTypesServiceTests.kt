@@ -13,6 +13,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypePeriodDefinition
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.NomisTermType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SDSPlusEligibilityType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SentenceEligibility
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.ToreraEligibilityType
 import java.time.LocalDate
 import java.util.UUID
 
@@ -59,10 +63,10 @@ class SentenceTypesServiceTests {
       nomisActive = true,
       nomisExpiryDate = LocalDate.of(2025, 1, 1),
       nomisDescription = "Test description",
-      eligibility = "{\"toreraEligibilityType\": \"SDS\", \"sdsPlusEligibilityType\": \"SDS\"}",
+      eligibility = SentenceEligibility(ToreraEligibilityType.SDS, SDSPlusEligibilityType.SDS),
       recallType = null,
       sentenceType = sentenceTypeEntity,
-      nomisTerms = "[\"Imprisonment\"]",
+      nomisTermTypes = listOf(NomisTermType.IMP),
     )
     every { legacySentenceTypeRepository.findByNomisSentenceTypeReference(legacyKey) } returns listOf(legacySentenceTypeEntity)
 

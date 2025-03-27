@@ -9,6 +9,10 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.NomisTermType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SentenceEligibility
 import java.time.LocalDate
 
 @Entity
@@ -24,8 +28,9 @@ data class LegacySentenceTypeEntity(
   @Column(name = "sentencing_act", nullable = false)
   val sentencingAct: Int,
 
-  @Column(name = "eligibility", columnDefinition = "jsonb", nullable = false)
-  val eligibility: String,
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "eligibility", columnDefinition = "jsonb")
+  val eligibility: SentenceEligibility,
 
   @Column(name = "recall_type")
   val recallType: String? = null,
@@ -46,7 +51,10 @@ data class LegacySentenceTypeEntity(
   @Column(name = "nomis_description", nullable = false)
   val nomisDescription: String,
 
-  @Column(name = "nomis_terms", columnDefinition = "jsonb", nullable = true)
-  val nomisTerms: String,
-
-)
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "nomis_terms", columnDefinition = "jsonb")
+  private val nomisTermTypes: List<NomisTermType>? = null,
+) {
+  val safeNomisTerms: List<NomisTermType>
+    get() = nomisTermTypes.orEmpty()
+}

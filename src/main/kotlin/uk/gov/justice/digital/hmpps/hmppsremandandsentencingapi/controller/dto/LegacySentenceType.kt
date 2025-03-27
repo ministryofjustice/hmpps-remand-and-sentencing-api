@@ -21,5 +21,5 @@ data class LegacySentenceType(
   val nomisActive: Boolean,
   val nomisDescription: String,
   val nomisExpiryDate: LocalDate?,
-  val nomisTermType: Map<String, String>,
+  val nomisTermTypes: Map<String, String>,
 )

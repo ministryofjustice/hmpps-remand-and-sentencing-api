@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model
 
 enum class NomisTermType(var description: String = "") {
   COMM("SUP"),
+  CUR("Curfew Period"),
   DEF("Deferment Period"),
   DET("Detention"),
   IMP("Imprisonment"),
