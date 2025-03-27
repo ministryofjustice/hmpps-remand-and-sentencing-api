@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import java.util.UUID
 
-class GetSentenceTypeByUuidTests : IntegrationTestBase() {
+class GetSentenceCalculationTypeByUuidTests : IntegrationTestBase() {
 
   @Test
   fun `get sentence type by uuid`() {

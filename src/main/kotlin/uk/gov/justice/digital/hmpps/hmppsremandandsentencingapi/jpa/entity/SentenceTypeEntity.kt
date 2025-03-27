@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -18,6 +19,7 @@ class SentenceTypeEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
+  @Column(name = "sentence_type_uuid", unique = true)
   val sentenceTypeUuid: UUID,
   val description: String,
   val minAgeInclusive: Int?,
