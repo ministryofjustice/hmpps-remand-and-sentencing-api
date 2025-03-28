@@ -1,12 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sentencetype
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.slf4j.LoggerFactory
 import org.springframework.core.ParameterizedTypeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -28,10 +24,6 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     Assertions.assertThat(result).isNotEmpty()
-    val objectMapper = ObjectMapper()
-      .registerModule(JavaTimeModule())
-      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    log.error(objectMapper.writeValueAsString(result))
   }
 
   @Test
@@ -47,8 +39,6 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     Assertions.assertThat(result).isNotEmpty()
-
-    log.error(result.toString())
   }
 
   @Test
@@ -81,8 +71,6 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
       Assertions.assertThat(it.nomisSentenceTypeReference).isNotBlank()
       Assertions.assertThat(it.nomisDescription).isNotBlank()
     }
-
-    log.info("All summaries: ${ObjectMapper().registerModule(JavaTimeModule()).writeValueAsString(result)}")
   }
 
   @Test
@@ -155,9 +143,5 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     Assertions.assertThat(result.nomisDescription).isNotBlank()
     Assertions.assertThat(result.isIndeterminate).isTrue()
     Assertions.assertThat(result.recall).isNotNull
-  }
-
-  companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
