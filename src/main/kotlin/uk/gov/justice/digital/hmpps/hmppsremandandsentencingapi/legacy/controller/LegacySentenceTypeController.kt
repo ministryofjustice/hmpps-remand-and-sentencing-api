@@ -22,7 +22,7 @@ class LegacySentenceTypeController(private val legacySentenceTypesService: Legac
 
   @GetMapping("/{nomisSentenceTypeReference}")
   @Operation(
-    summary = "Get historic NOMIS sentence type by type code",
+    summary = "Get historic NOMIS sentence type by nomis sentence type reference",
     description = "Returns historic NOMIS sentence type information for the specified type in a detailed format",
   )
   @ApiResponses(
@@ -38,7 +38,7 @@ class LegacySentenceTypeController(private val legacySentenceTypesService: Legac
 
   @GetMapping("/{nomisSentenceTypeReference}/summary")
   @Operation(
-    summary = "Get historic NOMIS sentence type by type code",
+    summary = "Get historic NOMIS sentence type by nomis sentence type reference",
     description = "Returns historic NOMIS sentence type information for the specified type in a summary format",
   )
   @ApiResponses(
