@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.stream.Stream
 
-class SearchSentenceTypesTests : IntegrationTestBase() {
+class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
 
   private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 

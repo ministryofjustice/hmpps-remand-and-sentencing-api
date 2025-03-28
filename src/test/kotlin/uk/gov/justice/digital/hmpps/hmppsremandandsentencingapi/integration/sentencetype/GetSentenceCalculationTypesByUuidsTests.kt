@@ -6,7 +6,7 @@ import org.springframework.core.ParameterizedTypeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 
-class GetSentenceTypesByUuidsTests : IntegrationTestBase() {
+class GetSentenceCalculationTypesByUuidsTests : IntegrationTestBase() {
 
   private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 

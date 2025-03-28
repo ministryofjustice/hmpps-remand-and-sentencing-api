@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import java.util.stream.Stream
 
-class PeriodLengthTypeMapperTests {
+class PeriodTypeMapperTests {
 
   @ParameterizedTest(name = "NOMIS to DPS when life sentence is {0}, sentence term code is {1} and sentence calc is {2} then type is {3}")
   @MethodSource("nomisToDpsPeriodLengthTypeParameters")

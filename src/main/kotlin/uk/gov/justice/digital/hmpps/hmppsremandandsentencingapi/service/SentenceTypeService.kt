@@ -9,7 +9,9 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Service
-class SentenceTypeService(private val sentenceTypeRepository: SentenceTypeRepository) {
+class SentenceTypeService(
+  private val sentenceTypeRepository: SentenceTypeRepository,
+) {
 
   fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): List<SentenceType> = sentenceTypeRepository.searchSentenceTypes(
     age,
