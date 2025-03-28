@@ -21,7 +21,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
     .servers(
       listOf(
         Server().url("https://remand-and-sentencing-api.hmpps.service.justice.gov.uk").description("Prod"),
-        Server().url("https://remand-and-sentencing-api-preprod.hmpps.service.justice.gov.ukk").description("Preprod"),
+        Server().url("https://remand-and-sentencing-api-preprod.hmpps.service.justice.gov.uk").description("Preprod"),
         Server().url("https://remand-and-sentencing-api-dev.hmpps.service.justice.gov.uk").description("Development"),
         Server().url("http://localhost:8080").description("Local"),
       ),

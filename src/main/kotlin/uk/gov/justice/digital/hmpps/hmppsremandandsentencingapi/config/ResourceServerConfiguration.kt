@@ -30,6 +30,7 @@ class ResourceServerConfiguration {
           "/swagger-ui/**",
           "/swagger-ui.html",
           "/h2-console/**",
+          "/legacy/sentence-type/**",
         ).forEach { authorize(it, permitAll) }
         authorize(anyRequest, authenticated)
       }
