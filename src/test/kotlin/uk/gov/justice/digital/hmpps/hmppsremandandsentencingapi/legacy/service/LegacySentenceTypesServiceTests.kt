@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import io.mockk.every
 import io.mockk.mockk
@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Referen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypePeriodDefinition
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.NomisTermType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SDSPlusEligibilityType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SentenceEligibility
@@ -19,13 +18,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.Tor
 import java.time.LocalDate
 import java.util.UUID
 
-class SentenceTypesServiceTests {
+class LegacySentenceTypesServiceTests {
 
-  private val sentenceTypeRepository = mockk<SentenceTypeRepository>()
   private val legacySentenceTypeRepository = mockk<LegacySentenceTypeRepository>()
 
-  private val sentenceTypeService = SentenceTypeService(
-    sentenceTypeRepository,
+  private val legacySentenceTypesService = LegacySentenceTypesService(
     legacySentenceTypeRepository,
   )
 
@@ -67,7 +64,7 @@ class SentenceTypesServiceTests {
     )
     every { legacySentenceTypeRepository.findByNomisSentenceTypeReference(legacyKey) } returns listOf(legacySentenceTypeEntity)
 
-    val result: List<LegacySentenceType> = sentenceTypeService.getLegacySentencesByNomisSentenceTypeReference(legacyKey)
+    val result: List<LegacySentenceType> = legacySentenceTypesService.getLegacySentencesByNomisSentenceTypeReference(legacyKey)
 
     Assertions.assertEquals(1, result.size)
     val dto = result.first()

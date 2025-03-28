@@ -4,5 +4,5 @@ data class LegacySentenceTypeGroupingSummary(
   val nomisSentenceTypeReference: String,
   val nomisDescription: String,
   val isIndeterminate: Boolean,
-  val recall: RecallType,
+  val recall: RecallType?,
 )

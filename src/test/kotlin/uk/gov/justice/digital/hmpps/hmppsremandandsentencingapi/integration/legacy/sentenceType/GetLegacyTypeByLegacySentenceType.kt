@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sentencetype
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentenceType
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,7 +16,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
   @Test
   fun `getLegacyAllSentenceTypes returns legacy sentence types`() {
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/all")
+      .uri("/legacy/sentence-type/all")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -31,7 +31,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "ADIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/$legacyKey")
+      .uri("/legacy/sentence-type/$legacyKey")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -46,7 +46,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val unknownKey = "MINIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/$unknownKey")
+      .uri("/legacy/sentence-type/$unknownKey")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -59,7 +59,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
   @Test
   fun `getGroupedLegacySummaries returns grouped summaries`() {
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/all/summary")
+      .uri("/legacy/sentence-type/all/summary")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -78,7 +78,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "ADIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/$legacyKey/summary")
+      .uri("/legacy/sentence-type/$legacyKey/summary")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -96,7 +96,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "MLP"
 
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/$legacyKey/summary")
+      .uri("/legacy/sentence-type/$legacyKey/summary")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -114,7 +114,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "LR_ORA"
 
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/$legacyKey/summary")
+      .uri("/legacy/sentence-type/$legacyKey/summary")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -132,7 +132,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "LR_ALP"
 
     val result = webTestClient.get()
-      .uri("/sentence-type/legacy/$legacyKey/summary")
+      .uri("/legacy/sentence-type/$legacyKey/summary")
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
