@@ -31,7 +31,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "ADIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey")
+      .uri("/legacy/sentence-type/?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -46,7 +46,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val unknownKey = "MINIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$unknownKey")
+      .uri("/legacy/sentence-type/?nomisSentenceTypeReference={nomisSentenceTypeReference}", unknownKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -78,7 +78,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "ADIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -96,7 +96,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "MLP"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -114,7 +114,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "LR_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -132,7 +132,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "LR_ALP"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
