@@ -74,11 +74,18 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
       error("Inconsistent recallType for $nomisSentenceTypeReference: ${group.map { it.recallType }}")
     }
 
+    val nomisActive = group.all { it.nomisActive }
+    val nomisExpiryDate = group
+      .mapNotNull { it.nomisExpiryDate }
+      .minOrNull()
+
     return LegacySentenceTypeGroupingSummary(
       nomisSentenceTypeReference = nomisSentenceTypeReference,
       nomisDescription = nomisDescription,
       isIndeterminate = classification == SentenceTypeClassification.INDETERMINATE,
       recall = recallType,
+      nomisActive = nomisActive,
+      nomisExpiryDate = nomisExpiryDate,
     )
   }
 }

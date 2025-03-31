@@ -26,25 +26,33 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
 
     data class SortKey(
       val nomisActive: Boolean,
-      val nomisExpiryDate: LocalDate?, // Nullable
+      val nomisExpiryDate: LocalDate?,
       val sentencingAct: String,
     )
 
+    result.forEach {
+      check(
+        (it.nomisActive && it.nomisExpiryDate == null) ||
+          (!it.nomisActive && it.nomisExpiryDate != null),
+      ) {
+        "Invalid state: active=${it.nomisActive} but expiryDate=${it.nomisExpiryDate} - $it"
+      }
+    }
     val sortKeys = result.map {
       SortKey(
         nomisActive = it.nomisActive,
-        nomisExpiryDate = it.nomisExpiryDate,
+        nomisExpiryDate = it.nomisExpiryDate ?: LocalDate.MIN,
         sentencingAct = it.sentencingAct.toString(),
       )
     }
 
-    val expectedOrder = sortKeys.sortedWith(
+    val expected = sortKeys.sortedWith(
       compareByDescending<SortKey> { it.nomisActive }
-        .thenByDescending { it.nomisExpiryDate }
+        .thenByDescending { it.nomisExpiryDate } // only applies if nomisActive == false
         .thenBy { it.sentencingAct },
     )
 
-    assertEquals(expectedOrder, sortKeys, "Legacy sentence types are not sorted as expected")
+    assertEquals(expected, sortKeys, "Legacy sentence types are not sorted as expected")
   }
 
   @Test
