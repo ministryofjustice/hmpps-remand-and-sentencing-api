@@ -8,13 +8,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.LegacySentenceTypeGroupingSummary
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallType
+import java.time.LocalDate
 
 class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
 
   private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
   @Test
-  fun `getLegacyAllSentenceTypes returns legacy sentence types`() {
+  fun `getLegacyAllSentenceTypes is sorted by nomisActive desc, nomisExpiryDate desc, sentencingAct asc`() {
     val result = webTestClient.get()
       .uri("/legacy/sentence-type/all")
       .headers { it.authToken() }
@@ -23,7 +24,35 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
       .expectBody(typeReference<List<LegacySentenceType>>())
       .returnResult().responseBody!!
 
-    Assertions.assertThat(result).isNotEmpty()
+    data class SortKey(
+      val nomisActive: Boolean,
+      val nomisExpiryDate: LocalDate?,
+      val sentencingAct: String,
+    )
+
+    result.forEach {
+      check(
+        (it.nomisActive && it.nomisExpiryDate == null) ||
+          (!it.nomisActive && it.nomisExpiryDate != null),
+      ) {
+        "Invalid state: active=${it.nomisActive} but expiryDate=${it.nomisExpiryDate} - $it"
+      }
+    }
+    val sortKeys = result.map {
+      SortKey(
+        nomisActive = it.nomisActive,
+        nomisExpiryDate = it.nomisExpiryDate ?: LocalDate.MIN,
+        sentencingAct = it.sentencingAct.toString(),
+      )
+    }
+
+    val expected = sortKeys.sortedWith(
+      compareByDescending<SortKey> { it.nomisActive }
+        .thenByDescending { it.nomisExpiryDate } // only applies if nomisActive == false
+        .thenBy { it.sentencingAct },
+    )
+
+    assertEquals(expected, sortKeys, "Legacy sentence types are not sorted as expected")
   }
 
   @Test
@@ -31,7 +60,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "ADIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey")
+      .uri("/legacy/sentence-type/?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -46,7 +75,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val unknownKey = "MINIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$unknownKey")
+      .uri("/legacy/sentence-type/?nomisSentenceTypeReference={nomisSentenceTypeReference}", unknownKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -78,7 +107,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "ADIMP_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -96,7 +125,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "MLP"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -114,7 +143,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "LR_ORA"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk
@@ -132,7 +161,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     val legacyKey = "LR_ALP"
 
     val result = webTestClient.get()
-      .uri("/legacy/sentence-type/$legacyKey/summary")
+      .uri("/legacy/sentence-type/summary?nomisSentenceTypeReference={nomisSentenceTypeReference}", legacyKey)
       .headers { it.authToken() }
       .exchange()
       .expectStatus().isOk

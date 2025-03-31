@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.LegacySentenceTypeEntity
@@ -13,10 +14,16 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.Rec
 @Service
 class LegacySentenceTypesService(private val legacySentenceTypeRepository: LegacySentenceTypeRepository) {
 
-  fun getLegacySentencesByNomisSentenceTypeReference(nomisSentenceTypeReference: String): List<LegacySentenceType> = legacySentenceTypeRepository.findByNomisSentenceTypeReference(nomisSentenceTypeReference)
+  private val defaultSort: Sort = Sort.by(
+    Sort.Order.desc("nomisActive"),
+    Sort.Order.desc("nomisExpiryDate"),
+    Sort.Order.asc("sentencingAct"),
+  )
+
+  fun getLegacySentencesByNomisSentenceTypeReference(nomisSentenceTypeReference: String): List<LegacySentenceType> = legacySentenceTypeRepository.findByNomisSentenceTypeReference(nomisSentenceTypeReference, defaultSort)
     .map(::toLegacySentenceType)
 
-  fun getAllLegacySentences(): List<LegacySentenceType> = legacySentenceTypeRepository.findAll()
+  fun getAllLegacySentences(): List<LegacySentenceType> = legacySentenceTypeRepository.findAll(defaultSort)
     .map(::toLegacySentenceType)
 
   fun getGroupedLegacySummaries(): List<LegacySentenceTypeGroupingSummary> = getAllLegacySentences()
@@ -67,11 +74,18 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
       error("Inconsistent recallType for $nomisSentenceTypeReference: ${group.map { it.recallType }}")
     }
 
+    val nomisActive = group.all { it.nomisActive }
+    val nomisExpiryDate = group
+      .mapNotNull { it.nomisExpiryDate }
+      .minOrNull()
+
     return LegacySentenceTypeGroupingSummary(
       nomisSentenceTypeReference = nomisSentenceTypeReference,
       nomisDescription = nomisDescription,
       isIndeterminate = classification == SentenceTypeClassification.INDETERMINATE,
       recall = recallType,
+      nomisActive = nomisActive,
+      nomisExpiryDate = nomisExpiryDate,
     )
   }
 }
