@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceType
@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.L
 @Tag(name = "sentence-type-controller", description = "Sentence Type")
 class LegacySentenceTypeController(private val legacySentenceTypesService: LegacySentenceTypesService) {
 
-  @GetMapping("/{nomisSentenceTypeReference}")
+  @GetMapping("/")
   @Operation(
     summary = "Get historic NOMIS sentence type by nomis sentence type reference",
     description = "Returns historic NOMIS sentence type information for the specified type in a detailed format",
@@ -34,9 +34,9 @@ class LegacySentenceTypeController(private val legacySentenceTypesService: Legac
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getLegacySentenceType(@PathVariable nomisSentenceTypeReference: String): List<LegacySentenceType> = legacySentenceTypesService.getLegacySentencesByNomisSentenceTypeReference(nomisSentenceTypeReference)
+  fun getLegacySentenceType(@RequestParam nomisSentenceTypeReference: String): List<LegacySentenceType> = legacySentenceTypesService.getLegacySentencesByNomisSentenceTypeReference(nomisSentenceTypeReference)
 
-  @GetMapping("/{nomisSentenceTypeReference}/summary")
+  @GetMapping("/summary")
   @Operation(
     summary = "Get historic NOMIS sentence type by nomis sentence type reference",
     description = "Returns historic NOMIS sentence type information for the specified type in a summary format",
@@ -50,7 +50,7 @@ class LegacySentenceTypeController(private val legacySentenceTypesService: Legac
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun getLegacySentenceTypeSummary(@PathVariable nomisSentenceTypeReference: String): LegacySentenceTypeGroupingSummary = legacySentenceTypesService.getLegacySentencesByNomisSentenceTypeReferenceAsSummary(nomisSentenceTypeReference)
+  fun getLegacySentenceTypeSummary(@RequestParam nomisSentenceTypeReference: String): LegacySentenceTypeGroupingSummary = legacySentenceTypesService.getLegacySentencesByNomisSentenceTypeReferenceAsSummary(nomisSentenceTypeReference)
 
   @GetMapping("/all")
   @Operation(

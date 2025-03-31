@@ -62,7 +62,7 @@ class LegacySentenceTypesServiceTests {
       sentenceType = sentenceTypeEntity,
       nomisTermTypes = listOf(NomisTermType.IMP),
     )
-    every { legacySentenceTypeRepository.findByNomisSentenceTypeReference(legacyKey) } returns listOf(legacySentenceTypeEntity)
+    every { legacySentenceTypeRepository.findByNomisSentenceTypeReference(legacyKey, any()) } returns listOf(legacySentenceTypeEntity)
 
     val result: List<LegacySentenceType> = legacySentenceTypesService.getLegacySentencesByNomisSentenceTypeReference(legacyKey)
 
