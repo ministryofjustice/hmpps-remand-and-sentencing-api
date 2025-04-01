@@ -141,4 +141,25 @@ class SearchCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
+
+  @Test
+  fun `Court case search doesnt return any cases that have no appearances associated`() {
+    val legacyCourtCase = createLegacyCourtCase()
+
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/search")
+          .queryParam("prisonerId", legacyCourtCase.second.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.totalElements")
+      .isEqualTo(0)
+  }
 }
