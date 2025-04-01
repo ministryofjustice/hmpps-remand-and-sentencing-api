@@ -7,7 +7,7 @@ import org.springframework.core.ParameterizedTypeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.LegacySentenceTypeGroupingSummary
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallTypeIdentifier
 import java.time.LocalDate
 
 class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
@@ -117,7 +117,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     Assertions.assertThat(result.nomisSentenceTypeReference).isEqualTo(legacyKey)
     Assertions.assertThat(result.nomisDescription).isNotBlank()
     Assertions.assertThat(result.isIndeterminate).isFalse()
-    assertEquals(result.recall, RecallType.NONE)
+    assertEquals(result.recall, RecallTypeIdentifier.NONE)
   }
 
   @Test
@@ -135,7 +135,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     Assertions.assertThat(result.nomisSentenceTypeReference).isEqualTo(legacyKey)
     Assertions.assertThat(result.nomisDescription).isNotBlank()
     Assertions.assertThat(result.isIndeterminate).isTrue()
-    assertEquals(result.recall, RecallType.NONE)
+    assertEquals(result.recall, RecallTypeIdentifier.NONE.toDomain())
   }
 
   @Test
@@ -153,7 +153,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     Assertions.assertThat(result.nomisSentenceTypeReference).isEqualTo(legacyKey)
     Assertions.assertThat(result.nomisDescription).isNotBlank()
     Assertions.assertThat(result.isIndeterminate).isFalse()
-    Assertions.assertThat(result.recall).isNotNull()
+    assertEquals(result.recall, RecallTypeIdentifier.STANDARD_RECALL.toDomain())
   }
 
   @Test
