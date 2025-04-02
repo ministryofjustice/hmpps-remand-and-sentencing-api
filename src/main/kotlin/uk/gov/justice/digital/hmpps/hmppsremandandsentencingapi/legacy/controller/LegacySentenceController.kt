@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -56,18 +57,19 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "sentence updated"),
+      ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
-  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence) {
+  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
     legacySentenceService.update(lifetimeUuid, sentence).also { (entityChangeStatus, legacySentenceCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, legacySentenceCreatedResponse.appearanceUuid.toString(), EventSource.NOMIS)
       }
     }
+    return ResponseEntity.noContent().build()
   }
 
   @GetMapping("/{lifetimeUuid}")
