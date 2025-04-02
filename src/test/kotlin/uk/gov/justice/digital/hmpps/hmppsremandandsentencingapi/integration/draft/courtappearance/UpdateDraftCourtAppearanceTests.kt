@@ -21,7 +21,7 @@ class UpdateDraftCourtAppearanceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isOk
+      .isNoContent
   }
 
   @Test

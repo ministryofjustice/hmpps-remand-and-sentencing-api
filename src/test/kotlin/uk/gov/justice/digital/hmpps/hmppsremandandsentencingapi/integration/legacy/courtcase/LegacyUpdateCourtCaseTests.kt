@@ -23,7 +23,7 @@ class LegacyUpdateCourtCaseTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isOk
+      .isNoContent
 
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("court-case.updated")
