@@ -24,7 +24,7 @@ class LegacyLinkCourtAppearanceWithChargeTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isOk
+      .isNoContent
     val messages = getMessages(2)
     Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("charge.updated", "court-appearance.updated")
     Assertions.assertThat(messages).hasSize(2).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("NOMIS")

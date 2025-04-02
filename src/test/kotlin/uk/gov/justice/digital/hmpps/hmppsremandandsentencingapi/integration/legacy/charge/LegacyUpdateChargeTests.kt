@@ -43,7 +43,7 @@ class LegacyUpdateChargeTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isOk
+      .isNoContent
 
     val courtCase = webTestClient
       .get()

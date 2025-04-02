@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -98,8 +99,8 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @GetMapping("/court-case/search")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
-    summary = "Retrieve all court cases for person",
-    description = "This endpoint will retrieve all court cases for a person",
+    summary = "Retrieve all court cases for person (that have appearances)",
+    description = "This endpoint will retrieve all court cases (that have appearances) for a person",
   )
   @ApiResponses(
     value = [
@@ -151,13 +152,13 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "204"),
+      ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun refreshCaseReferences(@RequestBody courtCaseLegacyData: CourtCaseLegacyData, @PathVariable courtCaseUuid: String) {
+  fun refreshCaseReferences(@RequestBody courtCaseLegacyData: CourtCaseLegacyData, @PathVariable courtCaseUuid: String): ResponseEntity<Void> {
     courtCaseReferenceService.refreshCaseReferences(courtCaseLegacyData, courtCaseUuid)
+    return ResponseEntity.noContent().build()
   }
 }
