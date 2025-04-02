@@ -17,7 +17,7 @@ data class LegacySentenceType(
   val classificationPeriodDefinition: SentenceTypePeriodDefinitions?,
   val sentencingAct: Int,
   val eligibility: SentenceEligibility?,
-  val recallType: RecallType?,
+  val recallType: RecallType,
   val inputSentenceType: SentenceType?,
   val nomisActive: Boolean,
   val nomisDescription: String,
