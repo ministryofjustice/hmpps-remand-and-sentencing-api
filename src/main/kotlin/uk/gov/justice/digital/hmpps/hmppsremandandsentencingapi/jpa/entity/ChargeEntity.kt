@@ -48,7 +48,7 @@ class ChargeEntity(
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
   val createdPrison: String?,
-  var updatedAt: ZonedDateTime? = null,
+  var updatedAt: ZonedDateTime = createdAt,
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
   @JdbcTypeCode(SqlTypes.JSON)
@@ -134,10 +134,11 @@ class ChargeEntity(
   }
 
   fun copyFromReplacedCharge(replacedCharge: ChargeEntity): ChargeEntity {
+    val currentDate = ZonedDateTime.now()
     val charge = ChargeEntity(
       0, UUID.randomUUID(), offenceCode, offenceStartDate, offenceEndDate, EntityStatus.ACTIVE, chargeOutcome, replacedCharge,
       terrorRelated,
-      ZonedDateTime.now(), createdBy, createdPrison, null, null, null, legacyData, appearanceCharges.toMutableSet(),
+      currentDate, createdBy, createdPrison, currentDate, null, null, legacyData, appearanceCharges.toMutableSet(),
     )
     charge.sentences = sentences.toMutableList()
     return charge
