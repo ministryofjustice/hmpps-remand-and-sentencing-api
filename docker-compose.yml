@@ -12,7 +12,7 @@ services:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=dev
   remand-and-sentencing-db:
-    image: postgres:15
+    image: postgres:17
     networks:
       - hmpps
     ports:
