@@ -7,7 +7,7 @@ import java.util.UUID
 
 interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
 
-  fun findFirstByChargeUuidOrderByCreatedAtDesc(lifetimeUUID: UUID): ChargeEntity?
+  fun findFirstByChargeUuidOrderByUpdatedAtDesc(chargeUuid: UUID): ChargeEntity?
 
   fun findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(
     appearanceUuid: UUID,
@@ -15,6 +15,4 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   ): ChargeEntity?
 
   fun findByChargeUuidAndStatusId(lifetimeUUID: UUID, status: EntityStatus): List<ChargeEntity>
-
-  fun findByChargeUuidInAndStatusId(lifetimeUUIDs: List<UUID>, status: EntityStatus): List<ChargeEntity>
 }
