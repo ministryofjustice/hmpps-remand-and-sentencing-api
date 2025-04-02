@@ -99,8 +99,8 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @GetMapping("/court-case/search")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
-    summary = "Retrieve all court cases for person",
-    description = "This endpoint will retrieve all court cases for a person",
+    summary = "Retrieve all court cases for person (that have appearances)",
+    description = "This endpoint will retrieve all court cases (that have appearances) for a person",
   )
   @ApiResponses(
     value = [
