@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.NomisTermType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallTypeIdentifier
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SDSPlusEligibilityType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.SentenceEligibility
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.ToreraEligibilityType
@@ -79,6 +80,6 @@ class LegacySentenceTypesServiceTests {
     Assertions.assertEquals(legacySentenceTypeEntity.nomisExpiryDate, dto.nomisExpiryDate)
     Assertions.assertEquals(legacySentenceTypeEntity.nomisDescription, dto.nomisDescription)
     Assertions.assertNotNull(dto.eligibility)
-    Assertions.assertNull(dto.recallType)
+    Assertions.assertEquals(dto.recallType, RecallTypeIdentifier.NONE.toDomain())
   }
 }

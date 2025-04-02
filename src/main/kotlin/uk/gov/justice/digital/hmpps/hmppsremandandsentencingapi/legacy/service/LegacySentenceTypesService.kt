@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.LegacySentenceTypeGroupingSummary
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.RecallTypeIdentifier
 
 @Service
 class LegacySentenceTypesService(private val legacySentenceTypeRepository: LegacySentenceTypeRepository) {
@@ -37,7 +37,6 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
 
   private fun toLegacySentenceType(entity: LegacySentenceTypeEntity): LegacySentenceType = with(entity) {
     val classificationEnum = SentenceTypeClassification.from(classification)
-
     LegacySentenceType(
       id = id,
       classification = classificationEnum,
@@ -47,7 +46,7 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
       nomisActive = nomisActive,
       nomisExpiryDate = nomisExpiryDate,
       eligibility = eligibility,
-      recallType = recallType?.let(RecallType::from),
+      recallType = RecallTypeIdentifier.from(recallType).toDomain(),
       inputSentenceType = sentenceType?.let { SentenceType.from(it) },
       nomisTermTypes = safeNomisTerms.associate { it.name to it.description },
       sentencingAct = sentencingAct,
