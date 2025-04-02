@@ -26,7 +26,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
-    val charge = chargeRepository.findFirstByChargeUuid(sentence.chargeLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at ${sentence.chargeLifetimeUuid}")
+    val charge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(sentence.chargeLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at ${sentence.chargeLifetimeUuid}")
     if (charge.getActiveOrInactiveSentence() != null) {
       throw ChargeAlreadySentencedException("charge at ${sentence.chargeLifetimeUuid} is already sentenced")
     }

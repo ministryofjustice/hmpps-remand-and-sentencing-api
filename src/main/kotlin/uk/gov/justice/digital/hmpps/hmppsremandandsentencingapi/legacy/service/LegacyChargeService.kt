@@ -138,6 +138,6 @@ class LegacyChargeService(
     chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
   }
 
-  private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuid(lifetimeUUID)
+  private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(lifetimeUUID)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
 }
