@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,14 +31,15 @@ class DraftCourtAppearanceController(private val draftCourtAppearanceService: Dr
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "court appearance updated"),
+      ApiResponse(responseCode = "204", description = "court appearance updated"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI')")
-  fun update(@PathVariable draftUuid: UUID, @RequestBody draftCourtAppearance: DraftCreateCourtAppearance) {
+  fun update(@PathVariable draftUuid: UUID, @RequestBody draftCourtAppearance: DraftCreateCourtAppearance): ResponseEntity<Void> {
     draftCourtAppearanceService.update(draftUuid, draftCourtAppearance)
+    return ResponseEntity.noContent().build()
   }
 
   @GetMapping("/{draftUuid}")

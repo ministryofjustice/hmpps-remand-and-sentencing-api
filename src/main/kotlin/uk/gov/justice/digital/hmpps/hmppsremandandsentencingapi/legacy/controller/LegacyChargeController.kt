@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -57,14 +58,15 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "charge updated"),
+      ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyUpdateWholeCharge) {
+  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody charge: LegacyUpdateWholeCharge): ResponseEntity<Void> {
     legacyChargeService.updateInAllAppearances(lifetimeUuid, charge)
+    return ResponseEntity.noContent().build()
   }
 
   @PutMapping("/{lifetimeUuid}/appearance/{appearanceLifetimeUuid}")
@@ -74,18 +76,19 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "charge updated"),
+      ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  fun updateInAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable appearanceLifetimeUuid: UUID, @RequestBody charge: LegacyUpdateCharge) {
+  fun updateInAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable appearanceLifetimeUuid: UUID, @RequestBody charge: LegacyUpdateCharge): ResponseEntity<Void> {
     legacyChargeService.updateInAppearance(lifetimeUuid, appearanceLifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), appearanceLifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
+    return ResponseEntity.noContent().build()
   }
 
   @GetMapping("/{lifetimeUuid}")

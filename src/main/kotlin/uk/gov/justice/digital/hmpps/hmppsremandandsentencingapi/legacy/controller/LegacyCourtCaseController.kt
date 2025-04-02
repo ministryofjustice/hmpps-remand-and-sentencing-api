@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -70,16 +71,17 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "court case updated"),
+      ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun update(@PathVariable courtCaseUuid: String, @RequestBody courtCase: LegacyCreateCourtCase) {
+  fun update(@PathVariable courtCaseUuid: String, @RequestBody courtCase: LegacyCreateCourtCase): ResponseEntity<Void> {
     legacyCourtCaseService.update(courtCaseUuid, courtCase).also {
       eventService.update(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
     }
+    return ResponseEntity.noContent().build()
   }
 
   @DeleteMapping("/{courtCaseUuid}")

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -59,18 +60,19 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "court appearance updated"),
+      ApiResponse(responseCode = "204", description = "court appearance updated"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody courtAppearance: LegacyCreateCourtAppearance) {
+  fun update(@PathVariable lifetimeUuid: UUID, @RequestBody courtAppearance: LegacyCreateCourtAppearance): ResponseEntity<Void> {
     legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also<Pair<EntityChangeStatus, LegacyCourtAppearanceCreatedResponse>> { (entityChangeStatus, legacyCourtAppearanceCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearanceCreatedResponse.prisonerId, legacyCourtAppearanceCreatedResponse.lifetimeUuid.toString(), legacyCourtAppearanceCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
+    return ResponseEntity.noContent().build()
   }
 
   @GetMapping("/{lifetimeUuid}")
@@ -117,12 +119,12 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge) {
+  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge): ResponseEntity<Void> {
     legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
       val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
@@ -134,6 +136,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
         chargeEventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
     }
+    return ResponseEntity.noContent().build()
   }
 
   @GetMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
