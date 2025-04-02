@@ -117,7 +117,7 @@ class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
     Assertions.assertThat(result.nomisSentenceTypeReference).isEqualTo(legacyKey)
     Assertions.assertThat(result.nomisDescription).isNotBlank()
     Assertions.assertThat(result.isIndeterminate).isFalse()
-    assertEquals(result.recall, RecallTypeIdentifier.NONE)
+    assertEquals(result.recall, RecallTypeIdentifier.NONE.toDomain())
   }
 
   @Test
