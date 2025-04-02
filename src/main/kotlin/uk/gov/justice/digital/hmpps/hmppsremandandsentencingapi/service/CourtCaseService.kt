@@ -59,7 +59,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   @Transactional(readOnly = true)
-  fun searchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseRepository.findByPrisonerIdAndAppearancesIsNotEmpty(prisonerId, pageable).map {
+  fun searchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId, pageable).map {
     CourtCase.from(it)
   }
 
