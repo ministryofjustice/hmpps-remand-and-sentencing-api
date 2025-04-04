@@ -49,7 +49,7 @@ class DpsDataCreator {
       courtCaseReference: String? = "GH123456789",
       appearanceDate: LocalDate = LocalDate.now(),
       warrantId: String? = "123",
-      warrantType: String = "REMAND",
+      warrantType: String = "SENTENCING",
       taggedBail: Int? = 1,
       overallSentenceLength: CreatePeriodLength? = dpsCreatePeriodLength(),
       nextCourtAppearance: CreateNextCourtAppearance? = dpsCreateNextCourtAppearance(),
