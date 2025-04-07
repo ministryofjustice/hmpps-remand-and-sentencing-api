@@ -1,0 +1,1 @@
+CREATE INDEX idx_sentence_charge_id ON sentence (charge_id);
