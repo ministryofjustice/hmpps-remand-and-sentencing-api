@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeDetail
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.LegacySentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypePeriodDefinition
@@ -47,7 +47,7 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
       nomisExpiryDate = nomisExpiryDate,
       eligibility = eligibility,
       recallType = RecallTypeIdentifier.from(recallType).toDomain(),
-      inputSentenceType = sentenceType?.let { SentenceType.from(it) },
+      inputSentenceType = sentenceType?.let { SentenceTypeDetail.from(it) },
       nomisTermTypes = safeNomisTerms.associate { it.name to it.description },
       sentencingAct = sentencingAct,
     )
