@@ -5,4 +5,5 @@ data class SentenceLegacyData(
   val sentenceCategory: String?,
   val sentenceTypeDesc: String?,
   val postedDate: String,
+  var active: Boolean?,
 )
