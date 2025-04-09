@@ -146,6 +146,48 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(futureAppearance.courtCode)
   }
 
+  @Test
+  fun `many charges to a single sentence creates multiple sentence records`() {
+    val sentence = DataCreator.migrationCreateSentence()
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(courtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
+    val firstChargeUuid = response.charges.first { firstCharge.chargeNOMISId == it.chargeNOMISId }.chargeUuid
+    val secondChargeUuid = response.charges.first { secondCharge.chargeNOMISId == it.chargeNOMISId }.chargeUuid
+    webTestClient
+      .get()
+      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$firstChargeUuid')].sentence.sentenceUuid")
+      .isEqualTo(sentenceUuid.toString())
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$secondChargeUuid')].sentence.sentenceUuid")
+      .isEqualTo(sentenceUuid.toString())
+  }
+
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
     webTestClient
       .get()

@@ -253,8 +253,12 @@ class MigrationService(
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(dpsSentenceTypes, it) }
     migrationCreateSentence.legacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
 
-    val toCreateSentence = SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType)
+    val toCreateSentence = createdSentencesMap[migrationCreateSentence.sentenceId]?.let { existingSentence ->
+      existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+      existingSentence.copyFrom(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType)
+    } ?: SentenceEntity.from(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
+
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
       val createdPeriodLength = periodLengthRepository.save(PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: migrationCreateSentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername()))
       createdPeriodLength.sentenceEntity = createdSentence
