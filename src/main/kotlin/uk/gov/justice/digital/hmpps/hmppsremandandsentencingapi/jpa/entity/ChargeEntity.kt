@@ -68,7 +68,7 @@ class ChargeEntity(
 
   fun hasTwoOrMoreActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId == EntityStatus.ACTIVE } >= 2
 
-  fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
+  fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { setOf(EntityStatus.ACTIVE, EntityStatus.MANY_CHARGES_DATA_FIX).contains(it.statusId) }
 
   fun getActiveOrInactiveSentence(): SentenceEntity? = sentences.firstOrNull { setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE).contains(it.statusId) }
   fun isSame(other: ChargeEntity): Boolean = this.offenceCode == other.offenceCode &&

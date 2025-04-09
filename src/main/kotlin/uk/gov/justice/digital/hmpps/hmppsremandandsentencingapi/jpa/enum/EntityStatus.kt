@@ -8,4 +8,5 @@ enum class EntityStatus {
   DRAFT,
   FUTURE,
   MERGED,
+  MANY_CHARGES_DATA_FIX,
 }

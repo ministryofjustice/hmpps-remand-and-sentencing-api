@@ -126,6 +126,25 @@ class SentenceEntity(
     return sentenceEntity
   }
 
+  fun copyFrom(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {
+    sentence.legacyData.active = sentence.active
+    return SentenceEntity(
+      sentenceUuid = sentenceUuid,
+      chargeNumber = sentence.chargeNumber,
+      statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
+      createdBy = createdBy,
+      createdPrison = null,
+      supersedingSentence = null,
+      charge = chargeEntity,
+      sentenceServeType = "UNKNOWN",
+      consecutiveTo = null,
+      sentenceType = sentenceTypeEntity,
+      convictionDate = null,
+      legacyData = sentence.legacyData,
+      fineAmount = sentence.fine?.fineAmount,
+    )
+  }
+
   fun updateFrom(sentence: SentenceEntity) {
     chargeNumber = sentence.chargeNumber
     statusId = sentence.statusId
@@ -183,20 +202,23 @@ class SentenceEntity(
       fineAmount = sentence.fine?.fineAmount,
     )
 
-    fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity = SentenceEntity(
-      sentenceUuid = UUID.randomUUID(),
-      chargeNumber = sentence.chargeNumber,
-      statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
-      createdBy = createdBy,
-      createdPrison = null,
-      supersedingSentence = null,
-      charge = chargeEntity,
-      sentenceServeType = "UNKNOWN",
-      consecutiveTo = null,
-      sentenceType = sentenceTypeEntity,
-      convictionDate = null,
-      legacyData = sentence.legacyData,
-      fineAmount = sentence.fine?.fineAmount,
-    )
+    fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {
+      sentence.legacyData.active = sentence.active
+      return SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        chargeNumber = sentence.chargeNumber,
+        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        createdBy = createdBy,
+        createdPrison = null,
+        supersedingSentence = null,
+        charge = chargeEntity,
+        sentenceServeType = "UNKNOWN",
+        consecutiveTo = null,
+        sentenceType = sentenceTypeEntity,
+        convictionDate = null,
+        legacyData = sentence.legacyData,
+        fineAmount = sentence.fine?.fineAmount,
+      )
+    }
   }
 }
