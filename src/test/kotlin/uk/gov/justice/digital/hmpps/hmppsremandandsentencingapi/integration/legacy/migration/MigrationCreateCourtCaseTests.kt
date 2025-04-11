@@ -172,6 +172,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
     val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
     val firstChargeUuid = response.charges.first { firstCharge.chargeNOMISId == it.chargeNOMISId }.chargeUuid
     val secondChargeUuid = response.charges.first { secondCharge.chargeNOMISId == it.chargeNOMISId }.chargeUuid
+    val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
     webTestClient
       .get()
       .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
@@ -186,6 +187,10 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(sentenceUuid.toString())
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$secondChargeUuid')].sentence.sentenceUuid")
       .isEqualTo(sentenceUuid.toString())
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$firstChargeUuid')].sentence.periodLengths[0].periodLengthUuid")
+      .isEqualTo(periodLengthUuid.toString())
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$secondChargeUuid')].sentence.periodLengths[0].periodLengthUuid")
+      .isEqualTo(periodLengthUuid.toString())
   }
 
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
