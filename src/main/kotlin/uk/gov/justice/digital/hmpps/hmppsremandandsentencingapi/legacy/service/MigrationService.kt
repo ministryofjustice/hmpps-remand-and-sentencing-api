@@ -152,8 +152,10 @@ class MigrationService(
       .forEach { nomisSentence ->
         if (createdSentencesMap.contains(nomisSentence.consecutiveToSentenceId)) {
           val consecutiveToSentence = createdSentencesMap[nomisSentence.consecutiveToSentenceId]!!.minBy { it.id }
-          val sentence = createdSentencesMap[nomisSentence.sentenceId]!!.minBy { it.id }
-          sentence.consecutiveTo = consecutiveToSentence
+          val sentences = createdSentencesMap[nomisSentence.sentenceId]!!
+          sentences.forEach { sentence ->
+            sentence.consecutiveTo = consecutiveToSentence
+          }
         } else {
           log.info("sentence with id {} {} has a non existent consecutive to sentence at id {} {}", nomisSentence.sentenceId.offenderBookingId, nomisSentence.sentenceId.sequence, nomisSentence.consecutiveToSentenceId!!.offenderBookingId, nomisSentence.consecutiveToSentenceId.sequence)
         }
