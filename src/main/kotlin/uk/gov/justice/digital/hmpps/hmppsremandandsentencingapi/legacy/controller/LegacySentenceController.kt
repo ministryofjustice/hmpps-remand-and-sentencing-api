@@ -67,9 +67,11 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
-    legacySentenceService.update(lifetimeUuid, sentence).also { (entityChangeStatus, legacySentenceCreatedResponse) ->
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, legacySentenceCreatedResponse.appearanceUuid.toString(), EventSource.NOMIS)
+    legacySentenceService.update(lifetimeUuid, sentence).also {
+      it.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
+        if (entityChangeStatus == EntityChangeStatus.EDITED) {
+          eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, legacySentenceCreatedResponse.appearanceUuid.toString(), EventSource.NOMIS)
+        }
       }
     }
     return ResponseEntity.noContent().build()

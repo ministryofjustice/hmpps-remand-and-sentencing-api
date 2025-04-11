@@ -104,11 +104,17 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity {
+  fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?, isManyCharges: Boolean): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = sentence.chargeNumber,
-      statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+      statusId = if (isManyCharges) {
+        EntityStatus.MANY_CHARGES_DATA_FIX
+      } else if (sentence.active) {
+        EntityStatus.ACTIVE
+      } else {
+        EntityStatus.INACTIVE
+      },
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
@@ -123,7 +129,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fine?.fineAmount,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, createdBy) }.toMutableList()
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, createdBy, isManyCharges) }.toMutableList()
     return sentenceEntity
   }
 
