@@ -79,7 +79,8 @@ class SentenceEntity(
     createdPrison == other.createdPrison &&
     ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
     convictionDate == other.convictionDate &&
-    ((fineAmount == null && other.fineAmount == null) || other.fineAmount?.compareTo(fineAmount) == 0)
+    ((fineAmount == null && other.fineAmount == null) || other.fineAmount?.compareTo(fineAmount) == 0) &&
+    statusId == other.statusId
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
@@ -186,10 +187,16 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?): SentenceEntity = SentenceEntity(
-      sentenceUuid = UUID.randomUUID(),
+    fun from(sentence: LegacyCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?, sentenceUuid: UUID, isManyCharges: Boolean): SentenceEntity = SentenceEntity(
+      sentenceUuid = sentenceUuid,
       chargeNumber = sentence.chargeNumber,
-      statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+      statusId = if (isManyCharges) {
+        EntityStatus.MANY_CHARGES_DATA_FIX
+      } else if (sentence.active) {
+        EntityStatus.ACTIVE
+      } else {
+        EntityStatus.INACTIVE
+      },
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = null,

@@ -46,8 +46,11 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
-  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).also {
-    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), it.courtCaseId, it.appearanceUuid.toString(), EventSource.NOMIS)
+  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).let { responses ->
+    responses.forEach {
+      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), it.courtCaseId, it.appearanceUuid.toString(), EventSource.NOMIS)
+    }
+    responses.first()
   }
 
   @PutMapping("/{lifetimeUuid}")

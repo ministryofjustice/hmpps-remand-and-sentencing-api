@@ -25,35 +25,43 @@ import java.util.UUID
 class LegacySentenceService(private val sentenceRepository: SentenceRepository, private val chargeRepository: ChargeRepository, private val sentenceTypeRepository: SentenceTypeRepository, private val serviceUserService: ServiceUserService, private val legacyPeriodLengthService: LegacyPeriodLengthService, private val sentenceHistoryRepository: SentenceHistoryRepository) {
 
   @Transactional
-  fun create(sentence: LegacyCreateSentence): LegacySentenceCreatedResponse {
-    val charge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(sentence.chargeLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at ${sentence.chargeLifetimeUuid}")
-    if (charge.getActiveOrInactiveSentence() != null) {
-      throw ChargeAlreadySentencedException("charge at ${sentence.chargeLifetimeUuid} is already sentenced")
-    }
+  fun create(sentence: LegacyCreateSentence): List<LegacySentenceCreatedResponse> {
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
+    sentence.legacyData.active = sentence.active
     sentence.legacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
-    val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, consecutiveToSentence))
-    sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
-    charge.sentences.add(createdSentence)
-    val (_, createdPeriodLengths) = legacyPeriodLengthService.upsert(
-      sentence.periodLengths
-        .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername()) },
-      createdSentence,
-    )
-    val courtAppearance = charge.appearanceCharges
-      .map { it.appearance!! }
-      .filter { it.statusId == EntityStatus.ACTIVE }
-      .maxByOrNull { it.appearanceDate }
-      ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
-    return LegacySentenceCreatedResponse(
-      courtAppearance.courtCase.prisonerId,
-      createdSentence.sentenceUuid,
-      charge.chargeUuid,
-      courtAppearance.appearanceUuid,
-      courtAppearance.courtCase.caseUniqueIdentifier,
-      createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) },
-    )
+    val isManyCharges = sentence.chargeUuids.size > 1
+    val sentenceUuid = UUID.randomUUID()
+    val periodLengths = sentence.periodLengths
+      .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername(), isManyCharges) }
+
+    return sentence.chargeUuids.map { chargeLifetimeUuid ->
+      val charge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(chargeLifetimeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $chargeLifetimeUuid")
+      if (charge.getActiveOrInactiveSentence() != null) {
+        throw ChargeAlreadySentencedException("charge at $chargeLifetimeUuid is already sentenced")
+      }
+
+      val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, consecutiveToSentence, sentenceUuid, isManyCharges))
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
+      charge.sentences.add(createdSentence)
+      val (_, createdPeriodLengths) = legacyPeriodLengthService.upsert(
+        periodLengths.mapValues { (_, periodLengthEntity) -> periodLengthEntity.copy() },
+        createdSentence,
+      )
+      val courtAppearance = charge.appearanceCharges
+        .map { it.appearance!! }
+        .filter { it.statusId == EntityStatus.ACTIVE }
+        .maxByOrNull { it.appearanceDate }
+        ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
+      LegacySentenceCreatedResponse(
+        courtAppearance.courtCase.prisonerId,
+        createdSentence.sentenceUuid,
+        charge.chargeUuid,
+        courtAppearance.appearanceUuid,
+        courtAppearance.courtCase.caseUniqueIdentifier,
+        createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) },
+      )
+    }
   }
 
   @Transactional

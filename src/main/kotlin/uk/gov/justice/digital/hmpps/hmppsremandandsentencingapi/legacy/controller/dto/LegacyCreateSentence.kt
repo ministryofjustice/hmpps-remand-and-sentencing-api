@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import java.util.UUID
 
 data class LegacyCreateSentence(
-  val chargeLifetimeUuid: UUID,
+  val chargeUuids: List<UUID>,
   val chargeNumber: String?,
   val fine: LegacyCreateFine?,
   val consecutiveToLifetimeUuid: UUID?,
