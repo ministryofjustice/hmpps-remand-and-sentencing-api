@@ -17,7 +17,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
   @Test
   fun `update sentence for existing charge`() {
     val (sentenceLifetimeUuid, createdSentence) = createLegacySentence()
-    val toUpdate = DataCreator.legacyCreateSentence(chargeNumber = "6")
+    val toUpdate = createdSentence.copy(chargeNumber = "6")
     webTestClient
       .put()
       .uri("/legacy/sentence/$sentenceLifetimeUuid")

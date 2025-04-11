@@ -187,7 +187,7 @@ abstract class IntegrationTestBase {
       DataCreator.legacyCreateSentence(),
   ): Pair<UUID, LegacyCreateSentence> {
     val (chargeLifetimeUuid) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    val toCreateSentence = legacySentence.copy(chargeLifetimeUuid = chargeLifetimeUuid)
+    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeLifetimeUuid))
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")

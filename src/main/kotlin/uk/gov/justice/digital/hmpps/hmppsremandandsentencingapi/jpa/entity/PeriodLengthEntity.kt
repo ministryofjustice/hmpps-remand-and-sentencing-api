@@ -75,6 +75,27 @@ class PeriodLengthEntity(
     updatedPrison = periodLength.createdPrison
   }
 
+  fun copy(): PeriodLengthEntity = PeriodLengthEntity(
+    id,
+    periodLengthUuid,
+    years,
+    months,
+    weeks,
+    days,
+    periodOrder,
+    periodLengthType,
+    statusId,
+    createdAt,
+    createdBy,
+    createdPrison,
+    updatedAt,
+    updatedBy,
+    updatedPrison,
+    sentenceEntity,
+    appearanceEntity,
+    legacyData,
+  )
+
   fun delete(username: String) {
     statusId = EntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
@@ -96,7 +117,7 @@ class PeriodLengthEntity(
       createdPrison = periodLength.prisonId,
     )
 
-    fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
+    fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String, createdBy: String, isManyCharges: Boolean): PeriodLengthEntity {
       val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
@@ -108,7 +129,7 @@ class PeriodLengthEntity(
         days = periodLength.periodDays,
         periodOrder = order,
         periodLengthType = type,
-        statusId = EntityStatus.ACTIVE,
+        statusId = if (isManyCharges) EntityStatus.MANY_CHARGES_DATA_FIX else EntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = legacyData,

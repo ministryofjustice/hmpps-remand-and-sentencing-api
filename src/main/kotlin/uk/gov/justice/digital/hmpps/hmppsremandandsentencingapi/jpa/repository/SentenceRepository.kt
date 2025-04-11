@@ -5,7 +5,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import java.util.UUID
 
 interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
-  fun findBySentenceUuid(sentenceUuid: UUID): SentenceEntity?
+  fun findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid: UUID): SentenceEntity?
+
+  fun findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid: UUID, chargeUUID: UUID): SentenceEntity?
 
   fun findBySentenceUuidIn(sentenceUuids: List<UUID>): List<SentenceEntity>
 }

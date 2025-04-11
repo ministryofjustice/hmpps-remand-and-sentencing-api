@@ -15,7 +15,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   @Test
   fun `create sentence in existing court case`() {
     val (chargeLifetimeUuid) = createLegacyCharge()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = chargeLifetimeUuid)
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid))
 
     webTestClient
       .post()
@@ -46,7 +46,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       ),
     )
     val charge = courtCaseCreated.appearances.first().charges.first()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = charge.chargeUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -76,7 +76,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   @Test
   fun `must not be able to create a sentence on a already sentenced charge`() {
     val (_, sentence) = createLegacySentence()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = sentence.chargeLifetimeUuid)
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(sentence.chargeUuids.first()))
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -101,7 +101,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
         ),
       ),
     )
-    val legacySentence = DataCreator.legacyCreateSentence(chargeLifetimeUuid = chargeLifetimeUuid, consecutiveToLifetimeUuid = lifetimeUuid)
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), consecutiveToLifetimeUuid = lifetimeUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")

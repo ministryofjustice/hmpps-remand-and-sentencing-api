@@ -72,7 +72,7 @@ class DataCreator {
       active: Boolean? = null,
     ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active)
 
-    fun legacyCreateSentence(chargeLifetimeUuid: UUID = UUID.randomUUID(), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(), periodLengths: List<LegacyCreatePeriodLength> = listOf(legacyCreatePeriodLength())): LegacyCreateSentence = LegacyCreateSentence(chargeLifetimeUuid, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData, periodLengths)
+    fun legacyCreateSentence(chargeUuids: List<UUID> = listOf(UUID.randomUUID()), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(), periodLengths: List<LegacyCreatePeriodLength> = listOf(legacyCreatePeriodLength())): LegacyCreateSentence = LegacyCreateSentence(chargeUuids, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData, periodLengths)
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
 
