@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
@@ -36,14 +37,8 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
       .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername(), isManyCharges) }
 
     return sentence.chargeUuids.map { chargeUuid ->
-      val charge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(chargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $chargeUuid")
-      if (charge.getActiveOrInactiveSentence() != null) {
-        throw ChargeAlreadySentencedException("charge at $chargeUuid is already sentenced")
-      }
-
-      val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, consecutiveToSentence, sentenceUuid, isManyCharges))
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
-      charge.sentences.add(createdSentence)
+      val charge = getCharge(chargeUuid)
+      val createdSentence = createSentenceRecord(charge, SentenceEntity.from(sentence, serviceUserService.getUsername(), charge, dpsSentenceType, consecutiveToSentence, sentenceUuid, isManyCharges))
       val (_, createdPeriodLengths) = legacyPeriodLengthService.upsert(
         periodLengths.mapValues { (_, periodLengthEntity) -> periodLengthEntity.copy() },
         createdSentence,
@@ -64,9 +59,23 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     }
   }
 
+  fun getCharge(chargeUuid: UUID): ChargeEntity {
+    val charge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(chargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $chargeUuid")
+    if (charge.getActiveOrInactiveSentence() != null) {
+      throw ChargeAlreadySentencedException("charge at $chargeUuid is already sentenced")
+    }
+    return charge
+  }
+
+  fun createSentenceRecord(charge: ChargeEntity, sentence: SentenceEntity): SentenceEntity {
+    val createdSentence = sentenceRepository.save(sentence)
+    sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
+    charge.sentences.add(createdSentence)
+    return sentence
+  }
+
   @Transactional
   fun update(sentenceUuid: UUID, sentence: LegacyCreateSentence): List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>> {
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     sentence.legacyData.active = sentence.active
     sentence.legacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
@@ -76,8 +85,34 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
 
     return sentence.chargeUuids.map { chargeUuid ->
-      val existingSentence = sentenceRepository.findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid, chargeUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+      val (existingSentence, entityStatus) = (
+        (
+          (
+            sentenceRepository.findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(
+              sentenceUuid,
+              chargeUuid,
+            )?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { it to EntityChangeStatus.NO_CHANGE }
+            )
+            ?: (
+              getCharge(chargeUuid).let { charge ->
+                createSentenceRecord(
+                  charge,
+                  SentenceEntity.from(
+                    sentence,
+                    serviceUserService.getUsername(),
+                    charge,
+                    dpsSentenceType,
+                    consecutiveToSentence,
+                    sentenceUuid,
+                    isManyCharges,
+                  ),
+                )
+              } to EntityChangeStatus.CREATED
+              )
+          )
+        )
       var activeRecord = existingSentence
+      var entityChangeStatus = entityStatus
       val updatedSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), dpsSentenceType, consecutiveToSentence, isManyCharges)
       if (!existingSentence.isSame(updatedSentence)) {
         existingSentence.updateFrom(updatedSentence)
@@ -89,7 +124,7 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
         periodLengths.mapValues { (_, periodLengthEntity) -> periodLengthEntity.copy() },
         existingSentence,
       )
-      entityChangeStatus = if (periodLengthChangeStatus == EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
+      entityChangeStatus = if (periodLengthChangeStatus == EntityChangeStatus.NO_CHANGE || entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
       val courtAppearance = activeRecord.charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId == EntityStatus.ACTIVE }

@@ -71,6 +71,15 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
       it.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
         if (entityChangeStatus == EntityChangeStatus.EDITED) {
           eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, legacySentenceCreatedResponse.appearanceUuid.toString(), EventSource.NOMIS)
+        } else if (entityChangeStatus == EntityChangeStatus.CREATED) {
+          eventService.create(
+            legacySentenceCreatedResponse.prisonerId,
+            legacySentenceCreatedResponse.lifetimeUuid.toString(),
+            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
+            legacySentenceCreatedResponse.courtCaseId,
+            legacySentenceCreatedResponse.appearanceUuid.toString(),
+            EventSource.NOMIS,
+          )
         }
       }
     }

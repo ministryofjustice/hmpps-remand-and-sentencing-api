@@ -29,7 +29,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .isNoContent
 
     val courtCaseUuid = sentenceWithMultipleCharges.courtCaseUuid
-    val (firstCharge, secondCharge) = sentenceWithMultipleCharges.courtCase.appearances.first().charges
+    val (firstCharge, secondCharge, thirdCharge) = sentenceWithMultipleCharges.courtCase.appearances.first().charges
 
     webTestClient
       .get()
@@ -45,6 +45,45 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .isEqualTo("02fe3513-40a6-47e9-a72d-9dafdd936a0e")
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${secondCharge.chargeUuid}')].sentence.sentenceType.sentenceTypeUuid")
       .isEqualTo("02fe3513-40a6-47e9-a72d-9dafdd936a0e")
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${thirdCharge.chargeUuid}')].sentence")
+      .isEqualTo(null)
+  }
+
+  @Test
+  fun `update sentence adding another charge to link to`() {
+    val sentenceWithMultipleCharges = createSentenceWithMultipleCharges()
+    val chargeUuids = sentenceWithMultipleCharges.courtCase.appearances.first().charges.map { it.chargeUuid }
+    val updatedSentence = sentenceWithMultipleCharges.legacySentence.copy(chargeUuids = chargeUuids)
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/${sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid}")
+      .bodyValue(updatedSentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    val courtCaseUuid = sentenceWithMultipleCharges.courtCaseUuid
+    val (firstCharge, secondCharge, thirdCharge) = sentenceWithMultipleCharges.courtCase.appearances.first().charges
+    val sentenceUuid = sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid.toString()
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${firstCharge.chargeUuid}')].sentence.sentenceUuid")
+      .isEqualTo(sentenceUuid)
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${secondCharge.chargeUuid}')].sentence.sentenceUuid")
+      .isEqualTo(sentenceUuid)
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${thirdCharge.chargeUuid}')].sentence.sentenceUuid")
+      .isEqualTo(sentenceUuid)
   }
 
   fun createSentenceWithMultipleCharges(): TestData {
