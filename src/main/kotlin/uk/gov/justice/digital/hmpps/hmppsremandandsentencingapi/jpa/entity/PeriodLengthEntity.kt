@@ -76,7 +76,7 @@ class PeriodLengthEntity(
   }
 
   fun copy(): PeriodLengthEntity = PeriodLengthEntity(
-    id,
+    0,
     periodLengthUuid,
     years,
     months,
