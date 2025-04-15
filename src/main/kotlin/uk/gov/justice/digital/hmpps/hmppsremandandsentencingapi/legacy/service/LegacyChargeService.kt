@@ -132,11 +132,13 @@ class LegacyChargeService(
     ?: throw EntityNotFoundException("No charge found at $lifetimeUUID for appearance $appearanceLifetimeUuid")
 
   @Transactional
-  fun delete(lifetimeUUID: UUID) {
-    val charge = getUnlessDeleted(lifetimeUUID)
-    charge.delete(serviceUserService.getUsername())
-    chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
-  }
+  fun delete(chargeUUID: UUID): LegacyCharge? = chargeRepository.findByChargeUuid(chargeUUID)
+    .filter { it.statusId != EntityStatus.DELETED }
+    .map { charge ->
+      charge.delete(serviceUserService.getUsername())
+      chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
+      LegacyCharge.from(charge)
+    }.firstOrNull()
 
   private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(lifetimeUUID)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")

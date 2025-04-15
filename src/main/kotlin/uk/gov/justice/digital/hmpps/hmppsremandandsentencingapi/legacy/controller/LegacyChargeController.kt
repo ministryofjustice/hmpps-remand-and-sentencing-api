@@ -106,7 +106,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW', 'ROLE_REMAND_AND_SENTENCING_CHARGE_RO')")
   fun get(@PathVariable lifetimeUuid: UUID): LegacyCharge = legacyChargeService.get(lifetimeUuid)
 
-  @DeleteMapping("/{lifetimeUuid}")
+  @DeleteMapping("/{chargeUuid}")
   @Operation(
     summary = "Delete Charge",
     description = "Synchronise a deletion of charge from NOMIS offender charges into remand and sentencing API.",
@@ -119,9 +119,9 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  fun delete(@PathVariable lifetimeUuid: UUID) {
-    legacyChargeService.get(lifetimeUuid).also { legacyCharge ->
-      legacyChargeService.delete(lifetimeUuid)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun delete(@PathVariable chargeUuid: UUID) {
+    legacyChargeService.delete(chargeUuid)?.also { legacyCharge ->
       eventService.delete(legacyCharge.prisonerId, legacyCharge.lifetimeUuid.toString(), legacyCharge.courtCaseUuid, EventSource.NOMIS)
     }
   }
