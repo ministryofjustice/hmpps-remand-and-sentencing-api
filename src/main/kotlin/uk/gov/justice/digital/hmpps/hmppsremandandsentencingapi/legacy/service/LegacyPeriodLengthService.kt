@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
@@ -15,7 +16,7 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
 
   fun upsert(createPeriodLengthEntities: Map<NomisPeriodLengthId, PeriodLengthEntity>, sentenceEntity: SentenceEntity): Pair<EntityChangeStatus, Map<NomisPeriodLengthId, PeriodLengthEntity>> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    val existingPeriodLengths = sentenceEntity.periodLengths
+    val existingPeriodLengths = sentenceEntity.periodLengths.filter { setOf(EntityStatus.ACTIVE, EntityStatus.MANY_CHARGES_DATA_FIX, EntityStatus.INACTIVE).contains(it.statusId) }.toMutableList()
     existingPeriodLengths.forEach { existingPeriodLength ->
       val updatedPeriodLength = createPeriodLengthEntities.firstNotNullOfOrNull { if (it.value.periodLengthUuid == existingPeriodLength.periodLengthUuid) it.value else null }
       if (updatedPeriodLength != null) {
