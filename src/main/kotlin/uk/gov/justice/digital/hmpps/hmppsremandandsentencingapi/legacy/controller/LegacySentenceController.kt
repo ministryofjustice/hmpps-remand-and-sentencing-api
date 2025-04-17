@@ -108,15 +108,15 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "204"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
   fun delete(@PathVariable lifetimeUuid: UUID) {
-    legacySentenceService.get(lifetimeUuid).also { legacySentence ->
-      legacySentenceService.delete(lifetimeUuid)
+    legacySentenceService.delete(lifetimeUuid)?.also { legacySentence ->
       eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), legacySentence.courtCaseId, legacySentence.appearanceUuid.toString(), EventSource.NOMIS)
     }
   }

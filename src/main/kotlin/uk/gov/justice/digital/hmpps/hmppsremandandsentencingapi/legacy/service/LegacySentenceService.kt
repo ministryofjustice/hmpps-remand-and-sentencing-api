@@ -135,13 +135,25 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
   }
 
   @Transactional(readOnly = true)
-  fun get(lifetimeUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(lifetimeUuid))
+  fun get(sentenceUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(sentenceUuid))
 
   @Transactional
-  fun delete(lifetimeUuid: UUID) {
-    val sentence = getUnlessDeleted(lifetimeUuid)
+  fun delete(sentenceUuid: UUID): LegacySentence? = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    .filter { it.statusId != EntityStatus.DELETED }
+    .map { sentence ->
+      delete(sentence)
+      LegacySentence.from(sentence)
+    }.firstOrNull()
+
+  fun delete(sentence: SentenceEntity) {
     sentence.delete(serviceUserService.getUsername())
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
+    sentence.periodLengths
+      .filter { it.statusId != EntityStatus.DELETED }
+      .forEach { periodLength ->
+        legacyPeriodLengthService.delete(periodLength)
+        periodLength
+      }
   }
 
   private fun getDpsSentenceType(sentenceCategory: String?, sentenceCalcType: String?): SentenceTypeEntity? {
