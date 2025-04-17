@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -29,7 +31,7 @@ import java.util.UUID
 @RestController
 @RequestMapping("/legacy/sentence", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-sentence-controller", description = "CRUD operations for syncing sentence data from NOMIS Offender sentences into remand and sentencing api database.")
-class LegacySentenceController(private val legacySentenceService: LegacySentenceService, private val eventService: SentenceDomainEventService) {
+class LegacySentenceController(private val legacySentenceService: LegacySentenceService, private val eventService: SentenceDomainEventService, private val objectMapper: ObjectMapper) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -67,6 +69,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
+    log.info("updating sentence {} with request body {}", lifetimeUuid, objectMapper.writeValueAsString(sentence))
     legacySentenceService.update(lifetimeUuid, sentence).also {
       it.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
         if (entityChangeStatus == EntityChangeStatus.EDITED) {
@@ -119,5 +122,9 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
       legacySentenceService.delete(lifetimeUuid)
       eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), legacySentence.courtCaseId, legacySentence.appearanceUuid.toString(), EventSource.NOMIS)
     }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
