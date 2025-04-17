@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
@@ -154,6 +155,17 @@ class LegacySentenceService(private val sentenceRepository: SentenceRepository, 
         legacyPeriodLengthService.delete(periodLength)
         periodLength
       }
+  }
+
+  fun handleManyChargesSentenceDeleted(sentenceUuid: UUID) {
+    val sentences = sentenceRepository.findBySentenceUuidAndStatusId(sentenceUuid, EntityStatus.MANY_CHARGES_DATA_FIX)
+    if (sentences.size == 1) {
+      val sentenceRecord = sentences.first()
+      sentenceRecord.statusId = EntityStatus.ACTIVE
+      sentenceRecord.updatedAt = ZonedDateTime.now()
+      sentenceRecord.updatedBy = serviceUserService.getUsername()
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
+    }
   }
 
   private fun getDpsSentenceType(sentenceCategory: String?, sentenceCalcType: String?): SentenceTypeEntity? {
