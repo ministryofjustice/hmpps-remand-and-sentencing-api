@@ -267,7 +267,9 @@ class MigrationService(
       val existingPeriodLengths = createdPeriodLengthsMap[it.periodLengthId] ?: mutableListOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
         existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
-        existingPeriodLength.copy()
+        val copiedPeriodLength = existingPeriodLength.copy()
+        copiedPeriodLength.sentenceEntity = createdSentence
+        copiedPeriodLength
       } ?: PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: migrationCreateSentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername())
       val createdPeriodLength = periodLengthRepository.save(toCreatePeriodLength)
       createdPeriodLength.sentenceEntity = createdSentence

@@ -1,0 +1,1 @@
+ALTER TABLE period_length ADD CONSTRAINT unique_uuid_status_sentence UNIQUE (period_length_uuid, status_id, sentence_id)

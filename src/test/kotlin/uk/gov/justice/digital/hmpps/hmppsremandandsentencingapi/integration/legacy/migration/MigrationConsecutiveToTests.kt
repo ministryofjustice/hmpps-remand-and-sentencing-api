@@ -11,8 +11,25 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
 
   @Test
   fun `can create sentence when consecutive to another in the same court case`() {
-    val firstSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 1), legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
-    val consecutiveToSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(1, 5), consecutiveToSentenceId = firstSentence.sentenceId)
+    val firstSentenceId = DataCreator.migrationSentenceId(1, 1)
+    val firstPeriodLengthId = DataCreator.nomisPeriodLengthId(firstSentenceId.offenderBookingId, firstSentenceId.sequence, 1)
+    val firstSentence = DataCreator.migrationCreateSentence(
+      sentenceId = firstSentenceId,
+      legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"),
+      periodLengths = listOf(
+        DataCreator.migrationCreatePeriodLength(periodLengthId = firstPeriodLengthId),
+      ),
+    )
+
+    val consecutiveToSentenceId = DataCreator.migrationSentenceId(1, 5)
+    val consecutiveToPeriodLengthId = DataCreator.nomisPeriodLengthId(consecutiveToSentenceId.offenderBookingId, consecutiveToSentenceId.sequence, 1)
+    val consecutiveToSentence = DataCreator.migrationCreateSentence(
+      sentenceId = consecutiveToSentenceId,
+      consecutiveToSentenceId = firstSentence.sentenceId,
+      periodLengths = listOf(
+        DataCreator.migrationCreatePeriodLength(periodLengthId = consecutiveToPeriodLengthId),
+      ),
+    )
     val charge = DataCreator.migrationCreateCharge(chargeNOMISId = 11, sentence = firstSentence)
     val consecutiveToCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 22, sentence = consecutiveToSentence)
     val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(consecutiveToCharge, charge))
