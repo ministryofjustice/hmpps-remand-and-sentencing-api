@@ -20,7 +20,7 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isOk
+      .isNoContent
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("sentence.deleted")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")

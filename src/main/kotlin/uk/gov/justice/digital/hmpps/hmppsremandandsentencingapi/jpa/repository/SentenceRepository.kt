@@ -10,4 +10,6 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid: UUID, chargeUUID: UUID): SentenceEntity?
 
   fun findBySentenceUuidIn(sentenceUuids: List<UUID>): List<SentenceEntity>
+
+  fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
 }

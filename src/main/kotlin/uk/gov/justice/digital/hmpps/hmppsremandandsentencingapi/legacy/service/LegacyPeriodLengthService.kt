@@ -41,4 +41,9 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
     existingPeriodLengths.addAll(toAddPeriodLengths.values)
     return entityChangeStatus to toAddPeriodLengths
   }
+
+  fun delete(periodLength: PeriodLengthEntity) {
+    periodLength.delete(serviceUserService.getUsername())
+    periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
+  }
 }
