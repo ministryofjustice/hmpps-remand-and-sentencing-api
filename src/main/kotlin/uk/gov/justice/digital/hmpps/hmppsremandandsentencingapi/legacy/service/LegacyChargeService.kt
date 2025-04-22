@@ -30,6 +30,7 @@ class LegacyChargeService(
   private val serviceUserService: ServiceUserService,
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+  private val legacySentenceService: LegacySentenceService,
 ) {
 
   @Transactional
@@ -137,8 +138,17 @@ class LegacyChargeService(
     .map { charge ->
       charge.delete(serviceUserService.getUsername())
       chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
-      LegacyCharge.from(charge)
-    }.firstOrNull()
+      val deletedManyChargesSentence = charge.sentences.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }.map {
+        legacySentenceService.delete(it)
+        it
+      }.firstOrNull()
+      deletedManyChargesSentence to LegacyCharge.from(charge)
+    }.firstOrNull()?.let { (deletedManyChargesSentence, legacyCharge) ->
+      if (deletedManyChargesSentence != null) {
+        legacySentenceService.handleManyChargesSentenceDeleted(deletedManyChargesSentence.sentenceUuid)
+      }
+      legacyCharge
+    }
 
   private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(lifetimeUUID)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
