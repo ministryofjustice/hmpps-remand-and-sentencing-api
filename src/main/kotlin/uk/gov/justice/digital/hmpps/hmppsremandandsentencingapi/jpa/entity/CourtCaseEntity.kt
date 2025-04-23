@@ -8,9 +8,13 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.NamedAttributeNode
+import jakarta.persistence.NamedEntityGraph
+import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
@@ -25,6 +29,29 @@ import java.util.UUID
 
 @Entity
 @Table(name = "court_case")
+@NamedEntityGraph(
+  name = "CourtCaseEntity.withAppearancesAndOutcomes",
+  attributeNodes = [
+    NamedAttributeNode("appearances", subgraph = "appearanceDetails"),
+    NamedAttributeNode("latestCourtAppearance", subgraph = "appearanceDetails"),
+  ],
+  subgraphs = [
+    NamedSubgraph(
+      name = "appearanceDetails",
+      attributeNodes = [
+        NamedAttributeNode("appearanceOutcome"),
+        NamedAttributeNode("nextCourtAppearance", subgraph = "nextAppearanceDetails"),
+      ],
+    ),
+    NamedSubgraph(
+      name = "nextAppearanceDetails",
+      attributeNodes = [
+        NamedAttributeNode("appearanceType"),
+        NamedAttributeNode("futureSkeletonAppearance"),
+      ],
+    ),
+  ],
+)
 class CourtCaseEntity(
   @Id
   @Column
@@ -51,6 +78,7 @@ class CourtCaseEntity(
 ) {
   @OneToMany
   @JoinColumn(name = "court_case_id")
+  @BatchSize(size = 50)
   var appearances: List<CourtAppearanceEntity> = emptyList()
 
   @OneToMany(mappedBy = "courtCase")

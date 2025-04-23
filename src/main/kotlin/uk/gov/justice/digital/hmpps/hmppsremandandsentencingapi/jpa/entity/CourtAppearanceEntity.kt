@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
@@ -78,6 +79,7 @@ class CourtAppearanceEntity(
   var taggedBail: Int?,
 
   @OneToMany(mappedBy = "appearance", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @BatchSize(size = 50)
   val appearanceCharges: MutableSet<AppearanceChargeEntity> = mutableSetOf(),
 
   @OneToOne
