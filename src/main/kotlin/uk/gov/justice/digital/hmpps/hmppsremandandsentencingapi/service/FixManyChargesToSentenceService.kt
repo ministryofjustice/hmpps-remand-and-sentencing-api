@@ -47,7 +47,7 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
       sentenceRecords.forEach { sentenceRecordEventMetadata ->
         val sentenceEventToEmit = fixSentence(sentenceRecordEventMetadata, EventType.SENTENCE_INSERTED, UUID.randomUUID())
         eventsToEmit.add(sentenceEventToEmit)
-        fixPeriodLengths(sentenceRecordEventMetadata.record.periodLengths)
+        fixPeriodLengths(sentenceRecordEventMetadata.record.periodLengths) { it.periodLengthUuid = UUID.randomUUID() }
       }
     }
     return eventsToEmit
@@ -68,11 +68,12 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     )
   }
 
-  private fun fixPeriodLengths(periodLengths: List<PeriodLengthEntity>) {
+  private fun fixPeriodLengths(periodLengths: List<PeriodLengthEntity>, periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}) {
     periodLengths.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
-      .forEach { firstRecordPeriodLength ->
-        firstRecordPeriodLength.statusId = EntityStatus.ACTIVE
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(firstRecordPeriodLength))
+      .forEach { periodLength ->
+        periodLength.statusId = EntityStatus.ACTIVE
+        periodLengthModifyFunction(periodLength)
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
       }
   }
 }
