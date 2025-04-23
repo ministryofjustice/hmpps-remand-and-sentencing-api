@@ -110,7 +110,10 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun searchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseService.searchCourtCases(prisonerId, pageable)
+  fun searchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseService.searchCourtCases(prisonerId, pageable).let { (pageCourtCase, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    pageCourtCase
+  }
 
   @GetMapping("\${court.case.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -126,7 +129,10 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
       ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
     ],
   )
-  fun getCourtCaseDetails(@PathVariable courtCaseUuid: String): CourtCase = courtCaseService.getCourtCaseByUuid(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+  fun getCourtCaseDetails(@PathVariable courtCaseUuid: String): CourtCase = courtCaseService.getCourtCaseByUuid(courtCaseUuid)?.let { (courtCase, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    courtCase
+  } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 
   @GetMapping("/court-case/{courtCaseUuid}/latest-appearance")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -142,7 +148,10 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
       ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
     ],
   )
-  fun getLatestAppearanceDetails(@PathVariable courtCaseUuid: String): CourtAppearance = courtCaseService.getLatestAppearanceByCourtCaseUuid(courtCaseUuid) ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+  fun getLatestAppearanceDetails(@PathVariable courtCaseUuid: String): CourtAppearance = courtCaseService.getLatestAppearanceByCourtCaseUuid(courtCaseUuid)?.let { (courtAppearance, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    courtAppearance
+  } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 
   @PutMapping("/court-case/{courtCaseUuid}/case-references/refresh")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")

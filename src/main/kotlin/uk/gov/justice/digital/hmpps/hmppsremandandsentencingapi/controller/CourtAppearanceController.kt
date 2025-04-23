@@ -66,7 +66,10 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       ApiResponse(responseCode = "404", description = "Not found if no court appearance at uuid"),
     ],
   )
-  fun getCourtAppearanceDetails(@PathVariable appearanceUuid: UUID): CourtAppearance = courtAppearanceService.findAppearanceByUuid(appearanceUuid) ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
+  fun getCourtAppearanceDetails(@PathVariable appearanceUuid: UUID): CourtAppearance = courtAppearanceService.findAppearanceByUuid(appearanceUuid)?.let { (courtAppearance, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    courtAppearance
+  } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
 
   @PutMapping("/court-appearance/{appearanceUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")

@@ -27,7 +27,7 @@ class PeriodLengthEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  val periodLengthUuid: UUID,
+  var periodLengthUuid: UUID,
   var years: Int?,
   var months: Int?,
   var weeks: Int?,

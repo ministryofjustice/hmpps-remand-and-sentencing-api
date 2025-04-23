@@ -183,14 +183,18 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$firstChargeUuid')].sentence.sentenceUuid")
-      .isEqualTo(sentenceUuid.toString())
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$secondChargeUuid')].sentence.sentenceUuid")
-      .isEqualTo(sentenceUuid.toString())
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$firstChargeUuid')].sentence.periodLengths[0].periodLengthUuid")
-      .isEqualTo(periodLengthUuid.toString())
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$secondChargeUuid')].sentence.periodLengths[0].periodLengthUuid")
-      .isEqualTo(periodLengthUuid.toString())
+      .jsonPath("$.appearances[*].charges[*].sentence.sentenceUuid")
+      .value<List<String>> { result ->
+        Assertions.assertThat(result).contains(sentenceUuid.toString())
+        val counts = result.groupingBy { it }.eachCount()
+        Assertions.assertThat(counts.values).allMatch { it == 1 }
+      }
+      .jsonPath("$.appearances[*].charges[*].sentence.periodLengths[*].periodLengthUuid")
+      .value<List<String>> { result ->
+        Assertions.assertThat(result).contains(periodLengthUuid.toString())
+        val counts = result.groupingBy { it }.eachCount()
+        Assertions.assertThat(counts.values).allMatch { it == 1 }
+      }
   }
 
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {

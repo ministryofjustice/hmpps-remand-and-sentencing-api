@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
-class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService) {
+class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService) {
 
   @Transactional
   fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
@@ -59,17 +59,33 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     return RecordResponse(courtCaseRepository.save(courtCase), eventsToEmit)
   }
 
-  @Transactional(readOnly = true)
-  fun searchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId, pageable).map {
-    CourtCase.from(it)
+  @Transactional
+  fun searchCourtCases(prisonerId: String, pageable: Pageable): RecordResponse<Page<CourtCase>> {
+    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId, pageable)
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasePage.content)
+    return RecordResponse(
+      courtCasePage.map {
+        CourtCase.from(it)
+      },
+      eventsToEmit,
+    )
   }
 
-  @Transactional(readOnly = true)
-  fun getCourtCaseByUuid(courtCaseUUID: String): CourtCase? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let { CourtCase.from(it) }
+  @Transactional
+  fun getCourtCaseByUuid(courtCaseUUID: String): RecordResponse<CourtCase>? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let {
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it))
+    RecordResponse(CourtCase.from(it), eventsToEmit)
+  }
 
-  @Transactional(readOnly = true)
-  fun getLatestAppearanceByCourtCaseUuid(courtCaseUUID: String): CourtAppearance? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let { CourtAppearance.from(it.latestCourtAppearance!!) }
+  @Transactional
+  fun getLatestAppearanceByCourtCaseUuid(courtCaseUUID: String): RecordResponse<CourtAppearance>? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let {
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it))
+    RecordResponse(CourtAppearance.from(it.latestCourtAppearance!!), eventsToEmit)
+  }
 
-  @Transactional(readOnly = true)
-  fun getSentencedCourtCases(prisonerId: String): CourtCases = courtCaseRepository.findSentencedCourtCasesByPrisonerId(prisonerId).let { CourtCases.from(it) }
+  @Transactional
+  fun getSentencedCourtCases(prisonerId: String): RecordResponse<CourtCases> = courtCaseRepository.findSentencedCourtCasesByPrisonerId(prisonerId).let {
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(it)
+    RecordResponse(CourtCases.from(it), eventsToEmit)
+  }
 }
