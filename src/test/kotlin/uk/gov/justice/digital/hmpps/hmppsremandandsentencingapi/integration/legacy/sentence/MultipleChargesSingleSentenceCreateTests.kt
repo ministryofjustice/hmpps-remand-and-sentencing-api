@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -40,9 +41,15 @@ class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
+      .jsonPath("$.appearances[*].charges[*].sentence.sentenceUuid")
+      .value<List<String>> { result ->
+        Assertions.assertThat(result).contains(response.lifetimeUuid.toString())
+        val counts = result.groupingBy { it }.eachCount()
+        Assertions.assertThat(counts.values).allMatch { it == 1 }
+      }
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${firstCharge.chargeUuid}')].sentence.sentenceUuid")
-      .isEqualTo(response.lifetimeUuid.toString())
+      .exists()
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${secondCharge.chargeUuid}')].sentence.sentenceUuid")
-      .isEqualTo(response.lifetimeUuid.toString())
+      .exists()
   }
 }

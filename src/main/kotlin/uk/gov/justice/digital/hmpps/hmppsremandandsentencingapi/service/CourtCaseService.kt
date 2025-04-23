@@ -14,10 +14,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
-class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService) {
+class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService) {
 
   @Transactional
   fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
@@ -60,12 +61,23 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   @Transactional(readOnly = true)
-  fun searchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId, pageable).map {
-    CourtCase.from(it)
+  fun searchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCase> {
+    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId, pageable)
+    val sentences = courtCasePage.content.flatMap { it.appearances.flatMap { it.appearanceCharges.filter { it.charge != null }.flatMap { it.charge!!.sentences } } }
+
+    return courtCasePage.map {
+      CourtCase.from(it)
+    }
   }
 
-  @Transactional(readOnly = true)
-  fun getCourtCaseByUuid(courtCaseUUID: String): CourtCase? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let { CourtCase.from(it) }
+  private fun courtCaseToSentences(courtCaseEntity: CourtCaseEntity): List<SentenceEntity> = courtCaseEntity.appearances.flatMap { it.appearanceCharges.filter { it.charge != null }.flatMap { it.charge!!.sentences } }
+
+  @Transactional
+  fun getCourtCaseByUuid(courtCaseUUID: String): CourtCase? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let {
+    val sentences = courtCaseToSentences(it)
+    fixManyChargesToSentenceService.fixSentences(sentences)
+    CourtCase.from(it)
+  }
 
   @Transactional(readOnly = true)
   fun getLatestAppearanceByCourtCaseUuid(courtCaseUUID: String): CourtAppearance? = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUUID)?.let { CourtAppearance.from(it.latestCourtAppearance!!) }

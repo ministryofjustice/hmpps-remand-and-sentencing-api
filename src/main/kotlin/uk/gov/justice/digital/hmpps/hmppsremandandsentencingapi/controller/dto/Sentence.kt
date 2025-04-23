@@ -21,7 +21,7 @@ data class Sentence(
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
       sentenceEntity.sentenceUuid,
       sentenceEntity.chargeNumber,
-      sentenceEntity.periodLengths.filter { setOf(EntityStatus.ACTIVE, EntityStatus.MANY_CHARGES_DATA_FIX).contains(it.statusId) }.map { PeriodLength.from(it) },
+      sentenceEntity.periodLengths.filter { it.statusId == EntityStatus.ACTIVE }.map { PeriodLength.from(it) },
       sentenceEntity.sentenceServeType,
       sentenceEntity.consecutiveTo?.chargeNumber,
       sentenceEntity.sentenceType?.let { SentenceType.from(it) },
