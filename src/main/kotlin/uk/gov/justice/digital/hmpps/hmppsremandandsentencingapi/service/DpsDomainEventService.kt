@@ -110,6 +110,8 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
             eventMetaData.recallId!!,
             EventSource.DPS,
           )
+
+          EventType.METADATA_ONLY -> {}
         }
       }
   }

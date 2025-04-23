@@ -17,4 +17,5 @@ enum class EventType(val order: Int) {
   RECALL_INSERTED(130),
   RECALL_UPDATED(140),
   RECALL_DELETED(150),
+  METADATA_ONLY(999),
 }

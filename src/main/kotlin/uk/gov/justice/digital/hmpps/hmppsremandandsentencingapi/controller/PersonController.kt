@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
 
 @RestController
 @RequestMapping("/person", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "person-controller", description = "Get person details")
-class PersonController(private val personService: PersonService, private val courtCaseService: CourtCaseService) {
+class PersonController(private val personService: PersonService, private val courtCaseService: CourtCaseService, private val dpsDomainEventService: DpsDomainEventService) {
 
   @GetMapping("/{prisonerId}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -48,5 +49,8 @@ class PersonController(private val personService: PersonService, private val cou
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getSentencedCourtCases(@PathVariable prisonerId: String): CourtCases = courtCaseService.getSentencedCourtCases(prisonerId)
+  fun getSentencedCourtCases(@PathVariable prisonerId: String): CourtCases = courtCaseService.getSentencedCourtCases(prisonerId).let { (courtCases, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    courtCases
+  }
 }

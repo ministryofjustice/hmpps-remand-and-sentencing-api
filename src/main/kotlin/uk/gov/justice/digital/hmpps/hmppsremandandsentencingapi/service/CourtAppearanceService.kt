@@ -46,6 +46,7 @@ class CourtAppearanceService(
   private val appearanceTypeRepository: AppearanceTypeRepository,
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
 ) {
 
   @Transactional
@@ -390,5 +391,8 @@ class CourtAppearanceService(
   }
 
   @Transactional(readOnly = true)
-  fun findAppearanceByUuid(appearanceUuid: UUID): CourtAppearance? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let { CourtAppearance.from(it) }
+  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
+    RecordResponse(CourtAppearance.from(it), eventsToEmit)
+  }
 }
