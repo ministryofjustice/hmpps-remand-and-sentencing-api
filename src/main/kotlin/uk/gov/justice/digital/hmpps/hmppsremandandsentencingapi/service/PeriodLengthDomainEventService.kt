@@ -24,11 +24,11 @@ class PeriodLengthDomainEventService(
     courtChargeId: String,
     courtCaseId: String,
     courtAppearanceId: String,
-    source: EventSource
+    source: EventSource,
   ) {
     snsService.publishDomainEvent(
-      "period-length.inserted",
-      "Period length inserted",
+      "sentence.period-length.inserted",
+      "Sentence period length inserted",
       generateDetailsUri(periodLengthLookupPath, periodLengthId),
       ZonedDateTime.now(),
       HmppsPeriodLengthMessage(
@@ -37,7 +37,7 @@ class PeriodLengthDomainEventService(
         courtChargeId = courtChargeId,
         courtCaseId = courtCaseId,
         courtAppearanceId = courtAppearanceId,
-        source = source
+        source = source,
       ),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
@@ -50,11 +50,11 @@ class PeriodLengthDomainEventService(
     courtChargeId: String,
     courtCaseId: String,
     courtAppearanceId: String,
-    source: EventSource
+    source: EventSource,
   ) {
     snsService.publishDomainEvent(
-      "period-length.updated",
-      "Period length updated",
+      "sentence.period-length.updated",
+      "Sentence period length updated",
       generateDetailsUri(periodLengthLookupPath, periodLengthId),
       ZonedDateTime.now(),
       HmppsPeriodLengthMessage(
@@ -63,7 +63,7 @@ class PeriodLengthDomainEventService(
         courtChargeId = courtChargeId,
         courtCaseId = courtCaseId,
         courtAppearanceId = courtAppearanceId,
-        source = source
+        source = source,
       ),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
@@ -76,11 +76,11 @@ class PeriodLengthDomainEventService(
     courtChargeId: String,
     courtCaseId: String,
     courtAppearanceId: String,
-    source: EventSource
+    source: EventSource,
   ) {
     snsService.publishDomainEvent(
-      "period-length.deleted",
-      "Period length deleted",
+      "sentence.period-length.deleted",
+      "Sentence period length deleted",
       generateDetailsUri(periodLengthLookupPath, periodLengthId),
       ZonedDateTime.now(),
       HmppsPeriodLengthMessage(
@@ -89,7 +89,7 @@ class PeriodLengthDomainEventService(
         courtChargeId = courtChargeId,
         courtCaseId = courtCaseId,
         courtAppearanceId = courtAppearanceId,
-        source = source
+        source = source,
       ),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )

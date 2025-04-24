@@ -16,14 +16,14 @@ import java.util.function.Consumer
 class PeriodLengthService(
   private val periodLengthRepository: PeriodLengthRepository,
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
-  private val serviceUserService: ServiceUserService
+  private val serviceUserService: ServiceUserService,
 ) {
 
   fun upsert(
     createPeriodLengthEntities: List<PeriodLengthEntity>,
     existingPeriodLengths: MutableList<PeriodLengthEntity>,
     prisonerId: String,
-    onCreateConsumer: Consumer<PeriodLengthEntity>
+    onCreateConsumer: Consumer<PeriodLengthEntity>,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -44,8 +44,8 @@ class PeriodLengthService(
               chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
               sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
               periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
-              eventType = EventType.PERIOD_LENGTH_UPDATED
-            )
+              eventType = EventType.PERIOD_LENGTH_UPDATED,
+            ),
           )
         }
       } else {
@@ -61,8 +61,8 @@ class PeriodLengthService(
             chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
             sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
-            eventType = EventType.PERIOD_LENGTH_DELETED
-          )
+            eventType = EventType.PERIOD_LENGTH_DELETED,
+          ),
         )
       }
     }
@@ -83,8 +83,8 @@ class PeriodLengthService(
             chargeId = savedPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
             sentenceId = savedPeriodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLengthId = savedPeriodLength.periodLengthUuid.toString(),
-            eventType = EventType.PERIOD_LENGTH_INSERTED
-          )
+            eventType = EventType.PERIOD_LENGTH_INSERTED,
+          ),
         )
         savedPeriodLength
       }

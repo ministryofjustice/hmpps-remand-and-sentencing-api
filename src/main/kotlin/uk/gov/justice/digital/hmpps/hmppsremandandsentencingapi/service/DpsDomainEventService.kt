@@ -124,7 +124,7 @@ class DpsDomainEventService(
             courtChargeId = eventMetaData.chargeId!!,
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
-            source = EventSource.DPS
+            source = EventSource.DPS,
           )
           EventType.PERIOD_LENGTH_UPDATED -> periodLengthDomainEventService.update(
             prisonerId = eventMetaData.prisonerId,
@@ -133,7 +133,7 @@ class DpsDomainEventService(
             courtChargeId = eventMetaData.chargeId!!,
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
-            source = EventSource.DPS
+            source = EventSource.DPS,
           )
           EventType.PERIOD_LENGTH_DELETED -> periodLengthDomainEventService.delete(
             prisonerId = eventMetaData.prisonerId,
@@ -142,7 +142,7 @@ class DpsDomainEventService(
             courtChargeId = eventMetaData.chargeId!!,
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
-            source = EventSource.DPS
+            source = EventSource.DPS,
           )
 
           EventType.METADATA_ONLY -> {}

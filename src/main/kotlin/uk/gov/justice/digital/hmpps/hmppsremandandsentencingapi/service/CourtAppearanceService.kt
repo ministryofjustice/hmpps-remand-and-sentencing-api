@@ -112,14 +112,9 @@ class CourtAppearanceService(
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
     courtAppearance.overallSentenceLength?.let { createPeriodLength ->
-      val periodLengthRecord = periodLengthService.upsert(
-        listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())),
-        createdCourtAppearance.periodLengths,
-        courtCaseEntity.prisonerId
-      ) { createdPeriodLength ->
+      periodLengthService.upsert(listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())), createdCourtAppearance.periodLengths, courtCaseEntity.prisonerId) { createdPeriodLength ->
         createdPeriodLength.appearanceEntity = createdCourtAppearance
       }
-      eventsToEmit.addAll(periodLengthRecord.eventsToEmit)
     }
     updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
@@ -159,7 +154,7 @@ class CourtAppearanceService(
     eventsToEmit.addAll(chargeEventsToEmit)
     val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord, existingCourtAppearanceEntity.nextCourtAppearance)
     updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
-    if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED || periodLengthResponse.record != EntityChangeStatus.NO_CHANGE) {
+    if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
         EventMetadataCreator.courtAppearanceEventMetadata(
           activeRecord.courtCase.prisonerId,
