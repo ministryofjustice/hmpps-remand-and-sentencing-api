@@ -38,13 +38,13 @@ class PeriodLengthService(
 
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
-              prisonerId,
-              existingPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
-              existingPeriodLength.appearanceEntity?.appearanceUuid.toString(),
-              existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
-              existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
-              existingPeriodLength.periodLengthUuid.toString(),
-              EventType.PERIOD_LENGTH_UPDATED
+              prisonerId = prisonerId,
+              courtCaseId = existingPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
+              courtAppearanceId = existingPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+              chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
+              sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
+              periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
+              eventType = EventType.PERIOD_LENGTH_UPDATED
             )
           )
         }
@@ -55,13 +55,13 @@ class PeriodLengthService(
 
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId,
-            existingPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
-            existingPeriodLength.appearanceEntity?.appearanceUuid.toString(),
-            existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
-            existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
-            existingPeriodLength.periodLengthUuid.toString(),
-            EventType.PERIOD_LENGTH_DELETED
+            prisonerId = prisonerId,
+            courtCaseId = existingPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
+            courtAppearanceId = existingPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+            chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
+            sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
+            periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
+            eventType = EventType.PERIOD_LENGTH_DELETED
           )
         )
       }
@@ -77,13 +77,13 @@ class PeriodLengthService(
 
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId,
-            savedPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
-            savedPeriodLength.appearanceEntity?.appearanceUuid.toString(),
-            savedPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
-            savedPeriodLength.sentenceEntity?.sentenceUuid.toString(),
-            savedPeriodLength.periodLengthUuid.toString(),
-            EventType.PERIOD_LENGTH_INSERTED
+            prisonerId = prisonerId,
+            courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
+            courtAppearanceId = savedPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+            chargeId = savedPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
+            sentenceId = savedPeriodLength.sentenceEntity?.sentenceUuid.toString(),
+            periodLengthId = savedPeriodLength.periodLengthUuid.toString(),
+            eventType = EventType.PERIOD_LENGTH_INSERTED
           )
         )
         savedPeriodLength
