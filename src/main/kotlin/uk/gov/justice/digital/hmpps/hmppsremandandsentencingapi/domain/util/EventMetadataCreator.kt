@@ -57,6 +57,7 @@ class EventMetadataCreator {
         sentenceId = sentenceId,
         recallId = null,
         eventType = eventType,
-        periodLengthId = periodLengthId)
+        periodLengthId = periodLengthId
+    )
   }
 }
