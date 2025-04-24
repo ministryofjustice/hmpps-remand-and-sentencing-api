@@ -6,7 +6,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 
 @Service
-class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDomainEventService, private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService, private val chargeDomainEventService: ChargeDomainEventService, private val sentenceDomainEventService: SentenceDomainEventService, private val recallDomainEventService: RecallDomainEventService) {
+class DpsDomainEventService(
+  private val courtCaseDomainEventService: CourtCaseDomainEventService,
+  private val courtAppearanceDomainEventService: CourtAppearanceDomainEventService,
+  private val chargeDomainEventService: ChargeDomainEventService,
+  private val sentenceDomainEventService: SentenceDomainEventService,
+  private val recallDomainEventService: RecallDomainEventService,
+  private val periodLengthDomainEventService: PeriodLengthDomainEventService,
+) {
 
   fun emitEvents(eventsMetadata: Set<EventMetadata>) {
     eventsMetadata.sortedBy { it.eventType.order }
@@ -109,6 +116,33 @@ class DpsDomainEventService(private val courtCaseDomainEventService: CourtCaseDo
             eventMetaData.prisonerId,
             eventMetaData.recallId!!,
             EventSource.DPS,
+          )
+          EventType.PERIOD_LENGTH_INSERTED -> periodLengthDomainEventService.create(
+            prisonerId = eventMetaData.prisonerId,
+            periodLengthId = eventMetaData.periodLengthId!!,
+            sentenceId = eventMetaData.sentenceId!!,
+            courtChargeId = eventMetaData.chargeId!!,
+            courtCaseId = eventMetaData.courtCaseId!!,
+            courtAppearanceId = eventMetaData.courtAppearanceId!!,
+            source = EventSource.DPS
+          )
+          EventType.PERIOD_LENGTH_UPDATED -> periodLengthDomainEventService.update(
+            prisonerId = eventMetaData.prisonerId,
+            periodLengthId = eventMetaData.periodLengthId!!,
+            sentenceId = eventMetaData.sentenceId!!,
+            courtChargeId = eventMetaData.chargeId!!,
+            courtCaseId = eventMetaData.courtCaseId!!,
+            courtAppearanceId = eventMetaData.courtAppearanceId!!,
+            source = EventSource.DPS
+          )
+          EventType.PERIOD_LENGTH_DELETED -> periodLengthDomainEventService.delete(
+            prisonerId = eventMetaData.prisonerId,
+            periodLengthId = eventMetaData.periodLengthId!!,
+            sentenceId = eventMetaData.sentenceId!!,
+            courtChargeId = eventMetaData.chargeId!!,
+            courtCaseId = eventMetaData.courtCaseId!!,
+            courtAppearanceId = eventMetaData.courtAppearanceId!!,
+            source = EventSource.DPS
           )
 
           EventType.METADATA_ONLY -> {}
