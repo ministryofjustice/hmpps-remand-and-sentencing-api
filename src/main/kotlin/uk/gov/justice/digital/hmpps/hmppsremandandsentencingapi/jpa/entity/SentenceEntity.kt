@@ -79,7 +79,7 @@ class SentenceEntity(
     createdPrison == other.createdPrison &&
     ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
     convictionDate == other.convictionDate &&
-    ((fineAmount == null && other.fineAmount == null) || other.fineAmount?.compareTo(fineAmount) == 0) &&
+    ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
     statusId == other.statusId
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
