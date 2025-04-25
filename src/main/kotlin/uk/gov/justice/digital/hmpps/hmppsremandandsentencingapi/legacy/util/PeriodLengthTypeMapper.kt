@@ -10,6 +10,11 @@ class PeriodLengthTypeMapper {
     val civilSentenceCalcTypes: Set<String> = setOf("CIVIL", "CIVILLT")
 
     val extendedSentenceCalcTypes: Set<String> = setOf("EDS18", "EDS21", "EDSU18", "EPP", "LASPO_AR", "LASPO_DR", "STS18", "STS21")
+    val sopcCalcTypes: Set<String> = setOf("SDOPCU18", "SOPC18", "SOPC21", "SEC236A")
+    val recallExtendedSentenceCalcTypes: Set<String> = setOf("LR_EDS18", "LR_EDS21", "LR_EDSU18", "LR_LASPO_AR", "LR_LASPO_DR")
+    val recallSopcCalcTypes: Set<String> = setOf("LR_SEC236A", "LR_SEC236A", "LR_SOPC18", "LR_SOPC21")
+    val calcTypesWithNomisLicenseAndCustodialPeriodTypes = extendedSentenceCalcTypes + sopcCalcTypes + recallExtendedSentenceCalcTypes + recallSopcCalcTypes
+
     const val NOMIS_DETENTION_TERM_CODE: String = "DET"
     const val NOMIS_IMPRISONMENT_TERM_CODE: String = "IMP"
     const val NOMIS_LICENCE_TERM_CODE: String = "LIC"
@@ -20,7 +25,7 @@ class PeriodLengthTypeMapper {
       val periodLengthType = when {
         periodLengthLegacyData.lifeSentence == true -> PeriodLengthType.TARIFF_LENGTH
         periodLengthLegacyData.sentenceTermCode == NOMIS_DETENTION_TERM_CODE && civilSentenceCalcTypes.contains(sentenceCalcType) -> PeriodLengthType.TERM_LENGTH
-        periodLengthLegacyData.sentenceTermCode == NOMIS_IMPRISONMENT_TERM_CODE && extendedSentenceCalcTypes.contains(sentenceCalcType) -> PeriodLengthType.CUSTODIAL_TERM
+        periodLengthLegacyData.sentenceTermCode == NOMIS_IMPRISONMENT_TERM_CODE && calcTypesWithNomisLicenseAndCustodialPeriodTypes.contains(sentenceCalcType) -> PeriodLengthType.CUSTODIAL_TERM
         periodLengthLegacyData.sentenceTermCode == NOMIS_LICENCE_TERM_CODE -> PeriodLengthType.LICENCE_PERIOD
         supportedNomisTermCodes.contains(periodLengthLegacyData.sentenceTermCode) -> PeriodLengthType.SENTENCE_LENGTH
         else -> PeriodLengthType.UNSUPPORTED
