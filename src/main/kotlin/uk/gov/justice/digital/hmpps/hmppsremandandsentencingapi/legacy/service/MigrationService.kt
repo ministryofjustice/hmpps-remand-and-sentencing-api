@@ -75,8 +75,8 @@ class MigrationService(
     val createdCourtCasesMap: MutableMap<Long, CourtCaseEntity> = HashMap()
     val createdCourtAppearancesMap: MutableMap<Long, CourtAppearanceEntity> = HashMap()
     val createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>> = HashMap()
-    val createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>> = HashMap()
-    val createdPeriodLengthMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>> = HashMap()
+    val createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>> = HashMap()
+    val createdPeriodLengthMap: MutableMap<NomisPeriodLengthId, MutableSet<PeriodLengthEntity>> = HashMap()
 
     migrationCreateCourtCases.courtCases.forEach { migrationCreateCourtCase ->
       createCourtCase(migrationCreateCourtCase, migrationCreateCourtCases.prisonerId, serviceUserService.getUsername(), createdCourtCasesMap, createdCourtAppearancesMap, createdChargesMap, createdSentencesMap, createdPeriodLengthMap)
@@ -146,7 +146,7 @@ class MigrationService(
       }
   }
 
-  fun linkConsecutiveToSentences(migrationCreateCourtCases: MigrationCreateCourtCases, createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>>) {
+  fun linkConsecutiveToSentences(migrationCreateCourtCases: MigrationCreateCourtCases, createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>>) {
     migrationCreateCourtCases.courtCases.flatMap { it.appearances }.flatMap { it.charges }.filter { it.sentence?.consecutiveToSentenceId != null }
       .map { it.sentence!! }
       .forEach { nomisSentence ->
@@ -175,7 +175,7 @@ class MigrationService(
     periodLengthHistoryRepository.saveAll(periodLengths.map { PeriodLengthHistoryEntity.from(it) })
   }
 
-  fun createCourtCase(migrationCreateCourtCase: MigrationCreateCourtCase, prisonerId: String, createdByUsername: String, createdCourtCaseMap: MutableMap<Long, CourtCaseEntity>, createdCourtAppearancesMap: MutableMap<Long, CourtAppearanceEntity>, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>>) {
+  fun createCourtCase(migrationCreateCourtCase: MigrationCreateCourtCase, prisonerId: String, createdByUsername: String, createdCourtCaseMap: MutableMap<Long, CourtCaseEntity>, createdCourtAppearancesMap: MutableMap<Long, CourtAppearanceEntity>, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableSet<PeriodLengthEntity>>) {
     val createdCourtCase = courtCaseRepository.save(CourtCaseEntity.from(migrationCreateCourtCase, createdByUsername, prisonerId))
     val latestCourtCaseReference = migrationCreateCourtCase.courtCaseLegacyData.caseReferences.maxByOrNull { caseReferenceLegacyData -> caseReferenceLegacyData.updatedDate }?.offenderCaseReference
     val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdByUsername, createdCourtCase, latestCourtCaseReference, createdChargesMap, createdSentencesMap, createdPeriodLengthsMap)
@@ -187,7 +187,7 @@ class MigrationService(
     createdCourtCaseMap.put(migrationCreateCourtCase.caseId, createdCourtCase)
   }
 
-  fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>>): Map<Long, CourtAppearanceEntity> {
+  fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableSet<PeriodLengthEntity>>): Map<Long, CourtAppearanceEntity> {
     val nomisAppearanceOutcomeIds = migrationCreateAppearances.filter { appearance -> appearance.legacyData.nomisOutcomeCode != null }.map { appearance -> appearance.legacyData.nomisOutcomeCode!! }.distinct()
     val dpsAppearanceOutcomes = appearanceOutcomeRepository.findByNomisCodeIn(nomisAppearanceOutcomeIds).associate { entity -> entity.nomisCode to entity }
     val nomisChargeOutcomeIds = migrationCreateAppearances.flatMap { courtAppearance -> courtAppearance.charges }.filter { charge -> charge.legacyData.nomisOutcomeCode != null }.map { charge -> charge.legacyData.nomisOutcomeCode!! }.distinct()
@@ -196,7 +196,7 @@ class MigrationService(
     return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.eventId to createAppearance(appearance, createdByUsername, createdCourtCase, courtCaseReference, dpsAppearanceOutcomes, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, createdPeriodLengthsMap) }
   }
 
-  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>>): CourtAppearanceEntity {
+  fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdByUsername: String, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableSet<PeriodLengthEntity>>): CourtAppearanceEntity {
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { dpsAppearanceOutcomes[it] }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, createdByUsername, courtCaseReference))
     val charges = migrationCreateCourtAppearance.charges.map { charge -> createCharge(charge, createdByUsername, dpsChargeOutcomes, createdChargesMap, dpsSentenceTypes, createdSentencesMap, createdPeriodLengthsMap, migrationCreateCourtAppearance.eventId) }
@@ -212,7 +212,7 @@ class MigrationService(
     return createdAppearance
   }
 
-  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>>, eventId: Long): ChargeEntity {
+  fun createCharge(migrationCreateCharge: MigrationCreateCharge, createdByUsername: String, dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>, createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>>, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableSet<PeriodLengthEntity>>, eventId: Long): ChargeEntity {
     val dpsChargeOutcome = migrationCreateCharge.legacyData.nomisOutcomeCode?.let { dpsChargeOutcomes[it] }
     migrationCreateCharge.legacyData = dpsChargeOutcome?.let { migrationCreateCharge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: migrationCreateCharge.legacyData
     val existingChangeRecords = createdChargesMap[migrationCreateCharge.chargeNOMISId] ?: mutableListOf()
@@ -251,11 +251,11 @@ class MigrationService(
     return dpsSentenceTypes[sentenceCalcType to sentenceCategory]
   }
 
-  fun createSentence(migrationCreateSentence: MigrationCreateSentence, chargeEntity: ChargeEntity, createdByUsername: String, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>>): SentenceEntity {
+  fun createSentence(migrationCreateSentence: MigrationCreateSentence, chargeEntity: ChargeEntity, createdByUsername: String, dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, createdSentencesMap: MutableMap<MigrationSentenceId, MutableSet<SentenceEntity>>, createdPeriodLengthsMap: MutableMap<NomisPeriodLengthId, MutableSet<PeriodLengthEntity>>): SentenceEntity {
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(dpsSentenceTypes, it) }
     migrationCreateSentence.legacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
 
-    val existingSentences = createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableListOf()
+    val existingSentences = createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableSetOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
       existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
       existingSentence.copyFrom(migrationCreateSentence, createdByUsername, chargeEntity, dpsSentenceType)
@@ -264,7 +264,7 @@ class MigrationService(
     existingSentences.add(createdSentence)
 
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
-      val existingPeriodLengths = createdPeriodLengthsMap[it.periodLengthId] ?: mutableListOf()
+      val existingPeriodLengths = createdPeriodLengthsMap[it.periodLengthId] ?: mutableSetOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
         existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
         val copiedPeriodLength = existingPeriodLength.copy()
@@ -276,7 +276,7 @@ class MigrationService(
       existingPeriodLengths.add(createdPeriodLength)
       createdPeriodLengthsMap.put(it.periodLengthId, existingPeriodLengths)
       createdPeriodLength
-    }.toMutableList()
+    }.toMutableSet()
     createdSentencesMap.put(migrationCreateSentence.sentenceId, existingSentences)
     return createdSentence
   }

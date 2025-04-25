@@ -62,7 +62,7 @@ class ChargeEntity(
   var mergedFromCourtCase: CourtCaseEntity? = null,
 ) {
   @OneToMany(mappedBy = "charge")
-  var sentences: MutableList<SentenceEntity> = mutableListOf()
+  var sentences: MutableSet<SentenceEntity> = mutableSetOf()
 
   fun hasNoActiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId == EntityStatus.ACTIVE }
 
@@ -111,7 +111,7 @@ class ChargeEntity(
       legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase,
     )
-    charge.sentences = sentences.toMutableList()
+    charge.sentences = sentences.toMutableSet()
     return charge
   }
 
@@ -129,7 +129,7 @@ class ChargeEntity(
       legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase,
     )
-    chargeEntity.sentences = sentences.toMutableList()
+    chargeEntity.sentences = sentences.toMutableSet()
     return chargeEntity
   }
 
@@ -140,7 +140,7 @@ class ChargeEntity(
       terrorRelated,
       currentDate, createdBy, createdPrison, currentDate, null, null, legacyData, appearanceCharges.toMutableSet(),
     )
-    charge.sentences = sentences.toMutableList()
+    charge.sentences = sentences.toMutableSet()
     return charge
   }
 
@@ -175,11 +175,20 @@ class ChargeEntity(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
+
     other as ChargeEntity
-    return id == other.id
+
+    if (id != other.id) return false
+    if (chargeUuid != other.chargeUuid) return false
+
+    return true
   }
 
-  override fun hashCode(): Int = id
+  override fun hashCode(): Int {
+    var result = id
+    result = 31 * result + chargeUuid.hashCode()
+    return result
+  }
 
   companion object {
     fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = charge.prisonId)
