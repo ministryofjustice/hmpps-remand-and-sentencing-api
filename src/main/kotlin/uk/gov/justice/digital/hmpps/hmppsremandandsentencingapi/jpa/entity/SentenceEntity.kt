@@ -71,7 +71,7 @@ class SentenceEntity(
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
-  var periodLengths: MutableList<PeriodLengthEntity> = mutableListOf()
+  var periodLengths: MutableSet<PeriodLengthEntity> = mutableSetOf()
 
   fun isSame(other: SentenceEntity?): Boolean = chargeNumber == other?.chargeNumber &&
     sentenceServeType == other?.sentenceServeType &&
@@ -100,7 +100,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fineAmount?.fineAmount,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableList()
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableSet()
     return sentenceEntity
   }
 
@@ -129,7 +129,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fine?.fineAmount,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, createdBy, isManyCharges) }.toMutableList()
+    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, createdBy, isManyCharges) }.toMutableSet()
     return sentenceEntity
   }
 

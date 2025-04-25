@@ -24,13 +24,14 @@ class CourtCaseReferenceServiceTests {
   private val serviceUserService = mockk<ServiceUserService>()
   private val courtAppearanceHistoryRepository = mockk<CourtAppearanceHistoryRepository>()
   private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, courtAppearanceRepository, serviceUserService, courtAppearanceHistoryRepository)
+  private var idInt: Int = 0
 
   @Test
   fun `insert new active case references`() {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
 
     val activeCourtAppearance = generateCourtAppearance("REFERENCE1", EntityStatus.ACTIVE, courtCase)
-    courtCase.appearances = listOf(activeCourtAppearance)
+    courtCase.appearances = setOf(activeCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     val caseReferences = courtCase.legacyData!!.caseReferences
@@ -43,7 +44,7 @@ class CourtCaseReferenceServiceTests {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
     courtCase.legacyData = generateLegacyData(listOf(oldCaseReference))
     val deletedCourtAppearance = generateCourtAppearance(oldCaseReference, EntityStatus.DELETED, courtCase)
-    courtCase.appearances = listOf(deletedCourtAppearance)
+    courtCase.appearances = setOf(deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     val caseReferences = courtCase.legacyData!!.caseReferences
@@ -58,7 +59,7 @@ class CourtCaseReferenceServiceTests {
     courtCase.legacyData = generateLegacyData(existingReferences + oldCaseReference)
     val activeCourtAppearance = generateCourtAppearance("ANEWREFERENCE", EntityStatus.ACTIVE, courtCase)
     val deletedCourtAppearance = generateCourtAppearance("OLDCASEREFERENCE", EntityStatus.DELETED, courtCase)
-    courtCase.appearances = listOf(activeCourtAppearance, deletedCourtAppearance)
+    courtCase.appearances = setOf(activeCourtAppearance, deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     val caseReferences = courtCase.legacyData!!.caseReferences
@@ -67,5 +68,5 @@ class CourtCaseReferenceServiceTests {
 
   private fun generateLegacyData(caseReferences: List<String>): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList())
 
-  private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(appearanceUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdBy = "U", createdPrison = "P", warrantType = "W", taggedBail = null, appearanceCharges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
+  private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(id = idInt++, appearanceUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdBy = "U", createdPrison = "P", warrantType = "W", taggedBail = null, appearanceCharges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
 }

@@ -94,7 +94,7 @@ class CourtAppearanceEntity(
 
   @OneToMany
   @JoinColumn(name = "appearance_id")
-  var periodLengths: MutableList<PeriodLengthEntity> = mutableListOf()
+  var periodLengths: MutableSet<PeriodLengthEntity> = mutableSetOf()
 
   fun isSame(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
     this.courtCase == other.courtCase &&
@@ -114,7 +114,7 @@ class CourtAppearanceEntity(
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime), this, warrantId,
       ZonedDateTime.now(), createdBy, createdPrison, ZonedDateTime.now(), createdBy, createdPrison, deriveWarrantType(appearanceOutcome, courtAppearance.legacyData), taggedBail, appearanceCharges.toMutableSet(), nextCourtAppearance, overallConvictionDate, courtAppearance.legacyData,
     )
-    courtAppearance.periodLengths = periodLengths.toMutableList()
+    courtAppearance.periodLengths = periodLengths.toMutableSet()
     return courtAppearance
   }
 
@@ -123,7 +123,7 @@ class CourtAppearanceEntity(
       0, UUID.randomUUID(), appearanceOutcome, courtCase, courtAppearance.courtCode, courtAppearance.courtCaseReference, courtAppearance.appearanceDate,
       EntityStatus.ACTIVE, this, courtAppearance.warrantId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, ZonedDateTime.now(), createdBy, courtAppearance.prisonId, courtAppearance.warrantType, courtAppearance.taggedBail, appearanceCharges.toMutableSet(), null, courtAppearance.overallConvictionDate, courtAppearance.legacyData,
     )
-    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = mutableListOf(PeriodLengthEntity.from(it, createdBy)) }
+    courtAppearance.overallSentenceLength?.let { courtAppearanceEntity.periodLengths = mutableSetOf(PeriodLengthEntity.from(it, createdBy)) }
     return courtAppearanceEntity
   }
 
@@ -175,10 +175,17 @@ class CourtAppearanceEntity(
 
     other as CourtAppearanceEntity
 
-    return id == other.id
+    if (id != other.id) return false
+    if (appearanceUuid != other.appearanceUuid) return false
+
+    return true
   }
 
-  override fun hashCode(): Int = id
+  override fun hashCode(): Int {
+    var result = id
+    result = 31 * result + appearanceUuid.hashCode()
+    return result
+  }
 
   companion object {
 
@@ -272,7 +279,7 @@ class CourtAppearanceEntity(
 
     private fun deriveWarrantType(appearanceOutcome: AppearanceOutcomeEntity?, legacyData: CourtAppearanceLegacyData): String = appearanceOutcome?.outcomeType ?: if (legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") "SENTENCING" else "REMAND"
 
-    fun getLatestCourtAppearance(courtAppearances: List<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
+    fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
       compareBy(
         CourtAppearanceEntity::appearanceDate,
         CourtAppearanceEntity::createdAt,
