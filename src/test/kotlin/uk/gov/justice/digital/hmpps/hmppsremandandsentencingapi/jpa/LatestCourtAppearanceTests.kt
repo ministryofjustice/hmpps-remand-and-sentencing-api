@@ -18,7 +18,7 @@ class LatestCourtAppearanceTests {
     val appearanceDate = LocalDate.now()
     val courtAppearance = courtAppearanceEntity(appearanceDate, courtCase, ZonedDateTime.now().minusDays(10))
     val newerCourtAppearance = courtAppearanceEntity(appearanceDate, courtCase, ZonedDateTime.now())
-    val latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(listOf(courtAppearance, newerCourtAppearance))
+    val latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(setOf(courtAppearance, newerCourtAppearance))
     Assertions.assertThat(latestCourtAppearance).isEqualTo(newerCourtAppearance)
   }
 

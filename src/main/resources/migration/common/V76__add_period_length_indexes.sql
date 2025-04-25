@@ -1,0 +1,2 @@
+create index idx_period_length_sentence_id on period_length(sentence_id);
+create index idx_period_length_appearance_id on period_length(appearance_id);

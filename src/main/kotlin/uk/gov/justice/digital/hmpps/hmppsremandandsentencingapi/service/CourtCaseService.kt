@@ -53,7 +53,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     val toDeleteAppearances = courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
     val eventsToEmit = toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableSet()
     val appearanceRecords = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
-    val appearances = appearanceRecords.map { it.record }
+    val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
     return RecordResponse(courtCaseRepository.save(courtCase), eventsToEmit)
