@@ -154,7 +154,9 @@ class CourtAppearanceService(
     val toCreatePeriodLengths = courtAppearance.overallSentenceLength?.let { listOf(PeriodLengthEntity.from(it, serviceUserService.getUsername())) } ?: emptyList<PeriodLengthEntity>()
     // TODO not emitting period-length events here updateCourtAppearanceEntity
     periodLengthService.upsert(
-      toCreatePeriodLengths, existingCourtAppearanceEntity.periodLengths, courtCaseEntity.prisonerId,
+      toCreatePeriodLengths,
+      existingCourtAppearanceEntity.periodLengths,
+      courtCaseEntity.prisonerId,
       { createdPeriodLength ->
         createdPeriodLength.appearanceEntity = existingCourtAppearanceEntity
       },

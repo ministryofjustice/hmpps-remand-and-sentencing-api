@@ -82,12 +82,13 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       createPeriodLengthEntities = sentence.periodLengths.map {
         PeriodLengthEntity.from(
           it,
-          serviceUserService.getUsername()
+          serviceUserService.getUsername(),
         )
       },
       existingPeriodLengths = createdSentence.periodLengths,
       prisonerId = prisonerId,
-      onCreateConsumer = { toCreatePeriodLength ->  // Explicitly name the parameter
+      onCreateConsumer = { toCreatePeriodLength ->
+        // Explicitly name the parameter
         toCreatePeriodLength.sentenceEntity = createdSentence
       },
       courtAppearanceId = courtAppearanceId,

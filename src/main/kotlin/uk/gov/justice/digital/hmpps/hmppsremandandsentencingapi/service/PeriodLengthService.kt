@@ -25,7 +25,7 @@ class PeriodLengthService(
     prisonerId: String,
     onCreateConsumer: Consumer<PeriodLengthEntity>,
     courtAppearanceId: String? = null, // courtAppearanceId and courtCaseId are optional because they're only used for the events which are only used by the SentenceServvice
-    courtCaseId: String? = null
+    courtCaseId: String? = null,
   ): RecordResponse<EntityChangeStatus> {
     // The events to emit (sent in the response) are currently only used by the SentenceService (not used by the CourtAppearanceService)
     val eventsToEmit = mutableSetOf<EventMetadata>()

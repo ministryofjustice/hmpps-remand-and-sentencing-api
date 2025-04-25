@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.courtappearance
 
 import org.junit.jupiter.api.Test
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -32,7 +34,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `can get appearance and future appearance when DPS next court appearance is set`() {
     createCourtCase(purgeQueues = false)
-    val courtAppearanceMessages = getMessages(6).filter { message -> message.eventType == "court-appearance.inserted" }
+    val courtAppearanceMessages = getMessages(7).filter { message -> message.eventType == "court-appearance.inserted" }
     val courtAppearanceLifetimeUuid = courtAppearanceMessages.map { message -> message.additionalInformation.get("courtAppearanceId").asText() }
     courtAppearanceLifetimeUuid.forEach { lifetimeUuid ->
       webTestClient
@@ -49,6 +51,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `no appearance exist for uuid results in not found`() {
+    log.info("1  MESSAGES >>>>>>>>>>>>>>>>> : ")
     webTestClient
       .get()
       .uri("/legacy/court-appearance/${UUID.randomUUID()}")
@@ -83,5 +86,9 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  companion object {
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
