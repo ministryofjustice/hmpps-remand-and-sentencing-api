@@ -43,8 +43,8 @@ class PeriodTypeMapperTests {
       Arguments.of(false, "LIC", "LR_SEC236A", PeriodLengthType.LICENCE_PERIOD),
       Arguments.of(false, "LIC", "SDOPCU18", PeriodLengthType.LICENCE_PERIOD),
       Arguments.of(false, "IMP", "LR_EDS18", PeriodLengthType.CUSTODIAL_TERM),
-      Arguments.of(false, "IMP", "LR_SEC236A", PeriodLengthType.CUSTODIAL_TERM),
-      Arguments.of(false, "IMP", "SDOPCU18", PeriodLengthType.CUSTODIAL_TERM),
+      Arguments.of(false, "IMP", "LR_SEC236A", PeriodLengthType.SENTENCE_LENGTH),
+      Arguments.of(false, "IMP", "SDOPCU18", PeriodLengthType.SENTENCE_LENGTH),
     )
 
     @JvmStatic
