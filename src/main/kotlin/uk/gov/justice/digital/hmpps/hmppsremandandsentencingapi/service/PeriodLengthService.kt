@@ -11,7 +11,7 @@ import java.util.function.Consumer
 @Service
 class PeriodLengthService(private val periodLengthRepository: PeriodLengthRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService) {
 
-  fun upsert(createPeriodLengthEntities: List<PeriodLengthEntity>, existingPeriodLengths: MutableList<PeriodLengthEntity>, onCreateConsumer: Consumer<PeriodLengthEntity>): EntityChangeStatus {
+  fun upsert(createPeriodLengthEntities: List<PeriodLengthEntity>, existingPeriodLengths: MutableSet<PeriodLengthEntity>, onCreateConsumer: Consumer<PeriodLengthEntity>): EntityChangeStatus {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     existingPeriodLengths.forEach { existingPeriodLength ->
       val updatedPeriodLength = createPeriodLengthEntities.firstOrNull { it.periodLengthUuid == existingPeriodLength.periodLengthUuid }

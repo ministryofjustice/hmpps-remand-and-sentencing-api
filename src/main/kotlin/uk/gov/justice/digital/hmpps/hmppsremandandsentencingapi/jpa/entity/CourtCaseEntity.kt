@@ -40,14 +40,36 @@ import java.util.UUID
       name = "appearanceDetails",
       attributeNodes = [
         NamedAttributeNode("appearanceOutcome"),
+        NamedAttributeNode("periodLengths"),
         NamedAttributeNode("nextCourtAppearance", subgraph = "nextAppearanceDetails"),
+        NamedAttributeNode("appearanceCharges", subgraph = "appearanceChargeChargeDetails"),
       ],
     ),
     NamedSubgraph(
       name = "nextAppearanceDetails",
       attributeNodes = [
         NamedAttributeNode("appearanceType"),
-        NamedAttributeNode("futureSkeletonAppearance"),
+      ],
+    ),
+    NamedSubgraph(
+      name = "appearanceChargeChargeDetails",
+      attributeNodes = [
+        NamedAttributeNode("charge", subgraph = "chargeDetails"),
+      ],
+    ),
+    NamedSubgraph(
+      name = "chargeDetails",
+      attributeNodes = [
+        NamedAttributeNode("chargeOutcome"),
+        NamedAttributeNode("sentences", subgraph = "sentenceDetails"),
+      ],
+    ),
+    NamedSubgraph(
+      name = "sentenceDetails",
+      attributeNodes = [
+        NamedAttributeNode("sentenceType"),
+        NamedAttributeNode("consecutiveTo"),
+        NamedAttributeNode("periodLengths"),
       ],
     ),
   ],
@@ -79,7 +101,7 @@ class CourtCaseEntity(
   @OneToMany
   @JoinColumn(name = "court_case_id")
   @BatchSize(size = 50)
-  var appearances: List<CourtAppearanceEntity> = emptyList()
+  var appearances: Set<CourtAppearanceEntity> = emptySet()
 
   @OneToMany(mappedBy = "courtCase")
   var draftAppearances: MutableList<DraftAppearanceEntity> = mutableListOf()

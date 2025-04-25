@@ -68,7 +68,7 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     )
   }
 
-  private fun fixPeriodLengths(periodLengths: List<PeriodLengthEntity>, periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}) {
+  private fun fixPeriodLengths(periodLengths: Set<PeriodLengthEntity>, periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}) {
     periodLengths.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
       .forEach { periodLength ->
         periodLength.statusId = EntityStatus.ACTIVE
