@@ -96,3 +96,6 @@ court:
     getByIdPath: /sentence/{sentenceUuid}
 recall:
   getByIdPath: /recall/{recallUuid}
+period:
+  length:
+    getByIdPath: /period-length/{periodUuid}

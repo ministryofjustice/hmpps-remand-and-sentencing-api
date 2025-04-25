@@ -24,7 +24,10 @@ class PeriodLengthService(
     existingPeriodLengths: MutableList<PeriodLengthEntity>,
     prisonerId: String,
     onCreateConsumer: Consumer<PeriodLengthEntity>,
+    courtAppearanceId: String? = null, // courtAppearanceId and courtCaseId are optional because they're only used for the events which are only used by the SentenceServvice
+    courtCaseId: String? = null
   ): RecordResponse<EntityChangeStatus> {
+    // The events to emit (sent in the response) are currently only used by the SentenceService (not used by the CourtAppearanceService)
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
 
@@ -39,8 +42,8 @@ class PeriodLengthService(
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
               prisonerId = prisonerId,
-              courtCaseId = existingPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
-              courtAppearanceId = existingPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+              courtCaseId = courtCaseId.toString(),
+              courtAppearanceId = courtAppearanceId.toString(),
               chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
               sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
               periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
@@ -56,8 +59,8 @@ class PeriodLengthService(
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
             prisonerId = prisonerId,
-            courtCaseId = existingPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
-            courtAppearanceId = existingPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+            courtCaseId = courtCaseId.toString(),
+            courtAppearanceId = courtAppearanceId.toString(),
             chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
             sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
@@ -78,8 +81,8 @@ class PeriodLengthService(
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
             prisonerId = prisonerId,
-            courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.caseUniqueIdentifier.toString(),
-            courtAppearanceId = savedPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+            courtCaseId = courtCaseId.toString(),
+            courtAppearanceId = courtAppearanceId.toString(),
             chargeId = savedPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
             sentenceId = savedPeriodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLengthId = savedPeriodLength.periodLengthUuid.toString(),

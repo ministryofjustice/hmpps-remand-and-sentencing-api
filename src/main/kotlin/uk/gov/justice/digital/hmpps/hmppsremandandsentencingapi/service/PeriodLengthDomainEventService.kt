@@ -14,7 +14,7 @@ class PeriodLengthDomainEventService(
   private val snsService: SnsService,
   @Value("\${ingress.url}") private val ingressUrl: String,
   // TODO this lookup path doesnt exist yet?? will be covered by another ticket I think then this TODO can be resolved
-  @Value("\${period.length.getByIdPath}") private val periodLengthLookupPath: String = "/period-length/{id}",
+  @Value("\${period.length.getByIdPath}") private val periodLengthLookupPath: String,
 ) {
 
   fun create(

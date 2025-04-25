@@ -31,6 +31,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   }
 
   private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
+    println("Calling from updateSentenceEntity")
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
@@ -42,9 +43,17 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
       sentenceChangeStatus = EntityChangeStatus.EDITED
     }
-    val periodLengthChangeRecord = periodLengthService.upsert(sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }, existingSentence.periodLengths, prisonerId) { toCreatePeriodLength ->
-      toCreatePeriodLength.sentenceEntity = existingSentence
-    }
+
+    val periodLengthChangeRecord = periodLengthService.upsert(
+      createPeriodLengthEntities = sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) },
+      existingPeriodLengths = existingSentence.periodLengths,
+      prisonerId = prisonerId,
+      onCreateConsumer = { toCreatePeriodLength ->
+        toCreatePeriodLength.sentenceEntity = existingSentence
+      },
+      courtAppearanceId = courtAppearanceId,
+      courtCaseId = courtCaseId,
+    )
     eventsToEmit.addAll(periodLengthChangeRecord.eventsToEmit)
     if (sentenceChangeStatus == EntityChangeStatus.EDITED || periodLengthChangeRecord.record != EntityChangeStatus.NO_CHANGE) {
       eventsToEmit.add(
@@ -62,14 +71,28 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   }
 
   private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
+    println("Calling from createSentenceEntity")
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
-    val periodLengthResponse = periodLengthService.upsert(sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }, createdSentence.periodLengths, prisonerId) { toCreatePeriodLength ->
-      toCreatePeriodLength.sentenceEntity = createdSentence
-    }
+
+    val periodLengthResponse = periodLengthService.upsert(
+      createPeriodLengthEntities = sentence.periodLengths.map {
+        PeriodLengthEntity.from(
+          it,
+          serviceUserService.getUsername()
+        )
+      },
+      existingPeriodLengths = createdSentence.periodLengths,
+      prisonerId = prisonerId,
+      onCreateConsumer = { toCreatePeriodLength ->  // Explicitly name the parameter
+        toCreatePeriodLength.sentenceEntity = createdSentence
+      },
+      courtAppearanceId = courtAppearanceId,
+      courtCaseId = courtCaseId,
+    )
     val sentenceEvent = EventMetadataCreator.sentenceEventMetadata(
       prisonerId,
       courtCaseId,

@@ -252,7 +252,8 @@ abstract class IntegrationTestBase {
     return getAllDomainMessages()
   }
 
-  private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
+  // TODO private
+  fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
     val messages = ArrayList<HmppsMessage<ObjectNode>>()
     while (hmppsDomainQueueSqsClient.countAllMessagesOnQueue(hmppsDomainQueue.queueUrl).get() != 0) {
       val message = hmppsDomainQueueSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build())

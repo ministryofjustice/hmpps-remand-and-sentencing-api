@@ -112,9 +112,15 @@ class CourtAppearanceService(
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
     courtAppearance.overallSentenceLength?.let { createPeriodLength ->
-      periodLengthService.upsert(listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())), createdCourtAppearance.periodLengths, courtCaseEntity.prisonerId) { createdPeriodLength ->
-        createdPeriodLength.appearanceEntity = createdCourtAppearance
-      }
+      // TODO not emitting period-length events here createCourtAppearance
+      periodLengthService.upsert(
+        listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())),
+        createdCourtAppearance.periodLengths,
+        courtCaseEntity.prisonerId,
+        { createdPeriodLength ->
+          createdPeriodLength.appearanceEntity = createdCourtAppearance
+        },
+      )
     }
     updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
@@ -146,10 +152,13 @@ class CourtAppearanceService(
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
     val toCreatePeriodLengths = courtAppearance.overallSentenceLength?.let { listOf(PeriodLengthEntity.from(it, serviceUserService.getUsername())) } ?: emptyList<PeriodLengthEntity>()
-    val periodLengthResponse = periodLengthService.upsert(toCreatePeriodLengths, existingCourtAppearanceEntity.periodLengths, courtCaseEntity.prisonerId) { createdPeriodLength ->
-      createdPeriodLength.appearanceEntity = existingCourtAppearanceEntity
-    }
-    eventsToEmit.addAll(periodLengthResponse.eventsToEmit)
+    // TODO not emitting period-length events here updateCourtAppearanceEntity
+    periodLengthService.upsert(
+      toCreatePeriodLengths, existingCourtAppearanceEntity.periodLengths, courtCaseEntity.prisonerId,
+      { createdPeriodLength ->
+        createdPeriodLength.appearanceEntity = existingCourtAppearanceEntity
+      },
+    )
     val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(courtAppearance.charges, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, activeRecord, appearanceDateChanged, courtAppearance.prisonId)
     eventsToEmit.addAll(chargeEventsToEmit)
     val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(courtAppearance, activeRecord, existingCourtAppearanceEntity.nextCourtAppearance)
