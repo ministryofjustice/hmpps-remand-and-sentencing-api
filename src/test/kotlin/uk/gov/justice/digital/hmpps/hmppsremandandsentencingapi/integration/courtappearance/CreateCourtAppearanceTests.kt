@@ -138,8 +138,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .returnResult(CreateCourtAppearanceResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val messages = getMessages(6)
-    Assertions.assertThat(messages).hasSize(6).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated", "sentence.updated", "sentence.period-length.updated")
+    val messages = getMessages(5)
+    Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated", "sentence.period-length.updated")
     Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
 
     webTestClient
@@ -197,8 +197,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .returnResult(CreateCourtAppearanceResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val messages = getMessages(5)
-    Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("sentence.updated", "sentence.period-length.inserted", "sentence.period-length.deleted")
+    val messages = getMessages(4)
+    Assertions.assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("sentence.period-length.inserted", "sentence.period-length.deleted")
     Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
   }
 

@@ -54,7 +54,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       courtCaseId = courtCaseId,
     )
     eventsToEmit.addAll(periodLengthChangeRecord.eventsToEmit)
-    if (sentenceChangeStatus == EntityChangeStatus.EDITED || periodLengthChangeRecord.record != EntityChangeStatus.NO_CHANGE) {
+    if (sentenceChangeStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
