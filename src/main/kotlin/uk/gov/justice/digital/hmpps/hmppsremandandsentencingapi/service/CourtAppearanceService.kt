@@ -112,7 +112,7 @@ class CourtAppearanceService(
     eventsToEmit.addAll(chargeRecords.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
     courtAppearance.overallSentenceLength?.let { createPeriodLength ->
-      // TODO not emitting period-length events here createCourtAppearance
+      // Ignore period-length events returned here because we do not emit them from createCourtAppearanceEntity
       periodLengthService.upsert(
         listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())),
         createdCourtAppearance.periodLengths,
@@ -152,7 +152,7 @@ class CourtAppearanceService(
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
     val toCreatePeriodLengths = courtAppearance.overallSentenceLength?.let { listOf(PeriodLengthEntity.from(it, serviceUserService.getUsername())) } ?: emptyList<PeriodLengthEntity>()
-    // TODO not emitting period-length events here updateCourtAppearanceEntity
+    // Ignore period-length events returned here because we do not emit them from updateCourtAppearanceEntity
     periodLengthService.upsert(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
