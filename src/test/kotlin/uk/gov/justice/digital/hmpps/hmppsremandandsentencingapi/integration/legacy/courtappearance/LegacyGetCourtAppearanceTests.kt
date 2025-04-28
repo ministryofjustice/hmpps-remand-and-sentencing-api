@@ -1,8 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.courtappearance
 
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import java.time.format.DateTimeFormatter
 import java.util.UUID
