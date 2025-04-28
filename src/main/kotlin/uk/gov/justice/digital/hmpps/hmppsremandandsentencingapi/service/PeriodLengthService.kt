@@ -18,10 +18,9 @@ class PeriodLengthService(
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
   private val serviceUserService: ServiceUserService,
 ) {
-
   fun upsert(
     createPeriodLengthEntities: List<PeriodLengthEntity>,
-    existingPeriodLengths: MutableList<PeriodLengthEntity>,
+    existingPeriodLengths: MutableSet<PeriodLengthEntity>,
     prisonerId: String,
     onCreateConsumer: Consumer<PeriodLengthEntity>,
     courtAppearanceId: String? = null, // courtAppearanceId and courtCaseId are optional because they're only used for the events which are only used by the SentenceServvice
