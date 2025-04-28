@@ -31,7 +31,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   }
 
   private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
-    println("Calling from updateSentenceEntity")
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
@@ -71,7 +70,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   }
 
   private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
-    println("Calling from createSentenceEntity")
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val consecutiveToSentence = sentence.consecutiveToChargeNumber?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
     val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
@@ -88,7 +86,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       existingPeriodLengths = createdSentence.periodLengths,
       prisonerId = prisonerId,
       onCreateConsumer = { toCreatePeriodLength ->
-        // Explicitly name the parameter
         toCreatePeriodLength.sentenceEntity = createdSentence
       },
       courtAppearanceId = courtAppearanceId,
