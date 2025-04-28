@@ -28,7 +28,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .bodyValue(updateCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_sSENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
