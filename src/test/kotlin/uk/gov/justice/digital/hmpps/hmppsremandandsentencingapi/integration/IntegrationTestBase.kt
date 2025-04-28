@@ -7,8 +7,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
@@ -242,7 +240,6 @@ abstract class IntegrationTestBase {
   fun expectInsertedMessages(prisonerId: String) {
     numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 7)
     val messages = getAllDomainMessages()
-    println(messages)
     Assertions.assertEquals(7, messages.size)
     messages.forEach { message ->
       Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
@@ -255,8 +252,7 @@ abstract class IntegrationTestBase {
     return getAllDomainMessages()
   }
 
-  // TODO private
-  fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
+  private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
     val messages = ArrayList<HmppsMessage<ObjectNode>>()
     while (hmppsDomainQueueSqsClient.countAllMessagesOnQueue(hmppsDomainQueue.queueUrl).get() != 0) {
       val message = hmppsDomainQueueSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build())
@@ -269,13 +265,7 @@ abstract class IntegrationTestBase {
         },
       )
     }
-    log.info("MESSAGES >>>>>>>>>>>>>>>>> : ")
-    log.info(messages.toString())
     return messages
-  }
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
 

@@ -13,7 +13,7 @@ import java.time.ZonedDateTime
 class PeriodLengthDomainEventService(
   private val snsService: SnsService,
   @Value("\${ingress.url}") private val ingressUrl: String,
-  // TODO this lookup path doesnt exist yet?? will be covered by another ticket I think then this TODO can be resolved
+  // TODO this lookup path doesnt exist  in an an endpoint yet. will be created by another ticket then this TODO can be resolved
   @Value("\${period.length.getByIdPath}") private val periodLengthLookupPath: String,
 ) {
 

@@ -51,7 +51,6 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `no appearance exist for uuid results in not found`() {
-    log.info("1  MESSAGES >>>>>>>>>>>>>>>>> : ")
     webTestClient
       .get()
       .uri("/legacy/court-appearance/${UUID.randomUUID()}")
@@ -86,9 +85,5 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
-  }
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }

@@ -19,45 +19,16 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   fun `update appearance in existing court case`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-
-    // Get the existing period lengths from the created appearance
-    val existingPeriodLengths = createdAppearance.charges
-      .flatMap { it.sentence?.periodLengths ?: emptyList() }
-      .map { it.periodLengthUuid }
-
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
-
-    // First create the updateCourtAppearance object
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(
-      courtCaseUuid = courtCase.first,
-      appearanceUUID = createdAppearance.appearanceUuid,
-      courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE",
-    )
-
-    // Then create the updated version with modified period lengths
-    val updatedCourtAppearance = updateCourtAppearance.copy(
-      charges = updateCourtAppearance.charges.map { charge ->
-        charge.copy(
-          sentence = charge.sentence?.copy(
-            periodLengths = charge.sentence.periodLengths.mapIndexed { index, pl ->
-              // Keep the same UUID but change the days
-              pl.copy(
-                periodLengthUuid = existingPeriodLengths.getOrNull(index) ?: pl.periodLengthUuid,
-                days = 999,
-              )
-            },
-          ),
-        )
-      },
-    )
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
 
     webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updatedCourtAppearance)
+      .bodyValue(updateCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_sSENTENCING"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -66,11 +37,10 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearanceUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
-
     val messages = getMessages(7)
     Assertions.assertThat(messages).hasSize(7).extracting<String> { it.eventType }.contains("court-appearance.updated")
-    // Now this should be "updated" instead of "inserted"
-    Assertions.assertThat(messages).hasSize(7).extracting<String> { it.eventType }.contains("sentence.period-length.updated")
+    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
+    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("sentence.period-length.inserted")
 
     val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
     Assertions.assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)

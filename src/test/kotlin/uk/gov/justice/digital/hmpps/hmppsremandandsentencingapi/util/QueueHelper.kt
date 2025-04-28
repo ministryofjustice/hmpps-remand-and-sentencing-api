@@ -9,5 +9,5 @@ import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 fun numberOfMessagesCurrentlyOnQueue(client: SqsAsyncClient, queueUrl: String, count: Int) {
   await untilCallTo {
     client.countAllMessagesOnQueue(queueUrl).get()
-  } matches { (it == count || it!! > count) }
+  } matches { it == count }
 }
