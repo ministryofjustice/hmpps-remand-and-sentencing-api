@@ -201,33 +201,6 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("sentence.updated", "sentence.period-length.inserted", "sentence.period-length.deleted")
     Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
   }
-//  @Test
-//  fun `Delete period length from a sentence and replace with a new one`() {
-//    val (courtCaseUuid, courtCase) = createCourtCase()
-//    val appearance = courtCase.appearances.first()
-//    val charge = appearance.charges.first()
-//    val sentence = charge.sentence
-//    val sentenceWithNewPeriodLength = sentence?.copy(periodLengths = listOf(DpsDataCreator.dpsCreatePeriodLength()))
-//    val chargeWithOffenceCodeAndUpdatedPeriodLength = charge.copy(offenceCode = "OFF634624", sentence = sentenceWithNewPeriodLength)
-//    val newAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(chargeWithOffenceCodeAndUpdatedPeriodLength))
-//    webTestClient
-//      .post()
-//      .uri("/court-appearance")
-//      .bodyValue(newAppearance)
-//      .headers {
-//        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
-//        it.contentType = MediaType.APPLICATION_JSON
-//      }
-//      .exchange()
-//      .expectStatus()
-//      .isCreated
-//      .returnResult(CreateCourtAppearanceResponse::class.java)
-//      .responseBody.blockFirst()!!
-//
-//    val messages = getMessages(7)
-//    Assertions.assertThat(messages).hasSize(7).extracting<String> { it.eventType }.contains("sentence.updated", "sentence.period-length.inserted", "sentence.period-length.deleted")
-//    Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
-//  }
 
   @Test
   fun `must not create appearance when no court case exists`() {
