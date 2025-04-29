@@ -46,7 +46,7 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
       nomisActive = nomisActive,
       nomisExpiryDate = nomisExpiryDate,
       eligibility = eligibility,
-      recallType = RecallTypeIdentifier.from(recallType).toDomain(),
+      recallType = RecallTypeIdentifier.from(recallTypeDescription).toDomain(),
       inputSentenceType = sentenceType?.let { SentenceTypeDetail.from(it) },
       nomisTermTypes = safeNomisTerms.associate { it.name to it.description },
       sentencingAct = sentencingAct,

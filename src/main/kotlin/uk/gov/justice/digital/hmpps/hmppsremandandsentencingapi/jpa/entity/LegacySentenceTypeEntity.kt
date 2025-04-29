@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
@@ -32,8 +33,12 @@ data class LegacySentenceTypeEntity(
   @Column(name = "eligibility", columnDefinition = "jsonb")
   val eligibility: SentenceEligibility,
 
-  @Column(name = "recall_type")
-  val recallType: String? = null,
+  @Column(name = "recall_type_description")
+  val recallTypeDescription: String? = null,
+
+  @ManyToOne(optional = true, fetch = FetchType.LAZY)
+  @JoinColumn(name = "recall_type_id", referencedColumnName = "id")
+  val recallType: RecallTypeEntity? = null,
 
   @OneToOne(optional = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "sentence_type_uuid", referencedColumnName = "sentence_type_uuid")
