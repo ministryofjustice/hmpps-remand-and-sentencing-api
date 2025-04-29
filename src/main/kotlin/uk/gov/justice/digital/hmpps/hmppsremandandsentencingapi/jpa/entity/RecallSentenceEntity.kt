@@ -48,5 +48,14 @@ class RecallSentenceEntity(
       createdByUsername = recall.createdByUsername,
       createdByPrison = recall.createdByPrison,
     )
+
+    fun from(sentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
+      recallSentenceUuid = UUID.randomUUID(),
+      sentence = sentence,
+      recall = recall,
+      createdByUsername = createdByUsername,
+      createdByPrison = "Migration",
+      legacyData = legacyData,
+    )
   }
 }

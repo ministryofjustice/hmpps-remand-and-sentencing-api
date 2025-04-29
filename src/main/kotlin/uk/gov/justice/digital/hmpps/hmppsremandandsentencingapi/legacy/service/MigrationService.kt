@@ -9,8 +9,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.LegacySentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
@@ -19,14 +22,19 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
@@ -47,6 +55,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentenceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationSentenceId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import kotlin.collections.filter
 
@@ -68,6 +77,10 @@ class MigrationService(
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+  private val legacySentenceTypeRepository: LegacySentenceTypeRepository,
+  private val recallTypeRepository: RecallTypeRepository,
+  private val recallRepository: RecallRepository,
+  private val recallSentenceRepository: RecallSentenceRepository,
 ) {
 
   @Transactional
@@ -191,7 +204,8 @@ class MigrationService(
     val nomisChargeOutcomeIds = migrationCreateAppearances.flatMap { courtAppearance -> courtAppearance.charges }.filter { charge -> charge.legacyData.nomisOutcomeCode != null }.map { charge -> charge.legacyData.nomisOutcomeCode!! }.distinct()
     val dpsChargeOutcomes = chargeOutcomeRepository.findByNomisCodeIn(nomisChargeOutcomeIds).associate { entity -> entity.nomisCode to entity }
     val dpsSentenceTypes = getDpsSentenceTypesMap(migrationCreateAppearances)
-    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.eventId to createAppearance(appearance, createdCourtCase, courtCaseReference, tracking, MigrationReferenceData(dpsAppearanceOutcomes, dpsChargeOutcomes, dpsSentenceTypes)) }
+    val legacySentenceTypes = getLegacySentenceTypesMap(migrationCreateAppearances)
+    return migrationCreateAppearances.sortedBy { courtAppearance -> courtAppearance.appearanceDate }.associate { appearance -> appearance.eventId to createAppearance(appearance, createdCourtCase, courtCaseReference, tracking, MigrationReferenceData(dpsAppearanceOutcomes, dpsChargeOutcomes, dpsSentenceTypes, legacySentenceTypes)) }
   }
 
   fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: MigrationDataTracking, referenceData: MigrationReferenceData): CourtAppearanceEntity {
@@ -230,7 +244,7 @@ class MigrationService(
 
   private fun getDpsSentenceTypesMap(migrationCreateAppearances: List<MigrationCreateCourtAppearance>): Map<Pair<String, String?>, SentenceTypeEntity> {
     val (sentenceCalcTypes, sentenceCategories) = migrationCreateAppearances.flatMap { it.charges }.filter { charge -> charge.sentence != null && charge.sentence.legacyData.sentenceCalcType != null && charge.sentence.legacyData.sentenceCategory != null }.map { charge -> charge.sentence!!.legacyData.sentenceCalcType!! to charge.sentence.legacyData.sentenceCategory!! }.unzip()
-    val dpsSentenceTypes: MutableMap<Pair<String, String?>, SentenceTypeEntity> = sentenceTypeRepository.findByNomisCjaCodeInAndNomisSentenceCalcTypeIn(sentenceCategories, sentenceCalcTypes).associateBy { sentenceType -> sentenceType.nomisSentenceCalcType to sentenceType.nomisCjaCode }.toMutableMap()
+    val dpsSentenceTypes: MutableMap<Pair<String, String?>, SentenceTypeEntity> = sentenceTypeRepository.findByNomisCjaCodeInAndNomisSentenceCalcTypeIn(sentenceCategories.distinct(), sentenceCalcTypes.distinct()).associateBy { sentenceType -> sentenceType.nomisSentenceCalcType to sentenceType.nomisCjaCode }.toMutableMap()
     val allRecallSentenceCalcTypes = LegacySentenceService.recallNomisSentenceCalcTypes.filter { sentenceCalcTypes.contains(it) }
     if (allRecallSentenceCalcTypes.isNotEmpty()) {
       val recallSentenceTypeBucket = sentenceTypeRepository.findBySentenceTypeUuid(LegacySentenceService.recallSentenceTypeBucketUuid)!!
@@ -239,6 +253,12 @@ class MigrationService(
       }
     }
     return dpsSentenceTypes
+  }
+
+  private fun getLegacySentenceTypesMap(migrationCreateAppearances: List<MigrationCreateCourtAppearance>): Map<Pair<String, Int>, LegacySentenceTypeEntity> {
+    val (sentenceCalcTypes, sentenceCategories) = migrationCreateAppearances.flatMap { it.charges }.filter { charge -> charge.sentence != null && charge.sentence.legacyData.sentenceCalcType != null && charge.sentence.legacyData.sentenceCategory != null }.map { charge -> charge.sentence!!.legacyData.sentenceCalcType!! to charge.sentence.legacyData.sentenceCategory!! }.unzip()
+    val legacySentenceTypes: MutableMap<Pair<String, Int>, LegacySentenceTypeEntity> = legacySentenceTypeRepository.findByNomisSentenceTypeReferenceInAndSentencingActIn(sentenceCalcTypes.distinct(), sentenceCategories.distinct()).associateBy { sentenceType -> sentenceType.nomisSentenceTypeReference to sentenceType.sentencingAct }.toMutableMap()
+    return legacySentenceTypes
   }
 
   private fun getDpsSentenceType(dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>, sentenceTypeIdentifier: Pair<String?, String?>): SentenceTypeEntity? {
@@ -251,7 +271,7 @@ class MigrationService(
 
   fun createSentence(migrationCreateSentence: MigrationCreateSentence, chargeEntity: ChargeEntity, tracking: MigrationDataTracking, referenceData: MigrationReferenceData): SentenceEntity {
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(referenceData.dpsSentenceTypes, it) }
-    migrationCreateSentence.legacyData = dpsSentenceType?.let { migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
+    migrationCreateSentence.legacyData = dpsSentenceType?.let { if (it.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) migrationCreateSentence.legacyData else migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
 
     val existingSentences = tracking.createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableListOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
@@ -260,6 +280,10 @@ class MigrationService(
     } ?: SentenceEntity.from(migrationCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
     existingSentences.add(createdSentence)
+
+    if (dpsSentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
+      createRecall(migrationCreateSentence, createdSentence, tracking, referenceData)
+    }
 
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
       val existingPeriodLengths = tracking.createdPeriodLengthMap[it.periodLengthId] ?: mutableListOf()
@@ -277,6 +301,15 @@ class MigrationService(
     }.toMutableSet()
     tracking.createdSentencesMap.put(migrationCreateSentence.sentenceId, existingSentences)
     return createdSentence
+  }
+
+  private fun createRecall(migrationCreateSentence: MigrationCreateSentence, createdSentence: SentenceEntity, tracking: MigrationDataTracking, referenceData: MigrationReferenceData) {
+    val legacySentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory)
+      .takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null && sentenceCategory.toIntOrNull() != null }
+      ?.let { referenceData.legacySentenceTypes[it.first to it.second!!.toInt()] }
+    val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
+    val recall = recallRepository.save(RecallEntity.from(tracking.prisonerId, tracking.createdByUsername, legacySentenceType?.recallType ?: defaultRecallType))
+    recallSentenceRepository.save(RecallSentenceEntity.from(createdSentence, recall, tracking.createdByUsername, RecallSentenceLegacyData.from(migrationCreateSentence.legacyData)))
   }
 
   companion object {
@@ -297,5 +330,6 @@ class MigrationService(
     val dpsAppearanceOutcomes: Map<String, AppearanceOutcomeEntity>,
     val dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>,
     val dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>,
+    val legacySentenceTypes: Map<Pair<String, Int>, LegacySentenceTypeEntity>,
   )
 }

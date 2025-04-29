@@ -43,5 +43,14 @@ class RecallEntity(
       createdByUsername = createRecall.createdByUsername,
       createdByPrison = createRecall.createdByPrison,
     )
+
+    fun from(prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
+      prisonerId = prisonerId,
+      revocationDate = null,
+      returnToCustodyDate = null, // TODO RCLL-371
+      recallType = recallType,
+      createdByUsername = createdByUsername,
+      createdByPrison = "Migration",
+    )
   }
 }
