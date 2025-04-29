@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -49,12 +50,21 @@ class RecallSentenceEntity(
       createdByPrison = recall.createdByPrison,
     )
 
-    fun from(sentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
+    fun fromMigration(createdSentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
       recallSentenceUuid = UUID.randomUUID(),
-      sentence = sentence,
+      sentence = createdSentence,
       recall = recall,
       createdByUsername = createdByUsername,
       createdByPrison = "Migration",
+      legacyData = legacyData,
+    )
+
+    fun from(sentence: LegacyCreateSentence, createdSentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
+      recallSentenceUuid = UUID.randomUUID(),
+      sentence = createdSentence,
+      recall = recall,
+      createdByUsername = createdByUsername,
+      createdByPrison = sentence.prisonId,
       legacyData = legacyData,
     )
   }

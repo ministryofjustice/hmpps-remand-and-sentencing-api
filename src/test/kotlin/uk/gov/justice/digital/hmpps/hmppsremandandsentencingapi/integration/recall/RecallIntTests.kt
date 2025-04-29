@@ -363,18 +363,6 @@ class RecallIntTests : IntegrationTestBase() {
     .expectBody(Recall::class.java)
     .returnResult().responseBody!!
 
-  private fun getRecallsByPrisonerId(prisonerId: String): List<Recall> = webTestClient
-    .get()
-    .uri("/recall/person/$prisonerId")
-    .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-    }
-    .exchange()
-    .expectStatus()
-    .isOk
-    .expectBodyList(Recall::class.java)
-    .returnResult().responseBody!!
-
   private fun postRecall(recall: CreateRecall) = webTestClient
     .post()
     .uri("/recall")

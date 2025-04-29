@@ -14,6 +14,11 @@ interface LegacySentenceTypeRepository : CrudRepository<LegacySentenceTypeEntity
 
   fun findByNomisSentenceTypeReferenceInAndSentencingActIn(
     legacySentenceTypeReference: List<String>,
-    sentencingAct: List<String>,
+    sentencingAct: List<Int>,
   ): List<LegacySentenceTypeEntity>
+
+  fun findByNomisSentenceTypeReferenceAndSentencingAct(
+    legacySentenceTypeReference: String,
+    sentencingAct: Int,
+  ): LegacySentenceTypeEntity?
 }
