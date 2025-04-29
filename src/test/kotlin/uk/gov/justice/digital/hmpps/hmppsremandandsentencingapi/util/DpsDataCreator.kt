@@ -16,8 +16,9 @@ import java.util.UUID
 
 class DpsDataCreator {
   companion object Factory {
+    const val DEFAULT_PRISONER_ID = "PRI123"
     fun dpsCreateCourtCase(
-      prisonerId: String = "PRI123",
+      prisonerId: String = DEFAULT_PRISONER_ID,
       appearances: List<CreateCourtAppearance> = listOf(dpsCreateCourtAppearance()),
       prisonId: String = "PRISON1",
     ): CreateCourtCase = CreateCourtCase(prisonerId, prisonId, appearances, null)

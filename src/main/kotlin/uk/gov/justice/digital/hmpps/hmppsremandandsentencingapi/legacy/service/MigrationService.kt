@@ -256,7 +256,7 @@ class MigrationService(
   }
 
   private fun getLegacySentenceTypesMap(migrationCreateAppearances: List<MigrationCreateCourtAppearance>): Map<Pair<String, Int>, LegacySentenceTypeEntity> {
-    val (sentenceCalcTypes, sentenceCategories) = migrationCreateAppearances.flatMap { it.charges }.filter { charge -> charge.sentence != null && charge.sentence.legacyData.sentenceCalcType != null && charge.sentence.legacyData.sentenceCategory != null }.map { charge -> charge.sentence!!.legacyData.sentenceCalcType!! to charge.sentence.legacyData.sentenceCategory!! }.unzip()
+    val (sentenceCalcTypes, sentenceCategories) = migrationCreateAppearances.flatMap { it.charges }.filter { charge -> charge.sentence != null && charge.sentence.legacyData.sentenceCalcType != null && charge.sentence.legacyData.sentenceCategory != null && charge.sentence.legacyData.sentenceCategory!!.toIntOrNull() != null }.map { charge -> charge.sentence!!.legacyData.sentenceCalcType!! to charge.sentence.legacyData.sentenceCategory!!.toInt() }.unzip()
     val legacySentenceTypes: MutableMap<Pair<String, Int>, LegacySentenceTypeEntity> = legacySentenceTypeRepository.findByNomisSentenceTypeReferenceInAndSentencingActIn(sentenceCalcTypes.distinct(), sentenceCategories.distinct()).associateBy { sentenceType -> sentenceType.nomisSentenceTypeReference to sentenceType.sentencingAct }.toMutableMap()
     return legacySentenceTypes
   }
@@ -271,6 +271,7 @@ class MigrationService(
 
   fun createSentence(migrationCreateSentence: MigrationCreateSentence, chargeEntity: ChargeEntity, tracking: MigrationDataTracking, referenceData: MigrationReferenceData): SentenceEntity {
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(referenceData.dpsSentenceTypes, it) }
+    val legacyData = migrationCreateSentence.legacyData
     migrationCreateSentence.legacyData = dpsSentenceType?.let { if (it.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) migrationCreateSentence.legacyData else migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
 
     val existingSentences = tracking.createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableListOf()
@@ -282,7 +283,7 @@ class MigrationService(
     existingSentences.add(createdSentence)
 
     if (dpsSentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
-      createRecall(migrationCreateSentence, createdSentence, tracking, referenceData)
+      createRecall(migrationCreateSentence, createdSentence, tracking, referenceData, RecallSentenceLegacyData.from(legacyData))
     }
 
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
@@ -303,13 +304,13 @@ class MigrationService(
     return createdSentence
   }
 
-  private fun createRecall(migrationCreateSentence: MigrationCreateSentence, createdSentence: SentenceEntity, tracking: MigrationDataTracking, referenceData: MigrationReferenceData) {
+  private fun createRecall(migrationCreateSentence: MigrationCreateSentence, createdSentence: SentenceEntity, tracking: MigrationDataTracking, referenceData: MigrationReferenceData, recallSentenceLegacyData: RecallSentenceLegacyData) {
     val legacySentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory)
       .takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null && sentenceCategory.toIntOrNull() != null }
       ?.let { referenceData.legacySentenceTypes[it.first to it.second!!.toInt()] }
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
-    val recall = recallRepository.save(RecallEntity.from(tracking.prisonerId, tracking.createdByUsername, legacySentenceType?.recallType ?: defaultRecallType))
-    recallSentenceRepository.save(RecallSentenceEntity.from(createdSentence, recall, tracking.createdByUsername, RecallSentenceLegacyData.from(migrationCreateSentence.legacyData)))
+    val recall = recallRepository.save(RecallEntity.fromMigration(tracking.prisonerId, tracking.createdByUsername, legacySentenceType?.recallType ?: defaultRecallType))
+    recallSentenceRepository.save(RecallSentenceEntity.fromMigration(createdSentence, recall, tracking.createdByUsername, recallSentenceLegacyData))
   }
 
   companion object {

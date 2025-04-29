@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -44,13 +45,21 @@ class RecallEntity(
       createdByPrison = createRecall.createdByPrison,
     )
 
-    fun from(prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
+    fun fromMigration(prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
       prisonerId = prisonerId,
       revocationDate = null,
       returnToCustodyDate = null, // TODO RCLL-371
       recallType = recallType,
       createdByUsername = createdByUsername,
       createdByPrison = "Migration",
+    )
+    fun from(sentence: LegacyCreateSentence, prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
+      prisonerId = prisonerId,
+      revocationDate = null,
+      returnToCustodyDate = null, // TODO RCLL-371
+      recallType = recallType,
+      createdByUsername = createdByUsername,
+      createdByPrison = sentence.prisonId,
     )
   }
 }
