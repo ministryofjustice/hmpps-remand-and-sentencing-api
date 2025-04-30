@@ -18,7 +18,7 @@ import java.util.*
 @RequestMapping("/legacy/period-length", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(
   name = "legacy-period-length-controller",
-  description = "CRUD operations for syncing period-length data between NOMIS and RAS (period-lengths are called sentence-terms in NOMIS)"
+  description = "CRUD operations for syncing period-length data between NOMIS and RAS (period-lengths are called sentence-terms in NOMIS)",
 )
 class LegacyPeriodLengthController(private val legacyPeriodLengthService: LegacyPeriodLengthService) {
   @GetMapping("/{lifetimeUuid}")

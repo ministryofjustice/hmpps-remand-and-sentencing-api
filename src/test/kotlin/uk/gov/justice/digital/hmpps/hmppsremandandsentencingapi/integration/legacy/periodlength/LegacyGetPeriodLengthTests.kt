@@ -15,7 +15,7 @@ class LegacyGetPeriodLengthTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/legacy/period-length/${periodLengthUuid}")
+      .uri("/legacy/period-length/$periodLengthUuid")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RO"))
       }
@@ -32,14 +32,12 @@ class LegacyGetPeriodLengthTests : IntegrationTestBase() {
     val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance()
     val periodLengthUuidWithNoSentence = sentencedAppearance.overallSentenceLength?.periodLengthUuid
 
-
     webTestClient
       .get()
-      .uri("/legacy/period-length/${periodLengthUuidWithNoSentence}")
+      .uri("/legacy/period-length/$periodLengthUuidWithNoSentence")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RO"))
       }
-
       .exchange()
       .expectStatus()
       .isNotFound

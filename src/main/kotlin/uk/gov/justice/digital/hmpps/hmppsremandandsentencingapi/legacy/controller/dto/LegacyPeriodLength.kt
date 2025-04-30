@@ -13,7 +13,7 @@ data class LegacyPeriodLength(
   val isLifeSentence: Boolean?,
   val sentenceTermCode: String,
   val periodLengthUuid: UUID,
-  val sentenceUUID:  UUID? = null,
+  val sentenceUUID: UUID, // The LegacyPeriodLength only gets set when associated to a sentence atm, so safe to specify this as mandatory
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity, sentenceTypeClassification: SentenceTypeClassification?, sentenceUuid: UUID): LegacyPeriodLength {
@@ -30,7 +30,7 @@ data class LegacyPeriodLength(
         isLifeSentence = isLifeSentence,
         sentenceTermCode = sentenceTermCode,
         periodLengthUuid = periodLengthEntity.periodLengthUuid,
-        sentenceUUID = sentenceUuid
+        sentenceUUID = sentenceUuid,
       )
     }
   }

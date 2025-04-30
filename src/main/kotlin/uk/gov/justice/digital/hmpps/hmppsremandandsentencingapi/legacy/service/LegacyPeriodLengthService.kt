@@ -60,19 +60,17 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
     return LegacyPeriodLength.from(
       periodLengthEntity = periodLength,
       sentenceTypeClassification = sentenceEntity.sentenceType?.classification,
-      sentenceUuid = sentenceEntity.sentenceUuid
+      sentenceUuid = sentenceEntity.sentenceUuid,
     )
   }
 
   @Transactional(readOnly = true)
-  fun getActivePeriodLengthWithSentence(lifetimeUUID: UUID): PeriodLengthEntity {
-    return periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(lifetimeUUID)
-      ?.takeUnless { it.statusId == EntityStatus.DELETED }
-      ?.also { entity ->
-        if (entity.sentenceEntity == null) {
-          throw IllegalStateException("Period length $lifetimeUUID has no associated sentence")
-        }
+  fun getActivePeriodLengthWithSentence(lifetimeUUID: UUID): PeriodLengthEntity = periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(lifetimeUUID)
+    ?.takeUnless { it.statusId == EntityStatus.DELETED }
+    ?.also { entity ->
+      if (entity.sentenceEntity == null) {
+        throw IllegalStateException("Period length $lifetimeUUID has no associated sentence")
       }
-      ?: throw EntityNotFoundException("No period-length found with UUID $lifetimeUUID")
-  }
+    }
+    ?: throw EntityNotFoundException("No period-length found with UUID $lifetimeUUID")
 }
