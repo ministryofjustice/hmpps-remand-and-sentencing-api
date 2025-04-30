@@ -59,8 +59,7 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
 
     return LegacyPeriodLength.from(
       periodLengthEntity = periodLength,
-      sentenceTypeClassification = sentenceEntity.sentenceType?.classification,
-      sentenceUuid = sentenceEntity.sentenceUuid,
+      sentenceEntity = sentenceEntity,
     )
   }
 
