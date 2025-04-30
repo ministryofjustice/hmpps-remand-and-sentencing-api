@@ -174,7 +174,7 @@ class RecallIntTests : IntegrationTestBase() {
         revocationDate = originalRecall.revocationDate,
         returnToCustodyDate = originalRecall.returnToCustodyDate,
         createdByUsername = "user001",
-        createdByPrison = originalRecall.createdByPrison,
+        createdByPrison = "New prison",
       ),
       uuid,
     )
