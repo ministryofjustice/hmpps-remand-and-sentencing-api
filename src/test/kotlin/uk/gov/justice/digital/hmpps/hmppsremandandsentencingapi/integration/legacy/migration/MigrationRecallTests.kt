@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -45,16 +44,4 @@ class MigrationRecallTests : IntegrationTestBase() {
     assertThat(recalls[1].recallType).isEqualTo(RecallType.FTR_28)
     assertThat(recalls[1].sentences).hasSize(1)
   }
-
-  private fun getRecallsByPrisonerId(prisonerId: String): List<Recall> = webTestClient
-    .get()
-    .uri("/recall/person/$prisonerId")
-    .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-    }
-    .exchange()
-    .expectStatus()
-    .isOk
-    .expectBodyList(Recall::class.java)
-    .returnResult().responseBody!!
 }

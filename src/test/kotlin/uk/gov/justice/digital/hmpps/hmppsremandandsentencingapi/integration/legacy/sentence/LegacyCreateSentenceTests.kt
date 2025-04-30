@@ -1,12 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
@@ -32,8 +33,8 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .jsonPath("$.lifetimeUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val message = getMessages(1)[0]
-    Assertions.assertThat(message.eventType).isEqualTo("sentence.inserted")
-    Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+    assertThat(message.eventType).isEqualTo("sentence.inserted")
+    assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
   }
 
   @Test
@@ -46,7 +47,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       ),
     )
     val charge = courtCaseCreated.appearances.first().charges.first()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"))
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -71,6 +72,11 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.sentence.sentenceType.sentenceTypeUuid")
       .isEqualTo("f9a1551e-86b1-425b-96f7-23465a0f05fc")
+
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    assertThat(recalls).hasSize(1)
+    assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
+    assertThat(recalls[0].sentences).hasSize(1)
   }
 
   @Test
