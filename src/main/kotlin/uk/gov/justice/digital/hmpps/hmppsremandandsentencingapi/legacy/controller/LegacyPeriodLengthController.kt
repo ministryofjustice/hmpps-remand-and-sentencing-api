@@ -21,7 +21,7 @@ import java.util.UUID
   description = "CRUD operations for syncing period-length data between NOMIS and RAS (period-lengths are called sentence-terms in NOMIS)",
 )
 class LegacyPeriodLengthController(private val legacyPeriodLengthService: LegacyPeriodLengthService) {
-  @GetMapping("/{lifetimeUuid}")
+  @GetMapping("/{periodLengthUuid}")
   @Operation(
     summary = "retrieve a period-length",
     description = "This endpoint will retrieve period-length details.",
@@ -31,8 +31,9 @@ class LegacyPeriodLengthController(private val legacyPeriodLengthService: Legacy
       ApiResponse(responseCode = "200", description = "Returns period-length details"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found: Period length either doesn't exist, has no sentence, or is deleted"),
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW', 'ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RO')")
-  fun get(@PathVariable lifetimeUuid: UUID): LegacyPeriodLength = legacyPeriodLengthService.get(lifetimeUuid)
+  fun get(@PathVariable periodLengthUuid: UUID): LegacyPeriodLength = legacyPeriodLengthService.get(periodLengthUuid)
 }
