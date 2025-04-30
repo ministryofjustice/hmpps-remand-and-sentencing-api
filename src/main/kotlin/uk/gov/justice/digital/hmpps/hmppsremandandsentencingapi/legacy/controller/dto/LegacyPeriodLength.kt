@@ -13,22 +13,24 @@ data class LegacyPeriodLength(
   val isLifeSentence: Boolean?,
   val sentenceTermCode: String,
   val periodLengthUuid: UUID,
+  val sentenceUUID:  UUID? = null,
 ) {
   companion object {
-    fun from(periodLengthEntity: PeriodLengthEntity, sentenceTypeClassification: SentenceTypeClassification?): LegacyPeriodLength {
+    fun from(periodLengthEntity: PeriodLengthEntity, sentenceTypeClassification: SentenceTypeClassification?, sentenceUuid: UUID): LegacyPeriodLength {
       val (isLifeSentence, sentenceTermCode) = if (sentenceTypeClassification != null) {
         PeriodLengthTypeMapper.convertDpsToNomis(periodLengthEntity.periodLengthType, sentenceTypeClassification, periodLengthEntity.legacyData)
       } else {
         periodLengthEntity.legacyData?.lifeSentence to periodLengthEntity.legacyData!!.sentenceTermCode!!
       }
       return LegacyPeriodLength(
-        if (isLifeSentence != true) periodLengthEntity.years else null,
-        if (isLifeSentence != true) periodLengthEntity.months else null,
-        if (isLifeSentence != true) periodLengthEntity.weeks else null,
-        if (isLifeSentence != true) periodLengthEntity.days else null,
-        isLifeSentence,
-        sentenceTermCode,
-        periodLengthEntity.periodLengthUuid,
+        periodYears = if (isLifeSentence != true) periodLengthEntity.years else null,
+        periodMonths = if (isLifeSentence != true) periodLengthEntity.months else null,
+        periodWeeks = if (isLifeSentence != true) periodLengthEntity.weeks else null,
+        periodDays = if (isLifeSentence != true) periodLengthEntity.days else null,
+        isLifeSentence = isLifeSentence,
+        sentenceTermCode = sentenceTermCode,
+        periodLengthUuid = periodLengthEntity.periodLengthUuid,
+        sentenceUUID = sentenceUuid
       )
     }
   }

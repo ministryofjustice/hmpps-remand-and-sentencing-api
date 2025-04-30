@@ -27,11 +27,13 @@ class LegacyPeriodLengthTests {
       periodLengthType = PeriodLengthType.TARIFF_LENGTH,
       createdBy = "createdBy",
     )
-    val result = LegacyPeriodLength.from(periodLengthEntity, SentenceTypeClassification.INDETERMINATE)
+    val sentenceUuid = UUID.randomUUID()
+    val result = LegacyPeriodLength.from(periodLengthEntity, SentenceTypeClassification.INDETERMINATE, sentenceUuid)
     Assertions.assertThat(result.periodYears).isNull()
     Assertions.assertThat(result.periodMonths).isNull()
     Assertions.assertThat(result.periodWeeks).isNull()
     Assertions.assertThat(result.periodDays).isNull()
     Assertions.assertThat(result.isLifeSentence).isTrue
+    Assertions.assertThat(result.sentenceUUID).isEqualTo(sentenceUuid)
   }
 }
