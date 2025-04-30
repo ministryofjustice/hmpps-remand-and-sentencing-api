@@ -66,7 +66,7 @@ class PeriodLengthEntity(
     months = periodLength.months
     weeks = periodLength.weeks
     days = periodLength.days
-    periodOrder = getPeriodOrder(years, months, weeks, days)
+    periodOrder = getDefaultPeriodOrder()
     periodLengthType = periodLength.periodLengthType
     statusId = periodLength.statusId
     legacyData = periodLength.legacyData
@@ -118,7 +118,7 @@ class PeriodLengthEntity(
     )
 
     fun from(periodLength: LegacyCreatePeriodLength, sentenceCalcType: String, createdBy: String, isManyCharges: Boolean): PeriodLengthEntity {
-      val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
+      val order = getDefaultPeriodOrder()
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
@@ -139,7 +139,7 @@ class PeriodLengthEntity(
     }
 
     fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
-      val order = getPeriodOrder(periodLength.periodYears, periodLength.periodMonths, periodLength.periodWeeks, periodLength.periodDays)
+      val order = getDefaultPeriodOrder()
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
@@ -159,21 +159,6 @@ class PeriodLengthEntity(
       )
     }
 
-    private fun getPeriodOrder(years: Int?, months: Int?, weeks: Int?, days: Int?): String {
-      val units: MutableList<String> = mutableListOf()
-      if (years != null) {
-        units.add("years")
-      }
-      if (months != null) {
-        units.add("months")
-      }
-      if (weeks != null) {
-        units.add("weeks")
-      }
-      if (days != null) {
-        units.add("days")
-      }
-      return units.joinToString(",")
-    }
+    private fun getDefaultPeriodOrder(): String = "years,months,weeks,days"
   }
 }

@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.D
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
@@ -230,6 +231,18 @@ abstract class IntegrationTestBase {
     .isCreated.returnResult(DraftCourtAppearanceCreatedResponse::class.java)
     .responseBody.blockFirst()!!
 
+  protected fun getRecallsByPrisonerId(prisonerId: String): List<Recall> = webTestClient
+    .get()
+    .uri("/recall/person/$prisonerId")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBodyList(Recall::class.java)
+    .returnResult().responseBody!!
+
   fun purgeQueues() {
     runBlocking {
       hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_queue", hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl))
@@ -238,9 +251,9 @@ abstract class IntegrationTestBase {
   }
 
   fun expectInsertedMessages(prisonerId: String) {
-    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 6)
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 7)
     val messages = getAllDomainMessages()
-    Assertions.assertEquals(6, messages.size)
+    Assertions.assertEquals(7, messages.size)
     messages.forEach { message ->
       Assertions.assertEquals(prisonerId, message.personReference.identifiers.first { it.type == "NOMS" }.value)
       Assertions.assertEquals("DPS", message.additionalInformation.get("source").asText())

@@ -32,7 +32,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `can get appearance and future appearance when DPS next court appearance is set`() {
     createCourtCase(purgeQueues = false)
-    val courtAppearanceMessages = getMessages(6).filter { message -> message.eventType == "court-appearance.inserted" }
+    val courtAppearanceMessages = getMessages(7).filter { message -> message.eventType == "court-appearance.inserted" }
     val courtAppearanceLifetimeUuid = courtAppearanceMessages.map { message -> message.additionalInformation.get("courtAppearanceId").asText() }
     courtAppearanceLifetimeUuid.forEach { lifetimeUuid ->
       webTestClient

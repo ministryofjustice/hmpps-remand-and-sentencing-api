@@ -115,12 +115,15 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `update charge with different offence code in second appearance results in charge created`() {
+  fun `update charge with different offence code in second appearance results in charge created + update sentence period length`() {
     val (courtCaseUuid, courtCase) = createCourtCase()
     val appearance = courtCase.appearances.first()
     val charge = appearance.charges.first()
-    val chargeWithOffenceCode = charge.copy(offenceCode = "OFF634624")
-    val newAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(chargeWithOffenceCode))
+    val sentence = charge.sentence
+    val periodLength = sentence?.periodLengths?.first()
+    val sentenceWithUpdatedPeriodLength = sentence?.copy(periodLengths = listOf(periodLength!!.copy(days = 997)))
+    val chargeWithOffenceCodeAndUpdatedPeriodLength = charge.copy(offenceCode = "OFF634624", sentence = sentenceWithUpdatedPeriodLength)
+    val newAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(chargeWithOffenceCodeAndUpdatedPeriodLength))
     val newAppearanceResponse = webTestClient
       .post()
       .uri("/court-appearance")
@@ -135,8 +138,9 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .returnResult(CreateCourtAppearanceResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val messages = getMessages(4)
-    Assertions.assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated")
+    val messages = getMessages(5)
+    Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated", "sentence.period-length.updated")
+    Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
 
     webTestClient
       .get()
@@ -168,7 +172,34 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].outcome.outcomeUuid")
       .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced by another outcome
       .jsonPath("$.charges[?(@.chargeUuid != '${charge.chargeUuid}')].offenceCode")
-      .isEqualTo(chargeWithOffenceCode.offenceCode)
+      .isEqualTo(chargeWithOffenceCodeAndUpdatedPeriodLength.offenceCode)
+  }
+
+  @Test
+  fun `Delete period length from a sentence and replace with a new one`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val charge = courtCase.appearances.first().charges.first()
+    val sentence = charge.sentence
+    val sentenceWithNewPeriodLength = sentence?.copy(periodLengths = listOf(DpsDataCreator.dpsCreatePeriodLength()))
+    val chargeWithNewPeriodLength = charge.copy(sentence = sentenceWithNewPeriodLength)
+    val newAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(chargeWithNewPeriodLength))
+    webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(newAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val messages = getMessages(4)
+    Assertions.assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("sentence.period-length.inserted", "sentence.period-length.deleted")
+    Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
   }
 
   @Test
