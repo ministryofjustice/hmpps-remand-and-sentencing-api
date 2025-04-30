@@ -15,7 +15,7 @@ data class Recall(
   val recallType: RecallType,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
-  val createdByPrison: String,
+  val createdByPrison: String?,
   val sentences: List<Sentence>? = emptyList(),
   val courtCaseIds: List<String>? = emptyList(),
 ) {
@@ -28,7 +28,7 @@ data class Recall(
       recallType = recall.recallType.code,
       createdByUsername = recall.createdByUsername,
       createdAt = recall.createdAt,
-      createdByPrison = recall.createdByPrison,
+      createdByPrison = recall.createdPrison,
       sentences = sentences.map { Sentence.from(it.sentence) },
       courtCaseIds = sentences.flatMap { it.sentence.charge.appearanceCharges.map { ac -> ac.appearance!!.courtCase.caseUniqueIdentifier } },
     )

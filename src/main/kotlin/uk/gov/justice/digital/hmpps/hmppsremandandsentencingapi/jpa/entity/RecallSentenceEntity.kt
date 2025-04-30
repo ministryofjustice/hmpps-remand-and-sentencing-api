@@ -31,14 +31,12 @@ class RecallSentenceEntity(
   @ManyToOne
   @JoinColumn(name = "recall_id")
   var recall: RecallEntity,
-  @Column
-  val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
-  @Column
-  val createdByUsername: String,
-  @Column
-  val createdByPrison: String?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: RecallSentenceLegacyData? = null,
+  // Audit and status columns
+  val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+  val createdByUsername: String,
+  val createdPrison: String? = null,
 ) {
 
   companion object {
@@ -47,7 +45,7 @@ class RecallSentenceEntity(
       sentence = sentence,
       recall = recall,
       createdByUsername = recall.createdByUsername,
-      createdByPrison = recall.createdByPrison,
+      createdPrison = recall.createdPrison,
     )
 
     fun fromMigration(createdSentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
@@ -55,7 +53,6 @@ class RecallSentenceEntity(
       sentence = createdSentence,
       recall = recall,
       createdByUsername = createdByUsername,
-      createdByPrison = "Migration",
       legacyData = legacyData,
     )
 
@@ -64,7 +61,7 @@ class RecallSentenceEntity(
       sentence = createdSentence,
       recall = recall,
       createdByUsername = createdByUsername,
-      createdByPrison = sentence.prisonId,
+      createdPrison = sentence.prisonId,
       legacyData = legacyData,
     )
   }
