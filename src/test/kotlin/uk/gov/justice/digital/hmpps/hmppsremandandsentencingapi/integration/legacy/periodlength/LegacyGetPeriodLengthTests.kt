@@ -11,11 +11,12 @@ class LegacyGetPeriodLengthTests : IntegrationTestBase() {
   fun `get period length by lifetime uuid`() {
     val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance()
     val (_, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencedAppearance)))
-    val periodLengthUuid = createdCourtCase.appearances.first().charges.first().sentence?.periodLengths?.first()?.periodLengthUuid
+    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence?.sentenceUuid
+    val periodLength = createdCourtCase.appearances.first().charges.first().sentence?.periodLengths?.first()
 
     webTestClient
       .get()
-      .uri("/legacy/period-length/$periodLengthUuid")
+      .uri("/legacy/period-length/${periodLength?.periodLengthUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RO"))
       }
@@ -24,7 +25,17 @@ class LegacyGetPeriodLengthTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.periodLengthUuid")
-      .isEqualTo(periodLengthUuid.toString())
+      .isEqualTo(periodLength?.periodLengthUuid.toString())
+      .jsonPath("$.periodYears")
+      .isEqualTo(periodLength?.years.toString())
+      .jsonPath("$.periodMonths")
+      .isEqualTo(null)
+      .jsonPath("$.periodWeeks")
+      .isEqualTo(null)
+      .jsonPath("$.periodDays")
+      .isEqualTo(null)
+      .jsonPath("$.sentenceUuid")
+      .isEqualTo(sentenceUuid.toString())
   }
 
   @Test

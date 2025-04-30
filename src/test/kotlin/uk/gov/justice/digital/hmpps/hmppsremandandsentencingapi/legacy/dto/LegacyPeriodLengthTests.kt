@@ -34,6 +34,6 @@ class LegacyPeriodLengthTests {
     Assertions.assertThat(result.periodWeeks).isNull()
     Assertions.assertThat(result.periodDays).isNull()
     Assertions.assertThat(result.isLifeSentence).isTrue
-    Assertions.assertThat(result.sentenceUUID).isEqualTo(sentenceUuid)
+    Assertions.assertThat(result.sentenceUuid).isEqualTo(sentenceUuid)
   }
 }
