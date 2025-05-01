@@ -183,12 +183,6 @@ class LegacySentenceService(
   fun delete(sentence: SentenceEntity) {
     sentence.delete(serviceUserService.getUsername())
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
-    sentence.periodLengths
-      .filter { it.statusId != EntityStatus.DELETED }
-      .forEach { periodLength ->
-        legacyPeriodLengthService.delete(periodLength)
-        periodLength
-      }
     deleteRecallSentence(sentence)
   }
 

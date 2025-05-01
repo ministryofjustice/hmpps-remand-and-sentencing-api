@@ -2,7 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.dto
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
@@ -11,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLength
+import java.time.LocalDate
 import java.util.UUID
 
 class LegacyPeriodLengthTests {
@@ -23,7 +27,8 @@ class LegacyPeriodLengthTests {
     assertThat(result.periodWeeks).isNull()
     assertThat(result.periodDays).isNull()
     assertThat(result.isLifeSentence).isTrue()
-    assertThat(result.sentenceUuid).isEqualTo(testSentenceUuid)
+    assertThat(result.sentenceUuid).isEqualTo(testSentence.sentenceUuid)
+    assertThat(result.prisonerId).isEqualTo(TEST_PRISONER_ID)
   }
 
   companion object {
@@ -42,6 +47,39 @@ class LegacyPeriodLengthTests {
       createdBy = "createdBy",
     )
 
+    private const val TEST_PRISONER_ID = "A1234BC"
+
+    private val testCourtCase = CourtCaseEntity(
+      caseUniqueIdentifier = "CASE123",
+      prisonerId = TEST_PRISONER_ID,
+      statusId = EntityStatus.ACTIVE,
+      createdBy = "test-user",
+    )
+
+    private val testCourtAppearance = CourtAppearanceEntity(
+      id = 0,
+      appearanceUuid = UUID.randomUUID(),
+      courtCase = testCourtCase,
+      courtCode = "COURT1",
+      appearanceDate = LocalDate.now(),
+      statusId = EntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "TEST",
+      appearanceOutcome = null,
+      courtCaseReference = null,
+      previousAppearance = null,
+      warrantId = null,
+      updatedAt = null,
+      updatedBy = null,
+      updatedPrison = null,
+      taggedBail = null,
+      appearanceCharges = mutableSetOf(),
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+      legacyData = null,
+    )
+
     private val testCharge = ChargeEntity(
       chargeUuid = UUID.randomUUID(),
       offenceCode = "TEST123",
@@ -55,7 +93,16 @@ class LegacyPeriodLengthTests {
       createdPrison = null,
       legacyData = null,
       appearanceCharges = mutableSetOf(),
-    )
+    ).apply {
+      appearanceCharges.add(
+        AppearanceChargeEntity(
+          courtAppearanceEntity = testCourtAppearance,
+          chargeEntity = this,
+          createdBy = "test-user",
+          createdPrison = "TEST",
+        ),
+      )
+    }
 
     private val testSentenceType = SentenceTypeEntity(
       sentenceTypeUuid = UUID.randomUUID(),

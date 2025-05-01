@@ -8,4 +8,7 @@ import java.util.UUID
 interface PeriodLengthRepository : CrudRepository<PeriodLengthEntity, Int> {
   @EntityGraph(attributePaths = ["sentenceEntity"])
   fun findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid: UUID): PeriodLengthEntity?
+
+  @EntityGraph(attributePaths = ["sentenceEntity"])
+  fun findByPeriodLengthUuid(periodLengthUuid: UUID): List<PeriodLengthEntity>
 }
