@@ -126,19 +126,17 @@ class LegacyPeriodLengthService(
   }
 
   @Transactional(readOnly = true)
-  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity =
-    periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
-      ?.takeUnless { it.statusId == EntityStatus.DELETED }?.also { entity ->
-        if (entity.sentenceEntity == null) {
-          throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
-        }
-      } ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
+  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity = periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
+    ?.takeUnless { it.statusId == EntityStatus.DELETED }?.also { entity ->
+      if (entity.sentenceEntity == null) {
+        throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
+      }
+    } ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 
   @Transactional
-  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? =
-    periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
-      .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
-        delete(periodLength)
-        LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
-      }.firstOrNull()
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+    .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
+      delete(periodLength)
+      LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
+    }.firstOrNull()
 }

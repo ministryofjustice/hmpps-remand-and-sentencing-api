@@ -247,8 +247,8 @@ abstract class IntegrationTestBase {
   }
 
   protected fun createDraftCourtCase(
-    draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase()):
-    DraftCourtCaseCreatedResponse = webTestClient
+    draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase(),
+  ): DraftCourtCaseCreatedResponse = webTestClient
     .post()
     .uri("/draft/court-case")
     .bodyValue(draftCourtCase)

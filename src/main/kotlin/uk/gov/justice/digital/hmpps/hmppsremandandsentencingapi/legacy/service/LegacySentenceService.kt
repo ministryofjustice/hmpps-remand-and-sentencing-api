@@ -293,10 +293,9 @@ class LegacySentenceService(
     return null
   }
 
-  private fun getUnlessDeleted(sentenceUuid: UUID): SentenceEntity =
-    sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
-      ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+  private fun getUnlessDeleted(sentenceUuid: UUID): SentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
+    ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
   companion object {
     val recallNomisSentenceCalcTypes: Set<String> = setOf(
