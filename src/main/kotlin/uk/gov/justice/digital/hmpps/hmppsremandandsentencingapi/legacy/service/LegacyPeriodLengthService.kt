@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
@@ -38,7 +37,7 @@ class LegacyPeriodLengthService(
     val sentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(periodLength.sentenceUuid)
       ?: throw EntityNotFoundException("No sentence found at ${periodLength.sentenceUuid}")
 
-    val sentenceCalcType = requireNotNull(sentenceEntity.sentenceType?.nomisSentenceCalcType) {
+    val sentenceCalcType = requireNotNull(sentenceEntity.legacyData?.sentenceCalcType) {
       "Sentence calculation type is required"
     }
 
@@ -47,7 +46,7 @@ class LegacyPeriodLengthService(
       periodLength,
       sentenceCalcType,
       serviceUserService.getUsername(),
-      isManyCharges
+      isManyCharges,
     )
 
     val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
@@ -62,27 +61,29 @@ class LegacyPeriodLengthService(
         chargeUuid = sentenceEntity.charge.chargeUuid,
         appearanceUuid = savedPeriodLength.appearanceEntity?.appearanceUuid,
         courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
-        prisonerId = savedPeriodLength.appearanceEntity?.courtCase?.prisonerId,
-        sentenceTermNOMISId = periodLength.periodLengthId
+        prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId,
+        sentenceTermNOMISId = periodLength.periodLengthId,
       ),
-      eventsToEmit
+      eventsToEmit,
     )
   }
 
   private fun createEventMetadata(
     savedPeriodLength: PeriodLengthEntity,
-    sentenceEntity: SentenceEntity
+    sentenceEntity: SentenceEntity,
   ): EventMetadata? {
-    val prisonerId = savedPeriodLength.appearanceEntity?.courtCase?.prisonerId ?: return null
-    return EventMetadataCreator.periodLengthEventMetadata(
-      prisonerId = prisonerId,
-      courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
-      courtAppearanceId = savedPeriodLength.appearanceEntity?.appearanceUuid.toString(),
-      chargeId = sentenceEntity.charge.chargeUuid.toString(),
-      sentenceId = sentenceEntity.sentenceUuid.toString(),
-      periodLengthId = savedPeriodLength.periodLengthUuid.toString(),
-      eventType = EventType.PERIOD_LENGTH_INSERTED
-    )
+    val prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId
+    return prisonerId?.let {
+      EventMetadataCreator.periodLengthEventMetadata(
+        prisonerId = it,
+        courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
+        courtAppearanceId = savedPeriodLength.appearanceEntity?.appearanceUuid.toString(),
+        chargeId = sentenceEntity.charge.chargeUuid.toString(),
+        sentenceId = sentenceEntity.sentenceUuid.toString(),
+        periodLengthId = savedPeriodLength.periodLengthUuid.toString(),
+        eventType = EventType.PERIOD_LENGTH_INSERTED,
+      )
+    }
   }
 
 
@@ -136,12 +137,13 @@ class LegacyPeriodLengthService(
   }
 
   @Transactional(readOnly = true)
-  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity = periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
-    ?.takeUnless { it.statusId == EntityStatus.DELETED }
-    ?.also { entity ->
-      if (entity.sentenceEntity == null) {
-        throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
+  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity =
+    periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
+      ?.takeUnless { it.statusId == EntityStatus.DELETED }
+      ?.also { entity ->
+        if (entity.sentenceEntity == null) {
+          throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
+        }
       }
-    }
-    ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
+      ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 }

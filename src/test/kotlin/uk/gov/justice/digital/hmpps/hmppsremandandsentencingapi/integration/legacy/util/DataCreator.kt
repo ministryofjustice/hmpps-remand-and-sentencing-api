@@ -73,7 +73,7 @@ class DataCreator {
       active: Boolean? = null,
     ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active)
 
-    fun legacyCreateSentence(chargeUuids: List<UUID> = listOf(UUID.randomUUID()), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(), periodLengths: List<LegacyCreatePeriodLength> = listOf(legacyCreatePeriodLength())): LegacyCreateSentence = LegacyCreateSentence(chargeUuids, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData, periodLengths)
+    fun legacyCreateSentence(chargeUuids: List<UUID> = listOf(UUID.randomUUID()), chargeNumber: String = "1", fine: LegacyCreateFine = legacyCreateFine(), consecutiveToLifetimeUuid: UUID? = null, active: Boolean = true, prisonId: String = "PRISON1", sentenceLegacyData: SentenceLegacyData = sentenceLegacyData()): LegacyCreateSentence = LegacyCreateSentence(chargeUuids, chargeNumber, fine, consecutiveToLifetimeUuid, active, prisonId, sentenceLegacyData)
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
 
@@ -106,6 +106,6 @@ class DataCreator {
 
     fun periodLengthLegacyData(lifeSentence: Boolean = false, sentenceTermCode: String = "1", description: String = "Term description"): PeriodLengthLegacyData = PeriodLengthLegacyData(lifeSentence, sentenceTermCode, description)
 
-    fun legacyCreatePeriodLength(periodLengthId: NomisPeriodLengthId = nomisPeriodLengthId(), periodLengthUuid: UUID = UUID.randomUUID(), periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength = LegacyCreatePeriodLength(periodLengthId, periodLengthUuid, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
+    fun legacyCreatePeriodLength(sentenceUUID:UUID=UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),periodLengthId: NomisPeriodLengthId = nomisPeriodLengthId(), periodLengthUuid: UUID = UUID.randomUUID(), periodYears: Int? = 2, periodMonths: Int? = null, periodWeeks: Int? = null, periodDays: Int? = 2, legacyData: PeriodLengthLegacyData = periodLengthLegacyData()): LegacyCreatePeriodLength = LegacyCreatePeriodLength(sentenceUUID,periodLengthId, periodLengthUuid, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
   }
 }

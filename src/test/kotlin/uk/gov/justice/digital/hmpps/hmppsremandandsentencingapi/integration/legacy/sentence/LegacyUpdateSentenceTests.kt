@@ -38,8 +38,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
     val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentenceLifetimeUuid }
     Assertions.assertThat(historyRecords).extracting<String> { it.chargeNumber!! }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
-    val periodLengthHistoryRecords = periodLengthHistoryRepository.findAll().filter { it.periodLengthUuid == createdSentence.periodLengths.first().periodLengthUuid }
-    Assertions.assertThat(periodLengthHistoryRecords).hasSize(1)
   }
 
   @Test

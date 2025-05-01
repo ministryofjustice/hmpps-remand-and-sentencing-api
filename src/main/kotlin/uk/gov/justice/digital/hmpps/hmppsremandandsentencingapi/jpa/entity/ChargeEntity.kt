@@ -54,7 +54,7 @@ class ChargeEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: ChargeLegacyData? = null,
 
-  @OneToMany(mappedBy = "charge", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "charge", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
   val appearanceCharges: MutableSet<AppearanceChargeEntity> = mutableSetOf(),
 
   @OneToOne(fetch = FetchType.LAZY)
