@@ -3,6 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import java.util.UUID
 
 data class LegacyPeriodLengthCreatedResponse(
-  val uuid: UUID,
-  val sentenceTermNOMISId: NomisPeriodLengthId,
+  val periodLengthUuid: UUID,
+  val sentenceTermNOMISId: NomisPeriodLengthId?,
+  val prisonerId: String?,
+  val sentenceUuid: UUID,
+  val chargeUuid: UUID,
+  val appearanceUuid: UUID?,
+  val courtCaseId: String?,
 )

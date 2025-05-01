@@ -8,5 +8,4 @@ data class LegacySentenceCreatedResponse(
   val chargeLifetimeUuid: UUID,
   val appearanceUuid: UUID,
   val courtCaseId: String,
-  val createdPeriodLengths: List<LegacyPeriodLengthCreatedResponse>,
 )

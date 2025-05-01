@@ -56,8 +56,6 @@ class LegacySentenceService(
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
     val isManyCharges = sentence.chargeUuids.size > 1
     val sentenceUuid = UUID.randomUUID()
-    val periodLengths = sentence.periodLengths
-      .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername(), isManyCharges) }
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
 
     return sentence.chargeUuids.map { chargeUuid ->
@@ -66,10 +64,7 @@ class LegacySentenceService(
       if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
         createRecall(sentence, createdSentence, legacySentenceType, RecallSentenceLegacyData.from(legacyData), prisonerId!!)
       }
-      val (_, createdPeriodLengths) = legacyPeriodLengthService.upsert(
-        periodLengths.mapValues { (_, periodLengthEntity) -> periodLengthEntity.copy() },
-        createdSentence,
-      )
+
       val courtAppearance = charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId == EntityStatus.ACTIVE }
@@ -81,7 +76,6 @@ class LegacySentenceService(
         charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
-        createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) },
       )
     }
   }
@@ -126,8 +120,6 @@ class LegacySentenceService(
     sentence.legacyData.active = sentence.active
     sentence.legacyData = dpsSentenceType?.let { sentence.legacyData.copy(sentenceCategory = null, sentenceCalcType = null, sentenceTypeDesc = null) } ?: sentence.legacyData
     val isManyCharges = sentence.chargeUuids.size > 1
-    val periodLengths = sentence.periodLengths
-      .associate { it.periodLengthId to PeriodLengthEntity.from(it, dpsSentenceType?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, serviceUserService.getUsername(), isManyCharges) }
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
 
     return sentence.chargeUuids.map { chargeUuid ->
@@ -166,17 +158,14 @@ class LegacySentenceService(
         entityChangeStatus = EntityChangeStatus.EDITED
         existingSentence.charge.sentences.add(activeRecord)
       }
-      val (periodLengthChangeStatus, createdPeriodLengths) = legacyPeriodLengthService.upsert(
-        periodLengths.mapValues { (_, periodLengthEntity) -> periodLengthEntity.copy() },
-        existingSentence,
-      )
-      entityChangeStatus = if (periodLengthChangeStatus == EntityChangeStatus.NO_CHANGE || entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
+
+      entityChangeStatus = if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
       val courtAppearance = activeRecord.charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId == EntityStatus.ACTIVE }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")
-      entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.chargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier, createdPeriodLengths.map { LegacyPeriodLengthCreatedResponse(it.value.periodLengthUuid, it.key) })
+      entityChangeStatus to LegacySentenceCreatedResponse(courtAppearance.courtCase.prisonerId, activeRecord.sentenceUuid, activeRecord.charge.chargeUuid, courtAppearance.appearanceUuid, courtAppearance.courtCase.caseUniqueIdentifier)
     }
   }
 

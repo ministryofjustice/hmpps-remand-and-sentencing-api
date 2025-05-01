@@ -3,7 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 import java.util.UUID
 
 data class LegacyCreatePeriodLength(
-  val periodLengthId: NomisPeriodLengthId,
+  val sentenceUuid: UUID,
+  val periodLengthId: NomisPeriodLengthId?,
   val periodLengthUuid: UUID?,
   val periodYears: Int?,
   val periodMonths: Int?,

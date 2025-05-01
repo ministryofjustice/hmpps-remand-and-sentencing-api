@@ -10,5 +10,4 @@ data class LegacyCreateSentence(
   val active: Boolean,
   val prisonId: String,
   var legacyData: SentenceLegacyData,
-  val periodLengths: List<LegacyCreatePeriodLength>,
 )
