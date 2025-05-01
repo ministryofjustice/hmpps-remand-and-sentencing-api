@@ -71,4 +71,13 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
       }
     }
     ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
+
+  @Transactional
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+    .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null}
+    .map { periodLength ->
+      delete(periodLength)
+      LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
+    }.firstOrNull()
+
 }

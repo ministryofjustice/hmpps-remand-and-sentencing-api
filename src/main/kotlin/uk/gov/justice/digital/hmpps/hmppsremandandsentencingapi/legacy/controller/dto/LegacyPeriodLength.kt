@@ -14,9 +14,18 @@ data class LegacyPeriodLength(
   val sentenceTermCode: String,
   val periodLengthUuid: UUID,
   val sentenceUuid: UUID, // The LegacyPeriodLength only gets set when associated to a sentence atm, so safe to specify this as mandatory
+  val prisonerId: String,
+  val courtChargeId: UUID,
+  val courtCaseId: String,
+  val courtAppearanceId: UUID,
 ) {
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity, sentenceEntity: SentenceEntity): LegacyPeriodLength {
+      val appearance = sentenceEntity.charge.appearanceCharges
+        .first { it.appearance != null }
+        .appearance!!
+      val prisonerId = appearance.courtCase.prisonerId
+
       val sentenceTypeClassification = sentenceEntity.sentenceType?.classification
       val (isLifeSentence, sentenceTermCode) = if (sentenceEntity.sentenceType?.classification != null) {
         PeriodLengthTypeMapper.convertDpsToNomis(periodLengthEntity.periodLengthType, sentenceTypeClassification, periodLengthEntity.legacyData)
@@ -32,6 +41,10 @@ data class LegacyPeriodLength(
         sentenceTermCode = sentenceTermCode,
         periodLengthUuid = periodLengthEntity.periodLengthUuid,
         sentenceUuid = sentenceEntity.sentenceUuid,
+        prisonerId = prisonerId,
+        courtChargeId = sentenceEntity.charge.chargeUuid,
+        courtCaseId = appearance.courtCase.caseUniqueIdentifier,
+        courtAppearanceId = appearance.appearanceUuid,
       )
     }
   }
