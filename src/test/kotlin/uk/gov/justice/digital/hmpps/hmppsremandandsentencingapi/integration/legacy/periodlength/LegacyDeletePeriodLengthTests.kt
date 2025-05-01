@@ -10,7 +10,7 @@ class LegacyDeletePeriodLengthTests : IntegrationTestBase() {
 
   @Test
   fun `can delete period-length`() {
-    val periodLengthUuid = createLegacySentence().second.periodLengths[0].periodLengthUuid
+    val periodLengthUuid = createPeriodLength().second.periodLengthUuid
     webTestClient
       .delete()
       .uri("/legacy/period-length/$periodLengthUuid")

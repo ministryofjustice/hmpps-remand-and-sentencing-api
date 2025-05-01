@@ -8,22 +8,20 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyPeriodLengthService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PeriodLengthDomainEventService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
-import java.util.UUID
+import java.util.*
 
 @RestController
 @RequestMapping("/legacy/period-length", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -61,7 +59,7 @@ class LegacyPeriodLengthController(
         periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
         source = EventSource.NOMIS,
         courtChargeId = periodLengthCreated.chargeUuid.toString(),
-    )
+      )
     }
     return periodLengthCreated
   }

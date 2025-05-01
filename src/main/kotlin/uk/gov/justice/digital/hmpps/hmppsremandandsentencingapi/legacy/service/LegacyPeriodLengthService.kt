@@ -2,11 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
@@ -16,11 +15,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.P
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
-import java.util.UUID
+import java.util.*
 
 @Service
 class LegacyPeriodLengthService(
@@ -29,22 +28,16 @@ class LegacyPeriodLengthService(
   private val serviceUserService: ServiceUserService,
   private val sentenceRepository: SentenceRepository,
 ) {
-
-
   fun create(periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
     val eventsToEmit = mutableSetOf<EventMetadata>()
 
     val sentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(periodLength.sentenceUuid)
       ?: throw EntityNotFoundException("No sentence found at ${periodLength.sentenceUuid}")
 
-    val sentenceCalcType = requireNotNull(sentenceEntity.legacyData?.sentenceCalcType) {
-      "Sentence calculation type is required"
-    }
-
     val isManyCharges = sentenceEntity.charge.appearanceCharges.size > 1
     val periodLengthEntity = PeriodLengthEntity.from(
       periodLength,
-      sentenceCalcType,
+      sentenceEntity,
       serviceUserService.getUsername(),
       isManyCharges,
     )
@@ -55,14 +48,14 @@ class LegacyPeriodLengthService(
     createEventMetadata(savedPeriodLength, sentenceEntity)?.let { eventsToEmit.add(it) }
 
     return LegacyPeriodLengthCreatedResponse(
-        periodLengthUuid = savedPeriodLength.periodLengthUuid,
-        sentenceUuid = periodLength.sentenceUuid,
-        chargeUuid = sentenceEntity.charge.chargeUuid,
-        appearanceUuid = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.appearanceUuid,
-        courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
-        prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId,
-        sentenceTermNOMISId = periodLength.periodLengthId,
-      )
+      periodLengthUuid = savedPeriodLength.periodLengthUuid,
+      sentenceUuid = periodLength.sentenceUuid,
+      chargeUuid = sentenceEntity.charge.chargeUuid,
+      appearanceUuid = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.appearanceUuid,
+      courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
+      prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId,
+      sentenceTermNOMISId = periodLength.periodLengthId,
+    )
   }
 
   private fun createEventMetadata(
@@ -82,7 +75,6 @@ class LegacyPeriodLengthService(
       )
     }
   }
-
 
   fun upsert(
     createPeriodLengthEntities: Map<NomisPeriodLengthId, PeriodLengthEntity>,
@@ -134,20 +126,19 @@ class LegacyPeriodLengthService(
   }
 
   @Transactional(readOnly = true)
-  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity = periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
-    ?.takeUnless { it.statusId == EntityStatus.DELETED }
-    ?.also { entity ->
-      if (entity.sentenceEntity == null) {
-        throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
-      }
-    }
-    ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
+  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity =
+    periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
+      ?.takeUnless { it.statusId == EntityStatus.DELETED }?.also { entity ->
+        if (entity.sentenceEntity == null) {
+          throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
+        }
+      } ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 
   @Transactional
-  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
-    .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null }
-    .map { periodLength ->
-      delete(periodLength)
-      LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
-    }.firstOrNull()
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? =
+    periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+      .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
+        delete(periodLength)
+        LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
+      }.firstOrNull()
 }
