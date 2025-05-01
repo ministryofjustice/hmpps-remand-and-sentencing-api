@@ -45,7 +45,6 @@ class LegacyPeriodLengthController(
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW', 'ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RO')")
   fun get(@PathVariable periodLengthUuid: UUID): LegacyPeriodLength = legacyPeriodLengthService.get(periodLengthUuid)
 
-
   @DeleteMapping("/{periodLengthUuid}")
   @Operation(
     summary = "Delete Period Length",
@@ -69,7 +68,7 @@ class LegacyPeriodLengthController(
         courtChargeId = legacyPeriodLength.courtChargeId.toString(),
         courtCaseId = legacyPeriodLength.courtCaseId,
         courtAppearanceId = legacyPeriodLength.courtAppearanceId.toString(),
-        source = EventSource.NOMIS
+        source = EventSource.NOMIS,
       )
     }
   }

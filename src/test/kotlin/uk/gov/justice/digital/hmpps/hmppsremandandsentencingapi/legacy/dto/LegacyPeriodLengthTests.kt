@@ -2,7 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.dto
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.*
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
@@ -12,7 +15,6 @@ import java.time.LocalDate
 import java.util.UUID
 
 class LegacyPeriodLengthTests {
-
   @Test
   fun `return no units when its a life sentence`() {
     val result = LegacyPeriodLength.from(testPeriodLength, testSentence)
@@ -23,7 +25,7 @@ class LegacyPeriodLengthTests {
     assertThat(result.periodDays).isNull()
     assertThat(result.isLifeSentence).isTrue()
     assertThat(result.sentenceUuid).isEqualTo(testSentence.sentenceUuid)
-    assertThat(result.prisonerId).isEqualTo(testPrisonerId)
+    assertThat(result.prisonerId).isEqualTo(TEST_PRISONER_ID)
   }
 
   companion object {
@@ -42,13 +44,13 @@ class LegacyPeriodLengthTests {
       createdBy = "createdBy",
     )
 
-    private const val testPrisonerId = "A1234BC"
+    private const val TEST_PRISONER_ID = "A1234BC"
 
     private val testCourtCase = CourtCaseEntity(
       caseUniqueIdentifier = "CASE123",
-      prisonerId = testPrisonerId,
+      prisonerId = TEST_PRISONER_ID,
       statusId = EntityStatus.ACTIVE,
-      createdBy = "test-user"
+      createdBy = "test-user",
     )
 
     private val testCourtAppearance = CourtAppearanceEntity(
@@ -72,7 +74,7 @@ class LegacyPeriodLengthTests {
       appearanceCharges = mutableSetOf(),
       nextCourtAppearance = null,
       overallConvictionDate = null,
-      legacyData = null
+      legacyData = null,
     )
 
     private val testCharge = ChargeEntity(
@@ -94,8 +96,8 @@ class LegacyPeriodLengthTests {
           courtAppearanceEntity = testCourtAppearance,
           chargeEntity = this,
           createdBy = "test-user",
-          createdPrison = "TEST"
-        )
+          createdPrison = "TEST",
+        ),
       )
     }
 
