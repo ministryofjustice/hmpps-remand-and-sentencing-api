@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -19,7 +18,6 @@ data class LegacySentence(
   val consecutiveToLifetimeUuid: UUID?,
   val chargeNumber: String?,
   val fineAmount: BigDecimal?,
-  val periodLengths: List<LegacyPeriodLength>,
   val sentenceStartDate: LocalDate,
 ) {
   companion object {
@@ -45,7 +43,6 @@ data class LegacySentence(
         sentenceEntity.consecutiveTo?.sentenceUuid,
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmount,
-        sentenceEntity.periodLengths.filter { it.periodLengthType != PeriodLengthType.OVERALL_SENTENCE_LENGTH }.filter { it.statusId == EntityStatus.ACTIVE }.map { LegacyPeriodLength.from(it, sentenceEntity.sentenceType?.classification) },
         firstSentenceAppearance.appearanceDate,
       )
     }

@@ -1,13 +1,18 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -22,17 +27,32 @@ class RecallEntity(
   val id: Int = 0,
   val recallUuid: UUID = UUID.randomUUID(),
   val prisonerId: String,
-  val revocationDate: LocalDate?,
-  val returnToCustodyDate: LocalDate?,
+  var revocationDate: LocalDate?,
+  var returnToCustodyDate: LocalDate?,
   @ManyToOne
   @JoinColumn(name = "recall_type_id")
-  val recallType: RecallTypeEntity,
+  var recallType: RecallTypeEntity,
+
+  // Audit and status columns
+  @Column
+  @Enumerated(EnumType.ORDINAL)
+  var statusId: EntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
-  val createdByPrison: String,
+  val createdPrison: String? = null,
+  var updatedAt: ZonedDateTime? = null,
+  var updatedBy: String? = null,
+  var updatedPrison: String? = null,
 ) {
 
-  fun copy(revocationDate: LocalDate?, returnToCustodyDate: LocalDate?, recallType: RecallTypeEntity): RecallEntity = RecallEntity(this.id, this.recallUuid, this.prisonerId, revocationDate, returnToCustodyDate, recallType, this.createdAt, this.createdByUsername, this.createdByPrison)
+  @OneToMany(mappedBy = "recall")
+  var recallSentences: MutableSet<RecallSentenceEntity> = mutableSetOf()
+
+  fun delete(updatedUser: String) {
+    updatedAt = ZonedDateTime.now()
+    updatedBy = updatedUser
+    statusId = EntityStatus.DELETED
+  }
 
   companion object {
     fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
@@ -42,7 +62,8 @@ class RecallEntity(
       returnToCustodyDate = createRecall.returnToCustodyDate,
       recallType = recallType,
       createdByUsername = createRecall.createdByUsername,
-      createdByPrison = createRecall.createdByPrison,
+      createdPrison = createRecall.createdByPrison,
+      statusId = EntityStatus.ACTIVE,
     )
 
     fun fromMigration(prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
@@ -51,7 +72,7 @@ class RecallEntity(
       returnToCustodyDate = null, // TODO RCLL-371
       recallType = recallType,
       createdByUsername = createdByUsername,
-      createdByPrison = "Migration",
+      statusId = EntityStatus.ACTIVE,
     )
     fun from(sentence: LegacyCreateSentence, prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
       prisonerId = prisonerId,
@@ -59,7 +80,8 @@ class RecallEntity(
       returnToCustodyDate = null, // TODO RCLL-371
       recallType = recallType,
       createdByUsername = createdByUsername,
-      createdByPrison = sentence.prisonId,
+      createdPrison = sentence.prisonId,
+      statusId = EntityStatus.ACTIVE,
     )
   }
 }

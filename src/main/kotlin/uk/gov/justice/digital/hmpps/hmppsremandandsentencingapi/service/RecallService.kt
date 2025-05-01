@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
@@ -50,11 +51,11 @@ class RecallService(
 
   @Transactional
   fun updateRecall(recallUuid: UUID, recall: CreateRecall): RecordResponse<SaveRecallResponse> {
-    val recallType = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
+    val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
     val recallToUpdate = recallRepository.findOneByRecallUuid(recallUuid)
 
     if (recallToUpdate == null) {
-      val savedRecall = recallRepository.save(RecallEntity.placeholderEntity(recall, recallType, recallUuid))
+      val savedRecall = recallRepository.save(RecallEntity.placeholderEntity(recall, recallTypeEntity, recallUuid))
 
       return RecordResponse(
         SaveRecallResponse.from(savedRecall),
@@ -67,13 +68,15 @@ class RecallService(
         ),
       )
     } else {
-      val savedRecall = recallRepository.save(
-        recallToUpdate.copy(
-          revocationDate = recall.revocationDate,
-          returnToCustodyDate = recall.returnToCustodyDate,
-          recallType = recallType,
-        ),
-      )
+      recallToUpdate.apply {
+        revocationDate = recall.revocationDate
+        returnToCustodyDate = recall.returnToCustodyDate
+        recallType = recallTypeEntity
+        updatedAt = ZonedDateTime.now()
+        updatedBy = recall.createdByUsername
+        updatedPrison = recall.createdByPrison
+      }
+      val savedRecall = recallRepository.save(recallToUpdate)
 
       return RecordResponse(
         SaveRecallResponse.from(savedRecall),
@@ -97,7 +100,7 @@ class RecallService(
   }
 
   @Transactional(readOnly = true)
-  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerId(prisonerId).map {
+  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerIdAndStatusId(prisonerId).map {
     val recallSentences = recallSentenceRepository.findByRecallId(it.id).orEmpty()
     Recall.from(it, recallSentences)
   }

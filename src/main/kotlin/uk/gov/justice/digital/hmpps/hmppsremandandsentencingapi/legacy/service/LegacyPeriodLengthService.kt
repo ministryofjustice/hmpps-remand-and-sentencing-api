@@ -6,18 +6,22 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.util.UUID
 
 @Service
 class LegacyPeriodLengthService(
@@ -120,4 +124,24 @@ class LegacyPeriodLengthService(
     periodLength.delete(serviceUserService.getUsername())
     periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
   }
+
+  @Transactional(readOnly = true)
+  fun get(periodLengthUuid: UUID): LegacyPeriodLength {
+    val periodLength = getActivePeriodLengthWithSentence(periodLengthUuid)
+
+    return LegacyPeriodLength.from(
+      periodLengthEntity = periodLength,
+      sentenceEntity = periodLength.sentenceEntity!!,
+    )
+  }
+
+  @Transactional(readOnly = true)
+  fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity = periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
+    ?.takeUnless { it.statusId == EntityStatus.DELETED }
+    ?.also { entity ->
+      if (entity.sentenceEntity == null) {
+        throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
+      }
+    }
+    ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 }
