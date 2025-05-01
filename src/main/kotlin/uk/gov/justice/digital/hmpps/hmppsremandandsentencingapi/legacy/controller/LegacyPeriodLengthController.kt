@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
@@ -30,7 +31,9 @@ import java.util.UUID
   name = "legacy-period-length-controller",
   description = "CRUD operations for syncing period-length data between NOMIS and RAS (period-lengths are called sentence-terms in NOMIS)",
 )
-class LegacyPeriodLengthController(private val legacyPeriodLengthService: LegacyPeriodLengthService, private val dpsDomainEventService: DpsDomainEventService,  private val eventService: PeriodLengthDomainEventService,
+class LegacyPeriodLengthController(
+  private val legacyPeriodLengthService: LegacyPeriodLengthService,
+  private val eventService: PeriodLengthDomainEventService,
 ) {
 
   @PostMapping
@@ -48,8 +51,18 @@ class LegacyPeriodLengthController(private val legacyPeriodLengthService: Legacy
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW')")
   fun create(@RequestBody periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
-    val (periodLengthCreated, eventsToEmit) = legacyPeriodLengthService.create(periodLength)
-    dpsDomainEventService.emitEvents(eventsToEmit)
+    val periodLengthCreated = legacyPeriodLengthService.create(periodLength)
+    periodLengthCreated.prisonerId?.let {
+      eventService.create(
+        prisonerId = it,
+        courtCaseId = periodLengthCreated.courtCaseId,
+        courtAppearanceId = periodLengthCreated.appearanceUuid.toString(),
+        sentenceId = periodLengthCreated.sentenceUuid.toString(),
+        periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
+        source = EventSource.NOMIS,
+        courtChargeId = periodLengthCreated.chargeUuid.toString(),
+    )
+    }
     return periodLengthCreated
   }
 
@@ -63,7 +76,10 @@ class LegacyPeriodLengthController(private val legacyPeriodLengthService: Legacy
       ApiResponse(responseCode = "200", description = "Returns period-length details"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-      ApiResponse(responseCode = "404", description = "Not found: Period length either doesn't exist, has no sentence, or is deleted"),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found: Period length either doesn't exist, has no sentence, or is deleted",
+      ),
     ],
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW', 'ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RO')")

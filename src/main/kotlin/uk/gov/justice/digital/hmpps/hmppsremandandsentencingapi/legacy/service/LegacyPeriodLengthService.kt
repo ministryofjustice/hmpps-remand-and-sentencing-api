@@ -31,7 +31,7 @@ class LegacyPeriodLengthService(
 ) {
 
 
-  fun create(periodLength: LegacyCreatePeriodLength): RecordResponse<LegacyPeriodLengthCreatedResponse> {
+  fun create(periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
     val eventsToEmit = mutableSetOf<EventMetadata>()
 
     val sentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(periodLength.sentenceUuid)
@@ -54,18 +54,15 @@ class LegacyPeriodLengthService(
 
     createEventMetadata(savedPeriodLength, sentenceEntity)?.let { eventsToEmit.add(it) }
 
-    return RecordResponse(
-      LegacyPeriodLengthCreatedResponse(
+    return LegacyPeriodLengthCreatedResponse(
         periodLengthUuid = savedPeriodLength.periodLengthUuid,
         sentenceUuid = periodLength.sentenceUuid,
         chargeUuid = sentenceEntity.charge.chargeUuid,
-        appearanceUuid = savedPeriodLength.appearanceEntity?.appearanceUuid,
+        appearanceUuid = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.appearanceUuid,
         courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
         prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId,
         sentenceTermNOMISId = periodLength.periodLengthId,
-      ),
-      eventsToEmit,
-    )
+      )
   }
 
   private fun createEventMetadata(
