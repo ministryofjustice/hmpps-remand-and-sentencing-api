@@ -73,6 +73,9 @@ class SentenceEntity(
   @JoinColumn(name = "sentence_id")
   var periodLengths: MutableSet<PeriodLengthEntity> = mutableSetOf()
 
+  @OneToMany(mappedBy = "sentence")
+  var recallSentences: MutableSet<RecallSentenceEntity> = mutableSetOf()
+
   fun isSame(other: SentenceEntity?): Boolean = chargeNumber == other?.chargeNumber &&
     sentenceServeType == other?.sentenceServeType &&
     sentenceType == other.sentenceType &&
