@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -33,7 +34,7 @@ import java.util.UUID
 
 class DataCreator {
   companion object Factory {
-    fun legacyCreateCourtCase(prisonerId: String = "PRI123", active: Boolean = true): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active)
+    fun legacyCreateCourtCase(prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID, active: Boolean = true): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active)
 
     fun courtAppearanceLegacyData(
       postedDate: String = LocalDate.now().format(

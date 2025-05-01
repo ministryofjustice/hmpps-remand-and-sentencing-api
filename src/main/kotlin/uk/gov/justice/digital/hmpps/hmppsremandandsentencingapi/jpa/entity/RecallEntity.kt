@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -43,6 +44,15 @@ class RecallEntity(
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
 ) {
+
+  @OneToMany(mappedBy = "recall")
+  var recallSentences: MutableSet<RecallSentenceEntity> = mutableSetOf()
+
+  fun delete(updatedUser: String) {
+    updatedAt = ZonedDateTime.now()
+    updatedBy = updatedUser
+    statusId = EntityStatus.DELETED
+  }
 
   companion object {
     fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
