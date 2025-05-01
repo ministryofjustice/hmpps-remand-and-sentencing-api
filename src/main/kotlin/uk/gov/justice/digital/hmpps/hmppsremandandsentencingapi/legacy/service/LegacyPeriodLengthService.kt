@@ -47,7 +47,7 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
     return entityChangeStatus to toAddPeriodLengths
   }
 
-  fun delete(periodLength: PeriodLengthEntity) {
+  private fun delete(periodLength: PeriodLengthEntity) {
     periodLength.delete(serviceUserService.getUsername())
     periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
   }
@@ -71,4 +71,12 @@ class LegacyPeriodLengthService(private val periodLengthRepository: PeriodLength
       }
     }
     ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
+
+  @Transactional
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+    .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null }
+    .map { periodLength ->
+      delete(periodLength)
+      LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
+    }.firstOrNull()
 }
