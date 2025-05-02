@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyPeriodLengthService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PeriodLengthDomainEventService
-import java.util.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/legacy/period-length", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -60,19 +60,6 @@ class LegacyPeriodLengthController(
         courtChargeId = periodLengthCreated.chargeUuid.toString(),
       )
     }
-//    val periodLengthCreated = legacyPeriodLengthService.create(periodLength)
-//    periodLengthCreated.prisonerId?.let {
-//      eventService.create(
-//        prisonerId = it,
-//        courtCaseId = periodLengthCreated.courtCaseId,
-//        courtAppearanceId = periodLengthCreated.appearanceUuid.toString(),
-//        sentenceId = periodLengthCreated.sentenceUuid.toString(),
-//        periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
-//        source = EventSource.NOMIS,
-//        courtChargeId = periodLengthCreated.chargeUuid.toString(),
-//      )
-//    }
-//    return periodLengthCreated
   }
 
   @GetMapping("/{periodLengthUuid}")
