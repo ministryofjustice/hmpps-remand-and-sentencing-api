@@ -37,8 +37,8 @@ class LegacyPeriodLengthController(
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Create a new period length of a single sentence",
-    description = "Creates a new period length of a single sentence",
+    summary = "Creates one or more period lengths for a single sentence",
+    description = "Creates one or more period lengths for a single sentence",
   )
   @ApiResponses(
     value = [

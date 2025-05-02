@@ -117,13 +117,13 @@ class PeriodLengthEntity(
       createdPrison = periodLength.prisonId,
     )
 
-    fun from(periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String, isManyCharges: Boolean): PeriodLengthEntity {
+    fun from(periodLengthUuid: UUID, periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String, isManyCharges: Boolean): PeriodLengthEntity {
       val order = getDefaultPeriodOrder()
       val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData?.sentenceCalcType
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType!!)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
-        periodLengthUuid = periodLength.periodLengthUuid ?: UUID.randomUUID(),
+        periodLengthUuid = periodLengthUuid ?: UUID.randomUUID(),
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
         weeks = periodLength.periodWeeks,

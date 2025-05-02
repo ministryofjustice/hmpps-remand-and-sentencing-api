@@ -29,10 +29,11 @@ class LegacyPeriodLengthService(
     val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLength.sentenceUuid)
     val firstSentenceEntity = sentenceEntities.firstOrNull()
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLength.sentenceUuid}")
-    val isManyCharges = sentenceEntities.first().charge.appearanceCharges.size > 1
-
+    val isManyCharges = firstSentenceEntity.charge.appearanceCharges.size > 1
+    val periodLengthUuid = UUID.randomUUID()
     sentenceEntities.forEach { sentenceEntity ->
       val periodLengthEntity = PeriodLengthEntity.from(
+        periodLengthUuid,
         periodLength,
         sentenceEntity,
         serviceUserService.getUsername(),
@@ -45,7 +46,7 @@ class LegacyPeriodLengthService(
       ?: throw EntityNotFoundException("No appearance found for sentence ${firstSentenceEntity.sentenceUuid}")
 
     return LegacyPeriodLengthCreatedResponse(
-      periodLengthUuid = periodLength.periodLengthUuid!!,
+      periodLengthUuid = periodLengthUuid,
       sentenceUuid = periodLength.sentenceUuid,
       chargeUuid = firstSentenceEntity.charge.chargeUuid,
       appearanceUuid = appearance.appearanceUuid,

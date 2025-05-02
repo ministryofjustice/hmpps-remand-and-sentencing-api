@@ -222,8 +222,6 @@ class DataCreator {
 
     fun legacyCreatePeriodLength(
       sentenceUUID: UUID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
-      periodLengthId: NomisPeriodLengthId = nomisPeriodLengthId(),
-      periodLengthUuid: UUID = UUID.randomUUID(),
       periodYears: Int? = 2,
       periodMonths: Int? = null,
       periodWeeks: Int? = null,
@@ -231,7 +229,6 @@ class DataCreator {
       legacyData: PeriodLengthLegacyData = periodLengthLegacyData(),
     ): LegacyCreatePeriodLength = LegacyCreatePeriodLength(
       sentenceUUID,
-      periodLengthUuid,
       periodYears,
       periodMonths,
       periodWeeks,
