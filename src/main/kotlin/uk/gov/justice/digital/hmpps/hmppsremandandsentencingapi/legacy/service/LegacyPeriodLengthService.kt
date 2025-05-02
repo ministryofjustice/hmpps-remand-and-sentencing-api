@@ -25,6 +25,7 @@ class LegacyPeriodLengthService(
   private val serviceUserService: ServiceUserService,
   private val sentenceRepository: SentenceRepository,
 ) {
+  @Transactional
   fun create(periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
     val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLength.sentenceUuid)
     val firstSentenceEntity = sentenceEntities.firstOrNull()
