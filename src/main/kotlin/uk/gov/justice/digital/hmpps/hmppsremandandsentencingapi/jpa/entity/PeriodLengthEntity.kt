@@ -123,7 +123,7 @@ class PeriodLengthEntity(
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType!!)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
-        periodLengthUuid = periodLengthUuid ?: UUID.randomUUID(),
+        periodLengthUuid = periodLengthUuid,
         years = periodLength.periodYears,
         months = periodLength.periodMonths,
         weeks = periodLength.periodWeeks,
