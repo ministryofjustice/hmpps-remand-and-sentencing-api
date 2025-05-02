@@ -48,18 +48,16 @@ class LegacyPeriodLengthController(
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW')")
-  fun create(@RequestBody periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
-    return legacyPeriodLengthService.create(periodLength).also { periodLengthCreated ->
-      eventService.create(
-        prisonerId = periodLengthCreated.prisonerId,
-        courtCaseId = periodLengthCreated.courtCaseId,
-        courtAppearanceId = periodLengthCreated.appearanceUuid.toString(),
-        sentenceId = periodLengthCreated.sentenceUuid.toString(),
-        periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
-        source = EventSource.NOMIS,
-        courtChargeId = periodLengthCreated.chargeUuid.toString(),
-      )
-    }
+  fun create(@RequestBody periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse = legacyPeriodLengthService.create(periodLength).also { periodLengthCreated ->
+    eventService.create(
+      prisonerId = periodLengthCreated.prisonerId,
+      courtCaseId = periodLengthCreated.courtCaseId,
+      courtAppearanceId = periodLengthCreated.appearanceUuid.toString(),
+      sentenceId = periodLengthCreated.sentenceUuid.toString(),
+      periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
+      source = EventSource.NOMIS,
+      courtChargeId = periodLengthCreated.chargeUuid.toString(),
+    )
   }
 
   @GetMapping("/{periodLengthUuid}")
