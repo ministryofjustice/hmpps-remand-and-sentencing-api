@@ -38,7 +38,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCreator
@@ -70,7 +72,8 @@ abstract class IntegrationTestBase {
   protected lateinit var objectMapper: ObjectMapper
 
   private val hmppsDomainQueue by lazy {
-    hmppsQueueService.findByQueueId("hmppsdomainqueue") ?: throw MissingQueueException("HmppsQueue hmppsdomainqueue not found")
+    hmppsQueueService.findByQueueId("hmppsdomainqueue")
+      ?: throw MissingQueueException("HmppsQueue hmppsdomainqueue not found")
   }
 
   private val hmppsDomainQueueSqsClient by lazy { hmppsDomainQueue.sqsClient }
@@ -101,7 +104,10 @@ abstract class IntegrationTestBase {
     )
   }
 
-  protected fun createCourtCase(createCourtCase: CreateCourtCase = DpsDataCreator.dpsCreateCourtCase(), purgeQueues: Boolean = true): Pair<String, CreateCourtCase> {
+  protected fun createCourtCase(
+    createCourtCase: CreateCourtCase = DpsDataCreator.dpsCreateCourtCase(),
+    purgeQueues: Boolean = true,
+  ): Pair<String, CreateCourtCase> {
     val response = webTestClient
       .post()
       .uri("/court-case")
@@ -137,7 +143,10 @@ abstract class IntegrationTestBase {
     return response.courtCaseUuid to legacyCreateCourtCase
   }
 
-  protected fun createLegacyCourtAppearance(legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(), legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance()): Pair<UUID, LegacyCreateCourtAppearance> {
+  protected fun createLegacyCourtAppearance(
+    legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
+    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
+  ): Pair<UUID, LegacyCreateCourtAppearance> {
     val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
     val toCreateAppearance = legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
     val response = webTestClient
@@ -156,7 +165,11 @@ abstract class IntegrationTestBase {
     return response.lifetimeUuid to toCreateAppearance
   }
 
-  protected fun createLegacyCharge(legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(), legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(), legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge()): Pair<UUID, LegacyCreateCharge> {
+  protected fun createLegacyCharge(
+    legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
+    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
+    legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
+  ): Pair<UUID, LegacyCreateCharge> {
     val courtAppearance = createLegacyCourtAppearance(legacyCreateCourtCase, legacyCreateCourtAppearance)
     val toCreateCharge = legacyCharge.copy(appearanceLifetimeUuid = courtAppearance.first)
     val response = webTestClient
@@ -205,7 +218,37 @@ abstract class IntegrationTestBase {
     return response.lifetimeUuid to toCreateSentence
   }
 
-  protected fun createDraftCourtCase(draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase()): DraftCourtCaseCreatedResponse = webTestClient
+  protected fun createPeriodLength(
+    legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
+    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+      legacyData = DataCreator.courtAppearanceLegacyData(
+        outcomeConvictionFlag = true,
+        outcomeDispositionCode = "F",
+      ),
+    ),
+    legacyPeriodLength: LegacyCreatePeriodLength = DataCreator.legacyCreatePeriodLength(),
+  ): Pair<UUID, LegacyCreatePeriodLength> {
+    val (sentenceLifetimeUuid) = createLegacySentence(legacyCreateCourtCase, legacyCreateCourtAppearance)
+    val toCreatePeriodLength = legacyPeriodLength.copy(sentenceUuid = sentenceLifetimeUuid)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/period-length")
+      .bodyValue(toCreatePeriodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyPeriodLengthCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    purgeQueues()
+    return response.periodLengthUuid to toCreatePeriodLength
+  }
+
+  protected fun createDraftCourtCase(
+    draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase(),
+  ): DraftCourtCaseCreatedResponse = webTestClient
     .post()
     .uri("/draft/court-case")
     .bodyValue(draftCourtCase)
@@ -218,7 +261,10 @@ abstract class IntegrationTestBase {
     .isCreated.returnResult(DraftCourtCaseCreatedResponse::class.java)
     .responseBody.blockFirst()!!
 
-  protected fun createDraftAppearance(courtCaseUuid: String, draftAppearance: DraftCreateCourtAppearance = DraftDataCreator.draftCreateCourtAppearance()): DraftCourtAppearanceCreatedResponse = webTestClient
+  protected fun createDraftAppearance(
+    courtCaseUuid: String,
+    draftAppearance: DraftCreateCourtAppearance = DraftDataCreator.draftCreateCourtAppearance(),
+  ): DraftCourtAppearanceCreatedResponse = webTestClient
     .post()
     .uri("/draft/court-case/$courtCaseUuid/appearance")
     .bodyValue(draftAppearance)
@@ -245,8 +291,20 @@ abstract class IntegrationTestBase {
 
   fun purgeQueues() {
     runBlocking {
-      hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_queue", hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl))
-      hmppsQueueService.purgeQueue(PurgeQueueRequest("hmpps_domain_dlq", hmppsDomainQueueSqsDlqClient, hmppsDomainQueue.dlqUrl!!))
+      hmppsQueueService.purgeQueue(
+        PurgeQueueRequest(
+          "hmpps_domain_queue",
+          hmppsDomainQueueSqsClient,
+          hmppsDomainQueue.queueUrl,
+        ),
+      )
+      hmppsQueueService.purgeQueue(
+        PurgeQueueRequest(
+          "hmpps_domain_dlq",
+          hmppsDomainQueueSqsDlqClient,
+          hmppsDomainQueue.dlqUrl!!,
+        ),
+      )
     }
   }
 
@@ -268,10 +326,15 @@ abstract class IntegrationTestBase {
   private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {
     val messages = ArrayList<HmppsMessage<ObjectNode>>()
     while (hmppsDomainQueueSqsClient.countAllMessagesOnQueue(hmppsDomainQueue.queueUrl).get() != 0) {
-      val message = hmppsDomainQueueSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build())
+      val message = hmppsDomainQueueSqsClient.receiveMessage(
+        ReceiveMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build(),
+      )
       messages.addAll(
         message.get().messages().map {
-          hmppsDomainQueueSqsClient.deleteMessage(DeleteMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).receiptHandle(it.receiptHandle()).build()).get()
+          hmppsDomainQueueSqsClient.deleteMessage(
+            DeleteMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).receiptHandle(it.receiptHandle())
+              .build(),
+          ).get()
           val sqsMessage = objectMapper.readValue(it.body(), SQSMessage::class.java)
           val courtCaseInsertedMessageType = object : TypeReference<HmppsMessage<ObjectNode>>() {}
           objectMapper.readValue(sqsMessage.Message, courtCaseInsertedMessageType)

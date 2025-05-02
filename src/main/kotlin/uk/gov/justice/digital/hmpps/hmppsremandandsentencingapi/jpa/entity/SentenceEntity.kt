@@ -132,7 +132,6 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fine?.fineAmount,
     )
-    sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, sentenceTypeEntity?.nomisSentenceCalcType ?: sentence.legacyData.sentenceCalcType!!, createdBy, isManyCharges) }.toMutableSet()
     return sentenceEntity
   }
 
