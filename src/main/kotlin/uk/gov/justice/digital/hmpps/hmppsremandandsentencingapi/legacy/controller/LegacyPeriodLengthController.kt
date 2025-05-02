@@ -49,10 +49,9 @@ class LegacyPeriodLengthController(
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW')")
   fun create(@RequestBody periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
-    val periodLengthCreated = legacyPeriodLengthService.create(periodLength)
-    periodLengthCreated.prisonerId?.let {
+    return legacyPeriodLengthService.create(periodLength).also { periodLengthCreated ->
       eventService.create(
-        prisonerId = it,
+        prisonerId = periodLengthCreated.prisonerId,
         courtCaseId = periodLengthCreated.courtCaseId,
         courtAppearanceId = periodLengthCreated.appearanceUuid.toString(),
         sentenceId = periodLengthCreated.sentenceUuid.toString(),
@@ -61,7 +60,19 @@ class LegacyPeriodLengthController(
         courtChargeId = periodLengthCreated.chargeUuid.toString(),
       )
     }
-    return periodLengthCreated
+//    val periodLengthCreated = legacyPeriodLengthService.create(periodLength)
+//    periodLengthCreated.prisonerId?.let {
+//      eventService.create(
+//        prisonerId = it,
+//        courtCaseId = periodLengthCreated.courtCaseId,
+//        courtAppearanceId = periodLengthCreated.appearanceUuid.toString(),
+//        sentenceId = periodLengthCreated.sentenceUuid.toString(),
+//        periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
+//        source = EventSource.NOMIS,
+//        courtChargeId = periodLengthCreated.chargeUuid.toString(),
+//      )
+//    }
+//    return periodLengthCreated
   }
 
   @GetMapping("/{periodLengthUuid}")

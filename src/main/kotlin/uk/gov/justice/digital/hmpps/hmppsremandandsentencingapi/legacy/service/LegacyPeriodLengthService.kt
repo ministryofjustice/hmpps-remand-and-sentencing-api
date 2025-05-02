@@ -3,9 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
@@ -29,51 +26,32 @@ class LegacyPeriodLengthService(
   private val sentenceRepository: SentenceRepository,
 ) {
   fun create(periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
-    val eventsToEmit = mutableSetOf<EventMetadata>()
+    val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLength.sentenceUuid)
+    val firstSentenceEntity = sentenceEntities.firstOrNull()
+      ?: throw EntityNotFoundException("No sentence found with UUID ${periodLength.sentenceUuid}")
+    val isManyCharges = sentenceEntities.first().charge.appearanceCharges.size > 1
 
-    val sentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(periodLength.sentenceUuid)
-      ?: throw EntityNotFoundException("No sentence found at ${periodLength.sentenceUuid}")
-
-    val isManyCharges = sentenceEntity.charge.appearanceCharges.size > 1
-    val periodLengthEntity = PeriodLengthEntity.from(
-      periodLength,
-      sentenceEntity,
-      serviceUserService.getUsername(),
-      isManyCharges,
-    )
-
-    val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
-    periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
-
-    createEventMetadata(savedPeriodLength, sentenceEntity)?.let { eventsToEmit.add(it) }
+    sentenceEntities.forEach { sentenceEntity ->
+      val periodLengthEntity = PeriodLengthEntity.from(
+        periodLength,
+        sentenceEntity,
+        serviceUserService.getUsername(),
+        isManyCharges,
+      )
+      val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
+      periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
+    }
+    val appearance = firstSentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
+      ?: throw EntityNotFoundException("No appearance found for sentence ${firstSentenceEntity.sentenceUuid}")
 
     return LegacyPeriodLengthCreatedResponse(
-      periodLengthUuid = savedPeriodLength.periodLengthUuid,
+      periodLengthUuid = periodLength.periodLengthUuid!!,
       sentenceUuid = periodLength.sentenceUuid,
-      chargeUuid = sentenceEntity.charge.chargeUuid,
-      appearanceUuid = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.appearanceUuid,
-      courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
-      prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId,
-      sentenceTermNOMISId = periodLength.periodLengthId,
+      chargeUuid = firstSentenceEntity.charge.chargeUuid,
+      appearanceUuid = appearance.appearanceUuid,
+      courtCaseId = appearance.courtCase.id.toString(),
+      prisonerId = appearance.courtCase.prisonerId,
     )
-  }
-
-  private fun createEventMetadata(
-    savedPeriodLength: PeriodLengthEntity,
-    sentenceEntity: SentenceEntity,
-  ): EventMetadata? {
-    val prisonerId = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance?.courtCase?.prisonerId
-    return prisonerId?.let {
-      EventMetadataCreator.periodLengthEventMetadata(
-        prisonerId = it,
-        courtCaseId = savedPeriodLength.appearanceEntity?.courtCase?.id.toString(),
-        courtAppearanceId = savedPeriodLength.appearanceEntity?.appearanceUuid.toString(),
-        chargeId = sentenceEntity.charge.chargeUuid.toString(),
-        sentenceId = sentenceEntity.sentenceUuid.toString(),
-        periodLengthId = savedPeriodLength.periodLengthUuid.toString(),
-        eventType = EventType.PERIOD_LENGTH_INSERTED,
-      )
-    }
   }
 
   fun upsert(

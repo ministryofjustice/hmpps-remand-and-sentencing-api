@@ -231,7 +231,6 @@ class DataCreator {
       legacyData: PeriodLengthLegacyData = periodLengthLegacyData(),
     ): LegacyCreatePeriodLength = LegacyCreatePeriodLength(
       sentenceUUID,
-      periodLengthId,
       periodLengthUuid,
       periodYears,
       periodMonths,

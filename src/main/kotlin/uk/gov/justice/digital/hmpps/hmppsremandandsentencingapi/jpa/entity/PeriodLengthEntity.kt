@@ -119,10 +119,8 @@ class PeriodLengthEntity(
 
     fun from(periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String, isManyCharges: Boolean): PeriodLengthEntity {
       val order = getDefaultPeriodOrder()
-      val sentenceCalcType = requireNotNull(sentenceEntity.legacyData?.sentenceCalcType) {
-        "Sentence calculation type is required"
-      }
-      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+      val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData?.sentenceCalcType
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType!!)
       val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
         periodLengthUuid = periodLength.periodLengthUuid ?: UUID.randomUUID(),
@@ -134,7 +132,7 @@ class PeriodLengthEntity(
         periodLengthType = type,
         statusId = if (isManyCharges) EntityStatus.MANY_CHARGES_DATA_FIX else EntityStatus.ACTIVE,
         sentenceEntity = sentenceEntity,
-        appearanceEntity = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance,
+        appearanceEntity = null,
         legacyData = legacyData,
         createdBy = createdBy,
         createdPrison = null,
