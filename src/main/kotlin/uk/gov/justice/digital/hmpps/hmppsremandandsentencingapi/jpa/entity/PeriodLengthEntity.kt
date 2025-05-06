@@ -83,7 +83,7 @@ class PeriodLengthEntity(
     isManyCharges: Boolean,
   ) {
     // TODO not sure if the sentenceCalcType can change via the update-period-length legacy route - to check with syscon
-    // maybe syscon need to send the sentenceCalcType in the period length request to get around this? first one and possible the number of charges associated to the sentence in the second question?
+    // maybe syscon need to send the sentenceCalcType in the period length request to get around this?
     val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType
       ?: sentenceEntity.legacyData?.sentenceCalcType
       ?: throw IllegalStateException("Sentence calculation type not found")
