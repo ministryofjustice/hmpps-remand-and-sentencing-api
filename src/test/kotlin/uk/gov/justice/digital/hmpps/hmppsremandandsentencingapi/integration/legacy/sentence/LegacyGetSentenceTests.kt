@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
@@ -28,6 +29,30 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.lifetimeUuid")
       .isEqualTo(sentence.sentenceUuid.toString())
+  }
+
+  @Test
+  fun `get legacy recall sentence by lifetime uuid`() {
+    val (lifetimeUuid) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020")),
+    )
+
+    webTestClient
+      .get()
+      .uri("/legacy/sentence/$lifetimeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.lifetimeUuid")
+      .isEqualTo(lifetimeUuid)
+      .jsonPath("$.sentenceCalcType")
+      .isEqualTo("FTR_ORA")
+      .jsonPath("$.sentenceCategory")
+      .isEqualTo("2020")
   }
 
   @Test
