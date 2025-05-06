@@ -111,8 +111,8 @@ class LegacyPeriodLengthController(
   @PutMapping("/{periodLengthUuid}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @Operation(
-    summary = "Updates one or more period lengths for a single sentence UUID",
-    description = "Updates one or more period lengths for a single sentence UUID",
+    summary = "Updates one or more period lengths related to a period-length UUID",
+    description = "Updates one or more period lengths related to a period-length UUID",
   )
   @ApiResponses(
     value = [
