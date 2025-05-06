@@ -16,6 +16,7 @@ data class Sentence(
   val convictionDate: LocalDate?,
   val fineAmount: FineAmount?,
   val legacyData: SentenceLegacyData?,
+  val sentenceId: Int?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
@@ -28,6 +29,7 @@ data class Sentence(
       sentenceEntity.convictionDate,
       sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
+      sentenceEntity.id
     )
   }
 }
