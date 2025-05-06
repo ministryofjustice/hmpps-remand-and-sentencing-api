@@ -9,8 +9,7 @@ import java.time.LocalDate
 class ConsecutiveToSentenceService(private val sentenceRepository: SentenceRepository) {
 
   fun hasSentenceToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate): HasSentenceToChainToResponse {
-    val consecutiveToIds = sentenceRepository.findConsecutiveToIds(prisonerId)
-    val countSentences = sentenceRepository.countConsecutiveToSentences(consecutiveToIds, prisonerId, beforeOrOnAppearanceDate)
+    val countSentences = sentenceRepository.countConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate)
     return HasSentenceToChainToResponse(countSentences > 0)
   }
 }
