@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -103,6 +104,38 @@ class LegacyPeriodLengthController(
         courtCaseId = legacyPeriodLength.courtCaseId,
         courtAppearanceId = legacyPeriodLength.courtAppearanceId.toString(),
         source = EventSource.NOMIS,
+      )
+    }
+  }
+
+  @PutMapping("/{periodLengthUuid}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+    summary = "Updates one or more period lengths for a single sentence UUID",
+    description = "Updates one or more period lengths for a single sentence UUID",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "No content"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Period length or sentence not found"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW')")
+  fun update(
+    @PathVariable periodLengthUuid: UUID,
+    @RequestBody periodLength: LegacyCreatePeriodLength,
+  ) {
+    legacyPeriodLengthService.update(periodLengthUuid, periodLength)?.let { updatedPeriodLength ->
+      eventService.update(
+        prisonerId = updatedPeriodLength.prisonerId,
+        courtCaseId = updatedPeriodLength.courtCaseId,
+        courtAppearanceId = updatedPeriodLength.appearanceUuid.toString(),
+        sentenceId = updatedPeriodLength.sentenceUuid.toString(),
+        periodLengthId = updatedPeriodLength.periodLengthUuid.toString(),
+        source = EventSource.NOMIS,
+        courtChargeId = updatedPeriodLength.chargeUuid.toString(),
       )
     }
   }

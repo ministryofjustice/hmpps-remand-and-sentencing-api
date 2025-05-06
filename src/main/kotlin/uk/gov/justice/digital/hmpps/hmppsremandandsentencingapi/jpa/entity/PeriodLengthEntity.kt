@@ -75,6 +75,34 @@ class PeriodLengthEntity(
     updatedPrison = periodLength.createdPrison
   }
 
+  fun updateFrom(
+    periodLength: LegacyCreatePeriodLength,
+    sentenceEntity: SentenceEntity,
+    username: String,
+    isManyCharges: Boolean,
+  ) {
+    // TODO not sure if this can change but go with it
+    // what if the sentence is updated... do the period lengths need updating too?
+    // same for is many charges
+    val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType
+      ?: sentenceEntity.legacyData?.sentenceCalcType
+      ?: throw IllegalStateException("Sentence calculation type not found")
+
+    val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+
+    years = periodLength.periodYears
+    months = periodLength.periodMonths
+    weeks = periodLength.periodWeeks
+    days = periodLength.periodDays
+    periodLengthType = type
+    // can this change?? not covered by isSame logic. If it can change add to the isSame logic
+    statusId = if (isManyCharges) EntityStatus.MANY_CHARGES_DATA_FIX else EntityStatus.ACTIVE
+    legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+    updatedPrison = periodLength.prisonId
+  }
+
   fun copy(): PeriodLengthEntity = PeriodLengthEntity(
     0,
     periodLengthUuid,
@@ -135,7 +163,7 @@ class PeriodLengthEntity(
         appearanceEntity = null,
         legacyData = legacyData,
         createdBy = createdBy,
-        createdPrison = null,
+        createdPrison = periodLength.prisonId,
       )
     }
 
