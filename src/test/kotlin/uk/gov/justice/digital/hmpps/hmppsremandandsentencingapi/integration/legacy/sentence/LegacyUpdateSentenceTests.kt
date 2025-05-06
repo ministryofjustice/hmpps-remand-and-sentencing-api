@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import java.util.UUID
 
@@ -14,9 +13,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
-
-  @Autowired
-  private lateinit var periodLengthHistoryRepository: PeriodLengthHistoryRepository
 
   @Test
   fun `update sentence for existing charge`() {

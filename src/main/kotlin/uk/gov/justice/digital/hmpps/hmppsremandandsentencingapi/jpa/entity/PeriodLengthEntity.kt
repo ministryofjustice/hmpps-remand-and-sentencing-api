@@ -59,7 +59,8 @@ class PeriodLengthEntity(
     days == other?.days &&
     periodOrder == other?.periodOrder &&
     periodLengthType == other.periodLengthType &&
-    legacyData == other.legacyData
+    legacyData == other.legacyData &&
+    statusId == other.statusId
 
   fun updateFrom(periodLength: PeriodLengthEntity, username: String) {
     years = periodLength.years
@@ -73,6 +74,34 @@ class PeriodLengthEntity(
     updatedAt = ZonedDateTime.now()
     updatedBy = username
     updatedPrison = periodLength.createdPrison
+  }
+
+  fun updateFrom(
+    periodLength: LegacyCreatePeriodLength,
+    sentenceEntity: SentenceEntity,
+    username: String,
+    isManyCharges: Boolean,
+  ) {
+    // TODO not sure if the sentenceCalcType can change via the update-period-length legacy route - to check with syscon
+    // maybe syscon need to send the sentenceCalcType in the period length request to get around this?
+    val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType
+      ?: sentenceEntity.legacyData?.sentenceCalcType
+      ?: throw IllegalStateException("Sentence calculation type not found")
+
+    val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+
+    years = periodLength.periodYears
+    months = periodLength.periodMonths
+    weeks = periodLength.periodWeeks
+    days = periodLength.periodDays
+    periodLengthType = type
+    // TODO not sure if the status can change via the update-period-length legacy route - to check with syscon
+    // maybe syscon need to send the 'number of charges associated to the sentence'
+    statusId = if (isManyCharges) EntityStatus.MANY_CHARGES_DATA_FIX else EntityStatus.ACTIVE
+    legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+    updatedPrison = periodLength.prisonId
   }
 
   fun copy(): PeriodLengthEntity = PeriodLengthEntity(
@@ -135,7 +164,7 @@ class PeriodLengthEntity(
         appearanceEntity = null,
         legacyData = legacyData,
         createdBy = createdBy,
-        createdPrison = null,
+        createdPrison = periodLength.prisonId,
       )
     }
 
