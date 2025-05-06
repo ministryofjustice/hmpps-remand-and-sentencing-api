@@ -15,35 +15,35 @@ class RecallDomainEventService(
   @Value("\${ingress.url}") private val ingressUrl: String,
   @Value("\${recall.getByIdPath}") private val recallLookupPath: String,
 ) {
-  fun create(prisonerId: String, recallId: String, source: EventSource) {
+  fun create(prisonerId: String, recallId: String, sentenceIds: List<String>, source: EventSource) {
     snsService.publishDomainEvent(
       "recall.inserted",
       "Recall inserted",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, source),
+      HmppsRecallMessage(recallId, sentenceIds, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun update(prisonerId: String, recallId: String, source: EventSource) {
+  fun update(prisonerId: String, recallId: String, sentenceIds: List<String>, source: EventSource) {
     snsService.publishDomainEvent(
       "recall.updated",
       "Recall updated",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, source),
+      HmppsRecallMessage(recallId, sentenceIds, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun delete(prisonerId: String, recallId: String, source: EventSource) {
+  fun delete(prisonerId: String, recallId: String, sentenceIds: List<String>, source: EventSource) {
     snsService.publishDomainEvent(
       "recall.deleted",
       "Recall deleted",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, source),
+      HmppsRecallMessage(recallId, sentenceIds, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
