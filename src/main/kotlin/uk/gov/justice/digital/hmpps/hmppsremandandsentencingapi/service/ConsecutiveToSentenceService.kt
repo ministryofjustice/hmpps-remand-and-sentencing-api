@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -15,6 +16,7 @@ class ConsecutiveToSentenceService(private val sentenceRepository: SentenceRepos
     return HasSentenceToChainToResponse(countSentences > 0)
   }
 
+  @Transactional
   fun sentencesToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate): RecordResponse<SentencesToChainToResponse> {
     val consecutiveToSentences = sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate)
     val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
