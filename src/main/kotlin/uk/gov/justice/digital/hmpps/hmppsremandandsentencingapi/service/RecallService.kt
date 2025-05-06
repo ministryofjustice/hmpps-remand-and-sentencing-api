@@ -29,7 +29,6 @@ class RecallService(
   fun createRecall(createRecall: CreateRecall): RecordResponse<SaveRecallResponse> {
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
     val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!))
-    // TODO Do we need a domain event for these?
     // Temporarily nullable because CRDS data doesn't have sentence Ids
     val recallSentences: List<RecallSentenceEntity>? =
       createRecall.sentenceIds?.let { sentenceIds ->
@@ -43,6 +42,7 @@ class RecallService(
         EventMetadataCreator.recallEventMetadata(
           recall.prisonerId,
           recall.recallUuid.toString(),
+          recallSentences?.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
           EventType.RECALL_INSERTED,
         ),
       ),
@@ -63,6 +63,7 @@ class RecallService(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
+            emptyList(),
             EventType.RECALL_INSERTED,
           ),
         ),
@@ -84,6 +85,7 @@ class RecallService(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
+            emptyList(),
             EventType.RECALL_UPDATED,
           ),
         ),

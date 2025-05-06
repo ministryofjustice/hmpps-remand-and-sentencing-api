@@ -105,16 +105,19 @@ class DpsDomainEventService(
           EventType.RECALL_INSERTED -> recallDomainEventService.create(
             eventMetaData.prisonerId,
             eventMetaData.recallId!!,
+            eventMetaData.sentenceIds!!,
             EventSource.DPS,
           )
           EventType.RECALL_UPDATED -> recallDomainEventService.update(
             eventMetaData.prisonerId,
             eventMetaData.recallId!!,
+            eventMetaData.sentenceIds!!,
             EventSource.DPS,
           )
           EventType.RECALL_DELETED -> recallDomainEventService.delete(
             eventMetaData.prisonerId,
             eventMetaData.recallId!!,
+            eventMetaData.sentenceIds!!,
             EventSource.DPS,
           )
           EventType.PERIOD_LENGTH_INSERTED -> periodLengthDomainEventService.create(
