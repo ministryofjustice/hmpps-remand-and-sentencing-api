@@ -5,6 +5,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseAppearanceChargeSentence
 import java.time.LocalDate
 import java.util.UUID
 
@@ -43,4 +44,29 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       EntityStatus.MANY_CHARGES_DATA_FIX,
     ),
   ): Long
+
+  @Query(
+    """
+    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseAppearanceChargeSentence(cc, ca, c, s) from SentenceEntity s
+    join s.charge c
+    join c.appearanceCharges ac
+    join ac.appearance ca
+    join ca.courtCase cc
+    where s.statusId in :sentenceStatuses
+    and cc.prisonerId = :prisonerId
+    and c.statusId = :#{#status}
+    and ca.statusId = :#{#status}
+    and ca.appearanceDate <= :beforeOrOnAppearanceDate
+    and cc.statusId = :#{#status}
+  """,
+  )
+  fun findConsecutiveToSentences(
+    @Param("prisonerId") prisonerId: String,
+    @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
+      EntityStatus.ACTIVE,
+      EntityStatus.MANY_CHARGES_DATA_FIX,
+    ),
+  ): List<CourtCaseAppearanceChargeSentence>
 }
