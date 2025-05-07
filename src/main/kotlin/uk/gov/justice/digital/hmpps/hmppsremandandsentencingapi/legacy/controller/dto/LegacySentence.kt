@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
@@ -20,6 +21,7 @@ data class LegacySentence(
   val chargeNumber: String?,
   val fineAmount: BigDecimal?,
   val sentenceStartDate: LocalDate,
+  val returnToCustodyDate: LocalDate?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
@@ -32,7 +34,8 @@ data class LegacySentence(
         .filter { it.warrantType == "SENTENCING" }
         .minBy { it.appearanceDate }
 
-      val sentenceTypeAndCategory = getSentenceCalcTypeAndCategory(sentenceEntity)
+      val latestRecall = sentenceEntity.recallSentences.map { it.recall }.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
+      val sentenceTypeAndCategory = getSentenceCalcTypeAndCategory(sentenceEntity, latestRecall)
 
       return LegacySentence(
         courtCase.prisonerId,
@@ -47,12 +50,11 @@ data class LegacySentence(
         sentenceEntity.chargeNumber,
         sentenceEntity.fineAmount,
         firstSentenceAppearance.appearanceDate,
+        latestRecall?.returnToCustodyDate,
       )
     }
 
-    private fun getSentenceCalcTypeAndCategory(sentenceEntity: SentenceEntity): Pair<String, String> {
-      val latestRecall = sentenceEntity.recallSentences.map { it.recall }.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
-
+    private fun getSentenceCalcTypeAndCategory(sentenceEntity: SentenceEntity, latestRecall: RecallEntity?): Pair<String, String> {
       return if (latestRecall == null) {
         (sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData!!.sentenceCalcType!!) to
           (sentenceEntity.sentenceType?.nomisCjaCode ?: sentenceEntity.legacyData!!.sentenceCategory!!)
