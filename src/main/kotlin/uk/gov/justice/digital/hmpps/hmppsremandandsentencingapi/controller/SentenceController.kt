@@ -32,9 +32,9 @@ class SentenceController(private val sentenceService: SentenceService) {
       ApiResponse(responseCode = "404", description = "Not found if no charge at uuid"),
     ],
   )
-  fun getChargeDetails(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+  fun getSentenceDetails(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
-  @GetMapping("/sentence/multiple")
+  @GetMapping("\${court.sentence.get}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
     summary = "Retrieve sentence details for the requested ids",
@@ -48,5 +48,5 @@ class SentenceController(private val sentenceService: SentenceService) {
       ApiResponse(responseCode = "404", description = "Not found if no charge at uuid"),
     ],
   )
-  fun getChargeDetailsByIds(@RequestParam sentenceIds: List<Int>): List<Sentence> = sentenceService.findSentenceByIds(sentenceIds)
+  fun getSentence(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.findSentenceByUuids(sentenceUuids)
 }
