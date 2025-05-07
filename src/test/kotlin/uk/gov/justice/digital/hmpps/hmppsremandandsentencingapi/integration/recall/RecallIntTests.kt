@@ -231,6 +231,7 @@ class RecallIntTests : IntegrationTestBase() {
       legacyData = null,
       sentenceId = 1,
     )
+    assertThat(actualRecall.sentences!![0].sentenceId).isNotNull()
     assertThat(actualRecall)
       .usingRecursiveComparison()
       .ignoringFields("createdAt", "sentences.sentenceId")
@@ -295,6 +296,8 @@ class RecallIntTests : IntegrationTestBase() {
       legacyData = null,
       sentenceId = 1,
     )
+    assertThat(actualRecall.sentences!![0].sentenceId).isNotNull()
+    assertThat(actualRecall.sentences!![1].sentenceId).isNotNull()
     assertThat(actualRecall)
       .usingRecursiveComparison()
       .ignoringFields("createdAt", "sentences.sentenceId")
