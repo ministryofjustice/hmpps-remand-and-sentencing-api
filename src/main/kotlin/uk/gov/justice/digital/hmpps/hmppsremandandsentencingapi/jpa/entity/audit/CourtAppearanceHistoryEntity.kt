@@ -43,7 +43,6 @@ class CourtAppearanceHistoryEntity(
   val updatedBy: String?,
   val updatedPrison: String?,
   val warrantType: String,
-  val taggedBail: Int?,
   val nextCourtAppearanceId: Int?,
   val overallConvictionDate: LocalDate?,
   @JdbcTypeCode(SqlTypes.JSON)
@@ -57,7 +56,7 @@ class CourtAppearanceHistoryEntity(
       0, courtAppearanceEntity.appearanceUuid, courtAppearanceEntity.appearanceOutcome?.id, courtAppearanceEntity.courtCase.id, courtAppearanceEntity.courtCode,
       courtAppearanceEntity.courtCaseReference, courtAppearanceEntity.appearanceDate, courtAppearanceEntity.statusId, courtAppearanceEntity.previousAppearance?.id, courtAppearanceEntity.warrantId,
       courtAppearanceEntity.createdAt, courtAppearanceEntity.createdBy, courtAppearanceEntity.createdPrison, courtAppearanceEntity.updatedAt, courtAppearanceEntity.updatedBy,
-      courtAppearanceEntity.updatedPrison, courtAppearanceEntity.warrantType, courtAppearanceEntity.taggedBail, courtAppearanceEntity.nextCourtAppearance?.id, courtAppearanceEntity.overallConvictionDate,
+      courtAppearanceEntity.updatedPrison, courtAppearanceEntity.warrantType, courtAppearanceEntity.nextCourtAppearance?.id, courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData, courtAppearanceEntity,
     )
   }

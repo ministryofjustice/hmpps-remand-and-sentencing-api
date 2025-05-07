@@ -73,7 +73,6 @@ class LegacyPeriodLengthTests {
       updatedAt = null,
       updatedBy = null,
       updatedPrison = null,
-      taggedBail = null,
       appearanceCharges = mutableSetOf(),
       nextCourtAppearance = null,
       overallConvictionDate = null,
