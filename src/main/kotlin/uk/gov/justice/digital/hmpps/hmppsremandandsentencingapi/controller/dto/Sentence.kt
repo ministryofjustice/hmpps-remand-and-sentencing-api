@@ -29,7 +29,7 @@ data class Sentence(
       sentenceEntity.convictionDate,
       sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
-      sentenceEntity.id
+      sentenceEntity.id,
     )
   }
 }

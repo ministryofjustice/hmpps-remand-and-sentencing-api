@@ -229,10 +229,11 @@ class RecallIntTests : IntegrationTestBase() {
       convictionDate = null,
       fineAmount = null,
       legacyData = null,
+      sentenceId = 1,
     )
     assertThat(actualRecall)
       .usingRecursiveComparison()
-      .ignoringFields("createdAt")
+      .ignoringFields("createdAt", "sentences.sentenceId")
       .isEqualTo(
         Recall(
           recallUuid = createRecall.recallUuid,
@@ -280,6 +281,7 @@ class RecallIntTests : IntegrationTestBase() {
       convictionDate = null,
       fineAmount = null,
       legacyData = null,
+      sentenceId = 1,
     )
     val secondExpectedSentence = Sentence(
       sentenceUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655449999"),
@@ -291,10 +293,11 @@ class RecallIntTests : IntegrationTestBase() {
       convictionDate = null,
       fineAmount = null,
       legacyData = null,
+      sentenceId = 1,
     )
     assertThat(actualRecall)
       .usingRecursiveComparison()
-      .ignoringFields("createdAt")
+      .ignoringFields("createdAt", "sentences.sentenceId")
       .isEqualTo(
         Recall(
           recallUuid = createRecall.recallUuid,
