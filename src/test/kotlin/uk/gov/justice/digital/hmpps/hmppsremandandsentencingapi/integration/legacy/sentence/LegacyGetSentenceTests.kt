@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.util.UUID
 
 class LegacyGetSentenceTests : IntegrationTestBase() {
@@ -34,7 +35,7 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
   @Test
   fun `get legacy recall sentence by lifetime uuid`() {
     val (lifetimeUuid) = createLegacySentence(
-      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020")),
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1)),
     )
 
     webTestClient
@@ -53,6 +54,8 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
       .isEqualTo("FTR_ORA")
       .jsonPath("$.sentenceCategory")
       .isEqualTo("2020")
+      .jsonPath("$.returnToCustodyDate")
+      .isEqualTo("2024-01-01")
   }
 
   @Test
