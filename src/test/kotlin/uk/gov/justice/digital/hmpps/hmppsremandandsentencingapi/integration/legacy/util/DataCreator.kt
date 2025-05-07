@@ -104,6 +104,7 @@ class DataCreator {
       active: Boolean = true,
       prisonId: String = "PRISON1",
       sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(),
+      returnToCustodyDate: LocalDate? = null,
     ): LegacyCreateSentence = LegacyCreateSentence(
       chargeUuids,
       chargeNumber,
@@ -112,6 +113,7 @@ class DataCreator {
       active,
       prisonId,
       sentenceLegacyData,
+      returnToCustodyDate,
     )
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
@@ -185,6 +187,7 @@ class DataCreator {
       legacyData: SentenceLegacyData = sentenceLegacyData(),
       consecutiveToSentenceId: MigrationSentenceId? = null,
       periodLengths: List<MigrationCreatePeriodLength> = listOf(migrationCreatePeriodLength()),
+      returnToCustodyDate: LocalDate? = null,
     ): MigrationCreateSentence = MigrationCreateSentence(
       sentenceId,
       chargeNumber,
@@ -193,6 +196,7 @@ class DataCreator {
       legacyData,
       consecutiveToSentenceId,
       periodLengths,
+      returnToCustodyDate,
     )
 
     fun migrationCreatePeriodLength(

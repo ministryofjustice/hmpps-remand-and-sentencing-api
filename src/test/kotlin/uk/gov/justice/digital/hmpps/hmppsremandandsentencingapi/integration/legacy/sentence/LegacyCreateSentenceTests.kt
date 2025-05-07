@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 
 class LegacyCreateSentenceTests : IntegrationTestBase() {
 
@@ -47,7 +48,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       ),
     )
     val charge = courtCaseCreated.appearances.first().charges.first()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -77,6 +78,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     assertThat(recalls).hasSize(1)
     assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
     assertThat(recalls[0].sentences).hasSize(1)
+    assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
   }
 
   @Test

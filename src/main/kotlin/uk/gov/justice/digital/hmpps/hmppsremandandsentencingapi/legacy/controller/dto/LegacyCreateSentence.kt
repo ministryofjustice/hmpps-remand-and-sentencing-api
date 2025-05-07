@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import java.time.LocalDate
 import java.util.UUID
 
 data class LegacyCreateSentence(
@@ -10,4 +11,5 @@ data class LegacyCreateSentence(
   val active: Boolean,
   val prisonId: String,
   var legacyData: SentenceLegacyData,
+  val returnToCustodyDate: LocalDate? = null,
 )

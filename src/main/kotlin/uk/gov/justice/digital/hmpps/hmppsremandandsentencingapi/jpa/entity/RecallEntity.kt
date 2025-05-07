@@ -14,6 +14,7 @@ import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -66,18 +67,28 @@ class RecallEntity(
       statusId = EntityStatus.ACTIVE,
     )
 
-    fun fromMigration(prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
+    fun fromMigration(
+      sentence: MigrationCreateSentence,
+      prisonerId: String,
+      createdByUsername: String,
+      recallType: RecallTypeEntity,
+    ): RecallEntity = RecallEntity(
       prisonerId = prisonerId,
       revocationDate = null,
-      returnToCustodyDate = null, // TODO RCLL-371
+      returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
     )
-    fun from(sentence: LegacyCreateSentence, prisonerId: String, createdByUsername: String, recallType: RecallTypeEntity): RecallEntity = RecallEntity(
+    fun from(
+      sentence: LegacyCreateSentence,
+      prisonerId: String,
+      createdByUsername: String,
+      recallType: RecallTypeEntity,
+    ): RecallEntity = RecallEntity(
       prisonerId = prisonerId,
       revocationDate = null,
-      returnToCustodyDate = null, // TODO RCLL-371
+      returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
       recallType = recallType,
       createdByUsername = createdByUsername,
       createdPrison = sentence.prisonId,

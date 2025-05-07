@@ -309,7 +309,7 @@ class MigrationService(
       .takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null && sentenceCategory.toIntOrNull() != null }
       ?.let { referenceData.legacySentenceTypes[it.first to it.second!!.toInt()] }
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
-    val recall = recallRepository.save(RecallEntity.fromMigration(tracking.prisonerId, tracking.createdByUsername, legacySentenceType?.recallType ?: defaultRecallType))
+    val recall = recallRepository.save(RecallEntity.fromMigration(migrationCreateSentence, tracking.prisonerId, tracking.createdByUsername, legacySentenceType?.recallType ?: defaultRecallType))
     recallSentenceRepository.save(RecallSentenceEntity.fromMigration(createdSentence, recall, tracking.createdByUsername, recallSentenceLegacyData))
   }
 
