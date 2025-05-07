@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -11,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
@@ -91,6 +93,34 @@ class RecallService(
         ),
       )
     }
+  }
+
+  @Transactional
+  fun deleteRecall(recallUuid: UUID): RecordResponse<DeleteRecallResponse> {
+
+    val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
+      ?: throw EntityNotFoundException("Recall not found $recallUuid")
+
+    recallToDelete.statusId = EntityStatus.DELETED
+
+    recallToDelete.recallSentences.forEach {
+      recallSentenceRepository.delete(it)
+    }
+    // TODO RCLL-277 Recall audit data.
+
+    return RecordResponse(
+      DeleteRecallResponse.from(recallToDelete),
+      mutableSetOf(
+        EventMetadataCreator.recallEventMetadata(
+          recallToDelete.prisonerId,
+          recallToDelete.recallUuid.toString(),
+          recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
+          EventType.RECALL_DELETED,
+        ),
+      ),
+    )
+
+
   }
 
   @Transactional(readOnly = true)

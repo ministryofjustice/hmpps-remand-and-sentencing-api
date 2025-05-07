@@ -351,6 +351,43 @@ class RecallIntTests : IntegrationTestBase() {
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
   }
+
+  @Sql("classpath:test_data/insert-recalls.sql")
+  @Test
+  fun `Delete a recall`() {
+    val recalls = getRecallsByPrisonerId("A12345B")
+
+    assertThat(recalls)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        listOf(
+          Recall(
+            recallUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+            prisonerId = "A12345B",
+            revocationDate = LocalDate.of(2024, 7, 1),
+            returnToCustodyDate = LocalDate.of(2024, 7, 1),
+            recallType = LR_HDC,
+            createdByUsername = "admin_user",
+            createdAt = ZonedDateTime.now(),
+            createdByPrison = "HMI",
+            sentences = emptyList(),
+          ),
+          Recall(
+            recallUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440001"),
+            prisonerId = "A12345B",
+            revocationDate = LocalDate.of(2024, 7, 2),
+            returnToCustodyDate = LocalDate.of(2024, 7, 2),
+            recallType = LR_HDC,
+            createdByUsername = "admin_user",
+            createdAt = ZonedDateTime.now(),
+            createdByPrison = "HMI",
+            sentences = emptyList(),
+          ),
+        ),
+      )
+  }
   private fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
     .get()
     .uri("/recall/$recallUuid")
