@@ -51,14 +51,13 @@ class DpsDataCreator {
       appearanceDate: LocalDate = LocalDate.now(),
       warrantId: String? = "123",
       warrantType: String = "SENTENCING",
-      taggedBail: Int? = 1,
       overallSentenceLength: CreatePeriodLength? = dpsCreatePeriodLength(),
       nextCourtAppearance: CreateNextCourtAppearance? = dpsCreateNextCourtAppearance(),
       charges: List<CreateCharge> = listOf(dpsCreateCharge()),
       overallConvictionDate: LocalDate? = LocalDate.now().minusDays(7),
       legacyData: CourtAppearanceLegacyData? = null,
       prisonId: String = "PRISON1",
-    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, taggedBail, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData, prisonId)
+    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData, prisonId)
 
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
