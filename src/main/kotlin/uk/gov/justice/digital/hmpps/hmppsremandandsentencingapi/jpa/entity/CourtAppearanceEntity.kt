@@ -371,12 +371,11 @@ class CourtAppearanceEntity(
     ): String = appearanceOutcome?.outcomeType
       ?: if (legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") "SENTENCING" else "REMAND"
 
-    fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? =
-      courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
-        compareBy(
-          CourtAppearanceEntity::appearanceDate,
-          CourtAppearanceEntity::createdAt,
-        ),
-      )
+    fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
+      compareBy(
+        CourtAppearanceEntity::appearanceDate,
+        CourtAppearanceEntity::createdAt,
+      ),
+    )
   }
 }
