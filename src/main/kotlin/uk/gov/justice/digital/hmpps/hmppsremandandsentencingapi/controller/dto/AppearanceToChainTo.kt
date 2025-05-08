@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseAppearanceChargeSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import java.time.LocalDate
 
 data class AppearanceToChainTo(
@@ -11,11 +11,11 @@ data class AppearanceToChainTo(
   val sentences: List<SentenceToChainTo>,
 ) {
   companion object {
-    fun from(appearance: CourtAppearanceEntity, courtCaseAppearanceChargeSentences: List<CourtCaseAppearanceChargeSentence>): AppearanceToChainTo = AppearanceToChainTo(
+    fun from(appearance: ConsecutiveToSentenceAppearance, consecutiveToSentenceRows: List<ConsecutiveToSentenceRow>): AppearanceToChainTo = AppearanceToChainTo(
       appearance.courtCode,
       appearance.courtCaseReference,
       appearance.appearanceDate,
-      courtCaseAppearanceChargeSentences.map { SentenceToChainTo.from(it.charge, it.sentence) },
+      consecutiveToSentenceRows.map { SentenceToChainTo.from(it.charge, it.sentence) },
     )
   }
 }

@@ -4,22 +4,33 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordEventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import java.time.LocalDate
+import java.util.UUID
 
-data class CourtCaseAppearanceChargeSentence(
-  val courtCase: CourtCaseEntity,
-  val appearance: CourtAppearanceEntity,
+data class ConsecutiveToSentenceRow(
+  val prisonerId: String,
+  val courtCaseId: String,
+  val appearanceUuid: UUID,
+  val appearanceCourtCode: String,
+  val appearanceCourtCaseReference: String?,
+  val appearanceDate: LocalDate,
   val charge: ChargeEntity,
   val sentence: SentenceEntity,
 ) {
+
+  fun toConsecutiveToSentenceAppearance(): ConsecutiveToSentenceAppearance = ConsecutiveToSentenceAppearance(
+    appearanceUuid,
+    appearanceCourtCode,
+    appearanceCourtCaseReference,
+    appearanceDate,
+  )
   fun <T> toRecordEventMetadata(record: T): RecordEventMetadata<T> = RecordEventMetadata(
     record,
     EventMetadata(
-      courtCase.prisonerId,
-      courtCase.caseUniqueIdentifier,
-      appearance.appearanceUuid.toString(),
+      prisonerId,
+      courtCaseId,
+      appearanceUuid.toString(),
       charge.chargeUuid.toString(),
       sentence.sentenceUuid.toString(),
       null,

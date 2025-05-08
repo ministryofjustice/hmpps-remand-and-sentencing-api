@@ -1,1 +1,0 @@
-alter table court_appearance add constraint court_appearance_next_appearance_id_fkey foreign key (next_court_appearance_id) references next_court_appearance(id)
