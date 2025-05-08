@@ -331,6 +331,7 @@ abstract class IntegrationTestBase {
     } catch (e: ConditionTimeoutException) {
       val messagesOnQueue = getAllDomainMessages()
       log.info("message types on queue: {}", messagesOnQueue.joinToString { it.eventType })
+      throw e
     }
     return getAllDomainMessages()
   }
