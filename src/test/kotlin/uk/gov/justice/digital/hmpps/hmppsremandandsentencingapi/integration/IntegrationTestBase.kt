@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import kotlinx.coroutines.runBlocking
+import org.awaitility.core.ConditionTimeoutException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
@@ -324,7 +326,12 @@ abstract class IntegrationTestBase {
   }
 
   fun getMessages(expectedNumberOfMessages: Int): List<HmppsMessage<ObjectNode>> {
-    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, expectedNumberOfMessages)
+    try {
+      numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, expectedNumberOfMessages)
+    } catch (e: ConditionTimeoutException) {
+      val messagesOnQueue = getAllDomainMessages()
+      log.info("message types on queue: {}", messagesOnQueue.joinToString { it.eventType })
+    }
     return getAllDomainMessages()
   }
 
@@ -347,6 +354,10 @@ abstract class IntegrationTestBase {
       )
     }
     return messages
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
 
