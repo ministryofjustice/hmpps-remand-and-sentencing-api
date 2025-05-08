@@ -5,7 +5,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseAppearanceChargeSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import java.time.LocalDate
 import java.util.UUID
 
@@ -47,15 +47,12 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseAppearanceChargeSentence(cc, ca, c, s) from SentenceEntity s
+    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow(cc.prisonerId, cc.caseUniqueIdentifier, ca.appearanceUuid, ca.courtCode, ca.courtCaseReference, ca.appearanceDate, c, s) from SentenceEntity s
     left join fetch s.sentenceType st
     join s.charge c
     left join fetch c.chargeOutcome co
     join c.appearanceCharges ac
     join ac.appearance ca
-    left join fetch ca.appearanceOutcome ao
-    left join fetch ca.nextCourtAppearance nca
-    left join fetch nca.appearanceType nct
     join ca.courtCase cc
     where s.statusId in :sentenceStatuses
     and cc.prisonerId = :prisonerId
@@ -73,5 +70,5 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       EntityStatus.ACTIVE,
       EntityStatus.MANY_CHARGES_DATA_FIX,
     ),
-  ): List<CourtCaseAppearanceChargeSentence>
+  ): List<ConsecutiveToSentenceRow>
 }
