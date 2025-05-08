@@ -290,21 +290,26 @@ abstract class IntegrationTestBase {
     .returnResult().responseBody!!
 
   fun purgeQueues() {
-    runBlocking {
-      hmppsQueueService.purgeQueue(
-        PurgeQueueRequest(
-          "hmpps_domain_queue",
-          hmppsDomainQueueSqsClient,
-          hmppsDomainQueue.queueUrl,
-        ),
-      )
-      hmppsQueueService.purgeQueue(
-        PurgeQueueRequest(
-          "hmpps_domain_dlq",
-          hmppsDomainQueueSqsDlqClient,
-          hmppsDomainQueue.dlqUrl!!,
-        ),
-      )
+    val totalAttempts = 5
+    var currentAttempt = 0
+    while (currentAttempt < totalAttempts && hmppsDomainQueueSqsClient.countAllMessagesOnQueue(hmppsDomainQueue.queueUrl).get() != 0) {
+      runBlocking {
+        hmppsQueueService.purgeQueue(
+          PurgeQueueRequest(
+            "hmpps_domain_queue",
+            hmppsDomainQueueSqsClient,
+            hmppsDomainQueue.queueUrl,
+          ),
+        )
+        hmppsQueueService.purgeQueue(
+          PurgeQueueRequest(
+            "hmpps_domain_dlq",
+            hmppsDomainQueueSqsDlqClient,
+            hmppsDomainQueue.dlqUrl!!,
+          ),
+        )
+      }
+      currentAttempt++
     }
   }
 
