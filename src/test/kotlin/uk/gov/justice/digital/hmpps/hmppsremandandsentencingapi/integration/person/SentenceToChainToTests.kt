@@ -2,20 +2,21 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.per
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceToChainToResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import java.time.format.DateTimeFormatter
 
-class HasSentenceToChainToTests : IntegrationTestBase() {
+class SentenceToChainToTests : IntegrationTestBase() {
 
   @Test
-  fun `returns true when there is an active sentence in the past`() {
+  fun `returns sentences to chain to grouped by appearance when there is an active sentence in the past`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
-
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence!!
     val result = webTestClient.get()
       .uri {
-        it.path("/person/{prisonerId}/has-sentence-to-chain-to")
+        it.path("/person/{prisonerId}/sentences-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
           .build(createCourtCase.prisonerId)
       }
@@ -23,20 +24,30 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .returnResult(HasSentenceToChainToResponse::class.java)
+      .returnResult(SentencesToChainToResponse::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(result.hasSentenceToChainTo).isTrue
+    Assertions.assertThat(result.appearances).hasSize(1)
+    val appearanceToChainTo = result.appearances[0]
+    Assertions.assertThat(appearanceToChainTo.appearanceDate).isEqualTo(appearance.appearanceDate)
+    Assertions.assertThat(appearanceToChainTo.courtCode).isEqualTo(appearance.courtCode)
+    Assertions.assertThat(appearanceToChainTo.courtCaseReference).isEqualTo(appearance.courtCaseReference)
+    val sentenceToChainTo = appearanceToChainTo.sentences.first()
+    Assertions.assertThat(sentenceToChainTo.sentenceUuid).isEqualTo(sentence.sentenceUuid!!)
+    Assertions.assertThat(sentenceToChainTo.offenceCode).isEqualTo(charge.offenceCode)
+    Assertions.assertThat(sentenceToChainTo.offenceStartDate).isEqualTo(charge.offenceStartDate)
+    Assertions.assertThat(sentenceToChainTo.offenceEndDate).isEqualTo(charge.offenceEndDate)
+    Assertions.assertThat(sentenceToChainTo.countNumber).isEqualTo(sentence.chargeNumber)
   }
 
   @Test
-  fun `returns false when there is only an active sentence in the future`() {
+  fun `returns no appearances when there is only an active sentence in the future`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
 
     val result = webTestClient.get()
       .uri {
-        it.path("/person/{prisonerId}/has-sentence-to-chain-to")
+        it.path("/person/{prisonerId}/sentences-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.minusDays(5).format(DateTimeFormatter.ISO_DATE))
           .build(createCourtCase.prisonerId)
       }
@@ -44,10 +55,10 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .returnResult(HasSentenceToChainToResponse::class.java)
+      .returnResult(SentencesToChainToResponse::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(result.hasSentenceToChainTo).isFalse
+    Assertions.assertThat(result.appearances).isEmpty()
   }
 
   @Test
@@ -56,7 +67,7 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
     val appearance = createCourtCase.appearances.first()
     webTestClient.get()
       .uri {
-        it.path("/person/{prisonerId}/has-sentence-to-chain-to")
+        it.path("/person/{prisonerId}/sentences-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
           .build(createCourtCase.prisonerId)
       }
@@ -71,7 +82,7 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
     val appearance = createCourtCase.appearances.first()
     webTestClient.get()
       .uri {
-        it.path("/person/{prisonerId}/has-sentence-to-chain-to")
+        it.path("/person/{prisonerId}/sentences-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
           .build(createCourtCase.prisonerId)
       }

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import java.time.LocalDate
+
 data class MigrationCreateSentence(
   val sentenceId: MigrationSentenceId,
   val chargeNumber: String?,
@@ -8,4 +10,5 @@ data class MigrationCreateSentence(
   var legacyData: SentenceLegacyData,
   val consecutiveToSentenceId: MigrationSentenceId?,
   val periodLengths: List<MigrationCreatePeriodLength>,
+  val returnToCustodyDate: LocalDate? = null,
 )

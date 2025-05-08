@@ -34,7 +34,6 @@ class LatestCourtAppearanceTests {
     createdBy = "user",
     createdPrison = "PR1",
     warrantType = "TYPE",
-    taggedBail = null,
     appearanceCharges = mutableSetOf(),
     nextCourtAppearance = null,
     overallConvictionDate = LocalDate.now(),
