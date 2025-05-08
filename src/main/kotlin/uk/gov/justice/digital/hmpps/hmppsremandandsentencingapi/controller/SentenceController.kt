@@ -48,5 +48,5 @@ class SentenceController(private val sentenceService: SentenceService) {
       ApiResponse(responseCode = "404", description = "Not found if no charge at uuid"),
     ],
   )
-  fun getSentence(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.findSentenceByUuids(sentenceUuids)
+  fun getSentences(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.findSentenceByUuids(sentenceUuids)
 }

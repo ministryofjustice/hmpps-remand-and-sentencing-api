@@ -1,13 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sentence
 
 import org.junit.jupiter.api.Test
-import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateSentence
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-
-private const val TEST_SENTENCE_UUID_1 = "550e8400-e29b-41d4-a716-446655440000"
-private const val TEST_SENTENCE_UUID_2 = "550e8400-e29b-41d4-a716-446655449999"
 
 class GetSentenceTests : IntegrationTestBase() {
 
@@ -37,13 +35,19 @@ class GetSentenceTests : IntegrationTestBase() {
   }
 
   @Test
-  @Sql("classpath:test_data/insert-sentences-to-recall.sql")
   fun `get sentences by uuids`() {
+    val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = dpsCreateSentence())
+    val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = dpsCreateSentence())
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
+    val sentenceTwo = courtCase.appearances.first().charges[1].sentence!!
+
     webTestClient
       .get()
       .uri {
         it.path("/sentence")
-          .queryParam("sentenceUuids", listOf(TEST_SENTENCE_UUID_1, TEST_SENTENCE_UUID_2))
+          .queryParam("sentenceUuids", listOf(sentenceOne.sentenceUuid, sentenceTwo.sentenceUuid))
           .build()
       }
       .headers {
@@ -54,9 +58,9 @@ class GetSentenceTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.[0]sentenceUuid")
-      .isEqualTo(TEST_SENTENCE_UUID_1)
+      .isEqualTo(sentenceOne.sentenceUuid)
       .jsonPath("$.[1]sentenceUuid")
-      .isEqualTo(TEST_SENTENCE_UUID_2)
+      .isEqualTo(sentenceTwo.sentenceUuid)
   }
 
   @Test
