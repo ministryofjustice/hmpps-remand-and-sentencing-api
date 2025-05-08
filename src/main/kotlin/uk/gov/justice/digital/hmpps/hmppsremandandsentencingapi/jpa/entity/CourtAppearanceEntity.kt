@@ -80,7 +80,7 @@ class CourtAppearanceEntity(
   @BatchSize(size = 50)
   val appearanceCharges: MutableSet<AppearanceChargeEntity> = mutableSetOf(),
 
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "next_court_appearance_id")
   var nextCourtAppearance: NextCourtAppearanceEntity?,
 

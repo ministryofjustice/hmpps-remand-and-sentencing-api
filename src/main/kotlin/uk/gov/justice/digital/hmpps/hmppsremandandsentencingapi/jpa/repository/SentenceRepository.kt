@@ -48,9 +48,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   @Query(
     """
     select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseAppearanceChargeSentence(cc, ca, c, s) from SentenceEntity s
-    left join fetch s.sentenceType st
     join s.charge c
-    left join fetch c.chargeOutcome co
     join c.appearanceCharges ac
     join ac.appearance ca
     left join fetch ca.appearanceOutcome ao
