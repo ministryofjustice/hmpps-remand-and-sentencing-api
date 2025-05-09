@@ -77,12 +77,13 @@ class DpsDataCreator {
       chargeNumber: String = "1",
       periodLengths: List<CreatePeriodLength> = listOf(dpsCreatePeriodLength(type = PeriodLengthType.SENTENCE_LENGTH)),
       sentenceServeType: String = "FORTHWITH",
-      consecutiveToChargeNumber: String? = null,
+      consecutiveToSentenceReference: String? = null,
       consecutiveToSentenceUuid: UUID? = null,
       sentenceTypeId: UUID = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"),
       convictionDate: LocalDate? = LocalDate.now().minusDays(7),
       fineAmount: CreateFineAmount? = null,
       prisonId: String = "PRISON1",
-    ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToChargeNumber, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId)
+      sentenceReference: String = "0",
+    ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId, sentenceReference, consecutiveToSentenceReference)
   }
 }

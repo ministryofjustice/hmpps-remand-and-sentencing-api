@@ -61,8 +61,8 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].consecutiveToChargeNumber")
-      .isEqualTo(firstSentence.chargeNumber!!)
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].consecutiveToSentenceUuid")
+      .isEqualTo(firstSentenceUuid.toString())
       .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$firstSentenceUuid')].sentenceType.sentenceTypeUuid")
       .isEqualTo(LegacySentenceService.Companion.recallSentenceTypeBucketUuid.toString())
   }

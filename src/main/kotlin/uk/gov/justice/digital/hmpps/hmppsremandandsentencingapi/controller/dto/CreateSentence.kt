@@ -8,10 +8,11 @@ data class CreateSentence(
   val chargeNumber: String?,
   val periodLengths: List<CreatePeriodLength>,
   val sentenceServeType: String,
-  val consecutiveToChargeNumber: String?,
   val consecutiveToSentenceUuid: UUID?,
   val sentenceTypeId: UUID,
   val convictionDate: LocalDate?,
   val fineAmount: CreateFineAmount?,
   val prisonId: String?,
+  val sentenceReference: String,
+  val consecutiveToSentenceReference: String?,
 )

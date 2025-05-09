@@ -313,6 +313,8 @@ abstract class IntegrationTestBase {
       }
       currentAttempt++
     }
+    val messagesOnQueue = getAllDomainMessages()
+    log.info("message types on queue: {}", messagesOnQueue.joinToString { it.eventType })
   }
 
   fun expectInsertedMessages(prisonerId: String) {
