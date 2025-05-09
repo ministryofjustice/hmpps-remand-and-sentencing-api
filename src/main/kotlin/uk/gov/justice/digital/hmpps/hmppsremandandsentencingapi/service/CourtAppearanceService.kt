@@ -364,10 +364,10 @@ class CourtAppearanceService(
   }
 
   private fun chargesByConsecutiveToLast(first: CreateCharge, second: CreateCharge): Int {
-    if (first.sentence?.consecutiveToChargeNumber == null) {
+    if (first.sentence?.consecutiveToSentenceReference == null) {
       return -1
     }
-    if (first.sentence.consecutiveToChargeNumber == second.sentence?.chargeNumber) {
+    if (first.sentence.consecutiveToSentenceReference == second.sentence?.sentenceReference) {
       return 1
     }
     return 0

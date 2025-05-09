@@ -11,11 +11,11 @@ data class Sentence(
   val chargeNumber: String?,
   val periodLengths: List<PeriodLength>,
   val sentenceServeType: String,
-  val consecutiveToChargeNumber: String?,
   val sentenceType: SentenceType?,
   val convictionDate: LocalDate?,
   val fineAmount: FineAmount?,
   val legacyData: SentenceLegacyData?,
+  val consecutiveToSentenceUuid: UUID?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
@@ -23,11 +23,11 @@ data class Sentence(
       sentenceEntity.chargeNumber,
       sentenceEntity.periodLengths.filter { it.statusId == EntityStatus.ACTIVE }.map { PeriodLength.from(it) },
       sentenceEntity.sentenceServeType,
-      sentenceEntity.consecutiveTo?.chargeNumber,
       sentenceEntity.sentenceType?.let { SentenceType.from(it) },
       sentenceEntity.convictionDate,
       sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
+      sentenceEntity.consecutiveTo?.takeUnless { it.statusId == EntityStatus.DELETED }?.sentenceUuid,
     )
   }
 }
