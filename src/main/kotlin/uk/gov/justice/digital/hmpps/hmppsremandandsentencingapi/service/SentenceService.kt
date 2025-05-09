@@ -108,6 +108,9 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getActiveSentence() ?: sentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid) }
 
   @Transactional(TxType.REQUIRED)
+  fun findSentenceByUuids(sentenceUuids: List<UUID>): List<Sentence> = sentenceRepository.findBySentenceUuidIn(sentenceUuids.toList().distinct()).map { Sentence.from(it) }
+
+  @Transactional(TxType.REQUIRED)
   fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)?.let { Sentence.from(it) }
 
   @Transactional(TxType.REQUIRED)
