@@ -343,7 +343,6 @@ class CourtAppearanceService(
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
     return charges.sortedWith(this::chargesByConsecutiveToLast).map {
       val charge = chargeService.createCharge(it, sentencesCreated, prisonerId, courtCaseUuid, courtAppearanceEntity, courtAppearanceDateChanged)
-      charge.record.getActiveSentence()?.let { sentence -> sentence.chargeNumber?.let { it1 -> sentencesCreated.put(it1, sentence) } }
       charge
     }.toMutableSet()
   }
