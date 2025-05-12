@@ -34,7 +34,7 @@ class ChargeService(
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
 ) {
 
-  private fun createChargeEntity(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<ChargeEntity> {
+  private fun createChargeEntity(charge: CreateCharge, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<ChargeEntity> {
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     charge.legacyData = chargeLegacyData
     val savedCharge = chargeRepository.save(ChargeEntity.from(charge, chargeOutcome, serviceUserService.getUsername()))
@@ -58,7 +58,7 @@ class ChargeService(
 
   private fun updateChargeEntity(
     charge: CreateCharge,
-    sentencesCreated: Map<String, SentenceEntity>,
+    sentencesCreated: MutableMap<String, SentenceEntity>,
     prisonerId: String,
     courtCaseId: String,
     existingCharge: ChargeEntity,
@@ -162,7 +162,7 @@ class ChargeService(
   }
 
   @Transactional
-  fun createCharge(charge: CreateCharge, sentencesCreated: Map<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): RecordResponse<ChargeEntity> {
+  fun createCharge(charge: CreateCharge, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearance: CourtAppearanceEntity, courtAppearanceDateChanged: Boolean): RecordResponse<ChargeEntity> {
     val existingCharge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(charge.chargeUuid)
     val charge = if (existingCharge != null) {
       updateChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, existingCharge, courtAppearance, courtAppearanceDateChanged)
