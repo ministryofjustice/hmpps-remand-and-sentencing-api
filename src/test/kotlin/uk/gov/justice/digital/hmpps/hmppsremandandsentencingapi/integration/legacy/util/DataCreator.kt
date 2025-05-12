@@ -166,6 +166,7 @@ class DataCreator {
       mergedFromCaseId: Long? = null,
       mergedFromEventId: Long? = null,
       mergedChargeNOMISId: Long? = null,
+      mergedFromDate: LocalDate? = null,
     ): MigrationCreateCharge = MigrationCreateCharge(
       chargeNOMISId,
       offenceCode,
@@ -177,6 +178,7 @@ class DataCreator {
       mergedFromCaseId,
       mergedFromEventId,
       mergedChargeNOMISId,
+      mergedFromDate,
     )
 
     fun migrationCreateSentence(

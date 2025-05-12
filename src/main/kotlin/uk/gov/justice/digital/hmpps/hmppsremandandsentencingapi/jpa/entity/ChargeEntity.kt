@@ -60,6 +60,7 @@ class ChargeEntity(
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "merged_from_case_id")
   var mergedFromCourtCase: CourtCaseEntity? = null,
+  var mergedFromDate: LocalDate? = null,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()
@@ -119,6 +120,7 @@ class ChargeEntity(
     0, chargeUuid, migrationCreateCharge.offenceCode, migrationCreateCharge.offenceStartDate, migrationCreateCharge.offenceEndDate,
     if (migrationCreateCharge.merged) EntityStatus.MERGED else EntityStatus.ACTIVE, chargeOutcome, this, null,
     createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, migrationCreateCharge.legacyData, mutableSetOf(), null,
+    mergedFromDate = migrationCreateCharge.mergedFromDate,
   )
 
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
