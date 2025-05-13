@@ -47,15 +47,18 @@ class HmppsRemandAndSentencingApiExceptionHandler {
     )
 
   @ExceptionHandler(EntityNotFoundException::class)
-  fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(NOT_FOUND)
-    .body(
-      ErrorResponse(
-        status = NOT_FOUND,
-        userMessage = "not found: ${e.message}",
-        developerMessage = e.message,
-      ),
-    )
+  fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> {
+    log.info("Entity not found exception: ${e.message}", e)
+    return ResponseEntity
+      .status(NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = NOT_FOUND,
+          userMessage = "not found: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
 
   @ExceptionHandler(ImmutableCourtAppearanceException::class)
   fun handleImmutableCourtAppearanceException(e: ImmutableCourtAppearanceException): ResponseEntity<ErrorResponse> {

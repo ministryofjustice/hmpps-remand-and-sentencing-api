@@ -147,8 +147,7 @@ class LegacySentenceService(
     return charge
   }
 
-  fun getCharge(chargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(chargeUuid)
-    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
+  fun getCharge(chargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)
     ?: throw EntityNotFoundException("No charge found at $chargeUuid")
 
   fun createSentenceRecord(charge: ChargeEntity, sentence: SentenceEntity): SentenceEntity {
