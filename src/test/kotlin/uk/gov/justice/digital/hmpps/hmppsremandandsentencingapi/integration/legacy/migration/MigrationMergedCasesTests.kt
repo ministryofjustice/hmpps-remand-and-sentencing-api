@@ -5,6 +5,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import java.time.LocalDate
 
 class MigrationMergedCasesTests : IntegrationTestBase() {
 
@@ -41,6 +42,8 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       mergedFromCaseId = sourceCourtCase.caseId,
       mergedFromEventId = sourceAppearance.eventId,
       mergedChargeNOMISId = sourceCharge.chargeNOMISId,
+      mergedFromDate = LocalDate.now().minusYears(6),
+
     )
 
     val targetAppearance = DataCreator.migrationCreateCourtAppearance(eventId = sourceAppearance.eventId + 1, charges = listOf(targetCharge))

@@ -18,4 +18,5 @@ data class MigrationCreateCharge(
   val mergedFromCaseId: Long?,
   val mergedFromEventId: Long?,
   val mergedChargeNOMISId: Long?,
+  val mergedFromDate: LocalDate?,
 )
