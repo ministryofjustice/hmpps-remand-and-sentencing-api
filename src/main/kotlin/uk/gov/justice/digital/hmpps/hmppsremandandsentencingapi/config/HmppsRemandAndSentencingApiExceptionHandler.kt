@@ -115,7 +115,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(ChargeAlreadySentencedException::class)
   fun handleChargeAlreadySentencedException(e: ChargeAlreadySentencedException): ResponseEntity<ErrorResponse> {
-    log.info("Charge already sentenced exception: {}", e.message)
+    log.info("Charge already sentenced exception: ${e.message}", e)
     return ResponseEntity
       .status(UNPROCESSABLE_ENTITY)
       .body(
