@@ -85,6 +85,8 @@ class SentenceEntity(
     ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
     statusId == other.statusId
 
+  fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
+
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),

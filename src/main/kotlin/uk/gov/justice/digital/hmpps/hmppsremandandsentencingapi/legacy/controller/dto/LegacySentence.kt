@@ -34,7 +34,7 @@ data class LegacySentence(
         .filter { it.warrantType == "SENTENCING" }
         .minBy { it.appearanceDate }
 
-      val latestRecall = sentenceEntity.recallSentences.map { it.recall }.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
+      val latestRecall = sentenceEntity.latestRecall()
       val sentenceTypeAndCategory = getSentenceCalcTypeAndCategory(sentenceEntity, latestRecall)
 
       return LegacySentence(
