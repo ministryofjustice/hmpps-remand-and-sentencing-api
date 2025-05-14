@@ -64,7 +64,6 @@ class LegacyPeriodLengthService(
       .takeIf { it.isNotEmpty() }
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLengthUpdate.sentenceUuid}")
 
-    val isManyCharges = sentenceEntities.any { it.charge.appearanceCharges.size > 1 }
     val username = serviceUserService.getUsername()
     var changesMade = false
 
@@ -75,7 +74,6 @@ class LegacyPeriodLengthService(
         periodLength = periodLengthUpdate,
         sentenceEntity = existingEntity.sentenceEntity!!,
         username = username,
-        isManyCharges = isManyCharges,
       )
 
       if (!originalCopy.isSame(existingEntity)) {
