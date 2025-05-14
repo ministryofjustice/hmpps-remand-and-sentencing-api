@@ -71,4 +71,29 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       EntityStatus.MANY_CHARGES_DATA_FIX,
     ),
   ): List<ConsecutiveToSentenceRow>
+
+  @Query(
+    """
+    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow(cc.prisonerId, cc.caseUniqueIdentifier, ca.appearanceUuid, ca.courtCode, ca.courtCaseReference, ca.appearanceDate, c, s) from SentenceEntity s
+    left join fetch s.sentenceType st
+    join s.charge c
+    left join fetch c.chargeOutcome co
+    join c.appearanceCharges ac
+    join ac.appearance ca
+    join ca.courtCase cc
+    where s.statusId in :sentenceStatuses
+    and s.sentenceUuid in :sentenceUuids
+    and c.statusId = :#{#status}
+    and ca.statusId = :#{#status}
+    and cc.statusId = :#{#status}
+  """,
+  )
+  fun findConsecutiveToSentenceDetails(
+    @Param("sentenceUuids") sentenceUuids: List<UUID>,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
+      EntityStatus.ACTIVE,
+      EntityStatus.MANY_CHARGES_DATA_FIX,
+    ),
+  ): List<ConsecutiveToSentenceRow>
 }
