@@ -5,4 +5,5 @@ data class ChargeLegacyData(
   val nomisOutcomeCode: String?,
   val outcomeDescription: String?,
   val outcomeDispositionCode: String?,
+  val outcomeConvictionFlag: Boolean?,
 )
