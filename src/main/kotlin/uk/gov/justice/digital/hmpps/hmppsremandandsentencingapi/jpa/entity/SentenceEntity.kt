@@ -45,7 +45,7 @@ class SentenceEntity(
   @Column
   val createdBy: String,
   @Column
-  val createdPrison: String?,
+  val createdPrison: String? = null,
   var updatedAt: ZonedDateTime? = null,
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
@@ -121,7 +121,6 @@ class SentenceEntity(
         EntityStatus.INACTIVE
       },
       createdBy = createdBy,
-      createdPrison = sentence.prisonId,
       supersedingSentence = this,
       charge = charge,
       sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
@@ -131,7 +130,6 @@ class SentenceEntity(
       legacyData = sentence.legacyData,
       updatedAt = ZonedDateTime.now(),
       updatedBy = createdBy,
-      updatedPrison = sentence.prisonId,
       fineAmount = sentence.fine?.fineAmount,
     )
     return sentenceEntity
@@ -208,7 +206,6 @@ class SentenceEntity(
         EntityStatus.INACTIVE
       },
       createdBy = createdBy,
-      createdPrison = sentence.prisonId,
       supersedingSentence = null,
       charge = chargeEntity,
       sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",

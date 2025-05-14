@@ -11,6 +11,4 @@ data class LegacyCreatePeriodLength(
   val periodWeeks: Int?,
   val periodDays: Int?,
   val legacyData: PeriodLengthLegacyData,
-  @Schema(description = "Prison identifier where create/update originated from.", required = true, example = "MDI")
-  val prisonId: String,
 )

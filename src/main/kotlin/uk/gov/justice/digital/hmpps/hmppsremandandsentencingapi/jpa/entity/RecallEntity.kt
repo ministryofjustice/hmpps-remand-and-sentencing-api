@@ -91,7 +91,6 @@ class RecallEntity(
       returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      createdPrison = sentence.prisonId,
       statusId = EntityStatus.ACTIVE,
     )
   }
