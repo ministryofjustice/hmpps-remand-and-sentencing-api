@@ -231,7 +231,6 @@ class DataCreator {
       periodWeeks: Int? = null,
       periodDays: Int? = 2,
       legacyData: PeriodLengthLegacyData = periodLengthLegacyData(),
-      prisonId: String = "MDI",
     ): LegacyCreatePeriodLength = LegacyCreatePeriodLength(
       sentenceUUID,
       periodYears,
@@ -239,7 +238,6 @@ class DataCreator {
       periodWeeks,
       periodDays,
       legacyData,
-      prisonId,
     )
   }
 }

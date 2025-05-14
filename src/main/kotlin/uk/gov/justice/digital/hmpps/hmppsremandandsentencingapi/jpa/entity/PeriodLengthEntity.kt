@@ -39,7 +39,7 @@ class PeriodLengthEntity(
   var statusId: EntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
-  val createdPrison: String?,
+  val createdPrison: String? = null,
   var updatedAt: ZonedDateTime? = null,
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
@@ -101,7 +101,6 @@ class PeriodLengthEntity(
     legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
     updatedAt = ZonedDateTime.now()
     updatedBy = username
-    updatedPrison = periodLength.prisonId
   }
 
   fun copy(): PeriodLengthEntity = PeriodLengthEntity(
@@ -164,7 +163,6 @@ class PeriodLengthEntity(
         appearanceEntity = null,
         legacyData = legacyData,
         createdBy = createdBy,
-        createdPrison = periodLength.prisonId,
       )
     }
 
