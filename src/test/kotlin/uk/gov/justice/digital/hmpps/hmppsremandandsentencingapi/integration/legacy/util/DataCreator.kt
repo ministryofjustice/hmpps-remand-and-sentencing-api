@@ -102,7 +102,6 @@ class DataCreator {
       fine: LegacyCreateFine = legacyCreateFine(),
       consecutiveToLifetimeUuid: UUID? = null,
       active: Boolean = true,
-      prisonId: String = "PRISON1",
       sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(),
       returnToCustodyDate: LocalDate? = null,
     ): LegacyCreateSentence = LegacyCreateSentence(
@@ -111,7 +110,6 @@ class DataCreator {
       fine,
       consecutiveToLifetimeUuid,
       active,
-      prisonId,
       sentenceLegacyData,
       returnToCustodyDate,
     )

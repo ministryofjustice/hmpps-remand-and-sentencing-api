@@ -9,7 +9,6 @@ data class LegacyCreateSentence(
   val fine: LegacyCreateFine?,
   val consecutiveToLifetimeUuid: UUID?,
   val active: Boolean,
-  val prisonId: String,
   var legacyData: SentenceLegacyData,
   val returnToCustodyDate: LocalDate? = null,
 )

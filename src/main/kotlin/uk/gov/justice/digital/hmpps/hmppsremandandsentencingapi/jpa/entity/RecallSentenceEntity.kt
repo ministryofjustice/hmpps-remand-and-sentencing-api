@@ -61,7 +61,6 @@ class RecallSentenceEntity(
       sentence = createdSentence,
       recall = recall,
       createdByUsername = createdByUsername,
-      createdPrison = sentence.prisonId,
       legacyData = legacyData,
     )
   }
