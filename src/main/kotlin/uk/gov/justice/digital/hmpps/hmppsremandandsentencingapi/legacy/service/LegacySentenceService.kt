@@ -64,7 +64,7 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
 
     return sentence.chargeUuids.map { chargeUuid ->
-      val charge = getCharge(chargeUuid)
+      val charge = getUnsentencedCharge(chargeUuid)
       val createdSentence = createSentenceRecord(
         charge,
         SentenceEntity.from(
@@ -139,15 +139,16 @@ class LegacySentenceService(
     )
   }
 
-  fun getCharge(chargeUuid: UUID): ChargeEntity {
-    val charge = chargeRepository.findFirstByChargeUuidOrderByUpdatedAtDesc(chargeUuid)
-      ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
-      ?: throw EntityNotFoundException("No charge found at $chargeUuid")
+  fun getUnsentencedCharge(chargeUuid: UUID): ChargeEntity {
+    val charge = getCharge(chargeUuid)
     if (charge.getActiveOrInactiveSentence() != null) {
       throw ChargeAlreadySentencedException("charge at $chargeUuid is already sentenced")
     }
     return charge
   }
+
+  fun getCharge(chargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)
+    ?: throw EntityNotFoundException("No charge found at $chargeUuid")
 
   fun createSentenceRecord(charge: ChargeEntity, sentence: SentenceEntity): SentenceEntity {
     val createdSentence = sentenceRepository.save(sentence)
@@ -162,6 +163,7 @@ class LegacySentenceService(
     sentence: LegacyCreateSentence,
   ): List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>> {
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
+    val legacyData = sentence.legacyData
     sentence.legacyData.active = sentence.active
     sentence.legacyData = dpsSentenceType?.let {
       sentence.legacyData.copy(
@@ -172,6 +174,9 @@ class LegacySentenceService(
     } ?: sentence.legacyData
     val isManyCharges = sentence.chargeUuids.size > 1
     val consecutiveToSentence = sentence.consecutiveToLifetimeUuid?.let { getUnlessDeleted(it) }
+    val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
+    val legacySentenceType =
+      getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
 
     return sentence.chargeUuids.map { chargeUuid ->
       val (existingSentence, entityStatus) = (
@@ -184,7 +189,7 @@ class LegacySentenceService(
               ?.let { it to EntityChangeStatus.NO_CHANGE }
             )
             ?: (
-              getCharge(chargeUuid).let { charge ->
+              getUnsentencedCharge(chargeUuid).let { charge ->
                 createSentenceRecord(
                   charge,
                   SentenceEntity.from(
@@ -197,6 +202,16 @@ class LegacySentenceService(
                     isManyCharges,
                   ),
                 )
+              }.also {
+                if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
+                  createRecall(
+                    sentence,
+                    it,
+                    legacySentenceType,
+                    RecallSentenceLegacyData.from(legacyData),
+                    prisonerId!!,
+                  )
+                }
               } to EntityChangeStatus.CREATED
               )
           )
@@ -210,6 +225,7 @@ class LegacySentenceService(
         consecutiveToSentence,
         isManyCharges,
       )
+      updateRecall(existingSentence, sentence)
       if (!existingSentence.isSame(updatedSentence)) {
         existingSentence.updateFrom(updatedSentence)
         sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
@@ -232,6 +248,10 @@ class LegacySentenceService(
         courtAppearance.courtCase.caseUniqueIdentifier,
       )
     }
+  }
+
+  private fun updateRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
+    updatedSentence.latestRecall()?.returnToCustodyDate = sentence.returnToCustodyDate
   }
 
   @Transactional(readOnly = true)
