@@ -97,7 +97,6 @@ class RecallService(
 
   @Transactional
   fun deleteRecall(recallUuid: UUID): RecordResponse<DeleteRecallResponse> {
-
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
 
@@ -107,6 +106,7 @@ class RecallService(
       recallSentenceRepository.delete(it)
     }
     // TODO RCLL-277 Recall audit data.
+    // TODO RCLL-386 Delete sentence if legacy recall.
 
     return RecordResponse(
       DeleteRecallResponse.from(recallToDelete),
@@ -119,8 +119,6 @@ class RecallService(
         ),
       ),
     )
-
-
   }
 
   @Transactional(readOnly = true)

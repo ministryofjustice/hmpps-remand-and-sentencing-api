@@ -115,5 +115,4 @@ class RecallController(private val recallService: RecallService, private val dps
     dpsDomainEventService.emitEvents(eventsToEmit)
     response
   }
-
 }
