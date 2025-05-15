@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
@@ -316,6 +317,11 @@ class LegacySentenceService(
   private fun getUnlessDeleted(sentenceUuid: UUID): SentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
     ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+
+  @Transactional(readOnly = true)
+  fun search(searchSentence: LegacySearchSentence): List<LegacySentence> = sentenceRepository.findBySentenceUuidIn(searchSentence.lifetimeUuids.distinct()).mapNotNull { sentence ->
+    sentence.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { LegacySentence.from(it) }
+  }
 
   companion object {
     val recallNomisSentenceCalcTypes: Set<String> = setOf(
