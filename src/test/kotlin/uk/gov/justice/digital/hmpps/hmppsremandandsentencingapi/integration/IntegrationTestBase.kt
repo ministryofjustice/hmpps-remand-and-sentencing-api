@@ -21,11 +21,15 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
@@ -291,6 +295,59 @@ abstract class IntegrationTestBase {
     .expectBodyList(Recall::class.java)
     .returnResult().responseBody!!
 
+  protected fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
+    .get()
+    .uri("/recall/$recallUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(Recall::class.java)
+    .returnResult().responseBody!!
+
+  protected fun createRecall(recall: CreateRecall) = webTestClient
+    .post()
+    .uri("/recall")
+    .bodyValue(recall)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated
+    .expectBody(SaveRecallResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun updateRecall(recall: CreateRecall, uuid: UUID) = webTestClient
+    .put()
+    .uri("/recall/$uuid")
+    .bodyValue(recall)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(SaveRecallResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun deleteRecall(uuid: UUID) = webTestClient
+    .delete()
+    .uri("/recall/$uuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(DeleteRecallResponse::class.java)
+    .returnResult().responseBody!!
+
   fun purgeQueues() {
     val totalAttempts = 5
     var currentAttempt = 0
@@ -336,6 +393,16 @@ abstract class IntegrationTestBase {
       throw e
     }
     return getAllDomainMessages()
+  }
+
+  fun createCourtCaseTwoSentences(): Pair<CreateSentence, CreateSentence> {
+    val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
+    val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
+    val sentenceTwo = courtCase.appearances.first().charges[1].sentence!!
+    return sentenceOne to sentenceTwo
   }
 
   private fun getAllDomainMessages(): List<HmppsMessage<ObjectNode>> {

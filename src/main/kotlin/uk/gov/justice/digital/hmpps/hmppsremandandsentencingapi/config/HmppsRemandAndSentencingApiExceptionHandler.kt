@@ -48,7 +48,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(EntityNotFoundException::class)
   fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> {
-    log.info("Entity not found exception: ${e.message}", e)
+    log.error("Entity not found exception:", e)
     return ResponseEntity
       .status(NOT_FOUND)
       .body(
@@ -62,7 +62,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(ImmutableCourtAppearanceException::class)
   fun handleImmutableCourtAppearanceException(e: ImmutableCourtAppearanceException): ResponseEntity<ErrorResponse> {
-    log.info("Immutable court appearance exception: {}", e.message)
+    log.error("Immutable court appearance exception", e)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -76,7 +76,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(ImmutableCourtCaseException::class)
   fun handleImmutableCourtCaseException(e: ImmutableCourtCaseException): ResponseEntity<ErrorResponse> {
-    log.info("Immutable court case exception: {}", e.message)
+    log.error("Immutable court case exception", e)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -90,7 +90,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
   fun handleMissingServletRequestParameterException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
-    log.info("Missing servlet request parameter exception: {}", e.message)
+    log.error("Missing servlet request parameter exception", e)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -104,7 +104,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(OrphanedChargeException::class)
   fun handleIOrphanedChargeException(e: OrphanedChargeException): ResponseEntity<ErrorResponse> {
-    log.info("Orphaned charge exception: {}", e.message)
+    log.error("Orphaned charge exception", e)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -118,7 +118,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(ChargeAlreadySentencedException::class)
   fun handleChargeAlreadySentencedException(e: ChargeAlreadySentencedException): ResponseEntity<ErrorResponse> {
-    log.info("Charge already sentenced exception: ${e.message}", e)
+    log.error("Charge already sentenced exception", e)
     return ResponseEntity
       .status(UNPROCESSABLE_ENTITY)
       .body(
