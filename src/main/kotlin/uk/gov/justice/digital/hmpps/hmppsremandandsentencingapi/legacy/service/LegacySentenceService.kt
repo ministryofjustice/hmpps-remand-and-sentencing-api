@@ -10,17 +10,20 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
@@ -37,12 +40,13 @@ class LegacySentenceService(
   private val chargeRepository: ChargeRepository,
   private val sentenceTypeRepository: SentenceTypeRepository,
   private val serviceUserService: ServiceUserService,
-  private val legacyPeriodLengthService: LegacyPeriodLengthService,
   private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val legacySentenceTypeRepository: LegacySentenceTypeRepository,
   private val recallTypeRepository: RecallTypeRepository,
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
+  private val periodLengthRepository: PeriodLengthRepository,
+  private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
 ) {
 
   @Transactional
@@ -194,13 +198,13 @@ class LegacySentenceService(
                 createSentenceRecord(
                   charge,
                   SentenceEntity.from(
-                    sentence,
-                    serviceUserService.getUsername(),
-                    charge,
-                    dpsSentenceType,
-                    consecutiveToSentence,
-                    sentenceUuid,
-                    isManyCharges,
+                    sentence = sentence,
+                    createdBy = serviceUserService.getUsername(),
+                    chargeEntity = charge,
+                    sentenceTypeEntity = dpsSentenceType,
+                    consecutiveTo = consecutiveToSentence,
+                    sentenceUuid = sentenceUuid,
+                    isManyCharges = isManyCharges,
                   ),
                 )
               }.also {
@@ -232,6 +236,8 @@ class LegacySentenceService(
         sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
         entityChangeStatus = EntityChangeStatus.EDITED
         existingSentence.charge.sentences.add(activeRecord)
+
+        checkAndUpdatePeriodLengthStatus(existingSentence)
       }
 
       entityChangeStatus =
@@ -247,6 +253,23 @@ class LegacySentenceService(
         activeRecord.charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
+      )
+    }
+  }
+
+  private fun checkAndUpdatePeriodLengthStatus(existingSentence: SentenceEntity) {
+    val periodLengths = periodLengthRepository
+      .findAllBySentenceEntitySentenceUuidAndStatusIdNot(existingSentence.sentenceUuid)
+      .filter { it.statusId != existingSentence.statusId }
+      .onEach {
+        it.statusId = existingSentence.statusId
+        it.updatedBy = serviceUserService.getUsername()
+        it.updatedAt = ZonedDateTime.now()
+      }
+
+    if (periodLengths.isNotEmpty()) {
+      periodLengthHistoryRepository.saveAll(
+        periodLengths.map { PeriodLengthHistoryEntity.from(it) },
       )
     }
   }

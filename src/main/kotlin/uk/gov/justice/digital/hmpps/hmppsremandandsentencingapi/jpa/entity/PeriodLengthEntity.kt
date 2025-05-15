@@ -80,7 +80,6 @@ class PeriodLengthEntity(
     periodLength: LegacyCreatePeriodLength,
     sentenceEntity: SentenceEntity,
     username: String,
-    isManyCharges: Boolean,
   ) {
     // TODO not sure if the sentenceCalcType can change via the update-period-length legacy route - to check with syscon
     // maybe syscon need to send the sentenceCalcType in the period length request to get around this?
@@ -95,9 +94,6 @@ class PeriodLengthEntity(
     weeks = periodLength.periodWeeks
     days = periodLength.periodDays
     periodLengthType = type
-    // TODO not sure if the status can change via the update-period-length legacy route - to check with syscon
-    // maybe syscon need to send the 'number of charges associated to the sentence'
-    statusId = if (isManyCharges) EntityStatus.MANY_CHARGES_DATA_FIX else EntityStatus.ACTIVE
     legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
     updatedAt = ZonedDateTime.now()
     updatedBy = username
@@ -145,7 +141,7 @@ class PeriodLengthEntity(
       createdPrison = periodLength.prisonId,
     )
 
-    fun from(periodLengthUuid: UUID, periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String, isManyCharges: Boolean): PeriodLengthEntity {
+    fun from(periodLengthUuid: UUID, periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String): PeriodLengthEntity {
       val order = getDefaultPeriodOrder()
       val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData?.sentenceCalcType
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType!!)
@@ -158,7 +154,7 @@ class PeriodLengthEntity(
         days = periodLength.periodDays,
         periodOrder = order,
         periodLengthType = type,
-        statusId = if (isManyCharges) EntityStatus.MANY_CHARGES_DATA_FIX else EntityStatus.ACTIVE,
+        statusId = sentenceEntity.statusId,
         sentenceEntity = sentenceEntity,
         appearanceEntity = null,
         legacyData = legacyData,

@@ -27,15 +27,14 @@ class LegacyPeriodLengthService(
     val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLength.sentenceUuid)
     val firstSentenceEntity = sentenceEntities.firstOrNull()
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLength.sentenceUuid}")
-    val isManyCharges = firstSentenceEntity.charge.appearanceCharges.size > 1
+
     val periodLengthUuid = UUID.randomUUID()
     sentenceEntities.forEach { sentenceEntity ->
       val periodLengthEntity = PeriodLengthEntity.from(
-        periodLengthUuid,
-        periodLength,
-        sentenceEntity,
-        serviceUserService.getUsername(),
-        isManyCharges,
+        periodLengthUuid = periodLengthUuid,
+        periodLength = periodLength,
+        sentenceEntity = sentenceEntity,
+        createdBy = serviceUserService.getUsername(),
       )
       val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
       periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
@@ -64,7 +63,6 @@ class LegacyPeriodLengthService(
       .takeIf { it.isNotEmpty() }
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLengthUpdate.sentenceUuid}")
 
-    val isManyCharges = sentenceEntities.any { it.charge.appearanceCharges.size > 1 }
     val username = serviceUserService.getUsername()
     var changesMade = false
 
@@ -75,7 +73,6 @@ class LegacyPeriodLengthService(
         periodLength = periodLengthUpdate,
         sentenceEntity = existingEntity.sentenceEntity!!,
         username = username,
-        isManyCharges = isManyCharges,
       )
 
       if (!originalCopy.isSame(existingEntity)) {

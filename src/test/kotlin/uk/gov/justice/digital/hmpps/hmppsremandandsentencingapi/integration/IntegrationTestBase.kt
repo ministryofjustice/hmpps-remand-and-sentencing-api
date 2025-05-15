@@ -224,6 +224,37 @@ abstract class IntegrationTestBase {
     return response.lifetimeUuid to toCreateSentence
   }
 
+  protected fun createLegacySentenceWithManyCharges(
+    legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
+    legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+      legacyData = DataCreator.courtAppearanceLegacyData(
+        outcomeConvictionFlag = true,
+        outcomeDispositionCode = "F",
+      ),
+    ),
+    legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
+    legacySentence: LegacyCreateSentence =
+      DataCreator.legacyCreateSentence(),
+  ): Pair<UUID, LegacyCreateSentence> {
+    val (chargeUuidOne) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
+    val (chargeUuidTwo) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
+    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeUuidOne, chargeUuidTwo))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(toCreateSentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    purgeQueues()
+    return response.lifetimeUuid to toCreateSentence
+  }
+
   protected fun createPeriodLength(
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
@@ -424,6 +455,32 @@ abstract class IntegrationTestBase {
       )
     }
     return messages
+  }
+
+  protected fun legacyUpdateSentence(sentenceUuid: UUID, sentence: LegacyCreateSentence) {
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/$sentenceUuid")
+      .bodyValue(sentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isNoContent
+  }
+
+  protected fun legacyCreatePeriodLength(periodLength: LegacyCreatePeriodLength) {
+    webTestClient
+      .post()
+      .uri("/legacy/period-length")
+      .bodyValue(periodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isCreated
   }
 
   companion object {
