@@ -259,7 +259,7 @@ class LegacySentenceService(
 
   private fun checkAndUpdatePeriodLengthStatus(existingSentence: SentenceEntity) {
     val periodLengths = periodLengthRepository
-      .findAllBySentenceEntity_SentenceUuidAndStatusIdNot(existingSentence.sentenceUuid)
+      .findAllBySentenceEntitySentenceUuidAndStatusIdNot(existingSentence.sentenceUuid)
       .filter { it.statusId != existingSentence.statusId }
       .onEach {
         it.statusId = existingSentence.statusId
@@ -269,7 +269,7 @@ class LegacySentenceService(
 
     if (periodLengths.isNotEmpty()) {
       periodLengthHistoryRepository.saveAll(
-        periodLengths.map { PeriodLengthHistoryEntity.from(it) }
+        periodLengths.map { PeriodLengthHistoryEntity.from(it) },
       )
     }
   }
