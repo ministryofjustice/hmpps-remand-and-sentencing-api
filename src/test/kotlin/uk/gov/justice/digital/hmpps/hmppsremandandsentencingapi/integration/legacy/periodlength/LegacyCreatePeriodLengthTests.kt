@@ -3,11 +3,18 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.MANY_CHARGES_DATA_FIX
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 
 class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var periodLengthRepository: PeriodLengthRepository
   @Test
   fun `create period length`() {
     val sentenceLifetimeUuid = createLegacySentence().first
@@ -28,6 +35,28 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val message = getMessages(1)[0]
     assertThat(message.eventType).isEqualTo("sentence.period-length.inserted")
+    val periodLengthsAfterCreate = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceLifetimeUuid)
+    assertThat(periodLengthsAfterCreate).hasSize(1)
+    assertThat(periodLengthsAfterCreate[0].statusId).isEqualTo(ACTIVE)
+  }
+
+  @Test
+  fun `create period length when the sentence has a 'many charges' status then update the sentence to change the status`() {
+    val (sentenceUuid, createdSentence) = createLegacySentenceWithManyCharges()
+    val periodLength = DataCreator.legacyCreatePeriodLength(sentenceUUID = sentenceUuid)
+
+    legacyCreatePeriodLength(periodLength)
+
+    val periodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
+    assertThat(periodLengths).hasSize(2)
+    assertThat(periodLengths.map { it.statusId }).containsExactlyElementsOf(listOf(MANY_CHARGES_DATA_FIX, MANY_CHARGES_DATA_FIX))
+
+    val singleChargeSentence = createdSentence.copy(chargeUuids = listOf(createdSentence.chargeUuids[0]))
+    legacyUpdateSentence(sentenceUuid, singleChargeSentence)
+
+    val periodLengthsAfter = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
+    assertThat(periodLengthsAfter).hasSize(2)
+    assertThat(periodLengthsAfter.map { it.statusId }).containsExactlyElementsOf(listOf(ACTIVE, ACTIVE))
   }
 
   @Test

@@ -40,7 +40,6 @@ class LegacySentenceService(
   private val chargeRepository: ChargeRepository,
   private val sentenceTypeRepository: SentenceTypeRepository,
   private val serviceUserService: ServiceUserService,
-  private val legacyPeriodLengthService: LegacyPeriodLengthService,
   private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val legacySentenceTypeRepository: LegacySentenceTypeRepository,
   private val recallTypeRepository: RecallTypeRepository,
