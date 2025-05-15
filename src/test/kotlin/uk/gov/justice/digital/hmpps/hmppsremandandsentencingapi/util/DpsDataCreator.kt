@@ -6,8 +6,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
@@ -85,5 +88,23 @@ class DpsDataCreator {
       prisonId: String = "PRISON1",
       sentenceReference: String = "0",
     ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId, sentenceReference, consecutiveToSentenceReference)
+
+    fun dpsCreateRecall(
+      prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID,
+      revocationDate: LocalDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate: LocalDate = LocalDate.of(2024, 2, 3),
+      recallTypeCode: RecallType = FTR_14,
+      createdByUsername: String = "user001",
+      createdByPrison: String = "PRISON1",
+      sentenceIds: List<UUID> = listOf(UUID.randomUUID()),
+    ): CreateRecall = CreateRecall(
+      prisonerId,
+      revocationDate,
+      returnToCustodyDate,
+      recallTypeCode,
+      createdByUsername,
+      createdByPrison,
+      sentenceIds,
+    )
   }
 }
