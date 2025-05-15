@@ -15,6 +15,7 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var periodLengthRepository: PeriodLengthRepository
+
   @Test
   fun `create period length`() {
     val sentenceLifetimeUuid = createLegacySentence().first
