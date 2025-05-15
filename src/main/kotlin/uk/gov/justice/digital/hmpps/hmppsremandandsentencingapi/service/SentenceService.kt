@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional.TxType
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -22,7 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import java.util.UUID
 
 @Service
-class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthService: PeriodLengthService, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository) {
+class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthService: PeriodLengthService, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService) {
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
@@ -130,5 +131,12 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       )
     }
     return RecordResponse(sentence, eventsToEmit)
+  }
+
+  @Transactional
+  fun findConsecutiveToSentenceDetails(sentenceUuids: List<UUID>): RecordResponse<SentenceConsecutiveToDetailsResponse> {
+    val consecutiveToSentences = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids)
+    val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
+    return RecordResponse(SentenceConsecutiveToDetailsResponse.from(consecutiveToSentences), eventsToEmit)
   }
 }

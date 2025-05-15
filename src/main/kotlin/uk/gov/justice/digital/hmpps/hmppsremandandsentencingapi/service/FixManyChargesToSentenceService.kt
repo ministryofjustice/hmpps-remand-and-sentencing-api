@@ -42,12 +42,13 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
       val firstSentenceRecordEventMetadata = sentenceRecords.removeFirst()
       val firstSentenceEventToEmit = fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED, firstSentenceRecordEventMetadata.record.sentenceUuid)
       eventsToEmit.add(firstSentenceEventToEmit)
-      fixPeriodLengths(firstSentenceRecordEventMetadata.record.periodLengths)
+      fixPeriodLengths(firstSentenceRecordEventMetadata)
 
       sentenceRecords.forEach { sentenceRecordEventMetadata ->
         val sentenceEventToEmit = fixSentence(sentenceRecordEventMetadata, EventType.SENTENCE_INSERTED, UUID.randomUUID())
         eventsToEmit.add(sentenceEventToEmit)
-        fixPeriodLengths(sentenceRecordEventMetadata.record.periodLengths) { it.periodLengthUuid = UUID.randomUUID() }
+        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata) { it.periodLengthUuid = UUID.randomUUID() }
+        eventsToEmit.addAll(periodLengthEventsToEmit)
       }
     }
     return eventsToEmit
@@ -68,12 +69,27 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     )
   }
 
-  private fun fixPeriodLengths(periodLengths: Set<PeriodLengthEntity>, periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}) {
+  private fun fixPeriodLengths(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}): MutableSet<EventMetadata> {
+    val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
+    val periodLengthEventsToEmit = mutableSetOf<EventMetadata>()
+    val periodLengths = sentenceRecordEventMetadata.record.periodLengths
     periodLengths.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
       .forEach { periodLength ->
         periodLength.statusId = EntityStatus.ACTIVE
         periodLengthModifyFunction(periodLength)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
+        periodLengthEventsToEmit.add(
+          EventMetadataCreator.periodLengthEventMetadata(
+            periodLength.periodLengthUuid.toString(),
+            eventMetadata.courtCaseId!!,
+            eventMetadata.courtAppearanceId!!,
+            eventMetadata.chargeId!!,
+            sentenceRecord.sentenceUuid.toString(),
+            periodLength.periodLengthUuid.toString(),
+            EventType.PERIOD_LENGTH_INSERTED,
+          ),
+        )
       }
+    return periodLengthEventsToEmit
   }
 }
