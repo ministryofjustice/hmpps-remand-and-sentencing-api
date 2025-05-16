@@ -1,0 +1,21 @@
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
+
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
+import java.time.LocalDate
+import java.util.UUID
+
+data class LegacyRecall(
+  val recallUuid: UUID,
+  val prisonerId: String,
+  val returnToCustodyDate: LocalDate?,
+  val sentenceIds: List<UUID>,
+) {
+  companion object {
+    fun from(recallEntity: RecallEntity): LegacyRecall = LegacyRecall(
+      recallEntity.recallUuid,
+      recallEntity.prisonerId,
+      recallEntity.returnToCustodyDate,
+      recallEntity.recallSentences.map { it.sentence.sentenceUuid },
+    )
+  }
+}
