@@ -4,8 +4,8 @@ fun prisonerDetailsResponse() = """
   {
     "offenderNo": "A1234AB",
     "bookingId": "1234",
-    "firstName": "Marvin",
-    "lastName": "Haggler",
+    "firstName": "Cormac",
+    "lastName": "Meza",
     "dateOfBirth": "1965-02-03",
     "agencyId": "MDI",
     "assignedLivingUnit": {
