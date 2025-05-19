@@ -21,7 +21,7 @@ class RecallDomainEventService(
       "Recall inserted",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, sentenceIds, source),
+      HmppsRecallMessage(recallId, sentenceIds, null, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
@@ -32,18 +32,18 @@ class RecallDomainEventService(
       "Recall updated",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, sentenceIds, source),
+      HmppsRecallMessage(recallId, sentenceIds, null, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun delete(prisonerId: String, recallId: String, sentenceIds: List<String>, source: EventSource) {
+  fun delete(prisonerId: String, recallId: String, sentenceIds: List<String>, previousRecallId: String?, source: EventSource) {
     snsService.publishDomainEvent(
       "recall.deleted",
       "Recall deleted",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, sentenceIds, source),
+      HmppsRecallMessage(recallId, sentenceIds, previousRecallId, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
