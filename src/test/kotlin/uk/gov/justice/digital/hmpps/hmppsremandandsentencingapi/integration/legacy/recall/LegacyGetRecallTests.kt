@@ -11,6 +11,7 @@ class LegacyGetRecallTests : IntegrationTestBase() {
   fun `get recall by uuid`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val recall = DpsDataCreator.dpsCreateRecall(
+      createdByUsername = "username1",
       sentenceIds = listOf(
         sentenceOne.sentenceUuid!!,
         sentenceTwo.sentenceUuid!!,
@@ -32,6 +33,10 @@ class LegacyGetRecallTests : IntegrationTestBase() {
       .isEqualTo(createRecall.recallUuid.toString())
       .jsonPath("$.returnToCustodyDate")
       .isEqualTo(recall.returnToCustodyDate.toString())
+      .jsonPath("$.recallBy")
+      .isEqualTo("username1")
+      .jsonPath("$.recallType")
+      .isEqualTo("FTR_14")
   }
 
   @Test
