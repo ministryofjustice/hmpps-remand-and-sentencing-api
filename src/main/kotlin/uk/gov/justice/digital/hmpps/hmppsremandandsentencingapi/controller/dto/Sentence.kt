@@ -16,6 +16,7 @@ data class Sentence(
   val fineAmount: FineAmount?,
   val legacyData: SentenceLegacyData?,
   val consecutiveToSentenceUuid: UUID?,
+  val hasRecall: Boolean,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
@@ -28,6 +29,7 @@ data class Sentence(
       sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
       sentenceEntity.consecutiveTo?.takeUnless { it.statusId == EntityStatus.DELETED }?.sentenceUuid,
+      sentenceEntity.totalRecallSentences > 0,
     )
   }
 }

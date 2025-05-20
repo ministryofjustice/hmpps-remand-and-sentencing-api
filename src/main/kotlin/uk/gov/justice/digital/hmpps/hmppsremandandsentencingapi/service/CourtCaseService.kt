@@ -61,7 +61,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
   @Transactional
   fun searchCourtCases(prisonerId: String, pageable: Pageable): RecordResponse<Page<CourtCase>> {
-    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId, pageable)
+    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(prisonerId, pageable = pageable)
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasePage.content)
     return RecordResponse(
       courtCasePage.map {

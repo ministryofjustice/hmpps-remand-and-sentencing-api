@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
@@ -68,6 +69,8 @@ class SentenceEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: SentenceLegacyData? = null,
   var fineAmount: BigDecimal?,
+  @Formula("(select count(*) from recall_sentence rs where rs.sentence_id= id)")
+  val totalRecallSentences: Int = -1,
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
