@@ -134,6 +134,6 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")
   fun search(@RequestBody sentence: LegacySearchSentence): List<LegacySentence> = legacySentenceService.search(sentence)
 }
