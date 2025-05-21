@@ -207,11 +207,13 @@ class LegacySentenceService(
                     isManyCharges = isManyCharges,
                   ),
                 )
-              }.also {
+              }.also { newSentence ->
+                copyPeriodLengthsForNewSentence(sentenceUuid, newSentence)
+
                 if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
                   createRecall(
                     sentence,
-                    it,
+                    newSentence,
                     legacySentenceType,
                     RecallSentenceLegacyData.from(legacyData),
                     prisonerId!!,
@@ -253,6 +255,27 @@ class LegacySentenceService(
         activeRecord.charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
+      )
+    }
+  }
+
+  private fun copyPeriodLengthsForNewSentence(sentenceUuid: UUID, newSentence: SentenceEntity) {
+    val newPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
+      .distinctBy { it.periodLengthUuid } // Ensure we only copy each unique periodLengthUuid once
+      .map { periodLength ->
+        periodLength.copy(
+          sentenceEntity = newSentence,
+          createdBy = serviceUserService.getUsername(),
+          createdAt = ZonedDateTime.now(),
+          updatedBy = serviceUserService.getUsername(),
+          updatedAt = ZonedDateTime.now(),
+        )
+      }
+
+    if (newPeriodLengths.isNotEmpty()) {
+      val savedPeriodLengths = periodLengthRepository.saveAll(newPeriodLengths)
+      periodLengthHistoryRepository.saveAll(
+        savedPeriodLengths.map { PeriodLengthHistoryEntity.from(it) },
       )
     }
   }

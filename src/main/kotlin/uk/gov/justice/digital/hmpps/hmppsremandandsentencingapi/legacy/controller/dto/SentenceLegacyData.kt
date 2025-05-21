@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 data class SentenceLegacyData(
-  val sentenceCalcType: String?,
-  val sentenceCategory: String?,
-  val sentenceTypeDesc: String?,
+  val sentenceCalcType: String? = null,
+  val sentenceCategory: String? = null,
+  val sentenceTypeDesc: String? = null,
   val postedDate: String,
-  var active: Boolean?,
+  var active: Boolean? = null,
 )
