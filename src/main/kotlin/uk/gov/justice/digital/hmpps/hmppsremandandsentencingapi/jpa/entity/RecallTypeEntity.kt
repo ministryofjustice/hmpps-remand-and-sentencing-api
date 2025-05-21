@@ -32,19 +32,21 @@ class RecallTypeEntity(
       RecallType.CUR_HDC -> "CUR"
       RecallType.IN_HDC -> "HDR"
     }
-    ) to "2020"
+    ) to sentenceType.nomisCjaCode
 
   private fun findLicenseRecallLegacySentenceType(sentenceType: SentenceTypeEntity): String = when (sentenceType.classification) {
     SentenceTypeClassification.STANDARD -> "LR"
     SentenceTypeClassification.EXTENDED -> {
-      if (sentenceType.nomisSentenceCalcType === "LASPO_AR") {
+      if (sentenceType.nomisSentenceCalcType == "LASPO_AR") {
         "LR_LASPO_AR"
-      } else {
+      } else if (sentenceType.nomisSentenceCalcType == "LASPO_DR") {
         "LR_LASPO_DR"
+      } else {
+        "LR_EDS21"
       }
     }
     SentenceTypeClassification.SOPC -> {
-      if (sentenceType.nomisSentenceCalcType === "SOPC18") {
+      if (sentenceType.nomisSentenceCalcType == "SOPC18") {
         "LR_SOPC18"
       } else {
         "LR_SOPC21"
