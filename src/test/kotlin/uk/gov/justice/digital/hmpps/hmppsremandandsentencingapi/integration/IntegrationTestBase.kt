@@ -483,6 +483,19 @@ abstract class IntegrationTestBase {
       .expectStatus().isCreated
   }
 
+  protected fun legacyCreateSentence(legacySentence: LegacyCreateSentence): LegacySentenceCreatedResponse = webTestClient
+    .post()
+    .uri("/legacy/sentence")
+    .bodyValue(legacySentence)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+    .responseBody.blockFirst()!!
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }

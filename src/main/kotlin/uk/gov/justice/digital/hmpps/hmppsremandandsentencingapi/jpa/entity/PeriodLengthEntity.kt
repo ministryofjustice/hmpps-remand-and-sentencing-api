@@ -120,6 +120,45 @@ class PeriodLengthEntity(
     legacyData,
   )
 
+  fun copy(
+    periodLengthUuid: UUID = this.periodLengthUuid,
+    years: Int? = this.years,
+    months: Int? = this.months,
+    weeks: Int? = this.weeks,
+    days: Int? = this.days,
+    periodOrder: String = this.periodOrder,
+    periodLengthType: PeriodLengthType = this.periodLengthType,
+    statusId: EntityStatus = this.statusId,
+    createdAt: ZonedDateTime = this.createdAt,
+    createdBy: String = this.createdBy,
+    createdPrison: String? = this.createdPrison,
+    updatedAt: ZonedDateTime? = this.updatedAt,
+    updatedBy: String? = this.updatedBy,
+    updatedPrison: String? = this.updatedPrison,
+    sentenceEntity: SentenceEntity? = this.sentenceEntity,
+    appearanceEntity: CourtAppearanceEntity? = this.appearanceEntity,
+    legacyData: PeriodLengthLegacyData? = this.legacyData,
+  ): PeriodLengthEntity = PeriodLengthEntity(
+    id = 0,
+    periodLengthUuid = periodLengthUuid,
+    years = years,
+    months = months,
+    weeks = weeks,
+    days = days,
+    periodOrder = periodOrder,
+    periodLengthType = periodLengthType,
+    statusId = statusId,
+    createdAt = createdAt,
+    createdBy = createdBy,
+    createdPrison = createdPrison,
+    updatedAt = updatedAt,
+    updatedBy = updatedBy,
+    updatedPrison = updatedPrison,
+    sentenceEntity = sentenceEntity,
+    appearanceEntity = appearanceEntity,
+    legacyData = legacyData,
+  )
+
   fun delete(username: String) {
     statusId = EntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
