@@ -38,14 +38,14 @@ class LegacyGetSentenceSentenceTypeTests {
       Arguments.of("ADIMP_ORA", SentenceTypeClassification.STANDARD, RecallType.LR, "LR"),
 
       // Extended sentence recall types
-      Arguments.of("EDS18", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
-      Arguments.of("EDS21", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
-      Arguments.of("EDSU18", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
-      Arguments.of("EPP", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
+      Arguments.of("EDS18", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_EDS21"),
+      Arguments.of("EDS21", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_EDS21"),
+      Arguments.of("EDSU18", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_EDS21"),
+      Arguments.of("EPP", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_EDS21"),
       Arguments.of("LASPO_AR", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_AR"),
       Arguments.of("LASPO_DR", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
-      Arguments.of("STS18", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
-      Arguments.of("STS21", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_LASPO_DR"),
+      Arguments.of("STS18", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_EDS21"),
+      Arguments.of("STS21", SentenceTypeClassification.EXTENDED, RecallType.LR, "LR_EDS21"),
 
       // SOPC recall types
       Arguments.of("SOPC18", SentenceTypeClassification.SOPC, RecallType.LR, "LR_SOPC18"),
