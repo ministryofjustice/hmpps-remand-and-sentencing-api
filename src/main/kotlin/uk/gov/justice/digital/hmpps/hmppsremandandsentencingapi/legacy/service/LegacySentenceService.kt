@@ -208,6 +208,7 @@ class LegacySentenceService(
                   ),
                 )
               }.also { newSentence ->
+                // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
                 copyPeriodLengthsForNewSentence(sentenceUuid, newSentence)
 
                 if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {

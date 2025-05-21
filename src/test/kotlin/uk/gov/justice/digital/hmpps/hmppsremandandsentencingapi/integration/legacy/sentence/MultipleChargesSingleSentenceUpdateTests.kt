@@ -1,16 +1,26 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var periodLengthRepository: PeriodLengthRepository
+
+  @Autowired
+  private lateinit var sentenceRepository: SentenceRepository
 
   @Test
   fun `update sentence with multiple charges`() {
@@ -119,6 +129,39 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       legacySentence,
       response,
     )
+  }
+
+  @Test
+  fun `Update sentence - add a charge to an existing sentence (so a many-charges situation), ensure period-lengths are copied to new charge and sentence combination`() {
+    val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = null, offenceCode = "OFFENCE1")
+    val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = null, offenceCode = "OFFENCE2")
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
+    createCourtCase(courtCase)
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid))
+
+    val createdSentence = legacyCreateSentence(legacySentence)
+    val sentenceUuid = createdSentence.lifetimeUuid
+    val legacyCreatePeriodLength = DataCreator.legacyCreatePeriodLength(sentenceUUID = sentenceUuid, periodDays = 99)
+    legacyCreatePeriodLength(legacyCreatePeriodLength)
+
+    val sentencesBefore = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    assertThat(sentencesBefore).hasSize(1)
+    assertThat(sentencesBefore[0].charge.offenceCode).isEqualTo("OFFENCE1")
+    val periodLengthsBefore = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
+    assertThat(periodLengthsBefore).hasSize(1)
+    assertThat(periodLengthsBefore[0].days).isEqualTo(99)
+
+    val updatedSentence = legacySentence.copy(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid))
+    legacyUpdateSentence(sentenceUuid, updatedSentence)
+
+    val sentencesAfter = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    assertThat(sentencesAfter).hasSize(2)
+    assertThat(sentencesAfter.map { it.charge.offenceCode }).containsExactlyInAnyOrder("OFFENCE1", "OFFENCE2")
+    val periodLengthsAfter = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
+    assertThat(periodLengthsAfter).hasSize(2)
+    assertThat(periodLengthsAfter.map { it.days }).containsExactly(99, 99)
+    assertThat(periodLengthsAfter.map { it.sentenceEntity?.sentenceUuid }).containsExactly(sentenceUuid, sentenceUuid)
   }
 }
 
