@@ -126,10 +126,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
-  @Sql(
-    "classpath:test_data/reset-database.sql",
-    "classpath:test_data/single-sentence-case-with-appearance.sql",
-  )
+  @Sql("classpath:test_data/single-sentence-case-with-appearance.sql")
   fun `Update sentence - add a charge to an existing sentence (so a many-charges situation), ensure period-lengths are copied to new charge and sentence combination`() {
     val sentenceUuid = "8ba46b2d-ee44-48fe-a57f-ac51004e516e"
     val appearanceUuid = "4a5d8632-dd77-4fc8-8341-ec5fde0475fc"
