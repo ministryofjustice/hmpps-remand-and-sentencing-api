@@ -14,7 +14,7 @@ interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
   PagingAndSortingRepository<CourtCaseEntity, Int> {
   @EntityGraph(value = "CourtCaseEntity.withAppearancesAndOutcomes", type = EntityGraph.EntityGraphType.FETCH)
-  fun findByPrisonerIdAndLatestCourtAppearanceIsNotNull(prisonerId: String, pageable: Pageable): Page<CourtCaseEntity>
+  fun findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(prisonerId: String, statusId: EntityStatus = EntityStatus.DELETED, pageable: Pageable): Page<CourtCaseEntity>
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 
