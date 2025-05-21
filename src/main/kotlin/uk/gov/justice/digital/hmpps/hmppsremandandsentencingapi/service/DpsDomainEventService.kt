@@ -118,6 +118,7 @@ class DpsDomainEventService(
             eventMetaData.prisonerId,
             eventMetaData.recallId!!,
             eventMetaData.sentenceIds!!,
+            eventMetaData.previousRecallId,
             EventSource.DPS,
           )
           EventType.PERIOD_LENGTH_INSERTED -> periodLengthDomainEventService.create(

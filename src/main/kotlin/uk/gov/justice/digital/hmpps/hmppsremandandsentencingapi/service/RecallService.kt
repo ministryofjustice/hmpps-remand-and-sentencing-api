@@ -45,6 +45,7 @@ class RecallService(
           recall.prisonerId,
           recall.recallUuid.toString(),
           recallSentences?.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
+          null,
           EventType.RECALL_INSERTED,
         ),
       ),
@@ -66,6 +67,7 @@ class RecallService(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
             emptyList(),
+            null,
             EventType.RECALL_INSERTED,
           ),
         ),
@@ -88,6 +90,7 @@ class RecallService(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
             emptyList(),
+            null,
             EventType.RECALL_UPDATED,
           ),
         ),
@@ -105,6 +108,14 @@ class RecallService(
     recallToDelete.recallSentences.forEach {
       recallSentenceRepository.delete(it)
     }
+
+    val previousRecall = recallToDelete.recallSentences.map {
+      it.sentence
+    }.flatMap { it.recallSentences }
+      .map { it.recall }
+      .filter { it.recallUuid != recallUuid }
+      .maxByOrNull { it.createdAt }
+
     // TODO RCLL-277 Recall audit data.
     // TODO RCLL-386 Delete sentence if legacy recall.
 
@@ -115,6 +126,7 @@ class RecallService(
           recallToDelete.prisonerId,
           recallToDelete.recallUuid.toString(),
           recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
+          previousRecall?.recallUuid?.toString(),
           EventType.RECALL_DELETED,
         ),
       ),

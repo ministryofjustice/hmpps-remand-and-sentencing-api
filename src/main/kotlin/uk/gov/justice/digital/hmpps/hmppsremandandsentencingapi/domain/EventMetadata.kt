@@ -10,4 +10,5 @@ data class EventMetadata(
   val eventType: EventType,
   val periodLengthId: String? = null,
   val sentenceIds: List<String>? = null,
+  val previousRecallId: String? = null,
 )

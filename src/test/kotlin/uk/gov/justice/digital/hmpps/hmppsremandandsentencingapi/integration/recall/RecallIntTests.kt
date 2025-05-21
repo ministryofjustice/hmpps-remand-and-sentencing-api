@@ -338,4 +338,37 @@ class RecallIntTests : IntegrationTestBase() {
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.deleted")
   }
+
+  @Test
+  fun `Delete a recall where many recalls exist`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val recallOne = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid!!,
+        sentenceTwo.sentenceUuid!!,
+      ),
+    )
+    val recallTwo = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid!!,
+      ),
+      revocationDate = recallOne.revocationDate!!.plusWeeks(4),
+      returnToCustodyDate = recallOne.returnToCustodyDate!!.plusWeeks(4),
+    )
+    val recallOneId = createRecall(recallOne).recallUuid
+    val recallTwoId = createRecall(recallTwo).recallUuid
+    purgeQueues()
+
+    deleteRecall(recallTwoId)
+
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(recalls).hasSize(1)
+    assertThat(recalls[0].recallUuid).isEqualTo(recallOneId)
+
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1)
+      .extracting<String> { it.eventType }.contains("recall.deleted")
+    assertThat(messages[0].additionalInformation.get("previousRecallId").asText()).isEqualTo(recallOneId.toString())
+  }
 }
