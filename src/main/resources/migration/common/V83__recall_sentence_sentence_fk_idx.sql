@@ -1,0 +1,2 @@
+alter table recall_sentence add constraint fk_recall_sentence_to_sentence foreign key (sentence_id) references sentence(id);
+create index idx_recall_sentence_sentence_id on recall_sentence using btree(sentence_id);

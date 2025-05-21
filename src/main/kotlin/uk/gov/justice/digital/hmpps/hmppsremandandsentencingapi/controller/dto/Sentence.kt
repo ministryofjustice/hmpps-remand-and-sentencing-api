@@ -29,7 +29,7 @@ data class Sentence(
       sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
       sentenceEntity.consecutiveTo?.takeUnless { it.statusId == EntityStatus.DELETED }?.sentenceUuid,
-      false,
+      sentenceEntity.totalRecallSentences > 0,
     )
   }
 }
