@@ -47,6 +47,7 @@ class LegacySentenceService(
   private val recallSentenceRepository: RecallSentenceRepository,
   private val periodLengthRepository: PeriodLengthRepository,
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
+  private val legacyPeriodLengthService: LegacyPeriodLengthService,
 ) {
 
   @Transactional
@@ -317,6 +318,7 @@ class LegacySentenceService(
   fun delete(sentence: SentenceEntity) {
     sentence.delete(serviceUserService.getUsername())
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
+    deletePeriodLengths(sentence)
     deleteRecallSentence(sentence)
   }
 
@@ -329,6 +331,13 @@ class LegacySentenceService(
       recallSentenceRepository.delete(it)
     }
     // TODO RCLL-277 Recall audit data.
+  }
+
+  private fun deletePeriodLengths(sentence: SentenceEntity) {
+    sentence.periodLengths.filter { it.statusId != EntityStatus.DELETED }
+      .forEach { periodLength ->
+        legacyPeriodLengthService.delete(periodLength)
+      }
   }
 
   fun handleManyChargesSentenceDeleted(sentenceUuid: UUID) {
