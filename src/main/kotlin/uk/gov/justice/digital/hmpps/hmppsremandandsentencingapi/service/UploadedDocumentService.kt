@@ -44,14 +44,10 @@ class UploadedDocumentService(
     }.forEach(uploadedDocumentRepository::save)
   }
 
-  fun findAllByAppearanceUUIDAndWarrantType(appearanceUuid: UUID, warrantType: String): List<UploadedDocument> {
-    return uploadedDocumentRepository.findAllByAppearanceUUIDAndWarrantType(
-      appearanceUuid,
-      warrantType,
-    ).map { uploadedDocumentEntity ->
-      UploadedDocument.from(uploadedDocumentEntity)
-    }
+  fun findAllByAppearanceUUIDAndWarrantType(appearanceUuid: UUID, warrantType: String): List<UploadedDocument> = uploadedDocumentRepository.findAllByAppearanceUUIDAndWarrantType(
+    appearanceUuid,
+    warrantType,
+  ).map { uploadedDocumentEntity ->
+    UploadedDocument.from(uploadedDocumentEntity)
   }
-
-
 }

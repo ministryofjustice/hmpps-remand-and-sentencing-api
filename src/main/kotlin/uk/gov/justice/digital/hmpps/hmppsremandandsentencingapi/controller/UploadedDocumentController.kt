@@ -41,8 +41,7 @@ class UploadedDocumentController(private val uploadedDocumentService: UploadedDo
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW')")
-  fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) =
-    uploadedDocumentService.create(createUploadedDocument)
+  fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) = uploadedDocumentService.create(createUploadedDocument)
 
   @GetMapping
   @Operation(
@@ -79,5 +78,4 @@ class UploadedDocumentController(private val uploadedDocumentService: UploadedDo
     @RequestParam(required = true) documentUuids: List<UUID>,
     @RequestParam(required = true) appearanceUuid: UUID,
   ) = uploadedDocumentService.update(documentUuids, appearanceUuid)
-
 }

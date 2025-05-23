@@ -21,11 +21,11 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
     val createUploadedDocument = CreateUploadedDocument(
       appearanceUUID = null,
       documents = listOf(
-          UploadedDocument(
-              documentUUID = documentUuid,
-              documentType = "HMCTS_WARRANT",
-              warrantType = "SENTENCING",
-          ),
+        UploadedDocument(
+          documentUUID = documentUuid,
+          documentType = "HMCTS_WARRANT",
+          warrantType = "SENTENCING",
+        ),
       ),
     )
 
@@ -53,11 +53,11 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
     val createUploadedDocument = CreateUploadedDocument(
       appearanceUUID = null,
       documents = listOf(
-          UploadedDocument(
-              documentUUID = documentUuid,
-              documentType = "HMCTS_WARRANT",
-              warrantType = "SENTENCING",
-          ),
+        UploadedDocument(
+          documentUUID = documentUuid,
+          documentType = "HMCTS_WARRANT",
+          warrantType = "SENTENCING",
+        ),
       ),
     )
 
@@ -79,11 +79,11 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
     val createUploadedDocument = CreateUploadedDocument(
       appearanceUUID = null,
       documents = listOf(
-          UploadedDocument(
-              documentUUID = documentUuid,
-              documentType = "HMCTS_WARRANT",
-              warrantType = "SENTENCING",
-          ),
+        UploadedDocument(
+          documentUUID = documentUuid,
+          documentType = "HMCTS_WARRANT",
+          warrantType = "SENTENCING",
+        ),
       ),
     )
 

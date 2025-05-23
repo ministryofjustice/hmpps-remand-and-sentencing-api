@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.UploadedDocumentRepository
 import java.util.*
 
-
 class GetUploadedDocumentTest : IntegrationTestBase() {
   @Autowired
   private lateinit var uploadedDocumentRepository: UploadedDocumentRepository
@@ -82,6 +81,4 @@ class GetUploadedDocumentTest : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
-
-
 }

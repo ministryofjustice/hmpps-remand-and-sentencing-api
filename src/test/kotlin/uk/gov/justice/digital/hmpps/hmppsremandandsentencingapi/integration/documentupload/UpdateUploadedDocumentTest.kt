@@ -73,8 +73,4 @@ class UpdateUploadedDocumentTest : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
-
-
 }
-
-
