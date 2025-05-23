@@ -82,6 +82,39 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `inactive sentences are returned`() {
+    val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), active = false)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val appearanceUuid = toCreateCharge.appearanceLifetimeUuid.toString()
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].sentence.sentenceUuid")
+      .isEqualTo(response.lifetimeUuid.toString())
+  }
+
+  @Test
   fun `must not be able to create a sentence on a already sentenced charge`() {
     val (_, sentence) = createLegacySentence()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(sentence.chargeUuids.first()))
