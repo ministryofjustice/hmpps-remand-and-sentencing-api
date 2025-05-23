@@ -182,7 +182,8 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
-
+    sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
+      .forEach { delete(it) }
     return sentence.chargeUuids.map { chargeUuid ->
       val (existingSentence, entityStatus) = (
         (
