@@ -100,7 +100,7 @@ class LegacyPeriodLengthService(
     )
   }
 
-  private fun delete(periodLength: PeriodLengthEntity) {
+  fun delete(periodLength: PeriodLengthEntity) {
     periodLength.delete(serviceUserService.getUsername())
     periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
   }

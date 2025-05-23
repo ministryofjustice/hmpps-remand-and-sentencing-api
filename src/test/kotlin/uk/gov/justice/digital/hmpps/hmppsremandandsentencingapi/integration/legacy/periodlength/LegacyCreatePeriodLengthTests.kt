@@ -56,8 +56,8 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
     legacyUpdateSentence(sentenceUuid, singleChargeSentence)
 
     val periodLengthsAfter = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
-    assertThat(periodLengthsAfter).hasSize(2)
-    assertThat(periodLengthsAfter.map { it.statusId }).containsExactlyElementsOf(listOf(ACTIVE, ACTIVE))
+    assertThat(periodLengthsAfter).hasSize(1)
+    assertThat(periodLengthsAfter.map { it.statusId }).containsExactlyElementsOf(listOf(ACTIVE))
   }
 
   @Test
