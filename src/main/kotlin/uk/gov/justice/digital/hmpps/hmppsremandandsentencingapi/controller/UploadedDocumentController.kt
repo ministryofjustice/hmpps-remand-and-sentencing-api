@@ -61,7 +61,7 @@ class UploadedDocumentController(private val uploadedDocumentService: UploadedDo
     @RequestParam(required = true) warrantType: String,
   ) = uploadedDocumentService.findAllByAppearanceUUIDAndWarrantType(appearanceUuid, warrantType)
 
-  @PutMapping("")
+  @PutMapping
   @Operation(
     summary = "Updates an uploaded document entry",
     description = "Updates an uploaded document entry",
