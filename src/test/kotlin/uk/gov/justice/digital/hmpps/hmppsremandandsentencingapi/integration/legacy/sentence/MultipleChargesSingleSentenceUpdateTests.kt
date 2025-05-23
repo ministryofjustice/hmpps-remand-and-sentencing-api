@@ -91,7 +91,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearances[*].charges[*].sentence.sentenceUuid")
       .value<List<String>> { result ->
-        Assertions.assertThat(result).contains(sentenceUuid.toString())
+        Assertions.assertThat(result).contains(sentenceUuid)
         val counts = result.groupingBy { it }.eachCount()
         Assertions.assertThat(counts.values).allMatch { it == 1 }
       }
@@ -101,6 +101,39 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${thirdCharge.chargeUuid}')].sentence.sentenceUuid")
       .exists()
+  }
+
+  @Test
+  fun `update removing a link to a charge`() {
+    val sentenceWithMultipleCharges = createSentenceWithMultipleCharges()
+    val legacySentenceChargeUuids = sentenceWithMultipleCharges.legacySentence.chargeUuids.toMutableList()
+    val removedChargeUuid = legacySentenceChargeUuids.removeFirst()
+
+    val legacySentenceWithRemovedCharge = sentenceWithMultipleCharges.legacySentence.copy(chargeUuids = legacySentenceChargeUuids)
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/${sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid}")
+      .bodyValue(legacySentenceWithRemovedCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    val courtCaseUuid = sentenceWithMultipleCharges.courtCaseUuid
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$removedChargeUuid')].sentence.sentenceUuid")
+      .doesNotExist()
   }
 
   fun createSentenceWithMultipleCharges(): TestData {
