@@ -23,7 +23,7 @@ data class Charge(
       chargeEntity.offenceEndDate,
       chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
       chargeEntity.terrorRelated,
-      chargeEntity.getActiveSentence()?.let { Sentence.from(it) },
+      chargeEntity.getActiveOrInactiveSentence()?.let { Sentence.from(it) },
       chargeEntity.legacyData,
     )
   }
