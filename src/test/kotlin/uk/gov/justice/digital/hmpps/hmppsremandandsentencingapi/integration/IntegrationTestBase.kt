@@ -30,6 +30,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.D
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
@@ -169,6 +171,29 @@ abstract class IntegrationTestBase {
       .responseBody.blockFirst()!!
     purgeQueues()
     return response.lifetimeUuid to toCreateAppearance
+  }
+
+  protected fun createUploadedDocument(documentUuid: UUID, appearanceUuid: UUID? = null) {
+    val createUploadedDocument = CreateUploadedDocument(
+      appearanceUUID = appearanceUuid,
+      documents = listOf(UploadedDocument(
+        documentUUID = documentUuid,
+        documentType = "HMCTS_WARRANT",
+        warrantType = "SENTENCING",
+      )),
+    )
+
+    webTestClient
+      .post()
+      .uri("/uploaded-documents")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .bodyValue(createUploadedDocument)
+      .exchange()
+      .expectStatus()
+      .isCreated
   }
 
   protected fun createLegacyCharge(
