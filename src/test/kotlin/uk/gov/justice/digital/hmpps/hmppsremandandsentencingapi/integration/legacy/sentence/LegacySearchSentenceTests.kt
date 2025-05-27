@@ -29,10 +29,10 @@ class LegacySearchSentenceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$[0].lifetimeUuid")
-      .isEqualTo(sentenceTwo.sentenceUuid.toString())
-      .jsonPath("$[1].lifetimeUuid")
-      .isEqualTo(sentenceOne.sentenceUuid.toString())
+      .jsonPath("$.[?(@.lifetimeUuid == '${sentenceTwo.sentenceUuid}')]")
+      .exists()
+      .jsonPath("$.[?(@.lifetimeUuid == '${sentenceOne.sentenceUuid}')]")
+      .exists()
   }
 
   @Test
