@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.dto
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -29,6 +30,25 @@ class LegacyPeriodLengthTests {
     assertThat(result.isLifeSentence).isTrue()
     assertThat(result.sentenceUuid).isEqualTo(testSentence.sentenceUuid)
     assertThat(result.prisonerId).isEqualTo(TEST_PRISONER_ID)
+  }
+
+  @Test
+  fun `legacy sentence with DPS period length`() {
+    val legacySentence = SentenceEntity(
+      sentenceUuid = testSentenceUuid,
+      statusId = EntityStatus.ACTIVE,
+      createdBy = "USER",
+      sentenceServeType = "CONCURRENT",
+      consecutiveTo = null,
+      supersedingSentence = null,
+      charge = testCharge,
+      convictionDate = null,
+      legacyData = DataCreator.sentenceLegacyData(),
+      fineAmount = null,
+      chargeNumber = null,
+      sentenceType = null,
+    )
+    val result = LegacyPeriodLength.from(testPeriodLength, legacySentence)
   }
 
   companion object {
