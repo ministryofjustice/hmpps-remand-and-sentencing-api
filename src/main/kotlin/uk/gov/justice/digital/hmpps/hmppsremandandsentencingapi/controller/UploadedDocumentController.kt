@@ -40,42 +40,7 @@ class UploadedDocumentController(private val uploadedDocumentService: UploadedDo
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW')")
-  fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) = uploadedDocumentService.create(createUploadedDocument)
-
-  @GetMapping
-  @Operation(
-    summary = "Get all uploaded documents for a given appearance UUID and warrant type",
-    description = "Get all uploaded documents for a given appearance UUID and warrant type",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "200", description = "retrieves uploaded documents details"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW')")
-  fun findAllDocuments(
-    @RequestParam(required = true) appearanceUuid: UUID,
-    @RequestParam(required = true) warrantType: String,
-  ) = uploadedDocumentService.findAllByAppearanceUUIDAndWarrantType(appearanceUuid, warrantType)
-
-  @PutMapping
-  @Operation(
-    summary = "Updates an uploaded document entry",
-    description = "Updates an uploaded document entry",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "200", description = "uploaded document updated"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW')")
-  fun update(
-    @RequestParam(required = true) documentUuids: List<UUID>,
-    @RequestParam(required = true) appearanceUuid: UUID,
-  ) = uploadedDocumentService.update(documentUuids, appearanceUuid)
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) =
+    uploadedDocumentService.create(createUploadedDocument)
 }

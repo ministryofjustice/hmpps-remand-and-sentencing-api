@@ -27,6 +27,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
           warrantType = "SENTENCING",
         ),
       ),
+      createdBy = "user001",
     )
 
     webTestClient
@@ -57,8 +58,9 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
           warrantType = "SENTENCING",
-        ),
+          ),
       ),
+      createdBy = "user001",
     )
 
     webTestClient
@@ -83,8 +85,9 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
           warrantType = "SENTENCING",
-        ),
+          ),
       ),
+      createdBy = "user001",
     )
 
     webTestClient

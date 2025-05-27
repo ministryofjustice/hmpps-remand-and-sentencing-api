@@ -4,11 +4,9 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.UploadedDocumentRepository
-import java.util.*
 
 @Service
 class UploadedDocumentService(
@@ -28,26 +26,8 @@ class UploadedDocumentService(
         documentType = it.documentType,
         warrantType = it.warrantType,
         appearance = courtAppearance,
+        createdBy = createUploadedDocument.createdBy,
       )
     }.forEach(uploadedDocumentRepository::save)
-  }
-
-  @Transactional
-  fun update(documentUuids: List<UUID>, appearanceUuid: UUID) {
-    val courtAppearance = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)
-      ?: throw EntityNotFoundException("No court appearance found with UUID $appearanceUuid")
-
-    documentUuids.map { documentUuid ->
-      uploadedDocumentRepository.findByDocumentUuid(documentUuid)
-        .orElseThrow { EntityNotFoundException("No uploaded document found with UUID $documentUuid") }
-        .apply { appearance = courtAppearance }
-    }.forEach(uploadedDocumentRepository::save)
-  }
-
-  fun findAllByAppearanceUUIDAndWarrantType(appearanceUuid: UUID, warrantType: String): List<UploadedDocument> = uploadedDocumentRepository.findAllByAppearanceUUIDAndWarrantType(
-    appearanceUuid,
-    warrantType,
-  ).map { uploadedDocumentEntity ->
-    UploadedDocument.from(uploadedDocumentEntity)
   }
 }
