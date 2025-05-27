@@ -173,31 +173,6 @@ abstract class IntegrationTestBase {
     return response.lifetimeUuid to toCreateAppearance
   }
 
-  protected fun createUploadedDocument(documentUuid: UUID, appearanceUuid: UUID? = null) {
-    val createUploadedDocument = CreateUploadedDocument(
-      appearanceUUID = appearanceUuid,
-      documents = listOf(
-        UploadedDocument(
-          documentUUID = documentUuid,
-          documentType = "HMCTS_WARRANT",
-          warrantType = "SENTENCING",
-        ),
-      ),
-    )
-
-    webTestClient
-      .post()
-      .uri("/uploaded-documents")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .bodyValue(createUploadedDocument)
-      .exchange()
-      .expectStatus()
-      .isCreated
-  }
-
   protected fun createLegacyCharge(
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
