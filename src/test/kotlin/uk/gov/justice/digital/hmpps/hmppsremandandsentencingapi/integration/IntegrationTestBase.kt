@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
@@ -94,18 +95,21 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var courtAppearanceRepository: CourtAppearanceRepository
 
+  @Autowired
+  protected lateinit var sentenceRepository: SentenceRepository
+
   @BeforeEach
   fun clearDependencies() {
     purgeQueues()
   }
 
-  internal fun HttpHeaders.authToken(roles: List<String> = emptyList()) {
+  internal fun HttpHeaders.authToken(roles: List<String> = emptyList(), user: String = "SOME_USER") {
     this.setBearerAuth(
       jwtAuthHelper.createJwt(
         subject = "SOME_USER",
         roles = roles,
         client = "some-client",
-        user = "SOME_USER",
+        user = user,
       ),
     )
   }
