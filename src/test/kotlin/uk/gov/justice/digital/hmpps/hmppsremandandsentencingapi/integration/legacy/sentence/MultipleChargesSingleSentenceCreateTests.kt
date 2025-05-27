@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.util.UUID
 
 class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
 
@@ -35,7 +36,7 @@ class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/$courtCaseUuid")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"), user = "SOME_OTHER_USER")
       }
       .exchange()
       .expectStatus()
@@ -46,6 +47,9 @@ class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
         Assertions.assertThat(result).contains(response.lifetimeUuid.toString())
         val counts = result.groupingBy { it }.eachCount()
         Assertions.assertThat(counts.values).allMatch { it == 1 }
+        result.forEach {
+          Assertions.assertThat(sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(UUID.fromString(it))?.updatedBy).isEqualTo("SOME_OTHER_USER")
+        }
       }
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${firstCharge.chargeUuid}')].sentence.sentenceUuid")
       .exists()
