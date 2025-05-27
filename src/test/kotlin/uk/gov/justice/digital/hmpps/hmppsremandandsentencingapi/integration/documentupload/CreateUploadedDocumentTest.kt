@@ -34,7 +34,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
       .post()
       .uri("/uploaded-documents")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_UPLOADED_DOCUMENT_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .bodyValue(createUploadedDocument)
