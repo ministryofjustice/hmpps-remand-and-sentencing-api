@@ -6,13 +6,11 @@ import java.util.UUID
 data class UploadedDocument(
   val documentUUID: UUID,
   val documentType: String,
-  val warrantType: String,
 ) {
   companion object {
     fun from(uploadedDocumentEntity: UploadedDocumentEntity): UploadedDocument = UploadedDocument(
       documentUUID = uploadedDocumentEntity.documentUuid,
       documentType = uploadedDocumentEntity.documentType,
-      warrantType = uploadedDocumentEntity.warrantType,
     )
   }
 }

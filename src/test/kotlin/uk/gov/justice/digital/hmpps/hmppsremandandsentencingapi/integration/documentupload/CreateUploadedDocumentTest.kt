@@ -24,7 +24,6 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
         UploadedDocument(
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
-          warrantType = "SENTENCING",
         ),
       ),
       createdBy = "user001",
@@ -42,10 +41,9 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
       .expectStatus()
       .isCreated
 
-    val uploadedDocument = uploadedDocumentRepository.findByDocumentUuid(documentUuid).get()
+    val uploadedDocument = uploadedDocumentRepository.findByDocumentUuid(documentUuid)
     assertThat(uploadedDocument).isNotNull
-    assertThat(uploadedDocument.documentType).isEqualTo(createUploadedDocument.documents.first().documentType)
-    assertThat(uploadedDocument.warrantType).isEqualTo(createUploadedDocument.documents.first().warrantType)
+    assertThat(uploadedDocument?.documentType).isEqualTo(createUploadedDocument.documents.first().documentType)
   }
 
   @Test
@@ -57,8 +55,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
         UploadedDocument(
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
-          warrantType = "SENTENCING",
-          ),
+        ),
       ),
       createdBy = "user001",
     )
@@ -84,8 +81,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
         UploadedDocument(
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
-          warrantType = "SENTENCING",
-          ),
+        ),
       ),
       createdBy = "user001",
     )

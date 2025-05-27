@@ -24,7 +24,6 @@ class UploadedDocumentService(
       UploadedDocumentEntity(
         documentUuid = it.documentUUID,
         documentType = it.documentType,
-        warrantType = it.warrantType,
         appearance = courtAppearance,
         createdBy = createUploadedDocument.createdBy,
       )

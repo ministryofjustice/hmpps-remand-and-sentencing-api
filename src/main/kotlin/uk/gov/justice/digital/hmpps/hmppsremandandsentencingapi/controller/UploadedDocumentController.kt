@@ -7,17 +7,13 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
-import java.util.*
 
 @RestController
 @RequestMapping("/uploaded-documents", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -41,6 +37,5 @@ class UploadedDocumentController(private val uploadedDocumentService: UploadedDo
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
-  fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) =
-    uploadedDocumentService.create(createUploadedDocument)
+  fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) = uploadedDocumentService.create(createUploadedDocument)
 }

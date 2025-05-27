@@ -18,7 +18,6 @@ class UploadedDocumentEntity(
   @JoinColumn(name = "appearance_id", referencedColumnName = "id", nullable = false)
   var appearance: CourtAppearanceEntity?,
   val documentType: String,
-  val warrantType: String,
   val createdBy: String,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   var updatedAt: ZonedDateTime? = null,
