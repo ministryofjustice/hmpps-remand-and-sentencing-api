@@ -198,7 +198,16 @@ class SentenceEntity(
       return sentenceEntity
     }
 
-    fun from(sentence: LegacyCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?, sentenceUuid: UUID, isManyCharges: Boolean): SentenceEntity = SentenceEntity(
+    fun from(
+      sentence: LegacyCreateSentence,
+      createdBy: String,
+      chargeEntity: ChargeEntity,
+      sentenceTypeEntity: SentenceTypeEntity?,
+      consecutiveTo: SentenceEntity?,
+      sentenceUuid: UUID,
+      isManyCharges: Boolean,
+      convictionDate: LocalDate? = null,
+    ): SentenceEntity = SentenceEntity(
       sentenceUuid = sentenceUuid,
       chargeNumber = sentence.chargeNumber,
       statusId = if (isManyCharges) {
@@ -214,7 +223,7 @@ class SentenceEntity(
       sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "UNKNOWN",
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceTypeEntity,
-      convictionDate = null,
+      convictionDate = convictionDate,
       legacyData = sentence.legacyData,
       fineAmount = sentence.fine?.fineAmount,
     )
