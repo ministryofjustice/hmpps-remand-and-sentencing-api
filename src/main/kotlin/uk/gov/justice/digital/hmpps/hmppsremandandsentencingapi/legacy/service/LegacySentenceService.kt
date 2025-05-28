@@ -183,6 +183,7 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
+    val sourceSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it) }
     return sentence.chargeUuids.map { chargeUuid ->
@@ -207,7 +208,8 @@ class LegacySentenceService(
                     consecutiveTo = consecutiveToSentence,
                     sentenceUuid = sentenceUuid,
                     isManyCharges = isManyCharges,
-                  ),
+                    convictionDate = sourceSentence?.convictionDate,
+                  )
                 )
               }.also { newSentence ->
                 // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
