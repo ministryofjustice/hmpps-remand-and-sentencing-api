@@ -13,10 +13,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
-class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository) {
+class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService) {
 
   fun fixCourtCaseSentences(courtCases: List<CourtCaseEntity>): MutableSet<EventMetadata> = courtCases.flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase))
@@ -58,6 +59,8 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) EntityStatus.INACTIVE else EntityStatus.ACTIVE
     sentenceRecord.sentenceUuid = sentenceUuid
+    sentenceRecord.updatedAt = ZonedDateTime.now()
+    sentenceRecord.updatedBy = serviceUserService.getUsername()
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
     return EventMetadataCreator.sentenceEventMetadata(
       eventMetadata.prisonerId,
@@ -76,6 +79,8 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     periodLengths.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
       .forEach { periodLength ->
         periodLength.statusId = EntityStatus.ACTIVE
+        periodLength.updatedAt = ZonedDateTime.now()
+        periodLength.updatedBy = serviceUserService.getUsername()
         periodLengthModifyFunction(periodLength)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
         periodLengthEventsToEmit.add(
