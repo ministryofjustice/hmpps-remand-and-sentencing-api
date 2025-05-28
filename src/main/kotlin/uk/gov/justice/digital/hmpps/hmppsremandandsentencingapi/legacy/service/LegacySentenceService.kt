@@ -209,7 +209,7 @@ class LegacySentenceService(
                     sentenceUuid = sentenceUuid,
                     isManyCharges = isManyCharges,
                     convictionDate = sourceSentence?.convictionDate,
-                  )
+                  ),
                 )
               }.also { newSentence ->
                 // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
