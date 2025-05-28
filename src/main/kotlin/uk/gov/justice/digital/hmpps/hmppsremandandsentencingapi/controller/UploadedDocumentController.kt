@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.Uploaded
 @RequestMapping("/uploaded-documents", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(
   name = "uploaded-documents-controller",
-  description = "CRUD operations for keeping a record of  uploaded documents to document service",
+  description = "Endpoint for creating a record of an uploaded document",
 )
 class UploadedDocumentController(private val uploadedDocumentService: UploadedDocumentService) {
 

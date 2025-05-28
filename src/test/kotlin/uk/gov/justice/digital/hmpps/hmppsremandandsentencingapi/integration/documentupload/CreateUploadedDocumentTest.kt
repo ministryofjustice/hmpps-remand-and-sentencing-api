@@ -26,7 +26,6 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
           documentType = "HMCTS_WARRANT",
         ),
       ),
-      createdBy = "user001",
     )
 
     webTestClient
@@ -57,7 +56,6 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
           documentType = "HMCTS_WARRANT",
         ),
       ),
-      createdBy = "user001",
     )
 
     webTestClient
@@ -83,7 +81,6 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
           documentType = "HMCTS_WARRANT",
         ),
       ),
-      createdBy = "user001",
     )
 
     webTestClient

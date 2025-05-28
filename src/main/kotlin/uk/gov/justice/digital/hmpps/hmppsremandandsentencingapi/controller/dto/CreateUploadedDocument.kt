@@ -5,5 +5,4 @@ import java.util.UUID
 data class CreateUploadedDocument(
   val appearanceUUID: UUID?,
   val documents: List<UploadedDocument>,
-  val createdBy: String,
 )

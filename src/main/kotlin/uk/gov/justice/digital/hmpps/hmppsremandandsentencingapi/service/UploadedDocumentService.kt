@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.U
 class UploadedDocumentService(
   private val uploadedDocumentRepository: UploadedDocumentRepository,
   private val courtAppearanceRepository: CourtAppearanceRepository,
+  private val serviceUserService: ServiceUserService,
 ) {
   @Transactional
   fun create(createUploadedDocument: CreateUploadedDocument) {
@@ -21,12 +22,7 @@ class UploadedDocumentService(
     }
 
     createUploadedDocument.documents.map {
-      UploadedDocumentEntity(
-        documentUuid = it.documentUUID,
-        documentType = it.documentType,
-        appearance = courtAppearance,
-        createdBy = createUploadedDocument.createdBy,
-      )
+      UploadedDocumentEntity.from(it, serviceUserService.getUsername(), courtAppearance)
     }.forEach(uploadedDocumentRepository::save)
   }
 }
