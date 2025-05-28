@@ -112,6 +112,23 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].sentence.sentenceUuid")
       .isEqualTo(response.lifetimeUuid.toString())
+
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder.path("/sentence/consecutive-to-details")
+          .queryParam("sentenceUuids", response.lifetimeUuid.toString())
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.sentences[0].sentenceUuid")
+      .isEqualTo(response.lifetimeUuid.toString())
   }
 
   @Test
