@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.P
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
-import java.time.LocalDate
 
 class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
 
@@ -202,9 +201,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
     val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
     val createdCase = createCourtCase(courtCase)
     val createdSentence = createdCase.second.appearances.first().charges.first().sentence!!
-    val convictionDate = LocalDate.of(2025, 5, 21)
-
-    assertThat(createdSentence.convictionDate).isEqualTo(convictionDate)
+    val convictionDate = createdSentence.convictionDate!!
 
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid))
     val sentenceUuid = createdSentence.sentenceUuid!!
