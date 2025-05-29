@@ -60,13 +60,19 @@ class RecallService(
     if (recallToUpdate == null) {
       val savedRecall = recallRepository.save(RecallEntity.placeholderEntity(recall, recallTypeEntity, recallUuid))
 
+      val recallSentences: List<RecallSentenceEntity>? =
+        recall.sentenceIds?.let { sentenceIds ->
+          sentenceRepository.findBySentenceUuidIn(sentenceIds)
+            .map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(savedRecall, it)) }
+        }
+
       return RecordResponse(
         SaveRecallResponse.from(savedRecall),
         mutableSetOf(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
-            emptyList(),
+            recallSentences?.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
             null,
             EventType.RECALL_INSERTED,
           ),
@@ -89,7 +95,7 @@ class RecallService(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
-            emptyList(),
+            recallToUpdate.recallSentences.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
             null,
             EventType.RECALL_UPDATED,
           ),
