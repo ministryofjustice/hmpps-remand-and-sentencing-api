@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class MigrationMergedCasesTests : IntegrationTestBase() {
 
@@ -78,6 +79,10 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$sourceChargeUuid')]")
       .exists()
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCaseDetails.latestAppearanceDate")
+      .isEqualTo(sourceAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCaseDetails.latestAppearanceCourtCode")
+      .isEqualTo(sourceAppearance.courtCode)
   }
 
   private fun createSourceMergedCourtCase(): MigrationCreateCourtCasesResponse {

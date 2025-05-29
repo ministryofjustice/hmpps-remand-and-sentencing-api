@@ -61,6 +61,7 @@ import java.util.UUID
       name = "chargeDetails",
       attributeNodes = [
         NamedAttributeNode("chargeOutcome"),
+        NamedAttributeNode("mergedFromCourtCase", subgraph = "mergedFromCaseDetails"),
         NamedAttributeNode("sentences", subgraph = "sentenceDetails"),
       ],
     ),
@@ -70,6 +71,12 @@ import java.util.UUID
         NamedAttributeNode("sentenceType"),
         NamedAttributeNode("consecutiveTo"),
         NamedAttributeNode("periodLengths"),
+      ],
+    ),
+    NamedSubgraph(
+      name = "mergedFromCaseDetails",
+      attributeNodes = [
+        NamedAttributeNode("latestCourtAppearance"),
       ],
     ),
   ],
