@@ -81,8 +81,8 @@ class PeriodLengthEntity(
     sentenceEntity: SentenceEntity,
     username: String,
   ) {
-    // TODO not sure if the sentenceCalcType can change via the update-period-length legacy route - to check with syscon
-    // maybe syscon need to send the sentenceCalcType in the period length request to get around this?
+    // The sentenceCalcType from NOMIS never gets updated (i.e. cannot change after sentence creation), so we don't need to
+    // update the periiodLength.type via the legacy updateSentence route
     val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType
       ?: sentenceEntity.legacyData?.sentenceCalcType
       ?: throw IllegalStateException("Sentence calculation type not found")
