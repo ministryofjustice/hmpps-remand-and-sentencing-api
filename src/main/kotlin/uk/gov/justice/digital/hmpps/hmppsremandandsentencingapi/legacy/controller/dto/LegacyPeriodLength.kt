@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 import java.util.UUID
 
@@ -27,7 +28,7 @@ data class LegacyPeriodLength(
       val prisonerId = appearance.courtCase.prisonerId
 
       val sentenceTypeClassification = sentenceEntity.sentenceType?.classification
-      val (isLifeSentence, sentenceTermCode) = if (sentenceEntity.sentenceType?.classification != null) {
+      val (isLifeSentence, sentenceTermCode) = if (sentenceTypeClassification != null || periodLengthEntity.periodLengthType !== PeriodLengthType.UNSUPPORTED) {
         PeriodLengthTypeMapper.convertDpsToNomis(periodLengthEntity.periodLengthType, sentenceTypeClassification, periodLengthEntity.legacyData)
       } else {
         periodLengthEntity.legacyData?.lifeSentence to periodLengthEntity.legacyData!!.sentenceTermCode!!

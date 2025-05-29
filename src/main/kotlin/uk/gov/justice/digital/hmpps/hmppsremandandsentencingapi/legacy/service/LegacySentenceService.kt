@@ -183,6 +183,7 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
+    val sourceSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it) }
     return sentence.chargeUuids.map { chargeUuid ->
@@ -207,6 +208,7 @@ class LegacySentenceService(
                     consecutiveTo = consecutiveToSentence,
                     sentenceUuid = sentenceUuid,
                     isManyCharges = isManyCharges,
+                    convictionDate = sourceSentence?.convictionDate,
                   ),
                 )
               }.also { newSentence ->

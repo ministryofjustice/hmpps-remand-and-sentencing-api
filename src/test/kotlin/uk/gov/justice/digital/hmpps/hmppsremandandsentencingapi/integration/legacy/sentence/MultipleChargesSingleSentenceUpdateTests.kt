@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -18,9 +17,6 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var periodLengthRepository: PeriodLengthRepository
-
-  @Autowired
-  private lateinit var sentenceRepository: SentenceRepository
 
   @Test
   fun `update sentence with multiple charges`() {
@@ -195,6 +191,29 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
     assertThat(periodLengthsAfter).hasSize(2)
     assertThat(periodLengthsAfter.map { it.days }).containsExactly(99, 99)
     assertThat(periodLengthsAfter.map { it.sentenceEntity?.sentenceUuid }).containsExactly(sentenceUuid, sentenceUuid)
+  }
+
+  @Test
+  fun `When additional charges are added to a single sentence then the conviction date is retained from the source sentence`() {
+    val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence(), offenceCode = "OFFENCE1")
+    val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = null, offenceCode = "OFFENCE2")
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
+    val createdCase = createCourtCase(courtCase)
+    val createdSentence = createdCase.second.appearances.first().charges.first().sentence!!
+    val convictionDate = createdSentence.convictionDate!!
+
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid))
+    val sentenceUuid = createdSentence.sentenceUuid!!
+
+    val sentencesBefore = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    assertThat(sentencesBefore).hasSize(1)
+
+    legacyUpdateSentence(sentenceUuid, legacySentence)
+
+    val sentencesAfter = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    assertThat(sentencesAfter).hasSize(2)
+    assertThat(sentencesAfter.map { it.convictionDate }).containsExactlyInAnyOrder(convictionDate, convictionDate)
   }
 }
 

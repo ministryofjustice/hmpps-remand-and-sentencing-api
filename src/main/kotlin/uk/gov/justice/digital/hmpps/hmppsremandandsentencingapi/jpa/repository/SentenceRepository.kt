@@ -83,19 +83,15 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     join c.appearanceCharges ac
     join ac.appearance ca
     join ca.courtCase cc
-    where s.statusId in :sentenceStatuses
+    where s.statusId != :#{#status}
     and s.sentenceUuid in :sentenceUuids
-    and c.statusId = :#{#status}
-    and ca.statusId = :#{#status}
-    and cc.statusId = :#{#status}
+    and c.statusId != :#{#status}
+    and ca.statusId != :#{#status}
+    and cc.statusId != :#{#status}
   """,
   )
   fun findConsecutiveToSentenceDetails(
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
-    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
-      EntityStatus.ACTIVE,
-      EntityStatus.MANY_CHARGES_DATA_FIX,
-    ),
+    @Param("status") status: EntityStatus = EntityStatus.DELETED,
   ): List<ConsecutiveToSentenceRow>
 }
