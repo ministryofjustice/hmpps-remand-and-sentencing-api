@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
@@ -69,6 +71,13 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       },
       eventsToEmit,
     )
+  }
+
+  @Transactional
+  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable): Page<CourtCaseRow> {
+    val courtCaseRows = courtCaseRepository.searchCourtCases(prisonerId, pageable.pageSize, pageable.offset)
+    val count = courtCaseRepository.countCourtCases(prisonerId)
+    return PageImpl(courtCaseRows, pageable, count)
   }
 
   @Transactional
