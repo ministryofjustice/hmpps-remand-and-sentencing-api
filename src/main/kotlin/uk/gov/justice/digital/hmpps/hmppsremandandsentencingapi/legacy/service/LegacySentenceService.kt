@@ -243,9 +243,10 @@ class LegacySentenceService(
         sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
         entityChangeStatus = EntityChangeStatus.EDITED
         existingSentence.charge.sentences.add(activeRecord)
-
-        checkAndUpdatePeriodLengthStatus(existingSentence)
       }
+      // Always update period lengths using the current sentence status. Required when the sentence is changed and to cover a race condition (RASS-1119)
+      // This works for the race condition because `update-sentence` is invoked twice in such cases.
+      checkAndUpdatePeriodLengthStatus(existingSentence)
 
       entityChangeStatus =
         if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
