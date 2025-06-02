@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import java.time.LocalDate
 
@@ -12,5 +13,20 @@ data class PagedCourtCase(
   val appearanceCount: Long,
   val caseReferences: Set<String>,
   val firstDayInCustody: LocalDate,
-
-)
+) {
+  companion object {
+    fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
+      val firstCourtCase = courtCaseRows.first()
+      val legacyReferences = firstCourtCase.courtCaseLegacyData?.caseReferences?.map { it.offenderCaseReference } ?: emptyList()
+      return PagedCourtCase(
+        firstCourtCase.prisonerId,
+        firstCourtCase.courtCaseUuid,
+        firstCourtCase.courtCaseStatus,
+        firstCourtCase.courtCaseLegacyData,
+        firstCourtCase.appearanceCount,
+        (firstCourtCase.caseReferences.split(",") + legacyReferences).toSet(),
+        firstCourtCase.firstDayInCustody,
+      )
+    }
+  }
+}
