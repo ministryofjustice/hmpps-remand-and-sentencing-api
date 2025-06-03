@@ -9,7 +9,7 @@ data class PagedCharge(
   val offenceCode: String,
   val offenceStartDate: LocalDate,
   val offenceEndDate: LocalDate?,
-  val outcomeDescription: String?,
+  val outcome: PagedChargeOutcome?,
   val legacyData: ChargeLegacyData?,
   val sentence: PagedSentence?,
 ) {
@@ -21,7 +21,7 @@ data class PagedCharge(
         charge.chargeOffenceCode!!,
         charge.chargeOffenceStartDate!!,
         charge.chargeOffenceEndDate,
-        charge.chargeOutcome ?: charge.chargeLegacyData?.outcomeDescription,
+        charge.chargeOutcomeUuid?.let { PagedChargeOutcome(it, charge.chargeOutcomeName!!) },
         charge.chargeLegacyData,
         sentenceRows?.let { PagedSentence.from(it) },
       )

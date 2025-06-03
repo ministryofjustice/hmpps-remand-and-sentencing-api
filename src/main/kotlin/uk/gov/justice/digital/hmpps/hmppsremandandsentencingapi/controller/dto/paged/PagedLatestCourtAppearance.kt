@@ -12,6 +12,7 @@ data class PagedLatestCourtAppearance(
   val outcome: String?,
   val convictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
+  val nextCourtAppearance: PagedNextCourtAppearance?,
   val charges: List<PagedCharge>,
 ) {
   companion object {
@@ -23,6 +24,7 @@ data class PagedLatestCourtAppearance(
       courtCaseRow.latestCourtAppearanceOutcome ?: courtCaseRow.latestCourtAppearanceLegacyData?.outcomeDescription,
       courtCaseRow.latestCourtAppearanceOverallConvictionDate,
       courtCaseRow.latestCourtAppearanceLegacyData,
+      courtCaseRow.takeIf { it.nextCourtAppearanceId != null }?.let { PagedNextCourtAppearance.from(it) },
       latestAppearanceCharges.values.map {
         PagedCharge.from(it)
       },

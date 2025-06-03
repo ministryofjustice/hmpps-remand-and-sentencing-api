@@ -12,11 +12,11 @@ data class PagedSentence(
   val sentenceServeType: String,
   val consecutiveToSentenceUuid: UUID?,
   val convictionDate: LocalDate?,
-  val sentenceTypeDescription: String?,
+  val sentenceType: PagedSentenceType?,
   val legacyData: SentenceLegacyData?,
   val fineAmount: BigDecimal?,
   val periodLengths: List<PagedSentencePeriodLength>,
-  val isRecalled: Boolean,
+  val hasRecall: Boolean,
 ) {
   companion object {
     fun from(sentenceRows: List<CourtCaseRow>): PagedSentence {
@@ -27,7 +27,7 @@ data class PagedSentence(
         sentence.sentenceServeType!!,
         sentence.sentenceConsecutiveToUuid,
         sentence.sentenceConvictionDate,
-        sentence.sentenceTypeDescription ?: sentence.sentenceLegacyData?.sentenceTypeDesc,
+        sentence.sentenceTypeUuid?.let { PagedSentenceType(it, sentence.sentenceTypeDescription!!) },
         sentence.sentenceLegacyData,
         sentence.sentenceFineAmount,
         periodLengths.values.map { PagedSentencePeriodLength.from(it.first()) },
