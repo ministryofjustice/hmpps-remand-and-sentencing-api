@@ -140,7 +140,8 @@ import java.util.UUID
         spl.days as sentencePeriodLengthDays,
         spl.period_order as sentencePeriodLengthOrder,
         spl.period_length_type as sentencePeriodLengthType,
-        spl.legacy_data as sentencePeriodLengthLegacyData
+        spl.legacy_data as sentencePeriodLengthLegacyData,
+        rs.id as recallSentenceId
       from court_case cc
       join (select cc1.id, count(ca.id) as appearance_count, string_agg(ca.court_case_reference, ',') as case_references, min(ca.appearance_date) as first_day_in_custody 
         from court_case cc1
@@ -165,6 +166,7 @@ import java.util.UUID
       left join sentence cts on s.consecutive_to_id = cts.id
       left join sentence_type st on s.sentence_type_id = st.id
       left join period_length spl on spl.sentence_id = s.id
+      left join recall_sentence rs on rs.sentence_id = s.id
   """,
   resultSetMapping = "courtCaseRowMapping",
 )
@@ -225,6 +227,7 @@ import java.util.UUID
         ColumnResult(name = "sentencePeriodLengthOrder"),
         ColumnResult(name = "sentencePeriodLengthType", type = PeriodLengthType::class),
         ColumnResult(name = "sentencePeriodLengthLegacyData", type = PeriodLengthLegacyData::class),
+        ColumnResult(name = "recallSentenceId"),
       ),
     ),
   ],

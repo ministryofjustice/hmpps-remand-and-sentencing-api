@@ -64,4 +64,5 @@ data class CourtCaseRow(
   var sentencePeriodLengthOrder: String?,
   var sentencePeriodLengthType: PeriodLengthType?,
   var sentencePeriodLengthLegacyData: PeriodLengthLegacyData?,
+  var recallSentenceId: Int?,
 )

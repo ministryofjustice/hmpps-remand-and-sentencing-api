@@ -16,6 +16,7 @@ data class PagedSentence(
   val legacyData: SentenceLegacyData?,
   val fineAmount: BigDecimal?,
   val periodLengths: List<PagedSentencePeriodLength>,
+  val isRecalled: Boolean,
 ) {
   companion object {
     fun from(sentenceRows: List<CourtCaseRow>): PagedSentence {
@@ -30,6 +31,7 @@ data class PagedSentence(
         sentence.sentenceLegacyData,
         sentence.sentenceFineAmount,
         periodLengths.values.map { PagedSentencePeriodLength.from(it.first()) },
+        sentence.recallSentenceId != null,
       )
     }
   }
