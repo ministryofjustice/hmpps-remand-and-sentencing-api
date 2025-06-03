@@ -138,6 +138,7 @@ import java.util.UUID
         ColumnResult(name = "sentenceTypeUuid"),
         ColumnResult(name = "sentenceTypeDescription"),
         ColumnResult(name = "sentencePeriodLengthId"),
+        ColumnResult(name = "sentencePeriodLengthUuid"),
         ColumnResult(name = "sentencePeriodLengthStatus", type = EntityStatus::class),
         ColumnResult(name = "sentencePeriodLengthYears"),
         ColumnResult(name = "sentencePeriodLengthMonths"),

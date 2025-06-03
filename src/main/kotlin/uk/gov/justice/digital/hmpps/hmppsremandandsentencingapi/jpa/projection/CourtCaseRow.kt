@@ -59,6 +59,7 @@ data class CourtCaseRow(
   var sentenceTypeUuid: UUID?,
   var sentenceTypeDescription: String?,
   var sentencePeriodLengthId: Int?,
+  var sentencePeriodLengthUuid: UUID?,
   var sentencePeriodLengthStatus: EntityStatus?,
   var sentencePeriodLengthYears: Int?,
   var sentencePeriodLengthMonths: Int?,
