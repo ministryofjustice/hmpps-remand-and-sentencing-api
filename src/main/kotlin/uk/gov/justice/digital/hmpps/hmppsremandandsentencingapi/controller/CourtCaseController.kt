@@ -131,7 +131,10 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("appearanceDateSortDirection", defaultValue = "DESC") appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, appearanceDateSortDirection)
+  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("appearanceDateSortDirection", defaultValue = "DESC") appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, appearanceDateSortDirection).let { (pageCourtCase, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    pageCourtCase
+  }
 
   @GetMapping("\${court.case.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")

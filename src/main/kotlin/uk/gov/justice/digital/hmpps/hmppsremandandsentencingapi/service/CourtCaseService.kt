@@ -76,7 +76,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   @Transactional
-  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> {
+  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, appearanceDateSortDirection: AppearanceDateSortDirection): RecordResponse<Page<PagedCourtCase>> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
       pageable.pageSize,
@@ -85,12 +85,15 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       EntityStatus.ACTIVE,
       EntityStatus.DELETED,
     )
+
     val count = courtCaseRepository.countCourtCases(prisonerId)
+    val manyChargesToSentenceCourtCaseIds = courtCaseRows.filter { it.sentenceStatus == EntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCasesById(manyChargesToSentenceCourtCaseIds)
     val courtCaseMap = courtCaseRows.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = if (appearanceDateSortDirection == AppearanceDateSortDirection.ASC) compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate } else compareByDescending { it.latestCourtAppearance.warrantDate }
     val pagedCourtCases = courtCaseMap.values.map { PagedCourtCase.from(it) }
       .sortedWith(appearanceDateCompareTo)
-    return PageImpl(pagedCourtCases, pageable, count)
+    return RecordResponse(PageImpl(pagedCourtCases, pageable, count), eventsToEmit)
   }
 
   @Transactional
