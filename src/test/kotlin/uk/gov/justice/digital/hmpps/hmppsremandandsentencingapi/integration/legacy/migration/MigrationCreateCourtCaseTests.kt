@@ -175,21 +175,25 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
     val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
     webTestClient
       .get()
-      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[*].sentence.sentenceUuid")
+      .jsonPath("$.content[*].latestCourtAppearance.charges[*].sentence.sentenceUuid")
       .value<List<String>> { result ->
         Assertions.assertThat(result).contains(sentenceUuid.toString())
         val counts = result.groupingBy { it }.eachCount()
         Assertions.assertThat(counts.values).allMatch { it == 1 }
       }
-      .jsonPath("$.appearances[*].charges[*].sentence.periodLengths[*].periodLengthUuid")
+      .jsonPath("$.content[*].latestCourtAppearance.charges[*].sentence.periodLengths[*].periodLengthUuid")
       .value<List<String>> { result ->
         Assertions.assertThat(result).contains(periodLengthUuid.toString())
         val counts = result.groupingBy { it }.eachCount()

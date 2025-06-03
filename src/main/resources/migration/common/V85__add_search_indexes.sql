@@ -1,0 +1,3 @@
+create index idx_court_appearance_appearance_date_asc on court_appearance (appearance_date asc);
+create index idx_court_appearance_appearance_date_desc on court_appearance (appearance_date desc);
+create index idx_court_case_latest_court_appearance on court_case(latest_court_appearance_id);

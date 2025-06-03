@@ -11,13 +11,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
-class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService) {
+class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService, private val courtCaseRepository: CourtCaseRepository) {
 
   fun fixCourtCaseSentences(courtCases: List<CourtCaseEntity>): MutableSet<EventMetadata> = courtCases.flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase))
@@ -33,6 +34,10 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
       }
     }
   }
+
+  fun fixCourtCasesById(courtCaseIds: Set<Int>): MutableSet<EventMetadata> = courtCaseRepository.findAllById(courtCaseIds).flatMap { courtCase ->
+    fixSentences(courtCaseToSentences(courtCase))
+  }.toMutableSet()
 
   fun fixSentences(sentences: List<RecordEventMetadata<SentenceEntity>>): MutableSet<EventMetadata> {
     val toFixSentences = sentences
