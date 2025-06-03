@@ -13,11 +13,14 @@ data class PagedCourtCase(
   val appearanceCount: Long,
   val caseReferences: Set<String>,
   val firstDayInCustody: LocalDate,
+  val overallSentenceLength: PagedAppearancePeriodLength?,
+  val latestCourtAppearance: PagedLatestCourtAppearance,
 ) {
   companion object {
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
       val firstCourtCase = courtCaseRows.first()
       val legacyReferences = firstCourtCase.courtCaseLegacyData?.caseReferences?.map { it.offenderCaseReference } ?: emptyList()
+      val latestAppearanceCharges = courtCaseRows.filter { it.chargeId != null && it.chargeStatus != EntityStatus.DELETED }.groupBy { it.chargeId!! }
       return PagedCourtCase(
         firstCourtCase.prisonerId,
         firstCourtCase.courtCaseUuid,
@@ -26,6 +29,11 @@ data class PagedCourtCase(
         firstCourtCase.appearanceCount,
         (firstCourtCase.caseReferences.split(",") + legacyReferences).toSet(),
         firstCourtCase.firstDayInCustody,
+        firstCourtCase.takeIf { it.appearancePeriodLengthType != null && it.appearancePeriodLengthOrder != null }?.let {
+          PagedAppearancePeriodLength
+            .from(it)
+        },
+        PagedLatestCourtAppearance.from(firstCourtCase, latestAppearanceCharges),
       )
     }
   }
