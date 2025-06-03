@@ -24,8 +24,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
@@ -111,6 +113,25 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   )
   @ResponseStatus(HttpStatus.OK)
   fun searchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseService.searchCourtCases(prisonerId, pageable).let { (pageCourtCase, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    pageCourtCase
+  }
+
+  @GetMapping("/court-case/paged/search")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Retrieve all court cases for person (where each court case has at least one appearance in the past)",
+    description = "This endpoint will retrieve all court cases for a person (where each court case has at least one appearance in the past - i.e. there exists a latest court appearance)",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court cases"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("appearanceDateSortDirection", defaultValue = "DESC") appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, appearanceDateSortDirection).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }
