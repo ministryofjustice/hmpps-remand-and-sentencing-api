@@ -155,7 +155,7 @@ import java.util.UUID
           and cc1.prisoner_id = :prisonerId
           and cc1.latest_court_appearance_id is not null
         group by cc1.id, lca1.appearance_date
-        order by lca1.appearance_date desc
+        order by lca1.appearance_date :appearanceDateSortDirection
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id
       join court_appearance lca on lca.id = cc.latest_court_appearance_id
       left join appearance_outcome ao on lca.appearance_outcome_id = ao.id

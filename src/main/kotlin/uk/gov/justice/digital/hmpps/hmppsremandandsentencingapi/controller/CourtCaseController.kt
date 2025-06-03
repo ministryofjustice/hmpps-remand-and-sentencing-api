@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
@@ -130,7 +131,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable)
+  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("appearanceDateSortDirection", defaultValue = "DESC") appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, appearanceDateSortDirection)
 
   @GetMapping("\${court.case.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")

@@ -8,6 +8,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class PagedSentence(
+  val sentenceUuid: UUID,
   val chargeNumber: String?,
   val sentenceServeType: String,
   val consecutiveToSentenceUuid: UUID?,
@@ -23,6 +24,7 @@ data class PagedSentence(
       val sentence = sentenceRows.first()
       val periodLengths = sentenceRows.filter { it.sentencePeriodLengthId != null && it.sentencePeriodLengthStatus != EntityStatus.DELETED }.groupBy { it.sentencePeriodLengthId }
       return PagedSentence(
+        sentence.sentenceUuid!!,
         sentence.sentenceChargeNumber,
         sentence.sentenceServeType!!,
         sentence.sentenceConsecutiveToUuid,

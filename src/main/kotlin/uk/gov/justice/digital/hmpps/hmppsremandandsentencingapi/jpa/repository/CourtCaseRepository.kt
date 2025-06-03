@@ -23,6 +23,7 @@ interface CourtCaseRepository :
     @Param("prisonerId") prisonerId: String,
     @Param("limit") limit: Int,
     @Param("offset") offset: Long,
+    @Param("appearanceDateSortDirection") appearanceDateSortDirection: String,
     @Param("appearanceStatus") appearanceStatus: EntityStatus = EntityStatus.ACTIVE,
     @Param("courtCaseStatus") courtCaseStatus: EntityStatus = EntityStatus.DELETED,
   ): List<CourtCaseRow>
