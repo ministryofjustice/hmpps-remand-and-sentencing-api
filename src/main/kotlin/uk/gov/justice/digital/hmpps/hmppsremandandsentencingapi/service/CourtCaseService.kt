@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
@@ -76,7 +77,14 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
   @Transactional
   fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> {
-    val courtCaseRows = courtCaseRepository.searchCourtCases(prisonerId, pageable.pageSize, pageable.offset, appearanceDateSortDirection.name)
+    val courtCaseRows = courtCaseRepository.searchCourtCases(
+      prisonerId,
+      pageable.pageSize,
+      pageable.offset,
+      appearanceDateSortDirection,
+      EntityStatus.ACTIVE,
+      EntityStatus.DELETED,
+    )
     val count = courtCaseRepository.countCourtCases(prisonerId)
     val courtCaseMap = courtCaseRows.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = if (appearanceDateSortDirection == AppearanceDateSortDirection.ASC) compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate } else compareByDescending { it.latestCourtAppearance.warrantDate }
