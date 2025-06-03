@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -8,12 +9,15 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
@@ -69,6 +73,39 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       },
       eventsToEmit,
     )
+  }
+
+  @Transactional
+  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, appearanceDateSortDirection: AppearanceDateSortDirection): RecordResponse<Page<PagedCourtCase>> {
+    val courtCaseRows = courtCaseRepository.searchCourtCases(
+      prisonerId,
+      pageable.pageSize,
+      pageable.offset,
+      appearanceDateSortDirection,
+      EntityStatus.ACTIVE,
+      EntityStatus.DELETED,
+    )
+    val manyChargesToSentenceCourtCaseIds = courtCaseRows.filter { it.sentenceStatus == EntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCasesById(manyChargesToSentenceCourtCaseIds)
+    val toReturnCourtCases = if (eventsToEmit.isEmpty()) {
+      courtCaseRows
+    } else {
+      courtCaseRepository.searchCourtCases(
+        prisonerId,
+        pageable.pageSize,
+        pageable.offset,
+        appearanceDateSortDirection,
+        EntityStatus.ACTIVE,
+        EntityStatus.DELETED,
+      )
+    }
+    val count = courtCaseRepository.countCourtCases(prisonerId)
+
+    val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
+    val appearanceDateCompareTo = if (appearanceDateSortDirection == AppearanceDateSortDirection.ASC) compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate } else compareByDescending { it.latestCourtAppearance.warrantDate }
+    val pagedCourtCases = courtCaseMap.values.map { PagedCourtCase.from(it) }
+      .sortedWith(appearanceDateCompareTo)
+    return RecordResponse(PageImpl(pagedCourtCases, pageable, count), eventsToEmit)
   }
 
   @Transactional
