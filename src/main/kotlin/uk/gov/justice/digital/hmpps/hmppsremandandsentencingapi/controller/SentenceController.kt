@@ -34,7 +34,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
       ApiResponse(responseCode = "404", description = "Not found if no charge at uuid"),
     ],
   )
-  fun getChargeDetails(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+  fun getSentenceDetails(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
   @GetMapping("/sentence/consecutive-to-details")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
