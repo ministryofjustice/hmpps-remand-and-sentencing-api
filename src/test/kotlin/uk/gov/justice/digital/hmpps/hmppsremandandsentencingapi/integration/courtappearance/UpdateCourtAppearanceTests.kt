@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -38,12 +37,12 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .jsonPath("$.appearanceUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val messages = getMessages(7)
-    Assertions.assertThat(messages).hasSize(7).extracting<String> { it.eventType }.contains("court-appearance.updated")
-    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
-    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("sentence.period-length.inserted")
+    assertThat(messages).hasSize(7).extracting<String> { it.eventType }.contains("court-appearance.updated")
+    assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
+    assertThat(messages).extracting<String> { it.eventType }.contains("sentence.period-length.inserted")
 
     val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
-    Assertions.assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
+    assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
 
     val appearanceChargeHistoryAfter = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
     val beforeIds = appearanceChargeHistoryBefore.map { it.id }.toSet()
@@ -111,7 +110,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isOk
 
     val messages = getMessages(2)
-    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("sentence.updated")
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("sentence.updated")
   }
 
   @Test
@@ -215,7 +214,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isOk
 
     val messages = getMessages(3)
-    Assertions.assertThat(messages).hasSize(3).extracting<String> { it.eventType }.contains("court-appearance.updated")
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }.contains("court-appearance.updated")
 
     webTestClient
       .get()
@@ -231,6 +230,44 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .doesNotExist()
       .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')]")
       .exists()
+  }
+
+  @Test
+  fun `updating the appearance changing sentence type`() {
+    val sdsUuid = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39")
+    val edsUuid = UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0")
+    val sentence = DpsDataCreator.dpsCreateSentence(sentenceTypeId = sdsUuid)
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge), overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    val createdAppearance = createdCourtCase.appearances.first()
+    // Update from SDS sentence to EDS sentence
+    val updateAppearance = createdAppearance.copy(courtCaseUuid = courtCaseUuid, charges = createdAppearance.charges.map { it.copy(sentence = it.sentence?.copy(sentenceTypeId = edsUuid)) })
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')].sentence.sentenceType.sentenceTypeUuid")
+      .isEqualTo(edsUuid.toString())
   }
 
   @Test

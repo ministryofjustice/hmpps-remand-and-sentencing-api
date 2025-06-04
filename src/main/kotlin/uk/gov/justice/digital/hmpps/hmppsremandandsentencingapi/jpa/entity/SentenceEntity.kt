@@ -128,7 +128,7 @@ class SentenceEntity(
       charge = charge,
       sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "CONCURRENT",
       consecutiveTo = consecutiveTo,
-      sentenceType = sentenceTypeEntity,
+      sentenceType = sentenceType,
       convictionDate = convictionDate,
       legacyData = sentence.legacyData,
       updatedAt = ZonedDateTime.now(),
@@ -165,6 +165,7 @@ class SentenceEntity(
     updatedPrison = sentence.updatedPrison
     sentenceServeType = sentence.sentenceServeType
     consecutiveTo = sentence.consecutiveTo
+    sentenceType = sentence.sentenceType
     supersedingSentence = sentence.supersedingSentence
     charge = sentence.charge
     convictionDate = sentence.convictionDate
