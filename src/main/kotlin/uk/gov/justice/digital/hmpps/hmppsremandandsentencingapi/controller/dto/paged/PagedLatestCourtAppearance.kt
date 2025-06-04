@@ -6,7 +6,7 @@ import java.time.LocalDate
 
 data class PagedLatestCourtAppearance(
   val caseReference: String?,
-  val courtCase: String,
+  val courtCode: String,
   val warrantDate: LocalDate,
   val warrantType: String,
   val outcome: String?,
