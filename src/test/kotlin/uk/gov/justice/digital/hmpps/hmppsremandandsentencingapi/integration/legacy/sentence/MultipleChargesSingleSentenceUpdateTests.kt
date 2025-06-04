@@ -9,9 +9,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 
 class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
 
@@ -21,8 +23,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
   @Test
   fun `update sentence with multiple charges`() {
     val sentenceWithMultipleCharges = createSentenceWithMultipleCharges()
-    val updatedLegacyData = sentenceWithMultipleCharges.legacySentence.legacyData.copy(sentenceCalcType = "ADIMP", sentenceCategory = "2020") // DPS SDS sentence type
-    val updatedSentence = sentenceWithMultipleCharges.legacySentence.copy(legacyData = updatedLegacyData, fine = null)
+    val updatedSentence = sentenceWithMultipleCharges.legacySentence.copy(fine = LegacyCreateFine(BigDecimal.TEN))
     webTestClient
       .put()
       .uri("/legacy/sentence/${sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid}")
@@ -48,10 +49,10 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${firstCharge.chargeUuid}')].sentence.sentenceType.sentenceTypeUuid")
-      .isEqualTo("02fe3513-40a6-47e9-a72d-9dafdd936a0e")
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${secondCharge.chargeUuid}')].sentence.sentenceType.sentenceTypeUuid")
-      .isEqualTo("02fe3513-40a6-47e9-a72d-9dafdd936a0e")
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${firstCharge.chargeUuid}')].sentence.fineAmount.fineAmount")
+      .isEqualTo(10.0)
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${secondCharge.chargeUuid}')].sentence.fineAmount.fineAmount")
+      .isEqualTo(10.0)
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${thirdCharge.chargeUuid}')].sentence")
       .isEqualTo(null)
   }

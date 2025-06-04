@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
 import jakarta.persistence.Column
+import jakarta.persistence.ColumnResult
+import jakarta.persistence.ConstructorResult
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -13,6 +15,7 @@ import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
+import jakarta.persistence.SqlResultSetMapping
 import jakarta.persistence.Table
 import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
@@ -20,9 +23,18 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -71,6 +83,72 @@ import java.util.UUID
         NamedAttributeNode("consecutiveTo"),
         NamedAttributeNode("periodLengths"),
       ],
+    ),
+  ],
+)
+@SqlResultSetMapping(
+  name = "courtCaseRowMapping",
+  classes = [
+    ConstructorResult(
+      targetClass = CourtCaseRow::class,
+      columns = arrayOf(
+        ColumnResult(name = "courtCaseId"),
+        ColumnResult(name = "prisonerId"),
+        ColumnResult(name = "courtCaseUuid"),
+        ColumnResult(name = "courtCaseStatus", type = EntityStatus::class),
+        ColumnResult(name = "courtCaseLegacyData", type = CourtCaseLegacyData::class),
+        ColumnResult(name = "appearanceCount"),
+        ColumnResult(name = "caseReferences"),
+        ColumnResult(name = "firstDayInCustody", type = LocalDate::class),
+        ColumnResult(name = "appearancePeriodLengthYears"),
+        ColumnResult(name = "appearancePeriodLengthMonths"),
+        ColumnResult(name = "appearancePeriodLengthWeeks"),
+        ColumnResult(name = "appearancePeriodLengthDays"),
+        ColumnResult(name = "appearancePeriodLengthOrder"),
+        ColumnResult(name = "appearancePeriodLengthType", type = PeriodLengthType::class),
+        ColumnResult(name = "nextCourtAppearanceId"),
+        ColumnResult(name = "nextCourtAppearanceCourtCode"),
+        ColumnResult(name = "nextCourtAppearanceTypeDescription"),
+        ColumnResult(name = "nextCourtAppearanceDate", type = LocalDate::class),
+        ColumnResult(name = "nextCourtAppearanceTime", type = LocalTime::class),
+        ColumnResult(name = "latestCourtAppearanceCaseReference"),
+        ColumnResult(name = "latestCourtAppearanceCourtCode"),
+        ColumnResult(name = "latestCourtAppearanceDate", type = LocalDate::class),
+        ColumnResult(name = "latestCourtAppearanceWarrantType"),
+        ColumnResult(name = "latestCourtAppearanceOutcome"),
+        ColumnResult(name = "latestCourtAppearanceLegacyData", type = CourtAppearanceLegacyData::class),
+        ColumnResult(name = "latestCourtAppearanceOverallConvictionDate", type = LocalDate::class),
+        ColumnResult(name = "chargeId"),
+        ColumnResult(name = "chargeStatus", EntityStatus::class),
+        ColumnResult(name = "chargeOffenceCode"),
+        ColumnResult(name = "chargeOffenceStartDate", type = LocalDate::class),
+        ColumnResult(name = "chargeOffenceEndDate", type = LocalDate::class),
+        ColumnResult(name = "chargeOutcomeUuid"),
+        ColumnResult(name = "chargeOutcomeName"),
+        ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),
+        ColumnResult(name = "sentenceId"),
+        ColumnResult(name = "sentenceUuid"),
+        ColumnResult(name = "sentenceChargeNumber"),
+        ColumnResult(name = "sentenceStatus", type = EntityStatus::class),
+        ColumnResult(name = "sentenceServeType"),
+        ColumnResult(name = "sentenceConvictionDate", type = LocalDate::class),
+        ColumnResult(name = "sentenceLegacyData", type = SentenceLegacyData::class),
+        ColumnResult(name = "sentenceFineAmount", type = BigDecimal::class),
+        ColumnResult(name = "sentenceConsecutiveToUuid"),
+        ColumnResult(name = "sentenceTypeUuid"),
+        ColumnResult(name = "sentenceTypeDescription"),
+        ColumnResult(name = "sentencePeriodLengthId"),
+        ColumnResult(name = "sentencePeriodLengthUuid"),
+        ColumnResult(name = "sentencePeriodLengthStatus", type = EntityStatus::class),
+        ColumnResult(name = "sentencePeriodLengthYears"),
+        ColumnResult(name = "sentencePeriodLengthMonths"),
+        ColumnResult(name = "sentencePeriodLengthWeeks"),
+        ColumnResult(name = "sentencePeriodLengthDays"),
+        ColumnResult(name = "sentencePeriodLengthOrder"),
+        ColumnResult(name = "sentencePeriodLengthType", type = PeriodLengthType::class),
+        ColumnResult(name = "sentencePeriodLengthLegacyData", type = PeriodLengthLegacyData::class),
+        ColumnResult(name = "recallSentenceId"),
+      ),
     ),
   ],
 )

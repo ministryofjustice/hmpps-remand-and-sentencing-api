@@ -9,12 +9,26 @@ import org.springframework.data.repository.PagingAndSortingRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 
 interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
-  PagingAndSortingRepository<CourtCaseEntity, Int> {
+  PagingAndSortingRepository<CourtCaseEntity, Int>,
+  CourtCaseSearchRepository {
   @EntityGraph(value = "CourtCaseEntity.withAppearancesAndOutcomes", type = EntityGraph.EntityGraphType.FETCH)
   fun findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(prisonerId: String, statusId: EntityStatus = EntityStatus.DELETED, pageable: Pageable): Page<CourtCaseEntity>
+
+  @Query(
+    """select count(cc)
+    from CourtCaseEntity cc
+    join cc.latestCourtAppearance lca
+    where cc.prisonerId = :prisonerId and cc.latestCourtAppearance is not null and cc.statusId != :courtCaseStatus
+  """,
+  )
+  fun countCourtCases(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseStatus") courtCaseStatus: EntityStatus = EntityStatus.DELETED,
+  ): Long
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 
