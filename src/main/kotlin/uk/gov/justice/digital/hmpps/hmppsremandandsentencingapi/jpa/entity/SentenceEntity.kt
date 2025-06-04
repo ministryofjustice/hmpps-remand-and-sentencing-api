@@ -165,7 +165,6 @@ class SentenceEntity(
     updatedPrison = sentence.updatedPrison
     sentenceServeType = sentence.sentenceServeType
     consecutiveTo = sentence.consecutiveTo
-    sentenceType = sentence.sentenceType
     supersedingSentence = sentence.supersedingSentence
     charge = sentence.charge
     convictionDate = sentence.convictionDate
