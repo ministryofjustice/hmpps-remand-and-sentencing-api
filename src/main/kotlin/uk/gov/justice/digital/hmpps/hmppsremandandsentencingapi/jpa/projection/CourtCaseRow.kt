@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
@@ -58,6 +59,7 @@ data class CourtCaseRow(
   var sentenceConsecutiveToUuid: UUID?,
   var sentenceTypeUuid: UUID?,
   var sentenceTypeDescription: String?,
+  var sentenceTypeClassification: SentenceTypeClassification?,
   var sentencePeriodLengthId: Int?,
   var sentencePeriodLengthUuid: UUID?,
   var sentencePeriodLengthStatus: EntityStatus?,

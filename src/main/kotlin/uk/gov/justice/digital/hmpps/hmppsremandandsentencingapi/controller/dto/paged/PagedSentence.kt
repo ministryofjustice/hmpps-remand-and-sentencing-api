@@ -29,7 +29,7 @@ data class PagedSentence(
         sentence.sentenceServeType!!,
         sentence.sentenceConsecutiveToUuid,
         sentence.sentenceConvictionDate,
-        sentence.sentenceTypeUuid?.let { PagedSentenceType(it, sentence.sentenceTypeDescription!!) },
+        sentence.sentenceTypeUuid?.let { PagedSentenceType(it, sentence.sentenceTypeDescription!!, sentence.sentenceTypeClassification!!) },
         sentence.sentenceLegacyData,
         sentence.sentenceFineAmount,
         periodLengths.values.map { PagedSentencePeriodLength.from(it.first()) },

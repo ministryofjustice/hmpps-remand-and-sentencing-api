@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
@@ -137,6 +138,7 @@ import java.util.UUID
         ColumnResult(name = "sentenceConsecutiveToUuid"),
         ColumnResult(name = "sentenceTypeUuid"),
         ColumnResult(name = "sentenceTypeDescription"),
+        ColumnResult(name = "sentenceTypeClassification", type = SentenceTypeClassification::class),
         ColumnResult(name = "sentencePeriodLengthId"),
         ColumnResult(name = "sentencePeriodLengthUuid"),
         ColumnResult(name = "sentencePeriodLengthStatus", type = EntityStatus::class),

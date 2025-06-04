@@ -76,6 +76,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         cts.sentence_uuid as sentenceConsecutiveToUuid,
         st.sentence_type_uuid as sentenceTypeUuid,
         st.description as sentenceTypeDescription,
+        st.classification as sentenceTypeClassification,
         spl.id as sentencePeriodLengthId,
         spl.period_length_uuid as sentencePeriodLengthUuid,
         spl.status_id as sentencePeriodLengthStatus,
