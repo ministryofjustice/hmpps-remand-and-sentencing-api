@@ -66,6 +66,32 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update sentence sentence type cannot change`() {
+    val (lifetimeUuid, createdSentence) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "ADIMP_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2023, 1, 1)),
+    )
+    val toUpdate = createdSentence.copy(chargeNumber = "6", legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"))
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/$lifetimeUuid")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    val message = getMessages(1)[0]
+    assertThat(message.eventType).isEqualTo("sentence.updated")
+    assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+    val sentences = sentenceRepository.findBySentenceUuid(lifetimeUuid)
+    assertThat(sentences).hasSize(1).extracting<String> { it.sentenceType?.nomisSentenceCalcType!! }.containsExactlyInAnyOrder("ADIMP_ORA")
+    val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == lifetimeUuid }
+    assertThat(historyRecords).extracting<String> { it.chargeNumber!! }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
+  }
+
+  @Test
   fun `must not update sentence when no sentence exists`() {
     val toUpdate = DataCreator.legacyCreateSentence()
     webTestClient
