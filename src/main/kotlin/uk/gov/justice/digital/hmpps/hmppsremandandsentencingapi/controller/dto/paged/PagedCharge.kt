@@ -7,7 +7,7 @@ import java.time.LocalDate
 
 data class PagedCharge(
   val offenceCode: String,
-  val offenceStartDate: LocalDate,
+  val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
   val outcome: PagedChargeOutcome?,
   val legacyData: ChargeLegacyData?,
@@ -19,7 +19,7 @@ data class PagedCharge(
       val sentenceRows = chargeRows.filter { it.sentenceId != null && it.sentenceStatus != EntityStatus.DELETED }.groupBy { it.sentenceId!! }.values.firstOrNull()
       return PagedCharge(
         charge.chargeOffenceCode!!,
-        charge.chargeOffenceStartDate!!,
+        charge.chargeOffenceStartDate,
         charge.chargeOffenceEndDate,
         charge.chargeOutcomeUuid?.let { PagedChargeOutcome(it, charge.chargeOutcomeName!!) },
         charge.chargeLegacyData,

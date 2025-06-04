@@ -19,7 +19,7 @@ data class CourtCaseRow(
   var courtCaseStatus: EntityStatus,
   var courtCaseLegacyData: CourtCaseLegacyData?,
   var appearanceCount: Long,
-  var caseReferences: String,
+  var caseReferences: String?,
   var firstDayInCustody: LocalDate,
   var appearancePeriodLengthYears: Int?,
   var appearancePeriodLengthMonths: Int?,

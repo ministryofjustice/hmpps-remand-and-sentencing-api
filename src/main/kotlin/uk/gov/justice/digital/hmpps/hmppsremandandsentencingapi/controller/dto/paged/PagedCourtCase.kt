@@ -27,7 +27,7 @@ data class PagedCourtCase(
         firstCourtCase.courtCaseStatus,
         firstCourtCase.courtCaseLegacyData,
         firstCourtCase.appearanceCount,
-        (firstCourtCase.caseReferences.split(",") + legacyReferences).toSet(),
+        ((firstCourtCase.caseReferences?.split(",") ?: emptyList()) + legacyReferences).toSet(),
         firstCourtCase.firstDayInCustody,
         firstCourtCase.takeIf { it.appearancePeriodLengthType != null && it.appearancePeriodLengthOrder != null }?.let {
           PagedAppearancePeriodLength
