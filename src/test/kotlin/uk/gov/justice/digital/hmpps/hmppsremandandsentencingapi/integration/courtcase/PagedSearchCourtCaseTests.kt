@@ -94,7 +94,7 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .uri {
         it.path("/court-case/paged/search")
           .queryParam("prisonerId", courtCases.first().second.prisonerId)
-          .queryParam("appearanceDateSortDirection", "DESC")
+          .queryParam("pagedCourtCaseOrderBy", "APPEARANCE_DATE_DESC")
           .build()
       }
       .headers {

@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.
 import jakarta.persistence.EntityManager
 import org.springframework.data.jpa.repository.JpaContext
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 
 class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
@@ -18,10 +18,10 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     prisonerId: String,
     limit: Int,
     offset: Long,
-    appearanceDateSortDirection: AppearanceDateSortDirection,
+    pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
     appearanceStatus: EntityStatus,
     courtCaseStatus: EntityStatus,
-  ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<appearanceDateSortDirection>", appearanceDateSortDirection.name), "courtCaseRowMapping")
+  ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<order_by>", pagedCourtCaseOrderBy.orderBy), "courtCaseRowMapping")
     .setParameter("prisonerId", prisonerId)
     .setParameter("limit", limit)
     .setParameter("offset", offset)
@@ -105,7 +105,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
           and cc1.prisoner_id = :prisonerId
           and cc1.latest_court_appearance_id is not null
         group by cc1.id, lca1.appearance_date
-        order by lca1.appearance_date <appearanceDateSortDirection>
+        order by <order_by>
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id
       join court_appearance lca on lca.id = cc.latest_court_appearance_id
       left join appearance_outcome ao on lca.appearance_outcome_id = ao.id

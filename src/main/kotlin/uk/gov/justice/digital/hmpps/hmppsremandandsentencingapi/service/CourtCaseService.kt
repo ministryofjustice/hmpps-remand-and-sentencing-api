@@ -16,8 +16,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
@@ -76,12 +76,12 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   @Transactional
-  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, appearanceDateSortDirection: AppearanceDateSortDirection): RecordResponse<Page<PagedCourtCase>> {
+  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): RecordResponse<Page<PagedCourtCase>> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
       pageable.pageSize,
       pageable.offset,
-      appearanceDateSortDirection,
+      pagedCourtCaseOrderBy,
       EntityStatus.ACTIVE,
       EntityStatus.DELETED,
     )
@@ -94,7 +94,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
         prisonerId,
         pageable.pageSize,
         pageable.offset,
-        appearanceDateSortDirection,
+        pagedCourtCaseOrderBy,
         EntityStatus.ACTIVE,
         EntityStatus.DELETED,
       )
@@ -102,7 +102,11 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     val count = courtCaseRepository.countCourtCases(prisonerId)
 
     val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
-    val appearanceDateCompareTo = if (appearanceDateSortDirection == AppearanceDateSortDirection.ASC) compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate } else compareByDescending { it.latestCourtAppearance.warrantDate }
+    val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {
+      PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing { it.latestCourtAppearance.warrantDate }
+      PagedCourtCaseOrderBy.APPEARANCE_DATE_ASC -> compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate }
+      PagedCourtCaseOrderBy.APPEARANCE_DATE_DESC -> compareByDescending { it.latestCourtAppearance.warrantDate }
+    }
     val pagedCourtCases = courtCaseMap.values.map { PagedCourtCase.from(it) }
       .sortedWith(appearanceDateCompareTo)
     return RecordResponse(PageImpl(pagedCourtCases, pageable, count), eventsToEmit)
