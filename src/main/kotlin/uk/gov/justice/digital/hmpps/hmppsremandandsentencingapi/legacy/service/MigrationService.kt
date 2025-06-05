@@ -273,6 +273,7 @@ class MigrationService(
     val dpsSentenceType = (migrationCreateSentence.legacyData.sentenceCalcType to migrationCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(referenceData.dpsSentenceTypes, it) }
     val legacyData = migrationCreateSentence.legacyData
     migrationCreateSentence.legacyData = dpsSentenceType?.let { if (it.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) migrationCreateSentence.legacyData else migrationCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: migrationCreateSentence.legacyData
+    migrationCreateSentence.legacyData.nomisLineReference = migrationCreateSentence.chargeNumber
 
     val existingSentences = tracking.createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableListOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->

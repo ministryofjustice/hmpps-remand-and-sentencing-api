@@ -6,4 +6,5 @@ data class SentenceLegacyData(
   val sentenceTypeDesc: String? = null,
   val postedDate: String,
   var active: Boolean? = null,
+  var nomisLineReference: String? = null,
 )

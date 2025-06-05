@@ -57,6 +57,7 @@ class LegacySentenceService(
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacyData = sentence.legacyData
     sentence.legacyData.active = sentence.active
+    sentence.legacyData.nomisLineReference = sentence.chargeNumber
     sentence.legacyData = dpsSentenceType?.let {
       sentence.legacyData.copy(
         sentenceCategory = null,
@@ -171,6 +172,7 @@ class LegacySentenceService(
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacyData = sentence.legacyData
     sentence.legacyData.active = sentence.active
+    sentence.legacyData.nomisLineReference = sentence.chargeNumber
     sentence.legacyData = dpsSentenceType?.let {
       sentence.legacyData.copy(
         sentenceCategory = null,
@@ -233,7 +235,6 @@ class LegacySentenceService(
       val updatedSentence = existingSentence.copyFrom(
         sentence,
         serviceUserService.getUsername(),
-        dpsSentenceType,
         consecutiveToSentence,
         isManyCharges,
       )

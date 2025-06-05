@@ -36,7 +36,9 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     assertThat(message.eventType).isEqualTo("sentence.updated")
     assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
     val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentenceLifetimeUuid }
-    assertThat(historyRecords).extracting<String> { it.chargeNumber!! }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
+    historyRecords.forEach { println(it.chargeNumber) }
+    assertThat(historyRecords).extracting<String> { it.legacyData?.nomisLineReference }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
+    assertThat(historyRecords).extracting<String> { it.chargeNumber }.containsExactlyInAnyOrder(null, null)
   }
 
   @Test
@@ -88,7 +90,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     val sentences = sentenceRepository.findBySentenceUuid(lifetimeUuid)
     assertThat(sentences).hasSize(1).extracting<String> { it.sentenceType?.nomisSentenceCalcType!! }.containsExactlyInAnyOrder("ADIMP_ORA")
     val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == lifetimeUuid }
-    assertThat(historyRecords).extracting<String> { it.chargeNumber!! }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
+    assertThat(historyRecords).extracting<String> { it.legacyData?.nomisLineReference }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
   }
 
   @Test
