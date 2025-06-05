@@ -68,16 +68,26 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/court-case/$targetCourtCaseUuid")
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$sourceChargeUuid')]")
-      .exists()
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.caseReference")
+      .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.courtCode")
+      .isEqualTo(sourceCourtCase.appearances.first().courtCode)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].courtCode")
+      .isEqualTo(sourceCourtCase.appearances.first().courtCode)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].caseReference")
+      .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
   }
 
   private fun createSourceMergedCourtCase(): MigrationCreateCourtCasesResponse {
