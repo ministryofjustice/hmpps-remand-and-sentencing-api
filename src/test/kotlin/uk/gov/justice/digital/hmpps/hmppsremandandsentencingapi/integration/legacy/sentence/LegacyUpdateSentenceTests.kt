@@ -36,7 +36,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     assertThat(message.eventType).isEqualTo("sentence.updated")
     assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
     val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentenceLifetimeUuid }
-    historyRecords.forEach { println(it.chargeNumber) }
     assertThat(historyRecords).extracting<String> { it.legacyData?.nomisLineReference }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
     assertThat(historyRecords).extracting<String> { it.chargeNumber }.containsExactlyInAnyOrder(null, null)
   }
