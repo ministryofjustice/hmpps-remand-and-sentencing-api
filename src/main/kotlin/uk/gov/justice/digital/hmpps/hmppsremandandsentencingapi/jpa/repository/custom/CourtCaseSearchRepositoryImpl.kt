@@ -58,6 +58,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         lca.legacy_data as latestCourtAppearanceLegacyData,
         lca.overall_conviction_date as latestCourtAppearanceOverallConvictionDate,
         c.id as chargeId,
+        c.charge_uuid as chargeUuid,
         c.status_id as chargeStatus,
         c.offence_code as chargeOffenceCode,
         c.offence_start_date as chargeOffenceStartDate,
@@ -87,7 +88,13 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         spl.period_order as sentencePeriodLengthOrder,
         spl.period_length_type as sentencePeriodLengthType,
         spl.legacy_data as sentencePeriodLengthLegacyData,
-        rs.id as recallSentenceId
+        rs.id as recallSentenceId,
+        c.merged_from_date as chargeMergedFromDate,
+        mcc.id as mergedFromCaseId,
+        mca.id as mergedFromAppearanceId,
+        mca.court_case_reference as mergedFromCaseReference,
+        mca.court_code as mergedFromCourtCode,
+        mca.appearance_date as mergedFromWarrantDate
       from court_case cc
       join (select cc1.id, count(ca.id) as appearance_count, string_agg(ca.court_case_reference, ',') as case_references, min(ca.appearance_date) as first_day_in_custody 
         from court_case cc1
@@ -113,6 +120,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join sentence_type st on s.sentence_type_id = st.id
       left join period_length spl on spl.sentence_id = s.id
       left join recall_sentence rs on rs.sentence_id = s.id
+      left join court_case mcc on mcc.id = c.merged_from_case_id
+      left join court_appearance mca on mca.court_case_id = mcc.id
     """.trimIndent()
   }
 }

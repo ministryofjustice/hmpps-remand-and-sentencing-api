@@ -41,6 +41,7 @@ data class CourtCaseRow(
   var latestCourtAppearanceLegacyData: CourtAppearanceLegacyData?,
   var latestCourtAppearanceOverallConvictionDate: LocalDate?,
   var chargeId: Int?,
+  var chargeUuid: UUID?,
   var chargeStatus: EntityStatus?,
   var chargeOffenceCode: String?,
   var chargeOffenceStartDate: LocalDate?,
@@ -71,4 +72,10 @@ data class CourtCaseRow(
   var sentencePeriodLengthType: PeriodLengthType?,
   var sentencePeriodLengthLegacyData: PeriodLengthLegacyData?,
   var recallSentenceId: Int?,
+  var chargeMergedFromDate: LocalDate?,
+  var mergedFromCaseId: Int?,
+  var mergedFromAppearanceId: Int?,
+  var mergedFromCaseReference: String?,
+  var mergedFromCourtCode: String?,
+  var mergedFromWarrantDate: LocalDate?,
 )
