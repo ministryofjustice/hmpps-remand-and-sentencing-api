@@ -27,7 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AppearanceDateSortDirection
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
@@ -131,7 +131,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("appearanceDateSortDirection", defaultValue = "DESC") appearanceDateSortDirection: AppearanceDateSortDirection): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, appearanceDateSortDirection).let { (pageCourtCase, eventsToEmit) ->
+  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }
