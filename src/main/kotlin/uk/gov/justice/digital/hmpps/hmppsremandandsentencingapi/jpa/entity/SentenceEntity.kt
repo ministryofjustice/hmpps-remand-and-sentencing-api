@@ -37,7 +37,7 @@ class SentenceEntity(
   @Column
   var sentenceUuid: UUID,
   @Column
-  var chargeNumber: String?,
+  var chargeNumber: String? = null,
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
@@ -112,10 +112,9 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, sentenceTypeEntity: SentenceTypeEntity?, consecutiveTo: SentenceEntity?, isManyCharges: Boolean): SentenceEntity {
+  fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, consecutiveTo: SentenceEntity?, isManyCharges: Boolean): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
-      chargeNumber = sentence.chargeNumber,
       statusId = if (isManyCharges) {
         EntityStatus.MANY_CHARGES_DATA_FIX
       } else if (sentence.active) {
@@ -142,7 +141,6 @@ class SentenceEntity(
     sentence.legacyData.active = sentence.active
     return SentenceEntity(
       sentenceUuid = sentenceUuid,
-      chargeNumber = sentence.chargeNumber,
       statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
       createdBy = createdBy,
       createdPrison = null,
@@ -209,7 +207,6 @@ class SentenceEntity(
       convictionDate: LocalDate? = null,
     ): SentenceEntity = SentenceEntity(
       sentenceUuid = sentenceUuid,
-      chargeNumber = sentence.chargeNumber,
       statusId = if (isManyCharges) {
         EntityStatus.MANY_CHARGES_DATA_FIX
       } else if (sentence.active) {
@@ -232,7 +229,6 @@ class SentenceEntity(
       sentence.legacyData.active = sentence.active
       return SentenceEntity(
         sentenceUuid = UUID.randomUUID(),
-        chargeNumber = sentence.chargeNumber,
         statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
         createdBy = createdBy,
         createdPrison = null,
