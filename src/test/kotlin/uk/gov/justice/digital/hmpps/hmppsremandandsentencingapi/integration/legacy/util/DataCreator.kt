@@ -181,7 +181,6 @@ class DataCreator {
 
     fun migrationCreateSentence(
       sentenceId: MigrationSentenceId = migrationSentenceId(),
-      chargeNumber: String = "1",
       fine: MigrationCreateFine = migrationCreateFine(),
       active: Boolean = true,
       legacyData: SentenceLegacyData = sentenceLegacyData(),
@@ -190,7 +189,6 @@ class DataCreator {
       returnToCustodyDate: LocalDate? = null,
     ): MigrationCreateSentence = MigrationCreateSentence(
       sentenceId,
-      chargeNumber,
       fine,
       active,
       legacyData,
