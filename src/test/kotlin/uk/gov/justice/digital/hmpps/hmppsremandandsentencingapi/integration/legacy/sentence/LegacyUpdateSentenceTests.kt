@@ -51,13 +51,14 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
         sentenceLegacyData = sentenceLegacyData(
           sentenceCalcType = "ADIMP_ORA",
           sentenceCategory = "2020",
-          nomisLineReference = "67"
-        ), returnToCustodyDate = LocalDate.of(2023, 1, 1)
+          nomisLineReference = "67",
+        ),
+        returnToCustodyDate = LocalDate.of(2023, 1, 1),
       ),
     )
     val toUpdate = createdSentence.copy(
       chargeNumber = "6",
-      legacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", nomisLineReference = "67")
+      legacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", nomisLineReference = "67"),
     )
     webTestClient
       .put()
