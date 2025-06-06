@@ -16,6 +16,7 @@ data class PagedCourtCase(
   val overallSentenceLength: PagedAppearancePeriodLength?,
   val latestCourtAppearance: PagedLatestCourtAppearance,
   val mergedFromCases: List<PagedMergedFromCase>,
+  val allAppearancesHaveRecall: Boolean,
 ) {
   companion object {
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
@@ -37,6 +38,7 @@ data class PagedCourtCase(
         },
         PagedLatestCourtAppearance.from(firstCourtCase, latestAppearanceCharges),
         mergedFromCases.values.map { PagedMergedFromCase.from(it) },
+        courtCaseRows.filter { it.courtAppearanceId != null }.all { it.recallInAppearanceId != null },
       )
     }
   }

@@ -94,13 +94,15 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         mca.id as mergedFromAppearanceId,
         mca.court_case_reference as mergedFromCaseReference,
         mca.court_code as mergedFromCourtCode,
-        mca.appearance_date as mergedFromWarrantDate
+        mca.appearance_date as mergedFromWarrantDate,
+        ca.id as courtAppearanceId,
+        rs2.id as recallInAppearanceId
       from court_case cc
-      join (select cc1.id, count(ca.id) as appearance_count, string_agg(ca.court_case_reference, ',') as case_references, min(ca.appearance_date) as first_day_in_custody 
+      join (select cc1.id, count(ca1.id) as appearance_count, string_agg(ca1.court_case_reference, ',') as case_references, min(ca1.appearance_date) as first_day_in_custody 
         from court_case cc1
-        join court_appearance ca on cc1.id = ca.court_case_id 
+        join court_appearance ca1 on cc1.id = ca1.court_case_id 
         join court_appearance lca1 on lca1.id = cc1.latest_court_appearance_id
-        where ca.status_id = :appearanceStatus
+        where ca1.status_id = :appearanceStatus
           and cc1.status_id<>:courtCaseStatus
           and cc1.prisoner_id = :prisonerId
           and cc1.latest_court_appearance_id is not null
@@ -122,6 +124,11 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join recall_sentence rs on rs.sentence_id = s.id
       left join court_case mcc on mcc.id = c.merged_from_case_id
       left join court_appearance mca on mca.court_case_id = mcc.id
+      left join court_appearance ca on ca.court_case_id = cc.id
+      left join appearance_charge ac2 on ac2.appearance_id = ca.id
+      left join charge c2 on c2.id = ac2.charge_id
+      left join sentence s2 on s2.charge_id = c2.id
+      left join recall_sentence rs2 on rs2.sentence_id = s2.id
     """.trimIndent()
   }
 }
