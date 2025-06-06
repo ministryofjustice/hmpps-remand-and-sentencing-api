@@ -157,6 +157,8 @@ import java.util.UUID
         ColumnResult(name = "mergedFromCaseReference"),
         ColumnResult(name = "mergedFromCourtCode"),
         ColumnResult(name = "mergedFromWarrantDate", type = LocalDate::class),
+        ColumnResult(name = "courtAppearanceId"),
+        ColumnResult(name = "recallInAppearanceId"),
       ),
     ),
   ],
