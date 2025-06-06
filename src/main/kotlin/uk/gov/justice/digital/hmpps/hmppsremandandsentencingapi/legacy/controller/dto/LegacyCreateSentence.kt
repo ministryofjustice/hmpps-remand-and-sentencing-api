@@ -1,8 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
-import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 data class LegacyCreateSentence(
   val chargeUuids: List<UUID>,
