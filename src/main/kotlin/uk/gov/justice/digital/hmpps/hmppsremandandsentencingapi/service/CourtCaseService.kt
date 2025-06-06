@@ -103,7 +103,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
     val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {
-      PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing { it.latestCourtAppearance.warrantDate }
+      PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing(compareByDescending { it.latestCourtAppearance.warrantDate })
       PagedCourtCaseOrderBy.APPEARANCE_DATE_ASC -> compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate }
       PagedCourtCaseOrderBy.APPEARANCE_DATE_DESC -> compareByDescending { it.latestCourtAppearance.warrantDate }
     }

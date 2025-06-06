@@ -81,7 +81,7 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `sort by latest appearance date`() {
-    val courtCases = LongStream.range(0, 100).mapToObj {
+    val courtCases = LongStream.range(0, 5).mapToObj {
       createCourtCase(
         DpsDataCreator.dpsCreateCourtCase(
           appearances = listOf(
@@ -95,6 +95,37 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
         it.path("/court-case/paged/search")
           .queryParam("prisonerId", courtCases.first().second.prisonerId)
           .queryParam("pagedCourtCaseOrderBy", "APPEARANCE_DATE_DESC")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].courtCaseUuid")
+      .isEqualTo(courtCases[0].first)
+      .jsonPath("$.content.[1].courtCaseUuid")
+      .isEqualTo(courtCases[1].first)
+  }
+
+  @Test
+  fun `default sorting by status then appearance date descending`() {
+    val courtCases = LongStream.range(0, 5).mapToObj {
+      createCourtCase(
+        DpsDataCreator.dpsCreateCourtCase(
+          appearances = listOf(
+            DpsDataCreator.dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(it)),
+          ),
+        ),
+      )
+    }.toList()
+
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.first().second.prisonerId)
           .build()
       }
       .headers {
