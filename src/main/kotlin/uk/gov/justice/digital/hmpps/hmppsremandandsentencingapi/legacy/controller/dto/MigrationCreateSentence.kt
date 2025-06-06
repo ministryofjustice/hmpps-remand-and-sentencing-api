@@ -5,8 +5,6 @@ import java.time.LocalDate
 
 data class MigrationCreateSentence(
   val sentenceId: MigrationSentenceId,
-  @Schema(deprecated = true, description = "Deprecated. Will be removed soon.")
-  val chargeNumber: String?,
   val fine: MigrationCreateFine?,
   val active: Boolean,
   var legacyData: SentenceLegacyData,

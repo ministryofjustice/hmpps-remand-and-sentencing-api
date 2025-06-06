@@ -6,8 +6,6 @@ import java.util.UUID
 
 data class LegacyCreateSentence(
   val chargeUuids: List<UUID>,
-  @Schema(deprecated = true, description = "Deprecated. Will be removed soon.")
-  val chargeNumber: String? = null,
   val fine: LegacyCreateFine? = null,
   val consecutiveToLifetimeUuid: UUID? = null,
   val active: Boolean,
