@@ -57,7 +57,6 @@ class LegacySentenceService(
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacyData = sentence.legacyData
     sentence.legacyData.active = sentence.active
-    sentence.legacyData.nomisLineReference = sentence.chargeNumber
     sentence.legacyData = dpsSentenceType?.let {
       sentence.legacyData.copy(
         sentenceCategory = null,

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -16,29 +17,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
-
-  @Test
-  fun `update sentence for existing charge`() {
-    val (sentenceLifetimeUuid, createdSentence) = createLegacySentence()
-    val toUpdate = createdSentence.copy(chargeNumber = "6")
-    webTestClient
-      .put()
-      .uri("/legacy/sentence/$sentenceLifetimeUuid")
-      .bodyValue(toUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-    val message = getMessages(1)[0]
-    assertThat(message.eventType).isEqualTo("sentence.updated")
-    assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
-    val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentenceLifetimeUuid }
-    assertThat(historyRecords).extracting<String> { it.legacyData?.nomisLineReference }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
-    assertThat(historyRecords).extracting<String> { it.chargeNumber }.containsExactlyInAnyOrder(null, null)
-  }
 
   @Test
   fun `update sentence for a recall sentence`() {
@@ -69,9 +47,18 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
   @Test
   fun `update sentence sentence type cannot change`() {
     val (lifetimeUuid, createdSentence) = createLegacySentence(
-      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "ADIMP_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2023, 1, 1)),
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = sentenceLegacyData(
+          sentenceCalcType = "ADIMP_ORA",
+          sentenceCategory = "2020",
+          nomisLineReference = "67"
+        ), returnToCustodyDate = LocalDate.of(2023, 1, 1)
+      ),
     )
-    val toUpdate = createdSentence.copy(chargeNumber = "6", legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"))
+    val toUpdate = createdSentence.copy(
+      chargeNumber = "6",
+      legacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", nomisLineReference = "67")
+    )
     webTestClient
       .put()
       .uri("/legacy/sentence/$lifetimeUuid")
@@ -89,7 +76,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     val sentences = sentenceRepository.findBySentenceUuid(lifetimeUuid)
     assertThat(sentences).hasSize(1).extracting<String> { it.sentenceType?.nomisSentenceCalcType!! }.containsExactlyInAnyOrder("ADIMP_ORA")
     val historyRecords = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == lifetimeUuid }
-    assertThat(historyRecords).extracting<String> { it.legacyData?.nomisLineReference }.containsExactlyInAnyOrder(createdSentence.chargeNumber, toUpdate.chargeNumber)
+    assertThat(historyRecords).extracting<String> { it.legacyData?.nomisLineReference }.containsExactly("67")
   }
 
   @Test
