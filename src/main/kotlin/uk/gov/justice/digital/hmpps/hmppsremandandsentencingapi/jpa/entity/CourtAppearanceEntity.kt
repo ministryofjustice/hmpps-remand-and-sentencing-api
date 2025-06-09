@@ -19,6 +19,9 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
@@ -88,6 +91,9 @@ class CourtAppearanceEntity(
   var overallConvictionDate: LocalDate?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtAppearanceLegacyData? = null,
+
+  @Enumerated(EnumType.STRING)
+  var source: EventSource = DPS,
 ) {
 
   @OneToMany
@@ -132,6 +138,7 @@ class CourtAppearanceEntity(
       nextCourtAppearance,
       overallConvictionDate,
       courtAppearance.legacyData,
+      source = source,
     )
     courtAppearance.periodLengths = periodLengths.toMutableSet()
     return courtAppearance
@@ -165,6 +172,7 @@ class CourtAppearanceEntity(
       null,
       courtAppearance.overallConvictionDate,
       courtAppearance.legacyData,
+      source = source,
     )
     courtAppearance.overallSentenceLength?.let {
       courtAppearanceEntity.periodLengths = mutableSetOf(PeriodLengthEntity.from(it, createdBy))
@@ -330,6 +338,7 @@ class CourtAppearanceEntity(
       warrantType = deriveWarrantType(appearanceOutcome, courtAppearance.legacyData),
       overallConvictionDate = null,
       legacyData = courtAppearance.legacyData,
+      source = NOMIS,
     )
 
     fun from(
@@ -358,6 +367,7 @@ class CourtAppearanceEntity(
       warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData),
       overallConvictionDate = null,
       legacyData = migrationCreateCourtAppearance.legacyData,
+      source = NOMIS,
     )
 
     private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?): EntityStatus {
