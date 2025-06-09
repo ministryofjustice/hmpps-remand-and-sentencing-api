@@ -1,9 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.courtappearance
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import java.time.LocalDate
@@ -96,6 +99,7 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
     val existingAppearanceHistories = appearanceHistories.filter { it.appearanceUuid == appearanceUuid }.sortedBy { it.updatedAt ?: it.createdAt }
     Assertions.assertThat(existingAppearanceHistories[0].nextCourtAppearanceId).isNull()
     Assertions.assertThat(existingAppearanceHistories[1].nextCourtAppearanceId).isNotNull
+    assertThat(existingAppearanceHistories).extracting<EventSource> { it.source }.containsOnly(NOMIS)
   }
 
   @Test
