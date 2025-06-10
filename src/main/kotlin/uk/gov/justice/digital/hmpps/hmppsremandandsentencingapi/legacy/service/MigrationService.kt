@@ -152,12 +152,8 @@ class MigrationService(
             val targetCourtCase = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
             val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == targetNomisCharge.mergedFromEventId }
             val (_, targetCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == appearance.eventId }
-            println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################################")
-            println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################################")
-            println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################################")
-            println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#################################: " + targetNomisCharge.mergedFromDate)
             targetCharge.mergedFromCourtCase = sourceCourtCase
-//            targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
+            targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
             targetCharge.supersedingCharge = sourceCharge
             if (sourceCourtCase.mergedToCase == null) {
               sourceCourtCase.mergedToCase = targetCourtCase
