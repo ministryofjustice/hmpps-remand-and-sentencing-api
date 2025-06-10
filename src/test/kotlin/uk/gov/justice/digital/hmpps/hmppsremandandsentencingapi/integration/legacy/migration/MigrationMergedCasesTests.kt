@@ -41,7 +41,6 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
       mergedFromEventId = sourceAppearance.eventId,
-      mergedChargeNOMISId = sourceCharge.chargeNOMISId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
