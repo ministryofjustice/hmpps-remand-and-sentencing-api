@@ -28,9 +28,9 @@ class RecallService(
   private val sentenceRepository: SentenceRepository,
 ) {
   @Transactional
-  fun createRecall(createRecall: CreateRecall): RecordResponse<SaveRecallResponse> {
+  fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
-    val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!))
+    val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!, recallUuid))
     // Temporarily nullable because CRDS data doesn't have sentence Ids
     val recallSentences: List<RecallSentenceEntity>? =
       createRecall.sentenceIds?.let { sentenceIds ->
@@ -44,7 +44,8 @@ class RecallService(
         EventMetadataCreator.recallEventMetadata(
           recall.prisonerId,
           recall.recallUuid.toString(),
-          recallSentences?.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
+          (createRecall.sentenceIds ?: listOf()).map { it.toString() },
+          emptyList(),
           null,
           EventType.RECALL_INSERTED,
         ),
@@ -54,31 +55,24 @@ class RecallService(
 
   @Transactional
   fun updateRecall(recallUuid: UUID, recall: CreateRecall): RecordResponse<SaveRecallResponse> {
-    val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
     val recallToUpdate = recallRepository.findOneByRecallUuid(recallUuid)
 
-    if (recallToUpdate == null) {
-      val savedRecall = recallRepository.save(RecallEntity.placeholderEntity(recall, recallTypeEntity, recallUuid))
-
-      val recallSentences: List<RecallSentenceEntity>? =
-        recall.sentenceIds?.let { sentenceIds ->
-          sentenceRepository.findBySentenceUuidIn(sentenceIds)
-            .map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(savedRecall, it)) }
-        }
-
-      return RecordResponse(
-        SaveRecallResponse.from(savedRecall),
-        mutableSetOf(
-          EventMetadataCreator.recallEventMetadata(
-            savedRecall.prisonerId,
-            savedRecall.recallUuid.toString(),
-            recallSentences?.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
-            null,
-            EventType.RECALL_INSERTED,
-          ),
-        ),
-      )
+    return if (recallToUpdate == null) {
+      createRecall(recall, recallUuid)
     } else {
+      val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
+
+      val previousSentenceIds = recallToUpdate.recallSentences.map { it.sentence.sentenceUuid }
+
+      val sentencesToDelete = previousSentenceIds.filterNot { (recall.sentenceIds ?: emptyList()).contains(it) }
+      val sentencesToCreate = recall.sentenceIds?.filterNot { previousSentenceIds.contains(it) } ?: listOf()
+
+      recallToUpdate.recallSentences.filter { sentencesToDelete.contains(it.sentence.sentenceUuid) }.forEach {
+        recallSentenceRepository.delete(it)
+      }
+      sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
+        .map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recallToUpdate, it)) }
+
       recallToUpdate.apply {
         revocationDate = recall.revocationDate
         returnToCustodyDate = recall.returnToCustodyDate
@@ -95,7 +89,8 @@ class RecallService(
           EventMetadataCreator.recallEventMetadata(
             savedRecall.prisonerId,
             savedRecall.recallUuid.toString(),
-            recallToUpdate.recallSentences.map { it.sentence.sentenceUuid.toString() }?.distinct() ?: listOf(),
+            sentenceIds = (recall.sentenceIds ?: listOf()).map { it.toString() },
+            previousSentenceIds = previousSentenceIds.map { it.toString() },
             null,
             EventType.RECALL_UPDATED,
           ),
@@ -132,6 +127,7 @@ class RecallService(
           recallToDelete.prisonerId,
           recallToDelete.recallUuid.toString(),
           recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
+          emptyList(),
           previousRecall?.recallUuid?.toString(),
           EventType.RECALL_DELETED,
         ),
