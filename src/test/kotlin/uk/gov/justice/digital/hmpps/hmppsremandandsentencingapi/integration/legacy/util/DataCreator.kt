@@ -163,7 +163,6 @@ class DataCreator {
       merged: Boolean = false,
       mergedFromCaseId: Long? = null,
       mergedFromEventId: Long? = null,
-      mergedChargeNOMISId: Long? = null,
       mergedFromDate: LocalDate? = null,
     ): MigrationCreateCharge = MigrationCreateCharge(
       chargeNOMISId,
@@ -175,7 +174,6 @@ class DataCreator {
       merged,
       mergedFromCaseId,
       mergedFromEventId,
-      mergedChargeNOMISId,
       mergedFromDate,
     )
 

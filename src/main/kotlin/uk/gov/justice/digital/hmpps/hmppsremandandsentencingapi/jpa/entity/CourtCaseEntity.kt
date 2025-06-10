@@ -6,6 +6,7 @@ import jakarta.persistence.ConstructorResult
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -199,6 +200,9 @@ class CourtCaseEntity(
   @JoinColumn(name = "latest_court_appearance_id")
   var latestCourtAppearance: CourtAppearanceEntity? = null
 
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "merged_to_case_id")
+  var mergedToCase: CourtCaseEntity? = null
   companion object {
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
