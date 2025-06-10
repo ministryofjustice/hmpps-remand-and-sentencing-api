@@ -1,13 +1,19 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import java.time.LocalDate
 
 class MigrationMergedCasesTests : IntegrationTestBase() {
+
+  @Autowired
+  protected lateinit var chargeRepository: ChargeRepository
 
   @Test
   fun `create source court case for a linked case`() {
@@ -61,6 +67,12 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .isCreated
       .returnResult(MigrationCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
+
+    val a = chargeRepository.findByChargeUuid(response.charges.first().chargeUuid)
+    a.forEach {
+      println("a.first().mergedFromDate")
+      println(it.mergedFromDate)
+    }
 
     val targetCourtCaseUuid = response.courtCases.first { it.caseId == targetCourtCase.caseId }.courtCaseUuid
     val sourceChargeUuid = response.charges.first { it.chargeNOMISId == sourceCharge.chargeNOMISId }.chargeUuid
