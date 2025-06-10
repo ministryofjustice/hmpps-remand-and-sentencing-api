@@ -33,6 +33,8 @@ class LegacyGetRecallTests : IntegrationTestBase() {
       .isEqualTo(createRecall.recallUuid.toString())
       .jsonPath("$.returnToCustodyDate")
       .isEqualTo(recall.returnToCustodyDate.toString())
+      .jsonPath("$.revocationDate")
+      .isEqualTo(recall.revocationDate.toString())
       .jsonPath("$.recallBy")
       .isEqualTo("username1")
       .jsonPath("$.recallType")
