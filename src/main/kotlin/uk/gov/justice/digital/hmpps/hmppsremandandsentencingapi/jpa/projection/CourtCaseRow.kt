@@ -78,4 +78,6 @@ data class CourtCaseRow(
   var mergedFromCaseReference: String?,
   var mergedFromCourtCode: String?,
   var mergedFromWarrantDate: LocalDate?,
+  var courtAppearanceId: Int?,
+  var recallInAppearanceId: Int?,
 )

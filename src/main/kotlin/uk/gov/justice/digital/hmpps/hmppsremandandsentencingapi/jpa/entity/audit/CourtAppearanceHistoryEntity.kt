@@ -12,6 +12,7 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
@@ -50,14 +51,33 @@ class CourtAppearanceHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_appearance_id")
   val originalAppearance: CourtAppearanceEntity,
+  @Enumerated(EnumType.STRING)
+  val source: EventSource,
 ) {
   companion object {
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearanceHistoryEntity = CourtAppearanceHistoryEntity(
-      0, courtAppearanceEntity.appearanceUuid, courtAppearanceEntity.appearanceOutcome?.id, courtAppearanceEntity.courtCase.id, courtAppearanceEntity.courtCode,
-      courtAppearanceEntity.courtCaseReference, courtAppearanceEntity.appearanceDate, courtAppearanceEntity.statusId, courtAppearanceEntity.previousAppearance?.id, courtAppearanceEntity.warrantId,
-      courtAppearanceEntity.createdAt, courtAppearanceEntity.createdBy, courtAppearanceEntity.createdPrison, courtAppearanceEntity.updatedAt, courtAppearanceEntity.updatedBy,
-      courtAppearanceEntity.updatedPrison, courtAppearanceEntity.warrantType, courtAppearanceEntity.nextCourtAppearance?.id, courtAppearanceEntity.overallConvictionDate,
-      courtAppearanceEntity.legacyData, courtAppearanceEntity,
+      id = 0,
+      appearanceUuid = courtAppearanceEntity.appearanceUuid,
+      appearanceOutcomeId = courtAppearanceEntity.appearanceOutcome?.id,
+      courtCaseId = courtAppearanceEntity.courtCase.id,
+      courtCode = courtAppearanceEntity.courtCode,
+      courtCaseReference = courtAppearanceEntity.courtCaseReference,
+      appearanceDate = courtAppearanceEntity.appearanceDate,
+      statusId = courtAppearanceEntity.statusId,
+      previousAppearanceId = courtAppearanceEntity.previousAppearance?.id,
+      warrantId = courtAppearanceEntity.warrantId,
+      createdAt = courtAppearanceEntity.createdAt,
+      createdBy = courtAppearanceEntity.createdBy,
+      createdPrison = courtAppearanceEntity.createdPrison,
+      updatedAt = courtAppearanceEntity.updatedAt,
+      updatedBy = courtAppearanceEntity.updatedBy,
+      updatedPrison = courtAppearanceEntity.updatedPrison,
+      warrantType = courtAppearanceEntity.warrantType,
+      nextCourtAppearanceId = courtAppearanceEntity.nextCourtAppearance?.id,
+      overallConvictionDate = courtAppearanceEntity.overallConvictionDate,
+      legacyData = courtAppearanceEntity.legacyData,
+      originalAppearance = courtAppearanceEntity,
+      source = courtAppearanceEntity.source,
     )
   }
 }

@@ -1,10 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
@@ -34,6 +36,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(historyRecords).hasSize(1)
     val historyRecord = historyRecords[0]
     Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
+    assertThat(historyRecord.source).isEqualTo(DPS)
   }
 
   @Test

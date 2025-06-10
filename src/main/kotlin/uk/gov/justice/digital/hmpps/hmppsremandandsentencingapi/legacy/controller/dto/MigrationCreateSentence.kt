@@ -4,7 +4,6 @@ import java.time.LocalDate
 
 data class MigrationCreateSentence(
   val sentenceId: MigrationSentenceId,
-  val chargeNumber: String?,
   val fine: MigrationCreateFine?,
   val active: Boolean,
   var legacyData: SentenceLegacyData,

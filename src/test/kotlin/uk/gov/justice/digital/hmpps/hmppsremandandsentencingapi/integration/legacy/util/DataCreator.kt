@@ -95,24 +95,23 @@ class DataCreator {
         DateTimeFormatter.ISO_DATE,
       ),
       active: Boolean? = null,
-    ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active)
+      nomisLineReference: String? = null,
+    ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active, nomisLineReference)
 
     fun legacyCreateSentence(
       chargeUuids: List<UUID> = listOf(UUID.randomUUID()),
-      chargeNumber: String = "1",
       fine: LegacyCreateFine = legacyCreateFine(),
       consecutiveToLifetimeUuid: UUID? = null,
       active: Boolean = true,
       sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(),
       returnToCustodyDate: LocalDate? = null,
     ): LegacyCreateSentence = LegacyCreateSentence(
-      chargeUuids,
-      chargeNumber,
-      fine,
-      consecutiveToLifetimeUuid,
-      active,
-      sentenceLegacyData,
-      returnToCustodyDate,
+      chargeUuids = chargeUuids,
+      fine = fine,
+      consecutiveToLifetimeUuid = consecutiveToLifetimeUuid,
+      active = active,
+      legacyData = sentenceLegacyData,
+      returnToCustodyDate = returnToCustodyDate,
     )
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
@@ -182,7 +181,6 @@ class DataCreator {
 
     fun migrationCreateSentence(
       sentenceId: MigrationSentenceId = migrationSentenceId(),
-      chargeNumber: String = "1",
       fine: MigrationCreateFine = migrationCreateFine(),
       active: Boolean = true,
       legacyData: SentenceLegacyData = sentenceLegacyData(),
@@ -191,7 +189,6 @@ class DataCreator {
       returnToCustodyDate: LocalDate? = null,
     ): MigrationCreateSentence = MigrationCreateSentence(
       sentenceId,
-      chargeNumber,
       fine,
       active,
       legacyData,

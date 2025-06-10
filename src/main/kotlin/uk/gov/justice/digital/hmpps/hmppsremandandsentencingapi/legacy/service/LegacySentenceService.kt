@@ -233,7 +233,6 @@ class LegacySentenceService(
       val updatedSentence = existingSentence.copyFrom(
         sentence,
         serviceUserService.getUsername(),
-        dpsSentenceType,
         consecutiveToSentence,
         isManyCharges,
       )
