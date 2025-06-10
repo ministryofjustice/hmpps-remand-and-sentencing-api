@@ -142,19 +142,24 @@ class MigrationService(
   }
 
   fun linkMergedCases(migrationCreateCourtCases: MigrationCreateCourtCases, tracking: MigrationDataTracking) {
-    val targetCourtCases = migrationCreateCourtCases.courtCases.filter { it.appearances.flatMap { it.charges }.any { it.mergedFromCaseId != null && it.mergedFromEventId != null && it.mergedChargeNOMISId != null } }
-    targetCourtCases.flatMap { it.appearances }
-      .forEach { appearance ->
+    val targetCourtCases = migrationCreateCourtCases.courtCases.filter { it.appearances.flatMap { it.charges }.any { it.mergedFromCaseId != null && it.mergedFromEventId != null } }
+    targetCourtCases.forEach { targetCourtCase ->
+      targetCourtCase.appearances.forEach { appearance ->
         appearance.charges
-          .filter { it.mergedFromCaseId != null && it.mergedFromEventId != null && it.mergedChargeNOMISId != null }
+          .filter { it.mergedFromCaseId != null && it.mergedFromEventId != null }
           .forEach { targetNomisCharge ->
             val sourceCourtCase = tracking.createdCourtCasesMap[targetNomisCharge.mergedFromCaseId]!!
-            val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.mergedChargeNOMISId]!!.first { it.first == targetNomisCharge.mergedFromEventId }
+            val targetCourtCase = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
+            val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == targetNomisCharge.mergedFromEventId }
             val (_, targetCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == appearance.eventId }
             targetCharge.mergedFromCourtCase = sourceCourtCase
             targetCharge.supersedingCharge = sourceCharge
+            if (sourceCourtCase.mergedToCase == null) {
+              sourceCourtCase.mergedToCase = targetCourtCase
+            }
           }
       }
+    }
   }
 
   fun linkConsecutiveToSentences(migrationCreateCourtCases: MigrationCreateCourtCases, tracking: MigrationDataTracking) {
