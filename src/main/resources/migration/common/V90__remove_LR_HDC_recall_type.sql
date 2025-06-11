@@ -1,0 +1,1 @@
+DELETE FROM recall_type WHERE code = 'LR_HDC';
