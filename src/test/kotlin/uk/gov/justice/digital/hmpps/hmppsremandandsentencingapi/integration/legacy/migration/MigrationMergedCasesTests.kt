@@ -65,6 +65,25 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
     val targetCourtCaseUuid = response.courtCases.first { it.caseId == targetCourtCase.caseId }.courtCaseUuid
     val sourceChargeUuid = response.charges.first { it.chargeNOMISId == sourceCharge.chargeNOMISId }.chargeUuid
 
+    val searchResponseRaw = webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(String::class.java)
+      .responseBody
+      .blockFirst()
+
+    println("Search Response JSON:\n$searchResponseRaw")
+
     webTestClient
       .get()
       .uri {
@@ -83,6 +102,8 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.mergedFromDate")
+      .isEqualTo("2019-06-11")
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].caseReference")
