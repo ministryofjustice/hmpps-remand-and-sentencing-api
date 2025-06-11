@@ -28,11 +28,11 @@ dependencies {
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
-  runtimeOnly("org.postgresql:postgresql:42.7.6")
+  runtimeOnly("org.postgresql:postgresql:42.7.7")
 
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.6")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
-  testImplementation("org.wiremock:wiremock-standalone:3.13.0")
+  testImplementation("org.wiremock:wiremock-standalone:3.13.1")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("io.mockk:mockk:1.14.2")
 }
