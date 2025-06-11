@@ -177,10 +177,11 @@ class RecallIntTests : IntegrationTestBase() {
 
   @Test
   fun `Update a recall`() {
-    val (sentenceOne, _) = createCourtCaseTwoSentences()
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val originalRecall = DpsDataCreator.dpsCreateRecall(
       sentenceIds = listOf(
         sentenceOne.sentenceUuid!!,
+        sentenceTwo.sentenceUuid!!,
       ),
     )
     val uuid = createRecall(originalRecall).recallUuid
@@ -194,6 +195,7 @@ class RecallIntTests : IntegrationTestBase() {
         returnToCustodyDate = originalRecall.returnToCustodyDate,
         createdByUsername = "user001",
         createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid!!),
       ),
       uuid,
     )
@@ -217,8 +219,19 @@ class RecallIntTests : IntegrationTestBase() {
         ),
       )
 
+    assertThat(savedRecall.sentences).hasSize(1)
+    assertThat(savedRecall.sentences).extracting<UUID> { it.sentenceUuid }.contains(sentenceOne.sentenceUuid)
+
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.updated")
+    val message = messages[0]
+    val sentenceIds = message.additionalInformation.get("sentenceIds").toList().map { arr -> arr.asText() }
+    val previousSentenceIds = message.additionalInformation.get("previousSentenceIds").toList().map { arr -> arr.asText() }
+    assertThat(sentenceIds)
+      .contains(sentenceOne.sentenceUuid.toString())
+    assertThat(previousSentenceIds)
+      .contains(sentenceOne.sentenceUuid.toString())
+      .contains(sentenceTwo.sentenceUuid.toString())
   }
 
   @Test

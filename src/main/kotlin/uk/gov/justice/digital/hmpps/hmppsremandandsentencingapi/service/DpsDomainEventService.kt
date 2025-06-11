@@ -112,6 +112,7 @@ class DpsDomainEventService(
             eventMetaData.prisonerId,
             eventMetaData.recallId!!,
             eventMetaData.sentenceIds!!,
+            eventMetaData.previousSentenceIds!!,
             EventSource.DPS,
           )
           EventType.RECALL_DELETED -> recallDomainEventService.delete(
