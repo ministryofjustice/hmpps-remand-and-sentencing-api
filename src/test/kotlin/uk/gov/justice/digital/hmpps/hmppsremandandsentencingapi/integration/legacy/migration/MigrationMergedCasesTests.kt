@@ -92,7 +92,7 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
   }
 
   @Test
-fun `create target court case for a linked case - process target court case first`() {
+  fun `create target court case for a linked case - process target court case first`() {
     val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
