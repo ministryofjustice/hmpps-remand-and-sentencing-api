@@ -86,6 +86,7 @@ class ChargeEntity(
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
+    mergedFromDate = mergedFromDate,
   )
 
   fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -94,6 +95,7 @@ class ChargeEntity(
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
+    mergedFromDate = mergedFromDate,
   )
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -102,6 +104,7 @@ class ChargeEntity(
     createdAt, this.createdBy, charge.prisonId, ZonedDateTime.now(), createdBy, charge.prisonId,
     charge.legacyData, appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
+    mergedFromDate = mergedFromDate,
   )
 
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity {
@@ -111,6 +114,7 @@ class ChargeEntity(
       createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
       legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase,
+      mergedFromDate = mergedFromDate,
     )
     charge.sentences = sentences.toMutableSet()
     return charge
@@ -130,6 +134,7 @@ class ChargeEntity(
       createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
       legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase,
+      mergedFromDate = mergedFromDate,
     )
     chargeEntity.sentences = sentences.toMutableSet()
     return chargeEntity
@@ -159,6 +164,7 @@ class ChargeEntity(
     updatedPrison = chargeEntity.updatedPrison
     legacyData = chargeEntity.legacyData
     mergedFromCourtCase = chargeEntity.mergedFromCourtCase
+    mergedFromDate = chargeEntity.mergedFromDate
   }
 
   fun updateFrom(chargeOutcome: ChargeOutcomeEntity?, username: String, prisonId: String) {

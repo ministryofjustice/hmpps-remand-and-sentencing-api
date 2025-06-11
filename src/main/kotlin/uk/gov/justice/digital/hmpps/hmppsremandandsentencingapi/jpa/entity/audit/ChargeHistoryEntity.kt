@@ -45,6 +45,7 @@ class ChargeHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_charge_id")
   val originalCharge: ChargeEntity,
+  val mergedFromDate: LocalDate? = null,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): ChargeHistoryEntity = ChargeHistoryEntity(
@@ -52,6 +53,7 @@ class ChargeHistoryEntity(
       chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.terrorRelated,
       chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
       chargeEntity.updatedPrison, chargeEntity.legacyData, chargeEntity.mergedFromCourtCase?.id, chargeEntity,
+      mergedFromDate = chargeEntity.mergedFromDate,
     )
   }
 }
