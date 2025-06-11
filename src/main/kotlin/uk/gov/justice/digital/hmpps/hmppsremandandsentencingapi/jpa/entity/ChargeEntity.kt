@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkChargeToCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
@@ -78,7 +79,9 @@ class ChargeEntity(
     this.statusId == other.statusId &&
     this.chargeOutcome == other.chargeOutcome &&
     this.terrorRelated == other.terrorRelated &&
-    this.legacyData == other.legacyData
+    this.legacyData == other.legacyData &&
+    this.mergedFromCourtCase == other.mergedFromCourtCase &&
+    this.mergedFromDate == other.mergedFromDate
 
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
@@ -96,6 +99,13 @@ class ChargeEntity(
     appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
+  )
+
+  fun copyFrom(linkChargeToCase: LegacyLinkChargeToCase, mergedFromCase: CourtCaseEntity, createdBy: String): ChargeEntity = ChargeEntity(
+    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, EntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
+    createdAt, this.createdBy, createdPrison,
+    ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, legacyData, mutableSetOf(),
+    mergedFromCase, linkChargeToCase.linkedDate,
   )
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(

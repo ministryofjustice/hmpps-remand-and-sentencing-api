@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkChargeToCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
@@ -117,7 +118,7 @@ class DataCreator {
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
 
     fun legacyUpdateCharge(
-      offenceStartDate: LocalDate = LocalDate.now().minusDays(20),
+      offenceStartDate: LocalDate? = LocalDate.now().minusDays(20),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
     ): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData)
@@ -235,5 +236,10 @@ class DataCreator {
       periodDays,
       legacyData,
     )
+
+    fun legacyLinkChargeToCase(
+      sourceCourtCaseUuid: String,
+      linkedDate: LocalDate = LocalDate.now(),
+    ): LegacyLinkChargeToCase = LegacyLinkChargeToCase(sourceCourtCaseUuid, linkedDate)
   }
 }
