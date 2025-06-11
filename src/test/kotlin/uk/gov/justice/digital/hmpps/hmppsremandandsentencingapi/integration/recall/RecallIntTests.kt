@@ -224,10 +224,14 @@ class RecallIntTests : IntegrationTestBase() {
 
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.updated")
-    assertThat(messages).extracting<List<String>> { it.additionalInformation.get("sentenceIds").toList().map { arr -> arr.asText() } }.contains(listOf(sentenceOne.sentenceUuid.toString()))
-    assertThat(messages).extracting<List<String>> { it.additionalInformation.get("previousSentenceIds").toList().map { arr -> arr.asText() } }.contains(
-      listOf(sentenceOne.sentenceUuid.toString(), sentenceTwo.sentenceUuid.toString()),
-    )
+    val message = messages[0]
+    val sentenceIds = message.additionalInformation.get("sentenceIds").toList().map { arr -> arr.asText() }
+    val previousSentenceIds = message.additionalInformation.get("previousSentenceIds").toList().map { arr -> arr.asText() }
+    assertThat(sentenceIds)
+      .contains(sentenceOne.sentenceUuid.toString())
+    assertThat(previousSentenceIds)
+      .contains(sentenceOne.sentenceUuid.toString())
+      .contains(sentenceTwo.sentenceUuid.toString())
   }
 
   @Test
