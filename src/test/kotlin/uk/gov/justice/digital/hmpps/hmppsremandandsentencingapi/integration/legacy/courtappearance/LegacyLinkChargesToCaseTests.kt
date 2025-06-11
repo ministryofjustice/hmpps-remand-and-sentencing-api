@@ -5,6 +5,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class LegacyLinkChargesToCaseTests : IntegrationTestBase() {
@@ -84,6 +85,8 @@ class LegacyLinkChargesToCaseTests : IntegrationTestBase() {
       .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.mergedFromDate")
+      .isEqualTo(linkChargeToCase.linkedDate.format(DateTimeFormatter.ISO_DATE))
   }
 
   @Test
