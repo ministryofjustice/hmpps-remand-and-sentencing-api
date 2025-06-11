@@ -54,6 +54,15 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   }
 
   @Transactional
+  fun linkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String): Pair<String, String> {
+    val sourceCourtCase = getUnlessDeleted(sourceCourtCaseUuid)
+    val targetCourtCase = getUnlessDeleted(targetCourtCaseUuid)
+    sourceCourtCase.statusId = EntityStatus.MERGED
+    sourceCourtCase.mergedToCase = targetCourtCase
+    return sourceCourtCaseUuid to sourceCourtCase.prisonerId
+  }
+
+  @Transactional
   fun delete(courtCaseUuid: String) {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = EntityStatus.DELETED

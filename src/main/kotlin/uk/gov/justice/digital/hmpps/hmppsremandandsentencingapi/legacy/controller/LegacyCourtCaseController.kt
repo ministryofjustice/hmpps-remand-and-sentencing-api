@@ -105,6 +105,25 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
     }
   }
 
+  @PutMapping("/{sourceCourtCaseUuid}/link/{targetCourtCaseUuid}")
+  @Operation(
+    summary = "Links a court case to another court case",
+    description = "Synchronise a link of a court case from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "No content"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun linkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String) = legacyCourtCaseService.linkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid)
+    .also { (courtCaseUuid, prisonerId) ->
+      eventService.update(courtCaseUuid, prisonerId, EventSource.NOMIS)
+    }
+
   @GetMapping("/{courtCaseUuid}/test")
   @Operation(
     summary = "Retrieve court case details for testing",
