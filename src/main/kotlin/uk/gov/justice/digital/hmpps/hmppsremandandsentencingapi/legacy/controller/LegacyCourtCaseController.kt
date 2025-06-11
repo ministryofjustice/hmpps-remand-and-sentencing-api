@@ -24,12 +24,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.TestCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtCaseService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
 
 @RestController
 @RequestMapping("/legacy/court-case", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-case-controller", description = "CRUD operations for syncing court case data from NOMIS into remand and sentencing api database.")
-class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService) {
+class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService, private val chargeEventService: ChargeDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -122,6 +123,40 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   fun linkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String) = legacyCourtCaseService.linkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid)
     .also { (courtCaseUuid, prisonerId) ->
       eventService.update(courtCaseUuid, prisonerId, EventSource.NOMIS)
+    }
+
+  @PutMapping("/{sourceCourtCaseUuid}/unlink/{targetCourtCaseUuid}")
+  @Operation(
+    summary = "Unlinks a court case to another court case",
+    description = "Synchronise a unlink of a court case from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "No content"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun unlinkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String) = legacyCourtCaseService.unlinkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid)
+    .also { unlinkEventsToEmit ->
+      unlinkEventsToEmit.courtCaseEventMetadata?.let { courtCaseEventMetaData ->
+        eventService.update(
+          courtCaseEventMetaData.courtCaseId!!,
+          courtCaseEventMetaData.prisonerId,
+          EventSource.NOMIS,
+        )
+      }
+      unlinkEventsToEmit.chargesEventMetadata.forEach { chargeEventMetaData ->
+        chargeEventService.update(
+          chargeEventMetaData.prisonerId,
+          chargeEventMetaData.chargeId!!,
+          chargeEventMetaData.courtAppearanceId!!,
+          chargeEventMetaData.courtCaseId!!,
+          EventSource.NOMIS,
+        )
+      }
     }
 
   @GetMapping("/{courtCaseUuid}/test")
