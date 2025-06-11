@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkChargeToCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtAppearanceService
@@ -176,6 +177,26 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       if (chargeChangeStatus == EntityChangeStatus.DELETED) {
         chargeEventService.delete(legacyCourtAppearance.prisonerId, chargeLifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
       }
+    }
+  }
+
+  @PutMapping("/{courtAppearanceUuid}/charge/{chargeUuid}/link")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
+  @Operation(
+    summary = "link a charge with a case",
+    description = "Synchronise a link between charge and court case from NOMIS into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "No content"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun linkChargeToCaseInAppearance(@PathVariable courtAppearanceUuid: UUID, @PathVariable chargeUuid: UUID, @RequestBody linkChargeToCase: LegacyLinkChargeToCase) = legacyChargeService.linkChargeToCase(courtAppearanceUuid, chargeUuid, linkChargeToCase).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
+    if (entityChangeStatus == EntityChangeStatus.EDITED) {
+      chargeEventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), courtAppearanceUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
     }
   }
 }
