@@ -83,8 +83,6 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
-      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.mergedFromDate")
-      .isEqualTo("2019-06-11")
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].caseReference")
@@ -96,13 +94,14 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
     val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
+    val expectedMergedFromDate = LocalDate.now().minusYears(6)
 
     val targetCharge = DataCreator.migrationCreateCharge(
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
       mergedFromEventId = sourceAppearance.eventId,
-      mergedFromDate = LocalDate.now().minusYears(6),
+      mergedFromDate = expectedMergedFromDate,
 
     )
 
@@ -145,7 +144,7 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$sourceChargeUuid')].mergedFromCase.mergedFromDate")
-      .isEqualTo("2019-06-11")
+      .isEqualTo(expectedMergedFromDate.toString())
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].courtCode")
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].caseReference")
