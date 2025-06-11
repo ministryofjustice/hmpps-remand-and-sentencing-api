@@ -170,7 +170,7 @@ class LegacyChargeService(
         appearance.appearanceCharges.remove(appearanceChargeInTargetCase)
         appearanceChargeInTargetCase.charge = null
         appearanceChargeInTargetCase.appearance = null
-        chargeRecordsOnSourceCase.map { it.charge!! }.forEach { chargeRecordOnSourceCase ->
+        chargeRecordsOnSourceCase.map { it.charge!! }.filter { it.statusId != EntityStatus.DELETED }.forEach { chargeRecordOnSourceCase ->
           chargeRecordOnSourceCase.statusId = EntityStatus.MERGED
           chargeRecordOnSourceCase.updatedBy = serviceUserService.getUsername()
           chargeRecordOnSourceCase.updatedAt = ZonedDateTime.now()
