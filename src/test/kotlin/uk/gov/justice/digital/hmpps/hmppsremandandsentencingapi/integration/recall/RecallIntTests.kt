@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR_HDC
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -127,7 +127,7 @@ class RecallIntTests : IntegrationTestBase() {
     val recallOne = DpsDataCreator.dpsCreateRecall(
       revocationDate = LocalDate.of(2024, 7, 1),
       returnToCustodyDate = LocalDate.of(2024, 7, 1),
-      recallTypeCode = LR_HDC,
+      recallTypeCode = LR,
       sentenceIds = listOf(
         sentenceOne.sentenceUuid!!,
       ),
@@ -156,7 +156,7 @@ class RecallIntTests : IntegrationTestBase() {
             prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
             revocationDate = LocalDate.of(2024, 7, 1),
             returnToCustodyDate = LocalDate.of(2024, 7, 1),
-            recallType = LR_HDC,
+            recallType = LR,
             createdByUsername = "user001",
             createdAt = ZonedDateTime.now(),
             createdByPrison = "PRISON1",

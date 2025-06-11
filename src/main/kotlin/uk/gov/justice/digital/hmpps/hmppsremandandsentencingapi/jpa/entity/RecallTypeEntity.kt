@@ -26,8 +26,6 @@ class RecallTypeEntity(
       RecallType.LR -> findLicenseRecallLegacySentenceType(sentenceType)
       RecallType.FTR_14 -> "14FTR_ORA"
       RecallType.FTR_28 -> if (sentenceType.nomisSentenceCalcType.contains("ORA")) "FTR_ORA" else "FTR"
-      // TODO RCLL-399 Check LR_HDC types.
-      RecallType.LR_HDC -> "LR"
       RecallType.FTR_HDC_14 -> "14FTRHDC_ORA"
       RecallType.FTR_HDC_28 -> "FTR_HDC"
       RecallType.CUR_HDC -> if (sentenceType.nomisSentenceCalcType.contains("ORA")) "CUR_ORA" else "CUR"

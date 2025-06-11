@@ -68,7 +68,6 @@ class LegacyGetSentenceSentenceTypeTests {
       Arguments.of("2020", "ADIMP_ORA", SentenceTypeClassification.STANDARD, RecallType.IN_HDC, "HDR_ORA", "2020"),
       Arguments.of("2020", "ADIMP", SentenceTypeClassification.STANDARD, RecallType.CUR_HDC, "CUR", "2020"),
       Arguments.of("2020", "ADIMP", SentenceTypeClassification.STANDARD, RecallType.IN_HDC, "HDR", "2020"),
-      Arguments.of("2020", "ADIMP_ORA", SentenceTypeClassification.STANDARD, RecallType.LR_HDC, "LR", "2020"),
 
       // Standard recalls
       // Standard sentence types
