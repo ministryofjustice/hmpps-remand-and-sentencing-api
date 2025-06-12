@@ -4,11 +4,10 @@ import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
-import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.DELETED
-import java.util.UUID
+import java.util.*
 
 interface PeriodLengthRepository : CrudRepository<PeriodLengthEntity, Int> {
   @EntityGraph(attributePaths = ["sentenceEntity"])
@@ -33,5 +32,5 @@ interface PeriodLengthRepository : CrudRepository<PeriodLengthEntity, Int> {
         )
     """,
   )
-  fun deleteAllBySentenceEntityChargeAppearanceCourtCaseId(@Param("caseId") caseId: Int)
+  fun deleteAllBySentenceEntityChargeAppearanceCourtCaseId(caseId: Int)
 }
