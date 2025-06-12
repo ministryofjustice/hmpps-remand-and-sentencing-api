@@ -16,6 +16,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
     val extraPrisonerMigratedOnce = "ANOTHER"
     migrateCase(migrationCourtCases.copy(prisonerId = extraPrisonerMigratedOnce))
 
+    // Check that the first prisoner data is migrated correctly
     getPagedSearchResponse(migrationCourtCases.prisonerId)
       .expectStatus()
       .isOk
@@ -31,6 +32,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content[0].latestCourtAppearance.outcome").isEqualTo("Outcome Description")
       .jsonPath("$.content[0].latestCourtAppearance.charges[0].offenceCode").isEqualTo("OFF1")
 
+    // Check that the second prisoner data is migrated correctly
     getPagedSearchResponse(extraPrisonerMigratedOnce)
       .expectStatus()
       .isOk
@@ -39,6 +41,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content[0].prisonerId").isEqualTo(extraPrisonerMigratedOnce)
       .jsonPath("$.content[0].legacyData.caseReferences[0].offenderCaseReference").isEqualTo("NOMIS123")
 
+    // Create new data for the first prisoner to migrate
     val originalCase = migrationCourtCases.courtCases[0]
     val originalReference = originalCase.courtCaseLegacyData.caseReferences[0]
     val updatedReference = originalReference.copy(offenderCaseReference = "NEW-REFERENCE")
@@ -76,10 +79,11 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       appearances = listOf(updatedAppearance),
     )
 
+    // Migrate the first prisoner again
     val newMigrationRequest = migrationCourtCases.copy(courtCases = listOf(newCourtCase))
-
     migrateCase(newMigrationRequest)
 
+    // Ensure the first prisoner details have been completely refreshed (deleted and recreated)
     getPagedSearchResponse(migrationCourtCases.prisonerId)
       .expectStatus()
       .isOk
@@ -95,6 +99,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content[0].latestCourtAppearance.outcome").isEqualTo("New Outcome")
       .jsonPath("$.content[0].latestCourtAppearance.charges[0].offenceCode").isEqualTo("NEW-OFFENCE")
 
+    // Ensure the second prisoner that was only migrated once still exists and has not been deleted
     getPagedSearchResponse(extraPrisonerMigratedOnce)
       .expectStatus()
       .isOk
