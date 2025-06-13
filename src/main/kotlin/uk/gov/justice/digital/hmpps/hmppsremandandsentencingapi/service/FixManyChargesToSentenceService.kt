@@ -46,12 +46,15 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     val eventsToEmit = mutableSetOf<EventMetadata>()
     toFixSentences.forEach { (_, sentenceRecords) ->
       val firstSentenceRecordEventMetadata = sentenceRecords.removeFirst()
-      val firstSentenceEventToEmit = fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED, firstSentenceRecordEventMetadata.record.sentenceUuid)
+      val firstSentenceEventToEmit = fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED)
       eventsToEmit.add(firstSentenceEventToEmit)
       fixPeriodLengths(firstSentenceRecordEventMetadata)
 
       sentenceRecords.forEach { sentenceRecordEventMetadata ->
-        val sentenceEventToEmit = fixSentence(sentenceRecordEventMetadata, EventType.SENTENCE_INSERTED, UUID.randomUUID())
+        val sentenceEventToEmit = fixSentence(sentenceRecordEventMetadata, EventType.SENTENCE_INSERTED) {
+          it.sentenceUuid = UUID.randomUUID()
+          it.legacyData?.nomisLineReference = null
+        }
         eventsToEmit.add(sentenceEventToEmit)
         val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata) { it.periodLengthUuid = UUID.randomUUID() }
         eventsToEmit.addAll(periodLengthEventsToEmit)
@@ -60,12 +63,12 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     return eventsToEmit
   }
 
-  private fun fixSentence(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, sentenceEventType: EventType, sentenceUuid: UUID): EventMetadata {
+  private fun fixSentence(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, sentenceEventType: EventType, sentenceModifyFunction: (SentenceEntity) -> Unit = {}): EventMetadata {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) EntityStatus.INACTIVE else EntityStatus.ACTIVE
-    sentenceRecord.sentenceUuid = sentenceUuid
     sentenceRecord.updatedAt = ZonedDateTime.now()
     sentenceRecord.updatedBy = serviceUserService.getUsername()
+    sentenceModifyFunction(sentenceRecord)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
     return EventMetadataCreator.sentenceEventMetadata(
       eventMetadata.prisonerId,

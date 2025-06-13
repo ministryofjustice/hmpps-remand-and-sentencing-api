@@ -96,7 +96,7 @@ class DataCreator {
         DateTimeFormatter.ISO_DATE,
       ),
       active: Boolean? = null,
-      nomisLineReference: String? = null,
+      nomisLineReference: String? = "4",
     ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active, nomisLineReference)
 
     fun legacyCreateSentence(
