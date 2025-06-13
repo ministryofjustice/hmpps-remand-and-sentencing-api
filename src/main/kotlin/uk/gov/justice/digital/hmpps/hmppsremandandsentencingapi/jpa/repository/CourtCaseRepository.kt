@@ -52,6 +52,6 @@ interface CourtCaseRepository :
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
 
   @Modifying
-  @Query("DELETE FROM CourtAppearanceEntity ca WHERE ca.courtCase.id = :caseId")
+  @Query("DELETE FROM CourtCaseEntity cc WHERE cc.id = :caseId")
   fun deleteAllByCourtCaseId(caseId: Int)
 }

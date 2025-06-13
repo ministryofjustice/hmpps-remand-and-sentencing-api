@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -107,6 +108,10 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$.content[0].prisonerId").isEqualTo(extraPrisonerMigratedOnce)
       .jsonPath("$.content[0].legacyData.caseReferences[0].offenderCaseReference").isEqualTo("NOMIS123")
+
+    // Check that only one CourtCase record exists for the prisoner
+    val courtCases = courtCaseRepository.findAllByPrisonerId(migrationCourtCases.prisonerId)
+    assertThat(courtCases).hasSize(1)
   }
 
   private fun migrateCase(migrationCourtCases: MigrationCreateCourtCases) {
