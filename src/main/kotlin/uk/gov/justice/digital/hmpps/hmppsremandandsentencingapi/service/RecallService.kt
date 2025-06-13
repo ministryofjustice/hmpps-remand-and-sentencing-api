@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -17,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -26,6 +28,7 @@ class RecallService(
   private val recallSentenceRepository: RecallSentenceRepository,
   private val recallTypeRepository: RecallTypeRepository,
   private val sentenceRepository: SentenceRepository,
+  private val sentenceService: SentenceService,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
@@ -104,35 +107,63 @@ class RecallService(
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
 
+    val isLegacyRecall =
+      recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
+
+    val deleteSentenceEvents = if (isLegacyRecall) {
+      deleteSentencesForLegacyRecall(recallToDelete)
+    } else {
+      emptyList()
+    }
     recallToDelete.statusId = EntityStatus.DELETED
 
     recallToDelete.recallSentences.forEach {
       recallSentenceRepository.delete(it)
     }
 
-    val previousRecall = recallToDelete.recallSentences.map {
-      it.sentence
-    }.flatMap { it.recallSentences }
-      .map { it.recall }
-      .filter { it.recallUuid != recallUuid }
-      .maxByOrNull { it.createdAt }
+    val previousRecall = if (!isLegacyRecall) {
+      recallToDelete.recallSentences.map {
+        it.sentence
+      }.flatMap { it.recallSentences }
+        .map { it.recall }
+        .filter { it.recallUuid != recallUuid }
+        .maxByOrNull { it.createdAt }
+    } else {
+      null
+    }
 
     // TODO RCLL-277 Recall audit data.
-    // TODO RCLL-386 Delete sentence if legacy recall.
 
     return RecordResponse(
       DeleteRecallResponse.from(recallToDelete),
-      mutableSetOf(
-        EventMetadataCreator.recallEventMetadata(
-          recallToDelete.prisonerId,
-          recallToDelete.recallUuid.toString(),
-          recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
-          emptyList(),
-          previousRecall?.recallUuid?.toString(),
-          EventType.RECALL_DELETED,
-        ),
-      ),
+      (
+        mutableSetOf(
+          EventMetadataCreator.recallEventMetadata(
+            recallToDelete.prisonerId,
+            recallToDelete.recallUuid.toString(),
+            recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
+            emptyList(),
+            previousRecall?.recallUuid?.toString(),
+            EventType.RECALL_DELETED,
+          ),
+        ) + deleteSentenceEvents
+        ).toMutableSet(),
     )
+  }
+
+  private fun deleteSentencesForLegacyRecall(recallToDelete: RecallEntity): List<EventMetadata> = recallToDelete.recallSentences.flatMap {
+    val appearance = it.sentence.charge.appearanceCharges.first().appearance
+    if (appearance != null) {
+      sentenceService.deleteSentence(
+        it.sentence,
+        it.sentence.charge,
+        recallToDelete.prisonerId,
+        appearance.courtCase.caseUniqueIdentifier,
+        appearance.appearanceUuid.toString(),
+      ).eventsToEmit
+    } else {
+      emptyList()
+    }
   }
 
   @Transactional(readOnly = true)
