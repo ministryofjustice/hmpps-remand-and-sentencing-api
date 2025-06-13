@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence.Companion.getSentenceCalcTypeAndCategory
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -20,6 +21,9 @@ data class ReconciliationSentence(
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): ReconciliationSentence {
+      val latestRecall = sentenceEntity.latestRecall()
+      val sentenceTypeAndCategory = getSentenceCalcTypeAndCategory(sentenceEntity, latestRecall)
+
       val firstSentenceAppearanceDate = sentenceEntity.charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId == EntityStatus.ACTIVE && it.warrantType == "SENTENCING" }
@@ -27,8 +31,8 @@ data class ReconciliationSentence(
       return ReconciliationSentence(
         sentenceEntity.sentenceUuid,
         sentenceEntity.fineAmount,
-        sentenceEntity.legacyData?.sentenceCalcType ?: sentenceEntity.sentenceType?.nomisSentenceCalcType,
-        sentenceEntity.legacyData?.sentenceCategory ?: sentenceEntity.sentenceType?.nomisCjaCode,
+        sentenceTypeAndCategory.first,
+        sentenceTypeAndCategory.second,
         if (sentenceEntity.legacyData?.active != null) sentenceEntity.legacyData!!.active!! else sentenceEntity.statusId == EntityStatus.ACTIVE,
         firstSentenceAppearanceDate,
         sentenceEntity.legacyData,
