@@ -54,7 +54,7 @@ data class LegacySentence(
       )
     }
 
-    private fun getSentenceCalcTypeAndCategory(sentenceEntity: SentenceEntity, latestRecall: RecallEntity?): Pair<String, String> {
+    fun getSentenceCalcTypeAndCategory(sentenceEntity: SentenceEntity, latestRecall: RecallEntity?): Pair<String, String> {
       return if (latestRecall == null) {
         (sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData!!.sentenceCalcType!!) to
           (sentenceEntity.sentenceType?.nomisCjaCode ?: sentenceEntity.legacyData!!.sentenceCategory!!)
