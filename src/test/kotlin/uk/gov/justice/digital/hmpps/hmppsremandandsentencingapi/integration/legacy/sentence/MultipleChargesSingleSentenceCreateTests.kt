@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
 import org.assertj.core.api.Assertions
+import org.hamcrest.Matchers.everyItem
+import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -55,5 +57,9 @@ class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${secondCharge.chargeUuid}')].sentence.sentenceUuid")
       .exists()
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '${response.lifetimeUuid}')].legacyData.nomisLineReference")
+      .isEqualTo(legacySentence.legacyData.nomisLineReference!!)
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid != '${response.lifetimeUuid}')].legacyData.nomisLineReference")
+      .value(everyItem(IsNull.nullValue()))
   }
 }
