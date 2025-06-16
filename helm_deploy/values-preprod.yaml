@@ -13,6 +13,7 @@ generic-service:
     PRISON_API_URL: https://prison-api-preprod.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: https://document-api-preprod.hmpps.service.justice.gov.uk
     INGRESS_URL: *ingressHost
+    ENVIRONMENT_NAME: PREPROD
 
   allowlist:
     penetration-test-ip-1: 54.37.241.156/30

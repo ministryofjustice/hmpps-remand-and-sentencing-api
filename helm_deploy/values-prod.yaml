@@ -11,6 +11,7 @@ generic-service:
     PRISON_API_URL: https://prison-api.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
+    ENVIRONMENT_NAME: PROD
 
   resources:
     requests:
