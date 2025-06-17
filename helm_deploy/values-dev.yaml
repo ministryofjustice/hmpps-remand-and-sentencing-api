@@ -13,6 +13,7 @@ generic-service:
     PRISON_API_URL: https://prison-api-dev.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api-dev.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
+    ENVIRONMENT_NAME: DEV
 
   # Switches off the allow list in the DEV env only.
   allowlist: null

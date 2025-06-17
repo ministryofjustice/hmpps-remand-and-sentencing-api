@@ -5,7 +5,7 @@ generic-service:
   replicaCount: 4
 
   image:
-    repository: quay.io/hmpps/hmpps-remand-and-sentencing-api
+    repository: ghcr.io/ministryofjustice/hmpps-remand-and-sentencing-api
     tag: app_version # override at deployment time
     port: 8080
 
@@ -19,7 +19,6 @@ generic-service:
     JAVA_OPTS: "-Xmx512m"
     SERVER_PORT: "8080"
     SPRING_PROFILES_ACTIVE: "logstash"
-    APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=$(APPINSIGHTS_INSTRUMENTATIONKEY);IngestionEndpoint=https://northeurope-0.in.applicationinsights.azure.com/;LiveEndpoint=https://northeurope.livediagnostics.monitor.azure.com/"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     DB_SSL_MODE: "verify-full"
 
@@ -30,9 +29,10 @@ generic-service:
 
   namespace_secrets:
     hmpps-remand-and-sentencing-api:
-      APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
       HMPPS_AUTH_CLIENT_ID: "CLIENT_ID"
       HMPPS_AUTH_CLIENT_SECRET: "CLIENT_SECRET"
+    hmpps-remand-and-sentencing-api-application-insights:
+      APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
     rds-postgresql-instance-output:
         DB_SERVER: rds_instance_endpoint
         DB_NAME: database_name
