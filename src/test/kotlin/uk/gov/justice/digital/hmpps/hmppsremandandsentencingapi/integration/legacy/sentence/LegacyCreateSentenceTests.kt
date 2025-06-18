@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers.everyItem
+import org.hamcrest.core.IsNull
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -9,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 
@@ -186,6 +189,65 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.consecutiveToLifetimeUuid")
       .isEqualTo(lifetimeUuid.toString())
+  }
+
+  @Test
+  fun `able to create sentence in specific appearance`() {
+    val chargeNOMISId = 555L
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = chargeNOMISId, legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "99"), offenceEndDate = LocalDate.now().plusDays(5), sentence = null)
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 1, appearanceDate = LocalDate.now().minusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(), charges = listOf(charge))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 2, appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(), charges = listOf(charge))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(secondAppearance, firstAppearance))
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val courtCaseUuid = response.courtCases.first().courtCaseUuid
+    val chargeUuid = response.charges.first().chargeUuid
+    val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+    val secondAppearanceUuid = response.appearances.first { appearanceResponse -> secondAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+
+    val legacySentence = DataCreator.legacyCreateSentence(
+      chargeUuids = listOf(chargeUuid),
+      appearanceUuid = secondAppearanceUuid,
+    )
+    val sentenceCreatedResponse = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].charges[?(@.chargeUuid == '$chargeUuid')].sentence")
+      .value(everyItem(IsNull.nullValue()))
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$secondAppearanceUuid')].charges[?(@.chargeUuid == '$chargeUuid')].sentence")
+      .value(everyItem(IsNull.notNullValue()))
   }
 
   @Test
