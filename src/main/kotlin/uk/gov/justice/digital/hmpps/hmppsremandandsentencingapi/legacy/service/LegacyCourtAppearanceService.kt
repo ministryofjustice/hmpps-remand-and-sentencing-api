@@ -111,7 +111,7 @@ class LegacyCourtAppearanceService(
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    if (existingCourtAppearance.appearanceCharges.none { it.charge == existingCharge }) {
+    if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == lifetimeChargeUuid }) {
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
         existingCharge,
@@ -129,12 +129,11 @@ class LegacyCourtAppearanceService(
   @Transactional
   fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): Pair<EntityChangeStatus, EntityChangeStatus> {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
-    val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
+    val existingCharge = getChargeAtAppearanceUnlessDeleted(lifetimeUuid, lifetimeChargeUuid)
     var appearanceEntityChangeStatus = EntityChangeStatus.NO_CHANGE
     var chargeEntityStatus = EntityChangeStatus.NO_CHANGE
-    val appearanceCharge = existingCourtAppearance.appearanceCharges.find { it.charge == existingCharge }
-
-    if (appearanceCharge != null) {
+    if (existingCharge != null) {
+      val appearanceCharge = existingCourtAppearance.appearanceCharges.first { it.charge == existingCharge }
       existingCourtAppearance.appearanceCharges.remove(appearanceCharge)
       existingCharge.appearanceCharges.remove(appearanceCharge)
       appearanceEntityChangeStatus = EntityChangeStatus.EDITED
@@ -151,6 +150,7 @@ class LegacyCourtAppearanceService(
         ),
       )
     }
+
     return appearanceEntityChangeStatus to chargeEntityStatus
   }
 
@@ -158,4 +158,10 @@ class LegacyCourtAppearanceService(
     ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
 
   private fun getChargeUnlessDelete(lifetimeChargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(lifetimeChargeUuid) ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
+
+  private fun getChargeAtAppearanceUnlessDeleted(appearanceUuid: UUID, chargeUuid: UUID): ChargeEntity? = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidOrderByCreatedAtDesc(
+    appearanceUuid,
+    chargeUuid,
+  )
+    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
 }
