@@ -1,8 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
 import org.springframework.data.jpa.repository.EntityGraph
-import org.springframework.data.jpa.repository.Modifying
-import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -18,19 +16,4 @@ interface PeriodLengthRepository : CrudRepository<PeriodLengthEntity, Int> {
 
   @EntityGraph(attributePaths = ["sentenceEntity"])
   fun findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid: UUID, statusId: EntityStatus = DELETED): List<PeriodLengthEntity>
-
-  @Modifying
-  @Query(
-    """
-        DELETE FROM PeriodLengthEntity pl 
-        WHERE pl.sentenceEntity IN (
-            SELECT s FROM SentenceEntity s 
-            JOIN s.charge c 
-            JOIN c.appearanceCharges ac 
-            JOIN ac.appearance a 
-            WHERE a.courtCase.id = :caseId
-        )
-    """,
-  )
-  fun deleteAllBySentenceEntityChargeAppearanceCourtCaseId(caseId: Int)
 }

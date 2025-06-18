@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
@@ -8,7 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid: UUID): SentenceEntity?
@@ -95,19 +94,4 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
     @Param("status") status: EntityStatus = EntityStatus.DELETED,
   ): List<ConsecutiveToSentenceRow>
-
-  @Modifying
-  @Query(
-    """
-    DELETE FROM SentenceEntity s 
-    WHERE EXISTS (
-        SELECT 1 FROM ChargeEntity c 
-        JOIN c.appearanceCharges ac 
-        JOIN ac.appearance a 
-        WHERE a.courtCase.id = :caseId 
-        AND c = s.charge
-    )
-""",
-  )
-  fun deleteByCourtCaseId(caseId: Int)
 }
