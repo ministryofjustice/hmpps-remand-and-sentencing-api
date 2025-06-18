@@ -221,7 +221,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       chargeUuids = listOf(chargeUuid),
       appearanceUuid = secondAppearanceUuid,
     )
-    val sentenceCreatedResponse = webTestClient
+    webTestClient
       .post()
       .uri("/legacy/sentence")
       .bodyValue(legacySentence)
@@ -231,8 +231,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
-      .responseBody.blockFirst()!!
+      .isCreated
 
     webTestClient
       .get()
