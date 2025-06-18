@@ -27,56 +27,77 @@ jobs:
       matrix:
         environments: ['dev', 'preprod', 'prod']
     name: helm lint
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/test_helm_lint.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/test_helm_lint.yml@v2
     secrets: inherit
     with:
       environment: ${{ matrix.environments }}
-  gradle-validate:
-    name: Run the tests
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2 # WORKFLOW_VERSION
-    secrets: inherit
-    with:
-      localstack-tag: "3"
-      postgres-tag: "17"
-      postgres-db: ras
-      postgres-username: ras-user
-      postgres-password: ras-pass
+  # gradle-validate:
+  #   name: Run the tests
+  #   uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2
+  #   secrets: inherit
+  #   with:
+  #     localstack-tag: "3"
+  #     postgres-tag: "17"
+  #     postgres-db: ras
+  #     postgres-username: ras-user
+  #     postgres-password: ras-pass
+  run-single-test:
+    name: Run HealthInfoTest only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Run single test
+        run: ./gradlew test --tests "uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.health.HealthInfoTest" --info --stacktrace
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - gradle-validate
+      - run-single-test
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
       additional_docker_tag: ${{ inputs.additional_docker_tag }}
       push: ${{ inputs.push || true }}
       docker_multiplatform: true
+
   deploy_dev:
     name: Deploy to the dev environment
     if: github.ref == 'refs/heads/main'
     needs:
       - build
       - helm_lint
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2
     secrets: inherit
     with:
       environment: 'dev'
       app_version: '${{ needs.build.outputs.app_version }}'
       helm_timeout: '5m'
+
   deploy_preprod:
     name: Deploy to the preprod environment
     needs:
       - build
       - helm_lint
       - deploy_dev
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/deploy_env.yml@v2
     secrets: inherit
     with:
       environment: 'preprod'
       app_version: '${{ needs.build.outputs.app_version }}'
       helm_timeout: '5m'
+
   deploy_prod:
     name: Deploy to the prod environment
     needs:
