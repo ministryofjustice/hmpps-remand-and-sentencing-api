@@ -50,7 +50,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
     val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
     val (courtCaseUuid) = createCourtCase(courtCase)
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid), appearanceUuid = appearance.appearanceUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")

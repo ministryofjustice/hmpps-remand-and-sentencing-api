@@ -5,6 +5,7 @@ import java.util.*
 
 data class LegacyCreateSentence(
   val chargeUuids: List<UUID>,
+  val appearanceUuid: UUID,
   val fine: LegacyCreateFine? = null,
   val consecutiveToLifetimeUuid: UUID? = null,
   val active: Boolean,

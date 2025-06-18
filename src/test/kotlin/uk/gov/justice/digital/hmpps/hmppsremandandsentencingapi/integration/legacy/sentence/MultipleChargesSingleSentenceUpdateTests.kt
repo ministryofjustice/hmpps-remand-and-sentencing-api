@@ -140,7 +140,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge, thirdCharge))
     val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
     val (courtCaseUuid) = createCourtCase(courtCase)
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid), appearanceUuid = appearance.appearanceUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -168,7 +168,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
     val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
     createCourtCase(courtCase)
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid), appearanceUuid = appearance.appearanceUuid)
 
     val createdSentence = legacyCreateSentence(legacySentence)
     val sentenceUuid = createdSentence.lifetimeUuid
@@ -204,7 +204,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
     val createdSentence = createdCase.second.appearances.first().charges.first().sentence!!
     val convictionDate = createdSentence.convictionDate!!
 
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(firstCharge.chargeUuid, secondCharge.chargeUuid), appearanceUuid = appearance.appearanceUuid)
     val sentenceUuid = createdSentence.sentenceUuid!!
 
     val sentencesBefore = sentenceRepository.findBySentenceUuid(sentenceUuid)
