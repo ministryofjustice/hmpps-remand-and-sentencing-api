@@ -23,6 +23,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
@@ -37,9 +39,9 @@ import java.util.UUID
 @Service
 class LegacySentenceService(
   private val sentenceRepository: SentenceRepository,
-  private val chargeRepository: ChargeRepository,
+  chargeRepository: ChargeRepository,
   private val sentenceTypeRepository: SentenceTypeRepository,
-  private val serviceUserService: ServiceUserService,
+  serviceUserService: ServiceUserService,
   private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val legacySentenceTypeRepository: LegacySentenceTypeRepository,
   private val recallTypeRepository: RecallTypeRepository,
@@ -48,7 +50,9 @@ class LegacySentenceService(
   private val periodLengthRepository: PeriodLengthRepository,
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
   private val legacyPeriodLengthService: LegacyPeriodLengthService,
-) {
+  chargeHistoryRepository: ChargeHistoryRepository,
+  appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): List<LegacySentenceCreatedResponse> {
@@ -70,7 +74,7 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
 
     return sentence.chargeUuids.map { chargeUuid ->
-      val charge = getUnsentencedCharge(chargeUuid)
+      val charge = getUnsentencedCharge(chargeUuid, sentence.appearanceUuid)
       val createdSentence = createSentenceRecord(
         charge,
         SentenceEntity.from(
@@ -112,7 +116,7 @@ class LegacySentenceService(
     dpsSentenceType: SentenceTypeEntity?,
     sentence: LegacyCreateSentence,
   ): String? = if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
-    val charge = getCharge(sentence.chargeUuids[0])
+    val charge = getChargeAtAppearance(sentence.chargeUuids[0], sentence.appearanceUuid)
     charge.appearanceCharges.first().appearance?.courtCase?.prisonerId
   } else {
     null
@@ -145,15 +149,17 @@ class LegacySentenceService(
     )
   }
 
-  fun getUnsentencedCharge(chargeUuid: UUID): ChargeEntity {
-    val charge = getCharge(chargeUuid)
+  fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity {
+    val charge = getChargeAtAppearance(chargeUuid, appearanceUuid)
     if (charge.getActiveOrInactiveSentence() != null) {
       throw ChargeAlreadySentencedException("charge at $chargeUuid is already sentenced")
     }
-    return charge
+    val appearance = charge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
+    val toUpdateCharge = charge.copyFrom(serviceUserService.getUsername())
+    return createChargeRecordIfOverManyAppearancesOrUpdate(charge, appearance, toUpdateCharge)
   }
 
-  fun getCharge(chargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)
+  fun getChargeAtAppearance(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, chargeUuid)
     ?: throw EntityNotFoundException("No charge found at $chargeUuid")
 
   fun createSentenceRecord(charge: ChargeEntity, sentence: SentenceEntity): SentenceEntity {
@@ -197,7 +203,7 @@ class LegacySentenceService(
               ?.let { it to EntityChangeStatus.NO_CHANGE }
             )
             ?: (
-              getUnsentencedCharge(chargeUuid).let { charge ->
+              getUnsentencedCharge(chargeUuid, sentence.appearanceUuid).let { charge ->
                 createSentenceRecord(
                   charge,
                   SentenceEntity.from(

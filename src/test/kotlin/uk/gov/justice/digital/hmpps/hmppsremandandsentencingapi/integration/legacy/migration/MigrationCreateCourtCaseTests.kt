@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
 import org.assertj.core.api.Assertions
+import org.hamcrest.Matchers.everyItem
+import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -72,6 +74,48 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
     checkChargeSnapshotOutcomeCode(firstAppearanceUuid, chargeLifetimeUuid, firstSnapshot.legacyData.nomisOutcomeCode!!)
     val secondAppearanceUuid = response.appearances.first { appearanceResponse -> secondAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
     checkChargeSnapshotOutcomeCode(secondAppearanceUuid, chargeLifetimeUuid, secondSnapshot.legacyData.nomisOutcomeCode!!)
+  }
+
+  @Test
+  fun `create snapshots of charges where difference a sentence exists`() {
+    val chargeNOMISId = 555L
+    val firstSnapshot = DataCreator.migrationCreateCharge(chargeNOMISId = chargeNOMISId, legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "99"), offenceEndDate = LocalDate.now().plusDays(5), sentence = null)
+    val secondSnapshot = firstSnapshot.copy(sentence = DataCreator.migrationCreateSentence())
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 1, appearanceDate = LocalDate.now().minusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(), charges = listOf(firstSnapshot))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 2, appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(), charges = listOf(secondSnapshot))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(secondAppearance, firstAppearance))
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val courtCaseUuid = response.courtCases.first().courtCaseUuid
+    val chargeUuid = response.charges.first().chargeUuid
+    val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+    val secondAppearanceUuid = response.appearances.first { appearanceResponse -> secondAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].charges[?(@.chargeUuid == '$chargeUuid')].sentence")
+      .value(everyItem(IsNull.nullValue()))
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$secondAppearanceUuid')].charges[?(@.chargeUuid == '$chargeUuid')].sentence")
+      .value(everyItem(IsNull.notNullValue()))
   }
 
   @Test

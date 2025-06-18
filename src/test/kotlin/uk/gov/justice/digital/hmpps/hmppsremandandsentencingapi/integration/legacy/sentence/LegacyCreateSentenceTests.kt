@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers.everyItem
+import org.hamcrest.core.IsNull
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -9,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 
@@ -16,8 +19,8 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
 
   @Test
   fun `create sentence in existing court case`() {
-    val (chargeLifetimeUuid) = createLegacyCharge()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid))
+    val (chargeLifetimeUuid, createdCharge) = createLegacyCharge()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = createdCharge.appearanceLifetimeUuid)
 
     webTestClient
       .post()
@@ -47,8 +50,9 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
         ),
       ),
     )
-    val charge = courtCaseCreated.appearances.first().charges.first()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
+    val appearance = courtCaseCreated.appearances.first()
+    val charge = appearance.charges.first()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -84,7 +88,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   @Test
   fun `inactive sentences are returned`() {
     val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), active = false)
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -134,7 +138,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   @Test
   fun `must not be able to create a sentence on a already sentenced charge`() {
     val (_, sentence) = createLegacySentence()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(sentence.chargeUuids.first()))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(sentence.chargeUuids.first()), appearanceUuid = sentence.appearanceUuid)
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -151,7 +155,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   @Test
   fun `must be able to create a consecutive to sentence`() {
     val (lifetimeUuid) = createLegacySentence()
-    val (chargeLifetimeUuid) = createLegacyCharge(
+    val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge(
       legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
         legacyData = DataCreator.courtAppearanceLegacyData(
           outcomeConvictionFlag = true,
@@ -159,7 +163,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
         ),
       ),
     )
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), consecutiveToLifetimeUuid = lifetimeUuid)
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, consecutiveToLifetimeUuid = lifetimeUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -185,6 +189,64 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.consecutiveToLifetimeUuid")
       .isEqualTo(lifetimeUuid.toString())
+  }
+
+  @Test
+  fun `able to create sentence in specific appearance`() {
+    val chargeNOMISId = 555L
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = chargeNOMISId, legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "99"), offenceEndDate = LocalDate.now().plusDays(5), sentence = null)
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 1, appearanceDate = LocalDate.now().minusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(), charges = listOf(charge))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 2, appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(), charges = listOf(charge))
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(secondAppearance, firstAppearance))
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val courtCaseUuid = response.courtCases.first().courtCaseUuid
+    val chargeUuid = response.charges.first().chargeUuid
+    val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+    val secondAppearanceUuid = response.appearances.first { appearanceResponse -> secondAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+
+    val legacySentence = DataCreator.legacyCreateSentence(
+      chargeUuids = listOf(chargeUuid),
+      appearanceUuid = secondAppearanceUuid,
+    )
+    webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].charges[?(@.chargeUuid == '$chargeUuid')].sentence")
+      .value(everyItem(IsNull.nullValue()))
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$secondAppearanceUuid')].charges[?(@.chargeUuid == '$chargeUuid')].sentence")
+      .value(everyItem(IsNull.notNullValue()))
   }
 
   @Test

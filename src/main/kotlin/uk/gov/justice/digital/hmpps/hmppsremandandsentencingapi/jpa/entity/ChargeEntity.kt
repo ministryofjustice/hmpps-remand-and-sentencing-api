@@ -73,7 +73,9 @@ class ChargeEntity(
   fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
 
   fun getActiveOrInactiveSentence(): SentenceEntity? = sentences.firstOrNull { setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE).contains(it.statusId) }
-  fun isSame(other: ChargeEntity): Boolean = this.offenceCode == other.offenceCode &&
+
+  fun hasSentence(): Boolean = sentences.any { it.statusId != EntityStatus.DELETED }
+  fun isSame(other: ChargeEntity, otherHasSentence: Boolean): Boolean = this.offenceCode == other.offenceCode &&
     ((this.offenceStartDate == null && other.offenceStartDate == null) || (other.offenceStartDate != null && this.offenceStartDate?.isEqual(other.offenceStartDate) == true)) &&
     ((this.offenceEndDate == null && other.offenceEndDate == null) || (other.offenceEndDate != null && this.offenceEndDate?.isEqual(other.offenceEndDate) == true)) &&
     this.statusId == other.statusId &&
@@ -81,7 +83,8 @@ class ChargeEntity(
     this.terrorRelated == other.terrorRelated &&
     this.legacyData == other.legacyData &&
     this.mergedFromCourtCase == other.mergedFromCourtCase &&
-    this.mergedFromDate == other.mergedFromDate
+    this.mergedFromDate == other.mergedFromDate &&
+    otherHasSentence == hasSentence()
 
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
@@ -160,6 +163,11 @@ class ChargeEntity(
     charge.sentences = sentences.toMutableSet()
     return charge
   }
+
+  fun copyFrom(updatedBy: String): ChargeEntity = ChargeEntity(
+    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, statusId, chargeOutcome, this,
+    terrorRelated, createdAt, createdBy, createdPrison, ZonedDateTime.now(), updatedBy, null, legacyData, mutableSetOf(), mergedFromCourtCase, mergedFromDate,
+  )
 
   fun updateFrom(chargeEntity: ChargeEntity) {
     offenceCode = chargeEntity.offenceCode

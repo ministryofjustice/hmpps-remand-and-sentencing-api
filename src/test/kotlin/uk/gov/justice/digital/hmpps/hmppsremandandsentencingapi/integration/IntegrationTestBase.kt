@@ -182,9 +182,13 @@ abstract class IntegrationTestBase {
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
     legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
+    createAppearance: Boolean = true,
   ): Pair<UUID, LegacyCreateCharge> {
-    val courtAppearance = createLegacyCourtAppearance(legacyCreateCourtCase, legacyCreateCourtAppearance)
-    val toCreateCharge = legacyCharge.copy(appearanceLifetimeUuid = courtAppearance.first)
+    var toCreateCharge = legacyCharge
+    if (createAppearance) {
+      val courtAppearance = createLegacyCourtAppearance(legacyCreateCourtCase, legacyCreateCourtAppearance)
+      toCreateCharge = legacyCharge.copy(appearanceLifetimeUuid = courtAppearance.first)
+    }
     val response = webTestClient
       .post()
       .uri("/legacy/charge")
@@ -213,8 +217,8 @@ abstract class IntegrationTestBase {
     legacySentence: LegacyCreateSentence =
       DataCreator.legacyCreateSentence(),
   ): Pair<UUID, LegacyCreateSentence> {
-    val (chargeLifetimeUuid) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeLifetimeUuid))
+    val (chargeLifetimeUuid, toCreateLegacyCharge) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
+    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateLegacyCharge.appearanceLifetimeUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -239,13 +243,15 @@ abstract class IntegrationTestBase {
         outcomeDispositionCode = "F",
       ),
     ),
-    legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
+    firstLegacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
+    secondLegacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
     legacySentence: LegacyCreateSentence =
       DataCreator.legacyCreateSentence(),
   ): Pair<UUID, LegacyCreateSentence> {
-    val (chargeUuidOne) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    val (chargeUuidTwo) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeUuidOne, chargeUuidTwo))
+    val (chargeUuidOne, toCreateLegacyCharge) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, firstLegacyCharge)
+    val toCreateSecond = secondLegacyCharge.copy(appearanceLifetimeUuid = toCreateLegacyCharge.appearanceLifetimeUuid)
+    val (chargeUuidTwo) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, toCreateSecond, false)
+    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeUuidOne, chargeUuidTwo), appearanceUuid = toCreateLegacyCharge.appearanceLifetimeUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")

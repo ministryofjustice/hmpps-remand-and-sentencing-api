@@ -101,6 +101,7 @@ class DataCreator {
 
     fun legacyCreateSentence(
       chargeUuids: List<UUID> = listOf(UUID.randomUUID()),
+      appearanceUuid: UUID = UUID.randomUUID(),
       fine: LegacyCreateFine = legacyCreateFine(),
       consecutiveToLifetimeUuid: UUID? = null,
       active: Boolean = true,
@@ -108,6 +109,7 @@ class DataCreator {
       returnToCustodyDate: LocalDate? = null,
     ): LegacyCreateSentence = LegacyCreateSentence(
       chargeUuids = chargeUuids,
+      appearanceUuid = appearanceUuid,
       fine = fine,
       consecutiveToLifetimeUuid = consecutiveToLifetimeUuid,
       active = active,

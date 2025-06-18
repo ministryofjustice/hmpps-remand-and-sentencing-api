@@ -245,7 +245,7 @@ class MigrationService(
     val existingCharge = existingChangeRecords.lastOrNull()?.second
     val toCreateCharge = if (existingCharge != null) {
       val chargeInAppearance = existingCharge.copyFrom(migrationCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
-      if (existingCharge.isSame(chargeInAppearance)) existingCharge else chargeInAppearance
+      if (existingCharge.isSame(chargeInAppearance, migrationCreateCharge.sentence != null)) existingCharge else chargeInAppearance
     } else {
       ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
     }
