@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.
 
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CustomPrisonerDataRepository
 
 @Repository
 class CustomPrisonerDataRepositoryImpl(
@@ -10,7 +9,8 @@ class CustomPrisonerDataRepositoryImpl(
 ) : CustomPrisonerDataRepository {
 
   override fun deletePrisonerData(prisonerId: String) {
-    val sql = this::class.java.getResource("/sql/delete-prisoner.sql")!!.readText()
+    val sql = this::class.java.getResource("/sql/delete-prisoner.sql")?.readText()
+      ?: throw IllegalStateException("Delete prisoner SQL file not found")
     entityManager.createNativeQuery(sql)
       .setParameter("prisonerId", prisonerId)
       .executeUpdate()
