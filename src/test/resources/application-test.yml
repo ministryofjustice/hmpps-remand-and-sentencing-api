@@ -45,3 +45,7 @@ document:
       url: http://localhost:8442
 ingress:
   url: localhost:8080
+
+delete:
+  before:
+    migrate: true
