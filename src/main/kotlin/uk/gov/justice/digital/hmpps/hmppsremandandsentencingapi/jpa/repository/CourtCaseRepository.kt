@@ -47,4 +47,6 @@ interface CourtCaseRepository :
   """,
   )
   fun findSentencedCourtCasesByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("status") status: EntityStatus = EntityStatus.ACTIVE): List<CourtCaseEntity>
+
+  fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
 }
