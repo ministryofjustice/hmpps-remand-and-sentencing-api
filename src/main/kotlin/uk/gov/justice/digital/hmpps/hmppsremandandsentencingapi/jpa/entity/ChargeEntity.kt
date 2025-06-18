@@ -73,6 +73,8 @@ class ChargeEntity(
   fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId == EntityStatus.ACTIVE }
 
   fun getActiveOrInactiveSentence(): SentenceEntity? = sentences.firstOrNull { setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE).contains(it.statusId) }
+
+  fun hasSentence(): Boolean = sentences.any { it.statusId != EntityStatus.DELETED }
   fun isSame(other: ChargeEntity, otherHasSentence: Boolean): Boolean = this.offenceCode == other.offenceCode &&
     ((this.offenceStartDate == null && other.offenceStartDate == null) || (other.offenceStartDate != null && this.offenceStartDate?.isEqual(other.offenceStartDate) == true)) &&
     ((this.offenceEndDate == null && other.offenceEndDate == null) || (other.offenceEndDate != null && this.offenceEndDate?.isEqual(other.offenceEndDate) == true)) &&
@@ -82,7 +84,7 @@ class ChargeEntity(
     this.legacyData == other.legacyData &&
     this.mergedFromCourtCase == other.mergedFromCourtCase &&
     this.mergedFromDate == other.mergedFromDate &&
-    ((otherHasSentence && getActiveOrInactiveSentence() != null) || (!otherHasSentence && getActiveOrInactiveSentence() == null))
+    otherHasSentence == hasSentence()
 
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
