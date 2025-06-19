@@ -50,16 +50,15 @@ WHERE original_sentence_id IN (
 
 -- Delete sentences
 DELETE FROM sentence s
-WHERE EXISTS (
-    SELECT 1
-    FROM charge c
-             JOIN appearance_charge ac ON c.id = ac.charge_id
-             JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
-      AND c.id = s.charge_id
-);
+    USING (
+      SELECT DISTINCT c.id
+        FROM charge c
+          JOIN appearance_charge ac ON c.id = ac.charge_id
+          JOIN court_appearance a ON ac.appearance_id = a.id
+          JOIN court_case cc ON a.court_case_id = cc.id
+        WHERE cc.prisoner_id = :prisonerId
+    ) del
+WHERE s.charge_id = del.id;
 
 -- Delete charge history
 DELETE FROM charge_history ch
