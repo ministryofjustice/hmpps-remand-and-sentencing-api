@@ -13,6 +13,6 @@ data class SentenceToChainTo(
   val countNumber: String?,
 ) {
   companion object {
-    fun from(charge: ChargeEntity, sentence: SentenceEntity): SentenceToChainTo = SentenceToChainTo(charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate, sentence.sentenceUuid, sentence.chargeNumber)
+    fun from(charge: ChargeEntity, sentence: SentenceEntity): SentenceToChainTo = SentenceToChainTo(charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate, sentence.sentenceUuid, sentence.countNumber)
   }
 }

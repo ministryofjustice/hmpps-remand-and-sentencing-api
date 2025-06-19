@@ -51,7 +51,7 @@ data class CourtCaseRow(
   var chargeLegacyData: ChargeLegacyData?,
   var sentenceId: Int?,
   var sentenceUuid: UUID?,
-  var sentenceChargeNumber: String?,
+  var sentenceCountNumber: String?,
   var sentenceStatus: EntityStatus?,
   var sentenceServeType: String?,
   var sentenceConvictionDate: LocalDate?,

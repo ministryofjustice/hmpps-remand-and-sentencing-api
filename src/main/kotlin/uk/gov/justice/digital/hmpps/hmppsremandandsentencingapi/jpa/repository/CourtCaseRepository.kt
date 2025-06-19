@@ -49,4 +49,20 @@ interface CourtCaseRepository :
   fun findSentencedCourtCasesByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("status") status: EntityStatus = EntityStatus.ACTIVE): List<CourtCaseEntity>
 
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
+
+  @Query(
+    """
+    select s.countNumber from CourtCaseEntity cc
+    join cc.appearances ca
+    join ca.appearanceCharges ac
+    join ac.charge c
+    join c.sentences s
+    where s.statusId != :#{#status}
+    and cc.caseUniqueIdentifier = :courtCaseUuid
+    and c.statusId != :#{#status}
+    and ca.statusId != :#{#status}
+    and cc.statusId != :#{#status}
+  """,
+  )
+  fun findSentenceCountNumbers(@Param("courtCaseUuid") courtCaseUuid: String, @Param("status") status: EntityStatus = EntityStatus.DELETED): List<String?>
 }
