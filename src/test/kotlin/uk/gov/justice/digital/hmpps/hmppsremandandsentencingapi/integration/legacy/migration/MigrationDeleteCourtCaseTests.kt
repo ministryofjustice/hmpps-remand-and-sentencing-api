@@ -13,9 +13,20 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `Migrate a case twice - ensure the original one is fully deleted, and the new one is persisted - other cases should not be deleted`() {
     val migrationCourtCases = DataCreator.migrationCreateCourtCases()
-    migrateCase(migrationCourtCases)
+    val response = migrateCase(migrationCourtCases)
+    response
+      .expectStatus().isCreated
+      .returnResult(String::class.java)
+      .responseBody
+      .blockFirst()
+
     val extraPrisonerMigratedOnce = "ANOTHER"
-    migrateCase(migrationCourtCases.copy(prisonerId = extraPrisonerMigratedOnce))
+    val extraPrisonerResponse = migrateCase(migrationCourtCases.copy(prisonerId = extraPrisonerMigratedOnce))
+    extraPrisonerResponse
+      .expectStatus().isCreated
+      .returnResult(String::class.java)
+      .responseBody
+      .blockFirst()
 
     // Check that the first prisoner data is migrated correctly
     getPagedSearchResponse(migrationCourtCases.prisonerId)
@@ -114,19 +125,15 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
     assertThat(courtCases).hasSize(1)
   }
 
-  private fun migrateCase(migrationCourtCases: MigrationCreateCourtCases) {
-    webTestClient
-      .post()
-      .uri("/legacy/court-case/migration")
-      .bodyValue(migrationCourtCases)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated
-  }
+  private fun migrateCase(migrationCourtCases: MigrationCreateCourtCases) = webTestClient
+    .post()
+    .uri("/legacy/court-case/migration")
+    .bodyValue(migrationCourtCases)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
 
   private fun getPagedSearchResponse(prisonerId: String) = webTestClient.get()
     .uri {

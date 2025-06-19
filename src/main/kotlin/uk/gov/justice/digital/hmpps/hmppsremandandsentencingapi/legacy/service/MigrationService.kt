@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
@@ -44,6 +43,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CustomPrisonerDataRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateChargeResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
@@ -82,7 +82,7 @@ class MigrationService(
   private val recallTypeRepository: RecallTypeRepository,
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
-  private val appearanceChargeRepository: AppearanceChargeRepository,
+  private val customPrisonerDataRepository: CustomPrisonerDataRepository,
   @Value("\${delete.before.migrate:false}")
   private val deleteBeforeMigrate: Boolean,
 ) {
@@ -327,59 +327,10 @@ class MigrationService(
     recallSentenceRepository.save(RecallSentenceEntity.fromMigration(createdSentence, recall, tracking.createdByUsername, recallSentenceLegacyData))
   }
 
-  private fun deletePrisonerData(prisonerId: String) {
-    log.info("Starting deletion of prisoner data for $prisonerId")
-
-    try {
-      recallSentenceRepository.deleteAllByRecallPrisonerId(prisonerId)
-
-      recallRepository.deleteAllByPrisonerId(prisonerId)
-
-      val courtCases = courtCaseRepository.findAllByPrisonerId(prisonerId)
-
-      courtCases.forEach { courtCase ->
-        log.info("Deleting court case ${courtCase.id}")
-
-        // Clear the latest court appearance reference
-        courtCase.latestCourtAppearance = null
-        courtCaseRepository.save(courtCase)
-
-        val appearances = courtAppearanceRepository.findAllByCourtCaseId(courtCase.id)
-
-        periodLengthHistoryRepository.deleteByCourtCaseId(courtCase.id)
-
-        periodLengthRepository.deleteAllBySentenceEntityChargeAppearanceCourtCaseId(courtCase.id)
-
-        sentenceHistoryRepository.deleteAllByOriginalSentenceChargeAppearanceCourtCaseId(courtCase.id)
-
-        sentenceRepository.deleteByCourtCaseId(courtCase.id)
-
-        chargeHistoryRepository.deleteAllByAppearanceCourtCaseId(courtCase.id)
-
-        appearanceChargeHistoryRepository.deleteAllByAppearanceIdIn(appearances.map { it.id })
-
-        appearanceChargeRepository.deleteAllByAppearanceCourtCaseId(courtCase.id)
-
-        chargeRepository.deleteAllByAppearanceCourtCaseId(courtCase.id)
-
-        courtAppearanceHistoryRepository.deleteAllByOriginalAppearanceCourtCaseId(courtCase.id)
-
-        // Extract and store IDs to null references to delete the nextCourtAppearance records
-        val nextCourtAppearanceIds = appearances.mapNotNull { it.nextCourtAppearance?.id }
-        appearances.forEach { it.nextCourtAppearance = null }
-        courtAppearanceRepository.saveAll(appearances)
-        nextCourtAppearanceRepository.deleteAllByIdIn(nextCourtAppearanceIds)
-
-        courtAppearanceRepository.deleteAllByCourtCaseId(courtCase.id)
-
-        courtCaseRepository.deleteAllByCourtCaseId(courtCase.id)
-      }
-
-      log.info("Finished deleting data for prisoner $prisonerId")
-    } catch (e: Exception) {
-      log.error("Error deleting prisoner data for $prisonerId", e)
-      throw e
-    }
+  fun deletePrisonerData(prisonerId: String) {
+    log.info("Starting delete of prisoner data for $prisonerId")
+    customPrisonerDataRepository.deletePrisonerData(prisonerId)
+    log.info("Finished delete of prisoner data for $prisonerId")
   }
 
   companion object {

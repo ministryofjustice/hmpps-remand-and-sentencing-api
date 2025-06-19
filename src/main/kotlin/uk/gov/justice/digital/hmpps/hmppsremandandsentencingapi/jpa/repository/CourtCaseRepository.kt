@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.EntityGraph
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
@@ -50,10 +49,6 @@ interface CourtCaseRepository :
   fun findSentencedCourtCasesByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("status") status: EntityStatus = EntityStatus.ACTIVE): List<CourtCaseEntity>
 
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
-
-  @Modifying
-  @Query("DELETE FROM CourtCaseEntity cc WHERE cc.id = :caseId")
-  fun deleteAllByCourtCaseId(caseId: Int)
 
   @Query(
     """
