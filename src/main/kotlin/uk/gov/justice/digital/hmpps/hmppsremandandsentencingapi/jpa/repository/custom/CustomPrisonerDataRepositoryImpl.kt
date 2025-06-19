@@ -8,6 +8,7 @@ class CustomPrisonerDataRepositoryImpl(
   private val entityManager: EntityManager,
 ) : CustomPrisonerDataRepository {
 
+  // This uses Native sql to delete all data for a prisoner - Only to be used for Migration
   override fun deletePrisonerData(prisonerId: String) {
     val sql = this::class.java.getResource("/sql/delete-prisoner.sql")?.readText()
       ?: throw IllegalStateException("Delete prisoner SQL file not found")

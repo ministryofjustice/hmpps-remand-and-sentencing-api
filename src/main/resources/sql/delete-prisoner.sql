@@ -1,3 +1,4 @@
+-- Native sql script to delete all data for a prisoner - Only to be used for migration
 -- Delete recall sentences
 DELETE FROM recall_sentence rs
 WHERE rs.recall_id IN (
