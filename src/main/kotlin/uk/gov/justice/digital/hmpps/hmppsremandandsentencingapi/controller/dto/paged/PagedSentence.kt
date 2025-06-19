@@ -25,7 +25,7 @@ data class PagedSentence(
       val periodLengths = sentenceRows.filter { it.sentencePeriodLengthId != null && it.sentencePeriodLengthStatus != EntityStatus.DELETED }.groupBy { it.sentencePeriodLengthId }
       return PagedSentence(
         sentence.sentenceUuid!!,
-        sentence.sentenceChargeNumber,
+        sentence.sentenceCountNumber,
         sentence.sentenceServeType!!,
         sentence.sentenceConsecutiveToUuid,
         sentence.sentenceConvictionDate,

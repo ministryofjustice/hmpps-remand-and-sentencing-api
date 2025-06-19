@@ -45,7 +45,7 @@ class LegacyPeriodLengthTests {
       convictionDate = null,
       legacyData = DataCreator.sentenceLegacyData(),
       fineAmount = null,
-      chargeNumber = null,
+      countNumber = null,
       sentenceType = null,
     )
     val result = LegacyPeriodLength.from(testPeriodLength, legacySentence)
@@ -144,7 +144,7 @@ class LegacyPeriodLengthTests {
 
     private val testSentence = SentenceEntity(
       sentenceUuid = testSentenceUuid,
-      chargeNumber = "TEST123",
+      countNumber = "TEST123",
       statusId = EntityStatus.ACTIVE,
       createdBy = "test-user",
       createdPrison = "TEST",

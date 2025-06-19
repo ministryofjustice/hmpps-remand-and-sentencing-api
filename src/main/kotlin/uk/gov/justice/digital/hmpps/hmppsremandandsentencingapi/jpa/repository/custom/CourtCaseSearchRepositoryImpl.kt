@@ -68,7 +68,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         c.legacy_data as chargeLegacyData,
         s.id as sentenceId,
         s.sentence_uuid as sentenceUuid,
-        s.charge_number as sentenceChargeNumber,
+        s.count_number as sentenceCountNumber,
         s.status_id as sentenceStatus,
         s.sentence_serve_type as sentenceServeType,
         s.conviction_date as sentenceConvictionDate,

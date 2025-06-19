@@ -47,7 +47,7 @@ data class LegacySentence(
         sentenceTypeAndCategory.first,
         sentenceTypeAndCategory.second,
         sentenceEntity.consecutiveTo?.sentenceUuid,
-        sentenceEntity.chargeNumber,
+        sentenceEntity.countNumber,
         sentenceEntity.fineAmount,
         firstSentenceAppearance.appearanceDate,
         latestRecall?.returnToCustodyDate,

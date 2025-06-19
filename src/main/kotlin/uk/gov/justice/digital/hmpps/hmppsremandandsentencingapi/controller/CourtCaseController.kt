@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCaseCountNumbers
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
@@ -191,4 +192,19 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     courtCaseReferenceService.refreshCaseReferences(courtCaseLegacyData, courtCaseUuid)
     return ResponseEntity.noContent().build()
   }
+
+  @GetMapping("/court-case/{courtCaseUuid}/count-numbers")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Retrieve count numbers for case",
+    description = "This endpoint will retrieve all unique count numbers for a case",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns all count numbers"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun getAllCountNumbers(@PathVariable courtCaseUuid: String): CourtCaseCountNumbers = courtCaseService.getAllCountNumbers(courtCaseUuid)
 }

@@ -21,7 +21,7 @@ data class Sentence(
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
       sentenceEntity.sentenceUuid,
-      sentenceEntity.chargeNumber,
+      sentenceEntity.countNumber,
       sentenceEntity.periodLengths.filter { it.statusId == EntityStatus.ACTIVE }.map { PeriodLength.from(it) },
       sentenceEntity.sentenceServeType,
       sentenceEntity.sentenceType?.let { SentenceType.from(it) },

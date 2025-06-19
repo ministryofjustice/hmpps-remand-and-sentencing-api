@@ -1,0 +1,1 @@
+ALTER TABLE sentence RENAME COLUMN charge_number TO count_number;

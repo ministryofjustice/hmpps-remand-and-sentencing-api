@@ -54,4 +54,20 @@ interface CourtCaseRepository :
   @Modifying
   @Query("DELETE FROM CourtCaseEntity cc WHERE cc.id = :caseId")
   fun deleteAllByCourtCaseId(caseId: Int)
+
+  @Query(
+    """
+    select s.countNumber from CourtCaseEntity cc
+    join cc.appearances ca
+    join ca.appearanceCharges ac
+    join ac.charge c
+    join c.sentences s
+    where s.statusId != :#{#status}
+    and cc.caseUniqueIdentifier = :courtCaseUuid
+    and c.statusId != :#{#status}
+    and ca.statusId != :#{#status}
+    and cc.statusId != :#{#status}
+  """,
+  )
+  fun findSentenceCountNumbers(@Param("courtCaseUuid") courtCaseUuid: String, @Param("status") status: EntityStatus = EntityStatus.DELETED): List<String?>
 }

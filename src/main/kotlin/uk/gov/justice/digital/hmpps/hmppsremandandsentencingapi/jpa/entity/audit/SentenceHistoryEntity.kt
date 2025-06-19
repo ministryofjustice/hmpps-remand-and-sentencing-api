@@ -50,7 +50,7 @@ class SentenceHistoryEntity(
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): SentenceHistoryEntity = SentenceHistoryEntity(
-      0, sentenceEntity.sentenceUuid, sentenceEntity.chargeNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
+      0, sentenceEntity.sentenceUuid, sentenceEntity.countNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
       sentenceEntity.updatedAt, sentenceEntity.updatedBy, sentenceEntity.updatedPrison, sentenceEntity.sentenceServeType, sentenceEntity.supersedingSentence?.id, sentenceEntity.charge.id, sentenceEntity.consecutiveTo?.id,
       sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity.fineAmount, sentenceEntity,
     )

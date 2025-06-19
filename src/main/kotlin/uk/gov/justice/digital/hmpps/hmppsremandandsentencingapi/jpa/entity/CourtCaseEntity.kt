@@ -131,7 +131,7 @@ import java.util.UUID
         ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),
         ColumnResult(name = "sentenceId"),
         ColumnResult(name = "sentenceUuid"),
-        ColumnResult(name = "sentenceChargeNumber"),
+        ColumnResult(name = "sentenceCountNumber"),
         ColumnResult(name = "sentenceStatus", type = EntityStatus::class),
         ColumnResult(name = "sentenceServeType"),
         ColumnResult(name = "sentenceConvictionDate", type = LocalDate::class),

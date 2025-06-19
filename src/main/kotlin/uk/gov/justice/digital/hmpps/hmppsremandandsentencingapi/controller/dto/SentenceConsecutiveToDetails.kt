@@ -23,7 +23,7 @@ data class SentenceConsecutiveToDetails(
       consecutiveToSentenceRow.charge.offenceStartDate,
       consecutiveToSentenceRow.charge.offenceEndDate,
       consecutiveToSentenceRow.sentence.sentenceUuid,
-      consecutiveToSentenceRow.sentence.chargeNumber,
+      consecutiveToSentenceRow.sentence.countNumber,
     )
   }
 }

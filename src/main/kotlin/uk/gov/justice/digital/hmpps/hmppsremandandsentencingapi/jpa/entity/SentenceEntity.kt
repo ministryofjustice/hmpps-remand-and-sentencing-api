@@ -37,7 +37,7 @@ class SentenceEntity(
   @Column
   var sentenceUuid: UUID,
   @Column
-  var chargeNumber: String? = null,
+  var countNumber: String? = null,
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
@@ -79,7 +79,7 @@ class SentenceEntity(
   @OneToMany(mappedBy = "sentence")
   var recallSentences: MutableSet<RecallSentenceEntity> = mutableSetOf()
 
-  fun isSame(other: SentenceEntity?): Boolean = chargeNumber == other?.chargeNumber &&
+  fun isSame(other: SentenceEntity?): Boolean = countNumber == other?.countNumber &&
     sentenceServeType == other?.sentenceServeType &&
     sentenceType == other.sentenceType &&
     createdPrison == other.createdPrison &&
@@ -93,7 +93,7 @@ class SentenceEntity(
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
-      chargeNumber = sentence.chargeNumber,
+      countNumber = sentence.chargeNumber,
       statusId = EntityStatus.ACTIVE,
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
@@ -156,7 +156,7 @@ class SentenceEntity(
   }
 
   fun updateFrom(sentence: SentenceEntity) {
-    chargeNumber = sentence.chargeNumber
+    countNumber = sentence.countNumber
     statusId = sentence.statusId
     updatedAt = sentence.updatedAt
     updatedBy = sentence.updatedBy
@@ -181,7 +181,7 @@ class SentenceEntity(
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
       val sentenceEntity = SentenceEntity(
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
-        chargeNumber = sentence.chargeNumber,
+        countNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,
         createdBy = createdBy,
         createdPrison = sentence.prisonId,
