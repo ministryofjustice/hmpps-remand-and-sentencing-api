@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class GetCourtCaseCountNumbersTests : IntegrationTestBase() {
 
@@ -19,6 +20,26 @@ class GetCourtCaseCountNumbersTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.countNumbers[0].countNumber")
       .isEqualTo(countNumber)
+  }
+
+  @Test
+  fun `do not return -1 count numbers`() {
+    val chargeNumber = "-1"
+    val sentence = DpsDataCreator.dpsCreateSentence(chargeNumber = chargeNumber)
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge))
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
+    val (courtCaseUuid) = createCourtCase(courtCase)
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid/count-numbers")
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.countNumbers")
+      .isEmpty
   }
 
   @Test
