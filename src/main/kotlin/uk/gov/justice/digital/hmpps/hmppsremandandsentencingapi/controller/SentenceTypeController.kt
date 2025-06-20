@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeIsValid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceTypeService
 import java.time.LocalDate
@@ -69,4 +70,17 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
   )
   @ResponseStatus(HttpStatus.OK)
   fun getSentenceTypesByIds(@RequestParam("uuids") uuids: List<UUID>): List<SentenceType> = sentenceTypesService.findByUuids(uuids)
+
+  @GetMapping("/{sentenceTypeUuid}/is-still-valid")
+  @Operation(
+    summary = "Check the sentence type is still valid",
+    description = "This endpoint will determine if the sentence type is still valid with the age, conviction date, statuses, offence date parameters",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns whether the sentence type is still valid"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+    ],
+  )
+  fun sentenceTypeStillValid(@PathVariable sentenceTypeUuid: UUID, @RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate, @RequestParam(name = "statuses", defaultValue = "ACTIVE", required = false) statuses: List<ReferenceEntityStatus>, @RequestParam("offenceDate") offenceDate: LocalDate): SentenceTypeIsValid = sentenceTypesService.sentenceTypeIsStillValid(sentenceTypeUuid, age, convictionDate, statuses, offenceDate)
 }
