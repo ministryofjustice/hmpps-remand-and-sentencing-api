@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient
 class WebClientConfiguration(
   @Value("\${prison.api.url}") private val prisonApiUri: String,
   @Value("\${document.management.api.url}") private val documentManagementApiUri: String,
+  @Value("\${manage.offences.api.url}") private val manageOffencesApiUri: String,
 ) {
 
   @Bean
@@ -51,6 +52,12 @@ class WebClientConfiguration(
     clientRegistrationRepository: ClientRegistrationRepository,
     builder: WebClient.Builder,
   ): WebClient = getOAuthWebClient(authorizedClientManagerUserEnhanced(clientRegistrationRepository), builder.filter(addDocumentManagementHeadersFilterFunction()), documentManagementApiUri, "document-management-api")
+
+  @Bean
+  fun manageOffencesApiWebClient(webclientBuilder: WebClient.Builder): WebClient = webclientBuilder
+    .baseUrl(manageOffencesApiUri)
+    .filter(addAuthHeaderFilterFunction())
+    .build()
 
   private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authentication: Authentication = SecurityContextHolder.getContext()

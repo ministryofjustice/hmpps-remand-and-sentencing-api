@@ -43,6 +43,11 @@ document:
   management:
     api:
       url: http://localhost:8442
+
+manage:
+  offences:
+    api:
+      url: http://localhost:8443
 ingress:
   url: localhost:8080
 
