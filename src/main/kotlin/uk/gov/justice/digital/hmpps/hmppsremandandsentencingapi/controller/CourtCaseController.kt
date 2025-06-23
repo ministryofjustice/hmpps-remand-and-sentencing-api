@@ -142,7 +142,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Retrieve recallable court cases for a prisoner",
-    description = "This endpoint returns filtered court cases optimized for recall processing workflows. Only includes ACTIVE cases with SENTENCING warrant type that have sentences.",
+    description = "This endpoint returns filtered court cases optimised for recall processing workflows. Only includes ACTIVE cases with SENTENCING warrant type that have sentences.",
   )
   @ApiResponses(
     value = [

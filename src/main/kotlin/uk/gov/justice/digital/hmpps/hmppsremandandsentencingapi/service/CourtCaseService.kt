@@ -146,7 +146,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       .filter { courtCase ->
         courtCase.statusId == EntityStatus.ACTIVE &&
           courtCase.latestCourtAppearance?.let { appearance ->
-            (appearance.warrantType == "SENTENCING" || appearance.warrantType == "SENTENCED") &&
+            appearance.warrantType == "SENTENCING" &&
               appearance.appearanceCharges.any { appearanceCharge ->
                 appearanceCharge.charge?.statusId == EntityStatus.ACTIVE &&
                   appearanceCharge.charge?.sentences?.any { sentence ->
