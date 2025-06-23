@@ -72,27 +72,24 @@ WHERE original_charge_id IN (
     )
 );
 
--- Delete appearance charges
+-- Store charge IDs in tenp table before deleting appearance_charges so they can be used to delete charges
+CREATE TEMP TABLE tmp_charge_ids AS
+SELECT DISTINCT ac.charge_id
+FROM appearance_charge ac
+         JOIN court_appearance a ON ac.appearance_id = a.id
+         JOIN court_case cc ON a.court_case_id = cc.id
+WHERE cc.prisoner_id = :prisonerId;
+
+-- Delete apperance_charge
 DELETE FROM appearance_charge ac
-WHERE ac.appearance_id IN (
-    SELECT a.id
-    FROM court_appearance a
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
-);
+WHERE ac.charge_id IN (SELECT charge_id FROM tmp_charge_ids);
+
 
 -- Delete charges
 DELETE FROM charge c
-WHERE EXISTS (
-    SELECT 1
-    FROM appearance_charge ac
-             JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE ac.charge_id = c.id
-      AND a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
-);
+WHERE c.id IN (SELECT charge_id FROM tmp_charge_ids);
+
+DROP TABLE tmp_charge_ids;
 
 -- Delete court appearance history
 DELETE FROM court_appearance_history
