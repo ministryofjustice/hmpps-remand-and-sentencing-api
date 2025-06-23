@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
@@ -135,6 +136,31 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
+  }
+
+  @GetMapping("/court-case/{prisonerId}/recallable-court-cases")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Retrieve recallable court cases for a prisoner",
+    description = "This endpoint returns filtered court cases optimized for recall processing workflows. Only includes ACTIVE cases with SENTENCING warrant type that have sentences.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns recallable court cases"),
+      ApiResponse(responseCode = "400", description = "Bad request - invalid prisoner ID format or query parameters"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Prisoner not found in system"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun getRecallableCourtCases(
+    @PathVariable prisonerId: String,
+    @RequestParam(defaultValue = "date") sortBy: String,
+    @RequestParam(defaultValue = "desc") sortOrder: String,
+  ): RecallableCourtCasesResponse = courtCaseService.getRecallableCourtCases(prisonerId, sortBy, sortOrder).let { (recallCourtCases, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    recallCourtCases
   }
 
   @GetMapping("\${court.case.getByIdPath}")
