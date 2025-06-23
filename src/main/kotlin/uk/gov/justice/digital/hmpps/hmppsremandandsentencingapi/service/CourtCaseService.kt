@@ -10,7 +10,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCaseCountNumbers
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -129,6 +133,99 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   fun getSentencedCourtCases(prisonerId: String): RecordResponse<CourtCases> = courtCaseRepository.findSentencedCourtCasesByPrisonerId(prisonerId).let {
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(it)
     RecordResponse(CourtCases.from(it), eventsToEmit)
+  }
+
+  @Transactional
+  fun getRecallableCourtCases(
+    prisonerId: String,
+    sortBy: String = "date",
+    sortOrder: String = "desc",
+  ): RecordResponse<RecallableCourtCasesResponse> {
+    val courtCases = courtCaseRepository.findSentencedCourtCasesByPrisonerId(prisonerId)
+      .filter { courtCase ->
+        courtCase.statusId == EntityStatus.ACTIVE &&
+          courtCase.latestCourtAppearance?.warrantType == "SENTENCING" &&
+          courtCase.appearances.any { appearance ->
+            appearance.statusId == EntityStatus.ACTIVE &&
+              appearance.appearanceCharges.any { appearanceCharge ->
+                appearanceCharge.charge?.statusId == EntityStatus.ACTIVE &&
+                  appearanceCharge.charge?.sentences?.any { sentence ->
+                    sentence.statusId == EntityStatus.ACTIVE
+                  } == true
+              }
+          }
+      }
+
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCases)
+
+    val recallableCourtCases = courtCases.map { courtCase ->
+      val latestAppearance = courtCase.latestCourtAppearance!!
+      RecallableCourtCase(
+        courtCaseUuid = courtCase.caseUniqueIdentifier,
+        reference = latestAppearance.courtCaseReference ?: "",
+        courtCode = latestAppearance.courtCode,
+        date = latestAppearance.appearanceDate,
+        status = courtCase.statusId,
+        isSentenced = courtCase.appearances.any { appearance ->
+          appearance.appearanceCharges.any { it.charge?.sentences?.isNotEmpty() == true }
+        },
+        sentences = courtCase.appearances
+          .filter { it.statusId == EntityStatus.ACTIVE }
+          .flatMap { appearance ->
+            appearance.appearanceCharges
+              .filter { it.charge?.statusId == EntityStatus.ACTIVE }
+              .flatMap { it.charge?.sentences ?: emptyList() }
+              .filter { it.statusId == EntityStatus.ACTIVE }
+          }
+          .map { sentence ->
+            RecallableSentence(
+              sentenceUuid = sentence.sentenceUuid,
+              offenceCode = sentence.charge.offenceCode,
+              sentenceType = sentence.sentenceType?.description,
+              classification = sentence.sentenceType?.classification,
+              systemOfRecord = "RAS",
+              periodLengths = sentence.periodLengths.map { periodLength ->
+                PeriodLength(
+                  years = periodLength.years,
+                  months = periodLength.months,
+                  weeks = periodLength.weeks,
+                  days = periodLength.days,
+                  periodOrder = periodLength.periodOrder,
+                  periodLengthType = periodLength.periodLengthType,
+                  legacyData = periodLength.legacyData,
+                  periodLengthUuid = periodLength.periodLengthUuid,
+                )
+              },
+              convictionDate = sentence.convictionDate,
+            )
+          },
+      )
+    }
+
+    val sortedCases = when (sortBy.lowercase()) {
+      "reference" -> when (sortOrder.lowercase()) {
+        "asc" -> recallableCourtCases.sortedBy { it.reference }
+        else -> recallableCourtCases.sortedByDescending { it.reference }
+      }
+
+      "court" -> when (sortOrder.lowercase()) {
+        "asc" -> recallableCourtCases.sortedBy { it.courtCode }
+        else -> recallableCourtCases.sortedByDescending { it.courtCode }
+      }
+
+      else -> when (sortOrder.lowercase()) {
+        "asc" -> recallableCourtCases.sortedBy { it.date }
+        else -> recallableCourtCases.sortedByDescending { it.date }
+      }
+    }
+
+    return RecordResponse(
+      RecallableCourtCasesResponse(
+        totalCases = sortedCases.size,
+        cases = sortedCases,
+      ),
+      eventsToEmit,
+    )
   }
 
   @Transactional(readOnly = true)
