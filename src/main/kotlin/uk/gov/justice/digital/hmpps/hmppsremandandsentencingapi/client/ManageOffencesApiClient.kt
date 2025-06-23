@@ -44,8 +44,13 @@ class ManageOffencesApiClient(@Qualifier("manageOffencesApiWebClient") private v
         offence.code to (offence.description ?: "Description not available")
       }
     } catch (e: WebClientResponseException) {
-      log.error("Failed to fetch offence descriptions for codes: {}, status: {}, message: {}", 
-        offenceCodes, e.statusCode, e.responseBodyAsString, e)
+      log.error(
+        "Failed to fetch offence descriptions for codes: {}, status: {}, message: {}",
+        offenceCodes,
+        e.statusCode,
+        e.responseBodyAsString,
+        e,
+      )
       emptyMap()
     } catch (e: Exception) {
       log.error("Unexpected error fetching offence descriptions for codes: {}", offenceCodes, e)
