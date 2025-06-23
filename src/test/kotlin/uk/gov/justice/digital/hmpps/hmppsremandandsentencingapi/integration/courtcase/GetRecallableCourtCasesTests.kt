@@ -202,13 +202,13 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
     val newerChargeWithoutSentence = DpsDataCreator.dpsCreateCharge(sentence = null)
     val newerAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(newerChargeWithoutSentence),
-      warrantType = "SENTENCING", 
+      warrantType = "SENTENCING",
       appearanceDate = LocalDate.of(2024, 1, 15),
     )
 
     // Court case has both appearances - latest has no sentence, older has sentence
     val courtCase = DpsDataCreator.dpsCreateCourtCase(
-      appearances = listOf(olderAppearance, newerAppearance)
+      appearances = listOf(olderAppearance, newerAppearance),
     )
     val (courtCaseUuid, createdCase) = createCourtCase(courtCase)
 
