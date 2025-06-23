@@ -89,7 +89,7 @@ WHERE ac.charge_id IN (SELECT charge_id FROM tmp_charge_ids);
 DELETE FROM charge c
 WHERE c.id IN (SELECT charge_id FROM tmp_charge_ids);
 
-DROP TABLE tmp_charge_ids
+DROP TABLE tmp_charge_ids;
 
 -- Delete court appearance history
 DELETE FROM court_appearance_history
