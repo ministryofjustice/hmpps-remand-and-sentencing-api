@@ -35,7 +35,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${createdSentencedCase.prisonerId}/recallable-court-cases")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
       }
       .exchange()
       .expectStatus()
@@ -43,10 +43,10 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
-      .jsonPath("$.cases[0].caseId").isEqualTo(sentencedCourtCaseUuid)
+      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(sentencedCourtCaseUuid)
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
-      .jsonPath("$.cases[0].sentences[0].sentenceId").exists()
+      .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
       .jsonPath("$.cases[0].sentences[0].sentenceType").exists()
   }
@@ -78,7 +78,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${createdCase1.prisonerId}/recallable-court-cases?sortBy=date&sortOrder=desc")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
       }
       .exchange()
       .expectStatus()
@@ -86,8 +86,8 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.totalCases").isEqualTo(2)
       .jsonPath("$.cases.length()").isEqualTo(2)
-      .jsonPath("$.cases[0].caseId").isEqualTo(courtCaseUuid1) // More recent date first
-      .jsonPath("$.cases[1].caseId").isEqualTo(courtCaseUuid2)
+      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid1) // More recent date first
+      .jsonPath("$.cases[1].courtCaseUuid").isEqualTo(courtCaseUuid2)
   }
 
   @Test
@@ -117,7 +117,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${createdCase1.prisonerId}/recallable-court-cases?sortBy=date&sortOrder=asc")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
       }
       .exchange()
       .expectStatus()
@@ -125,12 +125,12 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.totalCases").isEqualTo(2)
       .jsonPath("$.cases.length()").isEqualTo(2)
-      .jsonPath("$.cases[0].caseId").isEqualTo(courtCaseUuid2) // Earlier date first
-      .jsonPath("$.cases[1].caseId").isEqualTo(courtCaseUuid1)
+      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid2) // Earlier date first
+      .jsonPath("$.cases[1].courtCaseUuid").isEqualTo(courtCaseUuid1)
   }
 
   @Test
-  fun `get recallable court cases with alternative authorized role`() {
+  fun `get recallable court cases with correct authorized role`() {
     val charge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(charge),
@@ -167,7 +167,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${createdCase.prisonerId}/recallable-court-cases")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
       }
       .exchange()
       .expectStatus()
@@ -187,6 +187,47 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isUnauthorized
+  }
+
+  @Test
+  fun `includes sentences from older appearances in the same court case`() {
+    // Create a court case with multiple appearances
+    val olderCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
+    val olderAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(olderCharge),
+      warrantType = "SENTENCING",
+      appearanceDate = LocalDate.of(2024, 1, 10),
+    )
+
+    val newerChargeWithoutSentence = DpsDataCreator.dpsCreateCharge(sentence = null)
+    val newerAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(newerChargeWithoutSentence),
+      warrantType = "SENTENCING", 
+      appearanceDate = LocalDate.of(2024, 1, 15),
+    )
+
+    // Court case has both appearances - latest has no sentence, older has sentence
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(
+      appearances = listOf(olderAppearance, newerAppearance)
+    )
+    val (courtCaseUuid, createdCase) = createCourtCase(courtCase)
+
+    webTestClient
+      .get()
+      .uri("/court-case/${createdCase.prisonerId}/recallable-court-cases")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.totalCases").isEqualTo(1)
+      .jsonPath("$.cases.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid)
+      .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
+      .jsonPath("$.cases[0].sentences.length()").isEqualTo(1) // Should find the sentence from older appearance
+      .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
   }
 
   @Test

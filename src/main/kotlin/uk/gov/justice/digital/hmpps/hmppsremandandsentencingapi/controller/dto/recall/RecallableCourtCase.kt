@@ -4,9 +4,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import java.time.LocalDate
 
 data class RecallableCourtCase(
-  val caseId: String,
+  val courtCaseUuid: String,
   val reference: String,
-  val court: String,
+  val courtCode: String,
   val date: LocalDate,
   val status: EntityStatus,
   val isSentenced: Boolean,
