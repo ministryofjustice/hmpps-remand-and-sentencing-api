@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
@@ -35,5 +36,8 @@ class MigrationController(private val migrationService: MigrationService) {
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun create(@RequestBody migrationCreateCourtCases: MigrationCreateCourtCases): MigrationCreateCourtCasesResponse = migrationService.create(migrationCreateCourtCases)
+  fun create(
+    @RequestBody migrationCreateCourtCases: MigrationCreateCourtCases,
+    @RequestParam(name = "deleteExisting", required = false, defaultValue = "false") deleteExisting: Boolean,
+  ): MigrationCreateCourtCasesResponse = migrationService.create(migrationCreateCourtCases, deleteExisting)
 }
