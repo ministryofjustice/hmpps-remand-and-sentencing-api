@@ -127,7 +127,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
 
   private fun migrateCase(migrationCourtCases: MigrationCreateCourtCases) = webTestClient
     .post()
-    .uri("/legacy/court-case/migration")
+    .uri("/legacy/court-case/migration?deleteExisting=true")
     .bodyValue(migrationCourtCases)
     .headers {
       it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
