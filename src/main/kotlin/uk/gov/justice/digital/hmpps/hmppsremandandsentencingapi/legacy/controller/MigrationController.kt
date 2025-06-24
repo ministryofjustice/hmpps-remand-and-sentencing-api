@@ -38,7 +38,6 @@ class MigrationController(private val migrationService: MigrationService) {
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun create(
     @RequestBody migrationCreateCourtCases: MigrationCreateCourtCases,
-    @RequestParam(name = "deleteExisting", required = false, defaultValue = "false") deleteExisting: Boolean
-  ): MigrationCreateCourtCasesResponse =
-    migrationService.create(migrationCreateCourtCases, deleteExisting)
+    @RequestParam(name = "deleteExisting", required = false, defaultValue = "false") deleteExisting: Boolean,
+  ): MigrationCreateCourtCasesResponse = migrationService.create(migrationCreateCourtCases, deleteExisting)
 }

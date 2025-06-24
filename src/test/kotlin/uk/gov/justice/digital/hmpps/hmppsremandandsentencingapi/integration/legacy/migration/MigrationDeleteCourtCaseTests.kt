@@ -123,11 +123,16 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
     // Check that only one CourtCase record exists for the prisoner
     val courtCases = courtCaseRepository.findAllByPrisonerId(migrationCourtCases.prisonerId)
     assertThat(courtCases).hasSize(1)
+
+    // Migrate again and this time dont delete the existing case, results in a duplicate
+    migrateCase(newMigrationRequest, deleteExisting = false)
+    val courtCasesAfterNotDeleting = courtCaseRepository.findAllByPrisonerId(migrationCourtCases.prisonerId)
+    assertThat(courtCasesAfterNotDeleting).hasSize(2)
   }
 
-  private fun migrateCase(migrationCourtCases: MigrationCreateCourtCases) = webTestClient
+  private fun migrateCase(migrationCourtCases: MigrationCreateCourtCases, deleteExisting: Boolean = true) = webTestClient
     .post()
-    .uri("/legacy/court-case/migration?deleteExisting=true")
+    .uri("/legacy/court-case/migration?deleteExisting=$deleteExisting")
     .bodyValue(migrationCourtCases)
     .headers {
       it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
