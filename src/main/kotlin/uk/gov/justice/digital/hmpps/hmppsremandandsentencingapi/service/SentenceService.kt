@@ -130,6 +130,8 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         ),
       )
     }
+
+    sentence.periodLengths.forEach { it.delete(serviceUserService.getUsername()) }
     return RecordResponse(sentence, eventsToEmit)
   }
 
