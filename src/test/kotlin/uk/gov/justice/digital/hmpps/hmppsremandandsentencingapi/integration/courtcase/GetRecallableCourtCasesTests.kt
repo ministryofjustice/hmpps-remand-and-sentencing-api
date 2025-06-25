@@ -20,8 +20,8 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
         nomisOutcomeCode = "1002",
         outcomeDescription = "Guilty",
         outcomeDispositionCode = "C",
-        outcomeConvictionFlag = true
-      )
+        outcomeConvictionFlag = true,
+      ),
     )
     val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(sentencedCharge),
@@ -210,8 +210,8 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
         nomisOutcomeCode = "1002",
         outcomeDescription = "Guilty",
         outcomeDispositionCode = "C",
-        outcomeConvictionFlag = true
-      )
+        outcomeConvictionFlag = true,
+      ),
     )
     val olderAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(olderCharge),
