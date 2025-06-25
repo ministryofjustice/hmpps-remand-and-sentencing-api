@@ -200,6 +200,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               chargeLegacyData = sentence.charge.legacyData,
               countNumber = sentence.countNumber,
               sentenceServeType = sentence.sentenceServeType,
+              sentenceLegacyData = sentence.legacyData,
             )
           },
       )

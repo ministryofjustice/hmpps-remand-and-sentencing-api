@@ -62,6 +62,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
+      .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
   }
 
   @Test
@@ -253,6 +254,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
+      .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
   }
 
   @Test
