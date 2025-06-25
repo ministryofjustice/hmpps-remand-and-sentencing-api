@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
@@ -12,7 +13,16 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
   @Test
   fun `get all recallable court cases with sentenced status`() {
     // Create a court case that should appear in recallable list
-    val sentencedCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(),
+      legacyData = ChargeLegacyData(
+        postedDate = "2024-01-01",
+        nomisOutcomeCode = "1002",
+        outcomeDescription = "Guilty",
+        outcomeDispositionCode = "C",
+        outcomeConvictionFlag = true
+      )
+    )
     val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(sentencedCharge),
       outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"), // Sentenced outcome
@@ -49,6 +59,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
       .jsonPath("$.cases[0].sentences[0].sentenceType").exists()
+      .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
   }
 
   @Test
@@ -192,7 +203,16 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
   @Test
   fun `includes sentences from older appearances in the same court case`() {
     // Create a court case with multiple appearances
-    val olderCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
+    val olderCharge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(),
+      legacyData = ChargeLegacyData(
+        postedDate = "2024-01-01",
+        nomisOutcomeCode = "1002",
+        outcomeDescription = "Guilty",
+        outcomeDispositionCode = "C",
+        outcomeConvictionFlag = true
+      )
+    )
     val olderAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(olderCharge),
       warrantType = "SENTENCING",
@@ -228,6 +248,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1) // Should find the sentence from older appearance
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
+      .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
   }
 
   @Test
