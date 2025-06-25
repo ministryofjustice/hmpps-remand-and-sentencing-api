@@ -15,4 +15,6 @@ data class RecallableSentence(
   val periodLengths: List<PeriodLength>,
   val convictionDate: LocalDate?,
   val chargeLegacyData: ChargeLegacyData?,
+  val countNumber: String?,
+  val sentenceServeType: String?,
 )
