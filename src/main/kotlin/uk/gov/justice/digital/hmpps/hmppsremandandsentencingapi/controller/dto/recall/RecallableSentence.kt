@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
 import java.util.UUID
 
@@ -13,4 +14,5 @@ data class RecallableSentence(
   val systemOfRecord: String,
   val periodLengths: List<PeriodLength>,
   val convictionDate: LocalDate?,
+  val chargeLegacyData: ChargeLegacyData?,
 )
