@@ -197,6 +197,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
                 )
               },
               convictionDate = sentence.convictionDate,
+              chargeLegacyData = sentence.charge.legacyData,
             )
           },
       )
