@@ -159,6 +159,7 @@ class ChargeEntity(
       0, UUID.randomUUID(), offenceCode, offenceStartDate, offenceEndDate, EntityStatus.ACTIVE, chargeOutcome, replacedCharge,
       terrorRelated,
       currentDate, createdBy, createdPrison, currentDate, null, null, legacyData, appearanceCharges.toMutableSet(),
+      mergedFromCourtCase, mergedFromDate,
     )
     charge.sentences = sentences.toMutableSet()
     return charge
@@ -221,6 +222,27 @@ class ChargeEntity(
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = null)
 
-    fun from(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = migrationCreateCharge.offenceCode, offenceStartDate = migrationCreateCharge.offenceStartDate, offenceEndDate = migrationCreateCharge.offenceEndDate, statusId = if (migrationCreateCharge.merged) EntityStatus.MERGED else EntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = migrationCreateCharge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = null)
+    fun from(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+      0,
+      UUID.randomUUID(),
+      migrationCreateCharge.offenceCode,
+      migrationCreateCharge.offenceStartDate,
+      migrationCreateCharge.offenceEndDate,
+      if (migrationCreateCharge.merged) EntityStatus.MERGED else EntityStatus.ACTIVE,
+      chargeOutcome,
+      null,
+      null,
+      ZonedDateTime.now(),
+      createdBy,
+      null,
+      ZonedDateTime.now(),
+      null,
+      null,
+
+      migrationCreateCharge.legacyData,
+      mutableSetOf(),
+      null,
+      migrationCreateCharge.mergedFromDate,
+    )
   }
 }
