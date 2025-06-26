@@ -15,10 +15,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.TestCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.UnlinkEventsToEmit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.LocalDate
 import java.time.ZonedDateTime
 
 @Service
@@ -61,11 +63,12 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   }
 
   @Transactional
-  fun linkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String): Pair<String, String> {
+  fun linkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String, linkCase: LegacyLinkCase?): Pair<String, String> {
     val sourceCourtCase = getUnlessDeleted(sourceCourtCaseUuid)
     val targetCourtCase = getUnlessDeleted(targetCourtCaseUuid)
     sourceCourtCase.statusId = EntityStatus.MERGED
     sourceCourtCase.mergedToCase = targetCourtCase
+    sourceCourtCase.mergedToDate = linkCase?.linkedDate ?: LocalDate.now()
     return sourceCourtCaseUuid to sourceCourtCase.prisonerId
   }
 
@@ -77,6 +80,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     if (sourceCourtCase.mergedToCase?.caseUniqueIdentifier == targetCourtCaseUuid) {
       sourceCourtCase.statusId = EntityStatus.ACTIVE
       sourceCourtCase.mergedToCase = null
+      sourceCourtCase.mergedToDate = null
       courtCaseEventMetadata = EventMetadataCreator.courtCaseEventMetadata(
         sourceCourtCase.prisonerId,
         sourceCourtCase.caseUniqueIdentifier,

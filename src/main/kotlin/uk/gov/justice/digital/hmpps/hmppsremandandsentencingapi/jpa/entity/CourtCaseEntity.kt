@@ -160,6 +160,12 @@ import java.util.UUID
         ColumnResult(name = "mergedFromWarrantDate", type = LocalDate::class),
         ColumnResult(name = "courtAppearanceId"),
         ColumnResult(name = "recallInAppearanceId"),
+        ColumnResult(name = "mergedToCaseId"),
+        ColumnResult(name = "mergedToDate", type = LocalDate::class),
+        ColumnResult(name = "mergedToAppearanceId"),
+        ColumnResult(name = "mergedToCaseReference"),
+        ColumnResult(name = "mergedToCourtCode"),
+        ColumnResult(name = "mergedToWarrantDate", type = LocalDate::class),
       ),
     ),
   ],
@@ -203,6 +209,8 @@ class CourtCaseEntity(
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "merged_to_case_id")
   var mergedToCase: CourtCaseEntity? = null
+
+  var mergedToDate: LocalDate? = null
   companion object {
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
