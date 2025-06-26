@@ -16,6 +16,5 @@ data class MigrationCreateCharge(
   @JsonSetter(nulls = Nulls.SKIP)
   var merged: Boolean = false,
   val mergedFromCaseId: Long?,
-  val mergedFromEventId: Long?,
   val mergedFromDate: LocalDate?,
 )

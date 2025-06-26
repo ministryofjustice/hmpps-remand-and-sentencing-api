@@ -20,7 +20,6 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
@@ -84,7 +83,6 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
@@ -130,7 +128,6 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )

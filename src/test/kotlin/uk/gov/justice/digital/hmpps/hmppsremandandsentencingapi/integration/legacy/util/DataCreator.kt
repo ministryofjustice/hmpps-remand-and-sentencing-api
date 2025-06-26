@@ -165,7 +165,6 @@ class DataCreator {
       sentence: MigrationCreateSentence? = migrationCreateSentence(),
       merged: Boolean = false,
       mergedFromCaseId: Long? = null,
-      mergedFromEventId: Long? = null,
       mergedFromDate: LocalDate? = null,
     ): MigrationCreateCharge = MigrationCreateCharge(
       chargeNOMISId,
@@ -176,7 +175,6 @@ class DataCreator {
       sentence,
       merged,
       mergedFromCaseId,
-      mergedFromEventId,
       mergedFromDate,
     )
 

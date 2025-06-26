@@ -59,7 +59,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
-import java.time.format.DateTimeFormatter
 
 @Service
 class MigrationService(
@@ -111,7 +110,7 @@ class MigrationService(
     )
 
     return MigrationCreateCourtCasesResponse(
-      tracking.createdCourtCasesMap.map { (caseId, createdCourtCase) -> MigrationCreateCourtCaseResponse(createdCourtCase.caseUniqueIdentifier, caseId) },
+      tracking.createdCourtCasesMap.map { (caseId, createdCourtCase) -> MigrationCreateCourtCaseResponse(createdCourtCase.record.caseUniqueIdentifier, caseId) },
       tracking.createdCourtAppearancesMap.map { (eventId, createdAppearance) -> MigrationCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
       tracking.createdChargesMap.map { (chargeNOMISId, createdCharges) -> MigrationCreateChargeResponse(createdCharges.first().second.chargeUuid, chargeNOMISId) },
       tracking.createdSentencesMap.map { (id, createdSentences) -> MigrationCreateSentenceResponse(createdSentences.first().sentenceUuid, id) },
@@ -151,21 +150,23 @@ class MigrationService(
   }
 
   fun linkMergedCases(migrationCreateCourtCases: MigrationCreateCourtCases, tracking: MigrationDataTracking) {
-    val targetCourtCases = migrationCreateCourtCases.courtCases.filter { it.appearances.flatMap { it.charges }.any { it.mergedFromCaseId != null && it.mergedFromEventId != null } }
+    val targetCourtCases = migrationCreateCourtCases.courtCases.filter { it.appearances.flatMap { it.charges }.any { it.mergedFromCaseId != null } }
     targetCourtCases.forEach { targetCourtCase ->
       targetCourtCase.appearances.forEach { appearance ->
         appearance.charges
-          .filter { it.mergedFromCaseId != null && it.mergedFromEventId != null }
+          .filter { it.mergedFromCaseId != null }
           .forEach { targetNomisCharge ->
             val sourceCourtCase = tracking.createdCourtCasesMap[targetNomisCharge.mergedFromCaseId]!!
             val targetCourtCase = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
-            val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == targetNomisCharge.mergedFromEventId }
+            val lastSourceAppearance = sourceCourtCase.request.appearances.filter { appearance -> appearance.charges.any { charge -> charge.chargeNOMISId == targetNomisCharge.chargeNOMISId } }.maxBy { it.appearanceDate }
+
+            val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
             val (_, targetCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == appearance.eventId }
-            targetCharge.mergedFromCourtCase = sourceCourtCase
+            targetCharge.mergedFromCourtCase = sourceCourtCase.record
             targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
             targetCharge.supersedingCharge = sourceCharge
-            if (sourceCourtCase.mergedToCase == null) {
-              sourceCourtCase.mergedToCase = targetCourtCase
+            if (sourceCourtCase.record.mergedToCase == null) {
+              sourceCourtCase.record.mergedToCase = targetCourtCase.record
             }
           }
       }
@@ -210,7 +211,7 @@ class MigrationService(
     val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
     createdCourtCase.latestCourtAppearance = latestCourtAppearance
     latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, migrationCreateCourtCase, createdAppearances) }
-    tracking.createdCourtCasesMap.put(migrationCreateCourtCase.caseId, createdCourtCase)
+    tracking.createdCourtCasesMap.put(migrationCreateCourtCase.caseId, RequestToRecord(migrationCreateCourtCase, createdCourtCase))
   }
 
   fun createAppearances(migrationCreateAppearances: List<MigrationCreateCourtAppearance>, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: MigrationDataTracking): Map<Long, CourtAppearanceEntity> {
@@ -251,16 +252,7 @@ class MigrationService(
       ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
-    if (migrationCreateCharge.mergedFromDate != null && (migrationCreateCharge.mergedFromCaseId == null || migrationCreateCharge.mergedFromEventId == null)) {
-      log.info(
-        """
-        event $eventId merged from for charge ${migrationCreateCharge.chargeNOMISId} is not set. 
-        merged from case id: ${migrationCreateCharge.mergedFromCaseId} 
-        merged from event id: ${migrationCreateCharge.mergedFromEventId}
-        merged from date: ${migrationCreateCharge.mergedFromDate.format(DateTimeFormatter.ISO_DATE)}
-        """.trimIndent(),
-      )
-    }
+
     migrationCreateCharge.sentence?.let { migrationSentence -> createdCharge.sentences.add(createSentence(migrationSentence, createdCharge, tracking, referenceData)) }
     existingChangeRecords.add(eventId to createdCharge)
     tracking.createdChargesMap.put(migrationCreateCharge.chargeNOMISId, existingChangeRecords)
@@ -351,11 +343,16 @@ class MigrationService(
   data class MigrationDataTracking(
     val prisonerId: String,
     val createdByUsername: String,
-    val createdCourtCasesMap: MutableMap<Long, CourtCaseEntity> = HashMap(),
+    val createdCourtCasesMap: MutableMap<Long, RequestToRecord<MigrationCreateCourtCase, CourtCaseEntity>> = HashMap(),
     val createdCourtAppearancesMap: MutableMap<Long, CourtAppearanceEntity> = HashMap(),
     val createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>> = HashMap(),
     val createdSentencesMap: MutableMap<MigrationSentenceId, MutableList<SentenceEntity>> = HashMap(),
     val createdPeriodLengthMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>> = HashMap(),
+  )
+
+  data class RequestToRecord<T, S>(
+    val request: T,
+    val record: S,
   )
 
   data class MigrationReferenceData(
