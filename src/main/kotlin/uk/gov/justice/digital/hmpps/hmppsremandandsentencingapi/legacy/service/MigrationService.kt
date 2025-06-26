@@ -58,6 +58,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.format.DateTimeFormatter
 
 @Service
 class MigrationService(
@@ -247,6 +248,16 @@ class MigrationService(
       ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
+    if (migrationCreateCharge.mergedFromDate != null && (migrationCreateCharge.mergedFromCaseId == null || migrationCreateCharge.mergedFromEventId == null)) {
+      log.info(
+        """
+        event $eventId merged from for charge ${migrationCreateCharge.chargeNOMISId} is not set. 
+        merged from case id: ${migrationCreateCharge.mergedFromCaseId} 
+        merged from event id: ${migrationCreateCharge.mergedFromEventId}
+        merged from date: ${migrationCreateCharge.mergedFromDate.format(DateTimeFormatter.ISO_DATE)}
+        """.trimIndent(),
+      )
+    }
     migrationCreateCharge.sentence?.let { migrationSentence -> createdCharge.sentences.add(createSentence(migrationSentence, createdCharge, tracking, referenceData)) }
     existingChangeRecords.add(eventId to createdCharge)
     tracking.createdChargesMap.put(migrationCreateCharge.chargeNOMISId, existingChangeRecords)
