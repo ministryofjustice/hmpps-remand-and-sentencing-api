@@ -1,14 +1,24 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import java.time.LocalDate
 import java.util.UUID
 
 class UpdateCourtCaseTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var periodLengthRepository: PeriodLengthRepository
 
   @Test
   fun `update court case`() {
@@ -128,4 +138,78 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
+
+  @Test
+  fun `Associated Period lengths are deleted if the sentence is deleted`() {
+    val courtCase = createCourtCase()
+    val courtCaseUuid = courtCase.first
+    val prisonerId = DEFAULT_PRISONER_ID
+    val courtCaseBefore = getCourtCase(courtCaseUuid, prisonerId)
+
+    // Check the period length is inserted and is active
+    val periodLengthUuid = courtCaseBefore.appearances.first().charges.first().sentence?.periodLengths?.first()?.periodLengthUuid!!
+    val periodLengthBefore = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid).first()
+    assertThat(periodLengthBefore.statusId).isEqualTo(EntityStatus.ACTIVE)
+
+    // Remove the first sentence then update the court case
+    val editedCourtCase = courtCase.second.copy(
+      appearances = courtCase.second.appearances.mapIndexed { index, appearance ->
+        if (index == 0) {
+          appearance.copy(
+            charges = appearance.charges.mapIndexed { chargeIndex, charge ->
+              if (chargeIndex == 0) {
+                charge.copy(sentence = null)
+              } else {
+                charge
+              }
+            },
+          )
+        } else {
+          appearance
+        }
+      },
+    )
+    updateCourtCase(courtCaseUuid, editedCourtCase)
+
+    // Check the period length is now DELETED
+    val periodLengthAfter = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid).first()
+    assertThat(periodLengthAfter.statusId).isEqualTo(EntityStatus.DELETED)
+  }
+
+  private fun updateCourtCase(
+    courtCaseUuid: String,
+    editedCourtCase: CreateCourtCase,
+  ) {
+    webTestClient
+      .put()
+      .uri("/court-case/$courtCaseUuid")
+      .bodyValue(editedCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+  }
+
+  private fun getCourtCase(
+    courtCaseUuid: String,
+    prisonerId: String,
+  ): CourtCase = webTestClient
+    .get()
+    .uri { uriBuilder ->
+      uriBuilder
+        .path("/court-case/$courtCaseUuid")
+        .queryParam("prisonerId", prisonerId)
+        .build()
+    }
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .returnResult(CourtCase::class.java)
+    .responseBody.blockFirst()!!
 }

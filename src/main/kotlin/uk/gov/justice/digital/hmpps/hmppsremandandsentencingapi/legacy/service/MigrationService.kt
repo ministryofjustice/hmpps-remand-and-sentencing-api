@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -58,6 +59,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.format.DateTimeFormatter
 
 @Service
 class MigrationService(
@@ -82,11 +84,13 @@ class MigrationService(
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val customPrisonerDataRepository: CustomPrisonerDataRepository,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @Transactional
   fun create(migrationCreateCourtCases: MigrationCreateCourtCases, deleteExisting: Boolean): MigrationCreateCourtCasesResponse {
     if (deleteExisting) {
+      log.info("request body: ${objectMapper.writeValueAsString(migrationCreateCourtCases)}")
       deletePrisonerData(migrationCreateCourtCases.prisonerId)
     }
 
@@ -247,6 +251,16 @@ class MigrationService(
       ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
+    if (migrationCreateCharge.mergedFromDate != null && (migrationCreateCharge.mergedFromCaseId == null || migrationCreateCharge.mergedFromEventId == null)) {
+      log.info(
+        """
+        event $eventId merged from for charge ${migrationCreateCharge.chargeNOMISId} is not set. 
+        merged from case id: ${migrationCreateCharge.mergedFromCaseId} 
+        merged from event id: ${migrationCreateCharge.mergedFromEventId}
+        merged from date: ${migrationCreateCharge.mergedFromDate.format(DateTimeFormatter.ISO_DATE)}
+        """.trimIndent(),
+      )
+    }
     migrationCreateCharge.sentence?.let { migrationSentence -> createdCharge.sentences.add(createSentence(migrationSentence, createdCharge, tracking, referenceData)) }
     existingChangeRecords.add(eventId to createdCharge)
     tracking.createdChargesMap.put(migrationCreateCharge.chargeNOMISId, existingChangeRecords)
