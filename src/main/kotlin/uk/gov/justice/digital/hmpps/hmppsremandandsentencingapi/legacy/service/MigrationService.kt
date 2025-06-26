@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -83,11 +84,13 @@ class MigrationService(
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val customPrisonerDataRepository: CustomPrisonerDataRepository,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @Transactional
   fun create(migrationCreateCourtCases: MigrationCreateCourtCases, deleteExisting: Boolean): MigrationCreateCourtCasesResponse {
     if (deleteExisting) {
+      log.info("request body: ${objectMapper.writeValueAsString(migrationCreateCourtCases)}")
       deletePrisonerData(migrationCreateCourtCases.prisonerId)
     }
 
