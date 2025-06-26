@@ -60,6 +60,9 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
       .jsonPath("$.cases[0].sentences[0].sentenceType").exists()
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
+      .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
+      .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
+      .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
   }
 
   @Test
@@ -249,6 +252,9 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1) // Should find the sentence from older appearance
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
+      .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
+      .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
+      .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
   }
 
   @Test
