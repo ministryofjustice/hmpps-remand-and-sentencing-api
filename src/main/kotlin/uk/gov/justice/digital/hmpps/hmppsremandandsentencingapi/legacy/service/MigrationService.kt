@@ -165,6 +165,7 @@ class MigrationService(
             targetCharge.mergedFromCourtCase = sourceCourtCase.record
             targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
             targetCharge.supersedingCharge = sourceCharge
+            sourceCharge.statusId = EntityStatus.MERGED
             if (sourceCourtCase.record.mergedToCase == null) {
               sourceCourtCase.record.mergedToCase = targetCourtCase.record
               sourceCourtCase.record.mergedToDate = targetNomisCharge.mergedFromDate
