@@ -19,4 +19,5 @@ data class RecallableSentence(
   val countNumber: String?,
   val sentenceServeType: String?,
   val sentenceLegacyData: SentenceLegacyData?,
+  val outcomeDescription: String?,
 )

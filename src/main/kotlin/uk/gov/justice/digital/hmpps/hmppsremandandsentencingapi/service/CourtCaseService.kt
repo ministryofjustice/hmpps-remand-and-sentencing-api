@@ -181,6 +181,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
             RecallableSentence(
               sentenceUuid = sentence.sentenceUuid,
               offenceCode = sentence.charge.offenceCode,
+              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               sentenceType = sentence.sentenceType?.description,
               classification = sentence.sentenceType?.classification,
               systemOfRecord = "RAS",
