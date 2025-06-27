@@ -80,4 +80,10 @@ data class CourtCaseRow(
   var mergedFromWarrantDate: LocalDate?,
   var courtAppearanceId: Int?,
   var recallInAppearanceId: Int?,
+  var mergedToCaseId: Int?,
+  var mergedToDate: LocalDate?,
+  var mergedToAppearanceId: Int?,
+  var mergedToCaseReference: String?,
+  var mergedToCourtCode: String?,
+  var mergedToWarrantDate: LocalDate?,
 )

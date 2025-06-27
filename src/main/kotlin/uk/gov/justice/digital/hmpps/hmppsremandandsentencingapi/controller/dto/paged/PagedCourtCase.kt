@@ -17,6 +17,7 @@ data class PagedCourtCase(
   val latestCourtAppearance: PagedLatestCourtAppearance,
   val mergedFromCases: List<PagedMergedFromCase>,
   val allAppearancesHaveRecall: Boolean,
+  val mergedToCase: PagedMergedToCase?,
 ) {
   companion object {
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
@@ -24,6 +25,7 @@ data class PagedCourtCase(
       val legacyReferences = firstCourtCase.courtCaseLegacyData?.caseReferences?.map { it.offenderCaseReference } ?: emptyList()
       val latestAppearanceCharges = courtCaseRows.filter { it.chargeId != null && it.chargeStatus != EntityStatus.DELETED }.groupBy { it.chargeId!! }
       val mergedFromCases = courtCaseRows.filter { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }.groupBy { it.mergedFromCaseId!! }
+      val mergedToCase = courtCaseRows.firstOrNull { it.mergedToCaseId != null && it.mergedToAppearanceId != null }
       return PagedCourtCase(
         firstCourtCase.prisonerId,
         firstCourtCase.courtCaseUuid,
@@ -39,6 +41,7 @@ data class PagedCourtCase(
         PagedLatestCourtAppearance.from(firstCourtCase, latestAppearanceCharges),
         mergedFromCases.values.map { PagedMergedFromCase.from(it) },
         courtCaseRows.filter { it.courtAppearanceId != null }.all { it.recallInAppearanceId != null },
+        mergedToCase?.let { PagedMergedToCase.from(it) },
       )
     }
   }
