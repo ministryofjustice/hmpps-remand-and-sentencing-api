@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.TestCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtCaseService
@@ -120,7 +121,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun linkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String) = legacyCourtCaseService.linkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid)
+  fun linkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String, @RequestBody(required = false) linkCase: LegacyLinkCase?) = legacyCourtCaseService.linkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid, linkCase)
     .also { (courtCaseUuid, prisonerId) ->
       eventService.update(courtCaseUuid, prisonerId, EventSource.NOMIS)
     }

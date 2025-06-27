@@ -96,7 +96,13 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         mca.court_code as mergedFromCourtCode,
         mca.appearance_date as mergedFromWarrantDate,
         ca.id as courtAppearanceId,
-        rs2.id as recallInAppearanceId
+        rs2.id as recallInAppearanceId,
+        mtcc.id as mergedToCaseId,
+        cc.merged_to_date as mergedToDate,
+        lmtca.id as mergedToAppearanceId,
+        lmtca.court_case_reference as mergedToCaseReference,
+        lmtca.court_code as mergedToCourtCode,
+        lmtca.appearance_date as mergedToWarrantDate
       from court_case cc
       join (select cc1.id, count(ca1.id) as appearance_count, string_agg(ca1.court_case_reference, ',') as case_references, min(ca1.appearance_date) as first_day_in_custody 
         from court_case cc1
@@ -129,6 +135,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join charge c2 on c2.id = ac2.charge_id
       left join sentence s2 on s2.charge_id = c2.id
       left join recall_sentence rs2 on rs2.sentence_id = s2.id
+      left join court_case mtcc on mtcc.id = cc.merged_to_case_id
+      left join court_appearance lmtca on mtcc.latest_court_appearance_id = lmtca.id
     """.trimIndent()
   }
 }

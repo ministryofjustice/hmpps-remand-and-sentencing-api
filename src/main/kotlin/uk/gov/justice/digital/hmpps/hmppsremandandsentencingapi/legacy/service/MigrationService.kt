@@ -167,6 +167,7 @@ class MigrationService(
             targetCharge.supersedingCharge = sourceCharge
             if (sourceCourtCase.record.mergedToCase == null) {
               sourceCourtCase.record.mergedToCase = targetCourtCase.record
+              sourceCourtCase.record.mergedToDate = targetNomisCharge.mergedFromDate
             }
           }
       }
