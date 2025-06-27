@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
-import com.fasterxml.jackson.annotation.JsonSetter
-import com.fasterxml.jackson.annotation.Nulls
-import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 
 data class MigrationCreateCharge(
@@ -12,10 +9,6 @@ data class MigrationCreateCharge(
   val offenceEndDate: LocalDate?,
   var legacyData: ChargeLegacyData,
   val sentence: MigrationCreateSentence?,
-  @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-  @JsonSetter(nulls = Nulls.SKIP)
-  var merged: Boolean = false,
   val mergedFromCaseId: Long?,
-  val mergedFromEventId: Long?,
   val mergedFromDate: LocalDate?,
 )

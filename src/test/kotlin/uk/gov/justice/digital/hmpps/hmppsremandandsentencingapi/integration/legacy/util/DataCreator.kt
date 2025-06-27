@@ -163,9 +163,7 @@ class DataCreator {
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
       sentence: MigrationCreateSentence? = migrationCreateSentence(),
-      merged: Boolean = false,
       mergedFromCaseId: Long? = null,
-      mergedFromEventId: Long? = null,
       mergedFromDate: LocalDate? = null,
     ): MigrationCreateCharge = MigrationCreateCharge(
       chargeNOMISId,
@@ -174,9 +172,7 @@ class DataCreator {
       offenceEndDate,
       legacyData,
       sentence,
-      merged,
       mergedFromCaseId,
-      mergedFromEventId,
       mergedFromDate,
     )
 

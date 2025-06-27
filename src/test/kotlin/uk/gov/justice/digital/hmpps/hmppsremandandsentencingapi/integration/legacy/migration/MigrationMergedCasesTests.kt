@@ -32,7 +32,7 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
 
   @Test
   fun `create target court case for a linked case`() {
-    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
 
@@ -40,7 +40,6 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
@@ -91,7 +90,7 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
 
   @Test
   fun `create target court case for a linked case - process target court case first`() {
-    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
     val expectedMergedFromDate = LocalDate.now().minusYears(6)
@@ -100,7 +99,6 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = expectedMergedFromDate,
 
     )
@@ -152,7 +150,7 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
   }
 
   private fun createSourceMergedCourtCase(): MigrationCreateCourtCasesResponse {
-    val charge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val charge = DataCreator.migrationCreateCharge(sentence = null)
     val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(charge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance), merged = true)
     val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCourtCase))

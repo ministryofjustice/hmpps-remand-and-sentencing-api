@@ -12,7 +12,7 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `unlink source from target case`() {
-    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
 
@@ -20,7 +20,6 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
@@ -76,7 +75,7 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `no token results in unauthorized`() {
-    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
 
@@ -84,7 +83,6 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
@@ -122,7 +120,7 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null, merged = true)
+    val sourceCharge = DataCreator.migrationCreateCharge(sentence = null)
     val sourceAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(sourceCharge))
     val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
 
@@ -130,7 +128,6 @@ class LegacyUnlinkCourtCaseTests : IntegrationTestBase() {
       chargeNOMISId = sourceCharge.chargeNOMISId,
       sentence = null,
       mergedFromCaseId = sourceCourtCase.caseId,
-      mergedFromEventId = sourceAppearance.eventId,
       mergedFromDate = LocalDate.now().minusYears(6),
 
     )
