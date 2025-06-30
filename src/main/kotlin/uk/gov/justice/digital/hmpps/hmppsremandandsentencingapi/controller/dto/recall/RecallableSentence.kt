@@ -10,6 +10,9 @@ import java.util.UUID
 data class RecallableSentence(
   val sentenceUuid: UUID,
   val offenceCode: String?,
+  val offenceStartDate: LocalDate?,
+  val offenceEndDate: LocalDate?,
+  val outcome: String?,
   val sentenceType: String?,
   val classification: SentenceTypeClassification?,
   val systemOfRecord: String,
@@ -17,6 +20,7 @@ data class RecallableSentence(
   val convictionDate: LocalDate?,
   val chargeLegacyData: ChargeLegacyData?,
   val countNumber: String?,
+  val lineNumber: String?,
   val sentenceServeType: String?,
   val sentenceLegacyData: SentenceLegacyData?,
   val outcomeDescription: String?,
