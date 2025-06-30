@@ -186,7 +186,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               offenceCode = sentence.charge.offenceCode,
               offenceStartDate = sentence.charge.offenceStartDate,
               offenceEndDate = sentence.charge.offenceEndDate,
-              outcome = sentence.charge.chargeOutcome?.nomisCode,
+              outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               sentenceType = sentence.sentenceType?.description,
               classification = sentence.sentenceType?.classification,
