@@ -184,6 +184,9 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
             RecallableSentence(
               sentenceUuid = sentence.sentenceUuid,
               offenceCode = sentence.charge.offenceCode,
+              offenceStartDate = sentence.charge.offenceStartDate,
+              offenceEndDate = sentence.charge.offenceEndDate,
+              outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               sentenceType = sentence.sentenceType?.description,
               classification = sentence.sentenceType?.classification,
@@ -203,6 +206,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               convictionDate = sentence.convictionDate,
               chargeLegacyData = sentence.charge.legacyData,
               countNumber = sentence.countNumber,
+              lineNumber = sentence.legacyData?.nomisLineReference,
               sentenceServeType = sentence.sentenceServeType,
               sentenceLegacyData = sentence.legacyData,
             )
