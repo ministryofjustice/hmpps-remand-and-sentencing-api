@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -255,6 +256,26 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
       .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
+  }
+
+  @Test
+  fun `Inactive sentences are returned by get recallable sentences endpoint`() {
+    val (lifetimeUuid) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(active = false),
+    )
+    webTestClient
+      .get()
+      .uri("/court-case/${DpsDataCreator.Factory.DEFAULT_PRISONER_ID}/recallable-court-cases")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.totalCases").isEqualTo(1)
+      .jsonPath("$.cases.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].sentences[0].sentenceUuid").isEqualTo(lifetimeUuid.toString())
   }
 
   @Test

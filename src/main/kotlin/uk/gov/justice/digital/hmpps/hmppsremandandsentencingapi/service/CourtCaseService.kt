@@ -141,7 +141,13 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     sortBy: String = "date",
     sortOrder: String = "desc",
   ): RecordResponse<RecallableCourtCasesResponse> {
-    val courtCases = courtCaseRepository.findSentencedCourtCasesByPrisonerId(prisonerId)
+    val courtCases = courtCaseRepository.findSentencedCourtCasesByPrisonerId(
+      prisonerId,
+      sentenceStatuses = listOf(
+        EntityStatus.ACTIVE,
+        EntityStatus.INACTIVE,
+      ),
+    )
       .filter { courtCase ->
         courtCase.statusId == EntityStatus.ACTIVE &&
           courtCase.latestCourtAppearance?.warrantType == "SENTENCING" &&
@@ -149,9 +155,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
             appearance.statusId == EntityStatus.ACTIVE &&
               appearance.appearanceCharges.any { appearanceCharge ->
                 appearanceCharge.charge?.statusId == EntityStatus.ACTIVE &&
-                  appearanceCharge.charge?.sentences?.any { sentence ->
-                    sentence.statusId == EntityStatus.ACTIVE
-                  } == true
+                  appearanceCharge.charge?.sentences?.isNotEmpty() == true
               }
           }
       }
@@ -175,7 +179,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
             appearance.appearanceCharges
               .filter { it.charge?.statusId == EntityStatus.ACTIVE }
               .flatMap { it.charge?.sentences ?: emptyList() }
-              .filter { it.statusId == EntityStatus.ACTIVE }
           }
           .map { sentence ->
             RecallableSentence(

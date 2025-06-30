@@ -39,14 +39,14 @@ interface CourtCaseRepository :
     join ca.appearanceCharges ac
     join ac.charge c
     join c.sentences s
-    where cc.statusId = :#{#status} and 
-    ca.statusId = :#{#status} and 
-    c.statusId = :#{#status} and 
-    s.statusId = :#{#status} and
+    where cc.statusId in :#{#status} and 
+    ca.statusId in :#{#status} and 
+    c.statusId in :#{#status} and 
+    s.statusId in :#{#sentenceStatuses} and
     cc.prisonerId = :prisonerId
   """,
   )
-  fun findSentencedCourtCasesByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("status") status: EntityStatus = EntityStatus.ACTIVE): List<CourtCaseEntity>
+  fun findSentencedCourtCasesByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("status") statuses: List<EntityStatus> = listOf(EntityStatus.ACTIVE), sentenceStatuses: List<EntityStatus> = statuses): List<CourtCaseEntity>
 
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
 
