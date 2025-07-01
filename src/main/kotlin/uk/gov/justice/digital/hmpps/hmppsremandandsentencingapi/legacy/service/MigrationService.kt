@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -83,13 +82,11 @@ class MigrationService(
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val customPrisonerDataRepository: CustomPrisonerDataRepository,
-  private val objectMapper: ObjectMapper,
 ) {
 
   @Transactional
   fun create(migrationCreateCourtCases: MigrationCreateCourtCases, deleteExisting: Boolean): MigrationCreateCourtCasesResponse {
     if (deleteExisting) {
-      log.info("request body: ${objectMapper.writeValueAsString(migrationCreateCourtCases)}")
       deletePrisonerData(migrationCreateCourtCases.prisonerId)
     }
 
@@ -156,8 +153,10 @@ class MigrationService(
         appearance.charges
           .filter { it.mergedFromCaseId != null }
           .forEach { targetNomisCharge ->
+            log.info("linking source court case ${targetNomisCharge.mergedFromCaseId} with target court case ${targetCourtCase.caseId}")
             val sourceCourtCase = tracking.createdCourtCasesMap[targetNomisCharge.mergedFromCaseId]!!
-            val targetCourtCase = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
+            val targetCourtCaseEntity = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
+
             val lastSourceAppearance = sourceCourtCase.request.appearances.filter { appearance -> appearance.charges.any { charge -> charge.chargeNOMISId == targetNomisCharge.chargeNOMISId } }.maxBy { it.appearanceDate }
 
             val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
@@ -167,7 +166,7 @@ class MigrationService(
             targetCharge.supersedingCharge = sourceCharge
             sourceCharge.statusId = EntityStatus.MERGED
             if (sourceCourtCase.record.mergedToCase == null) {
-              sourceCourtCase.record.mergedToCase = targetCourtCase.record
+              sourceCourtCase.record.mergedToCase = targetCourtCaseEntity.record
               sourceCourtCase.record.mergedToDate = targetNomisCharge.mergedFromDate
             }
           }
