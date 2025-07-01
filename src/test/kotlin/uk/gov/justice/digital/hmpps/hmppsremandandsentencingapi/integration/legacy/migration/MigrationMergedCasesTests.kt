@@ -149,6 +149,63 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
   }
 
+  @Test
+  fun `charge could only exist on target and not on source`() {
+    val sourceAppearance = DataCreator.migrationCreateCourtAppearance()
+    val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
+
+    val targetCharge = DataCreator.migrationCreateCharge(
+      chargeNOMISId = 5453,
+      sentence = null,
+      mergedFromCaseId = sourceCourtCase.caseId,
+      mergedFromDate = LocalDate.now().minusYears(6),
+
+    )
+
+    val targetAppearance = DataCreator.migrationCreateCourtAppearance(eventId = sourceAppearance.eventId + 1, charges = listOf(targetCharge))
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(caseId = sourceCourtCase.caseId + 1, appearances = listOf(targetAppearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCourtCase, targetCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(courtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val targetCourtCaseUuid = response.courtCases.first { it.caseId == targetCourtCase.caseId }.courtCaseUuid
+    val chargeUuid = response.charges.first { it.chargeNOMISId == targetCharge.chargeNOMISId }.chargeUuid
+
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$chargeUuid')].mergedFromCase.caseReference")
+      .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$chargeUuid')].mergedFromCase.courtCode")
+      .isEqualTo(sourceCourtCase.appearances.first().courtCode)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].courtCode")
+      .isEqualTo(sourceCourtCase.appearances.first().courtCode)
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].caseReference")
+      .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
+  }
+
   private fun createSourceMergedCourtCase(): MigrationCreateCourtCasesResponse {
     val charge = DataCreator.migrationCreateCharge(sentence = null)
     val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(charge))

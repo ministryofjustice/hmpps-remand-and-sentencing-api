@@ -153,18 +153,21 @@ class MigrationService(
         appearance.charges
           .filter { it.mergedFromCaseId != null }
           .forEach { targetNomisCharge ->
-            log.info("linking source court case ${targetNomisCharge.mergedFromCaseId} with target court case ${targetCourtCase.caseId}")
+
             val sourceCourtCase = tracking.createdCourtCasesMap[targetNomisCharge.mergedFromCaseId]!!
             val targetCourtCaseEntity = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
 
-            val lastSourceAppearance = sourceCourtCase.request.appearances.filter { appearance -> appearance.charges.any { charge -> charge.chargeNOMISId == targetNomisCharge.chargeNOMISId } }.maxBy { it.appearanceDate }
-
-            val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
             val (_, targetCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == appearance.eventId }
             targetCharge.mergedFromCourtCase = sourceCourtCase.record
             targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
-            targetCharge.supersedingCharge = sourceCharge
-            sourceCharge.statusId = EntityStatus.MERGED
+            val lastSourceAppearance = sourceCourtCase.request.appearances.filter { appearance -> appearance.charges.any { charge -> charge.chargeNOMISId == targetNomisCharge.chargeNOMISId } }.maxByOrNull { it.appearanceDate }
+            if (lastSourceAppearance != null) {
+              val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
+              targetCharge.supersedingCharge = sourceCharge
+              sourceCharge.statusId = EntityStatus.MERGED
+            } else {
+              log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
+            }
             if (sourceCourtCase.record.mergedToCase == null) {
               sourceCourtCase.record.mergedToCase = targetCourtCaseEntity.record
               sourceCourtCase.record.mergedToDate = targetNomisCharge.mergedFromDate
