@@ -24,4 +24,5 @@ data class CreateCourtAppearance(
   val overallConvictionDate: LocalDate?,
   var legacyData: CourtAppearanceLegacyData?,
   val prisonId: String,
+  val documents: List<UploadedDocument>
 )

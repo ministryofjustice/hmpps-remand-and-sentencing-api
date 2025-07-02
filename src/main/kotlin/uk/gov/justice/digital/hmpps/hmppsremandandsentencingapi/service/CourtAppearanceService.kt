@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -47,6 +49,7 @@ class CourtAppearanceService(
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
+  private val documentService: UploadedDocumentService,
 ) {
 
   @Transactional
@@ -134,9 +137,16 @@ class CourtAppearanceService(
         ),
       )
     }
+
+    documentService.create(CreateUploadedDocument(
+      appearanceUUID = createdCourtAppearance.appearanceUuid,
+      documents = courtAppearance.documents
+    ))
+
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
     return RecordResponse(createdCourtAppearance, eventsToEmit)
   }
+
 
   private fun updateCourtAppearanceEntity(courtAppearance: CreateCourtAppearance, courtCaseEntity: CourtCaseEntity, existingCourtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
     var appearanceChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -204,6 +214,12 @@ class CourtAppearanceService(
         ),
       )
     }
+
+    documentService.create(CreateUploadedDocument(
+      appearanceUUID = activeRecord.appearanceUuid,
+      documents = courtAppearance.documents
+    ))
+
     if (appearanceChangeStatus != EntityChangeStatus.NO_CHANGE || setOf(EntityChangeStatus.CREATED, EntityChangeStatus.DELETED).contains(nextCourtAppearanceEntityChangeStatus)) {
       courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearanceEntity))
     }
