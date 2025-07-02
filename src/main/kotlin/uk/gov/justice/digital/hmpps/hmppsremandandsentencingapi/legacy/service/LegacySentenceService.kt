@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -26,6 +28,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
@@ -34,7 +38,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
-import java.util.UUID
+import java.util.*
 
 @Service
 class LegacySentenceService(
@@ -52,6 +56,8 @@ class LegacySentenceService(
   private val legacyPeriodLengthService: LegacyPeriodLengthService,
   chargeHistoryRepository: ChargeHistoryRepository,
   appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+  private val recallHistoryRepository: RecallHistoryRepository,
+  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
 ) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
 
   @Transactional
@@ -159,7 +165,10 @@ class LegacySentenceService(
     return createChargeRecordIfOverManyAppearancesOrUpdate(charge, appearance, toUpdateCharge)
   }
 
-  fun getChargeAtAppearance(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, chargeUuid)
+  fun getChargeAtAppearance(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(
+    appearanceUuid,
+    chargeUuid,
+  )
     ?: throw EntityNotFoundException("No charge found at $chargeUuid")
 
   fun createSentenceRecord(charge: ChargeEntity, sentence: SentenceEntity): SentenceEntity {
@@ -234,7 +243,7 @@ class LegacySentenceService(
               )
           )
         )
-      var activeRecord = existingSentence
+      val activeRecord = existingSentence
       var entityChangeStatus = entityStatus
       val updatedSentence = existingSentence.copyFrom(
         sentence,
@@ -309,7 +318,15 @@ class LegacySentenceService(
   }
 
   private fun updateRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
-    updatedSentence.latestRecall()?.returnToCustodyDate = sentence.returnToCustodyDate
+    val latestRecall = updatedSentence.latestRecall()
+    if (latestRecall != null) {
+      latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
+      val recallHistoryEntity =
+        recallHistoryRepository.save(RecallHistoryEntity.from(latestRecall, EntityStatus.EDITED))
+      latestRecall.recallSentences.forEach {
+        recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
+      }
+    }
   }
 
   @Transactional(readOnly = true)
@@ -333,12 +350,21 @@ class LegacySentenceService(
   private fun deleteRecallSentence(sentence: SentenceEntity) {
     sentence.recallSentences.forEach {
       val recall = it.recall
-      if (recall.recallSentences.size == 1) {
+
+      val recallHistoryEntity = if (recall.recallSentences.size == 1) {
+        val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.DELETED))
         recall.delete(serviceUserService.getUsername())
+        recallHistoryEntity
+      } else {
+        recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
+      }
+      recall.recallSentences.forEach { recallSentence ->
+        recallSentenceHistoryRepository.save(
+          RecallSentenceHistoryEntity.from(recallHistoryEntity, recallSentence),
+        )
       }
       recallSentenceRepository.delete(it)
     }
-    // TODO RCLL-277 Recall audit data.
   }
 
   private fun deletePeriodLengths(sentence: SentenceEntity) {
