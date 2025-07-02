@@ -30,6 +30,7 @@ class RecallEntity(
   val prisonerId: String,
   var revocationDate: LocalDate?,
   var returnToCustodyDate: LocalDate?,
+  var inPrisonOnRevocationDate: Boolean?,
   @ManyToOne
   @JoinColumn(name = "recall_type_id")
   var recallType: RecallTypeEntity,
@@ -61,6 +62,7 @@ class RecallEntity(
       prisonerId = createRecall.prisonerId,
       revocationDate = createRecall.revocationDate,
       returnToCustodyDate = createRecall.returnToCustodyDate,
+      inPrisonOnRevocationDate = createRecall.inPrisonOnRevocationDate,
       recallType = recallType,
       createdByUsername = createRecall.createdByUsername,
       createdPrison = createRecall.createdByPrison,
@@ -76,6 +78,7 @@ class RecallEntity(
       prisonerId = prisonerId,
       revocationDate = null,
       returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
+      inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
@@ -89,6 +92,7 @@ class RecallEntity(
       prisonerId = prisonerId,
       revocationDate = null,
       returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
+      inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,

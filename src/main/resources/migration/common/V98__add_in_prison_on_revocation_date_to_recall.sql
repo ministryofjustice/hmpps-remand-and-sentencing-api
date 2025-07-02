@@ -1,0 +1,1 @@
+ALTER TABLE recall ADD COLUMN in_prison_on_revocation_date BOOLEAN NULL;

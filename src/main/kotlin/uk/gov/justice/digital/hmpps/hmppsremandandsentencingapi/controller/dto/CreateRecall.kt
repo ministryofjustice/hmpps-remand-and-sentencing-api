@@ -9,6 +9,7 @@ data class CreateRecall(
   val prisonerId: String,
   val revocationDate: LocalDate? = null,
   val returnToCustodyDate: LocalDate? = null,
+  val inPrisonOnRevocationDate: Boolean? = null,
   val recallTypeCode: RecallType,
   val createdByUsername: String,
   val createdByPrison: String,
