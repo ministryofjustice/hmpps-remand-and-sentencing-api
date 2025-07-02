@@ -1,1 +1,0 @@
-update uploaded_document add column file_name varchar(255) not null default '' after updated_by;

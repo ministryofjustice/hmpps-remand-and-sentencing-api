@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
@@ -60,7 +61,24 @@ class DpsDataCreator {
       overallConvictionDate: LocalDate? = LocalDate.now().minusDays(7),
       legacyData: CourtAppearanceLegacyData? = null,
       prisonId: String = "PRISON1",
-    ): CreateCourtAppearance = CreateCourtAppearance(courtCaseUuid, appearanceUUID, outcomeUuid, courtCode, courtCaseReference, appearanceDate, warrantId, warrantType, overallSentenceLength, nextCourtAppearance, charges, overallConvictionDate, legacyData, prisonId)
+      documents: List<UploadedDocument> = listOf(dpsCreateUploadedDocument()),
+    ): CreateCourtAppearance = CreateCourtAppearance(
+      courtCaseUuid,
+      appearanceUUID,
+      outcomeUuid,
+      courtCode,
+      courtCaseReference,
+      appearanceDate,
+      warrantId,
+      warrantType,
+      overallSentenceLength,
+      nextCourtAppearance,
+      charges,
+      overallConvictionDate,
+      legacyData,
+      prisonId,
+      documents,
+    )
 
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
@@ -73,7 +91,18 @@ class DpsDataCreator {
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
       prisonId: String = "PRISON1",
-    ): CreateCharge = CreateCharge(appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, terrorRelated, sentence, legacyData, prisonId)
+    ): CreateCharge = CreateCharge(
+      appearanceUuid,
+      chargeUuid,
+      offenceCode,
+      offenceStartDate,
+      offenceEndDate,
+      outcomeUuid,
+      terrorRelated,
+      sentence,
+      legacyData,
+      prisonId,
+    )
 
     fun dpsCreateSentence(
       sentenceUuid: UUID? = UUID.randomUUID(),
@@ -87,7 +116,19 @@ class DpsDataCreator {
       fineAmount: CreateFineAmount? = null,
       prisonId: String = "PRISON1",
       sentenceReference: String = "0",
-    ): CreateSentence = CreateSentence(sentenceUuid, chargeNumber, periodLengths, sentenceServeType, consecutiveToSentenceUuid, sentenceTypeId, convictionDate, fineAmount, prisonId, sentenceReference, consecutiveToSentenceReference)
+    ): CreateSentence = CreateSentence(
+      sentenceUuid,
+      chargeNumber,
+      periodLengths,
+      sentenceServeType,
+      consecutiveToSentenceUuid,
+      sentenceTypeId,
+      convictionDate,
+      fineAmount,
+      prisonId,
+      sentenceReference,
+      consecutiveToSentenceReference,
+    )
 
     fun dpsCreateRecall(
       prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID,
@@ -108,5 +149,11 @@ class DpsDataCreator {
       createdByPrison,
       sentenceIds,
     )
+
+    fun dpsCreateUploadedDocument(
+      documentUuid: UUID = UUID.randomUUID(),
+      documentType: String = "COURT_APPEARANCE",
+      documentName: String = "document.pdf",
+    ): UploadedDocument = UploadedDocument(documentUuid, documentType, documentName)
   }
 }

@@ -24,6 +24,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
         UploadedDocument(
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
+          fileName = "warrant.pdf",
         ),
       ),
     )
@@ -54,6 +55,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
         UploadedDocument(
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
+          fileName = "warrant.pdf",
         ),
       ),
     )
@@ -79,6 +81,7 @@ class CreateUploadedDocumentTest : IntegrationTestBase() {
         UploadedDocument(
           documentUUID = documentUuid,
           documentType = "HMCTS_WARRANT",
+          fileName = "warrant.pdf",
         ),
       ),
     )
