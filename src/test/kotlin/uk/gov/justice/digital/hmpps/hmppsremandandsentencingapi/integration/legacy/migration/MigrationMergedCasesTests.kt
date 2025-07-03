@@ -1,7 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
+import org.hamcrest.Matchers
+import org.hamcrest.Matchers.everyItem
+import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedMergedFromCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
@@ -204,6 +208,56 @@ class MigrationMergedCasesTests : IntegrationTestBase() {
       .isEqualTo(sourceCourtCase.appearances.first().courtCode)
       .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases[0].caseReference")
       .isEqualTo(sourceCourtCase.courtCaseLegacyData.caseReferences.first().offenderCaseReference)
+  }
+
+  @Test
+  fun `charge could reference a non existent source case`() {
+    val targetCharge = DataCreator.migrationCreateCharge(
+      chargeNOMISId = 5453,
+      sentence = null,
+      mergedFromCaseId = 896473,
+      mergedFromDate = LocalDate.now().minusYears(6),
+
+    )
+
+    val targetAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(targetCharge))
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(targetAppearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(targetCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(courtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val targetCourtCaseUuid = response.courtCases.first { it.caseId == targetCourtCase.caseId }.courtCaseUuid
+    val chargeUuid = response.charges.first { it.chargeNOMISId == targetCharge.chargeNOMISId }.chargeUuid
+
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$chargeUuid')].mergedFromCase")
+      .value(everyItem(IsNull.nullValue()))
+      .jsonPath("$.content[?(@.courtCaseUuid == '$targetCourtCaseUuid')].mergedFromCases")
+      .value(everyItem(Matchers.empty<PagedMergedFromCase>()))
   }
 
   private fun createSourceMergedCourtCase(): MigrationCreateCourtCasesResponse {
