@@ -1,0 +1,99 @@
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.*
+
+class RecallSentenceHistoryEntityTest {
+
+  @Test
+  fun `can create history entity from original`() {
+    val recallUuid = UUID.randomUUID()
+    val recallSentenceUuid = UUID.randomUUID()
+    val originalRecall = RecallEntity(
+      id = 987654,
+      recallUuid = recallUuid,
+      prisonerId = "A1234BC",
+      revocationDate = LocalDate.of(2021, 1, 1),
+      returnToCustodyDate = LocalDate.of(2022, 2, 2),
+      inPrisonOnRevocationDate = true,
+      recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
+      statusId = EntityStatus.ACTIVE,
+      createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
+      createdByUsername = "CREATOR",
+      createdPrison = "FOO",
+      updatedAt = ZonedDateTime.of(2024, 4, 4, 4, 4, 4, 4, ZoneId.systemDefault()),
+      updatedBy = "UPDATER",
+      updatedPrison = "BAR",
+    )
+    val sentence = SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = EntityStatus.ACTIVE,
+      createdBy = "USER",
+      sentenceServeType = "CONCURRENT",
+      consecutiveTo = null,
+      supersedingSentence = null,
+      charge = ChargeEntity(
+        chargeUuid = UUID.randomUUID(),
+        offenceCode = "TEST123",
+        statusId = EntityStatus.ACTIVE,
+        createdBy = "test-user",
+        offenceStartDate = null,
+        offenceEndDate = null,
+        chargeOutcome = null,
+        supersedingCharge = null,
+        terrorRelated = null,
+        createdPrison = null,
+        legacyData = null,
+        appearanceCharges = mutableSetOf(),
+      ),
+      convictionDate = null,
+      legacyData = DataCreator.sentenceLegacyData(),
+      fineAmount = null,
+      countNumber = null,
+      sentenceType = null,
+    )
+
+    val original = RecallSentenceEntity(
+      id = 999888,
+      recallSentenceUuid = recallSentenceUuid,
+      sentence = sentence,
+      recall = originalRecall,
+      legacyData = RecallSentenceLegacyData(null, null, null, "2025-05-05", null),
+      createdAt = ZonedDateTime.of(2025, 5, 5, 5, 5, 5, 5, ZoneId.systemDefault()),
+      createdByUsername = "CREATOR",
+      createdPrison = "BAR",
+    )
+
+    val historyRecall = RecallHistoryEntity.from(originalRecall, EntityStatus.EDITED)
+    assertThat(RecallSentenceHistoryEntity.from(historyRecall, original))
+      .usingRecursiveComparison()
+      .ignoringFields("historyCreatedAt")
+      .isEqualTo(
+        RecallSentenceHistoryEntity(
+          id = 0,
+          originalRecallSentenceId = 999888,
+          recallSentenceUuid = recallSentenceUuid,
+          sentence = sentence,
+          recallHistory = historyRecall,
+          legacyData = RecallSentenceLegacyData(null, null, null, "2025-05-05", null),
+          createdAt = ZonedDateTime.of(2025, 5, 5, 5, 5, 5, 5, ZoneId.systemDefault()),
+          createdByUsername = "CREATOR",
+          createdPrison = "BAR",
+          historyCreatedAt = ZonedDateTime.now(), // ignored in assertions
+        ),
+      )
+  }
+}
