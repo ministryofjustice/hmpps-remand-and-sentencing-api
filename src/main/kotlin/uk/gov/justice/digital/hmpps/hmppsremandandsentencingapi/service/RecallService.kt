@@ -13,11 +13,15 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -29,6 +33,8 @@ class RecallService(
   private val recallTypeRepository: RecallTypeRepository,
   private val sentenceRepository: SentenceRepository,
   private val sentenceService: SentenceService,
+  private val recallHistoryRepository: RecallHistoryRepository,
+  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
@@ -63,6 +69,10 @@ class RecallService(
     return if (recallToUpdate == null) {
       createRecall(recall, recallUuid)
     } else {
+      val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, EntityStatus.EDITED))
+      recallToUpdate.recallSentences.forEach {
+        recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it).apply {})
+      }
       val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
 
       val previousSentenceIds = recallToUpdate.recallSentences.map { it.sentence.sentenceUuid }
@@ -107,6 +117,9 @@ class RecallService(
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
 
+    val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, EntityStatus.DELETED))
+    recallToDelete.recallSentences.forEach { recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it)) }
+
     val isLegacyRecall =
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
 
@@ -131,8 +144,6 @@ class RecallService(
     } else {
       null
     }
-
-    // TODO RCLL-277 Recall audit data.
 
     return RecordResponse(
       DeleteRecallResponse.from(recallToDelete),

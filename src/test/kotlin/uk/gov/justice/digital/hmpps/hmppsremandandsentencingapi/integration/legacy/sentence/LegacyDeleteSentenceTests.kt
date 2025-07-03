@@ -2,13 +2,23 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class LegacyDeleteSentenceTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var recallHistoryRepository: RecallHistoryRepository
+
+  @Autowired
+  private lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
 
   @Test
   fun `can delete sentence`() {
@@ -34,7 +44,8 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
     val (lifetimeUuid) = createLegacySentence(
       legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020")),
     )
-    assertThat(getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)).isNotEmpty
+    val recallsBeforeDelete = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    assertThat(recallsBeforeDelete).isNotEmpty
 
     // Delete sentence
     webTestClient
@@ -48,8 +59,17 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
       .expectStatus()
       .isNoContent
 
-    // Check associated recall has been deleted.
+    // Check associated recall has been deleted and recall history updated.
     assertThat(getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)).isEmpty()
+
+    val historicalRecalls = recallHistoryRepository.findByRecallUuid(recallsBeforeDelete[0].recallUuid)
+    assertThat(historicalRecalls).hasSize(1)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.DELETED)
+    assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
+
+    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
+    assertThat(historicalRecallSentences!!).hasSize(1)
+    assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(lifetimeUuid)
   }
 
   @Test
