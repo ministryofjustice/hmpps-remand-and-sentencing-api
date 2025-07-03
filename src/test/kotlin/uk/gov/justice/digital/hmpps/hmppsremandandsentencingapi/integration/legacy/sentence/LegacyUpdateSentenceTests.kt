@@ -7,16 +7,26 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.collections.map
 
 class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
+
+  @Autowired
+  private lateinit var recallHistoryRepository: RecallHistoryRepository
+
+  @Autowired
+  private lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
 
   @Test
   fun `update sentence for a recall sentence`() {
@@ -42,6 +52,15 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
     assertThat(recalls[0].sentences).hasSize(1)
     assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
+
+    val historicalRecalls = recallHistoryRepository.findByRecallUuid(recalls[0].recallUuid)
+    assertThat(historicalRecalls).hasSize(1)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.EDITED)
+    assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
+
+    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
+    assertThat(historicalRecallSentences!!).hasSize(1)
+    assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(lifetimeUuid)
   }
 
   @Test
