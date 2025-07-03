@@ -154,23 +154,29 @@ class MigrationService(
           .filter { it.mergedFromCaseId != null }
           .forEach { targetNomisCharge ->
 
-            val sourceCourtCase = tracking.createdCourtCasesMap[targetNomisCharge.mergedFromCaseId]!!
-            val targetCourtCaseEntity = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
+            val sourceCourtCaseEntity = tracking.createdCourtCasesMap[targetNomisCharge.mergedFromCaseId]
+            if (sourceCourtCaseEntity != null) {
+              val targetCourtCaseEntity = tracking.createdCourtCasesMap[targetCourtCase.caseId]!!
 
-            val (_, targetCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == appearance.eventId }
-            targetCharge.mergedFromCourtCase = sourceCourtCase.record
-            targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
-            val lastSourceAppearance = sourceCourtCase.request.appearances.filter { appearance -> appearance.charges.any { charge -> charge.chargeNOMISId == targetNomisCharge.chargeNOMISId } }.maxByOrNull { it.appearanceDate }
-            if (lastSourceAppearance != null) {
-              val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
-              targetCharge.supersedingCharge = sourceCharge
-              sourceCharge.statusId = EntityStatus.MERGED
+              val (_, targetCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == appearance.eventId }
+              targetCharge.mergedFromCourtCase = sourceCourtCaseEntity.record
+              targetCharge.mergedFromDate = targetNomisCharge.mergedFromDate
+              val lastSourceAppearance =
+                sourceCourtCaseEntity.request.appearances.filter { appearance -> appearance.charges.any { charge -> charge.chargeNOMISId == targetNomisCharge.chargeNOMISId } }
+                  .maxByOrNull { it.appearanceDate }
+              if (lastSourceAppearance != null) {
+                val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
+                targetCharge.supersedingCharge = sourceCharge
+                sourceCharge.statusId = EntityStatus.MERGED
+              } else {
+                log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
+              }
+              if (sourceCourtCaseEntity.record.mergedToCase == null) {
+                sourceCourtCaseEntity.record.mergedToCase = targetCourtCaseEntity.record
+                sourceCourtCaseEntity.record.mergedToDate = targetNomisCharge.mergedFromDate
+              }
             } else {
-              log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
-            }
-            if (sourceCourtCase.record.mergedToCase == null) {
-              sourceCourtCase.record.mergedToCase = targetCourtCaseEntity.record
-              sourceCourtCase.record.mergedToDate = targetNomisCharge.mergedFromDate
+              log.info("charge ${targetNomisCharge.chargeNOMISId} is referencing a non existing source case at ${targetNomisCharge.mergedFromCaseId}")
             }
           }
       }
