@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable

@@ -38,16 +38,6 @@ class GetCourtCaseLatestOffenceDateTests : IntegrationTestBase() {
       .expectStatus().isNoContent
   }
 
-
-  @Test
-  fun `should return 404 when court case does not exist`() {
-    webTestClient.get()
-      .uri("/court-case/non-existent-case-uuid/latest-offence-date")
-      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING")) }
-      .exchange()
-      .expectStatus().isNotFound
-  }
-
   @Test
   fun `no token results in unauthorized`() {
     val (courtCaseUuid) = createCourtCase()

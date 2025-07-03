@@ -77,8 +77,10 @@ interface CourtCaseRepository :
   where cc.caseUniqueIdentifier = :uuid
     and a.statusId = :status
     and c.statusId = :status
-  """
+  """,
   )
-  fun findLatestOffenceDate(@Param("uuid") uuid: String,
-                            @Param("status") status: EntityStatus = EntityStatus.ACTIVE): LocalDate?
+  fun findLatestOffenceDate(
+    @Param("uuid") uuid: String,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+  ): LocalDate?
 }
