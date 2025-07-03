@@ -180,8 +180,8 @@ class CourtAppearanceService(
     }
 
     documentService.update(
-      documentUUIDs = courtAppearance.documents.map { it.documentUUID },
-      appearanceUUID = createdCourtAppearance.appearanceUuid,
+      courtAppearance.documents.map { it.documentUUID },
+      createdCourtAppearance,
     )
 
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
@@ -283,8 +283,8 @@ class CourtAppearanceService(
     }
 
     documentService.update(
-      documentUUIDs = courtAppearance.documents.map { it.documentUUID },
-      appearanceUUID = activeRecord.appearanceUuid,
+      courtAppearance.documents.map { it.documentUUID },
+      activeRecord,
     )
 
     if (appearanceChangeStatus != EntityChangeStatus.NO_CHANGE ||
