@@ -24,7 +24,7 @@ class RecallHistoryEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  val recallId: Int,
+  val originalRecallId: Int,
   val recallUuid: UUID,
   val prisonerId: String,
   val revocationDate: LocalDate?,
@@ -53,7 +53,7 @@ class RecallHistoryEntity(
   companion object {
     fun from(original: RecallEntity, historyStatus: EntityStatus) = RecallHistoryEntity(
       id = 0,
-      recallId = original.id,
+      originalRecallId = original.id,
       recallUuid = original.recallUuid,
       prisonerId = original.prisonerId,
       revocationDate = original.revocationDate,

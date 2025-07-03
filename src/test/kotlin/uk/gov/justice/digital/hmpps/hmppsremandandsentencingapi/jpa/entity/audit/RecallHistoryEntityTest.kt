@@ -39,7 +39,7 @@ class RecallHistoryEntityTest {
       .isEqualTo(
         RecallHistoryEntity(
           id = 0,
-          recallId = 987654,
+          originalRecallId = 987654,
           recallUuid = recallUuid,
           prisonerId = "A1234BC",
           revocationDate = LocalDate.of(2021, 1, 1),

@@ -24,7 +24,7 @@ class RecallSentenceHistoryEntity(
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int,
-  val recallSentenceId: Int,
+  val originalRecallSentenceId: Int,
   @Column
   val recallSentenceUuid: UUID,
   @ManyToOne
@@ -45,7 +45,7 @@ class RecallSentenceHistoryEntity(
   companion object {
     fun from(recall: RecallHistoryEntity, sentence: RecallSentenceEntity): RecallSentenceHistoryEntity = RecallSentenceHistoryEntity(
       id = 0,
-      recallSentenceId = sentence.id,
+      originalRecallSentenceId = sentence.id,
       recallSentenceUuid = sentence.recallSentenceUuid,
       sentence = sentence.sentence,
       recallHistory = recall,

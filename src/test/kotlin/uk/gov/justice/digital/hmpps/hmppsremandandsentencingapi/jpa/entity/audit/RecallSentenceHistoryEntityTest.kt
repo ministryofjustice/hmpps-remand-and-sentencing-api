@@ -84,7 +84,7 @@ class RecallSentenceHistoryEntityTest {
       .isEqualTo(
         RecallSentenceHistoryEntity(
           id = 0,
-          recallSentenceId = 999888,
+          originalRecallSentenceId = 999888,
           recallSentenceUuid = recallSentenceUuid,
           sentence = sentence,
           recallHistory = historyRecall,

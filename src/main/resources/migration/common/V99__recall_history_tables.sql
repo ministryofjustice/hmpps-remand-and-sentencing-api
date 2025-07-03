@@ -1,7 +1,7 @@
 
 CREATE TABLE recall_history(
                        id SERIAL PRIMARY KEY,
-                       recall_id INTEGER NOT NULL,
+                       original_recall_id INTEGER NOT NULL,
                        recall_uuid UUID NOT NULL,
                        prisoner_id VARCHAR NOT NULL,
                        revocation_date DATE NULL,
@@ -21,7 +21,7 @@ CREATE TABLE recall_history(
 
 CREATE TABLE recall_sentence_history(
                                 id SERIAL PRIMARY KEY,
-                                recall_sentence_id INTEGER NOT NULL,
+                                original_recall_sentence_id INTEGER NOT NULL,
                                 recall_sentence_uuid UUID NOT NULL,
                                 recall_history_id INTEGER NOT NULL,
                                 sentence_id INTEGER NOT NULL,

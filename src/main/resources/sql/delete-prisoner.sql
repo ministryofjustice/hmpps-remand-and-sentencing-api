@@ -1,9 +1,18 @@
 -- Native sql script to delete all data for a prisoner - Only to be used for migration
+-- Delete recall sentence history
+DELETE FROM recall_sentence_history rsh
+WHERE rsh.recall_history_id IN (
+    SELECT id FROM recall_history rh WHERE rh.prisoner_id = :prisonerId
+);
+
 -- Delete recall sentences
 DELETE FROM recall_sentence rs
 WHERE rs.recall_id IN (
     SELECT id FROM recall r WHERE r.prisoner_id = :prisonerId
 );
+
+-- Delete recall history
+DELETE FROM recall_history rh WHERE rh.prisoner_id = :prisonerId;
 
 -- Delete recalls
 DELETE FROM recall r WHERE r.prisoner_id = :prisonerId;
