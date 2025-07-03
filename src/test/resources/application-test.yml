@@ -11,16 +11,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        generate_statistics: true
   datasource:
     url: "jdbc:postgresql://localhost:5432/ras"
     username: "ras-user"
     password: "ras-pass"
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-
 
 # Wiremock auth server
 hmpps:
