@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -180,11 +179,9 @@ class CourtAppearanceService(
       )
     }
 
-    documentService.create(
-      CreateUploadedDocument(
-        appearanceUUID = createdCourtAppearance.appearanceUuid,
-        documents = courtAppearance.documents,
-      ),
+    documentService.update(
+      documentUUIDs = courtAppearance.documents.map { it.documentUUID },
+      appearanceUUID = createdCourtAppearance.appearanceUuid,
     )
 
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
@@ -285,11 +282,9 @@ class CourtAppearanceService(
       )
     }
 
-    documentService.create(
-      CreateUploadedDocument(
-        appearanceUUID = activeRecord.appearanceUuid,
-        documents = courtAppearance.documents,
-      ),
+    documentService.update(
+      documentUUIDs = courtAppearance.documents.map { it.documentUUID },
+      appearanceUUID = activeRecord.appearanceUuid,
     )
 
     if (appearanceChangeStatus != EntityChangeStatus.NO_CHANGE ||
