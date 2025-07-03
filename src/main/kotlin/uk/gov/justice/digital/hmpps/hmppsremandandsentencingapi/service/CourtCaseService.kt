@@ -245,15 +245,5 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   fun getAllCountNumbers(courtCaseUuid: String): CourtCaseCountNumbers = CourtCaseCountNumbers.from(courtCaseRepository.findSentenceCountNumbers(courtCaseUuid))
 
   @Transactional(readOnly = true)
-  fun getLatestOffenceDateForCourtCase(courtCaseUuid: String): LocalDate? {
-    val courtCase = courtCaseRepository.findWithAppearancesAndChargesByUuid(courtCaseUuid)
-      ?: throw EntityNotFoundException("No court case found with UUID $courtCaseUuid")
-
-    return courtCase.appearances
-      .filter { it.statusId == EntityStatus.ACTIVE }
-      .flatMap { appearance -> appearance.appearanceCharges.mapNotNull { it.charge } }
-      .filter { it.statusId == EntityStatus.ACTIVE }
-      .flatMap { listOfNotNull(it.offenceStartDate, it.offenceEndDate) }
-      .maxOrNull()
-  }
+  fun getLatestOffenceDateForCourtCase(courtCaseUuid: String): LocalDate? = courtCaseRepository.findLatestOffenceDate(courtCaseUuid)
 }

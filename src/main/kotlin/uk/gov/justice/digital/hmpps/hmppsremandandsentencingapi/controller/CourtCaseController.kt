@@ -244,10 +244,9 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @ApiResponses(
     value = [
       ApiResponse(responseCode = "200", description = "Returns the latest offence date"),
-      ApiResponse(responseCode = "204", description = "No offence dates available for this court case"),
+      ApiResponse(responseCode = "204", description = "No offence dates found"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-      ApiResponse(responseCode = "404", description = "Court case not found"),
     ],
   )
   fun getLatestOffenceDate(@PathVariable courtCaseUuid: String): ResponseEntity<LocalDate> {

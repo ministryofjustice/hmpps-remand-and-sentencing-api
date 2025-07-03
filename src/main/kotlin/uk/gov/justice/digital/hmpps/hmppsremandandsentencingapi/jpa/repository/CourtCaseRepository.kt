@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
+import java.time.LocalDate
 
 interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
@@ -66,7 +67,18 @@ interface CourtCaseRepository :
   )
   fun findSentenceCountNumbers(@Param("courtCaseUuid") courtCaseUuid: String, @Param("status") status: EntityStatus = EntityStatus.DELETED): List<String?>
 
-  @EntityGraph(value = "CourtCaseEntity.withAppearancesAndCharges", type = EntityGraph.EntityGraphType.FETCH)
-  @Query("SELECT cc FROM CourtCaseEntity cc WHERE cc.caseUniqueIdentifier = :courtCaseUuid")
-  fun findWithAppearancesAndChargesByUuid(@Param("courtCaseUuid") courtCaseUuid: String): CourtCaseEntity?
+  @Query(
+    """
+  select max(coalesce(c.offenceEndDate, c.offenceStartDate))
+  from CourtCaseEntity cc
+  join cc.appearances a
+  join a.appearanceCharges ac
+  join ac.charge c
+  where cc.caseUniqueIdentifier = :uuid
+    and a.statusId = :status
+    and c.statusId = :status
+  """
+  )
+  fun findLatestOffenceDate(@Param("uuid") uuid: String,
+                            @Param("status") status: EntityStatus = EntityStatus.ACTIVE): LocalDate?
 }

@@ -88,26 +88,6 @@ import java.util.UUID
     ),
   ],
 )
-@NamedEntityGraph(
-  name = "CourtCaseEntity.withAppearancesAndCharges",
-  attributeNodes = [
-    NamedAttributeNode("appearances", subgraph = "appearanceChargesOnly"),
-  ],
-  subgraphs = [
-    NamedSubgraph(
-      name = "appearanceChargesOnly",
-      attributeNodes = [
-        NamedAttributeNode("appearanceCharges", subgraph = "chargeOnly"),
-      ],
-    ),
-    NamedSubgraph(
-      name = "chargeOnly",
-      attributeNodes = [
-        NamedAttributeNode("charge"),
-      ],
-    ),
-  ],
-)
 @SqlResultSetMapping(
   name = "courtCaseRowMapping",
   classes = [
