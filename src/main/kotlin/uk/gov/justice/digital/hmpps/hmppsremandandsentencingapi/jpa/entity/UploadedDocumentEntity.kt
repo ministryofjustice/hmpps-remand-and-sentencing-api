@@ -39,7 +39,7 @@ class UploadedDocumentEntity(
       appearance = courtAppearanceEntity,
       documentType = document.documentType,
       createdBy = username,
-      fileName = document.fileName, // Assuming documentType is used as fileName, adjust if needed
+      fileName = document.fileName,
     )
   }
 }
