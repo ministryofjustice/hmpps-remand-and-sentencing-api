@@ -27,6 +27,7 @@ class UploadedDocumentEntity(
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   var updatedAt: ZonedDateTime? = null,
   var updatedBy: String? = null,
+  var fileName: String,
 ) {
   companion object {
     fun from(
@@ -38,6 +39,7 @@ class UploadedDocumentEntity(
       appearance = courtAppearanceEntity,
       documentType = document.documentType,
       createdBy = username,
+      fileName = document.fileName,
     )
   }
 }
