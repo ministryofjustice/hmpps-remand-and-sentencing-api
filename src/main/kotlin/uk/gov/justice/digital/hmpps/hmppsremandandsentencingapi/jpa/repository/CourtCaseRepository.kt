@@ -65,4 +65,8 @@ interface CourtCaseRepository :
   """,
   )
   fun findSentenceCountNumbers(@Param("courtCaseUuid") courtCaseUuid: String, @Param("status") status: EntityStatus = EntityStatus.DELETED): List<String?>
+
+  @EntityGraph(value = "CourtCaseEntity.withAppearancesAndCharges", type = EntityGraph.EntityGraphType.FETCH)
+  @Query("SELECT cc FROM CourtCaseEntity cc WHERE cc.caseUniqueIdentifier = :courtCaseUuid")
+  fun findWithAppearancesAndChargesByUuid(@Param("courtCaseUuid") courtCaseUuid: String): CourtCaseEntity?
 }

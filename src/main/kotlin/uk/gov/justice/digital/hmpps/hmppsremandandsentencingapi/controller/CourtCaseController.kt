@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
+import java.time.LocalDate
 
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -233,4 +234,29 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   fun getAllCountNumbers(@PathVariable courtCaseUuid: String): CourtCaseCountNumbers = courtCaseService.getAllCountNumbers(courtCaseUuid)
+
+  @GetMapping("/court-case/{courtCaseUuid}/latest-offence-date")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @Operation(
+    summary = "Retrieve the latest offence date for a court case (checks both offence start and end dates)",
+    description = "This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns the latest offence date"),
+      ApiResponse(responseCode = "204", description = "No offence dates available for this court case"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Court case not found"),
+    ],
+  )
+  fun getLatestOffenceDate(@PathVariable courtCaseUuid: String): ResponseEntity<LocalDate> {
+    val latestOffenceDate = courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid)
+
+    return if (latestOffenceDate != null) {
+      ResponseEntity.ok(latestOffenceDate)
+    } else {
+      ResponseEntity.noContent().build()
+    }
+  }
 }
