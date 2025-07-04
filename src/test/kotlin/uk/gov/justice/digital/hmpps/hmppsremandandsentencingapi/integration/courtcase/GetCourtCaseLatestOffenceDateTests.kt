@@ -18,7 +18,7 @@ class GetCourtCaseLatestOffenceDateTests : IntegrationTestBase() {
 
     webTestClient.get()
       .uri("/court-case/$courtCaseUuid/latest-offence-date")
-      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING")) }
+      .headers { it.authToken(roles = listOf("@PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")")) }
       .exchange()
       .expectStatus().isOk
       .expectBody(LocalDate::class.java)
@@ -33,7 +33,7 @@ class GetCourtCaseLatestOffenceDateTests : IntegrationTestBase() {
 
     webTestClient.get()
       .uri("/court-case/$courtCaseUuid/latest-offence-date")
-      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING")) }
+      .headers { it.authToken(roles = listOf("@PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")")) }
       .exchange()
       .expectStatus().isNoContent
   }

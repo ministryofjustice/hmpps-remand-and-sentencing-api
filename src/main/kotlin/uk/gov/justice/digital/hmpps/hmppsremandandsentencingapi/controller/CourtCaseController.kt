@@ -236,7 +236,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   fun getAllCountNumbers(@PathVariable courtCaseUuid: String): CourtCaseCountNumbers = courtCaseService.getAllCountNumbers(courtCaseUuid)
 
   @GetMapping("/court-case/{courtCaseUuid}/latest-offence-date")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Retrieve the latest offence date for a court case (checks both offence start and end dates)",
     description = "This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.",
