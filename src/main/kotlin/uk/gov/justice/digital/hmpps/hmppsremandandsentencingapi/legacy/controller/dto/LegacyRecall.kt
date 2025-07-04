@@ -19,7 +19,7 @@ data class LegacyRecall(
     fun from(recallEntity: RecallEntity): LegacyRecall = LegacyRecall(
       recallEntity.recallUuid,
       recallEntity.prisonerId,
-      recallEntity.returnToCustodyDate,
+      if (recallEntity.inPrisonOnRevocationDate == true) recallEntity.revocationDate else recallEntity.returnToCustodyDate,
       recallEntity.revocationDate,
       recallEntity.recallSentences.map { it.sentence }.filter { it.statusId != EntityStatus.DELETED }.map { it.sentenceUuid },
       recallType = recallEntity.recallType.code,

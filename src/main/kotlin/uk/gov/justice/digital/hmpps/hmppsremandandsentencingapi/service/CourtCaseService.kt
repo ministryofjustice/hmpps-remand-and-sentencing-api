@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import java.time.LocalDate
 
 @Service
 class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService) {
@@ -241,4 +242,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
   @Transactional(readOnly = true)
   fun getAllCountNumbers(courtCaseUuid: String): CourtCaseCountNumbers = CourtCaseCountNumbers.from(courtCaseRepository.findSentenceCountNumbers(courtCaseUuid))
+
+  @Transactional(readOnly = true)
+  fun getLatestOffenceDateForCourtCase(courtCaseUuid: String): LocalDate? = courtCaseRepository.findLatestOffenceDate(courtCaseUuid)
 }
