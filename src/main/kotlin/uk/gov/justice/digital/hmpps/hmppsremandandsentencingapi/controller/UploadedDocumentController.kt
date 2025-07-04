@@ -36,6 +36,6 @@ class UploadedDocumentController(private val uploadedDocumentService: UploadedDo
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   fun create(@RequestBody createUploadedDocument: CreateUploadedDocument) = uploadedDocumentService.create(createUploadedDocument)
 }
