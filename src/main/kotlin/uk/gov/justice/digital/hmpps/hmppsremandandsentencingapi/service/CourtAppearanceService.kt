@@ -180,7 +180,7 @@ class CourtAppearanceService(
     }
 
     documentService.update(
-      courtAppearance.documents.map { it.documentUUID },
+      courtAppearance.documents?.map { it.documentUUID } ?: emptyList(),
       createdCourtAppearance,
     )
 
@@ -283,7 +283,7 @@ class CourtAppearanceService(
     }
 
     documentService.update(
-      courtAppearance.documents.map { it.documentUUID },
+      courtAppearance.documents?.map { it.documentUUID } ?: emptyList(),
       activeRecord,
     )
 
