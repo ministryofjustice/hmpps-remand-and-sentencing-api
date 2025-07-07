@@ -20,6 +20,8 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+enum class DataSource { NOMIS, RAS }
+
 @Entity
 @Table(name = "recall")
 class RecallEntity(
@@ -45,6 +47,9 @@ class RecallEntity(
   var updatedAt: ZonedDateTime? = null,
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
+  @Column
+  @Enumerated(EnumType.STRING)
+  val dataSource: DataSource,
 ) {
 
   @OneToMany(mappedBy = "recall")
@@ -67,6 +72,7 @@ class RecallEntity(
       createdByUsername = createRecall.createdByUsername,
       createdPrison = createRecall.createdByPrison,
       statusId = EntityStatus.ACTIVE,
+      dataSource = DataSource.RAS,
     )
 
     fun fromMigration(
@@ -82,6 +88,7 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
+      dataSource = DataSource.NOMIS,
     )
     fun from(
       sentence: LegacyCreateSentence,
@@ -96,6 +103,7 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
+      dataSource = DataSource.NOMIS,
     )
   }
 }
