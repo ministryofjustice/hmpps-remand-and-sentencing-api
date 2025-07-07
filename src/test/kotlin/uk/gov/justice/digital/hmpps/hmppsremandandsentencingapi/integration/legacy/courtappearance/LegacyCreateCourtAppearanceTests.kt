@@ -9,7 +9,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
@@ -100,6 +104,57 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(existingAppearanceHistories[0].nextCourtAppearanceId).isNull()
     Assertions.assertThat(existingAppearanceHistories[1].nextCourtAppearanceId).isNotNull
     assertThat(existingAppearanceHistories).extracting<EventSource> { it.source }.containsOnly(NOMIS)
+  }
+
+  @Test
+  fun `use latest court case reference in appearance when creating`() {
+    val nomisCaseReference = "NEW_NOMIS_CASE_REFERENCE"
+    val (courtCaseUuid) = createLegacyCourtCase()
+    val legacyData = CourtCaseLegacyData(
+      mutableListOf(
+        CaseReferenceLegacyData(nomisCaseReference, LocalDateTime.now()),
+      ),
+    )
+    webTestClient
+      .put()
+      .uri("/court-case/$courtCaseUuid/case-references/refresh")
+      .bodyValue(legacyData)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    val legacyCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = courtCaseUuid)
+
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(legacyCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(LegacyCourtAppearanceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${response.lifetimeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.courtCaseReference")
+      .isEqualTo(nomisCaseReference)
   }
 
   @Test
