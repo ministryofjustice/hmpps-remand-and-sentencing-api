@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers.everyItem
+import org.hamcrest.core.IsNull
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -181,8 +183,12 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')].outcome.outcomeUuid")
       .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced with another outcome
+      .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')].sentence")
+      .value(everyItem(IsNull.nullValue()))
       .jsonPath("$.charges.[?(@.chargeUuid != '${charge.chargeUuid}')].offenceCode")
       .isEqualTo(charge.offenceCode)
+      .jsonPath("$.charges.[?(@.chargeUuid != '${charge.chargeUuid}')].sentence")
+      .exists()
   }
 
   @Test

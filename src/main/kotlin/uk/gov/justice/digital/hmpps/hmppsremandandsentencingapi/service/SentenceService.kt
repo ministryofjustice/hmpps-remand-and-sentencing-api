@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
@@ -140,5 +141,31 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val consecutiveToSentences = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids)
     val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
     return RecordResponse(SentenceConsecutiveToDetailsResponse.from(consecutiveToSentences), eventsToEmit)
+  }
+
+  fun moveSentencesToNewCharge(
+    existingCharge: ChargeEntity,
+    newChargeRecord: ChargeEntity,
+    prisonerId: String,
+    courtCaseId: String,
+    courtAppearanceId: String,
+  ): MutableSet<EventMetadata> {
+    val existingSentences = existingCharge.sentences.filter { it.statusId != EntityStatus.DELETED }
+    return existingSentences.map { existingSentence ->
+      newChargeRecord.sentences.add(existingSentence)
+      existingSentence.charge = newChargeRecord
+      existingSentence.updatedBy = serviceUserService.getUsername()
+      existingSentence.updatedAt = ZonedDateTime.now()
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
+      existingCharge.sentences.remove(existingSentence)
+      EventMetadataCreator.sentenceEventMetadata(
+        prisonerId,
+        courtCaseId,
+        newChargeRecord.chargeUuid.toString(),
+        existingSentence.sentenceUuid.toString(),
+        courtAppearanceId,
+        EventType.SENTENCE_UPDATED,
+      )
+    }.toMutableSet()
   }
 }
