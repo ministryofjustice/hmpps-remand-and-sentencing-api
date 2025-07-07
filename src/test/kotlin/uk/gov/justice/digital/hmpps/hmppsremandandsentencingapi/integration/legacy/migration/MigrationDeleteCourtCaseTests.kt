@@ -12,7 +12,13 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `Migrate a case twice - ensure the original one is fully deleted, and the new one is persisted - other cases should not be deleted`() {
-    val migrationCourtCases = DataCreator.migrationCreateCourtCases()
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(
+      courtCases = listOf(
+        DataCreator.migrationCreateCourtCase(
+          appearances = listOf(DataCreator.migrationCreateCourtAppearance(charges = listOf(DataCreator.migrationCreateCharge(sentence = DataCreator.migrationCreateSentence())))),
+        ),
+      ),
+    )
     val response = migrateCase(migrationCourtCases)
     response
       .expectStatus().isCreated
@@ -40,7 +46,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content[0].latestCourtAppearance.caseReference").isEqualTo("NOMIS123")
       .jsonPath("$.content[0].latestCourtAppearance.courtCode").isEqualTo("COURT1")
       .jsonPath("$.content[0].latestCourtAppearance.warrantDate").isEqualTo(LocalDate.now().toString())
-      .jsonPath("$.content[0].latestCourtAppearance.warrantType").isEqualTo("REMAND")
+      .jsonPath("$.content[0].latestCourtAppearance.warrantType").isEqualTo("SENTENCING")
       .jsonPath("$.content[0].latestCourtAppearance.outcome").isEqualTo("Outcome Description")
       .jsonPath("$.content[0].latestCourtAppearance.charges[0].offenceCode").isEqualTo("OFF1")
 

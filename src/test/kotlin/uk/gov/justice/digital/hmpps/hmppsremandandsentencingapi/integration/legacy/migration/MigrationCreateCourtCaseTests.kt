@@ -17,7 +17,13 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `create all entities and return ids against NOMIS ids`() {
-    val migrationCourtCases = DataCreator.migrationCreateCourtCases()
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(
+      courtCases = listOf(
+        DataCreator.migrationCreateCourtCase(
+          appearances = listOf(DataCreator.migrationCreateCourtAppearance(charges = listOf(DataCreator.migrationCreateCharge(sentence = DataCreator.migrationCreateSentence())))),
+        ),
+      ),
+    )
     val response = webTestClient
       .post()
       .uri("/legacy/court-case/migration")

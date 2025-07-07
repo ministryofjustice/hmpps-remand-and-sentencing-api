@@ -162,7 +162,7 @@ class DataCreator {
       offenceStartDate: LocalDate? = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
-      sentence: MigrationCreateSentence? = migrationCreateSentence(),
+      sentence: MigrationCreateSentence? = null,
       mergedFromCaseId: Long? = null,
       mergedFromDate: LocalDate? = null,
     ): MigrationCreateCharge = MigrationCreateCharge(
