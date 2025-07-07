@@ -38,7 +38,7 @@ class RecallSentenceHistoryEntityTest {
       updatedAt = ZonedDateTime.of(2024, 4, 4, 4, 4, 4, 4, ZoneId.systemDefault()),
       updatedBy = "UPDATER",
       updatedPrison = "BAR",
-      dataSource = DataSource.RAS
+      dataSource = DataSource.RAS,
     )
     val sentence = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
