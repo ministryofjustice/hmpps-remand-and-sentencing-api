@@ -28,4 +28,13 @@ class CourtAppearanceTests {
     val result = CourtAppearanceEntity.from(legacyCourtAppearance, null, courtCase, "user")
     Assertions.assertThat(result.statusId).isEqualTo(EntityStatus.ACTIVE)
   }
+
+  @Test
+  fun `appearance without outcome and null legacy data and charge has sentence results in sentencing warrant type`() {
+    val sentencedCharge = DataCreator.migrationCreateCharge(sentence = DataCreator.migrationCreateSentence())
+    val migrationCourtAppearance = DataCreator.migrationCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(outcomeDispositionCode = null, outcomeConvictionFlag = null, outcomeDescription = null, nomisOutcomeCode = null), charges = listOf(sentencedCharge))
+    val courtCase = CourtCaseEntity.from(DataCreator.migrationCreateCourtCase(), "user", "PRI1")
+    val result = CourtAppearanceEntity.from(migrationCourtAppearance, null, courtCase, "user", null)
+    Assertions.assertThat(result.warrantType).isEqualTo("SENTENCING")
+  }
 }

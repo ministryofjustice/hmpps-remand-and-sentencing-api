@@ -48,8 +48,8 @@ class DataCreator {
       outcomeDescription: String? = "Outcome Description",
       nextEventDateTime: LocalDateTime? = LocalDateTime.now().plusDays(10),
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
-      outcomeDispositionCode: String = "I",
-      outcomeConvictionFlag: Boolean = false,
+      outcomeDispositionCode: String? = "I",
+      outcomeConvictionFlag: Boolean? = false,
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
       postedDate,
       nomisOutcomeCode,
@@ -162,7 +162,7 @@ class DataCreator {
       offenceStartDate: LocalDate? = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
-      sentence: MigrationCreateSentence? = migrationCreateSentence(),
+      sentence: MigrationCreateSentence? = null,
       mergedFromCaseId: Long? = null,
       mergedFromDate: LocalDate? = null,
     ): MigrationCreateCharge = MigrationCreateCharge(
