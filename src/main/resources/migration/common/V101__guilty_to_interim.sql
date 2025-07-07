@@ -1,0 +1,1 @@
+update charge_outcome set disposition_code = 'INTERIM' where outcome_uuid = '0828e8a8-c734-4c7f-8f66-a65302170f5c'
