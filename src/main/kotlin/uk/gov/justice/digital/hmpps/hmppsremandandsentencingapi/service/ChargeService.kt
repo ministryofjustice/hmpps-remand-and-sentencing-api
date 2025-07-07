@@ -94,6 +94,7 @@ class ChargeService(
         chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord))
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
+        eventsToEmit.addAll(sentenceService.moveSentencesToNewCharge(existingCharge, newChargeRecord, prisonerId, courtCaseId, courtAppearance.appearanceUuid.toString()))
       } else if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
         courtAppearance.appearanceCharges.filter { it.charge == existingCharge }
           .forEach { appearanceCharge ->
