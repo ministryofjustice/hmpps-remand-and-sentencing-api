@@ -321,25 +321,28 @@ class CourtAppearanceEntity(
       appearanceOutcome: AppearanceOutcomeEntity?,
       courtCase: CourtCaseEntity,
       createdBy: String,
-    ): CourtAppearanceEntity = CourtAppearanceEntity(
-      appearanceUuid = UUID.randomUUID(),
-      appearanceOutcome = appearanceOutcome,
-      courtCase = courtCase,
-      courtCode = courtAppearance.courtCode,
-      courtCaseReference = null,
-      appearanceDate = courtAppearance.appearanceDate,
-      statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
-      warrantId = null,
-      appearanceCharges = mutableSetOf(),
-      previousAppearance = null,
-      createdPrison = null,
-      createdBy = createdBy,
-      nextCourtAppearance = null,
-      warrantType = deriveWarrantType(appearanceOutcome, courtAppearance.legacyData),
-      overallConvictionDate = null,
-      legacyData = courtAppearance.legacyData,
-      source = NOMIS,
-    )
+    ): CourtAppearanceEntity {
+      val courtCaseReference = courtCase.legacyData?.caseReferences?.maxByOrNull { it.updatedDate }?.offenderCaseReference
+      return CourtAppearanceEntity(
+        appearanceUuid = UUID.randomUUID(),
+        appearanceOutcome = appearanceOutcome,
+        courtCase = courtCase,
+        courtCode = courtAppearance.courtCode,
+        courtCaseReference = courtCaseReference,
+        appearanceDate = courtAppearance.appearanceDate,
+        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
+        warrantId = null,
+        appearanceCharges = mutableSetOf(),
+        previousAppearance = null,
+        createdPrison = null,
+        createdBy = createdBy,
+        nextCourtAppearance = null,
+        warrantType = deriveWarrantType(appearanceOutcome, courtAppearance.legacyData),
+        overallConvictionDate = null,
+        legacyData = courtAppearance.legacyData,
+        source = NOMIS,
+      )
+    }
 
     fun from(
       migrationCreateCourtAppearance: MigrationCreateCourtAppearance,
