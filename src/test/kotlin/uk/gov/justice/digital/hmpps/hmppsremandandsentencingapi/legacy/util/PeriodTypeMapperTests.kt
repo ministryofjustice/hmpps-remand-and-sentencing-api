@@ -20,10 +20,10 @@ class PeriodTypeMapperTests {
     Assertions.assertThat(result).isEqualTo(expectedType)
   }
 
-  @ParameterizedTest(name = "DPS to NOMIS when period length type is {0} and sentence type classification is {1} then life sentence is {2} and sentence term code is {3}")
+  @ParameterizedTest(name = "DPS to NOMIS when period length type is {0} and sentence type classification is {1} and sentence calc type is {4} then life sentence is {2} and sentence term code is {3}")
   @MethodSource("dpsToNomisPeriodLengthTypeParameters")
-  fun `DPS to NOMIS period length type mapper tests`(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification?, lifeSentence: Boolean, sentenceTermCode: String, periodLengthLegacyData: PeriodLengthLegacyData?) {
-    val (lifeSentenceResult, sentenceTermCodeResult) = PeriodLengthTypeMapper.convertDpsToNomis(periodLengthType, sentenceTypeClassification, periodLengthLegacyData)
+  fun `DPS to NOMIS period length type mapper tests`(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification?, lifeSentence: Boolean, sentenceTermCode: String, periodLengthLegacyData: PeriodLengthLegacyData?, sentenceCalcType: String?) {
+    val (lifeSentenceResult, sentenceTermCodeResult) = PeriodLengthTypeMapper.convertDpsToNomis(periodLengthType, sentenceTypeClassification, periodLengthLegacyData, sentenceCalcType)
     Assertions.assertThat(lifeSentenceResult).isEqualTo(lifeSentence)
     Assertions.assertThat(sentenceTermCodeResult).isEqualTo(sentenceTermCode)
   }
@@ -49,15 +49,16 @@ class PeriodTypeMapperTests {
 
     @JvmStatic
     fun dpsToNomisPeriodLengthTypeParameters(): Stream<Arguments> = Stream.of(
-      Arguments.of(PeriodLengthType.TARIFF_LENGTH, SentenceTypeClassification.INDETERMINATE, true, "IMP", null),
-      Arguments.of(PeriodLengthType.CUSTODIAL_TERM, SentenceTypeClassification.EXTENDED, false, "IMP", null),
-      Arguments.of(PeriodLengthType.LICENCE_PERIOD, SentenceTypeClassification.EXTENDED, false, "LIC", null),
-      Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "IMP", null),
-      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.DTO, false, "IMP", null),
-      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET", null),
-      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.FINE, false, "IMP", null),
-      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.BOTUS, false, "IMP", null),
-      Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105")),
+      Arguments.of(PeriodLengthType.TARIFF_LENGTH, SentenceTypeClassification.INDETERMINATE, true, "IMP", null, null),
+      Arguments.of(PeriodLengthType.CUSTODIAL_TERM, SentenceTypeClassification.EXTENDED, false, "IMP", null, null),
+      Arguments.of(PeriodLengthType.LICENCE_PERIOD, SentenceTypeClassification.EXTENDED, false, "LIC", null, null),
+      Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "IMP", null, null),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.DTO, false, "IMP", null, null),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.CIVIL, false, "DET", null, null),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, null, false, "DET", null, "CIVIL"),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.FINE, false, "IMP", null, null),
+      Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.BOTUS, false, "IMP", null, null),
+      Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105"), null),
     )
   }
 }

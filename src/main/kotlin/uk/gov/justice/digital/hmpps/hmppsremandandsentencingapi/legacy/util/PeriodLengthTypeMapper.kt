@@ -31,12 +31,12 @@ class PeriodLengthTypeMapper {
       return periodLengthType
     }
 
-    fun convertDpsToNomis(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification?, periodLengthLegacyData: PeriodLengthLegacyData?): Pair<Boolean, String> {
+    fun convertDpsToNomis(periodLengthType: PeriodLengthType, sentenceTypeClassification: SentenceTypeClassification?, periodLengthLegacyData: PeriodLengthLegacyData?, sentenceCalcType: String?): Pair<Boolean, String> {
       var lifeSentenceSentenceTermCode = when {
         periodLengthType == PeriodLengthType.TARIFF_LENGTH -> true to NOMIS_IMPRISONMENT_TERM_CODE
         periodLengthType == PeriodLengthType.CUSTODIAL_TERM || periodLengthType == PeriodLengthType.SENTENCE_LENGTH -> false to NOMIS_IMPRISONMENT_TERM_CODE
         periodLengthType == PeriodLengthType.LICENCE_PERIOD -> false to NOMIS_LICENCE_TERM_CODE
-        periodLengthType == PeriodLengthType.TERM_LENGTH && sentenceTypeClassification == SentenceTypeClassification.CIVIL -> false to NOMIS_DETENTION_TERM_CODE
+        periodLengthType == PeriodLengthType.TERM_LENGTH && (sentenceTypeClassification == SentenceTypeClassification.CIVIL || civilSentenceCalcTypes.contains(sentenceCalcType)) -> false to NOMIS_DETENTION_TERM_CODE
         periodLengthType == PeriodLengthType.TERM_LENGTH -> false to NOMIS_IMPRISONMENT_TERM_CODE
         else -> periodLengthLegacyData!!.lifeSentence!! to periodLengthLegacyData.sentenceTermCode!!
       }
