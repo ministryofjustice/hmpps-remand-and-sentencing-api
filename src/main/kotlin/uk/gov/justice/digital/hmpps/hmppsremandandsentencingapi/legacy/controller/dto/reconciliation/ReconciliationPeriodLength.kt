@@ -19,8 +19,9 @@ data class ReconciliationPeriodLength(
   companion object {
     fun from(periodLengthEntity: PeriodLengthEntity): ReconciliationPeriodLength {
       val sentenceTypeClassification = periodLengthEntity.sentenceEntity!!.sentenceType?.classification
+      val sentenceCalcType = periodLengthEntity.sentenceEntity!!.sentenceType?.nomisSentenceCalcType ?: periodLengthEntity.sentenceEntity!!.legacyData?.sentenceCalcType
       val (isLifeSentence, sentenceTermCode) = if (sentenceTypeClassification != null || periodLengthEntity.periodLengthType !== PeriodLengthType.UNSUPPORTED) {
-        PeriodLengthTypeMapper.convertDpsToNomis(periodLengthEntity.periodLengthType, sentenceTypeClassification, periodLengthEntity.legacyData)
+        PeriodLengthTypeMapper.convertDpsToNomis(periodLengthEntity.periodLengthType, sentenceTypeClassification, periodLengthEntity.legacyData, sentenceCalcType)
       } else {
         periodLengthEntity.legacyData?.lifeSentence to periodLengthEntity.legacyData!!.sentenceTermCode!!
       }
