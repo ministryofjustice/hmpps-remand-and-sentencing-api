@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
@@ -11,6 +12,10 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
   fun findAllByAppearanceUUID(
     @Param("appearanceUUID") appearanceUUID: UUID,
   ): List<UploadedDocumentEntity>
+
+  @Modifying
+  @Query("delete from UploadedDocumentEntity d where d.appearance is null")
+  fun deleteWhenAppearanceIdIsNull(): Int
 
   fun findByDocumentUuid(documentUuid: UUID): UploadedDocumentEntity?
 }

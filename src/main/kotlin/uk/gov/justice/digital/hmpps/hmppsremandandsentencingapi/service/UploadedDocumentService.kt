@@ -45,4 +45,9 @@ class UploadedDocumentService(
       }
     }
   }
+
+  @Transactional
+  fun deleteDocumentsWithoutAppearanceId(): Int {
+    return uploadedDocumentRepository.deleteWhenAppearanceIdIsNull()
+  }
 }

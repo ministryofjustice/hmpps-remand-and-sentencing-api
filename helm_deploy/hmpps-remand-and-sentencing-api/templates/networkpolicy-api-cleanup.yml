@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-api-cleanup-policy
+  labels:
+    app.kubernetes.io/name: hmpps-remand-and-sentencing-api
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hmpps-remand-and-sentencing-api
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: hmpps-remand-and-sentencing-api
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: cronjob-cleanup
+              app.kubernetes.io/job-name: document-table-cleanup-cronjob
+      ports:
+        - protocol: TCP
+          port: {{ .Values.generic-service.port }}
