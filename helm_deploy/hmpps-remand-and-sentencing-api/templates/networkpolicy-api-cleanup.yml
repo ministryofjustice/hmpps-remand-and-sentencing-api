@@ -22,4 +22,4 @@ spec:
               app.kubernetes.io/job-name: document-table-cleanup-cronjob
       ports:
         - protocol: TCP
-          port: {{ .Values.generic-service.port }}
+          port: {{ get (get .Values "generic-service").image "port" }}
