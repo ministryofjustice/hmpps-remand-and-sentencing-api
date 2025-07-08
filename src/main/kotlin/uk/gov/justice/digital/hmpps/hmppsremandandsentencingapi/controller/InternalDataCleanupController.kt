@@ -23,12 +23,12 @@ class InternalDataCleanupController(private val uploadedDocumentService: Uploade
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Deletes uploaded documents without an appearance ID",
-    description = "Deletes all uploaded documents where the appearance ID is null"
+    description = "Deletes all uploaded documents where the appearance ID is null",
   )
   @ApiResponses(
     value = [
       ApiResponse(responseCode = "200", description = "Cleanup completed"),
-    ]
+    ],
   )
   fun cleanup() {
     uploadedDocumentService.deleteDocumentsWithoutAppearanceId()
