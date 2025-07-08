@@ -189,6 +189,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               sentenceType = sentence.sentenceType?.description,
+              nomisSentenceCalcType = sentence.sentenceType?.nomisSentenceCalcType,
               classification = sentence.sentenceType?.classification,
               systemOfRecord = "RAS",
               periodLengths = sentence.periodLengths.map { periodLength ->

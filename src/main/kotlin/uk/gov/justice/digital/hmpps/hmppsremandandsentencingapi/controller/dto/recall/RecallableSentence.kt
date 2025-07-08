@@ -24,4 +24,5 @@ data class RecallableSentence(
   val sentenceServeType: String?,
   val sentenceLegacyData: SentenceLegacyData?,
   val outcomeDescription: String?,
+  val nomisSentenceCalcType: String?,
 )
