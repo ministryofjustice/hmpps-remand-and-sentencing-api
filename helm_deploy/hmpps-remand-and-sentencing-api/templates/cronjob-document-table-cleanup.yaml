@@ -33,6 +33,5 @@ spec:
               args:
                 - "-X"
                 - "POST"
-                - "http://{{ .Release.Name }}-generic-service-service.{{ .Release.Namespace }}:{{ get (get .Values \"generic-service\") \"image\" | get \"port\" }}/internal/document-table-cleanup"
-
+                - "http://{{ .Release.Name }}-generic-service-service.{{ .Release.Namespace }}:{{ get (get .Values "generic-service") "image" | get "port" }}/internal/document-table-cleanup"
   {{- end }}
