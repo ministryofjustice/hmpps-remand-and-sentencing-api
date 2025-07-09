@@ -60,3 +60,4 @@ generic-data-analytics-extractor:
 documentCleanCronjob:
   enabled: true
   schedule: "0 2 * * 6"
+

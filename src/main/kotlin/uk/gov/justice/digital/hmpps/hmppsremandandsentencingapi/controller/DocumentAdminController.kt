@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
 
 @RestController
-@RequestMapping("/data-cleanup-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping("/document-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(
   name = "internal-data-cleanup-controller",
   description = "Endpoint for internal data cleanup operations",
 )
-class DataCleanupAdminController(private val uploadedDocumentService: UploadedDocumentService) {
-  @PostMapping("/document")
+class DocumentAdminController(private val uploadedDocumentService: UploadedDocumentService) {
+  @PostMapping("/cleanup")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Deletes uploaded documents without an appearance ID",
