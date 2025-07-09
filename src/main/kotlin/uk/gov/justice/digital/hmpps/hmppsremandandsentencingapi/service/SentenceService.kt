@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional
 import jakarta.transaction.Transactional.TxType
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -141,6 +142,11 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val consecutiveToSentences = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids)
     val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
     return RecordResponse(SentenceConsecutiveToDetailsResponse.from(consecutiveToSentences), eventsToEmit)
+  }
+
+  fun hasSentencesAfterOnOtherCourtAppearance(sentenceUuid: UUID): HasSentenceAfterOnOtherCourtAppearanceResponse {
+    val count = sentenceRepository.countSentencesAfterOnOtherCourtAppearance(sentenceUuid)
+    return HasSentenceAfterOnOtherCourtAppearanceResponse(count > 0)
   }
 
   fun moveSentencesToNewCharge(
