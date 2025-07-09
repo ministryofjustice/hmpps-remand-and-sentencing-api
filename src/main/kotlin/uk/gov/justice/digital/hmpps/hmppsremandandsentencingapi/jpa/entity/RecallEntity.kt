@@ -21,9 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import java.util.*
-
-enum class DataSource { NOMIS, RAS }
+import java.util.UUID
 
 @Entity
 @Table(name = "recall")

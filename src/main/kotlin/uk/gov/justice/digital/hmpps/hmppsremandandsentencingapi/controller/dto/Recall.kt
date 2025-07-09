@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.util.*
+import java.util.UUID
 
 data class Recall(
   val recallUuid: UUID,
