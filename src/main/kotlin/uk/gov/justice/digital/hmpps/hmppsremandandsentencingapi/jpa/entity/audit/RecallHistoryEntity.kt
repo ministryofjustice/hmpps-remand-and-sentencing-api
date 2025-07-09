@@ -10,6 +10,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -44,6 +46,8 @@ class RecallHistoryEntity(
   val updatedAt: ZonedDateTime?,
   val updatedBy: String?,
   val updatedPrison: String?,
+  @Enumerated(EnumType.STRING)
+  var source: EventSource = DPS,
   @Column
   @Enumerated(EnumType.ORDINAL)
   val historyStatusId: EntityStatus,
@@ -67,6 +71,7 @@ class RecallHistoryEntity(
       updatedAt = original.updatedAt,
       updatedBy = original.updatedBy,
       updatedPrison = original.updatedPrison,
+      source = original.source,
       historyStatusId = historyStatus,
       historyCreatedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
     )

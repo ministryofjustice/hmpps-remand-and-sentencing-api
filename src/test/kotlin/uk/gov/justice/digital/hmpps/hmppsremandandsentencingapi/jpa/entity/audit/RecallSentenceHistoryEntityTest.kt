@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audi
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
@@ -37,6 +38,7 @@ class RecallSentenceHistoryEntityTest {
       updatedAt = ZonedDateTime.of(2024, 4, 4, 4, 4, 4, 4, ZoneId.systemDefault()),
       updatedBy = "UPDATER",
       updatedPrison = "BAR",
+      source = EventSource.DPS,
     )
     val sentence = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
