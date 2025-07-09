@@ -51,5 +51,4 @@ class UploadedDocumentService(
     val cutoff = ZonedDateTime.now().minusDays(10)
     return uploadedDocumentRepository.deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days(cutoff)
   }
-
-  }
+}
