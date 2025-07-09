@@ -12,6 +12,9 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
@@ -45,6 +48,8 @@ class RecallEntity(
   var updatedAt: ZonedDateTime? = null,
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
+  @Enumerated(EnumType.STRING)
+  var source: EventSource = DPS,
 ) {
 
   @OneToMany(mappedBy = "recall")
@@ -57,7 +62,7 @@ class RecallEntity(
   }
 
   companion object {
-    fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
+    fun fromDps(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
       recallUuid = recallUuid ?: UUID.randomUUID(),
       prisonerId = createRecall.prisonerId,
       revocationDate = createRecall.revocationDate,
@@ -67,6 +72,7 @@ class RecallEntity(
       createdByUsername = createRecall.createdByUsername,
       createdPrison = createRecall.createdByPrison,
       statusId = EntityStatus.ACTIVE,
+      source = DPS,
     )
 
     fun fromMigration(
@@ -82,8 +88,10 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
+      source = NOMIS,
     )
-    fun from(
+
+    fun fromLegacy(
       sentence: LegacyCreateSentence,
       prisonerId: String,
       createdByUsername: String,
@@ -96,6 +104,7 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
+      source = NOMIS,
     )
   }
 }
