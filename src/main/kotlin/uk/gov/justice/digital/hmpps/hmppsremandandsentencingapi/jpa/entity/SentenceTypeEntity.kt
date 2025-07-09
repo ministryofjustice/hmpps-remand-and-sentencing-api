@@ -36,4 +36,6 @@ class SentenceTypeEntity(
   val displayOrder: Int,
   @Enumerated(EnumType.STRING)
   val status: ReferenceEntityStatus,
+  @Column(name = "is_recallable")
+  val isRecallable: Boolean,
 )

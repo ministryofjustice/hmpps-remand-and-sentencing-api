@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -54,6 +55,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          source = EventSource.DPS,
           sentences = emptyList(),
         ),
       )
@@ -89,6 +91,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          source = EventSource.DPS,
           sentences = emptyList(),
         ),
       )
@@ -128,6 +131,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          source = EventSource.DPS,
           sentences = emptyList(),
         ),
       )
@@ -175,6 +179,7 @@ class RecallIntTests : IntegrationTestBase() {
             createdByUsername = "user001",
             createdAt = ZonedDateTime.now(),
             createdByPrison = "PRISON1",
+            source = EventSource.DPS,
           ),
           Recall(
             recallUuid = uuidTwo,
@@ -186,6 +191,7 @@ class RecallIntTests : IntegrationTestBase() {
             createdByUsername = "user001",
             createdAt = ZonedDateTime.now(),
             createdByPrison = "PRISON1",
+            source = EventSource.DPS,
           ),
         ),
       )
@@ -233,6 +239,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = originalRecall.createdByUsername,
           createdByPrison = originalRecall.createdByPrison,
           createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
         ),
       )
 
@@ -286,6 +293,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRISON1",
+          source = EventSource.DPS,
         ),
       )
     val messages = getMessages(1)
@@ -318,6 +326,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRISON1",
+          source = EventSource.DPS,
         ),
       )
     val messages = getMessages(1)
@@ -353,6 +362,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByUsername = "user001",
           createdAt = ZonedDateTime.now(),
           createdByPrison = "PRI",
+          source = EventSource.DPS,
           sentences = emptyList(),
         ),
       )

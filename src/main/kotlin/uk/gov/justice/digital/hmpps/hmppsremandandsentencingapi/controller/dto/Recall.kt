@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -17,6 +18,7 @@ data class Recall(
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
   val createdByPrison: String?,
+  val source: EventSource,
   val sentences: List<Sentence>? = emptyList(),
   val courtCaseIds: List<String>? = emptyList(),
 ) {
@@ -31,6 +33,7 @@ data class Recall(
       createdByUsername = recall.createdByUsername,
       createdAt = recall.createdAt,
       createdByPrison = recall.createdPrison,
+      source = recall.source,
       sentences = sentences.map { Sentence.from(it.sentence) },
       courtCaseIds = sentences.flatMap { it.sentence.charge.appearanceCharges.map { ac -> ac.appearance!!.courtCase.caseUniqueIdentifier } },
     )

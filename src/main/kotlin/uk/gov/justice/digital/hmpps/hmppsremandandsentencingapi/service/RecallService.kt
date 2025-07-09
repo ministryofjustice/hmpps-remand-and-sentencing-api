@@ -39,7 +39,7 @@ class RecallService(
   @Transactional
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
-    val recall = recallRepository.save(RecallEntity.placeholderEntity(createRecall, recallType!!, recallUuid))
+    val recall = recallRepository.save(RecallEntity.fromDps(createRecall, recallType!!, recallUuid))
     // Temporarily nullable because CRDS data doesn't have sentence Ids
     val recallSentences: List<RecallSentenceEntity>? =
       createRecall.sentenceIds?.let { sentenceIds ->
