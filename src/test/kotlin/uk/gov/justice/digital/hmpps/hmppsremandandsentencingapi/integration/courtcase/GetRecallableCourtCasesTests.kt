@@ -60,6 +60,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
       .jsonPath("$.cases[0].sentences[0].sentenceType").exists()
+      .jsonPath("$.cases[0].sentences[0].isRecallable").isEqualTo(true)
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
@@ -252,6 +253,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1) // Should find the sentence from older appearance
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
+      .jsonPath("$.cases[0].sentences[0].isRecallable").isEqualTo(true)
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
@@ -276,6 +278,39 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").isEqualTo(lifetimeUuid.toString())
+  }
+
+  @Test
+  fun `returns non-recallable sentence types`() {
+    // Create a court case with a non-recallable sentence type (A/FINE)
+    val chargeWithNonRecallableSentence = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(
+        sentenceTypeId = UUID.fromString("c71ceefe-932b-4a69-b87c-7c1294e37cf7"), // A/FINE sentence type
+      ),
+    )
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeWithNonRecallableSentence),
+      warrantType = "SENTENCING",
+    )
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
+    val (courtCaseUuid, createdCase) = createCourtCase(courtCase)
+
+    webTestClient
+      .get()
+      .uri("/court-case/${createdCase.prisonerId}/recallable-court-cases")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.totalCases").isEqualTo(1)
+      .jsonPath("$.cases.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid)
+      .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].sentences[0].isRecallable").isEqualTo(false)
+      .jsonPath("$.cases[0].sentences[0].classification").isEqualTo("FINE")
   }
 
   @Test

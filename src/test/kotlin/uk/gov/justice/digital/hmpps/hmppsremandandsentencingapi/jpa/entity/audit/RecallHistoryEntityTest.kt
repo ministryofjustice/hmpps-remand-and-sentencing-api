@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audi
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -31,6 +32,7 @@ class RecallHistoryEntityTest {
       updatedAt = ZonedDateTime.of(2024, 4, 4, 4, 4, 4, 4, ZoneId.systemDefault()),
       updatedBy = "UPDATER",
       updatedPrison = "BAR",
+      source = EventSource.DPS,
     )
 
     assertThat(RecallHistoryEntity.from(original, EntityStatus.DELETED))
@@ -53,6 +55,7 @@ class RecallHistoryEntityTest {
           updatedAt = ZonedDateTime.of(2024, 4, 4, 4, 4, 4, 4, ZoneId.systemDefault()),
           updatedBy = "UPDATER",
           updatedPrison = "BAR",
+          source = EventSource.DPS,
           historyStatusId = EntityStatus.DELETED,
           historyCreatedAt = ZonedDateTime.now(), // ignored in assertion
         ),

@@ -10,5 +10,5 @@ data class RecallableCourtCase(
   val date: LocalDate,
   val status: EntityStatus,
   val isSentenced: Boolean,
-  val sentences: List<RecallableSentence>,
+  val sentences: List<RecallableCourtCaseSentence>,
 )
