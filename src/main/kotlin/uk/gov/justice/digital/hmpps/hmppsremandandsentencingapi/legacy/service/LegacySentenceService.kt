@@ -137,7 +137,7 @@ class LegacySentenceService(
   ) {
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
     val recall = recallRepository.save(
-      RecallEntity.from(
+      RecallEntity.fromLegacy(
         sentence,
         prisonerId,
         serviceUserService.getUsername(),

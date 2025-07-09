@@ -12,13 +12,16 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 enum class DataSource { NOMIS, RAS }
 
@@ -47,9 +50,8 @@ class RecallEntity(
   var updatedAt: ZonedDateTime? = null,
   var updatedBy: String? = null,
   var updatedPrison: String? = null,
-  @Column
   @Enumerated(EnumType.STRING)
-  val dataSource: DataSource,
+  var source: EventSource = DPS,
 ) {
 
   @OneToMany(mappedBy = "recall")
@@ -62,7 +64,7 @@ class RecallEntity(
   }
 
   companion object {
-    fun placeholderEntity(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
+    fun fromDps(createRecall: CreateRecall, recallType: RecallTypeEntity, recallUuid: UUID? = null): RecallEntity = RecallEntity(
       recallUuid = recallUuid ?: UUID.randomUUID(),
       prisonerId = createRecall.prisonerId,
       revocationDate = createRecall.revocationDate,
@@ -72,7 +74,7 @@ class RecallEntity(
       createdByUsername = createRecall.createdByUsername,
       createdPrison = createRecall.createdByPrison,
       statusId = EntityStatus.ACTIVE,
-      dataSource = DataSource.RAS,
+      source = DPS,
     )
 
     fun fromMigration(
@@ -88,9 +90,10 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
-      dataSource = DataSource.NOMIS,
+      source = NOMIS,
     )
-    fun from(
+
+    fun fromLegacy(
       sentence: LegacyCreateSentence,
       prisonerId: String,
       createdByUsername: String,
@@ -103,7 +106,7 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
-      dataSource = DataSource.NOMIS,
+      source = NOMIS,
     )
   }
 }

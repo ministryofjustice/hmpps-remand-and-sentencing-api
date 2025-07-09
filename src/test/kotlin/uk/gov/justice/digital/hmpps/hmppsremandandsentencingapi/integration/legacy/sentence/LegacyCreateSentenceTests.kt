@@ -7,6 +7,7 @@ import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -83,6 +84,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
     assertThat(recalls[0].sentences).hasSize(1)
     assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
+    assertThat(recalls[0].source).isEqualTo(EventSource.NOMIS)
   }
 
   @Test
