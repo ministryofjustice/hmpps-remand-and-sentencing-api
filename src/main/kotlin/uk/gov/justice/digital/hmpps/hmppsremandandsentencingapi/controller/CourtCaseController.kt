@@ -184,7 +184,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 
   @GetMapping("/court-case/{courtCaseUuid}/latest-appearance")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Retrieve latest court appearance of court case",
     description = "This endpoint will retrieve latest court appearance of court case",
