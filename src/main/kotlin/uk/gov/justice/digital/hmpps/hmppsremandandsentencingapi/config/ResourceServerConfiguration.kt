@@ -21,7 +21,7 @@ class ResourceServerConfiguration {
       headers { frameOptions { sameOrigin = true } }
       csrf { disable() }
       authorizeHttpRequests {
-        authorize("/internal/**", permitAll)
+        authorize("/document-admin/cleanup", permitAll)
         listOf(
           "/webjars/**",
           "/favicon.ico",

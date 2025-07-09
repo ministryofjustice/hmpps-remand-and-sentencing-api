@@ -10,7 +10,7 @@ class CleanupDocumentTest : IntegrationTestBase() {
   fun `cleanup endpoint is authorized and returns expected status`() {
     webTestClient
       .post()
-      .uri("/internal/cleanup-document-table")
+      .uri("/document-admin/cleanup")
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
       }

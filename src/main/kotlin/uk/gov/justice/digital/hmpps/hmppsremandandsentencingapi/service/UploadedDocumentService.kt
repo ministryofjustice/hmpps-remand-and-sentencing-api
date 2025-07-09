@@ -47,5 +47,9 @@ class UploadedDocumentService(
   }
 
   @Transactional
-  fun deleteDocumentsWithoutAppearanceId(): Int = uploadedDocumentRepository.deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days()
-}
+  fun deleteDocumentsWithoutAppearanceId(): Int {
+    val cutoff = ZonedDateTime.now().minusDays(10)
+    return uploadedDocumentRepository.deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days(cutoff)
+  }
+
+  }

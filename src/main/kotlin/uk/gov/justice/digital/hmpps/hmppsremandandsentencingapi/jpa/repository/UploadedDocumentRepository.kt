@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
+import java.time.ZonedDateTime
 import java.util.UUID
 
 interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, Int> {
@@ -14,8 +15,8 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
   ): List<UploadedDocumentEntity>
 
   @Modifying
-  @Query("delete from UploadedDocumentEntity d where d.appearance is null and d.createdAt < CURRENT_TIMESTAMP - 10")
-  fun deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days(): Int
+  @Query("delete from UploadedDocumentEntity d where d.appearance is null and d.createdAt < :cutoff")
+  fun deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days(@Param("cutoff") cutoff: ZonedDateTime): Int
 
   fun findByDocumentUuid(documentUuid: UUID): UploadedDocumentEntity?
 }
