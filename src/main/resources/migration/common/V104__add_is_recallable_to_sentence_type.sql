@@ -14,5 +14,4 @@ UPDATE sentence_type SET is_recallable = FALSE WHERE sentence_type_uuid IN (
     '903ca33b-e264-4a16-883d-fee03a2a3396'   -- ORA Detention and Training Order (2020)
 );
 
--- Add comment to explain the column
 COMMENT ON COLUMN sentence_type.is_recallable IS 'Indicates whether sentences of this type are recallable';
