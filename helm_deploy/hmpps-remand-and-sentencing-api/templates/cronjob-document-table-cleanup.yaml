@@ -1,38 +1,31 @@
 # helm_deploy/hmpps-remand-and-sentencing-api/templates/cronjob-document-table-cleanup.yaml
-  {{- if .Values.cronjob.enabled }}
+  {{- if .Values.documentCleanCronjob.enabled }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-document-table-cleanup
+  name: {{ include "generic-service.fullname" . | trunc 26 }}-temp-document-cleanup
   labels:
-    app.kubernetes.io/name: hmpps-remand-and-sentencing-api
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: cronjob-cleanup
-    app.kubernetes.io/job-name: document-table-cleanup-cronjob
+    {{- include "generic-service.labels" . | nindent 4 }}
 
 spec:
-  schedule: {{ .Values.cronjob.schedule | quote }}
-  successfulJobsHistoryLimit: 1
-  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 5
   jobTemplate:
     spec:
       template:
-        metadata:
-          labels:
-            app.kubernetes.io/name: hmpps-remand-and-sentencing-api
-            app.kubernetes.io/instance: {{ .Release.Name }}
-            app.kubernetes.io/component: cronjob-cleanup
-            app.kubernetes.io/job-name: document-table-cleanup-cronjob
         spec:
           restartPolicy: OnFailure
           containers:
-            - name: cleanup-runner
-              image: curlimages/curl:latest
+            - name: temp-document-cleanup
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools:main
               imagePullPolicy: IfNotPresent
               command: ["curl"]
               args:
-                - "-X"
-                - "POST"
-                - "http://{{ .Release.Name }}-generic-service-service.{{ .Release.Namespace }}:{{ get (get (get .Values "generic-service") "image") "port" }}/internal/document-table-cleanup"
-
+                - /bin/sh
+                - -c
+                - curl -XPUT --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 40 http://{{ include "generic-service.fullname" . }}/data-cleanup-admin/document
+              securityContext:
+                              {{- toYaml .Values.documentCleanCronjob.securityContext | nindent 16 }}
 {{- end }}

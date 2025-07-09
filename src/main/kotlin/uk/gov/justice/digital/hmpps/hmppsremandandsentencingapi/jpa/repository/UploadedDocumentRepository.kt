@@ -14,8 +14,8 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
   ): List<UploadedDocumentEntity>
 
   @Modifying
-  @Query("delete from UploadedDocumentEntity d where d.appearance is null")
-  fun deleteWhenAppearanceIdIsNull(): Int
+  @Query("delete from UploadedDocumentEntity d where d.appearance is null and d.createdAt < CURRENT_TIMESTAMP - 10")
+  fun deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days(): Int
 
   fun findByDocumentUuid(documentUuid: UUID): UploadedDocumentEntity?
 }

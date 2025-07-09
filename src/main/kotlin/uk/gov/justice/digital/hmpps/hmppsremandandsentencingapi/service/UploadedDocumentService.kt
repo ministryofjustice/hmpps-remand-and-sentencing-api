@@ -47,5 +47,5 @@ class UploadedDocumentService(
   }
 
   @Transactional
-  fun deleteDocumentsWithoutAppearanceId(): Int = uploadedDocumentRepository.deleteWhenAppearanceIdIsNull()
+  fun deleteDocumentsWithoutAppearanceId(): Int = uploadedDocumentRepository.deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days()
 }

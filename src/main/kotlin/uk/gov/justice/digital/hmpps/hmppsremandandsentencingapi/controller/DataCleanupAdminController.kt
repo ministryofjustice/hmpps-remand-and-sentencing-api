@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
 
 @RestController
-@RequestMapping("/internal", produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping("/data-cleanup-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(
   name = "internal-data-cleanup-controller",
   description = "Endpoint for internal data cleanup operations",
 )
-class InternalDataCleanupController(private val uploadedDocumentService: UploadedDocumentService) {
-  @PostMapping("/cleanup-document-table")
+class DataCleanupAdminController(private val uploadedDocumentService: UploadedDocumentService) {
+  @PostMapping("/document")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Deletes uploaded documents without an appearance ID",
@@ -30,7 +30,7 @@ class InternalDataCleanupController(private val uploadedDocumentService: Uploade
       ApiResponse(responseCode = "200", description = "Cleanup completed"),
     ],
   )
-  fun cleanup() {
+  fun cleanupDocument() {
     uploadedDocumentService.deleteDocumentsWithoutAppearanceId()
   }
 }
