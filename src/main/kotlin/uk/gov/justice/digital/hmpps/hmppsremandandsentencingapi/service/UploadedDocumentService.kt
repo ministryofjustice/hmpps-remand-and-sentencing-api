@@ -18,7 +18,7 @@ class UploadedDocumentService(
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val serviceUserService: ServiceUserService,
   private val documentManagementApiClient: DocumentManagementApiClient,
-  ) {
+) {
   @Transactional
   fun create(createUploadedDocument: CreateUploadedDocument) {
     val courtAppearance = createUploadedDocument.appearanceUUID?.let {
@@ -52,7 +52,7 @@ class UploadedDocumentService(
   fun deleteDocumentsWithoutAppearanceId(): Int {
     val cutoff = ZonedDateTime.now().minusDays(10)
     val documentsToBeDeleted = uploadedDocumentRepository.findDocumentUuidsWithoutAppearanceAndOlderThan10Days(cutoff)
-    for( documentUuid in documentsToBeDeleted) {
+    for (documentUuid in documentsToBeDeleted) {
       documentManagementApiClient.deleteDocument(documentId = documentUuid.toString(), username = serviceUserService.getUsername())
     }
     return uploadedDocumentRepository.deleteByDocumentUuidInList(documentsToBeDeleted)
