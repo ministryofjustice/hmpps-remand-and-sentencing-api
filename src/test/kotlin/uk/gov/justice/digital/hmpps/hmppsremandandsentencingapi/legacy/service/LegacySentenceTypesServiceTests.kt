@@ -48,6 +48,7 @@ class LegacySentenceTypesServiceTests {
       nomisSentenceCalcType = "IMP",
       displayOrder = 5432,
       status = ReferenceEntityStatus.ACTIVE,
+      isRecallable = true,
     )
 
     val legacySentenceTypeEntity = LegacySentenceTypeEntity(

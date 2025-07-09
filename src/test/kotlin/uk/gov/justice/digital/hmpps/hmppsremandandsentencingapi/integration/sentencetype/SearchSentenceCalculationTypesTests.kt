@@ -55,6 +55,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
         status = ReferenceEntityStatus.INACTIVE,
         minOffenceDateInclusive = offenceDate.minusDays(10),
         maxOffenceDateExclusive = offenceDate.plusDays(10),
+        isRecallable = true,
       ),
     )
     val result = webTestClient.get()

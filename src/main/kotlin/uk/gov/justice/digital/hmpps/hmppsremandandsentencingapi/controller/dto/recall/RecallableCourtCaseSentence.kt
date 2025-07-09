@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import java.time.LocalDate
 import java.util.UUID
 
-data class RecallableSentence(
+data class RecallableCourtCaseSentence(
   val sentenceUuid: UUID,
   val offenceCode: String?,
   val offenceStartDate: LocalDate?,
@@ -24,6 +24,5 @@ data class RecallableSentence(
   val sentenceServeType: String?,
   val sentenceLegacyData: SentenceLegacyData?,
   val outcomeDescription: String?,
-  val nomisSentenceCalcType: String?,
-  val sentenceTypeUuid: String?,
+  val isRecallable: Boolean,
 )
