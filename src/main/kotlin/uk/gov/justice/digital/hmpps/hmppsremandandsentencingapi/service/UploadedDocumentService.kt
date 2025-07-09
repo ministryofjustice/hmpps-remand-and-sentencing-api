@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import jakarta.persistence.EntityNotFoundException
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
@@ -16,7 +17,8 @@ class UploadedDocumentService(
   private val uploadedDocumentRepository: UploadedDocumentRepository,
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val serviceUserService: ServiceUserService,
-) {
+  private val documentManagementApiClient: DocumentManagementApiClient,
+  ) {
   @Transactional
   fun create(createUploadedDocument: CreateUploadedDocument) {
     val courtAppearance = createUploadedDocument.appearanceUUID?.let {
@@ -49,6 +51,10 @@ class UploadedDocumentService(
   @Transactional
   fun deleteDocumentsWithoutAppearanceId(): Int {
     val cutoff = ZonedDateTime.now().minusDays(10)
-    return uploadedDocumentRepository.deleteWhenAppearanceIdIsNullAndCreatedAtOlderThan10Days(cutoff)
+    val documentsToBeDeleted = uploadedDocumentRepository.findDocumentUuidsWithoutAppearanceAndOlderThan10Days(cutoff)
+    for( documentUuid in documentsToBeDeleted) {
+      documentManagementApiClient.deleteDocument(documentId = documentUuid.toString(), username = serviceUserService.getUsername())
+    }
+    return uploadedDocumentRepository.deleteByDocumentUuidInList(documentsToBeDeleted)
   }
 }
