@@ -210,6 +210,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               lineNumber = sentence.legacyData?.nomisLineReference,
               sentenceServeType = sentence.sentenceServeType,
               sentenceLegacyData = sentence.legacyData,
+              sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
             )
           },
       )

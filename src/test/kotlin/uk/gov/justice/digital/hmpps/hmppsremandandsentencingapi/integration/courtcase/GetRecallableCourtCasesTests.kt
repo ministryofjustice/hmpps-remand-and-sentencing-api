@@ -61,6 +61,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
       .jsonPath("$.cases[0].sentences[0].sentenceType").exists()
       .jsonPath("$.cases[0].sentences[0].nomisSentenceCalcType").isEqualTo("SEC250")
+      .jsonPath("$.cases[0].sentences[0].sentenceTypeUuid").isEqualTo("1104e683-5467-4340-b961-ff53672c4f39")
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
@@ -254,6 +255,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1) // Should find the sentence from older appearance
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].nomisSentenceCalcType").isEqualTo("SEC250")
+      .jsonPath("$.cases[0].sentences[0].sentenceTypeUuid").isEqualTo("1104e683-5467-4340-b961-ff53672c4f39")
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
@@ -310,6 +312,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid)
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences[0].nomisSentenceCalcType").isEqualTo("A/FINE")
+      .jsonPath("$.cases[0].sentences[0].sentenceTypeUuid").isEqualTo("c71ceefe-932b-4a69-b87c-7c1294e37cf7")
       .jsonPath("$.cases[0].sentences[0].classification").isEqualTo("FINE")
   }
 
