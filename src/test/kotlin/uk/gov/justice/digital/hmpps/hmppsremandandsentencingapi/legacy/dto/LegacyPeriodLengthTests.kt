@@ -138,6 +138,7 @@ class LegacyPeriodLengthTests {
       minOffenceDateInclusive = null,
       maxOffenceDateExclusive = null,
       hintText = null,
+      isRecallable = true,
     )
 
     private val testSentenceUuid = UUID.randomUUID()

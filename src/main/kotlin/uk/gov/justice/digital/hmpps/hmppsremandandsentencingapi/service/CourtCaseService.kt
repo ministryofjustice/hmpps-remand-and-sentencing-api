@@ -13,8 +13,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -181,7 +181,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               .flatMap { it.charge?.sentences ?: emptyList() }
           }
           .map { sentence ->
-            RecallableSentence(
+            RecallableCourtCaseSentence(
               sentenceUuid = sentence.sentenceUuid,
               offenceCode = sentence.charge.offenceCode,
               offenceStartDate = sentence.charge.offenceStartDate,
@@ -189,7 +189,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               sentenceType = sentence.sentenceType?.description,
-              nomisSentenceCalcType = sentence.sentenceType?.nomisSentenceCalcType,
               classification = sentence.sentenceType?.classification,
               systemOfRecord = "RAS",
               periodLengths = sentence.periodLengths.map { periodLength ->
@@ -210,6 +209,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               lineNumber = sentence.legacyData?.nomisLineReference,
               sentenceServeType = sentence.sentenceServeType,
               sentenceLegacyData = sentence.legacyData,
+              isRecallable = sentence.sentenceType?.isRecallable ?: true,
             )
           },
       )
