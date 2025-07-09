@@ -367,7 +367,7 @@ class CourtAppearanceEntity(
       createdPrison = null,
       createdBy = createdBy,
       nextCourtAppearance = null,
-      warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData),
+      warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData, migrationCreateCourtAppearance.charges.any { it.sentence != null }),
       overallConvictionDate = null,
       legacyData = migrationCreateCourtAppearance.legacyData,
       source = NOMIS,
@@ -381,8 +381,9 @@ class CourtAppearanceEntity(
     private fun deriveWarrantType(
       appearanceOutcome: AppearanceOutcomeEntity?,
       legacyData: CourtAppearanceLegacyData,
+      anyChargeHasSentence: Boolean? = null,
     ): String = appearanceOutcome?.outcomeType
-      ?: if (legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") "SENTENCING" else "REMAND"
+      ?: if ((legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") || anyChargeHasSentence == true) "SENTENCING" else "REMAND"
 
     fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
       compareBy(

@@ -141,8 +141,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .returnResult(CreateCourtAppearanceResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val messages = getMessages(5)
-    Assertions.assertThat(messages).hasSize(5).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated", "sentence.period-length.updated")
+    val messages = getMessages(6)
+    Assertions.assertThat(messages).hasSize(6).extracting<String> { it.eventType }.contains("court-appearance.inserted", "charge.inserted", "charge.updated", "sentence.period-length.updated", "sentence.updated")
     Assertions.assertThat(messages).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("DPS")
 
     webTestClient
