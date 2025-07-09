@@ -61,3 +61,6 @@ documentCleanCronjob:
   enabled: true
   schedule: "0 2 * * 6"
 
+image:
+  tag: app_version # override at deployment time
+

@@ -1,11 +1,11 @@
 # helm_deploy/hmpps-remand-and-sentencing-api/templates/cronjob-document-table-cleanup.yaml
-  {{- if .Values.documentCleanCronjob.enabled }}
+  {{- if .Values.documentCleanCronjob.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ include "generic-service.fullname" . | trunc 26 }}-temp-document-cleanup
   labels:
-    {{ include "generic-service.labels" . | nindent 4 }}
+    {{- include "generic-service.labels" . | nindent 4 }}
 
 spec:
   concurrencyPolicy: Forbid
