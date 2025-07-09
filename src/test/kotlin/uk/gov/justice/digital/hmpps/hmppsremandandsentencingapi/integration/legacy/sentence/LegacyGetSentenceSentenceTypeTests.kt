@@ -39,6 +39,7 @@ class LegacyGetSentenceSentenceTypeTests {
       nomisSentenceCalcType = nomisSentenceCalcType,
       displayOrder = 1,
       status = ReferenceEntityStatus.ACTIVE,
+      isRecallable = true,
     )
 
     val legacySentenceType = RecallTypeEntity(1, recallType, recallType.name).toLegacySentenceType(sentenceType)

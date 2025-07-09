@@ -49,6 +49,39 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
+      select count(*) from SentenceEntity s
+      join s.consecutiveTo sct
+      join sct.charge sctc
+      join sctc.appearanceCharges sctac
+      join sctac.appearance sctca
+      join sctca.courtCase sctcc
+      join s.charge c
+      join c.appearanceCharges ac
+      join ac.appearance ca on ca != sctca
+      join ca.courtCase cc on (cc != sctcc or ca != sctca)
+      
+      where sct.sentenceUuid = :sentenceUuid
+      and c.statusId = :#{#status}
+      and ca.statusId = :#{#status}
+      and cc.statusId = :#{#status}
+      and sctc.statusId = :#{#status}
+      and sctca.statusId = :#{#status}
+      and sctcc.statusId = :#{#status}
+      and s.statusId in :sentenceStatuses
+    """,
+  )
+  fun countSentencesAfterOnOtherCourtAppearance(
+    @Param("sentenceUuid") sentenceUuid: UUID,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
+      EntityStatus.ACTIVE,
+      EntityStatus.MANY_CHARGES_DATA_FIX,
+      EntityStatus.INACTIVE,
+    ),
+  ): Long
+
+  @Query(
+    """
     select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow(cc.prisonerId, cc.caseUniqueIdentifier, ca.appearanceUuid, ca.courtCode, ca.courtCaseReference, ca.appearanceDate, c, s) from SentenceEntity s
     left join fetch s.sentenceType st
     join s.charge c
