@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceService
 import java.util.UUID
@@ -69,4 +70,19 @@ class SentenceController(private val sentenceService: SentenceService, private v
     ],
   )
   fun hasSentencesAfterOnOtherCase(@PathVariable sentenceUuid: UUID): HasSentenceAfterOnOtherCourtAppearanceResponse = sentenceService.hasSentencesAfterOnOtherCourtAppearance(sentenceUuid)
+
+  @GetMapping("/sentence/{sentenceUuid}/sentences-after-on-other-court-appearance-details")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Sentences after on other court appearance details",
+    description = "This endpoint will return details of the court appearances of sentences after this sentence",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns true or false"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun sentencesAfterOnOtherCourtAppearanceDetails(@PathVariable sentenceUuid: UUID): SentencesAfterOnOtherCourtAppearanceDetailsResponse = sentenceService.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid)
 }

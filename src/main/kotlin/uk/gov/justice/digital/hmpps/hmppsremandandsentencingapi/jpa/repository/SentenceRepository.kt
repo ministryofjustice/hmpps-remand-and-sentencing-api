@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
 import java.time.LocalDate
 import java.util.*
 
@@ -79,6 +80,40 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       EntityStatus.INACTIVE,
     ),
   ): Long
+
+  @Query(
+    """
+      select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow(ca.appearanceUuid, ca.appearanceDate, ca.courtCaseReference, ca.courtCode)
+      from SentenceEntity s
+      join s.consecutiveTo sct
+      join sct.charge sctc
+      join sctc.appearanceCharges sctac
+      join sctac.appearance sctca
+      join sctca.courtCase sctcc
+      join s.charge c
+      join c.appearanceCharges ac
+      join ac.appearance ca on ca != sctca
+      join ca.courtCase cc on (cc != sctcc or ca != sctca)
+      
+      where sct.sentenceUuid = :sentenceUuid
+      and c.statusId = :#{#status}
+      and ca.statusId = :#{#status}
+      and cc.statusId = :#{#status}
+      and sctc.statusId = :#{#status}
+      and sctca.statusId = :#{#status}
+      and sctcc.statusId = :#{#status}
+      and s.statusId in :sentenceStatuses
+    """,
+  )
+  fun sentencesAfterOnOtherCourtAppearanceDetails(
+    @Param("sentenceUuid") sentenceUuid: UUID,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
+      EntityStatus.ACTIVE,
+      EntityStatus.MANY_CHARGES_DATA_FIX,
+      EntityStatus.INACTIVE,
+    ),
+  ): List<SentenceAfterOnAnotherCourtAppearanceRow>
 
   @Query(
     """
