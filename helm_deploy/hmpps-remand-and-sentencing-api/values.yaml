@@ -67,6 +67,15 @@ generic-data-analytics-extractor:
 documentCleanCronjob:
   enabled: true
   schedule: "0 2 * * 6"
+  timeZone: Etc/UTC
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
 
 image:
   tag: app_version

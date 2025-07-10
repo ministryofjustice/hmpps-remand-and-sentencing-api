@@ -7,6 +7,8 @@ metadata:
     {{- include "generic-service.labels" . | nindent 4 }}
 
 spec:
+  schedule: { { .Values.documentCleanCronjob.schedule } }
+  timeZone: { { .Values.documentCleanCronjob.timeZone } }
   concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 600
