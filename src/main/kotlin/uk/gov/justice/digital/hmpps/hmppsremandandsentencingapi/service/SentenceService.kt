@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -148,6 +149,10 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val count = sentenceRepository.countSentencesAfterOnOtherCourtAppearance(sentenceUuid)
     return HasSentenceAfterOnOtherCourtAppearanceResponse(count > 0)
   }
+
+  fun sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid: UUID): SentencesAfterOnOtherCourtAppearanceDetailsResponse = SentencesAfterOnOtherCourtAppearanceDetailsResponse.from(
+    sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid),
+  )
 
   fun moveSentencesToNewCharge(
     existingCharge: ChargeEntity,
