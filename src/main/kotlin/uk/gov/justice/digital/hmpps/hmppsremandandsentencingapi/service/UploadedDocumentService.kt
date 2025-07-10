@@ -49,12 +49,12 @@ class UploadedDocumentService(
   }
 
   @Transactional
-  fun deleteDocumentsWithoutAppearanceId(): Int {
+  fun deleteDocumentsWithoutAppearanceId() {
     val cutoff = ZonedDateTime.now().minusDays(10)
     val documentsToBeDeleted = uploadedDocumentRepository.findDocumentUuidsWithoutAppearanceAndOlderThan10Days(cutoff)
-    for (documentUuid in documentsToBeDeleted) {
-      documentManagementApiClient.deleteDocument(documentId = documentUuid.toString(), username = serviceUserService.getUsername())
+    for (document in documentsToBeDeleted) {
+      documentManagementApiClient.deleteDocument(documentId = document.documentUuid.toString())
     }
-    return uploadedDocumentRepository.deleteByDocumentUuidInList(documentsToBeDeleted)
+    uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 }

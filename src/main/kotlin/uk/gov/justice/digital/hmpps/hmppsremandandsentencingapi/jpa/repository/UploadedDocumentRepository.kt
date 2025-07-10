@@ -14,12 +14,8 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
     @Param("appearanceUUID") appearanceUUID: UUID,
   ): List<UploadedDocumentEntity>
 
-  @Modifying
-  @Query("delete from UploadedDocumentEntity d where d.documentUuid in :uuids")
-  fun deleteByDocumentUuidInList(@Param("uuids") uuids: List<UUID>): Int
-
-  @Query("select d.documentUuid from UploadedDocumentEntity d where d.appearance is null and d.createdAt < :cutoff")
-  fun findDocumentUuidsWithoutAppearanceAndOlderThan10Days(@Param("cutoff") cutoff: ZonedDateTime): List<UUID>
+  @Query("select d from UploadedDocumentEntity d where d.appearance is null and d.createdAt < :cutoff")
+  fun findDocumentUuidsWithoutAppearanceAndOlderThan10Days(@Param("cutoff") cutoff: ZonedDateTime): List<UploadedDocumentEntity>
 
   fun findByDocumentUuid(documentUuid: UUID): UploadedDocumentEntity?
 }
