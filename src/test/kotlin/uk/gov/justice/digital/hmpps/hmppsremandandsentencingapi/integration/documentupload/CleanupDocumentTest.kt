@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.doc
 
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -35,7 +35,7 @@ class CleanupDocumentTest : IntegrationTestBase() {
       updatedBy = null,
       updatedAt = null,
       documentType = "HMCTS_WARRANT",
-      fileName = "old_warrant.pdf"
+      fileName = "old_warrant.pdf",
     )
     uploadedDocumentRepository.save(oldDocument)
 
@@ -55,7 +55,6 @@ class CleanupDocumentTest : IntegrationTestBase() {
   @TestConfiguration
   class MockConfig {
     @Bean
-    fun documentManagementApiClient(): DocumentManagementApiClient =
-      mock(DocumentManagementApiClient::class.java)
+    fun documentManagementApiClient(): DocumentManagementApiClient = mock(DocumentManagementApiClient::class.java)
   }
 }
