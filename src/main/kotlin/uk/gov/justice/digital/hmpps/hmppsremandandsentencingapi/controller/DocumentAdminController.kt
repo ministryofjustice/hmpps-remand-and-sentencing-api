@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.Uploaded
 @RestController
 @RequestMapping("/document-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(
-  name = "internal-data-cleanup-controller",
+  name = "document-admin-controller",
   description = "Endpoint for internal data cleanup operations",
 )
 class DocumentAdminController(private val uploadedDocumentService: UploadedDocumentService) {
