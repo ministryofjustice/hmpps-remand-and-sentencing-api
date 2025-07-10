@@ -42,7 +42,7 @@ class CleanupDocumentTest : IntegrationTestBase() {
     documentManagementApi.stubDeleteDocument(documentUuid.toString())
 
     webTestClient
-      .post()
+      .delete()
       .uri("/document-admin/cleanup")
       .headers { it.contentType = MediaType.APPLICATION_JSON }
       .exchange()
