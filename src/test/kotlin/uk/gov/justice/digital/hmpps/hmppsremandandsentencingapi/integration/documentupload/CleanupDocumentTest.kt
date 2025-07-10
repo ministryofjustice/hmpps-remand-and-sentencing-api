@@ -1,27 +1,27 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.documentupload
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.UploadedDocumentRepository
 import java.time.ZonedDateTime
 import java.util.UUID
+import com.github.tomakehurst.wiremock.client.WireMock.verify as wireMockVerify
+import com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 
+@ExtendWith(DocumentManagementApiExtension::class)
 class CleanupDocumentTest : IntegrationTestBase() {
 
   @Autowired
   lateinit var uploadedDocumentRepository: UploadedDocumentRepository
-
-  @Autowired
-  lateinit var documentManagementApiClient: DocumentManagementApiClient
 
   @Test
   fun `cleanup deletes old documents without appearance`() {
@@ -39,6 +39,8 @@ class CleanupDocumentTest : IntegrationTestBase() {
     )
     uploadedDocumentRepository.save(oldDocument)
 
+    documentManagementApi.stubDeleteDocument(documentUuid.toString())
+
     webTestClient
       .post()
       .uri("/document-admin/cleanup")
@@ -49,12 +51,6 @@ class CleanupDocumentTest : IntegrationTestBase() {
     val found = uploadedDocumentRepository.findByDocumentUuid(documentUuid)
     assertNull(found)
 
-    verify(documentManagementApiClient).deleteDocument(documentUuid.toString())
-  }
-
-  @TestConfiguration
-  class MockConfig {
-    @Bean
-    fun documentManagementApiClient(): DocumentManagementApiClient = mock(DocumentManagementApiClient::class.java)
-  }
+    WireMock.configureFor("localhost", 8442)
+    wireMockVerify(deleteRequestedFor(urlEqualTo("/documents/$documentUuid")))  }
 }
