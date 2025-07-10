@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.documentupload
 
 import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -14,8 +16,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.U
 import java.time.ZonedDateTime
 import java.util.UUID
 import com.github.tomakehurst.wiremock.client.WireMock.verify as wireMockVerify
-import com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 
 @ExtendWith(DocumentManagementApiExtension::class)
 class CleanupDocumentTest : IntegrationTestBase() {
@@ -52,5 +52,6 @@ class CleanupDocumentTest : IntegrationTestBase() {
     assertNull(found)
 
     WireMock.configureFor("localhost", 8442)
-    wireMockVerify(deleteRequestedFor(urlEqualTo("/documents/$documentUuid")))  }
+    wireMockVerify(deleteRequestedFor(urlEqualTo("/documents/$documentUuid")))
+  }
 }
