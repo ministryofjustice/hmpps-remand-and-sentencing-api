@@ -7,8 +7,8 @@ metadata:
     {{- include "generic-service.labels" . | nindent 4 }}
 
 spec:
-  schedule: { { .Values.documentCleanCronjob.schedule } }
-  timeZone: { { .Values.documentCleanCronjob.timeZone } }
+  schedule: "{{ .Values.documentCleanCronjob.schedule }}"
+  timeZone: "{{ .Values.documentCleanCronjob.timeZone }}"
   concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 5
   startingDeadlineSeconds: 600
@@ -28,5 +28,5 @@ spec:
                 - -c
                 - curl -XDELETE --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 40 http://{{ include "generic-service.fullname" . }}/document-admin/cleanup
               securityContext:
-                              {{- toYaml .Values.documentCleanCronjob.securityContext | nindent 16 }}
+                {{- toYaml .Values.documentCleanCronjob.securityContext | nindent 16 }}
 {{- end }}
