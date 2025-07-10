@@ -1,4 +1,3 @@
-# helm_deploy/hmpps-remand-and-sentencing-api/templates/cronjob-document-table-cleanup.yaml
   {{- if .Values.documentCleanCronjob.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
