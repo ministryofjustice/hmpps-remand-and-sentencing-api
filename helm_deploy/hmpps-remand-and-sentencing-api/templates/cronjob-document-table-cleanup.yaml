@@ -1,0 +1,31 @@
+# helm_deploy/hmpps-remand-and-sentencing-api/templates/cronjob-document-table-cleanup.yaml
+  {{- if .Values.documentCleanCronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "generic-service.fullname" . | trunc 26 }}-temp-document-cleanup
+  labels:
+    {{- include "generic-service.labels" . | nindent 4 }}
+
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: temp-document-cleanup
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools:main
+              imagePullPolicy: IfNotPresent
+              command: ["curl"]
+              args:
+                - /bin/sh
+                - -c
+                - curl -XDELETE --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 40 http://{{ include "generic-service.fullname" . }}/document-admin/cleanup
+              securityContext:
+                              {{- toYaml .Values.documentCleanCronjob.securityContext | nindent 16 }}
+{{- end }}

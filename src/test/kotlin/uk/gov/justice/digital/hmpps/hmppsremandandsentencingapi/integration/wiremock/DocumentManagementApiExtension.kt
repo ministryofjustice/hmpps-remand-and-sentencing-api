@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wir
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.delete
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
@@ -47,6 +48,14 @@ class DocumentManagementApiMockServer : WireMockServer(WireMockConfiguration.opt
       .willReturn(
         aResponse()
           .withStatus(200),
+      ),
+  )
+
+  fun stubDeleteDocument(documentId: String): StubMapping = stubFor(
+    delete("/documents/$documentId")
+      .willReturn(
+        aResponse()
+          .withStatus(204),
       ),
   )
 }
