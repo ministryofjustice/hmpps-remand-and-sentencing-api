@@ -66,7 +66,7 @@ generic-data-analytics-extractor:
 
 documentCleanCronjob:
   enabled: true
-  schedule: "0 2 * * 6"
+  schedule: "0 2 * * *"
   timeZone: Etc/UTC
   securityContext:
     capabilities:
