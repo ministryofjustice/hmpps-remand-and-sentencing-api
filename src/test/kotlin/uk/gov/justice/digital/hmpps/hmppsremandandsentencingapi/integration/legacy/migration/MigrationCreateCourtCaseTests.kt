@@ -249,6 +249,9 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
         val counts = result.groupingBy { it }.eachCount()
         Assertions.assertThat(counts.values).allMatch { it == 1 }
       }
+
+    val messages = getMessages(3)
+    Assertions.assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder("sentence.fix-single-charge.inserted", "sentence.updated", "sentence.period-length.inserted")
   }
 
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
