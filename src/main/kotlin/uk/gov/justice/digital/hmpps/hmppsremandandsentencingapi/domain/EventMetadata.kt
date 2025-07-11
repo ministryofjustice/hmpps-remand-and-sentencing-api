@@ -12,4 +12,5 @@ data class EventMetadata(
   val sentenceIds: List<String>? = null,
   val previousRecallId: String? = null,
   val previousSentenceIds: List<String>? = null,
+  val originalSentenceId: String? = null,
 )
