@@ -85,6 +85,15 @@ class DpsDomainEventService(
             eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
           )
+          EventType.SENTENCE_FIX_SINGLE_CHARGE_INSERTED -> sentenceDomainEventService.createFromFix(
+            eventMetaData.prisonerId,
+            eventMetaData.sentenceId!!,
+            eventMetaData.originalSentenceId!!,
+            eventMetaData.chargeId!!,
+            eventMetaData.courtCaseId!!,
+            eventMetaData.courtAppearanceId!!,
+            EventSource.DPS,
+          )
           EventType.SENTENCE_UPDATED -> sentenceDomainEventService.update(
             eventMetaData.prisonerId,
             eventMetaData.sentenceId!!,
