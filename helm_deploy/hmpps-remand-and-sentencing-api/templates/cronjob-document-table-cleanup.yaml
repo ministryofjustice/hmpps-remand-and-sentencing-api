@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "generic-service.fullname" . | trunc 26 }}-temp-document-cleanup
+  name: {{ include "generic-service.fullname" . | trunc 27 }}-temp-document-cleanup
   labels:
     {{- include "generic-service.labels" . | nindent 4 }}
 
