@@ -20,6 +20,7 @@ data class CourtAppearance(
   val overallSentenceLength: PeriodLength?,
   val overallConvictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
+  val documents: List<UploadedDocument> = emptyList(),
 ) {
   companion object {
 
@@ -38,6 +39,7 @@ data class CourtAppearance(
       courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
       courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData,
+      courtAppearanceEntity.documents.map { UploadedDocument.from(it) },
     )
   }
 }
