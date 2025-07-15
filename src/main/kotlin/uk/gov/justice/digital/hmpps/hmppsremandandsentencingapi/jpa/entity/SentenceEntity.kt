@@ -90,7 +90,7 @@ class SentenceEntity(
 
   fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
 
-  fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
+  fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       countNumber = sentence.chargeNumber,
@@ -107,6 +107,7 @@ class SentenceEntity(
       updatedBy = createdBy,
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fineAmount?.fineAmount,
+      legacyData = legacyData,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableSet()
     return sentenceEntity
@@ -178,7 +179,7 @@ class SentenceEntity(
   }
 
   companion object {
-    fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity): SentenceEntity {
+    fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
       val sentenceEntity = SentenceEntity(
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         countNumber = sentence.chargeNumber,

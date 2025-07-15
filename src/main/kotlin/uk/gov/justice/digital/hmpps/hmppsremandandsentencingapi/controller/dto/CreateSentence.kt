@@ -9,7 +9,7 @@ data class CreateSentence(
   val periodLengths: List<CreatePeriodLength>,
   val sentenceServeType: String,
   val consecutiveToSentenceUuid: UUID?,
-  val sentenceTypeId: UUID,
+  val sentenceTypeId: UUID?,
   val convictionDate: LocalDate?,
   val fineAmount: CreateFineAmount?,
   val prisonId: String?,
