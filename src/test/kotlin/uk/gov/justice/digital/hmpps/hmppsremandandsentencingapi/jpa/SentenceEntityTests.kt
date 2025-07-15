@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
@@ -29,6 +30,31 @@ class SentenceEntityTests {
       chargeEntity,
       null,
       sentenceType,
+    )
+    val result = sentenceEntity.isSame(compareSentenceEntity)
+    Assertions.assertThat(result).isFalse
+  }
+
+  @Test
+  fun `not same when line reference number changes`() {
+    val chargeEntity = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, "USER")
+    val legacyDataNoLineNumber = DataCreator.sentenceLegacyData(nomisLineReference = null)
+    val sentenceEntity = SentenceEntity.from(
+      DataCreator.legacyCreateSentence(sentenceLegacyData = legacyDataNoLineNumber),
+      "USER",
+      chargeEntity,
+      null,
+      null,
+      UUID.randomUUID(),
+      false,
+      null,
+    )
+    val legacyDataWithLineNumber = DataCreator.sentenceLegacyData()
+    val compareSentenceEntity = sentenceEntity.copyFrom(
+      DataCreator.legacyCreateSentence(sentenceLegacyData = legacyDataWithLineNumber),
+      "USER",
+      null,
+      false,
     )
     val result = sentenceEntity.isSame(compareSentenceEntity)
     Assertions.assertThat(result).isFalse
