@@ -36,7 +36,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
   private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val consecutiveToSentence = sentence.consecutiveToSentenceReference?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
-    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
+    val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
     var activeRecord = existingSentence
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
@@ -77,7 +77,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val consecutiveToSentence = sentence.consecutiveToSentenceReference?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
-    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
+    val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
 

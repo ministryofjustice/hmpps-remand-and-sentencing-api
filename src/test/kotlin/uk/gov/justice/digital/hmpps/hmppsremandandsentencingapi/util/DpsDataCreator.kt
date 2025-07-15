@@ -111,7 +111,7 @@ class DpsDataCreator {
       sentenceServeType: String = "FORTHWITH",
       consecutiveToSentenceReference: String? = null,
       consecutiveToSentenceUuid: UUID? = null,
-      sentenceTypeId: UUID = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"),
+      sentenceTypeId: UUID? = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39"),
       convictionDate: LocalDate? = LocalDate.now().minusDays(7),
       fineAmount: CreateFineAmount? = null,
       prisonId: String = "PRISON1",
