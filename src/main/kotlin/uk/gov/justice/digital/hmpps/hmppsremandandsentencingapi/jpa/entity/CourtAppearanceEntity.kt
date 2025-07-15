@@ -92,6 +92,9 @@ class CourtAppearanceEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtAppearanceLegacyData? = null,
 
+  @OneToMany(mappedBy = "appearance", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val documents: MutableSet<UploadedDocumentEntity> = mutableSetOf(),
+
   @Enumerated(EnumType.STRING)
   var source: EventSource = DPS,
 ) {
@@ -138,6 +141,7 @@ class CourtAppearanceEntity(
       nextCourtAppearance,
       overallConvictionDate,
       courtAppearance.legacyData,
+      documents.toMutableSet(),
       source = source,
     )
     courtAppearance.periodLengths = periodLengths.toMutableSet()
@@ -172,6 +176,7 @@ class CourtAppearanceEntity(
       null,
       courtAppearance.overallConvictionDate,
       courtAppearance.legacyData,
+      courtAppearance.documents?.map { UploadedDocumentEntity.from(it, createdBy, null) }?.toMutableSet() ?: mutableSetOf(),
       source = source,
     )
     courtAppearance.overallSentenceLength?.let {

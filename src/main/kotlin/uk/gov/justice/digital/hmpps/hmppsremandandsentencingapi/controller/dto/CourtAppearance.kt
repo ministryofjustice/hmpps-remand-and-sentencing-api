@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
@@ -20,6 +21,7 @@ data class CourtAppearance(
   val overallSentenceLength: PeriodLength?,
   val overallConvictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
+  val documents: List<UploadedDocument>?,
 ) {
   companion object {
 
@@ -38,6 +40,7 @@ data class CourtAppearance(
       courtAppearanceEntity.periodLengths.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
       courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData,
+      courtAppearanceEntity.documents.map{ UploadedDocument.from(it) },
     )
   }
 }
