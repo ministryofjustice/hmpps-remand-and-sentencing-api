@@ -20,7 +20,7 @@ data class CourtAppearance(
   val overallSentenceLength: PeriodLength?,
   val overallConvictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
-  val documents: List<UploadedDocument>?,
+  val documents: List<UploadedDocument> = emptyList(),
 ) {
   companion object {
 

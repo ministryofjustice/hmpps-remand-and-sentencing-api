@@ -176,7 +176,7 @@ class CourtAppearanceEntity(
       null,
       courtAppearance.overallConvictionDate,
       courtAppearance.legacyData,
-      courtAppearance.documents?.map { UploadedDocumentEntity.from(it, createdBy, null) }?.toMutableSet() ?: mutableSetOf(),
+      documents.toMutableSet(),
       source = source,
     )
     courtAppearance.overallSentenceLength?.let {
