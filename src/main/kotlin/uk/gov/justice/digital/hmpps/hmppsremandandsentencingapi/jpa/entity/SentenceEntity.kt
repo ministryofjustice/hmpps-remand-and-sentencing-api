@@ -86,7 +86,8 @@ class SentenceEntity(
     ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
     convictionDate == other.convictionDate &&
     ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
-    statusId == other.statusId
+    statusId == other.statusId &&
+    ((legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true)
 
   fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.statusId == EntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
 
