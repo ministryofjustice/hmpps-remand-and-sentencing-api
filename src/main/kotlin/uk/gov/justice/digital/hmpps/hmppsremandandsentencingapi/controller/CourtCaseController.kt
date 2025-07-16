@@ -239,7 +239,10 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Retrieve the latest offence date for a court case (checks both offence start and end dates)",
-    description = "This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.",
+    description = """
+      This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.     
+      Optionally, the result can exclude offences tied to a specific court appearance, used when editing a court appearance in the UI (the latest version of the offence dates are in the UI session).
+      """,
   )
   @ApiResponses(
     value = [
