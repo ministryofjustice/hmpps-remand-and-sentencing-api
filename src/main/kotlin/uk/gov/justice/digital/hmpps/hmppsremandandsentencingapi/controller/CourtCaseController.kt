@@ -249,8 +249,11 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getLatestOffenceDate(@PathVariable courtCaseUuid: String): ResponseEntity<LocalDate> {
-    val latestOffenceDate = courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid)
+  fun getLatestOffenceDate(
+    @PathVariable courtCaseUuid: String,
+    @RequestParam(required = false) appearanceUuidToExclude: String?,
+  ): ResponseEntity<LocalDate> {
+    val latestOffenceDate = courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid, appearanceUuidToExclude)
 
     return if (latestOffenceDate != null) {
       ResponseEntity.ok(latestOffenceDate)
