@@ -36,6 +36,18 @@ class UploadedDocumentService(
     documentUUIDs: List<UUID>,
     appearance: CourtAppearanceEntity,
   ) {
+    val existingDocuments = uploadedDocumentRepository.findAllByAppearanceUUID(appearance.appearanceUuid)
+    val uuidSet = documentUUIDs.toSet()
+
+    existingDocuments.forEach { document ->
+      if (document.documentUuid !in uuidSet) {
+        document.appearance = null
+        document.updatedBy = serviceUserService.getUsername()
+        document.updatedAt = ZonedDateTime.now()
+        uploadedDocumentRepository.save(document)
+      }
+    }
+
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
       if (document != null) {
