@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
+import java.util.UUID
 
 interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
@@ -81,6 +82,25 @@ interface CourtCaseRepository :
   )
   fun findLatestOffenceDate(
     @Param("uuid") uuid: String,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+  ): LocalDate?
+
+  @Query(
+    """
+  select max(coalesce(c.offenceEndDate, c.offenceStartDate))
+  from CourtCaseEntity cc
+  join cc.appearances a
+  join a.appearanceCharges ac
+  join ac.charge c
+  where cc.caseUniqueIdentifier = :uuid
+    and a.statusId = :status
+    and c.statusId = :status
+    and a.appearanceUuid != :appearanceUuidToExclude
+  """,
+  )
+  fun findLatestOffenceDateExcludingAppearance(
+    @Param("uuid") uuid: String,
+    @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
     @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
   ): LocalDate?
 }

@@ -5,8 +5,10 @@ import jakarta.transaction.Transactional
 import jakarta.transaction.Transactional.TxType
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -34,7 +36,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
   private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val consecutiveToSentence = sentence.consecutiveToSentenceReference?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
-    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
+    val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
     var activeRecord = existingSentence
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
@@ -75,7 +77,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<String, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val consecutiveToSentence = sentence.consecutiveToSentenceReference?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
-    val sentenceType = sentenceTypeRepository.findBySentenceTypeUuid(sentence.sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at ${sentence.sentenceTypeId}")
+    val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
 
@@ -142,6 +144,15 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
     return RecordResponse(SentenceConsecutiveToDetailsResponse.from(consecutiveToSentences), eventsToEmit)
   }
+
+  fun hasSentencesAfterOnOtherCourtAppearance(sentenceUuid: UUID): HasSentenceAfterOnOtherCourtAppearanceResponse {
+    val count = sentenceRepository.countSentencesAfterOnOtherCourtAppearance(sentenceUuid)
+    return HasSentenceAfterOnOtherCourtAppearanceResponse(count > 0)
+  }
+
+  fun sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid: UUID): SentencesAfterOnOtherCourtAppearanceDetailsResponse = SentencesAfterOnOtherCourtAppearanceDetailsResponse.from(
+    sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid),
+  )
 
   fun moveSentencesToNewCharge(
     existingCharge: ChargeEntity,

@@ -18,4 +18,14 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
       .toBodilessEntity()
       .block()
   }
+
+  fun deleteDocument(documentId: String) {
+    webClient
+      .delete()
+      .uri("/documents/{documentId}", documentId)
+      .header("Service-Name", "Remand and Sentencing")
+      .retrieve()
+      .toBodilessEntity()
+      .block()
+  }
 }

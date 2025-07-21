@@ -184,7 +184,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 
   @GetMapping("/court-case/{courtCaseUuid}/latest-appearance")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Retrieve latest court appearance of court case",
     description = "This endpoint will retrieve latest court appearance of court case",
@@ -239,7 +239,10 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Retrieve the latest offence date for a court case (checks both offence start and end dates)",
-    description = "This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.",
+    description = """
+      This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.     
+      Optionally, the result can exclude offences tied to a specific court appearance, used when editing a court appearance in the UI (the latest version of the offence dates are in the UI session).
+      """,
   )
   @ApiResponses(
     value = [
@@ -249,8 +252,11 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getLatestOffenceDate(@PathVariable courtCaseUuid: String): ResponseEntity<LocalDate> {
-    val latestOffenceDate = courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid)
+  fun getLatestOffenceDate(
+    @PathVariable courtCaseUuid: String,
+    @RequestParam(required = false) appearanceUuidToExclude: String?,
+  ): ResponseEntity<LocalDate> {
+    val latestOffenceDate = courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid, appearanceUuidToExclude)
 
     return if (latestOffenceDate != null) {
       ResponseEntity.ok(latestOffenceDate)

@@ -1,0 +1,30 @@
+  {{- if .Values.documentCleanCronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "generic-service.fullname" . | trunc 27 }}-temp-document-cleanup
+  labels:
+    {{- include "generic-service.labels" . | nindent 4 }}
+
+spec:
+  schedule: "{{ .Values.documentCleanCronjob.schedule }}"
+  timeZone: "{{ .Values.documentCleanCronjob.timeZone }}"
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: temp-document-cleanup
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools:main
+              imagePullPolicy: IfNotPresent
+              command: [ "/bin/sh", "-c" ]
+              args:
+                - curl -XDELETE --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 40 http://{{ include "generic-service.fullname" . }}/document-admin/cleanup
+              securityContext:
+                {{- toYaml .Values.documentCleanCronjob.securityContext | nindent 16 }}
+{{- end }}

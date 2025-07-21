@@ -13,6 +13,13 @@ generic-service:
     enabled: true
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-remand-and-sentencing-api-cert
+    annotations:
+      nginx.ingress.kubernetes.io/server-snippet: |
+        server_tokens off;
+        location /document-admin/cleanup {
+          deny all;
+          return 401;
+        }
 
   # Environment variables to load into the deployment
   env:
@@ -56,3 +63,20 @@ generic-data-analytics-extractor:
   databaseSecretName: rds-postgresql-instance-output
   destinationS3SecretName: analytical-platform-reporting-s3-bucket
   serviceAccountName: hmpps-remand-and-sentencing-to-ap-s3
+
+documentCleanCronjob:
+  enabled: true
+  schedule: "0 2 * * *"
+  timeZone: Etc/UTC
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+
+image:
+  tag: app_version
+

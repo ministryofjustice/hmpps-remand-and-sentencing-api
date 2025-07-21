@@ -61,7 +61,7 @@ class NextCourtAppearanceEntity(
 
     fun from(nomisAppearance: MigrationCreateCourtAppearance, nomisFutureAppearance: MigrationCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
       appearanceDate = nomisAppearance.legacyData.nextEventDateTime!!.toLocalDate(),
-      appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime(),
+      appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime().takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisFutureAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
       futureSkeletonAppearance = futureAppearance,
@@ -69,7 +69,7 @@ class NextCourtAppearanceEntity(
 
     fun from(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
       appearanceDate = nomisAppearance.appearanceDate,
-      appearanceTime = nomisAppearance.legacyData.appearanceTime,
+      appearanceTime = nomisAppearance.legacyData.appearanceTime.takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
       futureSkeletonAppearance = futureAppearance,
