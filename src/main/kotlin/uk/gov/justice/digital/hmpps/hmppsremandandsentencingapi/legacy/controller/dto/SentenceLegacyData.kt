@@ -7,10 +7,12 @@ data class SentenceLegacyData(
   val postedDate: String,
   var active: Boolean? = null,
   var nomisLineReference: String? = null,
+  val bookingId: Long?,
 ) {
   fun isSame(other: SentenceLegacyData?): Boolean = sentenceCalcType == other?.sentenceCalcType &&
     sentenceCategory == other?.sentenceCategory &&
     sentenceTypeDesc == other?.sentenceTypeDesc &&
     active == other?.active &&
-    nomisLineReference == other?.nomisLineReference
+    nomisLineReference == other?.nomisLineReference &&
+    bookingId == other?.bookingId
 }

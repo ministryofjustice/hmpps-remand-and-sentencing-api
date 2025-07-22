@@ -114,6 +114,7 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       mutableListOf(
         CaseReferenceLegacyData(nomisCaseReference, LocalDateTime.now()),
       ),
+      1L,
     )
     webTestClient
       .put()
