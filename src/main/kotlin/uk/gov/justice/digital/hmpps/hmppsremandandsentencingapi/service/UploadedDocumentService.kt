@@ -37,7 +37,8 @@ class UploadedDocumentService(
     appearance: CourtAppearanceEntity,
   ) {
     val documentsToUnlink = uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
-      appearance.appearanceUuid, documentUUIDs
+      appearance.appearanceUuid,
+      documentUUIDs,
     )
     documentsToUnlink.forEach { document ->
       document.appearance = null

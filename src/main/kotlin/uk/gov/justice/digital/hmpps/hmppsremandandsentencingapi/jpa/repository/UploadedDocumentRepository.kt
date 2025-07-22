@@ -17,10 +17,10 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
   @Query(
     "SELECT u FROM UploadedDocumentEntity u " +
       "WHERE u.appearance.appearanceUuid = :appearanceUUID " +
-      "AND u.documentUuid NOT IN :documentUUIDs"
+      "AND u.documentUuid NOT IN :documentUUIDs",
   )
   fun findAllByAppearanceUUIDAndDocumentUuidNotIn(
     @Param("appearanceUUID") appearanceUUID: UUID,
-    @Param("documentUUIDs") documentUUIDs: List<UUID>
+    @Param("documentUUIDs") documentUUIDs: List<UUID>,
   ): List<UploadedDocumentEntity>
 }

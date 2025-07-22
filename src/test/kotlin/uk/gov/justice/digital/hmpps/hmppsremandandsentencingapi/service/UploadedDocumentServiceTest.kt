@@ -109,5 +109,4 @@ class UploadedDocumentServiceTest {
     nextCourtAppearance = null,
     overallConvictionDate = null,
   )
-
 }
