@@ -66,7 +66,7 @@ class CourtCaseReferenceServiceTests {
     Assertions.assertThat(caseReferences).hasSize(5).extracting<String> { it.offenderCaseReference }.containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
   }
 
-  private fun generateLegacyData(caseReferences: List<String>): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList())
+  private fun generateLegacyData(caseReferences: List<String>): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList(), 1L)
 
   private fun generateCourtAppearance(caseReference: String, statusId: EntityStatus, courtCase: CourtCaseEntity): CourtAppearanceEntity = CourtAppearanceEntity(id = idInt++, appearanceUuid = UUID.randomUUID(), appearanceOutcome = null, courtCase = courtCase, courtCode = "C", courtCaseReference = caseReference, appearanceDate = LocalDate.now(), statusId = statusId, previousAppearance = null, warrantId = null, createdBy = "U", createdPrison = "P", warrantType = "W", appearanceCharges = mutableSetOf(), nextCourtAppearance = null, overallConvictionDate = null)
 }

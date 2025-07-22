@@ -24,6 +24,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
           )
         } + CaseReferenceLegacyData("NEW_NOMIS_CASE_REFERENCE", LocalDateTime.now())
         ).toMutableList(),
+      1L,
     )
     webTestClient
       .put()
@@ -42,7 +43,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
   fun `remove case reference from DPS court appearance when not in legacy data`() {
     val courtCase = createCourtCase()
     val dpsCaseReference = courtCase.second.appearances.first().courtCaseReference!!
-    val legacyData = CourtCaseLegacyData(mutableListOf(CaseReferenceLegacyData("NEW_NOMIS_CASE_REFERENCE", LocalDateTime.now())))
+    val legacyData = CourtCaseLegacyData(mutableListOf(CaseReferenceLegacyData("NEW_NOMIS_CASE_REFERENCE", LocalDateTime.now())), 1L)
     webTestClient
       .put()
       .uri("/court-case/${courtCase.first}/case-references/refresh")
@@ -83,7 +84,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-    val legacyData = CourtCaseLegacyData(mutableListOf(CaseReferenceLegacyData("NEW_NOMIS_CASE_REFERENCE", LocalDateTime.now())))
+    val legacyData = CourtCaseLegacyData(mutableListOf(CaseReferenceLegacyData("NEW_NOMIS_CASE_REFERENCE", LocalDateTime.now())), 1L)
     webTestClient
       .put()
       .uri("/court-case/$courtCaseUuid/case-references/refresh")
@@ -113,7 +114,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
 
   @Test
   fun `no token results in unauthorized`() {
-    val legacyData = CourtCaseLegacyData(mutableListOf())
+    val legacyData = CourtCaseLegacyData(mutableListOf(), 1L)
     webTestClient
       .put()
       .uri("/court-case/${UUID.randomUUID()}/case-references/refresh")
@@ -128,7 +129,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val legacyData = CourtCaseLegacyData(mutableListOf())
+    val legacyData = CourtCaseLegacyData(mutableListOf(), 1L)
     webTestClient
       .put()
       .uri("/court-case/${UUID.randomUUID()}/case-references/refresh")
