@@ -6,10 +6,8 @@ import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
@@ -19,19 +17,14 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   fun `create appearance in existing court case and link document`() {
     val courtCase = createCourtCase()
     val documentUuid = UUID.randomUUID()
-    val uploadedDocumentEntity = UploadedDocumentEntity(
+
+    val uploadedDocument = DpsDataCreator.dpsCreateUploadedDocument(
       documentUuid = documentUuid,
-      appearance = null, // Initially no appearance linked
       documentType = "REMAND_WARRANT",
-      createdBy = "test-user",
-      fileName = "court-appearance-document.pdf",
+      documentName = "court-appearance-document.pdf",
     )
-    uploadedDocumentRepository.save(uploadedDocumentEntity)
-    val uploadedDocument = UploadedDocument(
-      documentUuid,
-      documentType = "REMAND_WARRANT",
-      fileName = "court-appearance-document.pdf",
-    )
+    uploadDocument(uploadedDocument)
+
     val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, documents = listOf(uploadedDocument))
     webTestClient
       .post()
@@ -54,7 +47,6 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
     assertThat(historyRecord.source).isEqualTo(DPS)
 
-    // Step 3: Assert the document is now linked to the appearance
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(documentUuid)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
