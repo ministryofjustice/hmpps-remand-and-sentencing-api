@@ -14,9 +14,18 @@ import java.util.UUID
 class CreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
-  fun `create appearance in existing court case`() {
+  fun `create appearance in existing court case and link document`() {
     val courtCase = createCourtCase()
-    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first)
+    val documentUuid = UUID.randomUUID()
+
+    val uploadedDocument = DpsDataCreator.dpsCreateUploadedDocument(
+      documentUuid = documentUuid,
+      documentType = "REMAND_WARRANT",
+      documentName = "court-appearance-document.pdf",
+    )
+    uploadDocument(uploadedDocument)
+
+    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, documents = listOf(uploadedDocument))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -37,6 +46,10 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val historyRecord = historyRecords[0]
     Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
     assertThat(historyRecord.source).isEqualTo(DPS)
+
+    val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(documentUuid)
+    assertThat(linkedDocument).isNotNull
+    assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
   }
 
   @Test
