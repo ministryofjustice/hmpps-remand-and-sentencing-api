@@ -8,9 +8,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -22,9 +24,28 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   fun `update appearance in existing court case`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
+    val oldDocumentUuid = UUID.randomUUID()
+    val oldDocumentEntity = UploadedDocumentEntity(
+      documentUuid = oldDocumentUuid,
+      appearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid),
+      documentType = "REMAND_WARRANT",
+      createdBy = "test-user",
+      fileName = "old-document.pdf",
+    )
+    uploadedDocumentRepository.save(oldDocumentEntity)
+    val newDocumentUuid = UUID.randomUUID()
+    val newDocumentEntity = UploadedDocumentEntity(
+      documentUuid = newDocumentUuid,
+      appearance = null,
+      documentType = "REMAND_WARRANT",
+      createdBy = "test-user",
+      fileName = "new-document.pdf",
+    )
+    uploadedDocumentRepository.save(newDocumentEntity)
+    val newUploadedDocument = UploadedDocument(newDocumentUuid, "REMAND_WARRANT", "new-document.pdf")
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(newUploadedDocument))
 
     webTestClient
       .put()
@@ -57,6 +78,15 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newEntries).extracting<String> { it.createdBy }.containsExactly("SOME_USER", "SOME_USER")
     assertThat(newEntries).extracting<String> { it.createdPrison }.containsExactlyInAnyOrder("PRISON1", "PRISON1")
     assertThat(newEntries).extracting<String> { it.removedPrison }.containsExactlyInAnyOrder(null, "PRISON1")
+    // Assert old document is unlinked
+    val oldDoc = uploadedDocumentRepository.findByDocumentUuid(oldDocumentUuid)
+    assertThat(oldDoc).isNotNull
+    assertThat(oldDoc!!.appearance).isNull()
+
+    // Assert new document is linked
+    val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocumentUuid)
+    assertThat(newDoc).isNotNull
+    assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
   }
 
   @Test

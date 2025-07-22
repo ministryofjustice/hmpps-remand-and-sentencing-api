@@ -6,22 +6,17 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.UploadedDocumentRepository
 import java.time.ZonedDateTime
 import java.util.UUID
 import com.github.tomakehurst.wiremock.client.WireMock.verify as wireMockVerify
 
 @ExtendWith(DocumentManagementApiExtension::class)
 class CleanupDocumentTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var uploadedDocumentRepository: UploadedDocumentRepository
 
   @Test
   fun `cleanup deletes old documents without appearance`() {
