@@ -59,6 +59,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
+    existingCourtCase.legacyData = courtCase.legacyData
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
   }
 

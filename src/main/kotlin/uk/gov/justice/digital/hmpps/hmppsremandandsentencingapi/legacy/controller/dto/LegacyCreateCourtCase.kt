@@ -3,4 +3,5 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 data class LegacyCreateCourtCase(
   val prisonerId: String,
   val active: Boolean,
+  val legacyData: CourtCaseLegacyData,
 )
