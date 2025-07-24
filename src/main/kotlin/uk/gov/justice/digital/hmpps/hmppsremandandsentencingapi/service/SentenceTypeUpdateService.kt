@@ -70,16 +70,16 @@ class SentenceTypeUpdateService(
 
     // Prepare events to emit
     val eventsToEmit = mutableSetOf<EventMetadata>()
-    
+
     // Fetch sentence details for event generation
     updatedSentenceUuids.forEach { sentenceUuid ->
       val sentence = validatedUpdates.find { it.updateRequest.sentenceUuid == sentenceUuid }?.sentenceEntity
         ?: throw IllegalStateException("Sentence $sentenceUuid not found in validated updates")
-      
+
       val charge = sentence.charge
       val appearanceCharge = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == EntityStatus.ACTIVE }
       val appearance = appearanceCharge?.appearance
-      
+
       if (appearance != null) {
         eventsToEmit.add(
           EventMetadataCreator.sentenceEventMetadata(
@@ -93,7 +93,7 @@ class SentenceTypeUpdateService(
         )
       }
     }
-    
+
     return RecordResponse(
       record = UpdateSentenceTypeResponse(
         updatedSentenceUuids = updatedSentenceUuids,
