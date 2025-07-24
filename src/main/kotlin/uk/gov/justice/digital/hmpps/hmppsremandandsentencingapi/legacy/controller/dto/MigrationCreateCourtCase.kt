@@ -10,6 +10,6 @@ data class MigrationCreateCourtCase(
   val courtCaseLegacyData: CourtCaseLegacyData,
   val appearances: List<MigrationCreateCourtAppearance>,
   @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-  @field:JsonSetter(nulls = Nulls.SKIP)
+  @JsonSetter(nulls = Nulls.SKIP)
   var merged: Boolean = false,
 )
