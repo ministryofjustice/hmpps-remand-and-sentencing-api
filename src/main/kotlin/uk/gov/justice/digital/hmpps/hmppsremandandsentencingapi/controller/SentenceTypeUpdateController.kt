@@ -4,12 +4,10 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -18,10 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceTypeUpdateService
 import java.util.UUID
 
@@ -30,9 +25,7 @@ import java.util.UUID
 @Tag(name = "sentence-type-update-controller", description = "Sentence Type Updates")
 class SentenceTypeUpdateController(
   private val sentenceTypeUpdateService: SentenceTypeUpdateService,
-  private val sentenceDomainEventService: SentenceDomainEventService,
-  private val courtCaseRepository: CourtCaseRepository,
-  private val sentenceRepository: SentenceRepository,
+  private val dpsDomainEventService: DpsDomainEventService,
 ) {
 
   @PostMapping("/court-case/{courtCaseUuid}/sentences/update-types")
@@ -52,35 +45,12 @@ class SentenceTypeUpdateController(
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  @Transactional
   fun updateSentenceTypes(
     @PathVariable courtCaseUuid: UUID,
     @Valid @RequestBody request: UpdateSentenceTypeRequest,
   ): UpdateSentenceTypeResponse {
-    val response = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
-
-    // Emit domain events for each updated sentence
-    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())
-      ?: throw EntityNotFoundException("Court case with UUID $courtCaseUuid not found")
-
-    response.updatedSentenceUuids.forEach { sentenceUuid ->
-      val sentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
-        ?: throw EntityNotFoundException("Sentence with UUID $sentenceUuid not found")
-      val charge = sentence.charge
-      val appearance = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE }?.appearance
-
-      if (appearance != null) {
-        sentenceDomainEventService.update(
-          courtCase.prisonerId,
-          sentenceUuid.toString(),
-          charge.chargeUuid.toString(),
-          courtCaseUuid.toString(),
-          appearance.appearanceUuid.toString(),
-          EventSource.DPS,
-        )
-      }
-    }
-
+    val (response, eventsToEmit) = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
+    dpsDomainEventService.emitEvents(eventsToEmit)
     return response
   }
 }

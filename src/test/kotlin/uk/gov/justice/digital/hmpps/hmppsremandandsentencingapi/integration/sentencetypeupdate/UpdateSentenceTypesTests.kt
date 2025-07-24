@@ -70,6 +70,14 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     val updatedSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
       ?: throw IllegalStateException("Expected updated sentence to exist")
     assertThat(updatedSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
+    
+    // Verify domain event was emitted
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1)
+    val message = messages[0]
+    assertThat(message.eventType).isEqualTo("sentence.updated")
+    assertThat(message.additionalInformation.get("source").asText()).isEqualTo("DPS")
+    assertThat(message.additionalInformation.get("sentenceId").asText()).isEqualTo(sentenceUuid.toString())
   }
 
   @Test
@@ -369,5 +377,15 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(secondSentenceUuid)
       ?: throw IllegalStateException("Expected second updated sentence to exist")
     assertThat(updatedSecondSentence.sentenceType?.sentenceTypeUuid).isEqualTo(edsType)
+    
+    // Verify domain events were emitted
+    val messages = getMessages(2)
+    assertThat(messages).hasSize(2)
+    messages.forEach { message ->
+      assertThat(message.eventType).isEqualTo("sentence.updated")
+      assertThat(message.additionalInformation.get("source").asText()).isEqualTo("DPS")
+    }
+    val sentenceIdsInMessages = messages.map { it.additionalInformation.get("sentenceId").asText() }.toSet()
+    assertThat(sentenceIdsInMessages).containsExactlyInAnyOrder(firstSentenceUuid.toString(), secondSentenceUuid.toString())
   }
 }

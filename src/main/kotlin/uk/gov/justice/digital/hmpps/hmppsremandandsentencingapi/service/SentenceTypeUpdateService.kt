@@ -6,6 +6,10 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
@@ -35,7 +39,7 @@ class SentenceTypeUpdateService(
   fun updateSentenceTypes(
     courtCaseUuid: UUID,
     request: UpdateSentenceTypeRequest,
-  ): UpdateSentenceTypeResponse {
+  ): RecordResponse<UpdateSentenceTypeResponse> {
     // Validate court case exists and is active
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())
       ?: throw EntityNotFoundException("Court case with UUID $courtCaseUuid not found")
@@ -64,8 +68,37 @@ class SentenceTypeUpdateService(
       updatedSentenceUuids.add(validatedUpdate.updateRequest.sentenceUuid)
     }
 
-    return UpdateSentenceTypeResponse(
-      updatedSentenceUuids = updatedSentenceUuids,
+    // Prepare events to emit
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    
+    // Fetch sentence details for event generation
+    updatedSentenceUuids.forEach { sentenceUuid ->
+      val sentence = validatedUpdates.find { it.updateRequest.sentenceUuid == sentenceUuid }?.sentenceEntity
+        ?: throw IllegalStateException("Sentence $sentenceUuid not found in validated updates")
+      
+      val charge = sentence.charge
+      val appearanceCharge = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == EntityStatus.ACTIVE }
+      val appearance = appearanceCharge?.appearance
+      
+      if (appearance != null) {
+        eventsToEmit.add(
+          EventMetadataCreator.sentenceEventMetadata(
+            prisonerId = courtCase.prisonerId,
+            courtCaseId = courtCaseUuid.toString(),
+            chargeId = charge.chargeUuid.toString(),
+            sentenceId = sentenceUuid.toString(),
+            courtAppearanceId = appearance.appearanceUuid.toString(),
+            eventType = EventType.SENTENCE_UPDATED,
+          ),
+        )
+      }
+    }
+    
+    return RecordResponse(
+      record = UpdateSentenceTypeResponse(
+        updatedSentenceUuids = updatedSentenceUuids,
+      ),
+      eventsToEmit = eventsToEmit,
     )
   }
 
