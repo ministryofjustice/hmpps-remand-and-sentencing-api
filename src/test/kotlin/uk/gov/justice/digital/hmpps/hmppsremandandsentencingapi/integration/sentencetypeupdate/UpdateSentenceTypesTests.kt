@@ -353,10 +353,8 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .jsonPath("$.updatedCount").isEqualTo(2)
       .jsonPath("$.updates[0].sentenceUuid").isEqualTo(firstSentenceUuid.toString())
       .jsonPath("$.updates[0].sentenceType").isEqualTo(sdsType)
-      // Success field removed - operation is atomic
       .jsonPath("$.updates[1].sentenceUuid").isEqualTo(secondSentenceUuid.toString())
       .jsonPath("$.updates[1].sentenceType").isEqualTo(edsType)
-      .jsonPath("$.updates[1].success").isEqualTo(true)
 
     // Verify both sentences were updated
     val updatedFirstSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(firstSentenceUuid)!!

@@ -151,7 +151,7 @@ class SentenceTypeUpdateServiceTests {
   }
 
   @Test
-  fun `throw IllegalArgumentException when sentence does not have unknown pre-recall sentence type`() {
+  fun `throw IllegalStateException when sentence does not have unknown pre-recall sentence type`() {
     // Given
     val courtCase = createCourtCase()
     val sentence = createSentence(sdsTypeUuid) // Different type
@@ -173,7 +173,7 @@ class SentenceTypeUpdateServiceTests {
     assertThatThrownBy {
       sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
     }
-      .isInstanceOf(IllegalArgumentException::class.java)
+      .isInstanceOf(IllegalStateException::class.java)
       .hasMessage("Sentence $sentenceUuid does not have type 'unknown pre-recall sentence'")
   }
 

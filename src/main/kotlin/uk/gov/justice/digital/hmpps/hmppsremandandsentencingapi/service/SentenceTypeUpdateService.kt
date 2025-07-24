@@ -104,7 +104,7 @@ class SentenceTypeUpdateService(
 
       // Check sentence has "unknown pre-recall sentence" type
       if (sentence.sentenceType?.sentenceTypeUuid != UNKNOWN_PRE_RECALL_SENTENCE_TYPE_UUID) {
-        throw IllegalArgumentException("Sentence ${update.sentenceUuid} does not have type 'unknown pre-recall sentence'")
+        throw IllegalStateException("Sentence ${update.sentenceUuid} does not have type 'unknown pre-recall sentence'")
       }
 
       // Validate new sentence type against the pre-fetched map
