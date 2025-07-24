@@ -33,7 +33,8 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       ),
     )
     val (courtCaseUuid, createdCourtCase) = createCourtCase(courtCase)
-    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence!!.sentenceUuid!!
+    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence?.sentenceUuid
+      ?: throw IllegalStateException("Expected sentence to exist")
 
     // Get valid sentence type UUIDs
     val sdsType = sentenceTypeRepository.findAll()
@@ -66,7 +67,8 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .jsonPath("$.updatedSentenceUuids[0]").isEqualTo(sentenceUuid.toString())
 
     // Verify the sentence was updated
-    val updatedSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)!!
+    val updatedSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
+      ?: throw IllegalStateException("Expected updated sentence to exist")
     assertThat(updatedSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
   }
 
@@ -137,7 +139,8 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       ),
     )
     val (courtCaseUuid, createdCourtCase) = createCourtCase(courtCase)
-    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence!!.sentenceUuid!!
+    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence?.sentenceUuid
+      ?: throw IllegalStateException("Expected sentence to exist")
 
     val sdsType = sentenceTypeRepository.findAll()
       .first { it.description == "SDS (Standard Determinate Sentence)" }
@@ -217,7 +220,8 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       ),
     )
     val (courtCaseUuid, createdCourtCase) = createCourtCase(courtCase)
-    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence!!.sentenceUuid!!
+    val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence?.sentenceUuid
+      ?: throw IllegalStateException("Expected sentence to exist")
     val invalidSentenceType = UUID.randomUUID()
 
     val request = UpdateSentenceTypeRequest(
@@ -313,8 +317,10 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     )
     val (courtCaseUuid, createdCourtCase) = createCourtCase(courtCase)
     val charges = createdCourtCase.appearances.first().charges
-    val firstSentenceUuid = charges[0].sentence!!.sentenceUuid!!
-    val secondSentenceUuid = charges[1].sentence!!.sentenceUuid!!
+    val firstSentenceUuid = charges[0].sentence?.sentenceUuid
+      ?: throw IllegalStateException("Expected first sentence to exist")
+    val secondSentenceUuid = charges[1].sentence?.sentenceUuid
+      ?: throw IllegalStateException("Expected second sentence to exist")
 
     // Get valid sentence type UUIDs
     val sdsType = sentenceTypeRepository.findAll()
@@ -356,10 +362,12 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .jsonPath("$.updatedSentenceUuids[1]").isEqualTo(secondSentenceUuid.toString())
 
     // Verify both sentences were updated
-    val updatedFirstSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(firstSentenceUuid)!!
+    val updatedFirstSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(firstSentenceUuid)
+      ?: throw IllegalStateException("Expected first updated sentence to exist")
     assertThat(updatedFirstSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
 
-    val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(secondSentenceUuid)!!
+    val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(secondSentenceUuid)
+      ?: throw IllegalStateException("Expected second updated sentence to exist")
     assertThat(updatedSecondSentence.sentenceType?.sentenceTypeUuid).isEqualTo(edsType)
   }
 }

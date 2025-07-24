@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -57,9 +58,12 @@ class SentenceTypeUpdateController(
     val response = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
     
     // Emit domain events for each updated sentence
-    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())!!
+    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())
+      ?: throw EntityNotFoundException("Court case with UUID $courtCaseUuid not found")
+
     response.updatedSentenceUuids.forEach { sentenceUuid ->
-      val sentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)!!
+      val sentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
+        ?: throw EntityNotFoundException("Sentence with UUID $sentenceUuid not found")
       val charge = sentence.charge
       val appearance = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE }?.appearance
       
