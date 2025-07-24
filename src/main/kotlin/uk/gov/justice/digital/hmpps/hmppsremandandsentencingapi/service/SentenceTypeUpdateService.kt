@@ -24,9 +24,6 @@ class SentenceTypeUpdateService(
   private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val serviceUserService: ServiceUserService,
 ) {
-  companion object {
-    private const val MAX_UPDATES_PER_REQUEST = 50
-  }
 
   private data class ValidatedUpdate(
     val updateRequest: SentenceTypeUpdate,
@@ -39,11 +36,6 @@ class SentenceTypeUpdateService(
     courtCaseUuid: UUID,
     request: UpdateSentenceTypeRequest,
   ): UpdateSentenceTypeResponse {
-    // Validate request size
-    if (request.updates.size > MAX_UPDATES_PER_REQUEST) {
-      throw IllegalArgumentException("Maximum of $MAX_UPDATES_PER_REQUEST sentence updates allowed per request")
-    }
-
     // Validate court case exists and is active
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())
       ?: throw EntityNotFoundException("Court case with UUID $courtCaseUuid not found")
