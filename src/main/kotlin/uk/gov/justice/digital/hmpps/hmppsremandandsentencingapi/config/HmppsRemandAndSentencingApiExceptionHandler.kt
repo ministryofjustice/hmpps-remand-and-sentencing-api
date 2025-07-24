@@ -68,12 +68,16 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   @ExceptionHandler(IllegalStateException::class)
   fun handleIllegalStateException(e: IllegalStateException): ResponseEntity<ErrorResponse> {
     log.info("Illegal state exception: {}", e.message)
+    val userMessage = when {
+      e.message?.contains("does not have type 'unknown pre-recall sentence'") == true -> "Cannot update sentence type"
+      else -> e.message ?: "Invalid state"
+    }
     return ResponseEntity
       .status(UNPROCESSABLE_ENTITY)
       .body(
         ErrorResponse(
           status = UNPROCESSABLE_ENTITY,
-          userMessage = e.message,
+          userMessage = userMessage,
           developerMessage = e.message,
         ),
       )
