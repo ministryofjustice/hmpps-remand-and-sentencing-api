@@ -92,17 +92,13 @@ class HmppsRemandAndSentencingApiExceptionHandler {
 
   @ExceptionHandler(EntityNotFoundException::class)
   fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<ErrorResponse> {
-    log.info("Entity not found exception: {}", e.message)
-    val userMessage = when {
-      e.message?.contains("Court case") == true || e.message?.contains("Sentence") == true -> "Court case or sentence not found"
-      else -> "Entity not found"
-    }
+    log.error("Entity not found exception:", e)
     return ResponseEntity
       .status(NOT_FOUND)
       .body(
         ErrorResponse(
           status = NOT_FOUND,
-          userMessage = userMessage,
+          userMessage = "not found: ${e.message}",
           developerMessage = e.message,
         ),
       )

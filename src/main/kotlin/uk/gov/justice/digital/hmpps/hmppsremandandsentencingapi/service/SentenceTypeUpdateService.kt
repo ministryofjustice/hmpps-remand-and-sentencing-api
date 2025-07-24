@@ -7,6 +7,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeUpdateResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
@@ -29,8 +31,8 @@ class SentenceTypeUpdateService(
 
   private data class ValidatedUpdate(
     val updateRequest: SentenceTypeUpdate,
-    val sentenceEntity: uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity,
-    val newSentenceTypeEntity: uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity,
+    val sentenceEntity: SentenceEntity,
+    val newSentenceTypeEntity: SentenceTypeEntity,
   )
 
   @Transactional
@@ -84,7 +86,7 @@ class SentenceTypeUpdateService(
 
   private fun validateUpdates(
     updates: List<SentenceTypeUpdate>,
-    courtCaseSentences: Map<UUID, uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity>,
+    courtCaseSentences: Map<UUID, SentenceEntity>,
   ): List<ValidatedUpdate> {
     // Collect all unique sentence type UUIDs from the request
     val sentenceTypeUuids = updates.map { UUID.fromString(it.sentenceType) }.distinct()

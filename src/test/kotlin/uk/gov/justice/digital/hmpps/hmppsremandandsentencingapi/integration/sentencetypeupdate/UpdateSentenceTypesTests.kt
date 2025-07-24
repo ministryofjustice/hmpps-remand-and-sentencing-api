@@ -94,7 +94,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .expectStatus()
       .isNotFound
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Court case or sentence not found")
+      .jsonPath("$.userMessage").isEqualTo("not found: Court case with UUID $nonExistentCourtCaseUuid not found")
       .jsonPath("$.developerMessage").isEqualTo("Court case with UUID $nonExistentCourtCaseUuid not found")
   }
 
@@ -199,7 +199,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .expectStatus()
       .isNotFound
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Court case or sentence not found")
+      .jsonPath("$.userMessage").isEqualTo("not found: Sentence with UUID $nonExistentSentenceUuid not found in court case")
       .jsonPath("$.developerMessage").isEqualTo("Sentence with UUID $nonExistentSentenceUuid not found in court case")
   }
 
@@ -241,7 +241,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .expectStatus()
       .isNotFound
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Court case or sentence not found")
+      .jsonPath("$.userMessage").isEqualTo("not found: Sentence type '$invalidSentenceType' is not a valid sentence type")
       .jsonPath("$.developerMessage").isEqualTo("Sentence type '$invalidSentenceType' is not a valid sentence type")
   }
 

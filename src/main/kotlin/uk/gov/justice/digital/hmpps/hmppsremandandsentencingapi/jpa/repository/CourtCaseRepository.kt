@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
@@ -121,5 +122,5 @@ interface CourtCaseRepository :
   fun findSentencesByCourtCaseUuid(
     @Param("courtCaseUuid") courtCaseUuid: String,
     @Param("status") status: EntityStatus = EntityStatus.DELETED,
-  ): List<uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity>
+  ): List<SentenceEntity>
 }
