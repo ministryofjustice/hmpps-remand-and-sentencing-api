@@ -54,7 +54,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -87,7 +87,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$nonExistentCourtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -110,7 +110,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -157,7 +157,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -192,7 +192,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -234,7 +234,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -343,7 +343,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid/sentences/update-types")
       .bodyValue(request)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
