@@ -88,34 +88,34 @@ class SentenceTypeUpdateService(
   ): List<ValidatedUpdate> {
     // Collect all unique sentence type UUIDs from the request
     val sentenceTypeUuids = updates.map { UUID.fromString(it.sentenceType) }.distinct()
-    
+
     val sentenceTypesByUuid = sentenceTypeRepository.findBySentenceTypeUuidIn(sentenceTypeUuids)
       .associateBy { it.sentenceTypeUuid }
 
     return updates.map { update ->
-    // Check sentence exists and belongs to court case
-    val sentence = courtCaseSentences[update.sentenceUuid]
-      ?: throw EntityNotFoundException("Sentence with UUID ${update.sentenceUuid} not found in court case")
+      // Check sentence exists and belongs to court case
+      val sentence = courtCaseSentences[update.sentenceUuid]
+        ?: throw EntityNotFoundException("Sentence with UUID ${update.sentenceUuid} not found in court case")
 
-    // Check sentence status
-    if (sentence.statusId == EntityStatus.DELETED) {
-      throw IllegalStateException("Sentence with UUID ${update.sentenceUuid} is deleted")
-    }
+      // Check sentence status
+      if (sentence.statusId == EntityStatus.DELETED) {
+        throw IllegalStateException("Sentence with UUID ${update.sentenceUuid} is deleted")
+      }
 
-    // Check sentence has "unknown pre-recall sentence" type
-    if (sentence.sentenceType?.sentenceTypeUuid != UNKNOWN_PRE_RECALL_SENTENCE_TYPE_UUID) {
-      throw IllegalArgumentException("Sentence ${update.sentenceUuid} does not have type 'unknown pre-recall sentence'")
-    }
+      // Check sentence has "unknown pre-recall sentence" type
+      if (sentence.sentenceType?.sentenceTypeUuid != UNKNOWN_PRE_RECALL_SENTENCE_TYPE_UUID) {
+        throw IllegalArgumentException("Sentence ${update.sentenceUuid} does not have type 'unknown pre-recall sentence'")
+      }
 
-    // Validate new sentence type against the pre-fetched map
-    val newSentenceType = sentenceTypesByUuid[UUID.fromString(update.sentenceType)]
-      ?: throw EntityNotFoundException("Sentence type '${update.sentenceType}' is not a valid sentence type")
+      // Validate new sentence type against the pre-fetched map
+      val newSentenceType = sentenceTypesByUuid[UUID.fromString(update.sentenceType)]
+        ?: throw EntityNotFoundException("Sentence type '${update.sentenceType}' is not a valid sentence type")
 
-    if (newSentenceType.status == ReferenceEntityStatus.INACTIVE) {
-      throw IllegalStateException("Sentence type '${update.sentenceType}' is not active")
-    }
+      if (newSentenceType.status == ReferenceEntityStatus.INACTIVE) {
+        throw IllegalStateException("Sentence type '${update.sentenceType}' is not active")
+      }
 
-    ValidatedUpdate(update, sentence, newSentenceType)
+      ValidatedUpdate(update, sentence, newSentenceType)
     }
   }
 }
