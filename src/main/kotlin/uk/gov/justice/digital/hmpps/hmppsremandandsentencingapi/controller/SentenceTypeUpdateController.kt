@@ -56,7 +56,7 @@ class SentenceTypeUpdateController(
     @Valid @RequestBody request: UpdateSentenceTypeRequest,
   ): UpdateSentenceTypeResponse {
     val response = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
-    
+
     // Emit domain events for each updated sentence
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())
       ?: throw EntityNotFoundException("Court case with UUID $courtCaseUuid not found")
@@ -66,7 +66,7 @@ class SentenceTypeUpdateController(
         ?: throw EntityNotFoundException("Sentence with UUID $sentenceUuid not found")
       val charge = sentence.charge
       val appearance = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE }?.appearance
-      
+
       if (appearance != null) {
         sentenceDomainEventService.update(
           courtCase.prisonerId,
@@ -74,11 +74,11 @@ class SentenceTypeUpdateController(
           charge.chargeUuid.toString(),
           courtCaseUuid.toString(),
           appearance.appearanceUuid.toString(),
-          EventSource.DPS
+          EventSource.DPS,
         )
       }
     }
-    
+
     return response
   }
 }

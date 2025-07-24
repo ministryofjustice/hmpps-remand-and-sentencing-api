@@ -60,7 +60,7 @@ class SentenceTypeUpdateService(
       sentence.updatedBy = username
 
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
-      
+
       updatedSentenceUuids.add(validatedUpdate.updateRequest.sentenceUuid)
     }
 

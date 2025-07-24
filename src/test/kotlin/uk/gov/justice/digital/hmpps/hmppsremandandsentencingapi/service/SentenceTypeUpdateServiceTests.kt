@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import io.mockk.every
 import io.mockk.mockk
-import jakarta.persistence.EntityNotFoundException
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -40,8 +39,6 @@ class SentenceTypeUpdateServiceTests {
     every { sentenceHistoryRepository.save(any()) } returnsArgument 0
   }
 
-
-
   @Test
   fun `throw IllegalStateException when court case is deleted`() {
     // Given
@@ -65,8 +62,6 @@ class SentenceTypeUpdateServiceTests {
       .hasMessage("Court case with UUID $courtCaseUuid is deleted")
   }
 
-
-
   private fun createCourtCase(status: EntityStatus = EntityStatus.ACTIVE): CourtCaseEntity = CourtCaseEntity(
     id = 1,
     prisonerId = "PRISONER1",
@@ -76,5 +71,4 @@ class SentenceTypeUpdateServiceTests {
     statusId = status,
     legacyData = null,
   )
-
 }
