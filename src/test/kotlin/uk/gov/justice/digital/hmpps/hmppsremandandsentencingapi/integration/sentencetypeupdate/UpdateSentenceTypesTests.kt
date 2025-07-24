@@ -70,7 +70,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     val updatedSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
       ?: throw IllegalStateException("Expected updated sentence to exist")
     assertThat(updatedSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
-    
+
     // Verify domain event was emitted
     val messages = getMessages(1)
     assertThat(messages).hasSize(1)
@@ -377,7 +377,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(secondSentenceUuid)
       ?: throw IllegalStateException("Expected second updated sentence to exist")
     assertThat(updatedSecondSentence.sentenceType?.sentenceTypeUuid).isEqualTo(edsType)
-    
+
     // Verify domain events were emitted
     val messages = getMessages(2)
     assertThat(messages).hasSize(2)
