@@ -73,6 +73,35 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `can delete sentence where court appearance has no outcome`() {
+    val (lifetimeUuid) = createLegacySentence(
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+        legacyData = DataCreator.courtAppearanceLegacyData(
+          outcomeConvictionFlag = null,
+          outcomeDispositionCode = null,
+          outcomeDescription = null,
+          nomisOutcomeCode = null,
+        ),
+      ),
+    )
+
+    webTestClient
+      .delete()
+      .uri("/legacy/sentence/$lifetimeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    val message = getMessages(1)[0]
+    assertThat(message.eventType).isEqualTo("sentence.deleted")
+    assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+  }
+
+  @Test
   fun `no token results in unauthorized`() {
     webTestClient
       .delete()
