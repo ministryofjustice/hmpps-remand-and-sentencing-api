@@ -103,4 +103,23 @@ interface CourtCaseRepository :
     @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
     @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
   ): LocalDate?
+
+  @Query(
+    """
+    select s from CourtCaseEntity cc
+    join cc.appearances ca
+    join ca.appearanceCharges ac
+    join ac.charge c
+    join c.sentences s
+    where cc.caseUniqueIdentifier = :courtCaseUuid
+    and cc.statusId != :status
+    and ca.statusId != :status
+    and c.statusId != :status
+    and s.statusId != :status
+  """,
+  )
+  fun findSentencesByCourtCaseUuid(
+    @Param("courtCaseUuid") courtCaseUuid: String,
+    @Param("status") status: EntityStatus = EntityStatus.DELETED,
+  ): List<uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity>
 }
