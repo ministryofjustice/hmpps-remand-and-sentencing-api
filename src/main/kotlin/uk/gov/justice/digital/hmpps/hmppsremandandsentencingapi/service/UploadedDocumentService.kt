@@ -36,6 +36,17 @@ class UploadedDocumentService(
     documentUUIDs: List<UUID>,
     appearance: CourtAppearanceEntity,
   ) {
+    val documentsToUnlink = uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
+      appearance.appearanceUuid,
+      documentUUIDs,
+    )
+    documentsToUnlink.forEach { document ->
+      document.appearance = null
+      document.updatedBy = serviceUserService.getUsername()
+      document.updatedAt = ZonedDateTime.now()
+      uploadedDocumentRepository.save(document)
+    }
+
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
       if (document != null) {

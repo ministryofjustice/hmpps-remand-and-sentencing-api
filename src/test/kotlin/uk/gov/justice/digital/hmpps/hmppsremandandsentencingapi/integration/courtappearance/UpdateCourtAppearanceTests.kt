@@ -20,11 +20,35 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update appearance in existing court case`() {
-    val courtCase = createCourtCase()
+    val oldDocumentUuid = UUID.randomUUID()
+    val oldDocument = DpsDataCreator.dpsCreateUploadedDocument(
+      documentUuid = oldDocumentUuid,
+      documentType = "REMAND_WARRANT",
+      documentName = "court-appearance-document.pdf",
+    )
+    uploadDocument(oldDocument)
+
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(oldDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
+
+    val newDocumentUuid = UUID.randomUUID()
+    val newDocument = DpsDataCreator.dpsCreateUploadedDocument(
+      documentUuid = newDocumentUuid,
+      documentType = "REMAND_WARRANT",
+      documentName = "court-appearance-document-2.pdf",
+    )
+    uploadDocument(newDocument)
+
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
-    val appearanceChargeHistoryBefore = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val appearanceChargeHistoryBefore =
+      appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      courtCaseUuid = courtCase.first,
+      appearanceUUID = createdAppearance.appearanceUuid,
+      courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE",
+      documents = listOf(newDocument),
+    )
 
     webTestClient
       .put()
@@ -45,11 +69,14 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.period-length.inserted")
 
-    val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
-    assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }.containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
+    val historyRecords =
+      courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
+    assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }
+      .containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
     assertThat(historyRecords).extracting<EventSource> { it.source }.containsOnly(DPS)
 
-    val appearanceChargeHistoryAfter = appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
+    val appearanceChargeHistoryAfter =
+      appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
     val beforeIds = appearanceChargeHistoryBefore.map { it.id }.toSet()
     val newEntries = appearanceChargeHistoryAfter.filter { it.id !in beforeIds }
     assertEquals(2, newEntries.size)
@@ -57,13 +84,25 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newEntries).extracting<String> { it.createdBy }.containsExactly("SOME_USER", "SOME_USER")
     assertThat(newEntries).extracting<String> { it.createdPrison }.containsExactlyInAnyOrder("PRISON1", "PRISON1")
     assertThat(newEntries).extracting<String> { it.removedPrison }.containsExactlyInAnyOrder(null, "PRISON1")
+
+    val oldDoc = uploadedDocumentRepository.findByDocumentUuid(oldDocumentUuid)
+    assertThat(oldDoc).isNotNull
+    assertThat(oldDoc!!.appearance).isNull()
+
+    val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocumentUuid)
+    assertThat(newDoc).isNotNull
+    assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
   }
 
   @Test
   fun `updating only a court appearance keeps the next court appearance`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = createdAppearance.appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
+    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      courtCaseUuid = courtCase.first,
+      appearanceUUID = createdAppearance.appearanceUuid,
+      courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE",
+    )
     val response = webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -100,8 +139,15 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       warrantType = "SENTENCING",
       appearanceDate = appearanceDate,
     )
-    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencedAppearance)))
-    val createdAppearance = createdCourtCase.appearances.first().copy(courtCaseUuid = courtCaseUuid, appearanceDate = appearanceDate.minusDays(10))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          sentencedAppearance,
+        ),
+      ),
+    )
+    val createdAppearance = createdCourtCase.appearances.first()
+      .copy(courtCaseUuid = courtCaseUuid, appearanceDate = appearanceDate.minusDays(10))
     webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -123,8 +169,14 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
     val createdNextAppearance = createdAppearance.nextCourtAppearance!!
-    val updateNextAppearance = createdNextAppearance.copy(appearanceTime = createdNextAppearance.appearanceTime!!.plusHours(2).withSecond(0).withNano(0))
-    val updateCourtAppearance = createdAppearance.copy(courtCaseUuid = courtCase.first, appearanceUuid = createdAppearance.appearanceUuid, nextCourtAppearance = updateNextAppearance)
+    val updateNextAppearance = createdNextAppearance.copy(
+      appearanceTime = createdNextAppearance.appearanceTime!!.plusHours(2).withSecond(0).withNano(0),
+    )
+    val updateCourtAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCase.first,
+      appearanceUuid = createdAppearance.appearanceUuid,
+      nextCourtAppearance = updateNextAppearance,
+    )
     val response = webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -158,7 +210,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   fun `update appearance to edit charge`() {
     val courtCase = createCourtCase()
     val charge = courtCase.second.appearances.first().charges.first().copy(offenceCode = "OFF634624")
-    val appearance = courtCase.second.appearances.first().copy(charges = listOf(charge), courtCaseUuid = courtCase.first)
+    val appearance =
+      courtCase.second.appearances.first().copy(charges = listOf(charge), courtCaseUuid = courtCase.first)
     webTestClient
       .put()
       .uri("/court-appearance/${appearance.appearanceUuid}")
@@ -196,7 +249,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
     val charge = DpsDataCreator.dpsCreateCharge()
     val secondCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "OFF567")
-    val appearance = courtCase.second.appearances.first().copy(charges = listOf(charge, secondCharge), courtCaseUuid = courtCase.first)
+    val appearance =
+      courtCase.second.appearances.first().copy(charges = listOf(charge, secondCharge), courtCaseUuid = courtCase.first)
     webTestClient
       .put()
       .uri("/court-appearance/${appearance.appearanceUuid}")
@@ -247,12 +301,24 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val edsUuid = UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0")
     val sentence = DpsDataCreator.dpsCreateSentence(sentenceTypeId = sdsUuid)
     val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge), overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6))
-    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(charge),
+      overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6),
+    )
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          appearance,
+        ),
+      ),
+    )
 
     val createdAppearance = createdCourtCase.appearances.first()
     // Update from SDS sentence to EDS sentence
-    val updateAppearance = createdAppearance.copy(courtCaseUuid = courtCaseUuid, charges = createdAppearance.charges.map { it.copy(sentence = it.sentence?.copy(sentenceTypeId = edsUuid)) })
+    val updateAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = createdAppearance.charges.map { it.copy(sentence = it.sentence?.copy(sentenceTypeId = edsUuid)) },
+    )
     webTestClient
       .put()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")

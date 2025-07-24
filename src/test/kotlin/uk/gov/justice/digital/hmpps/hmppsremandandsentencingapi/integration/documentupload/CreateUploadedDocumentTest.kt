@@ -2,18 +2,13 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.doc
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.UploadedDocumentRepository
 import java.util.UUID
 
 class CreateUploadedDocumentTest : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var uploadedDocumentRepository: UploadedDocumentRepository
 
   @Test
   fun `create uploaded document`() {
