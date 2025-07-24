@@ -30,7 +30,7 @@ class SentenceTypeUpdateServiceTests {
 
   private lateinit var sentenceTypeUpdateService: SentenceTypeUpdateService
 
-  private val unknownPreRecallSentenceTypeUuid = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
+  private val unknownPreRecallSentenceTypeUuid = uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService.recallSentenceTypeBucketUuid
   private val courtCaseUuid = UUID.randomUUID()
   private val sentenceUuid = UUID.randomUUID()
   private val sdsTypeUuid = UUID.randomUUID()
@@ -63,7 +63,7 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -72,10 +72,8 @@ class SentenceTypeUpdateServiceTests {
     val response = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
 
     // Then
-    assertThat(response.updatedCount).isEqualTo(1)
-    assertThat(response.updates).hasSize(1)
-    assertThat(response.updates[0].sentenceUuid).isEqualTo(sentenceUuid)
-    assertThat(response.updates[0].sentenceType).isEqualTo(sdsTypeUuid.toString())
+    assertThat(response.updatedSentenceUuids).hasSize(1)
+    assertThat(response.updatedSentenceUuids[0]).isEqualTo(sentenceUuid)
 
     verify { sentenceHistoryRepository.save(any()) }
   }
@@ -89,7 +87,7 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -112,7 +110,7 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -137,7 +135,7 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -164,7 +162,7 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -191,7 +189,7 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -210,7 +208,7 @@ class SentenceTypeUpdateServiceTests {
     val updates = (1..51).map {
       SentenceTypeUpdate(
         sentenceUuid = UUID.randomUUID(),
-        sentenceType = UUID.randomUUID().toString(),
+        sentenceTypeId = UUID.randomUUID(),
       )
     }
 
@@ -240,11 +238,11 @@ class SentenceTypeUpdateServiceTests {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentence1.sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
         SentenceTypeUpdate(
           sentenceUuid = sentence2.sentenceUuid,
-          sentenceType = sdsTypeUuid.toString(),
+          sentenceTypeId = sdsTypeUuid,
         ),
       ),
     )
@@ -253,8 +251,7 @@ class SentenceTypeUpdateServiceTests {
     val response = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
 
     // Then
-    assertThat(response.updatedCount).isEqualTo(2)
-    assertThat(response.updates).hasSize(2)
+    assertThat(response.updatedSentenceUuids).hasSize(2)
     verify(exactly = 2) { sentenceHistoryRepository.save(any()) }
   }
 
@@ -266,13 +263,13 @@ class SentenceTypeUpdateServiceTests {
   }
 
   private fun createSentence(sentenceTypeUuid: UUID, uuid: UUID = sentenceUuid): SentenceEntity {
-    val sentenceType = createSentenceType(sentenceTypeUuid, "Type")
+    val sentenceTypeId = createSentenceType(sentenceTypeUuid, "Type")
     val charge = mockk<ChargeEntity>()
     every { charge.id } returns 1
 
     return mockk<SentenceEntity>(relaxed = true).also { sentenceEntity ->
       every { sentenceEntity.sentenceUuid } returns uuid
-      every { sentenceEntity.sentenceType } returns sentenceType
+      every { sentenceEntity.sentenceType } returns sentenceTypeId
       every { sentenceEntity.statusId } returns EntityStatus.ACTIVE
       every { sentenceEntity.charge } returns charge
       every { sentenceEntity.id } returns 1

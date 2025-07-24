@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceTypeUpdateService
 import java.util.UUID
 
@@ -24,6 +28,9 @@ import java.util.UUID
 @Tag(name = "sentence-type-update-controller", description = "Sentence Type Updates")
 class SentenceTypeUpdateController(
   private val sentenceTypeUpdateService: SentenceTypeUpdateService,
+  private val sentenceDomainEventService: SentenceDomainEventService,
+  private val courtCaseRepository: CourtCaseRepository,
+  private val sentenceRepository: SentenceRepository,
 ) {
 
   @PostMapping("/court-case/{courtCaseUuid}/sentences/update-types")
@@ -46,5 +53,28 @@ class SentenceTypeUpdateController(
   fun updateSentenceTypes(
     @PathVariable courtCaseUuid: UUID,
     @Valid @RequestBody request: UpdateSentenceTypeRequest,
-  ): UpdateSentenceTypeResponse = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
+  ): UpdateSentenceTypeResponse {
+    val response = sentenceTypeUpdateService.updateSentenceTypes(courtCaseUuid, request)
+    
+    // Emit domain events for each updated sentence
+    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())!!
+    response.updatedSentenceUuids.forEach { sentenceUuid ->
+      val sentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)!!
+      val charge = sentence.charge
+      val appearance = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE }?.appearance
+      
+      if (appearance != null) {
+        sentenceDomainEventService.update(
+          courtCase.prisonerId,
+          sentenceUuid.toString(),
+          charge.chargeUuid.toString(),
+          courtCaseUuid.toString(),
+          appearance.appearanceUuid.toString(),
+          EventSource.DPS
+        )
+      }
+    }
+    
+    return response
+  }
 }

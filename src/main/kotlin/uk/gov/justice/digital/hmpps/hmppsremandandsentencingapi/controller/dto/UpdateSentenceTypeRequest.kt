@@ -15,6 +15,6 @@ data class SentenceTypeUpdate(
   @field:NotNull(message = "Sentence UUID is required")
   val sentenceUuid: UUID,
 
-  @field:NotNull(message = "Sentence type is required")
-  val sentenceType: String,
+  @field:NotNull(message = "Sentence type ID is required")
+  val sentenceTypeId: UUID,
 )

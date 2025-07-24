@@ -16,7 +16,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
   @Autowired
   private lateinit var sentenceTypeRepository: SentenceTypeRepository
 
-  private val unknownPreRecallSentenceTypeUuid = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
+  private val unknownPreRecallSentenceTypeUuid = uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService.recallSentenceTypeBucketUuid
 
   @Test
   fun `successfully update sentence types for unknown pre-recall sentences`() {
@@ -38,13 +38,13 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     // Get valid sentence type UUIDs
     val sdsType = sentenceTypeRepository.findAll()
       .first { it.description == "SDS (Standard Determinate Sentence)" }
-      .sentenceTypeUuid.toString()
+      .sentenceTypeUuid
 
     val request = UpdateSentenceTypeRequest(
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsType,
+          sentenceTypeId = sdsType,
         ),
       ),
     )
@@ -61,13 +61,13 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.updatedCount").isEqualTo(1)
-      .jsonPath("$.updates[0].sentenceUuid").isEqualTo(sentenceUuid.toString())
-      .jsonPath("$.updates[0].sentenceType").isEqualTo(sdsType)
+      .jsonPath("$.updatedSentenceUuids").isArray
+      .jsonPath("$.updatedSentenceUuids.length()").isEqualTo(1)
+      .jsonPath("$.updatedSentenceUuids[0]").isEqualTo(sentenceUuid.toString())
 
     // Verify the sentence was updated
     val updatedSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)!!
-    assertThat(updatedSentence.sentenceType?.sentenceTypeUuid.toString()).isEqualTo(sdsType)
+    assertThat(updatedSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
   }
 
   @Test
@@ -77,7 +77,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = UUID.randomUUID(),
-          sentenceType = UUID.randomUUID().toString(),
+          sentenceTypeId = UUID.randomUUID(),
         ),
       ),
     )
@@ -141,13 +141,13 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
 
     val sdsType = sentenceTypeRepository.findAll()
       .first { it.description == "SDS (Standard Determinate Sentence)" }
-      .sentenceTypeUuid.toString()
+      .sentenceTypeUuid
 
     val request = UpdateSentenceTypeRequest(
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = sdsType,
+          sentenceTypeId = sdsType,
         ),
       ),
     )
@@ -176,13 +176,13 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
 
     val sdsType = sentenceTypeRepository.findAll()
       .first { it.description == "SDS (Standard Determinate Sentence)" }
-      .sentenceTypeUuid.toString()
+      .sentenceTypeUuid
 
     val request = UpdateSentenceTypeRequest(
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = nonExistentSentenceUuid,
-          sentenceType = sdsType,
+          sentenceTypeId = sdsType,
         ),
       ),
     )
@@ -218,13 +218,13 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     )
     val (courtCaseUuid, createdCourtCase) = createCourtCase(courtCase)
     val sentenceUuid = createdCourtCase.appearances.first().charges.first().sentence!!.sentenceUuid!!
-    val invalidSentenceType = UUID.randomUUID().toString()
+    val invalidSentenceType = UUID.randomUUID()
 
     val request = UpdateSentenceTypeRequest(
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = sentenceUuid,
-          sentenceType = invalidSentenceType,
+          sentenceTypeId = invalidSentenceType,
         ),
       ),
     )
@@ -252,7 +252,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = UUID.randomUUID(),
-          sentenceType = UUID.randomUUID().toString(),
+          sentenceTypeId = UUID.randomUUID(),
         ),
       ),
     )
@@ -276,7 +276,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = UUID.randomUUID(),
-          sentenceType = UUID.randomUUID().toString(),
+          sentenceTypeId = UUID.randomUUID(),
         ),
       ),
     )
@@ -319,21 +319,21 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
     // Get valid sentence type UUIDs
     val sdsType = sentenceTypeRepository.findAll()
       .first { it.description == "SDS (Standard Determinate Sentence)" }
-      .sentenceTypeUuid.toString()
+      .sentenceTypeUuid
 
     val edsType = sentenceTypeRepository.findAll()
       .first { it.description == "EDS (Extended Determinate Sentence)" }
-      .sentenceTypeUuid.toString()
+      .sentenceTypeUuid
 
     val request = UpdateSentenceTypeRequest(
       updates = listOf(
         SentenceTypeUpdate(
           sentenceUuid = firstSentenceUuid,
-          sentenceType = sdsType,
+          sentenceTypeId = sdsType,
         ),
         SentenceTypeUpdate(
           sentenceUuid = secondSentenceUuid,
-          sentenceType = edsType,
+          sentenceTypeId = edsType,
         ),
       ),
     )
@@ -350,17 +350,16 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.updatedCount").isEqualTo(2)
-      .jsonPath("$.updates[0].sentenceUuid").isEqualTo(firstSentenceUuid.toString())
-      .jsonPath("$.updates[0].sentenceType").isEqualTo(sdsType)
-      .jsonPath("$.updates[1].sentenceUuid").isEqualTo(secondSentenceUuid.toString())
-      .jsonPath("$.updates[1].sentenceType").isEqualTo(edsType)
+      .jsonPath("$.updatedSentenceUuids").isArray
+      .jsonPath("$.updatedSentenceUuids.length()").isEqualTo(2)
+      .jsonPath("$.updatedSentenceUuids[0]").isEqualTo(firstSentenceUuid.toString())
+      .jsonPath("$.updatedSentenceUuids[1]").isEqualTo(secondSentenceUuid.toString())
 
     // Verify both sentences were updated
     val updatedFirstSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(firstSentenceUuid)!!
-    assertThat(updatedFirstSentence.sentenceType?.sentenceTypeUuid.toString()).isEqualTo(sdsType)
+    assertThat(updatedFirstSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
 
     val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(secondSentenceUuid)!!
-    assertThat(updatedSecondSentence.sentenceType?.sentenceTypeUuid.toString()).isEqualTo(edsType)
+    assertThat(updatedSecondSentence.sentenceType?.sentenceTypeUuid).isEqualTo(edsType)
   }
 }
