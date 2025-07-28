@@ -40,12 +40,7 @@ class UploadedDocumentService(
       appearance.appearanceUuid,
       documentUUIDs,
     )
-    documentsToUnlink.forEach { document ->
-      document.appearance = null
-      document.updatedBy = serviceUserService.getUsername()
-      document.updatedAt = ZonedDateTime.now()
-      uploadedDocumentRepository.save(document)
-    }
+    unlinkDocuments(documentsToUnlink)
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
@@ -67,5 +62,20 @@ class UploadedDocumentService(
       documentManagementApiClient.deleteDocument(documentId = document.documentUuid.toString())
     }
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
+  }
+
+  @Transactional
+  fun unlinkDocumentsFromCourtAppearance(appearanceId: Int) {
+    val documents = uploadedDocumentRepository.findAllByAppearanceId(appearanceId)
+    unlinkDocuments(documents)
+  }
+
+  private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>) {
+    uploadedDocuments.forEach { document ->
+      document.appearance = null
+      document.updatedBy = serviceUserService.getUsername()
+      document.updatedAt = ZonedDateTime.now()
+      uploadedDocumentRepository.save(document)
+    }
   }
 }

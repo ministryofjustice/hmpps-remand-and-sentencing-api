@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -94,4 +95,25 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     dpsDomainEventService.emitEvents(eventsToEmit)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
+
+  @DeleteMapping("/court-appearance/{appearanceUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @Operation(
+    summary = "Delete Court appearance",
+    description = "This endpoint will delete a court appearance in a given court case",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "Court appearance deleted successfully"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no court appearance at uuid"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID) {
+    courtAppearanceService.softDeleteCourtAppearance(appearanceUuid).let { (_, eventsToEmit) ->
+      dpsDomainEventService.emitEvents(eventsToEmit)
+    }
+  }
 }
