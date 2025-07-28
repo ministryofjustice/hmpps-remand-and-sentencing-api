@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.util.UUID
 
 class LegacyDeleteSentenceTests : IntegrationTestBase() {
@@ -126,5 +127,57 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `should not show deleted sentences when querying recalls`() {
+    // This test verifies that deleted sentences are properly filtered out when querying recalls
+    val prisonerId = "DEL001"
+
+    // Step 1: Create court case and appearance
+    val courtCase = DataCreator.legacyCreateCourtCase(prisonerId = prisonerId)
+    val appearance = DataCreator.legacyCreateCourtAppearance()
+
+    // Step 2: Create two recall sentences
+    val firstCharge = DataCreator.legacyCreateCharge()
+    val firstRecallSentence = DataCreator.legacyCreateSentence(
+      returnToCustodyDate = LocalDate.now(),
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "FTR", // Fixed Term Recall
+        sentenceCategory = "2003",
+      ),
+    )
+    val (firstSentenceUuid, _) = createLegacySentence(courtCase, appearance, firstCharge, firstRecallSentence)
+
+    val secondCharge = DataCreator.legacyCreateCharge()
+    val secondRecallSentence = DataCreator.legacyCreateSentence(
+      returnToCustodyDate = LocalDate.now(),
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "FTR", // Fixed Term Recall
+        sentenceCategory = "2003",
+      ),
+    )
+    createLegacySentence(courtCase, appearance, secondCharge, secondRecallSentence)
+
+    // Step 3: Delete the first sentence
+    webTestClient
+      .delete()
+      .uri("/legacy/sentence/$firstSentenceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+      }
+      .exchange()
+      .expectStatus().isNoContent
+
+    // Step 4: Query recalls
+    val recalls = getRecallsByPrisonerId(prisonerId)
+
+    // ASSERTION: Should have recalls but only with active sentences
+    assertThat(recalls).isNotEmpty
+
+    // Count total sentences across all recalls
+    val totalSentences = recalls.flatMap { it.sentences ?: emptyList() }.size
+    assertThat(totalSentences).isEqualTo(1)
+      .withFailMessage("Expected only 1 active sentence but found $totalSentences. Deleted sentences are being returned.")
   }
 }

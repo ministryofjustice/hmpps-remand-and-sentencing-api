@@ -88,6 +88,91 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `should not create duplicate recalls when multiple recall sentences created for same prisoner`() {
+    // This test verifies that the find-or-create pattern prevents duplicate RecallEntity records
+    val prisonerId = "REC001"
+
+    // Step 1: Create a recall sentence directly (this should create one RecallEntity)
+    val firstRecallSentence = DataCreator.legacyCreateSentence(
+      returnToCustodyDate = LocalDate.now(),
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "LR",
+        sentenceCategory = "2003",
+      ),
+    )
+    createLegacySentence(
+      DataCreator.legacyCreateCourtCase(prisonerId = prisonerId),
+      DataCreator.legacyCreateCourtAppearance(),
+      DataCreator.legacyCreateCharge(),
+      firstRecallSentence,
+    )
+
+    // Step 2: Create another recall sentence for the same prisoner
+    // The find-or-create pattern should reuse the existing RecallEntity
+    val secondRecallSentence = DataCreator.legacyCreateSentence(
+      returnToCustodyDate = LocalDate.now(),
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "LR",
+        sentenceCategory = "2003",
+      ),
+    )
+    createLegacySentence(
+      DataCreator.legacyCreateCourtCase(prisonerId = prisonerId),
+      DataCreator.legacyCreateCourtAppearance(),
+      DataCreator.legacyCreateCharge(),
+      secondRecallSentence,
+    )
+
+    // Step 3: Query recalls for the prisoner
+    val recalls = getRecallsByPrisonerId(prisonerId)
+
+    // ASSERTION: There should be only ONE recall for this prisoner
+    assertThat(recalls).hasSize(1)
+      .withFailMessage("Expected 1 recall but found ${recalls.size}. The find-or-create pattern should prevent duplicate RecallEntity records.")
+  }
+
+  @Test
+  fun `should reuse existing recall when multiple recall sentences created in same court case`() {
+    // This test verifies that the find-or-create pattern correctly reuses existing recalls
+    // when multiple charges are sentenced to recall in the same court case
+    val prisonerId = "REC002"
+
+    // Create court case and appearance
+    val courtCase = DataCreator.legacyCreateCourtCase(prisonerId = prisonerId)
+    val appearance = DataCreator.legacyCreateCourtAppearance()
+
+    // Create two separate recall sentences
+    val firstRecallSentence = DataCreator.legacyCreateSentence(
+      returnToCustodyDate = LocalDate.now(),
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "LR",
+        sentenceCategory = "2003",
+      ),
+    )
+    createLegacySentence(courtCase, appearance, DataCreator.legacyCreateCharge(), firstRecallSentence)
+
+    val secondRecallSentence = DataCreator.legacyCreateSentence(
+      returnToCustodyDate = LocalDate.now(),
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "LR",
+        sentenceCategory = "2003",
+      ),
+    )
+    createLegacySentence(courtCase, appearance, DataCreator.legacyCreateCharge(), secondRecallSentence)
+
+    // Query recalls
+    val recalls = getRecallsByPrisonerId(prisonerId)
+
+    // There should be only 1 recall with 2 sentences
+    assertThat(recalls).hasSize(1)
+      .withFailMessage("Expected 1 recall but found ${recalls.size}. The find-or-create pattern should reuse existing recalls.")
+    
+    // Verify that both sentences are linked to the same recall
+    assertThat(recalls[0].sentences).hasSize(2)
+      .withFailMessage("Expected 2 sentences linked to the recall but found ${recalls[0].sentences?.size}")
+  }
+
+  @Test
   fun `inactive sentences are returned`() {
     val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)

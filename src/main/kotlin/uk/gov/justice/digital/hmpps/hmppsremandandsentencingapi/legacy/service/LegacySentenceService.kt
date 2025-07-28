@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
@@ -137,14 +139,36 @@ class LegacySentenceService(
     prisonerId: String,
   ) {
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
-    val recall = recallRepository.save(
-      RecallEntity.fromLegacy(
-        sentence,
-        prisonerId,
-        serviceUserService.getUsername(),
-        legacySentenceType?.recallType ?: defaultRecallType,
-      ),
+    
+    // Check for existing recall first
+    val existingRecall = recallRepository.findFirstByPrisonerIdAndStatusIdOrderByCreatedAtDesc(
+      prisonerId,
+      EntityStatus.ACTIVE
     )
+    
+    val recall = if (existingRecall != null) {
+      log.info("Reusing existing recall ${existingRecall.recallUuid} for prisoner $prisonerId")
+      existingRecall
+    } else {
+      try {
+        val newRecall = recallRepository.save(
+          RecallEntity.fromLegacy(
+            sentence,
+            prisonerId,
+            serviceUserService.getUsername(),
+            legacySentenceType?.recallType ?: defaultRecallType,
+          ),
+        )
+        log.info("Created new recall for prisoner $prisonerId with recall UUID ${newRecall.recallUuid}")
+        newRecall
+      } catch (e: DataIntegrityViolationException) {
+        // Another thread created the recall concurrently, find and use it
+        log.warn("Concurrent recall creation detected for prisoner $prisonerId, fetching existing recall")
+        recallRepository.findFirstByPrisonerIdAndStatusIdOrderByCreatedAtDesc(prisonerId, EntityStatus.ACTIVE)
+          ?: throw IllegalStateException("Unable to find recall after concurrent creation for prisoner $prisonerId", e)
+      }
+    }
+    
     recallSentenceRepository.save(
       RecallSentenceEntity.from(
         sentence,
@@ -416,6 +440,7 @@ class LegacySentenceService(
   }
 
   companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
     val recallNomisSentenceCalcTypes: Set<String> = setOf(
       "CUR",
       "CUR_ORA",
