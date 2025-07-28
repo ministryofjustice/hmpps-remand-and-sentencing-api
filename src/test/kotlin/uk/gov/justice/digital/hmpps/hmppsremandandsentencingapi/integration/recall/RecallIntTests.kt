@@ -473,14 +473,14 @@ class RecallIntTests : IntegrationTestBase() {
       ),
     )
     val createRecall = createRecall(recall)
-    
+
     // Mark sentence two as deleted
     val sentenceTwoEntity = sentenceRepository.findBySentenceUuid(sentenceTwo.sentenceUuid).first()
     sentenceTwoEntity.statusId = EntityStatus.DELETED
     sentenceRepository.save(sentenceTwoEntity)
-    
+
     val actualRecall = getRecallByUUID(createRecall.recallUuid)
-    
+
     assertThat(actualRecall.sentences).hasSize(1)
     assertThat(actualRecall.sentences).extracting<UUID> { it.sentenceUuid }.containsExactly(sentenceOne.sentenceUuid)
   }
@@ -495,14 +495,14 @@ class RecallIntTests : IntegrationTestBase() {
       ),
     )
     createRecall(recall)
-    
+
     // Mark sentence two as deleted
     val sentenceTwoEntity = sentenceRepository.findBySentenceUuid(sentenceTwo.sentenceUuid).first()
     sentenceTwoEntity.statusId = EntityStatus.DELETED
     sentenceRepository.save(sentenceTwoEntity)
-    
+
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
-    
+
     assertThat(recalls).hasSize(1)
     assertThat(recalls[0].sentences).hasSize(1)
     assertThat(recalls[0].sentences).extracting<UUID> { it.sentenceUuid }.containsExactly(sentenceOne.sentenceUuid)
