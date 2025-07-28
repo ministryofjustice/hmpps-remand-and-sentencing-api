@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceDeletedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
@@ -333,11 +334,11 @@ class LegacySentenceService(
   fun get(sentenceUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(sentenceUuid))
 
   @Transactional
-  fun delete(sentenceUuid: UUID): LegacySentence? = sentenceRepository.findBySentenceUuid(sentenceUuid)
+  fun delete(sentenceUuid: UUID): LegacySentenceDeletedResponse? = sentenceRepository.findBySentenceUuid(sentenceUuid)
     .filter { it.statusId != EntityStatus.DELETED }
     .map { sentence ->
       delete(sentence)
-      LegacySentence.from(sentence)
+      LegacySentenceDeletedResponse.from(sentence)
     }.firstOrNull()
 
   fun delete(sentence: SentenceEntity) {
