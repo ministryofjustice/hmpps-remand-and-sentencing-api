@@ -513,7 +513,7 @@ class CourtAppearanceService(
   fun softDeleteCourtAppearance(courtAppearanceUUID: UUID): RecordResponse<CourtCaseEntity> {
     val courtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearanceUUID)
       ?: throw EntityNotFoundException("No court appearance found at $courtAppearanceUUID")
-    val courtCaseEntity = courtCaseRepository.findByCourtAppearance(courtAppearanceEntity.id, EntityStatus.ACTIVE)
+    val courtCaseEntity = courtCaseRepository.findByCourtAppearanceAndEntityStatus(courtAppearanceEntity.id, EntityStatus.ACTIVE)
       ?: throw EntityNotFoundException("No court case found at $courtAppearanceEntity")
 
     val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()

@@ -144,5 +144,5 @@ where a.id = :courtAppearanceId
   and a.statusId = :entityStatus
 """,
   )
-  fun findByCourtAppearance(@Param("courtAppearanceId") courtAppearanceId: Int, @Param("entityStatus") entityStatus: EntityStatus = EntityStatus.ACTIVE): CourtCaseEntity?
+  fun findByCourtAppearanceAndEntityStatus(@Param("courtAppearanceId") courtAppearanceId: Int, @Param("entityStatus") entityStatus: EntityStatus = EntityStatus.ACTIVE): CourtCaseEntity?
 }
