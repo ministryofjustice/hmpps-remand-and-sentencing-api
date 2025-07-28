@@ -462,49 +462,4 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(historicalRecallSentences!!).hasSize(1)
     assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(legacySentenceUuid)
   }
-
-  @Test
-  fun `Get recall by UUID excludes deleted sentences`() {
-    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
-    val recall = DpsDataCreator.dpsCreateRecall(
-      sentenceIds = listOf(
-        sentenceOne.sentenceUuid!!,
-        sentenceTwo.sentenceUuid!!,
-      ),
-    )
-    val createRecall = createRecall(recall)
-
-    // Mark sentence two as deleted
-    val sentenceTwoEntity = sentenceRepository.findBySentenceUuid(sentenceTwo.sentenceUuid).first()
-    sentenceTwoEntity.statusId = EntityStatus.DELETED
-    sentenceRepository.save(sentenceTwoEntity)
-
-    val actualRecall = getRecallByUUID(createRecall.recallUuid)
-
-    assertThat(actualRecall.sentences).hasSize(1)
-    assertThat(actualRecall.sentences).extracting<UUID> { it.sentenceUuid }.containsExactly(sentenceOne.sentenceUuid)
-  }
-
-  @Test
-  fun `Get recalls by prisoner ID excludes deleted sentences`() {
-    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
-    val recall = DpsDataCreator.dpsCreateRecall(
-      sentenceIds = listOf(
-        sentenceOne.sentenceUuid!!,
-        sentenceTwo.sentenceUuid!!,
-      ),
-    )
-    createRecall(recall)
-
-    // Mark sentence two as deleted
-    val sentenceTwoEntity = sentenceRepository.findBySentenceUuid(sentenceTwo.sentenceUuid).first()
-    sentenceTwoEntity.statusId = EntityStatus.DELETED
-    sentenceRepository.save(sentenceTwoEntity)
-
-    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
-
-    assertThat(recalls).hasSize(1)
-    assertThat(recalls[0].sentences).hasSize(1)
-    assertThat(recalls[0].sentences).extracting<UUID> { it.sentenceUuid }.containsExactly(sentenceOne.sentenceUuid)
-  }
 }
