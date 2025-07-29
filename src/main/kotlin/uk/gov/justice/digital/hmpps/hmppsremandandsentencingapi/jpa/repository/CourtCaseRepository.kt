@@ -134,15 +134,4 @@ interface CourtCaseRepository :
     @Param("courtCaseUuid") courtCaseUuid: String,
     @Param("status") status: EntityStatus = EntityStatus.DELETED,
   ): List<SentenceEntity>
-
-  @Query(
-    """
-select cc from CourtCaseEntity cc
-join cc.appearances a
-where a.id = :courtAppearanceId
-  and cc.statusId = :entityStatus
-  and a.statusId = :entityStatus
-""",
-  )
-  fun findByCourtAppearanceAndEntityStatus(@Param("courtAppearanceId") courtAppearanceId: Int, @Param("entityStatus") entityStatus: EntityStatus = EntityStatus.ACTIVE): CourtCaseEntity?
 }

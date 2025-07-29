@@ -66,9 +66,7 @@ class UploadedDocumentService(
 
   private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>) {
     uploadedDocuments.forEach { document ->
-      document.appearance = null
-      document.updatedBy = serviceUserService.getUsername()
-      document.updatedAt = ZonedDateTime.now()
+      document.unlink(serviceUserService.getUsername())
       uploadedDocumentRepository.save(document)
     }
   }

@@ -19,7 +19,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     // When the court appearance is deleted
     webTestClient.delete()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}?courtCaseUuid=${courtCase.first}")
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -48,7 +48,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     // When the court appearance is deleted
     webTestClient.delete()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}?courtCaseUuid=${courtCase.first}")
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON

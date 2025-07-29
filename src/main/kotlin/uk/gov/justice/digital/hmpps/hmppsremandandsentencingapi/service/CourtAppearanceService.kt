@@ -523,8 +523,8 @@ class CourtAppearanceService(
       )
     }
 
-    if (courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance != null) {
-      courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.statusId = EntityStatus.DELETED
+    courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.let { futureAppearance ->
+      eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
     }
 
     if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {

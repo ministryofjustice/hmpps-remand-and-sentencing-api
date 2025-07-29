@@ -23,9 +23,4 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
     @Param("appearanceUUID") appearanceUUID: UUID,
     @Param("documentUUIDs") documentUUIDs: List<UUID>,
   ): List<UploadedDocumentEntity>
-
-  @Query(
-    "SELECT u FROM UploadedDocumentEntity u WHERE u.appearance.id = :appearanceId",
-  )
-  fun findAllByAppearanceId(@Param("appearanceId") appearanceId: Int): List<UploadedDocumentEntity>
 }
