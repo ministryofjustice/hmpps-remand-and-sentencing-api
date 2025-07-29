@@ -90,10 +90,9 @@ class CourtAppearanceService(
   fun createCourtAppearance(
     courtAppearance: CreateCourtAppearance,
     courtCaseEntity: CourtCaseEntity,
-  ): RecordResponse<CourtAppearanceEntity> =
-    courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
-      updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
-    } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
+  ): RecordResponse<CourtAppearanceEntity> = courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
+    updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
+  } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
 
   private fun createCourtAppearanceEntity(
     courtAppearance: CreateCourtAppearance,
@@ -505,11 +504,10 @@ class CourtAppearanceService(
   }
 
   @Transactional(readOnly = true)
-  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? =
-    courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
-      val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
-      RecordResponse(CourtAppearance.from(it), eventsToEmit)
-    }
+  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
+    RecordResponse(CourtAppearance.from(it), eventsToEmit)
+  }
 
   @Transactional
   fun delete(courtAppearanceUUID: UUID): RecordResponse<CourtAppearanceEntity> {
@@ -524,9 +522,9 @@ class CourtAppearanceService(
       )
     }
 
-    if (courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance != null)
+    if (courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance != null) {
       courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.statusId = EntityStatus.DELETED
-
+    }
 
     if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
       courtCaseEntity.latestCourtAppearance = null
