@@ -29,6 +29,12 @@ class UploadedDocumentEntity(
   var updatedBy: String? = null,
   var fileName: String,
 ) {
+ fun unlink(username: String) {
+    appearance = null
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+  }
+
   companion object {
     fun from(
       document: UploadedDocument,

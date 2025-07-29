@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -19,9 +20,9 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     // When the court appearance is deleted
     webTestClient.delete()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}?courtCaseUuid=${courtCase.first}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -48,9 +49,9 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     // When the court appearance is deleted
     webTestClient.delete()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}?courtCaseUuid=${courtCase.first}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
@@ -97,7 +98,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @DeleteMapping("/court-appearance/{appearanceUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Delete Court appearance",
     description = "This endpoint will delete a court appearance in a given court case",
@@ -111,8 +112,13 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     ],
   )
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID) {
-    courtAppearanceService.softDeleteCourtAppearance(appearanceUuid).let { (_, eventsToEmit) ->
+  fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID, @RequestParam courtCaseUuid: String) {
+    courtAppearanceService.delete(appearanceUuid).let { (_, eventsToEmit) ->
+      courtCaseReferenceService.updateCourtCaseReferences(courtCaseUuid)?.takeIf { it.hasUpdated }?.let {
+        eventsToEmit.add(
+          EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
+        )
+      }
       dpsDomainEventService.emitEvents(eventsToEmit)
     }
   }

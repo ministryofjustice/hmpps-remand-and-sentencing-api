@@ -90,9 +90,10 @@ class CourtAppearanceService(
   fun createCourtAppearance(
     courtAppearance: CreateCourtAppearance,
     courtCaseEntity: CourtCaseEntity,
-  ): RecordResponse<CourtAppearanceEntity> = courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
-    updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
-  } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
+  ): RecordResponse<CourtAppearanceEntity> =
+    courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
+      updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
+    } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
 
   private fun createCourtAppearanceEntity(
     courtAppearance: CreateCourtAppearance,
@@ -504,26 +505,34 @@ class CourtAppearanceService(
   }
 
   @Transactional(readOnly = true)
-  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
-    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
-    RecordResponse(CourtAppearance.from(it), eventsToEmit)
-  }
+  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? =
+    courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
+      val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
+      RecordResponse(CourtAppearance.from(it), eventsToEmit)
+    }
 
   @Transactional
-  fun softDeleteCourtAppearance(courtAppearanceUUID: UUID): RecordResponse<CourtCaseEntity> {
+  fun delete(courtAppearanceUUID: UUID): RecordResponse<CourtAppearanceEntity> {
     val courtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearanceUUID)
       ?: throw EntityNotFoundException("No court appearance found at $courtAppearanceUUID")
-    val courtCaseEntity = courtCaseRepository.findByCourtAppearanceAndEntityStatus(courtAppearanceEntity.id, EntityStatus.ACTIVE)
-      ?: throw EntityNotFoundException("No court case found at $courtAppearanceEntity")
+    val courtCaseEntity = courtAppearanceEntity.courtCase
 
     val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()
-    documentService.unlinkDocumentsFromCourtAppearance(appearanceId = courtAppearanceEntity.id)
+    courtAppearanceEntity.documents.forEach { document ->
+      document.unlink(
+        username = serviceUserService.getUsername(),
+      )
+    }
 
-    if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE }) {
+    if (courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance != null)
+      courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.statusId = EntityStatus.DELETED
+
+
+    if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())
       return RecordResponse(
-        courtCaseEntity,
+        courtAppearanceEntity,
         (
           eventsToEmit + mutableSetOf(
             EventMetadataCreator.courtCaseEventMetadata(
@@ -539,7 +548,7 @@ class CourtAppearanceService(
       CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances - courtAppearanceEntity)
 
     return RecordResponse(
-      courtCaseEntity,
+      courtAppearanceEntity,
       (
         eventsToEmit + mutableSetOf(
           EventMetadataCreator.courtCaseEventMetadata(
