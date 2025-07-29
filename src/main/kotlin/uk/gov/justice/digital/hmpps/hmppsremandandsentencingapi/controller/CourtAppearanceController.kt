@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
@@ -112,14 +111,14 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
     ],
   )
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID, @RequestParam courtCaseUuid: String) {
-    courtAppearanceService.delete(appearanceUuid).let { (_, eventsToEmit) ->
+  fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID) {
+    courtAppearanceService.delete(appearanceUuid).let { (records, courtCaseUuid) ->
       courtCaseReferenceService.updateCourtCaseReferences(courtCaseUuid)?.takeIf { it.hasUpdated }?.let {
-        eventsToEmit.add(
+        records.eventsToEmit.add(
           EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
         )
       }
-      dpsDomainEventService.emitEvents(eventsToEmit)
+      dpsDomainEventService.emitEvents(records.eventsToEmit)
     }
   }
 }

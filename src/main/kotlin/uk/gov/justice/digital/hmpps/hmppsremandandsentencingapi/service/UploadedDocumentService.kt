@@ -64,12 +64,6 @@ class UploadedDocumentService(
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
-  @Transactional
-  fun unlinkDocumentsFromCourtAppearance(appearanceId: Int) {
-    val documents = uploadedDocumentRepository.findAllByAppearanceId(appearanceId)
-    unlinkDocuments(documents)
-  }
-
   private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>) {
     uploadedDocuments.forEach { document ->
       document.appearance = null

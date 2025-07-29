@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -510,7 +511,7 @@ class CourtAppearanceService(
   }
 
   @Transactional
-  fun delete(courtAppearanceUUID: UUID): RecordResponse<CourtAppearanceEntity> {
+  fun delete(courtAppearanceUUID: UUID): DeleteCourtAppearanceResponse {
     val courtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearanceUUID)
       ?: throw EntityNotFoundException("No court appearance found at $courtAppearanceUUID")
     val courtCaseEntity = courtAppearanceEntity.courtCase
@@ -529,33 +530,39 @@ class CourtAppearanceService(
     if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())
-      return RecordResponse(
+      return DeleteCourtAppearanceResponse(
+        records = RecordResponse(
+          courtAppearanceEntity,
+          (
+            eventsToEmit + mutableSetOf(
+              EventMetadataCreator.courtCaseEventMetadata(
+                courtCaseEntity.prisonerId,
+                courtCaseEntity.caseUniqueIdentifier,
+                EventType.COURT_CASE_DELETED,
+              ),
+            )
+            ) as MutableSet<EventMetadata>,
+        ),
+        courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
+      )
+    }
+    courtCaseEntity.latestCourtAppearance =
+      CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances - courtAppearanceEntity)
+
+    return DeleteCourtAppearanceResponse(
+      records = RecordResponse(
         courtAppearanceEntity,
         (
           eventsToEmit + mutableSetOf(
             EventMetadataCreator.courtCaseEventMetadata(
               courtCaseEntity.prisonerId,
               courtCaseEntity.caseUniqueIdentifier,
-              EventType.COURT_CASE_DELETED,
+              EventType.COURT_CASE_UPDATED,
             ),
           )
           ) as MutableSet<EventMetadata>,
-      )
-    }
-    courtCaseEntity.latestCourtAppearance =
-      CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances - courtAppearanceEntity)
-
-    return RecordResponse(
-      courtAppearanceEntity,
-      (
-        eventsToEmit + mutableSetOf(
-          EventMetadataCreator.courtCaseEventMetadata(
-            courtCaseEntity.prisonerId,
-            courtCaseEntity.caseUniqueIdentifier,
-            EventType.COURT_CASE_UPDATED,
-          ),
-        )
-        ) as MutableSet<EventMetadata>,
+      ),
+      courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
     )
   }
 }
