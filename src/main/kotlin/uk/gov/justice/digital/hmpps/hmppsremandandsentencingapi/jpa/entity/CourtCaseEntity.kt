@@ -211,6 +211,13 @@ class CourtCaseEntity(
   var mergedToCase: CourtCaseEntity? = null
 
   var mergedToDate: LocalDate? = null
+
+  fun delete(username: String) {
+    statusId = EntityStatus.DELETED
+    // ToDo: uncomment when RASS-1258 is implemented
+//    updatedAt = ZonedDateTime.now()
+//    updatedBy = username
+  }
   companion object {
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
