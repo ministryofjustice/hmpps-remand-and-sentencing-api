@@ -188,8 +188,8 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               offenceStartDate = sentence.charge.offenceStartDate,
               offenceEndDate = sentence.charge.offenceEndDate,
               outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
-              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               sentenceType = sentence.sentenceType?.description,
+              sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
               classification = sentence.sentenceType?.classification,
               systemOfRecord = "RAS",
               periodLengths = sentence.periodLengths.map { periodLength ->
@@ -210,6 +210,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
               lineNumber = sentence.legacyData?.nomisLineReference,
               sentenceServeType = sentence.sentenceServeType,
               sentenceLegacyData = sentence.legacyData,
+              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               isRecallable = sentence.sentenceType?.isRecallable ?: true,
             )
           },
