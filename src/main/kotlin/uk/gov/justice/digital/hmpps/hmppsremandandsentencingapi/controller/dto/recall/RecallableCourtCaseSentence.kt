@@ -25,4 +25,5 @@ data class RecallableCourtCaseSentence(
   val sentenceLegacyData: SentenceLegacyData?,
   val outcomeDescription: String?,
   val isRecallable: Boolean,
+  val sentenceTypeUuid: String,
 )
