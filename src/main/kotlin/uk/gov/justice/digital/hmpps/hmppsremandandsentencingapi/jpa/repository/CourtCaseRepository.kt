@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
@@ -18,7 +19,11 @@ interface CourtCaseRepository :
   PagingAndSortingRepository<CourtCaseEntity, Int>,
   CourtCaseSearchRepository {
   @EntityGraph(value = "CourtCaseEntity.withAppearancesAndOutcomes", type = EntityGraph.EntityGraphType.FETCH)
-  fun findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(prisonerId: String, statusId: EntityStatus = EntityStatus.DELETED, pageable: Pageable): Page<CourtCaseEntity>
+  fun findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(
+    prisonerId: String,
+    statusId: EntityStatus = EntityStatus.DELETED,
+    pageable: Pageable,
+  ): Page<CourtCaseEntity>
 
   @Query(
     """select count(cc)
@@ -48,7 +53,11 @@ interface CourtCaseRepository :
     cc.prisonerId = :prisonerId
   """,
   )
-  fun findSentencedCourtCasesByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("status") statuses: List<EntityStatus> = listOf(EntityStatus.ACTIVE), sentenceStatuses: List<EntityStatus> = statuses): List<CourtCaseEntity>
+  fun findSentencedCourtCasesByPrisonerId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("status") statuses: List<EntityStatus> = listOf(EntityStatus.ACTIVE),
+    sentenceStatuses: List<EntityStatus> = statuses,
+  ): List<CourtCaseEntity>
 
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
 
@@ -66,7 +75,10 @@ interface CourtCaseRepository :
     and cc.statusId != :#{#status}
   """,
   )
-  fun findSentenceCountNumbers(@Param("courtCaseUuid") courtCaseUuid: String, @Param("status") status: EntityStatus = EntityStatus.DELETED): List<String?>
+  fun findSentenceCountNumbers(
+    @Param("courtCaseUuid") courtCaseUuid: String,
+    @Param("status") status: EntityStatus = EntityStatus.DELETED,
+  ): List<String?>
 
   @Query(
     """
@@ -103,4 +115,23 @@ interface CourtCaseRepository :
     @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
     @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
   ): LocalDate?
+
+  @Query(
+    """
+    select s from CourtCaseEntity cc
+    join cc.appearances ca
+    join ca.appearanceCharges ac
+    join ac.charge c
+    join c.sentences s
+    where cc.caseUniqueIdentifier = :courtCaseUuid
+    and cc.statusId != :status
+    and ca.statusId != :status
+    and c.statusId != :status
+    and s.statusId != :status
+  """,
+  )
+  fun findSentencesByCourtCaseUuid(
+    @Param("courtCaseUuid") courtCaseUuid: String,
+    @Param("status") status: EntityStatus = EntityStatus.DELETED,
+  ): List<SentenceEntity>
 }

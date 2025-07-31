@@ -60,6 +60,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
       .jsonPath("$.cases[0].sentences[0].sentenceType").exists()
+      .jsonPath("$.cases[0].sentences[0].sentenceTypeUuid").exists()
       .jsonPath("$.cases[0].sentences[0].isRecallable").isEqualTo(true)
       .jsonPath("$.cases[0].sentences[0].chargeLegacyData").exists()
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")

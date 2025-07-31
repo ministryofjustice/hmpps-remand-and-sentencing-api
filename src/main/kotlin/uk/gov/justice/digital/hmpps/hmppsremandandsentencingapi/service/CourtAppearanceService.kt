@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -23,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -506,5 +508,61 @@ class CourtAppearanceService(
   fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
     RecordResponse(CourtAppearance.from(it), eventsToEmit)
+  }
+
+  @Transactional
+  fun delete(courtAppearanceUUID: UUID): DeleteCourtAppearanceResponse {
+    val courtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearanceUUID)
+      ?: throw EntityNotFoundException("No court appearance found at $courtAppearanceUUID")
+    val courtCaseEntity = courtAppearanceEntity.courtCase
+
+    val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()
+    courtAppearanceEntity.documents.forEach { document ->
+      document.unlink(
+        username = serviceUserService.getUsername(),
+      )
+    }
+
+    courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.let { futureAppearance ->
+      eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
+    }
+
+    if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
+      courtCaseEntity.latestCourtAppearance = null
+      courtCaseEntity.delete(serviceUserService.getUsername())
+      return DeleteCourtAppearanceResponse(
+        records = RecordResponse(
+          courtAppearanceEntity,
+          (
+            eventsToEmit + mutableSetOf(
+              EventMetadataCreator.courtCaseEventMetadata(
+                courtCaseEntity.prisonerId,
+                courtCaseEntity.caseUniqueIdentifier,
+                EventType.COURT_CASE_DELETED,
+              ),
+            )
+            ) as MutableSet<EventMetadata>,
+        ),
+        courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
+      )
+    }
+    courtCaseEntity.latestCourtAppearance =
+      CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances - courtAppearanceEntity)
+
+    return DeleteCourtAppearanceResponse(
+      records = RecordResponse(
+        courtAppearanceEntity,
+        (
+          eventsToEmit + mutableSetOf(
+            EventMetadataCreator.courtCaseEventMetadata(
+              courtCaseEntity.prisonerId,
+              courtCaseEntity.caseUniqueIdentifier,
+              EventType.COURT_CASE_UPDATED,
+            ),
+          )
+          ) as MutableSet<EventMetadata>,
+      ),
+      courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
+    )
   }
 }

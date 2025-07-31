@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -30,6 +31,53 @@ class HmppsRemandAndSentencingApiExceptionHandler {
         ErrorResponse(
           status = BAD_REQUEST,
           userMessage = "Validation failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException::class)
+  fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+    val errors = e.bindingResult.fieldErrors.joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
+    log.info("Method argument not valid: {}", errors)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Validation failure: $errors",
+          developerMessage = errors,
+        ),
+      )
+  }
+
+  @ExceptionHandler(IllegalArgumentException::class)
+  fun handleIllegalArgumentException(e: IllegalArgumentException): ResponseEntity<ErrorResponse> {
+    log.info("Illegal argument exception: {}", e.message)
+    return ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = e.message,
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(IllegalStateException::class)
+  fun handleIllegalStateException(e: IllegalStateException): ResponseEntity<ErrorResponse> {
+    log.info("Illegal state exception: {}", e.message)
+    val userMessage = when {
+      e.message?.contains("does not have type 'unknown pre-recall sentence'") == true -> "Cannot update sentence type"
+      else -> e.message ?: "Invalid state"
+    }
+    return ResponseEntity
+      .status(UNPROCESSABLE_ENTITY)
+      .body(
+        ErrorResponse(
+          status = UNPROCESSABLE_ENTITY,
+          userMessage = userMessage,
           developerMessage = e.message,
         ),
       )
