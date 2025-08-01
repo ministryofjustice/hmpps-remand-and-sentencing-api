@@ -31,7 +31,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance")
       .bodyValue(createCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -67,7 +67,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance")
       .bodyValue(appearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -92,7 +92,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance")
       .bodyValue(newAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -105,7 +105,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -119,7 +119,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${newAppearanceResponse.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -145,7 +145,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance")
       .bodyValue(newAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -162,7 +162,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -176,7 +176,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${newAppearanceResponse.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -204,7 +204,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance")
       .bodyValue(newAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -226,7 +226,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance")
       .bodyValue(createCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()

@@ -30,7 +30,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .uri("/court-case/${courtCase.first}")
       .bodyValue(editedCourtCase)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -52,7 +52,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid")
       .bodyValue(courtCase)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -65,7 +65,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid")
       .bodyValue(courtCaseWithoutSecondAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -76,7 +76,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/$courtCaseUuid")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -100,7 +100,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .uri("/court-case/${courtCase.first}")
       .bodyValue(editedCourtCase)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -185,7 +185,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .uri("/court-case/$courtCaseUuid")
       .bodyValue(editedCourtCase)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -205,7 +205,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
         .build()
     }
     .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
     }
     .exchange()
     .expectStatus()

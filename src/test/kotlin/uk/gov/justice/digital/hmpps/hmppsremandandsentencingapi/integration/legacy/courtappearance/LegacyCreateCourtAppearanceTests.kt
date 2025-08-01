@@ -88,7 +88,7 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${legacyCourtAppearance.courtCaseUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -148,7 +148,7 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${response.lifetimeUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()

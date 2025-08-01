@@ -34,7 +34,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -67,7 +67,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${firstAppearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -82,7 +82,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${secondAppearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
