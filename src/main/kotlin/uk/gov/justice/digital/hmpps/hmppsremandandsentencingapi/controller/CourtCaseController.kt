@@ -72,7 +72,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   }
 
   @PutMapping("/court-case/{courtCaseUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Create Court case",
     description = "This endpoint will create a court case",
