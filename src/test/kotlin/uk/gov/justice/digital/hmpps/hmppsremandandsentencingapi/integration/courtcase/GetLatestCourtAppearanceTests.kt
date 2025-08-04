@@ -14,7 +14,7 @@ class GetLatestCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${createdCase.first}/latest-appearance")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -32,7 +32,7 @@ class GetLatestCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${UUID.randomUUID()}/latest-appearance")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
