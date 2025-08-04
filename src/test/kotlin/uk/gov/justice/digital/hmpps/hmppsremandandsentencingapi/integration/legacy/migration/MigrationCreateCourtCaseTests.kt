@@ -112,7 +112,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/$courtCaseUuid")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -150,7 +150,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -186,7 +186,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
