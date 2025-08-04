@@ -30,7 +30,7 @@ import java.util.UUID
 class CourtAppearanceController(private val courtAppearanceService: CourtAppearanceService, private val courtCaseReferenceService: CourtCaseReferenceService, private val dpsDomainEventService: DpsDomainEventService) {
 
   @PostMapping("/court-appearance")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Create Court appearance",
     description = "This endpoint will create a court appearance in a given court case",
@@ -54,7 +54,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @GetMapping("\${court.appearance.getByIdPath}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Retrieve court appearance details",
     description = "This endpoint will retrieve court appearance details",
@@ -73,7 +73,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
 
   @PutMapping("/court-appearance/{appearanceUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Create Court appearance",
     description = "This endpoint will create a court appearance in a given court case",
