@@ -14,7 +14,7 @@ data class Charge(
   val terrorRelated: Boolean?,
   val sentence: Sentence?,
   val legacyData: ChargeLegacyData?,
-  val mergedFromCase: MergedFromCase,
+  val mergedFromCase: MergedFromCase?,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): Charge = Charge(
@@ -26,7 +26,12 @@ data class Charge(
       chargeEntity.terrorRelated,
       chargeEntity.getActiveOrInactiveSentence()?.let { Sentence.from(it) },
       chargeEntity.legacyData,
-      MergedFromCase.from(chargeEntity.mergedFromCourtCase?.latestCourtAppearance, chargeEntity.mergedFromDate),
+      chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.let {
+        MergedFromCase.from(
+          it,
+          chargeEntity.mergedFromDate,
+        )
+      },
     )
   }
 }
