@@ -5,8 +5,8 @@ import java.time.LocalDate
 
 data class MergedFromCase(
   val caseReference: String?,
-  val courtCode: String?,
-  val warrantDate: LocalDate?,
+  val courtCode: String,
+  val warrantDate: LocalDate,
   val mergedFromDate: LocalDate?,
 ) {
   companion object {
