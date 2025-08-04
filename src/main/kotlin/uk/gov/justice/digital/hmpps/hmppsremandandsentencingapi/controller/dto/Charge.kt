@@ -14,7 +14,9 @@ data class Charge(
   val terrorRelated: Boolean?,
   val sentence: Sentence?,
   val legacyData: ChargeLegacyData?,
-  val mergedFromCourtCase: CourtCase?,
+  val mergedFromCourtCaseReference: String?,
+  val mergedFromCourtCode: String?,
+  val mergedFromWarrantDate: LocalDate?,
   val mergedFromDate: LocalDate?,
 ) {
   companion object {
@@ -27,7 +29,9 @@ data class Charge(
       chargeEntity.terrorRelated,
       chargeEntity.getActiveOrInactiveSentence()?.let { Sentence.from(it) },
       chargeEntity.legacyData,
-      chargeEntity.mergedFromCourtCase?.let { CourtCase.from(it) },
+      chargeEntity.mergedFromCourtCase?.caseUniqueIdentifier,
+      chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.courtCode,
+      chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.appearanceDate,
       chargeEntity.mergedFromDate,
     )
   }
