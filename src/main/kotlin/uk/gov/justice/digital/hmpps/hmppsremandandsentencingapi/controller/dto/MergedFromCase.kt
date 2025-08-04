@@ -10,12 +10,11 @@ data class MergedFromCase(
   val mergedFromDate: LocalDate?,
 ) {
   companion object {
-    fun from(courtAppearanceEntity: CourtAppearanceEntity?, mergedFromDate: LocalDate?): MergedFromCase =
-      MergedFromCase(
-        courtAppearanceEntity?.courtCaseReference,
-        courtAppearanceEntity?.courtCode,
-        courtAppearanceEntity?.appearanceDate,
-        mergedFromDate,
-      )
+    fun from(courtAppearanceEntity: CourtAppearanceEntity?, mergedFromDate: LocalDate?): MergedFromCase = MergedFromCase(
+      courtAppearanceEntity?.courtCaseReference,
+      courtAppearanceEntity?.courtCode,
+      courtAppearanceEntity?.appearanceDate,
+      mergedFromDate,
+    )
   }
 }

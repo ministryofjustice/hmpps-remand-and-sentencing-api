@@ -26,7 +26,7 @@ data class Charge(
       chargeEntity.terrorRelated,
       chargeEntity.getActiveOrInactiveSentence()?.let { Sentence.from(it) },
       chargeEntity.legacyData,
-      MergedFromCase.from(chargeEntity.mergedFromCourtCase?.latestCourtAppearance, chargeEntity.mergedFromDate ),
+      MergedFromCase.from(chargeEntity.mergedFromCourtCase?.latestCourtAppearance, chargeEntity.mergedFromDate),
     )
   }
 }
