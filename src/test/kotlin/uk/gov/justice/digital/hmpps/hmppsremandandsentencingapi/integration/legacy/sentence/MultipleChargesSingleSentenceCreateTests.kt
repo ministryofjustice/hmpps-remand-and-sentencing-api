@@ -38,7 +38,7 @@ class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/$courtCaseUuid")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"), user = "SOME_OTHER_USER")
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"), user = "SOME_OTHER_USER")
       }
       .exchange()
       .expectStatus()

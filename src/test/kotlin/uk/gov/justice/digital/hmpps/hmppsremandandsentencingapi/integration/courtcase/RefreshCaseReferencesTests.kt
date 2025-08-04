@@ -59,7 +59,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/${courtCase.first}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -78,7 +78,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
       .uri("/court-appearance/${toUpdateAppearance.appearanceUuid}")
       .bodyValue(toUpdateAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -101,7 +101,7 @@ class RefreshCaseReferencesTests : IntegrationTestBase() {
       .get()
       .uri("/court-case/$courtCaseUuid")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()

@@ -55,7 +55,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .bodyValue(updateCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -108,7 +108,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .bodyValue(updateCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -120,7 +120,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${response.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -153,7 +153,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .bodyValue(createdAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -182,7 +182,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .bodyValue(updateCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -195,7 +195,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${response.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -217,7 +217,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .bodyValue(appearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -228,7 +228,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -256,7 +256,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .bodyValue(appearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -269,7 +269,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .bodyValue(appearanceWithoutSecondCharge)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -283,7 +283,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -324,7 +324,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .bodyValue(updateAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
@@ -335,7 +335,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .get()
       .uri("/court-appearance/${appearance.appearanceUuid}")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
@@ -353,7 +353,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .uri("/court-appearance/${updateCourtAppearance.appearanceUuid}")
       .bodyValue(updateCourtAppearance)
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
