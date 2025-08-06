@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.AuthAwareAuthenticationToken
+import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
 
 @Service
 class ServiceUserService {
