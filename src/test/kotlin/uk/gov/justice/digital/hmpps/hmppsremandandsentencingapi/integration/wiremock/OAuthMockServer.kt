@@ -64,7 +64,7 @@ class OAuthMockServer : WireMockServer(WIREMOCK_PORT) {
       get("/auth/health/ping").willReturn(
         aResponse()
           .withHeader("Content-Type", "application/json")
-          .withBody(if (status == 200) "pong" else "some error")
+          .withBody(if (status == 200) """{"status":"UP"}""" else """{"status":"DOWN"}""")
           .withStatus(status),
       ),
     )

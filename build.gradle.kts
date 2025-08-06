@@ -9,7 +9,7 @@ configurations {
 }
 
 dependencies {
-  // Spring boot dependencies
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.4.11")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
@@ -30,6 +30,7 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.postgresql:postgresql:42.7.7")
 
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.4.11")
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.6")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
@@ -37,8 +38,8 @@ dependencies {
   testImplementation("io.mockk:mockk:1.14.5")
 }
 
-java {
-  toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+kotlin {
+  jvmToolchain(21)
 }
 
 tasks {
