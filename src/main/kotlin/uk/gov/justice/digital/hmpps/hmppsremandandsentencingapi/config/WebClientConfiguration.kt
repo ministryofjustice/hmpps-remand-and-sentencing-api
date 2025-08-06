@@ -6,26 +6,23 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
-import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient
-import org.springframework.security.oauth2.client.endpoint.OAuth2ClientCredentialsGrantRequest
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.web.context.annotation.RequestScope
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.ExchangeFunction
 import org.springframework.web.reactive.function.client.WebClient
+import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
+import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
+import java.time.Duration
 
 @Configuration
 class WebClientConfiguration(
-  @Value("\${prison.api.url}") private val prisonApiUri: String,
-  @Value("\${document.management.api.url}") private val documentManagementApiUri: String,
+  @param:Value("\${prison.api.url}") private val prisonApiUri: String,
+  @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
+  @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
+  @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
+  @param:Value("\${api.timeout:20s}") val timeout: Duration,
 ) {
 
   @Bean
@@ -46,12 +43,14 @@ class WebClientConfiguration(
   }
 
   @Bean
-  @RequestScope
   fun documentManagementApiWebClient(
-    clientRegistrationRepository: ClientRegistrationRepository,
+    authorizedClientManager: OAuth2AuthorizedClientManager,
     builder: WebClient.Builder,
-  ): WebClient = getOAuthWebClient(authorizedClientManagerUserEnhanced(clientRegistrationRepository), builder.filter(addDocumentManagementHeadersFilterFunction()), documentManagementApiUri, "document-management-api")
-
+  ): WebClient = builder.filter(addDocumentManagementHeadersFilterFunction()).authorisedWebClient(
+    authorizedClientManager,
+    "document-management-api",
+    documentManagementApiUri,
+  )
   private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authentication: Authentication = SecurityContextHolder.getContext()
       .authentication
@@ -62,40 +61,7 @@ class WebClientConfiguration(
     next.exchange(filtered)
   }
 
-  private fun authorizedClientManagerUserEnhanced(clients: ClientRegistrationRepository?): OAuth2AuthorizedClientManager {
-    val service: OAuth2AuthorizedClientService = InMemoryOAuth2AuthorizedClientService(clients)
-    val manager = AuthorizedClientServiceOAuth2AuthorizedClientManager(clients, service)
-
-    val defaultClientCredentialsTokenResponseClient = DefaultClientCredentialsTokenResponseClient()
-
-    val authentication = SecurityContextHolder.getContext().authentication
-
-    defaultClientCredentialsTokenResponseClient.setRequestEntityConverter { grantRequest: OAuth2ClientCredentialsGrantRequest ->
-      val converter = CustomOAuth2ClientCredentialsGrantRequestEntityConverter()
-      val username = authentication.name
-      converter.enhanceWithUsername(grantRequest, username)
-    }
-
-    val authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder.builder()
-      .clientCredentials { clientCredentialsGrantBuilder: OAuth2AuthorizedClientProviderBuilder.ClientCredentialsGrantBuilder ->
-        clientCredentialsGrantBuilder.accessTokenResponseClient(defaultClientCredentialsTokenResponseClient)
-      }
-      .build()
-
-    manager.setAuthorizedClientProvider(authorizedClientProvider)
-    return manager
-  }
-
-  private fun getOAuthWebClient(
-    authorizedClientManager: OAuth2AuthorizedClientManager,
-    builder: WebClient.Builder,
-    rootUri: String,
-    registrationId: String,
-  ): WebClient {
-    val oauth2Client = ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
-    oauth2Client.setDefaultClientRegistrationId(registrationId)
-    return builder.baseUrl(rootUri)
-      .apply(oauth2Client.oauth2Configuration())
-      .build()
-  }
+  // HMPPS Auth health ping is required if your service calls HMPPS Auth to get a token to call other services
+  @Bean
+  fun hmppsAuthHealthWebClient(builder: WebClient.Builder): WebClient = builder.healthWebClient(hmppsAuthBaseUri, healthTimeout)
 }

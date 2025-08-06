@@ -5,6 +5,7 @@
 
 .idea/
 .gradle/
+.kotlin/
 build/
 
 # CMake
@@ -71,3 +72,6 @@ sonar-project.properties
 #Helm
 **/Chart.lock
 /volume/
+
+#Everything else:
+.DS_Store

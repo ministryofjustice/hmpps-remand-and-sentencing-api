@@ -60,6 +60,7 @@ import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.PurgeQueueRequest
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
+import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
 import java.util.*
 
 @Sql("classpath:test_data/reset-database.sql")
@@ -73,7 +74,7 @@ abstract class IntegrationTestBase {
   lateinit var webTestClient: WebTestClient
 
   @Autowired
-  protected lateinit var jwtAuthHelper: JwtAuthHelper
+  protected lateinit var jwtAuthHelper: JwtAuthorisationHelper
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
@@ -114,11 +115,10 @@ abstract class IntegrationTestBase {
 
   internal fun HttpHeaders.authToken(roles: List<String> = emptyList(), user: String = "SOME_USER") {
     this.setBearerAuth(
-      jwtAuthHelper.createJwt(
-        subject = "SOME_USER",
+      jwtAuthHelper.createJwtAccessToken(
         roles = roles,
-        client = "some-client",
-        user = user,
+        clientId = "some-client",
+        username = user,
       ),
     )
   }

@@ -1,16 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.health
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.function.Consumer
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension.Companion.oAuthApi
 
 class HealthCheckTest : IntegrationTestBase() {
 
   @Test
   fun `Health page reports ok`() {
+    oAuthApi.stubHealthPing(200)
     webTestClient.get()
       .uri("/health")
       .exchange()
@@ -21,15 +19,16 @@ class HealthCheckTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Health info reports version`() {
-    webTestClient.get().uri("/health")
+  fun `Health page reports down`() {
+    oAuthApi.stubHealthPing(503)
+    webTestClient.get()
+      .uri("/health")
       .exchange()
-      .expectStatus().isOk
-      .expectBody().jsonPath("components.healthInfo.details.version").value(
-        Consumer<String> {
-          assertThat(it).startsWith(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE))
-        },
-      )
+      .expectStatus()
+      .is5xxServerError
+      .expectBody()
+      .jsonPath("status").isEqualTo("DOWN")
+      .jsonPath("components.hmppsAuth.status").isEqualTo("DOWN")
   }
 
   @Test
