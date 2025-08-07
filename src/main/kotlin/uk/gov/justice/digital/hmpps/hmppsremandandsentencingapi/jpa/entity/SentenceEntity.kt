@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
 import jakarta.persistence.Column
+import jakarta.persistence.ColumnResult
+import jakarta.persistence.ConstructorResult
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -12,12 +14,14 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
+import jakarta.persistence.SqlResultSetMapping
 import jakarta.persistence.Table
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
@@ -26,7 +30,28 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
-
+@SqlResultSetMapping(
+  name = "consecutiveToSentenceRowMapping",
+  classes = [
+    ConstructorResult(
+      targetClass = ConsecutiveToSentenceRow::class,
+      columns = arrayOf(
+        ColumnResult(name = "prisonerId"),
+        ColumnResult(name = "caseUniqueIdentifier"),
+        ColumnResult(name = "appearanceUuid"),
+        ColumnResult(name = "courtCode"),
+        ColumnResult(name = "courtCaseReference"),
+        ColumnResult(name = "appearanceDate", type = LocalDate::class),
+        ColumnResult(name = "chargeUuid"),
+        ColumnResult(name = "offenceCode"),
+        ColumnResult(name = "offenceStartDate", type = LocalDate::class),
+        ColumnResult(name = "offenceEndDate", type = LocalDate::class),
+        ColumnResult(name = "sentenceUuid"),
+        ColumnResult(name = "countNumber"),
+      ),
+    ),
+  ],
+)
 @Entity
 @Table(name = "sentence")
 class SentenceEntity(
