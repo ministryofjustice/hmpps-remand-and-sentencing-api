@@ -11,15 +11,19 @@ import java.time.LocalDate
 @Service
 class ConsecutiveToSentenceService(private val sentenceRepository: SentenceRepository, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService) {
 
-  fun hasSentenceToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate): HasSentenceToChainToResponse {
-    val countSentences = sentenceRepository.countConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate)
-    return HasSentenceToChainToResponse(countSentences > 0)
+  fun hasSentenceToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate, bookingId: String?): HasSentenceToChainToResponse {
+    return bookingId?.let {
+      val countSentences = sentenceRepository.countConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate, it)
+      return HasSentenceToChainToResponse(countSentences > 0)
+    } ?: HasSentenceToChainToResponse(false)
   }
 
   @Transactional
-  fun sentencesToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate): RecordResponse<SentencesToChainToResponse> {
-    val consecutiveToSentences = sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate)
-    val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
-    return RecordResponse(SentencesToChainToResponse.from(consecutiveToSentences), eventsToEmit)
+  fun sentencesToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate, bookingId: String?): RecordResponse<SentencesToChainToResponse> {
+    return bookingId?.let {
+      val consecutiveToSentenceUuids = sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate, it).map { consecutiveToSentence -> consecutiveToSentence.toRecordEventMetadata(consecutiveToSentence.sentenceUuid) }
+      val eventsToEmit = fixManyChargesToSentenceService.fixSentencesBySentenceUuids(consecutiveToSentenceUuids)
+      return RecordResponse(SentencesToChainToResponse.from(sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate, it)), eventsToEmit)
+    } ?: RecordResponse(SentencesToChainToResponse.from(emptyList()), mutableSetOf())
   }
 }

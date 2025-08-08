@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
 import jakarta.persistence.Column
+import jakarta.persistence.ColumnResult
+import jakarta.persistence.ConstructorResult
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -10,14 +12,17 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedNativeQuery
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
+import jakarta.persistence.SqlResultSetMapping
 import jakarta.persistence.Table
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
@@ -26,7 +31,47 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
-
+@SqlResultSetMapping(
+  name = "consecutiveToSentenceRowMapping",
+  classes = [
+    ConstructorResult(
+      targetClass = ConsecutiveToSentenceRow::class,
+      columns = arrayOf(
+        ColumnResult(name = "prisonerId"),
+        ColumnResult(name = "caseUniqueIdentifier"),
+        ColumnResult(name = "appearanceUuid"),
+        ColumnResult(name = "courtCode"),
+        ColumnResult(name = "courtCaseReference"),
+        ColumnResult(name = "appearanceDate", type = LocalDate::class),
+        ColumnResult(name = "chargeUuid"),
+        ColumnResult(name = "offenceCode"),
+        ColumnResult(name = "offenceStartDate", type = LocalDate::class),
+        ColumnResult(name = "offenceEndDate", type = LocalDate::class),
+        ColumnResult(name = "sentenceUuid"),
+        ColumnResult(name = "countNumber"),
+      ),
+    ),
+  ],
+)
+@NamedNativeQuery(
+  name = "SentenceEntity.findConsecutiveToSentences",
+  query = """
+  select cc.prisoner_id as prisonerId, cc.case_unique_identifier as caseUniqueIdentifier, ca.appearance_uuid as appearanceUuid, ca.court_code as courtCode, ca.court_case_reference as courtCaseReference, ca.appearance_date as appearanceDate, c.charge_uuid as chargeUuid, c.offence_code as offenceCode, c.offence_start_date as offenceStartDate, c.offence_end_date as offenceEndDate, s.sentence_uuid as sentenceUuid, s.count_number as countNumber 
+    from sentence s
+    join charge c on s.charge_id = c.id
+    join appearance_charge ac on ac.charge_id = c.id
+    join court_appearance ca on ac.appearance_id = ca.id
+    join court_case cc on ca.court_case_id = cc.id
+    where s.status_id in :sentenceStatuses
+    and cc.prisoner_id = :prisonerId
+    and c.status_id = :status
+    and ca.status_id = :status
+    and ca.appearance_date <= :beforeOrOnAppearanceDate
+    and cc.status_id = :status
+    and s.legacy_data ->> 'bookingId' = :bookingId
+""",
+  resultSetMapping = "consecutiveToSentenceRowMapping",
+)
 @Entity
 @Table(name = "sentence")
 class SentenceEntity(
@@ -135,6 +180,7 @@ class SentenceEntity(
       updatedAt = ZonedDateTime.now(),
       updatedBy = createdBy,
       fineAmount = sentence.fine?.fineAmount,
+      countNumber = countNumber,
     )
     return sentenceEntity
   }
@@ -207,6 +253,7 @@ class SentenceEntity(
       sentenceUuid: UUID,
       isManyCharges: Boolean,
       convictionDate: LocalDate? = null,
+      countNumber: String? = null,
     ): SentenceEntity = SentenceEntity(
       sentenceUuid = sentenceUuid,
       statusId = if (isManyCharges) {
@@ -225,6 +272,7 @@ class SentenceEntity(
       convictionDate = convictionDate,
       legacyData = sentence.legacyData,
       fineAmount = sentence.fine?.fineAmount,
+      countNumber = countNumber,
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {

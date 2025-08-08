@@ -14,4 +14,6 @@ data class RecordEventMetadata<T>(
   }
 
   override fun hashCode(): Int = record?.hashCode() ?: 0
+
+  fun <S> toNewRecord(record: S): RecordEventMetadata<S> = RecordEventMetadata(record, eventMetadata)
 }

@@ -241,6 +241,27 @@ abstract class IntegrationTestBase {
     return response.lifetimeUuid to toCreateSentence
   }
 
+  protected fun addBookingIdToDpsSentence(
+    sentenceUuid: UUID,
+    chargeUuid: UUID,
+    appearanceUuid: UUID,
+  ): Long {
+    val toUpdateSentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeUuid), appearanceUuid = appearanceUuid, fine = null)
+
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/$sentenceUuid")
+      .bodyValue(toUpdateSentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    return toUpdateSentence.legacyData.bookingId!!
+  }
+
   protected fun createLegacySentenceWithManyCharges(
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(

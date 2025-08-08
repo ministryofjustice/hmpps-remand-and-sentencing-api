@@ -72,7 +72,7 @@ class PersonController(private val personService: PersonService, private val cou
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun hasSentenceToChainTo(@PathVariable prisonerId: String, @RequestParam(name = "beforeOrOnAppearanceDate", required = true) beforeOrOnAppearanceDate: LocalDate): HasSentenceToChainToResponse = consecutiveToSentenceService.hasSentenceToChainTo(prisonerId, beforeOrOnAppearanceDate)
+  fun hasSentenceToChainTo(@PathVariable prisonerId: String, @RequestParam(name = "beforeOrOnAppearanceDate", required = true) beforeOrOnAppearanceDate: LocalDate, @RequestParam(name = "bookingId", required = false) bookingId: String?): HasSentenceToChainToResponse = consecutiveToSentenceService.hasSentenceToChainTo(prisonerId, beforeOrOnAppearanceDate, bookingId)
 
   @GetMapping("/{prisonerId}/sentences-to-chain-to")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
@@ -87,7 +87,7 @@ class PersonController(private val personService: PersonService, private val cou
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun sentencesToChainTo(@PathVariable prisonerId: String, @RequestParam(name = "beforeOrOnAppearanceDate", required = true) beforeOrOnAppearanceDate: LocalDate): SentencesToChainToResponse = consecutiveToSentenceService.sentencesToChainTo(prisonerId, beforeOrOnAppearanceDate).let { (response, eventsToEmit) ->
+  fun sentencesToChainTo(@PathVariable prisonerId: String, @RequestParam(name = "beforeOrOnAppearanceDate", required = true) beforeOrOnAppearanceDate: LocalDate, @RequestParam(name = "bookingId", required = false) bookingId: String?): SentencesToChainToResponse = consecutiveToSentenceService.sentencesToChainTo(prisonerId, beforeOrOnAppearanceDate, bookingId).let { (response, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     response
   }

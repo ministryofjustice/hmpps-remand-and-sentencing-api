@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_sentence_booking_id ON sentence((legacy_data->>'bookingId'));

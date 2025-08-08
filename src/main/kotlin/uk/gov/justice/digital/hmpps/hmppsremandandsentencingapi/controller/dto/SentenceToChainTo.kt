@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import java.time.LocalDate
 import java.util.UUID
 
@@ -13,6 +12,6 @@ data class SentenceToChainTo(
   val countNumber: String?,
 ) {
   companion object {
-    fun from(charge: ChargeEntity, sentence: SentenceEntity): SentenceToChainTo = SentenceToChainTo(charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate, sentence.sentenceUuid, sentence.countNumber)
+    fun from(consecutiveToSentenceRow: ConsecutiveToSentenceRow): SentenceToChainTo = SentenceToChainTo(consecutiveToSentenceRow.offenceCode, consecutiveToSentenceRow.offenceStartDate, consecutiveToSentenceRow.offenceEndDate, consecutiveToSentenceRow.sentenceUuid, consecutiveToSentenceRow.countNumber)
   }
 }

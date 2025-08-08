@@ -7,7 +7,7 @@ data class SentenceConsecutiveToDetailsResponse(
 ) {
   companion object {
     fun from(consecutiveToSentenceRows: List<ConsecutiveToSentenceRow>): SentenceConsecutiveToDetailsResponse = SentenceConsecutiveToDetailsResponse(
-      consecutiveToSentenceRows.groupBy { it.sentence.sentenceUuid }.map { (_, records) ->
+      consecutiveToSentenceRows.groupBy { it.sentenceUuid }.map { (_, records) ->
         SentenceConsecutiveToDetails.from(records.minBy { it.appearanceDate })
       },
     )
