@@ -96,6 +96,20 @@ WHERE charge_id IN (
 DELETE FROM charge
 WHERE id IN (SELECT charge_id FROM deleted_charges);
 
+DELETE from charge_history ch
+WHERE original_charge_id IN (
+    SELECT c.id
+    FROM charge c
+    where c.merged_from_case_id in (SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId)
+);
+
+DELETE FROM charge
+WHERE id IN (
+    SELECT c.id
+    FROM charge c
+    JOIN court_case mfcc ON c.merged_from_case_id = mfcc.id
+    WHERE mfcc.prisoner_id = :prisonerId);
+
 -- Delete court appearance history
 DELETE FROM court_appearance_history
 WHERE original_appearance_id IN (
