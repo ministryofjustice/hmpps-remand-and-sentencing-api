@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
@@ -106,6 +107,24 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isBadRequest
+  }
+
+  @Test
+  fun `new court case being put results in court case created event`() {
+    webTestClient
+      .put()
+      .uri("/court-case/${UUID.randomUUID()}")
+      .bodyValue(DpsDataCreator.dpsCreateCourtCase())
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val eventTypes = getMessages(7).map { it.eventType }
+    Assertions.assertThat(eventTypes).contains("court-case.inserted")
   }
 
   @Test
