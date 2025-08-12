@@ -22,16 +22,16 @@ data class CourtCase(
       courtCaseEntity.appearances.filter { it.statusId == EntityStatus.ACTIVE }.map { CourtAppearance.from(it) },
       courtCaseEntity.legacyData,
       mergedToCaseDetails = courtCaseEntity.mergedToCase
-        ?.takeIf { it.statusId == EntityStatus.ACTIVE && it.latestCourtAppearance?.statusId == EntityStatus.ACTIVE}
+        ?.takeIf { it.statusId == EntityStatus.ACTIVE && it.latestCourtAppearance?.statusId == EntityStatus.ACTIVE }
         ?.let { mergedTo ->
-        val latestAppearance = mergedTo.latestCourtAppearance
-        MergedToCaseDetails(
-          mergedToDate = courtCaseEntity.mergedToDate,
-          caseReference = mergedTo.latestCourtAppearance?.courtCaseReference,
-          courtCode = latestAppearance?.courtCode,
-          warrantDate = latestAppearance?.appearanceDate,
-        )
-      },
+          val latestAppearance = mergedTo.latestCourtAppearance
+          MergedToCaseDetails(
+            mergedToDate = courtCaseEntity.mergedToDate,
+            caseReference = mergedTo.latestCourtAppearance?.courtCaseReference,
+            courtCode = latestAppearance?.courtCode,
+            warrantDate = latestAppearance?.appearanceDate,
+          )
+        },
     )
   }
 }
