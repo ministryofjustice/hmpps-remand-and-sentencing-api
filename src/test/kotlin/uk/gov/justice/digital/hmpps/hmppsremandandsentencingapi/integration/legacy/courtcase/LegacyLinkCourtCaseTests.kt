@@ -40,7 +40,6 @@ class LegacyLinkCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(EntityStatus.MERGED.name)
   }
 
-
   @Test
   fun `check that fetching a linked case populates the merged case details correctly`() {
     val sourceCourtCase = DataCreator.migrationCreateCourtCase()
