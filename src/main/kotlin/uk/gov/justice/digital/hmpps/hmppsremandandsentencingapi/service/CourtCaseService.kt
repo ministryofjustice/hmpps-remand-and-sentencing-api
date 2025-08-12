@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -172,10 +171,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
         val firstDayInCustody = courtCase.appearances
           .filter { it.statusId == EntityStatus.ACTIVE }
           .minOfOrNull { it.appearanceDate }
-        val caseReferences = courtCase.appearances
-          .filter { it.statusId == EntityStatus.ACTIVE }
-          .mapNotNull { it.courtCaseReference }
-          .distinct()
 
         RecallableCourtCase(
           courtCaseUuid = courtCase.caseUniqueIdentifier,
@@ -223,15 +218,10 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
                 sentenceLegacyData = sentence.legacyData,
                 outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
                 isRecallable = sentence.sentenceType?.isRecallable ?: true,
-                sentenceDate = firstDayInCustody,
               )
             },
-          warrantDate = latestAppearance.appearanceDate,
-          warrantType = latestAppearance.warrantType,
-          outcome = latestAppearance.appearanceOutcome?.outcomeName,
-          caseReferences = caseReferences,
+          date = latestAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
-          legacyCourtAppearance = latestAppearance.legacyData,
         )
       }
 
@@ -247,8 +237,8 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       }
 
       else -> when (sortOrder.lowercase()) {
-        "asc" -> recallableCourtCases.sortedBy { it.warrantDate }
-        else -> recallableCourtCases.sortedByDescending { it.warrantDate }
+        "asc" -> recallableCourtCases.sortedBy { it.date }
+        else -> recallableCourtCases.sortedByDescending { it.date }
       }
     }
 

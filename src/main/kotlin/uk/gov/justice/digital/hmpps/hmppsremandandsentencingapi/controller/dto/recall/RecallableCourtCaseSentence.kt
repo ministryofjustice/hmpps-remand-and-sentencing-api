@@ -26,5 +26,4 @@ data class RecallableCourtCaseSentence(
   val outcomeDescription: String?,
   val isRecallable: Boolean,
   val sentenceTypeUuid: String,
-  val sentenceDate: LocalDate?,
 )

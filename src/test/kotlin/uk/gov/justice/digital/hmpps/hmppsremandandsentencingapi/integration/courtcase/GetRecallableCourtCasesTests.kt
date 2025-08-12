@@ -55,9 +55,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(sentencedCourtCaseUuid)
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
-      .jsonPath("$.cases[0].warrantDate").exists()
-      .jsonPath("$.cases[0].warrantType").isEqualTo("SENTENCING")
-      .jsonPath("$.cases[0].caseReferences").isArray()
+      .jsonPath("$.cases[0].date").exists()
       .jsonPath("$.cases[0].firstDayInCustody").exists()
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
@@ -69,7 +67,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
       .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
-      .jsonPath("$.cases[0].sentences[0].sentenceDate").exists()
   }
 
   @Test
