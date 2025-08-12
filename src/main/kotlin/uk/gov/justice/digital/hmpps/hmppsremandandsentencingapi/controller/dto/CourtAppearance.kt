@@ -21,6 +21,7 @@ data class CourtAppearance(
   val overallConvictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
   val documents: List<UploadedDocument> = emptyList(),
+  val bookingId: Long?,
 ) {
   companion object {
 
@@ -40,6 +41,7 @@ data class CourtAppearance(
       courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.documents.map { UploadedDocument.from(it) },
+      courtAppearanceEntity.courtCase.legacyData?.bookingId,
     )
   }
 }
