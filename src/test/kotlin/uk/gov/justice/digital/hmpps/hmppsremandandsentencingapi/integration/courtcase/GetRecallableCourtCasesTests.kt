@@ -52,10 +52,13 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(sentencedCourtCaseUuid)
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
+      .jsonPath("$.cases[0].warrantDate").exists()
+      .jsonPath("$.cases[0].warrantType").isEqualTo("SENTENCING")
+      .jsonPath("$.cases[0].caseReferences").isArray()
+      .jsonPath("$.cases[0].firstDayInCustody").exists()
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
       .jsonPath("$.cases[0].sentences[0].offenceCode").exists()
@@ -66,6 +69,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].countNumber").isEqualTo("1")
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
       .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
+      .jsonPath("$.cases[0].sentences[0].sentenceDate").exists()
   }
 
   @Test
@@ -101,7 +105,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(2)
       .jsonPath("$.cases.length()").isEqualTo(2)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid1) // More recent date first
       .jsonPath("$.cases[1].courtCaseUuid").isEqualTo(courtCaseUuid2)
@@ -140,7 +143,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(2)
       .jsonPath("$.cases.length()").isEqualTo(2)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid2) // Earlier date first
       .jsonPath("$.cases[1].courtCaseUuid").isEqualTo(courtCaseUuid1)
@@ -166,7 +168,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
   }
 
@@ -190,7 +191,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(0)
       .jsonPath("$.cases.length()").isEqualTo(0)
   }
 
@@ -248,7 +248,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid)
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
@@ -276,7 +275,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").isEqualTo(lifetimeUuid.toString())
   }
@@ -306,7 +304,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.totalCases").isEqualTo(1)
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid)
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
