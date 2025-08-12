@@ -19,11 +19,11 @@ data class SentenceConsecutiveToDetails(
       consecutiveToSentenceRow.appearanceCourtCaseReference,
       consecutiveToSentenceRow.appearanceCourtCode,
       consecutiveToSentenceRow.appearanceDate,
-      consecutiveToSentenceRow.charge.offenceCode,
-      consecutiveToSentenceRow.charge.offenceStartDate,
-      consecutiveToSentenceRow.charge.offenceEndDate,
-      consecutiveToSentenceRow.sentence.sentenceUuid,
-      consecutiveToSentenceRow.sentence.countNumber,
+      consecutiveToSentenceRow.offenceCode,
+      consecutiveToSentenceRow.offenceStartDate,
+      consecutiveToSentenceRow.offenceEndDate,
+      consecutiveToSentenceRow.sentenceUuid,
+      consecutiveToSentenceRow.countNumber,
     )
   }
 }

@@ -24,23 +24,26 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: EntityStatus): List<SentenceEntity>
 
   @Query(
-    """
-    select count(*) from SentenceEntity s
-    join s.charge c
-    join c.appearanceCharges ac
-    join ac.appearance ca
-    join ca.courtCase cc
-    where s.statusId in :sentenceStatuses
-    and cc.prisonerId = :prisonerId
-    and c.statusId = :#{#status}
-    and ca.statusId = :#{#status}
-    and ca.appearanceDate <= :beforeOrOnAppearanceDate
-    and cc.statusId = :#{#status}
+    value = """
+    select count(*) from sentence s
+    join charge c on s.charge_id = c.id
+    join appearance_charge ac on ac.charge_id = c.id
+    join court_appearance ca on ac.appearance_id = ca.id
+    join court_case cc on ca.court_case_id = cc.id
+    where s.status_id in :sentenceStatuses
+    and cc.prisoner_id = :prisonerId
+    and c.status_id = :#{#status}
+    and ca.status_id = :#{#status}
+    and ca.appearance_date <= :beforeOrOnAppearanceDate
+    and cc.status_id = :#{#status}
+    and s.legacy_data ->> 'bookingId' = :bookingId
   """,
+    nativeQuery = true,
   )
   fun countConsecutiveToSentences(
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
+    @Param("bookingId") bookingId: String,
     @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
     @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
       EntityStatus.ACTIVE,
@@ -115,26 +118,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     ),
   ): List<SentenceAfterOnAnotherCourtAppearanceRow>
 
-  @Query(
-    """
-    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow(cc.prisonerId, cc.caseUniqueIdentifier, ca.appearanceUuid, ca.courtCode, ca.courtCaseReference, ca.appearanceDate, c, s) from SentenceEntity s
-    left join fetch s.sentenceType st
-    join s.charge c
-    left join fetch c.chargeOutcome co
-    join c.appearanceCharges ac
-    join ac.appearance ca
-    join ca.courtCase cc
-    where s.statusId in :sentenceStatuses
-    and cc.prisonerId = :prisonerId
-    and c.statusId = :#{#status}
-    and ca.statusId = :#{#status}
-    and ca.appearanceDate <= :beforeOrOnAppearanceDate
-    and cc.statusId = :#{#status}
-  """,
-  )
   fun findConsecutiveToSentences(
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
+    @Param("bookingId") bookingId: String,
     @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
     @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
       EntityStatus.ACTIVE,
@@ -144,10 +131,8 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow(cc.prisonerId, cc.caseUniqueIdentifier, ca.appearanceUuid, ca.courtCode, ca.courtCaseReference, ca.appearanceDate, c, s) from SentenceEntity s
-    left join fetch s.sentenceType st
+    select NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow(cc.prisonerId, cc.caseUniqueIdentifier, ca.appearanceUuid, ca.courtCode, ca.courtCaseReference, ca.appearanceDate, c.chargeUuid, c.offenceCode, c.offenceStartDate, c.offenceEndDate, s.sentenceUuid, s.countNumber) from SentenceEntity s
     join s.charge c
-    left join fetch c.chargeOutcome co
     join c.appearanceCharges ac
     join ac.appearance ca
     join ca.courtCase cc

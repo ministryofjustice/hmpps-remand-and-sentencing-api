@@ -143,9 +143,9 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
   @Transactional
   fun findConsecutiveToSentenceDetails(sentenceUuids: List<UUID>): RecordResponse<SentenceConsecutiveToDetailsResponse> {
-    val consecutiveToSentences = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids)
-    val eventsToEmit = fixManyChargesToSentenceService.fixSentences(consecutiveToSentences.map { it.toRecordEventMetadata(it.sentence) })
-    return RecordResponse(SentenceConsecutiveToDetailsResponse.from(consecutiveToSentences), eventsToEmit)
+    val consecutiveToSentencesUuids = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids).map { it.toRecordEventMetadata(it.sentenceUuid) }
+    val eventsToEmit = fixManyChargesToSentenceService.fixSentencesBySentenceUuids(consecutiveToSentencesUuids)
+    return RecordResponse(SentenceConsecutiveToDetailsResponse.from(sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids)), eventsToEmit)
   }
 
   fun hasSentencesAfterOnOtherCourtAppearance(sentenceUuid: UUID): HasSentenceAfterOnOtherCourtAppearanceResponse {

@@ -12,11 +12,14 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
   fun `returns true when there is an active sentence in the past`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
-
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence
+    val bookingId = addBookingIdToDpsSentence(sentence!!.sentenceUuid!!, charge.chargeUuid, appearance.appearanceUuid)
     val result = webTestClient.get()
       .uri {
         it.path("/person/{prisonerId}/has-sentence-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
+          .queryParam("bookingId", bookingId.toString())
           .build(createCourtCase.prisonerId)
       }
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
@@ -33,11 +36,15 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
   fun `returns false when there is only an active sentence in the future`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence
+    val bookingId = addBookingIdToDpsSentence(sentence!!.sentenceUuid!!, charge.chargeUuid, appearance.appearanceUuid)
 
     val result = webTestClient.get()
       .uri {
         it.path("/person/{prisonerId}/has-sentence-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.minusDays(5).format(DateTimeFormatter.ISO_DATE))
+          .queryParam("bookingId", bookingId.toString())
           .build(createCourtCase.prisonerId)
       }
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
@@ -54,10 +61,15 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
   fun `no token results in unauthorized`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence
+    val bookingId = addBookingIdToDpsSentence(sentence!!.sentenceUuid!!, charge.chargeUuid, appearance.appearanceUuid)
+
     webTestClient.get()
       .uri {
         it.path("/person/{prisonerId}/has-sentence-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
+          .queryParam("bookingId", bookingId.toString())
           .build(createCourtCase.prisonerId)
       }
       .exchange()
@@ -69,10 +81,15 @@ class HasSentenceToChainToTests : IntegrationTestBase() {
   fun `token with incorrect role is forbidden`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence
+    val bookingId = addBookingIdToDpsSentence(sentence!!.sentenceUuid!!, charge.chargeUuid, appearance.appearanceUuid)
+
     webTestClient.get()
       .uri {
         it.path("/person/{prisonerId}/has-sentence-to-chain-to")
           .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
+          .queryParam("bookingId", bookingId.toString())
           .build(createCourtCase.prisonerId)
       }
       .headers { it.authToken(roles = listOf("ROLE_OTHER_FUNCTION")) }

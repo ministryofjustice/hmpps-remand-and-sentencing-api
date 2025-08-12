@@ -225,6 +225,7 @@ class LegacySentenceService(
                     sentenceUuid = sentenceUuid,
                     isManyCharges = isManyCharges,
                     convictionDate = sourceSentence?.convictionDate,
+                    countNumber = sourceSentence?.countNumber,
                   ),
                 )
               }.also { newSentence ->
