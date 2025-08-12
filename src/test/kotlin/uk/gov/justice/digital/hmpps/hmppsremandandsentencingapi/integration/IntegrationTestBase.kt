@@ -53,6 +53,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
@@ -548,6 +551,31 @@ abstract class IntegrationTestBase {
       .expectStatus()
       .isCreated
   }
+
+  protected fun migrateCases(courtCases: MigrationCreateCourtCases) = webTestClient
+    .post()
+    .uri("/legacy/court-case/migration")
+    .bodyValue(courtCases)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated
+    .returnResult(MigrationCreateCourtCasesResponse::class.java)
+    .responseBody.blockFirst()!!
+
+  protected fun linkCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String) = webTestClient
+    .put()
+    .uri("/legacy/court-case/$sourceCourtCaseUuid/link/$targetCourtCaseUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isNoContent
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
