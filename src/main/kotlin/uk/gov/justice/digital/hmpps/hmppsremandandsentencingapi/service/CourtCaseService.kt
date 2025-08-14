@@ -164,59 +164,81 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCases)
 
-    val recallableCourtCases = courtCases.map { courtCase ->
-      val latestAppearance = courtCase.latestCourtAppearance!!
-      RecallableCourtCase(
-        courtCaseUuid = courtCase.caseUniqueIdentifier,
-        reference = latestAppearance.courtCaseReference ?: "",
-        courtCode = latestAppearance.courtCode,
-        date = latestAppearance.appearanceDate,
-        status = courtCase.statusId,
-        isSentenced = courtCase.appearances.any { appearance ->
-          appearance.appearanceCharges.any { it.charge?.sentences?.isNotEmpty() == true }
-        },
-        sentences = courtCase.appearances
+    val recallableCourtCases = courtCases
+      .filter { it.latestCourtAppearance != null }
+      .map { courtCase ->
+        val latestAppearance = courtCase.latestCourtAppearance!!
+
+        val firstDayInCustody = courtCase.appearances
           .filter { it.statusId == EntityStatus.ACTIVE }
-          .flatMap { appearance ->
-            appearance.appearanceCharges
-              .filter { it.charge?.statusId == EntityStatus.ACTIVE }
-              .flatMap { it.charge?.sentences ?: emptyList() }
+          .minOfOrNull { it.appearanceDate }
+
+        val firstSentencingAppearance = courtCase.appearances
+          .filter { appearance ->
+            appearance.statusId == EntityStatus.ACTIVE &&
+              appearance.warrantType == "SENTENCING"
           }
-          .map { sentence ->
-            RecallableCourtCaseSentence(
-              sentenceUuid = sentence.sentenceUuid,
-              offenceCode = sentence.charge.offenceCode,
-              offenceStartDate = sentence.charge.offenceStartDate,
-              offenceEndDate = sentence.charge.offenceEndDate,
-              outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
-              sentenceType = sentence.sentenceType?.description,
-              sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
-              classification = sentence.sentenceType?.classification,
-              systemOfRecord = "RAS",
-              periodLengths = sentence.periodLengths.map { periodLength ->
-                PeriodLength(
-                  years = periodLength.years,
-                  months = periodLength.months,
-                  weeks = periodLength.weeks,
-                  days = periodLength.days,
-                  periodOrder = periodLength.periodOrder,
-                  periodLengthType = periodLength.periodLengthType,
-                  legacyData = periodLength.legacyData,
-                  periodLengthUuid = periodLength.periodLengthUuid,
-                )
-              },
-              convictionDate = sentence.convictionDate,
-              chargeLegacyData = sentence.charge.legacyData,
-              countNumber = sentence.countNumber,
-              lineNumber = sentence.legacyData?.nomisLineReference,
-              sentenceServeType = sentence.sentenceServeType,
-              sentenceLegacyData = sentence.legacyData,
-              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
-              isRecallable = sentence.sentenceType?.isRecallable ?: true,
-            )
+          .minByOrNull { it.appearanceDate }
+
+        RecallableCourtCase(
+          courtCaseUuid = courtCase.caseUniqueIdentifier,
+          reference = latestAppearance.courtCaseReference ?: "",
+          courtCode = latestAppearance.courtCode,
+          status = courtCase.statusId,
+          isSentenced = courtCase.appearances.any { appearance ->
+            appearance.appearanceCharges.any { it.charge?.sentences?.isNotEmpty() == true }
           },
-      )
-    }
+          sentences = courtCase.appearances
+            .filter { it.statusId == EntityStatus.ACTIVE }
+            .flatMap { appearance ->
+              appearance.appearanceCharges
+                .filter { it.charge?.statusId == EntityStatus.ACTIVE }
+                .flatMap { appearanceCharge ->
+                  appearanceCharge.charge?.sentences?.map { sentence ->
+                    val sentenceAppearance = if (appearance.warrantType == "SENTENCING") {
+                      appearance
+                    } else {
+                      firstSentencingAppearance
+                    }
+                    RecallableCourtCaseSentence(
+                      sentenceUuid = sentence.sentenceUuid,
+                      offenceCode = sentence.charge.offenceCode,
+                      offenceStartDate = sentence.charge.offenceStartDate,
+                      offenceEndDate = sentence.charge.offenceEndDate,
+                      outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
+                      sentenceType = sentence.sentenceType?.description,
+                      sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
+                      classification = sentence.sentenceType?.classification,
+                      systemOfRecord = "RAS",
+                      periodLengths = sentence.periodLengths.map { periodLength ->
+                        PeriodLength(
+                          years = periodLength.years,
+                          months = periodLength.months,
+                          weeks = periodLength.weeks,
+                          days = periodLength.days,
+                          periodOrder = periodLength.periodOrder,
+                          periodLengthType = periodLength.periodLengthType,
+                          legacyData = periodLength.legacyData,
+                          periodLengthUuid = periodLength.periodLengthUuid,
+                        )
+                      },
+                      convictionDate = sentence.convictionDate,
+                      chargeLegacyData = sentence.charge.legacyData,
+                      countNumber = sentence.countNumber,
+                      lineNumber = sentence.legacyData?.nomisLineReference,
+                      sentenceServeType = sentence.sentenceServeType,
+                      sentenceLegacyData = sentence.legacyData,
+                      outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
+                      isRecallable = sentence.sentenceType?.isRecallable ?: true,
+                      sentenceDate = sentenceAppearance?.appearanceDate,
+                    )
+                  } ?: emptyList()
+                }
+            },
+          date = latestAppearance.appearanceDate,
+          firstDayInCustody = firstDayInCustody,
+        )
+      }
 
     val sortedCases = when (sortBy.lowercase()) {
       "reference" -> when (sortOrder.lowercase()) {
@@ -237,7 +259,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
     return RecordResponse(
       RecallableCourtCasesResponse(
-        totalCases = sortedCases.size,
         cases = sortedCases,
       ),
       eventsToEmit,

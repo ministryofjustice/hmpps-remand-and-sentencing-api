@@ -7,8 +7,9 @@ data class RecallableCourtCase(
   val courtCaseUuid: String,
   val reference: String,
   val courtCode: String,
-  val date: LocalDate,
   val status: EntityStatus,
   val isSentenced: Boolean,
   val sentences: List<RecallableCourtCaseSentence>,
+  val date: LocalDate,
+  val firstDayInCustody: LocalDate?,
 )
