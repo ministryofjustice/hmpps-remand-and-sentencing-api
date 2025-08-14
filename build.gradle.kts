@@ -31,8 +31,8 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql:42.7.7")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:1.5.0")
-  testImplementation("io.jsonwebtoken:jjwt-impl:0.12.6")
-  testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
+  testImplementation("io.jsonwebtoken:jjwt-impl:0.12.7")
+  testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.7")
   testImplementation("org.wiremock:wiremock-standalone:3.13.1")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("io.mockk:mockk:1.14.5")
