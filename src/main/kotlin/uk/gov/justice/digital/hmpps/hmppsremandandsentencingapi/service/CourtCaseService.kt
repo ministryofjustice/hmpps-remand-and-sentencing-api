@@ -167,17 +167,10 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     val recallableCourtCases = courtCases
       .filter { it.latestCourtAppearance != null }
       .map { courtCase ->
-        val latestAppearance = courtCase.latestCourtAppearance
+        val latestAppearance = courtCase.latestCourtAppearance!!
 
         val firstDayInCustody = courtCase.appearances
-          .filter { appearance ->
-            appearance.statusId == EntityStatus.ACTIVE &&
-              (
-                appearance.appearanceOutcome?.outcomeType == "REMAND" ||
-                  appearance.appearanceOutcome?.outcomeType == "SENTENCING" ||
-                  appearance.warrantType == "SENTENCING"
-                )
-          }
+          .filter { it.statusId == EntityStatus.ACTIVE }
           .minOfOrNull { it.appearanceDate }
 
         val firstSentencingAppearance = courtCase.appearances
@@ -189,8 +182,8 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
         RecallableCourtCase(
           courtCaseUuid = courtCase.caseUniqueIdentifier,
-          reference = latestAppearance?.courtCaseReference ?: "",
-          courtCode = latestAppearance?.courtCode ?: "",
+          reference = latestAppearance.courtCaseReference ?: "",
+          courtCode = latestAppearance.courtCode,
           status = courtCase.statusId,
           isSentenced = courtCase.appearances.any { appearance ->
             appearance.appearanceCharges.any { it.charge?.sentences?.isNotEmpty() == true }
@@ -242,7 +235,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
                   } ?: emptyList()
                 }
             },
-          date = latestAppearance?.appearanceDate,
+          date = latestAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
       }
