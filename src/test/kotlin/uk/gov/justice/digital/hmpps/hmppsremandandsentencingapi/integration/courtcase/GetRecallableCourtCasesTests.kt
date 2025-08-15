@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
@@ -16,7 +15,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
     // Create a court case that should appear in recallable list
     val sentencedCharge = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(),
-      legacyData = ChargeLegacyData(
+      legacyData = DataCreator.chargeLegacyData(
         postedDate = "2024-01-01",
         nomisOutcomeCode = "1002",
         outcomeDescription = "Guilty",
@@ -209,7 +208,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
     // Create a court case with multiple appearances
     val olderCharge = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(),
-      legacyData = ChargeLegacyData(
+      legacyData = DataCreator.chargeLegacyData(
         postedDate = "2024-01-01",
         nomisOutcomeCode = "1002",
         outcomeDescription = "Guilty",

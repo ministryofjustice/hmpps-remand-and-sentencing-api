@@ -77,7 +77,8 @@ class DataCreator {
       outcomeDescription: String = "Outcome Description",
       outcomeDispositionCode: String = "INTERIM",
       outcomeConvictionFlag: Boolean = false,
-    ): ChargeLegacyData = ChargeLegacyData(postedDate, nomisOutcomeCode, outcomeDescription, outcomeDispositionCode, outcomeConvictionFlag)
+      offenceDescription: String = "Offence Description",
+    ): ChargeLegacyData = ChargeLegacyData(postedDate, nomisOutcomeCode, outcomeDescription, outcomeDispositionCode, outcomeConvictionFlag, offenceDescription)
 
     fun legacyCreateCharge(
       appearanceLifetimeUuid: UUID = UUID.randomUUID(),
