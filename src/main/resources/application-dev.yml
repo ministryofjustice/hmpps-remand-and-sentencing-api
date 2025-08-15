@@ -7,6 +7,11 @@ spring:
 hmpps:
   auth:
     url: http://localhost:9090/auth
+  sqs:
+    provider: localstack
+    topics:
+      hmppsdomaintopic:
+        arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
 
 prison:
   api:
