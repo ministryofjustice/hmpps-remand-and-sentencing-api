@@ -6,4 +6,5 @@ data class ChargeLegacyData(
   val outcomeDescription: String?,
   val outcomeDispositionCode: String?,
   val outcomeConvictionFlag: Boolean?,
+  val offenceDescription: String?,
 )
