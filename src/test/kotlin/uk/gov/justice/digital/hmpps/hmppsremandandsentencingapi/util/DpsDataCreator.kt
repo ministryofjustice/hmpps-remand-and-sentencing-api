@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -36,7 +37,8 @@ class DpsDataCreator {
       periodOrder: String = "years",
       type: PeriodLengthType = PeriodLengthType.OVERALL_SENTENCE_LENGTH,
       prisonId: String = "PRISON1",
-    ): CreatePeriodLength = CreatePeriodLength(periodLengthUuid, years, months, weeks, days, periodOrder, type, prisonId)
+      legacyData: PeriodLengthLegacyData? = null,
+    ): CreatePeriodLength = CreatePeriodLength(periodLengthUuid, years, months, weeks, days, periodOrder, type, prisonId, legacyData)
 
     fun dpsCreateNextCourtAppearance(
       appearanceDate: LocalDate = LocalDate.now().plusDays(2),

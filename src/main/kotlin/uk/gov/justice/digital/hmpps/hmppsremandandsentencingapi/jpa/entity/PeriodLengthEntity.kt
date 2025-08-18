@@ -178,6 +178,7 @@ class PeriodLengthEntity(
       appearanceEntity = null,
       createdBy = createdBy,
       createdPrison = periodLength.prisonId,
+      legacyData = periodLength.legacyData,
     )
 
     fun from(periodLengthUuid: UUID, periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String): PeriodLengthEntity {
