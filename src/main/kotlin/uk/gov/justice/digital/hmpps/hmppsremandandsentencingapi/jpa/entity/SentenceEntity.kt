@@ -23,6 +23,7 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
@@ -49,6 +50,7 @@ import java.util.UUID
         ColumnResult(name = "offenceEndDate", type = LocalDate::class),
         ColumnResult(name = "sentenceUuid"),
         ColumnResult(name = "countNumber"),
+        ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),
       ),
     ),
   ],
@@ -56,7 +58,7 @@ import java.util.UUID
 @NamedNativeQuery(
   name = "SentenceEntity.findConsecutiveToSentences",
   query = """
-  select cc.prisoner_id as prisonerId, cc.case_unique_identifier as caseUniqueIdentifier, ca.appearance_uuid as appearanceUuid, ca.court_code as courtCode, ca.court_case_reference as courtCaseReference, ca.appearance_date as appearanceDate, c.charge_uuid as chargeUuid, c.offence_code as offenceCode, c.offence_start_date as offenceStartDate, c.offence_end_date as offenceEndDate, s.sentence_uuid as sentenceUuid, s.count_number as countNumber 
+  select cc.prisoner_id as prisonerId, cc.case_unique_identifier as caseUniqueIdentifier, ca.appearance_uuid as appearanceUuid, ca.court_code as courtCode, ca.court_case_reference as courtCaseReference, ca.appearance_date as appearanceDate, c.charge_uuid as chargeUuid, c.offence_code as offenceCode, c.offence_start_date as offenceStartDate, c.offence_end_date as offenceEndDate, s.sentence_uuid as sentenceUuid, s.count_number as countNumber, c.legacy_data as chargeLegacyData 
     from sentence s
     join charge c on s.charge_id = c.id
     join appearance_charge ac on ac.charge_id = c.id
