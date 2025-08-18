@@ -94,7 +94,7 @@ class PeriodLengthEntity(
     weeks = periodLength.periodWeeks
     days = periodLength.periodDays
     periodLengthType = type
-    legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
+    legacyData = periodLength.legacyData
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
@@ -178,13 +178,13 @@ class PeriodLengthEntity(
       appearanceEntity = null,
       createdBy = createdBy,
       createdPrison = periodLength.prisonId,
+      legacyData = periodLength.legacyData,
     )
 
     fun from(periodLengthUuid: UUID, periodLength: LegacyCreatePeriodLength, sentenceEntity: SentenceEntity, createdBy: String): PeriodLengthEntity {
       val order = getDefaultPeriodOrder()
       val sentenceCalcType = sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData?.sentenceCalcType
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType!!)
-      val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
         periodLengthUuid = periodLengthUuid,
         years = periodLength.periodYears,
@@ -196,7 +196,7 @@ class PeriodLengthEntity(
         statusId = sentenceEntity.statusId,
         sentenceEntity = sentenceEntity,
         appearanceEntity = null,
-        legacyData = legacyData,
+        legacyData = periodLength.legacyData,
         createdBy = createdBy,
       )
     }
@@ -204,7 +204,6 @@ class PeriodLengthEntity(
     fun from(periodLength: MigrationCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
       val order = getDefaultPeriodOrder()
       val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
-      val legacyData = if (type == PeriodLengthType.UNSUPPORTED) periodLength.legacyData else null
       return PeriodLengthEntity(
         periodLengthUuid = UUID.randomUUID(),
         years = periodLength.periodYears,
@@ -216,7 +215,7 @@ class PeriodLengthEntity(
         statusId = EntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
-        legacyData = legacyData,
+        legacyData = periodLength.legacyData,
         createdBy = createdBy,
         createdPrison = null,
       )

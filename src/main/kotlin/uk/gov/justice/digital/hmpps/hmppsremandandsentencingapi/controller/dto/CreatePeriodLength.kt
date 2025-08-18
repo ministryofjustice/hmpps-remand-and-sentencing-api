@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSetter
 import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import java.util.UUID
 
 data class CreatePeriodLength(
@@ -17,4 +18,5 @@ data class CreatePeriodLength(
   val periodOrder: String,
   val type: PeriodLengthType,
   val prisonId: String,
+  val legacyData: PeriodLengthLegacyData?,
 )
