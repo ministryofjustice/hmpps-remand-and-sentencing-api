@@ -31,20 +31,6 @@ WHERE original_period_length_id IN (
     )
 );
 
-DELETE from period_length_history
-where original_period_length_id IN (
-SELECT DISTINCT pl.id
-    FROM period_length pl
-    JOIN sentence s ON pl.sentence_id = s.id
-    JOIN charge c ON s.charge_id = c.id
-    where c.superseding_charge_id in (
-        select ac.charge_id
-        from appearance_charge ac
-        JOIN court_appearance ca ON ac.appearance_id = ca.id
-        JOIN court_case cc on ca.court_case_id = cc.id
-        where cc.prisoner_id = :prisonerId)
-);
-
 -- Delete period lengths
 DELETE FROM period_length
 WHERE sentence_id IN (
