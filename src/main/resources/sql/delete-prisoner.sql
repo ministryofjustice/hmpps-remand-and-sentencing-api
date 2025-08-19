@@ -139,6 +139,14 @@ WHERE future_skeleton_appearance_id IN (
     )
 );
 
+-- Delete documents
+DELETE FROM uploaded_document
+WHERE appearance_id IN (
+    SELECT ca.id FROM court_appearance ca
+    JOIN court_case cc ON ca.court_case_id = cc.id
+    WHERE cc.prisoner_id = :prisonerId
+);
+
 -- Delete court appearances
 DELETE FROM court_appearance
 WHERE court_case_id IN (
