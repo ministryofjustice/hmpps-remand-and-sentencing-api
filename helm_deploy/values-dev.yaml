@@ -2,7 +2,7 @@
 # Per environment values which override defaults in hmpps-remand-and-sentencing-api/values.yaml
 
 generic-service:
-  replicaCount: 2
+  replicaCount: 5
 
   ingress:
     host: &ingressHost remand-and-sentencing-api-dev.hmpps.service.justice.gov.uk
@@ -14,6 +14,12 @@ generic-service:
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api-dev.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: DEV
+
+  resources:
+    requests:
+      memory: 2G
+    limits:
+      memory: 4G
 
   # Switches off the allow list in the DEV env only.
   allowlist: null

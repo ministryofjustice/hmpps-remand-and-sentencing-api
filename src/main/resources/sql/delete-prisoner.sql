@@ -44,6 +44,27 @@ WHERE sentence_id IN (
     )
 );
 
+-- Delete appearance period length history
+DELETE FROM period_length_history
+WHERE original_period_length_id IN (
+    SELECT DISTINCT pl.id
+    FROM period_length pl
+    JOIN court_appearance a ON pl.appearance_id = a.id
+    WHERE a.court_case_id IN (
+        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
+    )
+);
+
+-- Delete appearance period lengths
+DELETE FROM period_length
+WHERE appearance_id IN (
+    SELECT a.id
+    FROM court_appearance a
+    WHERE a.court_case_id IN (
+        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
+    )
+);
+
 -- Delete sentence history
 DELETE FROM sentence_history
 WHERE original_sentence_id IN (
@@ -137,6 +158,14 @@ WHERE future_skeleton_appearance_id IN (
     WHERE court_case_id IN (
         SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
     )
+);
+
+-- Delete documents
+DELETE FROM uploaded_document
+WHERE appearance_id IN (
+    SELECT ca.id FROM court_appearance ca
+    JOIN court_case cc ON ca.court_case_id = cc.id
+    WHERE cc.prisoner_id = :prisonerId
 );
 
 -- Delete court appearances
