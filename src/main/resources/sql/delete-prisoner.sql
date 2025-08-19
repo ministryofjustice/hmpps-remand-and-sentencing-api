@@ -41,7 +41,8 @@ SELECT DISTINCT pl.id
         select ac.charge_id
         from appearance_charge ac
         JOIN court_appearance ca ON ac.appearance_id = ca.id
-        JOIN court_case cc where cc.prisoner_id = :prisonerId)
+        JOIN court_case cc on ca.court_case_id = cc.id
+        where cc.prisoner_id = :prisonerId)
 );
 
 -- Delete period lengths
@@ -66,7 +67,8 @@ WHERE sentence_id IN (
              select ac.charge_id
              from appearance_charge ac
              JOIN court_appearance ca ON ac.appearance_id = ca.id
-             JOIN court_case cc where cc.prisoner_id = :prisonerId)
+             JOIN court_case cc on ca.court_case_id = cc.id
+             where cc.prisoner_id = :prisonerId)
 );
 
 -- Delete appearance period length history
@@ -112,7 +114,8 @@ WHERE original_sentence_id IN (
                           select ac.charge_id
                           from appearance_charge ac
                           JOIN court_appearance ca ON ac.appearance_id = ca.id
-                          JOIN court_case cc where cc.prisoner_id = :prisonerId)
+                          JOIN court_case cc on ca.court_case_id = cc.id
+                          where cc.prisoner_id = :prisonerId)
 );
 
 -- Delete sentences
@@ -135,7 +138,7 @@ SELECT s.id
       select ac.charge_id
       from appearance_charge ac
       JOIN court_appearance ca ON ac.appearance_id = ca.id
-      JOIN court_case cc where cc.prisoner_id = :prisonerId));
+      JOIN court_case cc on ca.court_case_id = cc.id where cc.prisoner_id = :prisonerId));
 
 -- Delete charge history
 DELETE FROM charge_history ch
@@ -149,7 +152,7 @@ WHERE original_charge_id IN (
     )
 );
 
-DELETE from charge_history ch
+--DELETE from charge_history ch
 where original_charge_id in (
    select c.id
    from charge c
@@ -168,18 +171,17 @@ select c.id
    from charge c
       JOIN charge sc on c.superseding_charge_id = sc.id
       JOIN appearance_charge ac ON ac.charge_id = sc.id
-      JOIN court_appearance a ON ac.appearance_id = a.id
-      WHERE a.court_case_id IN (
-          SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-      ));
+      JOIN court_appearance ca ON ac.appearance_id = ca.id
+      JOIN court_case cc on ca.court_case_id = cc.id
+      WHERE cc.prisoner_id = :prisonerId);
 
 DELETE from charge where id in (
 select c.id
    from charge c
       JOIN charge sc on c.superseding_charge_id = sc.id
       JOIN appearance_charge ac ON ac.charge_id = sc.id
-      JOIN court_appearance a ON ac.appearance_id = a.id
-      JOIN court_case cc on a.court_case_id = cc.id
+      JOIN court_appearance ca ON ac.appearance_id = ca.id
+      JOIN court_case cc on ca.court_case_id = cc.id
       WHERE cc.prisoner_id = :prisonerId);
 
 WITH deleted_charges AS (
