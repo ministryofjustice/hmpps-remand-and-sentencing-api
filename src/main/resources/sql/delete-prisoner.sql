@@ -103,6 +103,15 @@ WHERE original_charge_id IN (
 );
 
 -- delete appearance_charge and charge
+update charge set superseding_charge_id = null where superseding_charge_id in (
+SELECT c.id
+    FROM charge c
+             JOIN appearance_charge ac ON ac.charge_id = c.id
+             JOIN court_appearance a ON ac.appearance_id = a.id
+    WHERE a.court_case_id IN (
+        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
+    ));
+
 WITH deleted_charges AS (
 DELETE FROM appearance_charge
 WHERE charge_id IN (
