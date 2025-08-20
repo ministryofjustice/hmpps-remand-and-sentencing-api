@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 data class PeriodLengthLegacyData(
-  val lifeSentence: Boolean?,
-  val sentenceTermCode: String?,
-  val sentenceTermDescription: String?,
+  var lifeSentence: Boolean?,
+  var sentenceTermCode: String?,
+  var sentenceTermDescription: String?,
 )
