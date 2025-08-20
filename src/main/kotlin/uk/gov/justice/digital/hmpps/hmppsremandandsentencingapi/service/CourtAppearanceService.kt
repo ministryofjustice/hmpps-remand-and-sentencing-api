@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -32,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.util.UUID
 
@@ -50,6 +52,7 @@ class CourtAppearanceService(
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val documentService: UploadedDocumentService,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
 
   @Transactional
@@ -530,6 +533,7 @@ class CourtAppearanceService(
     if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())
+      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity))
       return DeleteCourtAppearanceResponse(
         records = RecordResponse(
           courtAppearanceEntity,
