@@ -34,6 +34,13 @@ class PeriodLengthService(
       val updatedPeriodLength = createPeriodLengthEntities.firstOrNull { it.periodLengthUuid == existingPeriodLength.periodLengthUuid }
       if (updatedPeriodLength != null) {
         if (!existingPeriodLength.isSame(updatedPeriodLength)) {
+          updatedPeriodLength.legacyData = updatedPeriodLength.legacyData?.let { legacyData ->
+            if (existingPeriodLength.periodLengthType != updatedPeriodLength.periodLengthType) {
+              legacyData.sentenceTermCode = null
+              legacyData.lifeSentence = null
+            }
+            legacyData
+          }
           existingPeriodLength.updateFrom(updatedPeriodLength, serviceUserService.getUsername())
           periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existingPeriodLength))
           entityChangeStatus = EntityChangeStatus.EDITED
