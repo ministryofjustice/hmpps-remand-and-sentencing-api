@@ -1,0 +1,1 @@
+UPDATE charge_outcome set outcome_type = 'NON_CUSTODIAL' where outcome_uuid = '80f2af70-dcf5-4f40-834c-8063bea47ce7'
