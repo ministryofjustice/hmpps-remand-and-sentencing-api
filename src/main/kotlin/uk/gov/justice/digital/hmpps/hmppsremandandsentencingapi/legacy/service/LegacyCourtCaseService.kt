@@ -8,10 +8,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.DraftAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
@@ -24,7 +26,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 
 @Service
-class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val serviceUserService: ServiceUserService, private val draftAppearanceRepository: DraftAppearanceRepository, private val chargeHistoryRepository: ChargeHistoryRepository) {
+class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val serviceUserService: ServiceUserService, private val draftAppearanceRepository: DraftAppearanceRepository, private val chargeHistoryRepository: ChargeHistoryRepository, private val courtCaseHistoryRepository: CourtCaseHistoryRepository) {
 
   @Transactional
   fun create(courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
@@ -34,6 +36,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
         serviceUserService.getUsername(),
       ),
     )
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(createdCourtCase))
     return LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier)
   }
 
@@ -60,6 +63,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
     existingCourtCase.legacyData = courtCase.legacyData
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
   }
 
@@ -70,6 +74,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     sourceCourtCase.statusId = EntityStatus.MERGED
     sourceCourtCase.mergedToCase = targetCourtCase
     sourceCourtCase.mergedToDate = linkCase?.linkedDate ?: LocalDate.now()
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(sourceCourtCase))
     return sourceCourtCaseUuid to sourceCourtCase.prisonerId
   }
 
@@ -106,6 +111,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
             }
         }
     }
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(sourceCourtCase))
     return UnlinkEventsToEmit(courtCaseEventMetadata, chargeEventsToEmit)
   }
 
@@ -113,6 +119,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   fun delete(courtCaseUuid: String) {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = EntityStatus.DELETED
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     draftAppearanceRepository.deleteAll(existingCourtCase.draftAppearances)
   }
 

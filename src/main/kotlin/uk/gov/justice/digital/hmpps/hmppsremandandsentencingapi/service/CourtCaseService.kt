@@ -36,8 +36,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
     var eventType = EventType.COURT_CASE_UPDATED
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername(), caseUniqueIdentifier)).also { eventType = EventType.COURT_CASE_INSERTED }
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
-
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
     }
@@ -45,6 +43,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, eventType),
     )
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
     return RecordResponse(
       savedCourtCase,
       eventsToEmit,
@@ -54,8 +53,8 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   @Transactional
   fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername()))
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
     val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, EventType.COURT_CASE_INSERTED),
     )
