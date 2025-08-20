@@ -465,14 +465,19 @@ class CourtAppearanceService(
     }
   }
 
-  private fun chargesByConsecutiveToLast(first: CreateCharge, second: CreateCharge): Int {
-    if (first.sentence?.consecutiveToSentenceReference == null) {
-      return -1
+  private fun chargesByConsecutiveToLast(chargeA: CreateCharge, chargeB: CreateCharge): Int {
+    val chargeARef = chargeA.sentence?.sentenceReference
+    val chargeBRef = chargeB.sentence?.sentenceReference
+    val chargeAConsecutiveTo = chargeA.sentence?.consecutiveToSentenceReference
+    val chargeBConsecutiveTo = chargeB.sentence?.consecutiveToSentenceReference
+
+    return when {
+      chargeAConsecutiveTo != null && chargeAConsecutiveTo == chargeBRef -> 1
+      chargeBConsecutiveTo != null && chargeBConsecutiveTo == chargeARef -> -1
+      chargeAConsecutiveTo == null && chargeBConsecutiveTo != null -> -1
+      chargeAConsecutiveTo != null && chargeBConsecutiveTo == null -> 1
+      else -> 0
     }
-    if (first.sentence.consecutiveToSentenceReference == second.sentence?.sentenceReference) {
-      return 1
-    }
-    return 0
   }
 
   @Transactional
