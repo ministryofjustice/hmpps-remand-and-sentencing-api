@@ -62,7 +62,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
-    existingCourtCase.legacyData = courtCase.legacyData
+    existingCourtCase.legacyData = existingCourtCase.legacyData?.copyFrom(courtCase.legacyData) ?: courtCase.legacyData
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
   }
