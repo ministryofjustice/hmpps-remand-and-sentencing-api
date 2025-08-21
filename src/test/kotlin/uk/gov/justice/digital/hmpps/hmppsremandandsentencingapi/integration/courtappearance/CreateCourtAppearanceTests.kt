@@ -5,7 +5,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -263,5 +265,69 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `Create court appearance and ensure consecutive to relationships are correctly inserted`() {
+    val s1 = DpsDataCreator.dpsCreateSentence(
+      chargeNumber = "1",
+      sentenceServeType = "FORTHWITH",
+      sentenceReference = "0",
+    )
+
+    val s2 = DpsDataCreator.dpsCreateSentence(
+      chargeNumber = "2",
+      sentenceServeType = "CONSECUTIVE",
+      sentenceReference = "1",
+      consecutiveToSentenceReference = "0",
+    )
+
+    val s3 = DpsDataCreator.dpsCreateSentence(
+      chargeNumber = "3",
+      sentenceServeType = "CONSECUTIVE",
+      sentenceReference = "2",
+      consecutiveToSentenceReference = "1",
+    )
+
+    val s4 = DpsDataCreator.dpsCreateSentence(
+      chargeNumber = "4",
+      sentenceServeType = "CONSECUTIVE",
+      sentenceReference = "3",
+      consecutiveToSentenceReference = "2",
+    )
+
+    val c1 = DpsDataCreator.dpsCreateCharge(sentence = s1)
+    val c2 = DpsDataCreator.dpsCreateCharge(sentence = s2)
+    val c3 = DpsDataCreator.dpsCreateCharge(sentence = s3)
+    val c4 = DpsDataCreator.dpsCreateCharge(sentence = s4)
+
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(c4, c3, c2, c1))
+
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    val createdCourtAppearance: CourtAppearance =
+      webTestClient
+        .get()
+        .uri("/court-appearance/${courtCase.second.appearances[0].appearanceUuid}")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        }
+        .exchange()
+        .expectStatus().isOk
+        .expectBody(CourtAppearance::class.java)
+        .returnResult()
+        .responseBody!!
+
+    val sentences: List<Sentence> = createdCourtAppearance.charges.map { it.sentence!! }.sortedBy { it.chargeNumber!!.toInt() }
+
+    assertThat(sentences[0].chargeNumber).isEqualTo("1")
+    assertThat(sentences[1].chargeNumber).isEqualTo("2")
+    assertThat(sentences[2].chargeNumber).isEqualTo("3")
+    assertThat(sentences[3].chargeNumber).isEqualTo("4")
+
+    assertThat(sentences[3].consecutiveToSentenceUuid).isEqualTo(sentences[2].sentenceUuid)
+    assertThat(sentences[2].consecutiveToSentenceUuid).isEqualTo(sentences[1].sentenceUuid)
+    assertThat(sentences[1].consecutiveToSentenceUuid).isEqualTo(sentences[0].sentenceUuid)
+    assertThat(sentences[0].consecutiveToSentenceUuid).isNull()
   }
 }
