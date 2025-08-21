@@ -185,6 +185,12 @@ class CourtCaseEntity(
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   @Column
   val createdBy: String,
+
+  @Column
+  var updatedAt: ZonedDateTime = createdAt,
+  @Column
+  var updatedBy: String? = null,
+
   val createdPrison: String? = null,
   @Column
   @Enumerated(EnumType.ORDINAL)
@@ -214,10 +220,10 @@ class CourtCaseEntity(
 
   fun delete(username: String) {
     statusId = EntityStatus.DELETED
-    // ToDo: uncomment when RASS-1258 is implemented
-//    updatedAt = ZonedDateTime.now()
-//    updatedBy = username
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
   }
+
   companion object {
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
