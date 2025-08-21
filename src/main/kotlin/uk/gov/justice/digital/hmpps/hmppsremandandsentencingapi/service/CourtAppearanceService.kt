@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.jetbrains.annotations.VisibleForTesting
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
@@ -437,7 +438,7 @@ class CourtAppearanceService(
     courtAppearanceDateChanged: Boolean,
   ): MutableSet<RecordResponse<ChargeEntity>> {
     val sentencesCreated = mutableMapOf<String, SentenceEntity>()
-    return charges.sortedWith(this::chargesByConsecutiveToLast).map {
+    return orderChargesByConsecutiveChain(charges).map {
       val charge = chargeService.createCharge(
         it,
         sentencesCreated,
@@ -465,19 +466,56 @@ class CourtAppearanceService(
     }
   }
 
-  private fun chargesByConsecutiveToLast(chargeA: CreateCharge, chargeB: CreateCharge): Int {
-    val chargeARef = chargeA.sentence?.sentenceReference
-    val chargeBRef = chargeB.sentence?.sentenceReference
-    val chargeAConsecutiveTo = chargeA.sentence?.consecutiveToSentenceReference
-    val chargeBConsecutiveTo = chargeB.sentence?.consecutiveToSentenceReference
+  @VisibleForTesting
+  fun orderChargesByConsecutiveChain(charges: List<CreateCharge>): List<CreateCharge> {
+    val chargesByRef: Map<Int, CreateCharge> =
+      charges.mapNotNull { c -> c.sentence?.sentenceReference?.let { it.toInt() to c } }.toMap()
 
-    return when {
-      chargeAConsecutiveTo != null && chargeAConsecutiveTo == chargeBRef -> 1
-      chargeBConsecutiveTo != null && chargeBConsecutiveTo == chargeARef -> -1
-      chargeAConsecutiveTo == null && chargeBConsecutiveTo != null -> -1
-      chargeAConsecutiveTo != null && chargeBConsecutiveTo == null -> 1
-      else -> 0
+    val chainPositionByRef = mutableMapOf<Int, Int>()
+
+    val chargesWithSortKeys = charges.map { charge ->
+      val sentenceRef = charge.sentence?.sentenceReference?.toIntOrNull() ?: Int.MAX_VALUE
+      val positionInChain = chainPositionFor(sentenceRef, chargesByRef, chainPositionByRef)
+      ChargeWithSortKeys(positionInChain, sentenceRef, charge)
     }
+
+    // Sort by positionInChain, sentenceRef
+    return chargesWithSortKeys.sortedWith(compareBy({ it.chainPosition }, { it.sentenceRef })).map { it.charge }
+  }
+
+  private data class ChargeWithSortKeys(
+    val chainPosition: Int,
+    val sentenceRef: Int,
+    val charge: CreateCharge,
+  )
+
+  /**
+   * Determines "position in chain" of a sentenceReference, called recursively
+   *
+   * - If `sentenceRef` is null, position = 0.
+   * - If the parent is not present in this `charges` list: treat it as position 0.
+   */
+  private fun chainPositionFor(
+    sentenceRef: Int?,
+    chargesBySentenceRef: Map<Int, CreateCharge>,
+    chainPositionByRef: MutableMap<Int, Int>,
+  ): Int {
+    if (sentenceRef == null) return 0
+
+    // Already processed
+    chainPositionByRef[sentenceRef]?.let { return it }
+
+    val parentRef = chargesBySentenceRef[sentenceRef]?.sentence?.consecutiveToSentenceReference?.toIntOrNull()
+    val parentPosition = if (parentRef != null && chargesBySentenceRef.containsKey(parentRef)) {
+      chainPositionFor(parentRef, chargesBySentenceRef, chainPositionByRef)
+    } else {
+      0 // No parent in the chain
+    }
+    val chainPosition = parentPosition + 1
+
+    chainPositionByRef[sentenceRef] = chainPosition
+
+    return chainPosition
   }
 
   @Transactional
