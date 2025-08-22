@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtAppearance
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -375,6 +376,32 @@ class CourtAppearanceEntity(
       warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData, migrationCreateCourtAppearance.charges.any { it.sentence != null }),
       overallConvictionDate = null,
       legacyData = migrationCreateCourtAppearance.legacyData,
+      source = NOMIS,
+    )
+
+    fun from(
+      bookingCreateCourtAppearance: BookingCreateCourtAppearance,
+      appearanceOutcome: AppearanceOutcomeEntity?,
+      courtCase: CourtCaseEntity,
+      createdBy: String,
+      courtCaseReference: String?,
+    ): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = appearanceOutcome,
+      courtCase = courtCase,
+      courtCode = bookingCreateCourtAppearance.courtCode,
+      courtCaseReference = courtCaseReference,
+      appearanceDate = bookingCreateCourtAppearance.appearanceDate,
+      statusId = EntityStatus.DUPLICATE,
+      warrantId = null,
+      appearanceCharges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdBy = createdBy,
+      nextCourtAppearance = null,
+      warrantType = deriveWarrantType(appearanceOutcome, bookingCreateCourtAppearance.legacyData, bookingCreateCourtAppearance.charges.any { it.sentence != null }),
+      overallConvictionDate = null,
+      legacyData = bookingCreateCourtAppearance.legacyData,
       source = NOMIS,
     )
 
