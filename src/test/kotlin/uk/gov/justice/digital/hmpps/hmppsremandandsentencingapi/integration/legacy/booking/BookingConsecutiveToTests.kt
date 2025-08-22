@@ -1,0 +1,107 @@
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.booking
+
+import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.BookingDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
+
+class BookingConsecutiveToTests : IntegrationTestBase() {
+
+  @Test
+  fun `can create sentence when consecutive to another in the same court case`() {
+    val firstSentenceId = BookingDataCreator.bookingSentenceId(1, 1)
+    val firstPeriodLengthId = DataCreator.nomisPeriodLengthId(firstSentenceId.offenderBookingId, firstSentenceId.sequence, 1)
+    val firstSentence = BookingDataCreator.bookingCreateSentence(
+      sentenceId = firstSentenceId,
+      legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"),
+      periodLengths = listOf(
+        BookingDataCreator.bookingCreatePeriodLength(periodLengthId = firstPeriodLengthId),
+      ),
+    )
+
+    val consecutiveToSentenceId = BookingDataCreator.bookingSentenceId(1, 5)
+    val consecutiveToPeriodLengthId = DataCreator.nomisPeriodLengthId(consecutiveToSentenceId.offenderBookingId, consecutiveToSentenceId.sequence, 1)
+    val consecutiveToSentence = BookingDataCreator.bookingCreateSentence(
+      sentenceId = consecutiveToSentenceId,
+      consecutiveToSentenceId = firstSentence.sentenceId,
+      periodLengths = listOf(
+        BookingDataCreator.bookingCreatePeriodLength(periodLengthId = consecutiveToPeriodLengthId),
+      ),
+    )
+    val charge = BookingDataCreator.bookingCreateCharge(chargeNOMISId = 11, sentence = firstSentence)
+    val consecutiveToCharge = BookingDataCreator.bookingCreateCharge(chargeNOMISId = 22, sentence = consecutiveToSentence)
+    val appearance = BookingDataCreator.bookingCreateCourtAppearance(charges = listOf(consecutiveToCharge, charge))
+    val bookingCourtCase = BookingDataCreator.bookingCreateCourtCase(appearances = listOf(appearance))
+    val bookingCourtCases = BookingDataCreator.bookingCreateCourtCases(courtCases = listOf(bookingCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/booking")
+      .bodyValue(bookingCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(BookingCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val consecutiveToSentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == consecutiveToSentence.sentenceId }.sentenceUuid
+    val firstSentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == firstSentence.sentenceId }.sentenceUuid
+    webTestClient
+      .get()
+      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].consecutiveToSentenceUuid")
+      .isEqualTo(firstSentenceUuid.toString())
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].sentenceServeType")
+      .isEqualTo("CONSECUTIVE")
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$firstSentenceUuid')].sentenceType.sentenceTypeUuid")
+      .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
+  }
+
+  @Test
+  fun `can still process a sentence where the consecutive to sentence is non existent (A NOMIS data issue)`() {
+    val sentenceWithNonExistentConsecutiveTo = BookingDataCreator.bookingCreateSentence(sentenceId = BookingDataCreator.bookingSentenceId(1, 1), consecutiveToSentenceId = BookingDataCreator.bookingSentenceId(66, 99), legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA"))
+    val charge = BookingDataCreator.bookingCreateCharge(chargeNOMISId = 11, sentence = sentenceWithNonExistentConsecutiveTo)
+    val appearance = BookingDataCreator.bookingCreateCourtAppearance(charges = listOf(charge))
+    val bookingCourtCase = BookingDataCreator.bookingCreateCourtCase(appearances = listOf(appearance))
+    val bookingCourtCases = BookingDataCreator.bookingCreateCourtCases(courtCases = listOf(bookingCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/booking")
+      .bodyValue(bookingCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(BookingCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val sentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == sentenceWithNonExistentConsecutiveTo.sentenceId }.sentenceUuid
+    webTestClient
+      .get()
+      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$sentenceUuid')].sentenceType.sentenceTypeUuid")
+      .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
+  }
+}

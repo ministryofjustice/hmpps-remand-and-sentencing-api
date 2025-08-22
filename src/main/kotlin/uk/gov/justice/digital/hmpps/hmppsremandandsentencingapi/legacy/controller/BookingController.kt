@@ -10,17 +10,16 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.MigrationService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCases
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.BookingService
 
 @RestController
-@RequestMapping("/legacy/court-case/migration", produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "migration-controller", description = "Create operation for migrating court case data from NOMIS into remand and sentencing api database.")
-class MigrationController(private val migrationService: MigrationService) {
+@RequestMapping("/legacy/court-case/booking", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "booking-controller", description = "Create operation for bookings in NOMIS. This is used when court cases are cloned onto different bookings")
+class BookingController(private val bookingService: BookingService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -37,7 +36,6 @@ class MigrationController(private val migrationService: MigrationService) {
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun create(
-    @RequestBody migrationCreateCourtCases: MigrationCreateCourtCases,
-    @RequestParam(name = "deleteExisting", required = false, defaultValue = "false") deleteExisting: Boolean,
-  ): MigrationCreateCourtCasesResponse = migrationService.create(migrationCreateCourtCases, deleteExisting)
+    @RequestBody bookingCreateCourtCases: BookingCreateCourtCases,
+  ): BookingCreateCourtCasesResponse = bookingService.create(bookingCreateCourtCases)
 }
