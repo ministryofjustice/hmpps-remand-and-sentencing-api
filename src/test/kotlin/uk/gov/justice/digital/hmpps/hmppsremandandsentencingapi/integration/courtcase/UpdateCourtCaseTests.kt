@@ -40,6 +40,9 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.courtCaseUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+
+    val courtCaseLogs = courtCaseHistoryRepository.findAll().filter { it.prisonerId == courtCase.second.prisonerId }
+    assertThat(courtCaseLogs).hasSize(2)
   }
 
   @Test

@@ -43,7 +43,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, eventType),
     )
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
     return RecordResponse(
       savedCourtCase,
       eventsToEmit,
