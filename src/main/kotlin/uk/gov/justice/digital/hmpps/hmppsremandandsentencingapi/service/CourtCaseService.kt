@@ -54,7 +54,6 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername()))
     val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, EventType.COURT_CASE_INSERTED),
     )
