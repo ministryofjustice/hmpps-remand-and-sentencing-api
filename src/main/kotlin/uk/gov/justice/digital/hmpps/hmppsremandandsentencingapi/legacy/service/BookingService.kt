@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
@@ -86,7 +87,7 @@ class BookingService(
 ) {
 
   @Transactional
-  fun create(bookingCreateCourtCases: BookingCreateCourtCases): BookingCreateCourtCasesResponse {
+  fun create(bookingCreateCourtCases: BookingCreateCourtCases): RecordResponse<BookingCreateCourtCasesResponse> {
     val tracking = BookingDataTracking(
       bookingCreateCourtCases.prisonerId,
       serviceUserService.getUsername(),
@@ -103,12 +104,15 @@ class BookingService(
       tracking.createdPeriodLengthMap.values.flatMap { it }.distinct(),
     )
 
-    return BookingCreateCourtCasesResponse(
-      tracking.createdCourtCasesMap.map { (caseId, createdCourtCase) -> BookingCreateCourtCaseResponse(createdCourtCase.record.caseUniqueIdentifier, caseId) },
-      tracking.createdCourtAppearancesMap.map { (eventId, createdAppearance) -> BookingCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
-      tracking.createdChargesMap.map { (chargeNOMISId, createdCharges) -> BookingCreateChargeResponse(createdCharges.first().second.chargeUuid, chargeNOMISId) },
-      tracking.createdSentencesMap.map { (id, createdSentences) -> BookingCreateSentenceResponse(createdSentences.first().sentenceUuid, id) },
-      tracking.createdPeriodLengthMap.map { (id, createdPeriodLengths) -> BookingCreatePeriodLengthResponse(createdPeriodLengths.first().periodLengthUuid, id) },
+    return RecordResponse(
+      BookingCreateCourtCasesResponse(
+        tracking.createdCourtCasesMap.map { (caseId, createdCourtCase) -> BookingCreateCourtCaseResponse(createdCourtCase.record.caseUniqueIdentifier, caseId) },
+        tracking.createdCourtAppearancesMap.map { (eventId, createdAppearance) -> BookingCreateCourtAppearanceResponse(createdAppearance.appearanceUuid, eventId) },
+        tracking.createdChargesMap.map { (chargeNOMISId, createdCharges) -> BookingCreateChargeResponse(createdCharges.first().second.chargeUuid, chargeNOMISId) },
+        tracking.createdSentencesMap.map { (id, createdSentences) -> BookingCreateSentenceResponse(createdSentences.first().sentenceUuid, id) },
+        tracking.createdPeriodLengthMap.map { (id, createdPeriodLengths) -> BookingCreatePeriodLengthResponse(createdPeriodLengths.first().periodLengthUuid, id) },
+      ),
+      tracking.eventsToEmit,
     )
   }
 
@@ -406,7 +410,7 @@ class BookingService(
     val createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>> = HashMap(),
     val createdSentencesMap: MutableMap<BookingSentenceId, MutableList<SentenceEntity>> = HashMap(),
     val createdPeriodLengthMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>> = HashMap(),
-    val eventsToEmit: MutableList<EventMetadata> = mutableListOf(),
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf(),
   )
 
   data class RequestToRecord<T, S>(

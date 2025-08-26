@@ -15,17 +15,18 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.BookingService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 
 @RestController
 @RequestMapping("/legacy/court-case/booking", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "booking-controller", description = "Create operation for bookings in NOMIS. This is used when court cases are cloned onto different bookings")
-class BookingController(private val bookingService: BookingService) {
+class BookingController(private val bookingService: BookingService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Migrates court cases",
-    description = "Migrates a court case, court appearance and charge from NOMIS into remand and sentencing API.",
+    summary = "Creates court cases for specific booking",
+    description = "Creates all entities for specific bookings. This is when something is created on an old booking and the record is copied over to the latest booking so duplicate records need creating.",
   )
   @ApiResponses(
     value = [
@@ -37,5 +38,8 @@ class BookingController(private val bookingService: BookingService) {
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun create(
     @RequestBody bookingCreateCourtCases: BookingCreateCourtCases,
-  ): BookingCreateCourtCasesResponse = bookingService.create(bookingCreateCourtCases)
+  ): BookingCreateCourtCasesResponse = bookingService.create(bookingCreateCourtCases).let {
+    legacyDomainEventService.emitEvents(it.eventsToEmit)
+    it.record
+  }
 }

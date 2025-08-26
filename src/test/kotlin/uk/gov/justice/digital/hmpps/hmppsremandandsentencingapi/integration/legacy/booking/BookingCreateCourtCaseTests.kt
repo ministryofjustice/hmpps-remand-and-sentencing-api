@@ -51,6 +51,10 @@ class BookingCreateCourtCaseTests : IntegrationTestBase() {
     val createdSentence = response.sentences.first()
 
     Assertions.assertThat(createdSentence.sentenceNOMISId).isEqualTo(bookingCourtCases.courtCases.first().appearances.first().charges.first().sentence!!.sentenceId)
+
+    val messagesOnQueue = getMessages(5)
+    Assertions.assertThat(messagesOnQueue).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-case.inserted", "court-appearance.inserted", "charge.inserted", "sentence.inserted", "sentence.period-length.inserted")
+    Assertions.assertThat(messagesOnQueue).extracting<String> { it.additionalInformation.get("source").asText() }.allMatch { it.equals("NOMIS") }
   }
 
   @Test
