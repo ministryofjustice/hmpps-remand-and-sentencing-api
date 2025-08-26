@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -30,6 +31,9 @@ class CreateCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(createCourtCase.appearances.first().charges.first().chargeUuid.toString())
     expectInsertedMessages(createCourtCase.prisonerId)
+
+    val courtCaseLogs = courtCaseHistoryRepository.findAll().filter { it.prisonerId == createCourtCase.prisonerId }
+    assertThat(courtCaseLogs).hasSize(1)
   }
 
   @Test

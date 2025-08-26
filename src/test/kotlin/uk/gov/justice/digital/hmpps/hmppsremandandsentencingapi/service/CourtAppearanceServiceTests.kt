@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import java.time.LocalDate
 
 class CourtAppearanceServiceTests {
@@ -29,6 +30,7 @@ class CourtAppearanceServiceTests {
   private val appearanceChargeHistoryRepository = mockk<AppearanceChargeHistoryRepository>()
   private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
   private val documentService = mockk<UploadedDocumentService>()
+  private val courtCaseHistoryRepository = mockk<CourtCaseHistoryRepository>()
   private val courtAppearanceService = CourtAppearanceService(
     courtAppearanceRepository = courtAppearanceRepository,
     nextCourtAppearanceRepository = nextCourtAppearanceRepository,
@@ -43,6 +45,7 @@ class CourtAppearanceServiceTests {
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
     fixManyChargesToSentenceService = fixManyChargesToSentenceService,
     documentService = documentService,
+    courtCaseHistoryRepository = courtCaseHistoryRepository,
   )
 
   @Test

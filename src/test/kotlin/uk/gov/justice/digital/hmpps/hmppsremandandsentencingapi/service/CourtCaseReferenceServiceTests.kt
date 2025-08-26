@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
@@ -23,7 +24,8 @@ class CourtCaseReferenceServiceTests {
   private val courtAppearanceRepository = mockk<CourtAppearanceRepository>()
   private val serviceUserService = mockk<ServiceUserService>()
   private val courtAppearanceHistoryRepository = mockk<CourtAppearanceHistoryRepository>()
-  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, courtAppearanceRepository, serviceUserService, courtAppearanceHistoryRepository)
+  private val courtCaseHistoryRepository = mockk<CourtCaseHistoryRepository>()
+  private val courtCaseReferenceService = CourtCaseReferenceService(courtCaseRepository, courtAppearanceRepository, serviceUserService, courtAppearanceHistoryRepository, courtCaseHistoryRepository)
   private var idInt: Int = 0
 
   @Test
@@ -33,6 +35,7 @@ class CourtCaseReferenceServiceTests {
     val activeCourtAppearance = generateCourtAppearance("REFERENCE1", EntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(activeCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
+    every { courtCaseHistoryRepository.save(any()) } returns mockk()
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(1).extracting<String> { it.offenderCaseReference }.contains(activeCourtAppearance.courtCaseReference!!)
@@ -46,6 +49,7 @@ class CourtCaseReferenceServiceTests {
     val deletedCourtAppearance = generateCourtAppearance(oldCaseReference, EntityStatus.DELETED, courtCase)
     courtCase.appearances = setOf(deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
+    every { courtCaseHistoryRepository.save(any()) } returns mockk()
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(0).extracting<String> { it.offenderCaseReference }.doesNotContain(deletedCourtAppearance.courtCaseReference!!)
@@ -61,6 +65,7 @@ class CourtCaseReferenceServiceTests {
     val deletedCourtAppearance = generateCourtAppearance("OLDCASEREFERENCE", EntityStatus.DELETED, courtCase)
     courtCase.appearances = setOf(activeCourtAppearance, deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
+    every { courtCaseHistoryRepository.save(any()) } returns mockk()
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(5).extracting<String> { it.offenderCaseReference }.containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
