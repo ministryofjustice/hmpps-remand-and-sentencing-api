@@ -96,7 +96,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200",description = "Returns true or false"),
+      ApiResponse(responseCode = "200", description = "Returns true or false"),
       ApiResponse(responseCode = "400", description = "Invalid input"),
       ApiResponse(responseCode = "401", description = "Unauthorized"),
       ApiResponse(responseCode = "403", description = "Forbidden"),

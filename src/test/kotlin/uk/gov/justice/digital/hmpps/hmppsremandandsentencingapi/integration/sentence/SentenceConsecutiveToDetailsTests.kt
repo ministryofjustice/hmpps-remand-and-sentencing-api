@@ -124,7 +124,6 @@ class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
 
       val sentenceUUIDCount3 = sentenceEntities.first { it.countNumber == "3" }.sentenceUuid
 
-
       // Case 2 (CC2): single sentence, consecutive to CC1 Count 3
       val sentenceInCC2 = DpsDataCreator.dpsCreateSentence(
         chargeNumber = "5",
