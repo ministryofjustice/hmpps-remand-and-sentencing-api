@@ -3,10 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class CreateCourtCaseTests : IntegrationTestBase() {
