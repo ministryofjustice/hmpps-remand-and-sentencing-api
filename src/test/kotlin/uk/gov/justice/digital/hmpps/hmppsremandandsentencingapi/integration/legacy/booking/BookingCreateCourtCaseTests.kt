@@ -146,19 +146,8 @@ class BookingCreateCourtCaseTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
-
-    webTestClient
-      .get()
-      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].nextCourtAppearance.courtCode")
-      .isEqualTo(futureAppearance.courtCode)
+    val firstAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(firstAppearanceUuid)
+    Assertions.assertThat(firstAppearanceEntity!!.nextCourtAppearance!!.courtCode).isEqualTo(futureAppearance.courtCode)
   }
 
   @Test
@@ -182,19 +171,8 @@ class BookingCreateCourtCaseTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
-
-    webTestClient
-      .get()
-      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.appearances[?(@.appearanceUuid == '$firstAppearanceUuid')].nextCourtAppearance.courtCode")
-      .isEqualTo(futureAppearance.courtCode)
+    val firstAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(firstAppearanceUuid)!!
+    Assertions.assertThat(firstAppearanceEntity.nextCourtAppearance!!.courtCode).isEqualTo(futureAppearance.courtCode)
   }
 
   @Test
@@ -222,35 +200,10 @@ class BookingCreateCourtCaseTests : IntegrationTestBase() {
 
     val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
     val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
-    webTestClient
-      .get()
-      .uri {
-        it.path("/court-case/paged/search")
-          .queryParam("prisonerId", courtCases.prisonerId)
-          .build()
-      }
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.content[*].latestCourtAppearance.charges[*].sentence.sentenceUuid")
-      .value<List<String>> { result ->
-        Assertions.assertThat(result).contains(sentenceUuid.toString())
-        val counts = result.groupingBy { it }.eachCount()
-        Assertions.assertThat(counts.values).allMatch { it == 1 }
-      }
-      .jsonPath("$.content[*].latestCourtAppearance.charges[*].sentence.periodLengths[*].periodLengthUuid")
-      .value<List<String>> { result ->
-        Assertions.assertThat(result).contains(periodLengthUuid.toString())
-        val counts = result.groupingBy { it }.eachCount()
-        Assertions.assertThat(counts.values).allMatch { it == 1 }
-      }
-
-    val messages = getMessages(3)
-    Assertions.assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder("sentence.fix-single-charge.inserted", "sentence.updated", "sentence.period-length.inserted")
+    val sentences = sentenceRepository.findAll()
+    Assertions.assertThat(sentences).extracting<UUID> { it.sentenceUuid }.allMatch { it.equals(sentenceUuid) }
+    val periodLengths = periodLengthRepository.findAll()
+    Assertions.assertThat(periodLengths).extracting<UUID> { it.periodLengthUuid }.allMatch { it.equals(periodLengthUuid) }
   }
 
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {

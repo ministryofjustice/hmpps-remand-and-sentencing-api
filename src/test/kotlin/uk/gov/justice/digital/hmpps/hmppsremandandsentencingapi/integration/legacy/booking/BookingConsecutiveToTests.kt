@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.booking
 
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -52,22 +53,11 @@ class BookingConsecutiveToTests : IntegrationTestBase() {
 
     val consecutiveToSentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == consecutiveToSentence.sentenceId }.sentenceUuid
     val firstSentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == firstSentence.sentenceId }.sentenceUuid
-    webTestClient
-      .get()
-      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].consecutiveToSentenceUuid")
-      .isEqualTo(firstSentenceUuid.toString())
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$consecutiveToSentenceUuid')].sentenceServeType")
-      .isEqualTo("CONSECUTIVE")
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$firstSentenceUuid')].sentenceType.sentenceTypeUuid")
-      .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
+    val consecutiveToSentenceEntity = sentenceRepository.findBySentenceUuid(consecutiveToSentenceUuid).first()
+    val firstSentenceEntity = sentenceRepository.findBySentenceUuid(firstSentenceUuid).first()
+    Assertions.assertThat(consecutiveToSentenceEntity.consecutiveTo!!.sentenceUuid).isEqualTo(firstSentenceUuid)
+    Assertions.assertThat(consecutiveToSentenceEntity.sentenceServeType).isEqualTo("CONSECUTIVE")
+    Assertions.assertThat(firstSentenceEntity.sentenceType!!.sentenceTypeUuid).isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid)
   }
 
   @Test
@@ -91,17 +81,7 @@ class BookingConsecutiveToTests : IntegrationTestBase() {
       .returnResult(BookingCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
     val sentenceUuid = response.sentences.first { sentenceResponse -> sentenceResponse.sentenceNOMISId == sentenceWithNonExistentConsecutiveTo.sentenceId }.sentenceUuid
-    webTestClient
-      .get()
-      .uri("/court-case/${response.courtCases.first().courtCaseUuid}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.appearances[*].charges[*].sentence[?(@.sentenceUuid == '$sentenceUuid')].sentenceType.sentenceTypeUuid")
-      .isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid.toString())
+    val savedSentenceEntity = sentenceRepository.findBySentenceUuid(sentenceUuid).first()
+    Assertions.assertThat(savedSentenceEntity.sentenceType!!.sentenceTypeUuid).isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid)
   }
 }

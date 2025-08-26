@@ -392,7 +392,11 @@ class CourtAppearanceEntity(
       courtCode = bookingCreateCourtAppearance.courtCode,
       courtCaseReference = courtCaseReference,
       appearanceDate = bookingCreateCourtAppearance.appearanceDate,
-      statusId = EntityStatus.DUPLICATE,
+      statusId = getStatus(
+        bookingCreateCourtAppearance.appearanceDate,
+        bookingCreateCourtAppearance.legacyData.appearanceTime,
+        EntityStatus.DUPLICATE,
+      ),
       warrantId = null,
       appearanceCharges = mutableSetOf(),
       previousAppearance = null,
@@ -405,9 +409,9 @@ class CourtAppearanceEntity(
       source = NOMIS,
     )
 
-    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?): EntityStatus {
+    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?, nonFutureStatus: EntityStatus = EntityStatus.ACTIVE): EntityStatus {
       val compareDate = appearanceDate.atTime(appearanceTime ?: LocalTime.MIDNIGHT)
-      return if (compareDate.isAfter(LocalDateTime.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE
+      return if (compareDate.isAfter(LocalDateTime.now())) EntityStatus.FUTURE else nonFutureStatus
     }
 
     private fun deriveWarrantType(

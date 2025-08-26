@@ -215,7 +215,7 @@ class BookingService(
     val createdAppearances = createAppearances(bookingCreateCourtCase.appearances, createdCourtCase, latestCourtCaseReference, tracking)
     tracking.createdCourtAppearancesMap.putAll(createdAppearances)
     manageMatchedDpsNextCourtAppearances(bookingCreateCourtCase, createdAppearances)
-    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
+    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.DUPLICATE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
     createdCourtCase.latestCourtAppearance = latestCourtAppearance
     latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, bookingCreateCourtCase, createdAppearances) }
     tracking.createdCourtCasesMap[bookingCreateCourtCase.caseId] =
