@@ -327,9 +327,10 @@ class BookingService(
     bookingCreateSentence.legacyData = dpsSentenceType?.let { if (it.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) bookingCreateSentence.legacyData else bookingCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: bookingCreateSentence.legacyData
 
     val existingSentences = tracking.createdSentencesMap[bookingCreateSentence.sentenceId] ?: mutableListOf()
-    val toCreateSentence = existingSentences.firstOrNull()
-      ?.copyFrom(bookingCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
-      ?: SentenceEntity.from(bookingCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
+    val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
+      existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+      existingSentence.copyFrom(bookingCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
+    } ?: SentenceEntity.from(bookingCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
     existingSentences.add(createdSentence)
 
@@ -340,6 +341,7 @@ class BookingService(
     createdSentence.periodLengths = bookingCreateSentence.periodLengths.map {
       val existingPeriodLengths = tracking.createdPeriodLengthMap[it.periodLengthId] ?: mutableListOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
+        existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
         val copiedPeriodLength = existingPeriodLength.copy()
         copiedPeriodLength.sentenceEntity = createdSentence
         copiedPeriodLength

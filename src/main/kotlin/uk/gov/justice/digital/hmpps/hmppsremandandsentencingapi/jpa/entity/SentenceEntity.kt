@@ -210,7 +210,7 @@ class SentenceEntity(
     sentence.legacyData.active = sentence.active
     return SentenceEntity(
       sentenceUuid = sentenceUuid,
-      statusId = EntityStatus.DUPLICATE,
+      statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
       createdBy = createdBy,
       createdPrison = null,
       supersedingSentence = null,
