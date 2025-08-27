@@ -5,16 +5,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 
 class LegacyUpdatePeriodLengthTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var periodLengthHistoryRepository: PeriodLengthHistoryRepository
-
-  @Autowired
-  private lateinit var periodLengthRepository: PeriodLengthRepository
 
   @Test
   fun `update period length`() {

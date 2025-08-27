@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCase
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -236,6 +237,14 @@ class CourtCaseEntity(
         EntityStatus.INACTIVE
       },
       legacyData = migrationCreateCourtCase.courtCaseLegacyData,
+    )
+
+    fun from(bookingCreateCourtCase: BookingCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
+      prisonerId = prisonerId,
+      caseUniqueIdentifier = UUID.randomUUID().toString(),
+      createdBy = createdByUsername,
+      statusId = EntityStatus.DUPLICATE,
+      legacyData = bookingCreateCourtCase.courtCaseLegacyData,
     )
 
     fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = EntityStatus.DRAFT)
