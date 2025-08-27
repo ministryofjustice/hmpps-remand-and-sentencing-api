@@ -140,6 +140,15 @@ class DataCreator {
       courtCases: List<MigrationCreateCourtCase> = listOf(migrationCreateCourtCase()),
     ): MigrationCreateCourtCases = MigrationCreateCourtCases(prisonerId, courtCases)
 
+    fun migrationCreateSentenceCourtCases(
+      prisonerId: String = "PRI123",
+      courtCases: List<MigrationCreateCourtCase> = listOf(
+        migrationCreateCourtCase(
+          appearances = listOf(migrationCreateCourtAppearance(charges = listOf(migrationCreateCharge(sentence = migrationCreateSentence())))),
+        ),
+      ),
+    ): MigrationCreateCourtCases = MigrationCreateCourtCases(prisonerId, courtCases)
+
     fun migrationCreateCourtCase(
       caseId: Long = 1,
       active: Boolean = true,

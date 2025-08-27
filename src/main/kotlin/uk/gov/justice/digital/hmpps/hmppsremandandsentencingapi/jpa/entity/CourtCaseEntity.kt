@@ -178,7 +178,7 @@ class CourtCaseEntity(
   val id: Int = 0,
 
   @Column
-  val prisonerId: String,
+  var prisonerId: String,
   @Column
   val caseUniqueIdentifier: String,
 
