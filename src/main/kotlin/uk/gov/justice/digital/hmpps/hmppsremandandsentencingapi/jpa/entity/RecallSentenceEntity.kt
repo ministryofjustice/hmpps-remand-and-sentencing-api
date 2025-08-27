@@ -56,6 +56,14 @@ class RecallSentenceEntity(
       legacyData = legacyData,
     )
 
+    fun fromBooking(createdSentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
+      recallSentenceUuid = UUID.randomUUID(),
+      sentence = createdSentence,
+      recall = recall,
+      createdByUsername = createdByUsername,
+      legacyData = legacyData,
+    )
+
     fun from(sentence: LegacyCreateSentence, createdSentence: SentenceEntity, recall: RecallEntity, createdByUsername: String, legacyData: RecallSentenceLegacyData) = RecallSentenceEntity(
       recallSentenceUuid = UUID.randomUUID(),
       sentence = createdSentence,
