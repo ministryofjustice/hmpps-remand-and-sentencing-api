@@ -4,7 +4,7 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ConsecutiveSentenceDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
@@ -157,7 +157,7 @@ class SentenceServiceTests {
   private fun createConsecutiveSentenceDetails(
     uuid: UUID,
     parent: UUID?,
-  ): ConsecutiveSentenceDetails = ConsecutiveSentenceDetails(
+  ): SentenceDetailsForConsecValidation = SentenceDetailsForConsecValidation(
     uuid,
     parent,
   )

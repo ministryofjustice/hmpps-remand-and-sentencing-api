@@ -6,11 +6,11 @@ import jakarta.transaction.Transactional.TxType
 import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ConsecutiveSentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -191,7 +191,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     appearanceUUID: UUID,
     sourceSentenceUUID: UUID,
     targetSentenceUUID: UUID,
-    sentencesOnAppearanceFromUI: List<ConsecutiveSentenceDetails>,
+    sentencesOnAppearanceFromUI: List<SentenceDetailsForConsecValidation>,
   ): Boolean {
     if (sourceSentenceUUID == targetSentenceUUID) return true
 
@@ -236,13 +236,13 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
   @VisibleForTesting
   fun getUpstreamChains(
-    sentencesOnAppearanceFromUI: List<ConsecutiveSentenceDetails>,
+    sentencesOnAppearanceFromUI: List<SentenceDetailsForConsecValidation>,
     sourceSentenceUUID: UUID,
-  ): MutableList<MutableList<ConsecutiveSentenceDetails>> {
-    val childrenByParent: Map<UUID?, List<ConsecutiveSentenceDetails>> = sentencesOnAppearanceFromUI.groupBy { it.consecutiveToSentenceUuid }
+  ): MutableList<MutableList<SentenceDetailsForConsecValidation>> {
+    val childrenByParent: Map<UUID?, List<SentenceDetailsForConsecValidation>> = sentencesOnAppearanceFromUI.groupBy { it.consecutiveToSentenceUuid }
 
     val source = sentencesOnAppearanceFromUI.first { it.sentenceUuid == sourceSentenceUUID }
-    val results = mutableListOf<MutableList<ConsecutiveSentenceDetails>>()
+    val results = mutableListOf<MutableList<SentenceDetailsForConsecValidation>>()
 
     getChain(
       current = source,
@@ -254,10 +254,10 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
   }
 
   private fun getChain(
-    current: ConsecutiveSentenceDetails,
-    childrenByParent: Map<UUID?, List<ConsecutiveSentenceDetails>>,
-    currentChain: MutableList<ConsecutiveSentenceDetails>,
-    results: MutableList<MutableList<ConsecutiveSentenceDetails>>,
+    current: SentenceDetailsForConsecValidation,
+    childrenByParent: Map<UUID?, List<SentenceDetailsForConsecValidation>>,
+    currentChain: MutableList<SentenceDetailsForConsecValidation>,
+    results: MutableList<MutableList<SentenceDetailsForConsecValidation>>,
   ) {
     val children = childrenByParent[current.sentenceUuid].orEmpty()
     if (children.isEmpty()) {
