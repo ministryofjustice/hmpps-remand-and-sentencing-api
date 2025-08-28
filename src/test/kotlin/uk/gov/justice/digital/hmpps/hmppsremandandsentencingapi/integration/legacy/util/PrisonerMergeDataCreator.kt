@@ -36,6 +36,16 @@ class PrisonerMergeDataCreator {
       sentencesDeactivated: List<DeactivatedSentence> = listOf(),
     ): MergePerson = MergePerson(removedPrisonerNumber, casesCreated, casesDeactivated, sentencesDeactivated)
 
+    fun deactivatedCourtCase(
+      dpsCourtCaseUuid: String = "",
+      active: Boolean = false,
+    ): DeactivatedCourtCase = DeactivatedCourtCase(dpsCourtCaseUuid, active)
+
+    fun deactivatedSentence(
+      dpsSentenceUuid: UUID = UUID.randomUUID(),
+      active: Boolean = false,
+    ): DeactivatedSentence = DeactivatedSentence(dpsSentenceUuid, active)
+
     fun mergeCreateCourtCase(
       caseId: Long = 1,
       active: Boolean = true,
