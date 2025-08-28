@@ -31,6 +31,51 @@ class SentenceServiceTests {
   )
 
   @Nested
+  inner class IsTargetAlreadyInConsecutiveChainTests {
+    @Test
+    fun `should return false when source sentence not present in UI sentences`() {
+      val source = getId(1)
+      val target = getId(2)
+      val someOther = getId(3)
+
+      val sentences = listOf(
+        createConsecutiveSentenceDetails(uuid = someOther, parent = null),
+      )
+
+      val result = sentenceService.isTargetAlreadyInConsecutiveChain(
+        prisonerId = "A1234BC",
+        appearanceUUID = getId(9),
+        sourceSentenceUUID = source,
+        targetSentenceUUID = target,
+        sentencesOnAppearanceFromUI = sentences,
+      )
+
+      assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `should return true when target sentence exists in upstream chain`() {
+      val source = getId(1)
+      val target = getId(2)
+
+      val sentences = listOf(
+        createConsecutiveSentenceDetails(uuid = source, parent = null),
+        createConsecutiveSentenceDetails(uuid = target, parent = source), // target is child of source
+      )
+
+      val result = sentenceService.isTargetAlreadyInConsecutiveChain(
+        prisonerId = "A1234BC",
+        appearanceUUID = getId(9),
+        sourceSentenceUUID = source,
+        targetSentenceUUID = target,
+        sentencesOnAppearanceFromUI = sentences,
+      )
+
+      assertThat(result).isTrue()
+    }
+  }
+
+  @Nested
   inner class ExtractChainTests {
     @Test
     fun `should return only the source sentence in chain if nothing is consecutive to source`() {
