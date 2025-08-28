@@ -197,8 +197,9 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
 
     // The sentence hasnt been added to the court appearance (yet)
     // i.e. still in the 'Add sentence' phase - therefore it cannot be part on any consec chain
-    if (sentencesOnAppearanceFromUI.none { sentence ->  sentence.sentenceUuid == sourceSentenceUUID })
+    if (sentencesOnAppearanceFromUI.none { sentence -> sentence.sentenceUuid == sourceSentenceUUID }) {
       return false
+    }
 
     sentencesOnAppearanceFromUI.forEach { log.info(it.toString()) }
     // build upstream chains for the current appearance, starting from the sourceSentence
