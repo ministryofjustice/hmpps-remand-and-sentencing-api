@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtAppearance
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -69,6 +70,14 @@ class NextCourtAppearanceEntity(
     )
 
     fun from(nomisAppearance: BookingCreateCourtAppearance, nomisFutureAppearance: BookingCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+      appearanceDate = nomisAppearance.legacyData.nextEventDateTime!!.toLocalDate(),
+      appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime().takeUnless { time -> time == LocalTime.MIDNIGHT },
+      courtCode = nomisFutureAppearance.courtCode,
+      appearanceType = appearanceTypeEntity,
+      futureSkeletonAppearance = futureAppearance,
+    )
+
+    fun from(nomisAppearance: MergeCreateCourtAppearance, nomisFutureAppearance: MergeCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
       appearanceDate = nomisAppearance.legacyData.nextEventDateTime!!.toLocalDate(),
       appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime().takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisFutureAppearance.courtCode,

@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCase
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -237,6 +238,20 @@ class CourtCaseEntity(
         EntityStatus.INACTIVE
       },
       legacyData = migrationCreateCourtCase.courtCaseLegacyData,
+    )
+
+    fun from(mergeCreateCourtCase: MergeCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
+      prisonerId = prisonerId,
+      caseUniqueIdentifier = UUID.randomUUID().toString(),
+      createdBy = createdByUsername,
+      statusId = if (mergeCreateCourtCase.merged) {
+        EntityStatus.MERGED
+      } else if (mergeCreateCourtCase.active) {
+        EntityStatus.ACTIVE
+      } else {
+        EntityStatus.INACTIVE
+      },
+      legacyData = mergeCreateCourtCase.courtCaseLegacyData,
     )
 
     fun from(bookingCreateCourtCase: BookingCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(

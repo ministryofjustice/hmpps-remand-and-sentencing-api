@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergePerson
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyPrisonerMergeService
 
@@ -35,7 +36,5 @@ class LegacyPrisonerMergeController(private val legacyPrisonerMergeService: Lega
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun process(@RequestBody mergePerson: MergePerson, @PathVariable retainedPrisonerNumber: String) {
-    legacyPrisonerMergeService.process(mergePerson, retainedPrisonerNumber)
-  }
+  fun process(@RequestBody mergePerson: MergePerson, @PathVariable retainedPrisonerNumber: String): MergeCreateCourtCasesResponse = legacyPrisonerMergeService.process(mergePerson, retainedPrisonerNumber)
 }

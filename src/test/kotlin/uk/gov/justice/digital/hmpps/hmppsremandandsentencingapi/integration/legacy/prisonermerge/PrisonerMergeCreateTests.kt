@@ -7,6 +7,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.PrisonerMergeDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
+import java.util.regex.Pattern
 
 class PrisonerMergeCreateTests : IntegrationTestBase() {
 
@@ -82,10 +84,45 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.content.[0].courtCaseStatus")
-      .isEqualTo(EntityStatus.INACTIVE)
+      .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuid')].courtCaseStatus")
+      .isEqualTo(EntityStatus.INACTIVE.toString())
 
     val sentence = sentenceRepository.findBySentenceUuid(sentenceUuid).first()
     Assertions.assertThat(sentence.statusId).isEqualTo(EntityStatus.INACTIVE)
+  }
+
+  @Test
+  fun `create all entities and return ids against NOMIS ids`() {
+    val migratedRecords = migrateCases(DataCreator.migrationCreateSentenceCourtCases())
+    val retainedPrisonerNumber = "PRI999"
+    val mergePerson = PrisonerMergeDataCreator.mergePerson()
+
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/merge/person/$retainedPrisonerNumber")
+      .bodyValue(mergePerson)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MergeCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.courtCases).hasSize(mergePerson.casesCreated.size)
+    val courtCaseResponse = response.courtCases.first()
+
+    Assertions.assertThat(courtCaseResponse.courtCaseUuid).matches(Pattern.compile("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+    Assertions.assertThat(response.appearances).hasSize(mergePerson.casesCreated.flatMap { it.appearances }.size)
+    val createdAppearance = response.appearances.first()
+    Assertions.assertThat(createdAppearance.eventId).isEqualTo(mergePerson.casesCreated.first().appearances.first().eventId)
+    Assertions.assertThat(response.charges).hasSize(mergePerson.casesCreated.flatMap { it.appearances.flatMap { it.charges } }.size)
+    val createdCharge = response.charges.first()
+    Assertions.assertThat(createdCharge.chargeNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().chargeNOMISId)
+    val createdSentence = response.sentences.first()
+
+    Assertions.assertThat(createdSentence.sentenceNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().sentence!!.sentenceId)
   }
 }
