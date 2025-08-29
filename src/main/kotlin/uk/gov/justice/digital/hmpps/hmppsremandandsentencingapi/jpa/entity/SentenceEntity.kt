@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateSentence
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -206,6 +207,24 @@ class SentenceEntity(
     )
   }
 
+  fun copyFrom(sentence: MergeCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {
+    sentence.legacyData.active = sentence.active
+    return SentenceEntity(
+      sentenceUuid = sentenceUuid,
+      statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
+      createdBy = createdBy,
+      createdPrison = null,
+      supersedingSentence = null,
+      charge = chargeEntity,
+      sentenceServeType = if (sentence.consecutiveToSentenceId != null) "CONSECUTIVE" else "CONCURRENT",
+      consecutiveTo = null,
+      sentenceType = sentenceTypeEntity,
+      convictionDate = null,
+      legacyData = sentence.legacyData,
+      fineAmount = sentence.fine?.fineAmount,
+    )
+  }
+
   fun copyFrom(sentence: BookingCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {
     sentence.legacyData.active = sentence.active
     return SentenceEntity(
@@ -297,6 +316,24 @@ class SentenceEntity(
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {
+      sentence.legacyData.active = sentence.active
+      return SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        createdBy = createdBy,
+        createdPrison = null,
+        supersedingSentence = null,
+        charge = chargeEntity,
+        sentenceServeType = if (sentence.consecutiveToSentenceId != null) "CONSECUTIVE" else "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = sentenceTypeEntity,
+        convictionDate = null,
+        legacyData = sentence.legacyData,
+        fineAmount = sentence.fine?.fineAmount,
+      )
+    }
+
+    fun from(sentence: MergeCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {
       sentence.legacyData.active = sentence.active
       return SentenceEntity(
         sentenceUuid = UUID.randomUUID(),

@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtAppearance
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -376,6 +377,35 @@ class CourtAppearanceEntity(
       warrantType = deriveWarrantType(appearanceOutcome, migrationCreateCourtAppearance.legacyData, migrationCreateCourtAppearance.charges.any { it.sentence != null }),
       overallConvictionDate = null,
       legacyData = migrationCreateCourtAppearance.legacyData,
+      source = NOMIS,
+    )
+
+    fun from(
+      mergeCreateCourtAppearance: MergeCreateCourtAppearance,
+      appearanceOutcome: AppearanceOutcomeEntity?,
+      courtCase: CourtCaseEntity,
+      createdBy: String,
+      courtCaseReference: String?,
+    ): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = appearanceOutcome,
+      courtCase = courtCase,
+      courtCode = mergeCreateCourtAppearance.courtCode,
+      courtCaseReference = courtCaseReference,
+      appearanceDate = mergeCreateCourtAppearance.appearanceDate,
+      statusId = getStatus(
+        mergeCreateCourtAppearance.appearanceDate,
+        mergeCreateCourtAppearance.legacyData.appearanceTime,
+      ),
+      warrantId = null,
+      appearanceCharges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdBy = createdBy,
+      nextCourtAppearance = null,
+      warrantType = deriveWarrantType(appearanceOutcome, mergeCreateCourtAppearance.legacyData, mergeCreateCourtAppearance.charges.any { it.sentence != null }),
+      overallConvictionDate = null,
+      legacyData = mergeCreateCourtAppearance.legacyData,
       source = NOMIS,
     )
 
