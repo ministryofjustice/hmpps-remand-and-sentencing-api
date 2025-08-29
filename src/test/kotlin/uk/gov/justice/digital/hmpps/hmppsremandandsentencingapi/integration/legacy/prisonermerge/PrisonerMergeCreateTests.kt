@@ -16,7 +16,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
   fun `moved all records to new prisoner number`() {
     val migratedRecords = migrateCases(DataCreator.migrationCreateSentenceCourtCases())
     val retainedPrisonerNumber = "PRI999"
-    val mergePerson = PrisonerMergeDataCreator.mergePerson()
+    val mergePerson = PrisonerMergeDataCreator.mergePerson(casesCreated = listOf())
 
     webTestClient
       .post()
