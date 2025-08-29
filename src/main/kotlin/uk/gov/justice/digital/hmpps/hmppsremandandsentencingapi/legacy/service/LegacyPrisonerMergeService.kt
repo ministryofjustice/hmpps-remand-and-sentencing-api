@@ -153,10 +153,6 @@ class LegacyPrisonerMergeService(
           }
       }
     }
-    courtCases.flatMap { courtCase -> courtCase.appearances.flatMap { appearance -> appearance.appearanceCharges.filter { it.charge?.getActiveOrInactiveSentence() != null }.map { it.charge!!.getActiveOrInactiveSentence()!! } } }
-      .filter { deactivatedSentencesMap.containsKey(it.sentenceUuid) }
-      .forEach { sentenceEntity ->
-      }
   }
 
   fun processCreateCourtCases(mergePerson: MergePerson, trackingData: PrisonerMergeDataTracking): MergeCreateCourtCasesResponse {
