@@ -387,13 +387,15 @@ class BookingService(
       ?.let { referenceData.legacySentenceTypes[it.first to it.second!!.toInt()] }
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
     val recall = recallRepository.save(RecallEntity.fromBooking(bookingCreateSentence, tracking.prisonerId, tracking.createdByUsername, legacySentenceType?.recallType ?: defaultRecallType))
-    EventMetadataCreator.recallEventMetadata(
-      bookingHierarchyData.prisonerId,
-      recall.recallUuid.toString(),
-      listOf(createdSentence.sentenceUuid.toString()),
-      emptyList(),
-      null,
-      EventType.RECALL_INSERTED,
+    tracking.eventsToEmit.add(
+      EventMetadataCreator.recallEventMetadata(
+        bookingHierarchyData.prisonerId,
+        recall.recallUuid.toString(),
+        listOf(createdSentence.sentenceUuid.toString()),
+        emptyList(),
+        null,
+        EventType.RECALL_INSERTED,
+      ),
     )
     recallSentenceRepository.save(RecallSentenceEntity.fromBooking(createdSentence, recall, tracking.createdByUsername, recallSentenceLegacyData))
   }

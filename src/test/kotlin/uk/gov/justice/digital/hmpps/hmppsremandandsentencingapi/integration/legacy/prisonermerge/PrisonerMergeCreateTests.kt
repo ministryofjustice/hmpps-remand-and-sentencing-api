@@ -16,7 +16,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
   fun `moved all records to new prisoner number`() {
     val migratedRecords = migrateCases(DataCreator.migrationCreateSentenceCourtCases())
     val retainedPrisonerNumber = "PRI999"
-    val mergePerson = PrisonerMergeDataCreator.mergePerson()
+    val mergePerson = PrisonerMergeDataCreator.mergePerson(casesCreated = listOf())
 
     webTestClient
       .post()
@@ -93,7 +93,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
 
   @Test
   fun `create all entities and return ids against NOMIS ids`() {
-    val migratedRecords = migrateCases(DataCreator.migrationCreateSentenceCourtCases())
+    migrateCases(DataCreator.migrationCreateSentenceCourtCases())
     val retainedPrisonerNumber = "PRI999"
     val mergePerson = PrisonerMergeDataCreator.mergePerson()
 
@@ -124,5 +124,9 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
     val createdSentence = response.sentences.first()
 
     Assertions.assertThat(createdSentence.sentenceNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().sentence!!.sentenceId)
+
+    val messagesOnQueue = getMessages(6)
+    Assertions.assertThat(messagesOnQueue).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-case.inserted", "court-appearance.inserted", "charge.inserted", "sentence.inserted", "sentence.period-length.inserted", "court-case.updated")
+    Assertions.assertThat(messagesOnQueue).extracting<String> { it.additionalInformation.get("source").asText() }.allMatch { it.equals("NOMIS") }
   }
 }

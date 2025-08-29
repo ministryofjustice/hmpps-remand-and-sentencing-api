@@ -15,12 +15,13 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergePerson
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyPrisonerMergeService
 
 @RestController
 @RequestMapping("/legacy/court-case/merge/person", produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "booking-controller", description = "Create operation for bookings in NOMIS. This is used when court cases are cloned onto different bookings")
-class LegacyPrisonerMergeController(private val legacyPrisonerMergeService: LegacyPrisonerMergeService) {
+@Tag(name = "prisoner-merge-controller", description = "Create operation for bookings in NOMIS. This is used when court cases are cloned onto different bookings")
+class LegacyPrisonerMergeController(private val legacyPrisonerMergeService: LegacyPrisonerMergeService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping("/{retainedPrisonerNumber}")
   @ResponseStatus(HttpStatus.CREATED)
@@ -36,5 +37,8 @@ class LegacyPrisonerMergeController(private val legacyPrisonerMergeService: Lega
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun process(@RequestBody mergePerson: MergePerson, @PathVariable retainedPrisonerNumber: String): MergeCreateCourtCasesResponse = legacyPrisonerMergeService.process(mergePerson, retainedPrisonerNumber)
+  fun process(@RequestBody mergePerson: MergePerson, @PathVariable retainedPrisonerNumber: String): MergeCreateCourtCasesResponse = legacyPrisonerMergeService.process(mergePerson, retainedPrisonerNumber).let {
+    legacyDomainEventService.emitEvents(it.eventsToEmit)
+    it.record
+  }
 }
