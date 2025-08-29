@@ -3,6 +3,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -86,7 +90,7 @@ class LegacyPrisonerMergeService(
 ) {
 
   @Transactional
-  fun process(mergePerson: MergePerson, retainedPrisonerNumber: String): MergeCreateCourtCasesResponse {
+  fun process(mergePerson: MergePerson, retainedPrisonerNumber: String): RecordResponse<MergeCreateCourtCasesResponse> {
     val courtCases = courtCaseRepository.findAllByPrisonerId(mergePerson.removedPrisonerNumber)
     val deactivatedCourtCasesMap = mergePerson.casesDeactivated.associateBy { it.dpsCourtCaseUuid }
     val deactivatedSentencesMap = mergePerson.sentencesDeactivated.associateBy { it.dpsSentenceUuid }
@@ -95,7 +99,7 @@ class LegacyPrisonerMergeService(
     processExistingSentences(courtCases, deactivatedSentencesMap, trackingData)
     val createdResponse = processCreateCourtCases(mergePerson, trackingData)
     auditRecords(trackingData)
-    return createdResponse
+    return RecordResponse(createdResponse, trackingData.eventsToEmit)
   }
 
   fun processExistingCourtCases(courtCases: List<CourtCaseEntity>, deactivatedCourtCasesMap: Map<String, DeactivatedCourtCase>, trackingData: PrisonerMergeDataTracking) {
@@ -106,25 +110,52 @@ class LegacyPrisonerMergeService(
         courtCase.statusId = newStatus
       }
       trackingData.editedCourtCases.add(courtCase)
+      trackingData.eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(
+          trackingData.retainedPrisonerNumber,
+          courtCase.caseUniqueIdentifier,
+          EventType.COURT_CASE_UPDATED,
+        ),
+      )
     }
   }
 
   fun processExistingSentences(courtCases: List<CourtCaseEntity>, deactivatedSentencesMap: Map<UUID, DeactivatedSentence>, trackingData: PrisonerMergeDataTracking) {
+    courtCases.forEach { courtCase ->
+      courtCase.appearances.forEach { courtAppearance ->
+        courtAppearance.appearanceCharges.filter { appearanceCharge ->
+          appearanceCharge.charge?.getActiveOrInactiveSentence() != null
+        }.map { it.charge!!.getActiveOrInactiveSentence()!! }
+          .filter { deactivatedSentencesMap.containsKey(it.sentenceUuid) }
+          .forEach { sentenceEntity ->
+            val active = deactivatedSentencesMap[sentenceEntity.sentenceUuid]!!.active
+            var hasChanged = false
+            if (sentenceEntity.statusId != EntityStatus.MANY_CHARGES_DATA_FIX) {
+              val newStatus = if (active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
+              hasChanged = newStatus != sentenceEntity.statusId
+              sentenceEntity.statusId = newStatus
+            }
+            hasChanged = hasChanged || active != sentenceEntity.legacyData?.active
+            sentenceEntity.legacyData?.active = active
+            if (hasChanged) {
+              trackingData.editedSentences.add(sentenceEntity)
+              trackingData.eventsToEmit.add(
+                EventMetadataCreator.sentenceEventMetadata(
+                  trackingData.retainedPrisonerNumber,
+                  courtCase.caseUniqueIdentifier,
+                  sentenceEntity.charge.chargeUuid.toString(),
+                  sentenceEntity.sentenceUuid.toString(),
+                  courtAppearance.appearanceUuid.toString(),
+                  EventType.SENTENCE_UPDATED,
+                ),
+              )
+            }
+          }
+      }
+    }
     courtCases.flatMap { courtCase -> courtCase.appearances.flatMap { appearance -> appearance.appearanceCharges.filter { it.charge?.getActiveOrInactiveSentence() != null }.map { it.charge!!.getActiveOrInactiveSentence()!! } } }
       .filter { deactivatedSentencesMap.containsKey(it.sentenceUuid) }
       .forEach { sentenceEntity ->
-        val active = deactivatedSentencesMap[sentenceEntity.sentenceUuid]!!.active
-        var hasChanged = false
-        if (sentenceEntity.statusId != EntityStatus.MANY_CHARGES_DATA_FIX) {
-          val newStatus = if (active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
-          hasChanged = newStatus != sentenceEntity.statusId
-          sentenceEntity.statusId = newStatus
-        }
-        hasChanged = hasChanged || active != sentenceEntity.legacyData?.active
-        sentenceEntity.legacyData?.active = active
-        if (hasChanged) {
-          trackingData.editedSentences.add(sentenceEntity)
-        }
       }
   }
 
@@ -248,6 +279,7 @@ class LegacyPrisonerMergeService(
     createdCourtCase.latestCourtAppearance = latestCourtAppearance
     latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, mergeCreateCourtCase, createdAppearances) }
     tracking.createdCourtCasesMap[mergeCreateCourtCase.caseId] = RequestToRecord(mergeCreateCourtCase, createdCourtCase)
+    tracking.eventsToEmit.add(EventMetadataCreator.courtCaseEventMetadata(createdCourtCase.prisonerId, createdCourtCase.caseUniqueIdentifier, EventType.COURT_CASE_INSERTED))
   }
 
   fun createAppearances(mergeCreateAppearances: List<MergeCreateCourtAppearance>, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: PrisonerMergeDataTracking): Map<Long, CourtAppearanceEntity> {
@@ -263,7 +295,15 @@ class LegacyPrisonerMergeService(
   fun createAppearance(mergeCreateCourtAppearance: MergeCreateCourtAppearance, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: PrisonerMergeDataTracking, referenceData: PrisonerMergeReferenceData): CourtAppearanceEntity {
     val dpsAppearanceOutcome = mergeCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { referenceData.dpsAppearanceOutcomes[it] }
     val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(mergeCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.username, courtCaseReference))
-    val charges = mergeCreateCourtAppearance.charges.map { charge -> createCharge(charge, tracking, referenceData, mergeCreateCourtAppearance.eventId) }
+    val charges = mergeCreateCourtAppearance.charges.map { charge ->
+      createCharge(
+        charge,
+        tracking,
+        referenceData,
+        mergeCreateCourtAppearance.eventId,
+        MergeHierarchyData(tracking.retainedPrisonerNumber, createdCourtCase.caseUniqueIdentifier, createdAppearance.appearanceUuid.toString()),
+      )
+    }
     charges.forEach { charge ->
       val appearanceChargeEntity = AppearanceChargeEntity(
         createdAppearance,
@@ -273,10 +313,18 @@ class LegacyPrisonerMergeService(
       )
       createdAppearance.appearanceCharges.add(appearanceChargeEntity)
     }
+    tracking.eventsToEmit.add(
+      EventMetadataCreator.courtAppearanceEventMetadata(
+        createdAppearance.courtCase.prisonerId,
+        createdAppearance.courtCase.caseUniqueIdentifier,
+        createdAppearance.appearanceUuid.toString(),
+        EventType.COURT_APPEARANCE_INSERTED,
+      ),
+    )
     return createdAppearance
   }
 
-  fun createCharge(mergeCreateCharge: MergeCreateCharge, tracking: PrisonerMergeDataTracking, referenceData: PrisonerMergeReferenceData, eventId: Long): ChargeEntity {
+  fun createCharge(mergeCreateCharge: MergeCreateCharge, tracking: PrisonerMergeDataTracking, referenceData: PrisonerMergeReferenceData, eventId: Long, mergeHierarchyData: MergeHierarchyData): ChargeEntity {
     val dpsChargeOutcome = mergeCreateCharge.legacyData.nomisOutcomeCode?.let { referenceData.dpsChargeOutcomes[it] }
     mergeCreateCharge.legacyData = dpsChargeOutcome?.let { mergeCreateCharge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: mergeCreateCharge.legacyData
     val existingChangeRecords = tracking.createdChargesMap[mergeCreateCharge.chargeNOMISId] ?: mutableListOf()
@@ -288,10 +336,19 @@ class LegacyPrisonerMergeService(
       ChargeEntity.from(mergeCreateCharge, dpsChargeOutcome, tracking.username)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
-
-    mergeCreateCharge.sentence?.let { mergeSentence -> createdCharge.sentences.add(createSentence(mergeSentence, createdCharge, tracking, referenceData)) }
+    mergeHierarchyData.chargeId = createdCharge.chargeUuid.toString()
+    mergeCreateCharge.sentence?.let { mergeSentence -> createdCharge.sentences.add(createSentence(mergeSentence, createdCharge, tracking, referenceData, mergeHierarchyData)) }
     existingChangeRecords.add(eventId to createdCharge)
     tracking.createdChargesMap[mergeCreateCharge.chargeNOMISId] = existingChangeRecords
+    tracking.eventsToEmit.add(
+      EventMetadataCreator.chargeEventMetadata(
+        mergeHierarchyData.prisonerId,
+        mergeHierarchyData.courtCaseId,
+        null,
+        createdCharge.chargeUuid.toString(),
+        EventType.CHARGE_INSERTED,
+      ),
+    )
     return createdCharge
   }
 
@@ -322,7 +379,7 @@ class LegacyPrisonerMergeService(
     return dpsSentenceTypes[sentenceCalcType to sentenceCategory]
   }
 
-  fun createSentence(mergeCreateSentence: MergeCreateSentence, chargeEntity: ChargeEntity, tracking: PrisonerMergeDataTracking, referenceData: PrisonerMergeReferenceData): SentenceEntity {
+  fun createSentence(mergeCreateSentence: MergeCreateSentence, chargeEntity: ChargeEntity, tracking: PrisonerMergeDataTracking, referenceData: PrisonerMergeReferenceData, mergeHierarchyData: MergeHierarchyData): SentenceEntity {
     val dpsSentenceType = (mergeCreateSentence.legacyData.sentenceCalcType to mergeCreateSentence.legacyData.sentenceCategory).takeIf { (sentenceCalcType, sentenceCategory) -> sentenceCalcType != null && sentenceCategory != null }?.let { getDpsSentenceType(referenceData.dpsSentenceTypes, it) }
     val legacyData = mergeCreateSentence.legacyData
     mergeCreateSentence.legacyData = dpsSentenceType?.let { if (it.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) mergeCreateSentence.legacyData else mergeCreateSentence.legacyData.copy(sentenceCalcType = null, sentenceCategory = null, sentenceTypeDesc = null) } ?: mergeCreateSentence.legacyData
@@ -351,9 +408,30 @@ class LegacyPrisonerMergeService(
       createdPeriodLength.sentenceEntity = createdSentence
       existingPeriodLengths.add(createdPeriodLength)
       tracking.createdPeriodLengthMap[it.periodLengthId] = existingPeriodLengths
+      tracking.eventsToEmit.add(
+        EventMetadataCreator.periodLengthEventMetadata(
+          prisonerId = mergeHierarchyData.prisonerId,
+          courtCaseId = mergeHierarchyData.courtCaseId,
+          courtAppearanceId = mergeHierarchyData.courtAppearanceId,
+          chargeId = mergeHierarchyData.chargeId!!,
+          sentenceId = createdSentence.sentenceUuid.toString(),
+          periodLengthId = createdPeriodLength.periodLengthUuid.toString(),
+          eventType = EventType.PERIOD_LENGTH_INSERTED,
+        ),
+      )
       createdPeriodLength
     }.toMutableSet()
     tracking.createdSentencesMap[mergeCreateSentence.sentenceId] = existingSentences
+    tracking.eventsToEmit.add(
+      EventMetadataCreator.sentenceEventMetadata(
+        mergeHierarchyData.prisonerId,
+        mergeHierarchyData.courtCaseId,
+        mergeHierarchyData.chargeId!!,
+        createdSentence.sentenceUuid.toString(),
+        mergeHierarchyData.courtAppearanceId,
+        EventType.SENTENCE_INSERTED,
+      ),
+    )
     return createdSentence
   }
 
@@ -363,6 +441,16 @@ class LegacyPrisonerMergeService(
       ?.let { referenceData.legacySentenceTypes[it.first to it.second!!.toInt()] }
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
     val recall = recallRepository.save(RecallEntity.fromMerge(mergeCreateSentence, tracking.retainedPrisonerNumber, tracking.username, legacySentenceType?.recallType ?: defaultRecallType))
+    tracking.eventsToEmit.add(
+      EventMetadataCreator.recallEventMetadata(
+        tracking.retainedPrisonerNumber,
+        recall.recallUuid.toString(),
+        listOf(createdSentence.sentenceUuid.toString()),
+        emptyList(),
+        null,
+        EventType.RECALL_INSERTED,
+      ),
+    )
     recallSentenceRepository.save(RecallSentenceEntity.fromMerge(createdSentence, recall, tracking.username, recallSentenceLegacyData))
   }
 
@@ -380,6 +468,7 @@ class LegacyPrisonerMergeService(
     val createdChargesMap: MutableMap<Long, MutableList<Pair<Long, ChargeEntity>>> = HashMap(),
     val createdSentencesMap: MutableMap<MergeSentenceId, MutableList<SentenceEntity>> = HashMap(),
     val createdPeriodLengthMap: MutableMap<NomisPeriodLengthId, MutableList<PeriodLengthEntity>> = HashMap(),
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf(),
   )
 
   data class RequestToRecord<T, S>(
@@ -392,5 +481,12 @@ class LegacyPrisonerMergeService(
     val dpsChargeOutcomes: Map<String, ChargeOutcomeEntity>,
     val dpsSentenceTypes: Map<Pair<String, String?>, SentenceTypeEntity>,
     val legacySentenceTypes: Map<Pair<String, Int>, LegacySentenceTypeEntity>,
+  )
+
+  data class MergeHierarchyData(
+    var prisonerId: String,
+    var courtCaseId: String,
+    var courtAppearanceId: String,
+    var chargeId: String? = null,
   )
 }
