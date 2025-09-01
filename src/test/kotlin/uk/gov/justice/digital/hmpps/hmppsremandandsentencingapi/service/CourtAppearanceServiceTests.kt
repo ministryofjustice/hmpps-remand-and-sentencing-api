@@ -30,7 +30,6 @@ class CourtAppearanceServiceTests {
   private val appearanceChargeHistoryRepository = mockk<AppearanceChargeHistoryRepository>()
   private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
   private val documentService = mockk<UploadedDocumentService>()
-  private val courtCaseHistoryRepository = mockk<CourtCaseHistoryRepository>()
   private val courtAppearanceService = CourtAppearanceService(
     courtAppearanceRepository = courtAppearanceRepository,
     nextCourtAppearanceRepository = nextCourtAppearanceRepository,
@@ -45,7 +44,6 @@ class CourtAppearanceServiceTests {
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
     fixManyChargesToSentenceService = fixManyChargesToSentenceService,
     documentService = documentService,
-    courtCaseHistoryRepository = courtCaseHistoryRepository,
   )
 
   @Test

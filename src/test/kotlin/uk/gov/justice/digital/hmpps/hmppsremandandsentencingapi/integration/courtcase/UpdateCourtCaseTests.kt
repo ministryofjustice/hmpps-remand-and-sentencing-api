@@ -24,6 +24,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `update court case`() {
     val courtCase = createCourtCase()
+    courtCaseHistoryRepository.deleteAll()
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE")
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
     webTestClient
@@ -42,7 +43,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
 
     val courtCaseLogs = courtCaseHistoryRepository.findAll().filter { it.prisonerId == courtCase.second.prisonerId }
-    assertThat(courtCaseLogs).hasSize(2)
+    assertThat(courtCaseLogs).hasSize(1)
   }
 
   @Test

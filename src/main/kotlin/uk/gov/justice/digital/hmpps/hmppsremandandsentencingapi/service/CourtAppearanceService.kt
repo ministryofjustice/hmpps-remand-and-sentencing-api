@@ -53,7 +53,6 @@ class CourtAppearanceService(
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val documentService: UploadedDocumentService,
-  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
 
   @Transactional
@@ -576,7 +575,6 @@ class CourtAppearanceService(
     if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())
-      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity))
       return DeleteCourtAppearanceResponse(
         records = RecordResponse(
           courtAppearanceEntity,
