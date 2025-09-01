@@ -118,7 +118,6 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var periodLengthRepository: PeriodLengthRepository
 
-
   @BeforeEach
   fun clearDependencies() {
     purgeQueues()
