@@ -40,4 +40,13 @@ class CourtCaseHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_court_case_id")
   val originalCourtCase: CourtCaseEntity,
-)
+) {
+  companion object {
+    fun from(courtCaseEntity: CourtCaseEntity): CourtCaseHistoryEntity = CourtCaseHistoryEntity(
+      0, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.latestCourtAppearance?.id,
+      courtCaseEntity.createdAt, courtCaseEntity.createdBy, courtCaseEntity.updatedAt, courtCaseEntity.updatedBy,
+      courtCaseEntity.statusId, courtCaseEntity.legacyData, courtCaseEntity.createdPrison,
+      courtCaseEntity.mergedToCase?.id, courtCaseEntity.mergedToDate, courtCaseEntity,
+    )
+  }
+}
