@@ -23,6 +23,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCharge
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -140,6 +142,20 @@ class ChargeEntity(
     mergedFromDate = migrationCreateCharge.mergedFromDate,
   )
 
+  fun copyFrom(mergeCreateCharge: MergeCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+    0, chargeUuid, mergeCreateCharge.offenceCode, mergeCreateCharge.offenceStartDate, mergeCreateCharge.offenceEndDate,
+    EntityStatus.ACTIVE, chargeOutcome, this, null,
+    createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, mergeCreateCharge.legacyData, mutableSetOf(), null,
+    mergedFromDate = mergeCreateCharge.mergedFromDate,
+  )
+
+  fun copyFrom(bookingCreateCharge: BookingCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+    0, chargeUuid, bookingCreateCharge.offenceCode, bookingCreateCharge.offenceStartDate, bookingCreateCharge.offenceEndDate,
+    EntityStatus.DUPLICATE, chargeOutcome, this, null,
+    createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, bookingCreateCharge.legacyData, mutableSetOf(), null,
+    mergedFromDate = bookingCreateCharge.mergedFromDate,
+  )
+
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
     val chargeEntity = ChargeEntity(
       0, chargeUuid, charge.offenceCode, offenceStartDate, offenceEndDate,
@@ -243,6 +259,52 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       migrationCreateCharge.mergedFromDate,
+    )
+
+    fun from(mergeCreateCharge: MergeCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+      0,
+      UUID.randomUUID(),
+      mergeCreateCharge.offenceCode,
+      mergeCreateCharge.offenceStartDate,
+      mergeCreateCharge.offenceEndDate,
+      EntityStatus.ACTIVE,
+      chargeOutcome,
+      null,
+      null,
+      ZonedDateTime.now(),
+      createdBy,
+      null,
+      ZonedDateTime.now(),
+      null,
+      null,
+
+      mergeCreateCharge.legacyData,
+      mutableSetOf(),
+      null,
+      mergeCreateCharge.mergedFromDate,
+    )
+
+    fun from(bookingCreateCharge: BookingCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+      0,
+      UUID.randomUUID(),
+      bookingCreateCharge.offenceCode,
+      bookingCreateCharge.offenceStartDate,
+      bookingCreateCharge.offenceEndDate,
+      EntityStatus.DUPLICATE,
+      chargeOutcome,
+      null,
+      null,
+      ZonedDateTime.now(),
+      createdBy,
+      null,
+      ZonedDateTime.now(),
+      null,
+      null,
+
+      bookingCreateCharge.legacyData,
+      mutableSetOf(),
+      null,
+      bookingCreateCharge.mergedFromDate,
     )
   }
 }

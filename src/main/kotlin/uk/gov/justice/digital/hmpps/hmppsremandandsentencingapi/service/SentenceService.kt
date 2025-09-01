@@ -3,11 +3,14 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import jakarta.persistence.EntityNotFoundException
 import jakarta.transaction.Transactional
 import jakarta.transaction.Transactional.TxType
+import org.jetbrains.annotations.VisibleForTesting
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -181,5 +184,100 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         EventType.SENTENCE_UPDATED,
       )
     }.toMutableSet()
+  }
+
+  fun isTargetAlreadyInConsecutiveChain(
+    prisonerId: String,
+    appearanceUUID: UUID,
+    sourceSentenceUUID: UUID,
+    targetSentenceUUID: UUID,
+    sentencesOnAppearanceFromUI: List<SentenceDetailsForConsecValidation>,
+  ): Boolean {
+    if (sourceSentenceUUID == targetSentenceUUID) return true
+
+    // The sentence hasnt been added to the court appearance (yet)
+    // i.e. still in the 'Add sentence' phase - therefore it cannot be part on any consec chain
+    if (sentencesOnAppearanceFromUI.none { sentence -> sentence.sentenceUuid == sourceSentenceUUID }) {
+      return false
+    }
+
+    sentencesOnAppearanceFromUI.forEach { log.info(it.toString()) }
+    // build upstream chains for the current appearance, starting from the sourceSentence
+    val upstreamChains = getUpstreamChains(sentencesOnAppearanceFromUI, sourceSentenceUUID)
+
+    // If target exists anywhere in those UI upstream chains then return true
+    if (upstreamChains.any { chain -> chain.any { it.sentenceUuid == targetSentenceUUID } }) {
+      log.info("targetSentenceUUID $targetSentenceUUID exists in upstream chain passed from UI")
+      return true
+    }
+
+    // source UUID's also to be checked against DB
+    val sourceUuids = upstreamChains
+      .flatten()
+      .map { it.sentenceUuid }
+      .distinct()
+
+    if (sourceUuids.isEmpty()) return false
+
+    // DB query to check if target appear downstream of the sources, any chains in the current appearance are omitted due tio UI check above
+    log.info("Checking target descendant outside current appearance")
+    log.info("  sourceUuids={}", sourceUuids)
+    log.info("  targetSentenceId={}", targetSentenceUUID)
+    log.info("  prisonerId={}", prisonerId)
+    log.info("  currentAppearanceId={}", appearanceUUID)
+
+    for (source in sourceUuids) {
+      if (sentenceRepository.isTargetDescendantFromSource(
+          sourceUuid = source,
+          targetSentenceId = targetSentenceUUID,
+          prisonerId = prisonerId,
+          currentAppearanceId = appearanceUUID,
+        )
+      ) {
+        return true
+      }
+    }
+    return false
+  }
+
+  @VisibleForTesting
+  fun getUpstreamChains(
+    sentencesOnAppearanceFromUI: List<SentenceDetailsForConsecValidation>,
+    sourceSentenceUUID: UUID,
+  ): MutableList<MutableList<SentenceDetailsForConsecValidation>> {
+    val childrenByParent: Map<UUID?, List<SentenceDetailsForConsecValidation>> = sentencesOnAppearanceFromUI.groupBy { it.consecutiveToSentenceUuid }
+
+    val source = sentencesOnAppearanceFromUI.first { it.sentenceUuid == sourceSentenceUUID }
+    val results = mutableListOf<MutableList<SentenceDetailsForConsecValidation>>()
+
+    getChain(
+      current = source,
+      childrenByParent = childrenByParent,
+      currentChain = mutableListOf(source),
+      results = results,
+    )
+    return results
+  }
+
+  private fun getChain(
+    current: SentenceDetailsForConsecValidation,
+    childrenByParent: Map<UUID?, List<SentenceDetailsForConsecValidation>>,
+    currentChain: MutableList<SentenceDetailsForConsecValidation>,
+    results: MutableList<MutableList<SentenceDetailsForConsecValidation>>,
+  ) {
+    val children = childrenByParent[current.sentenceUuid].orEmpty()
+    if (children.isEmpty()) {
+      results.add(currentChain.toMutableList())
+      return
+    }
+
+    for (child in children) {
+      currentChain.add(child)
+      getChain(child, childrenByParent, currentChain, results)
+      currentChain.removeAt(currentChain.lastIndex)
+    }
+  }
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }

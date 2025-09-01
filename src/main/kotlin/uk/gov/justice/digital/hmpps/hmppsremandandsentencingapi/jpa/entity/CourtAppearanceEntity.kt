@@ -26,6 +26,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtAppearance
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -378,9 +380,68 @@ class CourtAppearanceEntity(
       source = NOMIS,
     )
 
-    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?): EntityStatus {
+    fun from(
+      mergeCreateCourtAppearance: MergeCreateCourtAppearance,
+      appearanceOutcome: AppearanceOutcomeEntity?,
+      courtCase: CourtCaseEntity,
+      createdBy: String,
+      courtCaseReference: String?,
+    ): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = appearanceOutcome,
+      courtCase = courtCase,
+      courtCode = mergeCreateCourtAppearance.courtCode,
+      courtCaseReference = courtCaseReference,
+      appearanceDate = mergeCreateCourtAppearance.appearanceDate,
+      statusId = getStatus(
+        mergeCreateCourtAppearance.appearanceDate,
+        mergeCreateCourtAppearance.legacyData.appearanceTime,
+      ),
+      warrantId = null,
+      appearanceCharges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdBy = createdBy,
+      nextCourtAppearance = null,
+      warrantType = deriveWarrantType(appearanceOutcome, mergeCreateCourtAppearance.legacyData, mergeCreateCourtAppearance.charges.any { it.sentence != null }),
+      overallConvictionDate = null,
+      legacyData = mergeCreateCourtAppearance.legacyData,
+      source = NOMIS,
+    )
+
+    fun from(
+      bookingCreateCourtAppearance: BookingCreateCourtAppearance,
+      appearanceOutcome: AppearanceOutcomeEntity?,
+      courtCase: CourtCaseEntity,
+      createdBy: String,
+      courtCaseReference: String?,
+    ): CourtAppearanceEntity = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = appearanceOutcome,
+      courtCase = courtCase,
+      courtCode = bookingCreateCourtAppearance.courtCode,
+      courtCaseReference = courtCaseReference,
+      appearanceDate = bookingCreateCourtAppearance.appearanceDate,
+      statusId = getStatus(
+        bookingCreateCourtAppearance.appearanceDate,
+        bookingCreateCourtAppearance.legacyData.appearanceTime,
+        EntityStatus.DUPLICATE,
+      ),
+      warrantId = null,
+      appearanceCharges = mutableSetOf(),
+      previousAppearance = null,
+      createdPrison = null,
+      createdBy = createdBy,
+      nextCourtAppearance = null,
+      warrantType = deriveWarrantType(appearanceOutcome, bookingCreateCourtAppearance.legacyData, bookingCreateCourtAppearance.charges.any { it.sentence != null }),
+      overallConvictionDate = null,
+      legacyData = bookingCreateCourtAppearance.legacyData,
+      source = NOMIS,
+    )
+
+    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?, nonFutureStatus: EntityStatus = EntityStatus.ACTIVE): EntityStatus {
       val compareDate = appearanceDate.atTime(appearanceTime ?: LocalTime.MIDNIGHT)
-      return if (compareDate.isAfter(LocalDateTime.now())) EntityStatus.FUTURE else EntityStatus.ACTIVE
+      return if (compareDate.isAfter(LocalDateTime.now())) EntityStatus.FUTURE else nonFutureStatus
     }
 
     private fun deriveWarrantType(

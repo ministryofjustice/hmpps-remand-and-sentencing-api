@@ -147,4 +147,46 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
     @Param("status") status: EntityStatus = EntityStatus.DELETED,
   ): List<ConsecutiveToSentenceRow>
+
+  @Query(
+    value = """
+    WITH RECURSIVE chain(id) AS (
+      SELECT s.id
+      FROM   sentence s
+      WHERE  s.sentence_uuid = :sourceUuid
+      UNION ALL
+      SELECT child.id
+      FROM   sentence child
+      JOIN   chain            ON child.consecutive_to_id = chain.id
+      JOIN   charge            c  ON c.id = child.charge_id
+      JOIN   appearance_charge ac ON ac.charge_id = c.id
+      JOIN   court_appearance  ca ON ca.id = ac.appearance_id
+      JOIN   court_case        cc ON cc.id = ca.court_case_id
+      WHERE  cc.prisoner_id = :prisonerId
+        AND  child.consecutive_to_id IS NOT NULL
+        AND  child.status_id    = :statusId
+        AND  c.status_id     = :statusId
+        AND  ca.status_id    = :statusId
+        AND  cc.status_id    = :statusId
+    )
+    SELECT EXISTS (
+      SELECT 1
+      FROM   chain
+      JOIN   sentence s           ON s.id = chain.id
+      JOIN   charge c             ON c.id = s.charge_id
+      JOIN   appearance_charge ac ON ac.charge_id = c.id
+      JOIN   court_appearance ca  ON ca.id = ac.appearance_id
+      WHERE  s.sentence_uuid = :targetSentenceId
+        AND  ca.appearance_uuid <> :currentAppearanceId   
+    ) AS target_in_descendants
+  """,
+    nativeQuery = true,
+  )
+  fun isTargetDescendantFromSource(
+    @Param("sourceUuid") sourceUuid: UUID,
+    @Param("targetSentenceId") targetSentenceId: UUID,
+    @Param("prisonerId") prisonerId: String,
+    @Param("currentAppearanceId") currentAppearanceId: UUID,
+    @Param("statusId") statusId: EntityStatus = EntityStatus.ACTIVE,
+  ): Boolean
 }

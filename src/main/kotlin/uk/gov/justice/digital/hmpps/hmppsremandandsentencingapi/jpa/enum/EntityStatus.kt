@@ -9,4 +9,5 @@ enum class EntityStatus {
   FUTURE,
   MERGED,
   MANY_CHARGES_DATA_FIX,
+  DUPLICATE,
 }
