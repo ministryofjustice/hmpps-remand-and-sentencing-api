@@ -17,6 +17,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreatePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -213,6 +215,46 @@ class PeriodLengthEntity(
         periodOrder = order,
         periodLengthType = type,
         statusId = EntityStatus.ACTIVE,
+        sentenceEntity = null,
+        appearanceEntity = null,
+        legacyData = periodLength.legacyData,
+        createdBy = createdBy,
+        createdPrison = null,
+      )
+    }
+
+    fun from(periodLength: MergeCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
+      val order = getDefaultPeriodOrder()
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+      return PeriodLengthEntity(
+        periodLengthUuid = UUID.randomUUID(),
+        years = periodLength.periodYears,
+        months = periodLength.periodMonths,
+        weeks = periodLength.periodWeeks,
+        days = periodLength.periodDays,
+        periodOrder = order,
+        periodLengthType = type,
+        statusId = EntityStatus.ACTIVE,
+        sentenceEntity = null,
+        appearanceEntity = null,
+        legacyData = periodLength.legacyData,
+        createdBy = createdBy,
+        createdPrison = null,
+      )
+    }
+
+    fun from(periodLength: BookingCreatePeriodLength, sentenceCalcType: String, createdBy: String): PeriodLengthEntity {
+      val order = getDefaultPeriodOrder()
+      val type = PeriodLengthTypeMapper.convertNomisToDps(periodLength.legacyData, sentenceCalcType)
+      return PeriodLengthEntity(
+        periodLengthUuid = UUID.randomUUID(),
+        years = periodLength.periodYears,
+        months = periodLength.periodMonths,
+        weeks = periodLength.periodWeeks,
+        days = periodLength.periodDays,
+        periodOrder = order,
+        periodLengthType = type,
+        statusId = EntityStatus.DUPLICATE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,

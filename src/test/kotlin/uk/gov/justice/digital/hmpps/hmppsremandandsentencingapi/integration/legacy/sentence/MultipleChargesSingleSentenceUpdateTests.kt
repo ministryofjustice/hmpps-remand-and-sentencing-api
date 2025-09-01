@@ -3,12 +3,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
@@ -16,9 +14,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCrea
 import java.math.BigDecimal
 
 class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var periodLengthRepository: PeriodLengthRepository
 
   @Test
   fun `update sentence with multiple charges`() {

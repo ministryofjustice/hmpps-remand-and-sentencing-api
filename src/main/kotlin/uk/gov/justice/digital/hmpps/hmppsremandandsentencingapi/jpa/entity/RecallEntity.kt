@@ -18,6 +18,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateSentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -88,6 +90,38 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createdByUsername,
       statusId = EntityStatus.ACTIVE,
+      source = NOMIS,
+    )
+
+    fun fromMerge(
+      sentence: MergeCreateSentence,
+      prisonerId: String,
+      createdByUsername: String,
+      recallType: RecallTypeEntity,
+    ): RecallEntity = RecallEntity(
+      prisonerId = prisonerId,
+      revocationDate = null,
+      returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
+      inPrisonOnRevocationDate = null,
+      recallType = recallType,
+      createdByUsername = createdByUsername,
+      statusId = EntityStatus.ACTIVE,
+      source = NOMIS,
+    )
+
+    fun fromBooking(
+      sentence: BookingCreateSentence,
+      prisonerId: String,
+      createdByUsername: String,
+      recallType: RecallTypeEntity,
+    ): RecallEntity = RecallEntity(
+      prisonerId = prisonerId,
+      revocationDate = null,
+      returnToCustodyDate = if (recallType.code.isFixedTermRecall()) sentence.returnToCustodyDate else null,
+      inPrisonOnRevocationDate = null,
+      recallType = recallType,
+      createdByUsername = createdByUsername,
+      statusId = EntityStatus.DUPLICATE,
       source = NOMIS,
     )
 

@@ -25,7 +25,7 @@ class MigrationController(private val migrationService: MigrationService) {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Creates a court case",
+    summary = "Migrates court cases",
     description = "Migrates a court case, court appearance and charge from NOMIS into remand and sentencing API.",
   )
   @ApiResponses(
