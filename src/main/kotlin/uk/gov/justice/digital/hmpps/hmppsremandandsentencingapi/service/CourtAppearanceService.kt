@@ -468,24 +468,23 @@ class CourtAppearanceService(
 
   @VisibleForTesting
   fun orderChargesByConsecutiveChain(charges: List<CreateCharge>): List<CreateCharge> {
-    val chargesByRef: Map<Int, CreateCharge> =
-      charges.mapNotNull { c -> c.sentence?.sentenceReference?.let { it.toInt() to c } }.toMap()
+    val chargesByRef: Map<String, CreateCharge> =
+      charges.filter { it.sentence?.sentenceReference != null }.associateBy { it.sentence!!.sentenceReference }
 
-    val chainPositionByRef = mutableMapOf<Int, Int>()
+    val chainPositionByRef = mutableMapOf<String, Int>()
 
     val chargesWithSortKeys = charges.map { charge ->
-      val sentenceRef = charge.sentence?.sentenceReference?.toIntOrNull() ?: Int.MAX_VALUE
+      val sentenceRef = charge.sentence?.sentenceReference
       val positionInChain = chainPositionFor(sentenceRef, chargesByRef, chainPositionByRef)
-      ChargeWithSortKeys(positionInChain, sentenceRef, charge)
+      ChargeWithSortKeys(positionInChain, charge)
     }
 
     // Sort by positionInChain, sentenceRef
-    return chargesWithSortKeys.sortedWith(compareBy({ it.chainPosition }, { it.sentenceRef })).map { it.charge }
+    return chargesWithSortKeys.sortedWith(compareBy { it.chainPosition }).map { it.charge }
   }
 
   private data class ChargeWithSortKeys(
     val chainPosition: Int,
-    val sentenceRef: Int,
     val charge: CreateCharge,
   )
 
@@ -496,16 +495,16 @@ class CourtAppearanceService(
    * - If the parent is not present in this `charges` list: treat it as position 0.
    */
   private fun chainPositionFor(
-    sentenceRef: Int?,
-    chargesBySentenceRef: Map<Int, CreateCharge>,
-    chainPositionByRef: MutableMap<Int, Int>,
+    sentenceRef: String?,
+    chargesBySentenceRef: Map<String, CreateCharge>,
+    chainPositionByRef: MutableMap<String, Int>,
   ): Int {
     if (sentenceRef == null) return 0
 
     // Already processed
     chainPositionByRef[sentenceRef]?.let { return it }
 
-    val parentRef = chargesBySentenceRef[sentenceRef]?.sentence?.consecutiveToSentenceReference?.toIntOrNull()
+    val parentRef = chargesBySentenceRef[sentenceRef]?.sentence?.consecutiveToSentenceReference
     val parentPosition = if (parentRef != null && chargesBySentenceRef.containsKey(parentRef)) {
       chainPositionFor(parentRef, chargesBySentenceRef, chainPositionByRef)
     } else {
