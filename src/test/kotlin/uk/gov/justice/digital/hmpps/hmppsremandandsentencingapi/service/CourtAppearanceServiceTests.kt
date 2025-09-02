@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import java.time.LocalDate
+import java.util.UUID
 
 class CourtAppearanceServiceTests {
   private val courtCaseRepository = mockk<CourtCaseRepository>()
@@ -47,17 +48,17 @@ class CourtAppearanceServiceTests {
 
   @Test
   fun `should sort charges when passed in order is mixed`() {
-    val c1 = createCharge(sentenceRef = "1", consecutiveToRef = null)
-    val c2 = createCharge(sentenceRef = "2", consecutiveToRef = "1")
-    val c3 = createCharge(sentenceRef = "3", consecutiveToRef = "2")
-    val c4 = createCharge(sentenceRef = "4", consecutiveToRef = "3")
+    val c1 = createCharge(sentenceRef = UUID.randomUUID().toString(), consecutiveToRef = null)
+    val c2 = createCharge(sentenceRef = UUID.randomUUID().toString(), consecutiveToRef = c1.sentence!!.sentenceReference)
+    val c3 = createCharge(sentenceRef = UUID.randomUUID().toString(), consecutiveToRef = c2.sentence!!.sentenceReference)
+    val c4 = createCharge(sentenceRef = UUID.randomUUID().toString(), consecutiveToRef = c3.sentence!!.sentenceReference)
 
     val unorderedList = listOf(c4, c2, c3, c1)
 
     val sorted = courtAppearanceService.orderChargesByConsecutiveChain(unorderedList)
 
     val actual = sorted.map { it.sentence!!.sentenceReference }
-    assertThat(actual).containsExactly("1", "2", "3", "4")
+    assertThat(actual).containsExactly(c1.sentence.sentenceReference, c2.sentence.sentenceReference, c3.sentence.sentenceReference, c4.sentence!!.sentenceReference)
   }
 
   @Test
