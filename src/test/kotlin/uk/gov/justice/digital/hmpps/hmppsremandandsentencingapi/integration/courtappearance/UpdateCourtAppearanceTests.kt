@@ -7,11 +7,15 @@ import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -391,4 +395,50 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
+
+  @Test
+  fun `updating a court appearance and changing the case reference removes the old case ref from legacy data`() {
+    val createCourtCase: Pair<String, CreateCourtCase> = createCourtCase()
+    val caseUuid = createCourtCase.first
+    createCourtCase.second.appearances
+    val oldRef = createCourtCase.second.appearances[0].courtCaseReference
+
+    val courtCase = getCourtCase(caseUuid)
+    assertThat(courtCase.legacyData!!.caseReferences.map { it.offenderCaseReference }).containsExactly(oldRef)
+
+    val newRef = "UPDATED-CASE-REF"
+    val appearanceWithWithNewRef = createCourtCase.second.appearances[0].copy(
+      appearanceUuid = courtCase.appearances[0].appearanceUuid,
+      courtCaseReference = newRef,
+      courtCaseUuid = caseUuid,
+    )
+    putCourtAppearance(appearanceWithWithNewRef.appearanceUuid, appearanceWithWithNewRef)
+
+    val courtCaseAfter = getCourtCase(caseUuid)
+    assertThat(courtCaseAfter.legacyData!!.caseReferences.map { it.offenderCaseReference }).containsExactly(newRef)
+  }
+
+  private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
+    .get()
+    .uri("/court-case/$caseUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .returnResult(CourtCase::class.java)
+    .responseBody.blockFirst()!!
+
+  private fun putCourtAppearance(appearanceUuid: UUID, appearance: CreateCourtAppearance) = webTestClient
+    .put()
+    .uri("/court-appearance/$appearanceUuid")
+    .bodyValue(appearance)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
 }
