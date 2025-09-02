@@ -78,7 +78,7 @@ class CourtAppearanceServiceTests {
     val sorted = courtAppearanceService.orderChargesByConsecutiveChain(mixedList)
     val refs = sorted.map { it.sentence!!.sentenceReference }
 
-    assertThat(refs).containsExactly("1", "5", "2", "6", "3", "7", "4", "8")
+    assertThat(refs).containsExactly("5", "1", "6", "2", "3", "7", "4", "8")
   }
 
   private fun createCharge(sentenceRef: String, consecutiveToRef: String?): CreateCharge = CreateCharge(
