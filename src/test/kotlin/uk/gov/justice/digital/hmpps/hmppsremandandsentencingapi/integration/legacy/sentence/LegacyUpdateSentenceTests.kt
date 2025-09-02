@@ -4,6 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
@@ -12,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
@@ -35,17 +38,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
       legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2023, 1, 1)),
     )
     val toUpdate = createdSentence.copy(returnToCustodyDate = LocalDate.of(2024, 1, 1))
-    webTestClient
-      .put()
-      .uri("/legacy/sentence/$lifetimeUuid")
-      .bodyValue(toUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
+    putLegacySentence(lifetimeUuid, toUpdate)
 
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
     assertThat(recalls).hasSize(1)
@@ -78,17 +71,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     val toUpdate = createdSentence.copy(
       legacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", nomisLineReference = "67"),
     )
-    webTestClient
-      .put()
-      .uri("/legacy/sentence/$lifetimeUuid")
-      .bodyValue(toUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
+    putLegacySentence(lifetimeUuid, toUpdate)
     val message = getMessages(1)[0]
     assertThat(message.eventType).isEqualTo("sentence.updated")
     assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
@@ -144,4 +127,57 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
+
+  @Test
+  fun `Updating legacy data for a FORTHWITH sentence preserves the FORTHWITH of the sentence (if its not consecutive)`() {
+    val createCourtCase: Pair<String, CreateCourtCase> = createCourtCase()
+    val caseUuid = createCourtCase.first
+    createCourtCase.second.appearances
+
+    val courtCase = getCourtCase(caseUuid)
+    val sentenceUuid = courtCase.appearances[0].charges[0].sentence?.sentenceUuid!!
+    assertThat(courtCase.appearances[0].charges[0].sentence?.sentenceServeType).isEqualTo("FORTHWITH")
+
+    val legacyUpdate = LegacyCreateSentence(
+      chargeUuids = listOf(courtCase.appearances[0].charges[0].chargeUuid),
+      appearanceUuid = courtCase.appearances[0].appearanceUuid,
+      active = true,
+      legacyData = sentenceLegacyData(),
+      consecutiveToLifetimeUuid = null, // Not consecutive to anything so should preserve the FORTHWITH status
+    )
+
+    putLegacySentence(sentenceUuid, legacyUpdate)
+
+    val courtCaseAfterLegacyUpdate = getCourtCase(caseUuid)
+    assertThat(courtCaseAfterLegacyUpdate.appearances[0].charges[0].sentence?.sentenceServeType).isEqualTo("FORTHWITH")
+  }
+
+  private fun putLegacySentence(
+    sentenceUuid: UUID,
+    legacyUpdate: LegacyCreateSentence,
+  ) {
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/$sentenceUuid")
+      .bodyValue(legacyUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+  }
+
+  private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
+    .get()
+    .uri("/court-case/$caseUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .returnResult(CourtCase::class.java)
+    .responseBody.blockFirst()!!
 }
