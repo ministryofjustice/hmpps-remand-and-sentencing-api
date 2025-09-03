@@ -163,7 +163,19 @@ class SentenceEntity(
     return sentenceEntity
   }
 
-  fun copyFrom(sentence: LegacyCreateSentence, createdBy: String, consecutiveTo: SentenceEntity?, isManyCharges: Boolean): SentenceEntity {
+  fun copyFrom(
+    sentence: LegacyCreateSentence,
+    createdBy: String,
+    consecutiveTo: SentenceEntity?,
+    isManyCharges: Boolean,
+  ): SentenceEntity {
+    val newSentenceServeType =
+      when {
+        consecutiveTo != null -> "CONSECUTIVE"
+        this.sentenceServeType == "FORTHWITH" -> "FORTHWITH"
+        else -> "CONCURRENT"
+      }
+
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       statusId = if (isManyCharges) {
@@ -176,7 +188,7 @@ class SentenceEntity(
       createdBy = createdBy,
       supersedingSentence = this,
       charge = charge,
-      sentenceServeType = if (consecutiveTo != null) "CONSECUTIVE" else "CONCURRENT",
+      sentenceServeType = newSentenceServeType,
       consecutiveTo = consecutiveTo,
       sentenceType = sentenceType,
       convictionDate = convictionDate,
