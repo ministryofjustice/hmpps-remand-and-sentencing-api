@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.P
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -16,6 +17,7 @@ data class RecallableCourtCaseSentence(
   val sentenceType: String?,
   val classification: SentenceTypeClassification?,
   val systemOfRecord: String,
+  val fineAmount: BigDecimal?,
   val periodLengths: List<PeriodLength>,
   val convictionDate: LocalDate?,
   val chargeLegacyData: ChargeLegacyData?,
