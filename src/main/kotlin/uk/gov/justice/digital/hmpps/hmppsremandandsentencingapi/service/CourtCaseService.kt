@@ -209,6 +209,7 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
                       sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
                       classification = sentence.sentenceType?.classification,
                       systemOfRecord = "RAS",
+                      fineAmount = sentence.fineAmount,
                       periodLengths = sentence.periodLengths.map { periodLength ->
                         PeriodLength(
                           years = periodLength.years,
