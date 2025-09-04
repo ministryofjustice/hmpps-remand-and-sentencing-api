@@ -102,7 +102,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   fun `updating only a court appearance keeps the next court appearance`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+    val updateCourtAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCase.first,
       appearanceUUID = createdAppearance.appearanceUuid,
       courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE",
@@ -138,7 +138,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `updating the appearance date results in sentence updated events`() {
     val appearanceDate = LocalDate.now()
-    val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+    val sentencedAppearance = dpsCreateCourtAppearance(
       outcomeUuid = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
       warrantType = "SENTENCING",
       appearanceDate = appearanceDate,
@@ -211,7 +211,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `update appearance to edit charge`() {
+  fun `update appearance to edit charge offence code`() {
     val courtCase = createCourtCase()
     val charge = courtCase.second.appearances.first().charges.first().copy(offenceCode = "OFF634624")
     val appearance =
@@ -246,6 +246,43 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(charge.offenceCode)
       .jsonPath("$.charges.[?(@.chargeUuid != '${charge.chargeUuid}')].sentence")
       .exists()
+  }
+
+  @Test
+  fun `charge can have different values across appearances`() {
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = null)
+    val firstAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(15), charges = listOf(charge))
+    val secondAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), charges = listOf(charge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+
+    val editedCharge = charge.copy(offenceStartDate = charge.offenceStartDate.minusDays(5))
+    val editedAppearance = firstAppearance.copy(charges = listOf(editedCharge), courtCaseUuid = courtCaseUuid)
+    webTestClient
+      .put()
+      .uri("/court-appearance/${editedAppearance.appearanceUuid}")
+      .bodyValue(editedAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances.[?(@.appearanceUuid == '${firstAppearance.appearanceUuid}')].charges.[?(@.chargeUuid == '${charge.chargeUuid}')].offenceStartDate")
+      .isEqualTo(editedCharge.offenceStartDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+      .jsonPath("$.appearances.[?(@.appearanceUuid == '${secondAppearance.appearanceUuid}')].charges.[?(@.chargeUuid == '${charge.chargeUuid}')].offenceStartDate")
+      .isEqualTo(charge.offenceStartDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
   }
 
   @Test
@@ -351,7 +388,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `must not update appearance when no court case exists`() {
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = UUID.randomUUID().toString())
+    val updateCourtAppearance = dpsCreateCourtAppearance(courtCaseUuid = UUID.randomUUID().toString())
     webTestClient
       .put()
       .uri("/court-appearance/${updateCourtAppearance.appearanceUuid}")

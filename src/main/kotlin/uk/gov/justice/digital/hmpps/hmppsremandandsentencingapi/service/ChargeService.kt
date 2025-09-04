@@ -110,7 +110,7 @@ class ChargeService(
             appearanceCharge.charge = null
             appearanceCharge.appearance = null
           }
-
+        compareCharge.appearanceCharges.removeAll { it.appearance == null }
         activeRecord = chargeRepository.save(compareCharge)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord))
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
