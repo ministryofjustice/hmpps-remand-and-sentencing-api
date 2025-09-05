@@ -37,6 +37,7 @@ class LegacyPeriodLengthTests {
     val legacySentence = SentenceEntity(
       sentenceUuid = testSentenceUuid,
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = "USER",
       sentenceServeType = "CONCURRENT",
       consecutiveTo = null,
@@ -62,6 +63,7 @@ class LegacyPeriodLengthTests {
       sentenceEntity = null,
       appearanceEntity = null,
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       periodOrder = "years,months,weeks,days",
       periodLengthType = PeriodLengthType.TARIFF_LENGTH,
       createdBy = "createdBy",
@@ -73,6 +75,7 @@ class LegacyPeriodLengthTests {
       caseUniqueIdentifier = "CASE123",
       prisonerId = TEST_PRISONER_ID,
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = "test-user",
     )
 
@@ -83,6 +86,7 @@ class LegacyPeriodLengthTests {
       courtCode = "COURT1",
       appearanceDate = LocalDate.now(),
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = "test-user",
       createdPrison = "TEST",
       warrantType = "TEST",
@@ -103,6 +107,7 @@ class LegacyPeriodLengthTests {
       chargeUuid = UUID.randomUUID(),
       offenceCode = "TEST123",
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = "test-user",
       offenceStartDate = null,
       offenceEndDate = null,
@@ -147,6 +152,7 @@ class LegacyPeriodLengthTests {
       sentenceUuid = testSentenceUuid,
       countNumber = "TEST123",
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = "test-user",
       createdPrison = "TEST",
       sentenceServeType = "LIFE",

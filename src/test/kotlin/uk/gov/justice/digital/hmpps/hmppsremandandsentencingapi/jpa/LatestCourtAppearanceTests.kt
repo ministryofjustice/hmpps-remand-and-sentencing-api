@@ -29,6 +29,7 @@ class LatestCourtAppearanceTests {
     courtCode = "CODE1",
     courtCaseReference = "REF1",
     statusId = EntityStatus.ACTIVE,
+    entityStatus = EntityStatus.ACTIVE,
     previousAppearance = null,
     warrantId = "1",
     createdBy = "user",
