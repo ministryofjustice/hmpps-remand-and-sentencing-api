@@ -185,5 +185,9 @@ WHERE court_case_id IN (
 );
 
 -- Delete court cases
+
+DELETE FROM court_case_history
+WHERE prisoner_id = :prisonerId;
+
 DELETE FROM court_case
 WHERE prisoner_id = :prisonerId;
