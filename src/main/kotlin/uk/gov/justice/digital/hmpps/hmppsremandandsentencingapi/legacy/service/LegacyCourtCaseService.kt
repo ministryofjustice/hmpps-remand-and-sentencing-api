@@ -62,7 +62,10 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
+    existingCourtCase.entityStatus = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
     existingCourtCase.legacyData = existingCourtCase.legacyData?.copyFrom(courtCase.legacyData) ?: courtCase.legacyData
+    existingCourtCase.updatedAt = ZonedDateTime.now()
+    existingCourtCase.updatedBy = serviceUserService.getUsername()
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
   }
@@ -72,8 +75,11 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     val sourceCourtCase = getUnlessDeleted(sourceCourtCaseUuid)
     val targetCourtCase = getUnlessDeleted(targetCourtCaseUuid)
     sourceCourtCase.statusId = EntityStatus.MERGED
+    sourceCourtCase.entityStatus = EntityStatus.MERGED
     sourceCourtCase.mergedToCase = targetCourtCase
     sourceCourtCase.mergedToDate = linkCase?.linkedDate ?: LocalDate.now()
+    sourceCourtCase.updatedAt = ZonedDateTime.now()
+    sourceCourtCase.updatedBy = serviceUserService.getUsername()
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(sourceCourtCase))
     return sourceCourtCaseUuid to sourceCourtCase.prisonerId
   }
@@ -85,8 +91,11 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     var chargeEventsToEmit = emptyList<EventMetadata>()
     if (sourceCourtCase.mergedToCase?.caseUniqueIdentifier == targetCourtCaseUuid) {
       sourceCourtCase.statusId = EntityStatus.ACTIVE
+      sourceCourtCase.entityStatus = EntityStatus.ACTIVE
       sourceCourtCase.mergedToCase = null
       sourceCourtCase.mergedToDate = null
+      sourceCourtCase.updatedBy = serviceUserService.getUsername()
+      sourceCourtCase.updatedAt = ZonedDateTime.now()
       courtCaseEventMetadata = EventMetadataCreator.courtCaseEventMetadata(
         sourceCourtCase.prisonerId,
         sourceCourtCase.caseUniqueIdentifier,
@@ -98,6 +107,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
             .map { appearanceCharge ->
               val charge = appearanceCharge.charge!!
               charge.statusId = EntityStatus.ACTIVE
+              charge.entityStatus = EntityStatus.ACTIVE
               charge.updatedAt = ZonedDateTime.now()
               charge.updatedBy = serviceUserService.getUsername()
               chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
@@ -118,7 +128,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   @Transactional
   fun delete(courtCaseUuid: String) {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
-    existingCourtCase.statusId = EntityStatus.DELETED
+    existingCourtCase.delete(serviceUserService.getUsername())
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     draftAppearanceRepository.deleteAll(existingCourtCase.draftAppearances)
   }

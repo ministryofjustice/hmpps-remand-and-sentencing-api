@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -44,6 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
@@ -68,6 +70,7 @@ import java.util.*
 @Service
 class LegacyPrisonerMergeService(
   private val courtCaseRepository: CourtCaseRepository,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val chargeRepository: ChargeRepository,
   private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
@@ -108,6 +111,7 @@ class LegacyPrisonerMergeService(
       deactivatedCourtCasesMap[courtCase.caseUniqueIdentifier]?.also {
         val newStatus = if (it.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
         courtCase.statusId = newStatus
+        courtCase.entityStatus = newStatus
       }
       trackingData.editedCourtCases.add(courtCase)
       trackingData.eventsToEmit.add(
@@ -134,6 +138,7 @@ class LegacyPrisonerMergeService(
               val newStatus = if (active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
               hasChanged = newStatus != sentenceEntity.statusId
               sentenceEntity.statusId = newStatus
+              sentenceEntity.entityStatus = newStatus
             }
             hasChanged = hasChanged || active != sentenceEntity.legacyData?.active
             sentenceEntity.legacyData?.active = active
@@ -174,6 +179,7 @@ class LegacyPrisonerMergeService(
     trackingData.editedSentences.forEach { sentenceEntity ->
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity))
     }
+    courtCaseHistoryRepository.saveAll(trackingData.createdCourtCasesMap.values.map { CourtCaseHistoryEntity.from(it.record) } + trackingData.editedCourtCases.map { CourtCaseHistoryEntity.from(it) })
     courtAppearanceHistoryRepository.saveAll(trackingData.createdCourtAppearancesMap.values.map { CourtAppearanceHistoryEntity.from(it) })
     appearanceChargeHistoryRepository.saveAll(trackingData.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
     chargeHistoryRepository.saveAll(trackingData.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map { ChargeHistoryEntity.from(it) })
@@ -234,6 +240,7 @@ class LegacyPrisonerMergeService(
                 val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
                 targetCharge.supersedingCharge = sourceCharge
                 sourceCharge.statusId = EntityStatus.MERGED
+                sourceCharge.entityStatus = EntityStatus.MERGED
               } else {
                 log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
               }
@@ -383,6 +390,7 @@ class LegacyPrisonerMergeService(
     val existingSentences = tracking.createdSentencesMap[mergeCreateSentence.sentenceId] ?: mutableListOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
       existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+      existingSentence.entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX
       existingSentence.copyFrom(mergeCreateSentence, tracking.username, chargeEntity, dpsSentenceType)
     } ?: SentenceEntity.from(mergeCreateSentence, tracking.username, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
@@ -396,6 +404,7 @@ class LegacyPrisonerMergeService(
       val existingPeriodLengths = tracking.createdPeriodLengthMap[it.periodLengthId] ?: mutableListOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
         existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+        existingPeriodLength.entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX
         val copiedPeriodLength = existingPeriodLength.copy()
         copiedPeriodLength.sentenceEntity = createdSentence
         copiedPeriodLength

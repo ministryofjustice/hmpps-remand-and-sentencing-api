@@ -69,6 +69,7 @@ class SentenceTypeUpdateServiceTests {
     createdBy = "test-user",
     createdPrison = null,
     statusId = status,
+    entityStatus = status,
     legacyData = null,
   )
 }

@@ -90,6 +90,8 @@ class SentenceEntity(
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   @Column
@@ -145,6 +147,7 @@ class SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       countNumber = sentence.chargeNumber,
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
@@ -178,13 +181,8 @@ class SentenceEntity(
 
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
-      statusId = if (isManyCharges) {
-        EntityStatus.MANY_CHARGES_DATA_FIX
-      } else if (sentence.active) {
-        EntityStatus.ACTIVE
-      } else {
-        EntityStatus.INACTIVE
-      },
+      statusId = getStatus(isManyCharges, sentence.active),
+      entityStatus = getStatus(isManyCharges, sentence.active),
       createdBy = createdBy,
       supersedingSentence = this,
       charge = charge,
@@ -206,6 +204,7 @@ class SentenceEntity(
     return SentenceEntity(
       sentenceUuid = sentenceUuid,
       statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
+      entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX,
       createdBy = createdBy,
       createdPrison = null,
       supersedingSentence = null,
@@ -224,6 +223,7 @@ class SentenceEntity(
     return SentenceEntity(
       sentenceUuid = sentenceUuid,
       statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
+      entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX,
       createdBy = createdBy,
       createdPrison = null,
       supersedingSentence = null,
@@ -242,6 +242,7 @@ class SentenceEntity(
     return SentenceEntity(
       sentenceUuid = sentenceUuid,
       statusId = EntityStatus.MANY_CHARGES_DATA_FIX,
+      entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX,
       createdBy = createdBy,
       createdPrison = null,
       supersedingSentence = null,
@@ -258,6 +259,7 @@ class SentenceEntity(
   fun updateFrom(sentence: SentenceEntity) {
     countNumber = sentence.countNumber
     statusId = sentence.statusId
+    entityStatus = sentence.entityStatus
     updatedAt = sentence.updatedAt
     updatedBy = sentence.updatedBy
     updatedPrison = sentence.updatedPrison
@@ -275,14 +277,25 @@ class SentenceEntity(
     updatedAt = ZonedDateTime.now()
     updatedBy = updatedUser
     statusId = EntityStatus.DELETED
+    entityStatus = EntityStatus.DELETED
   }
 
   companion object {
+
+    fun getStatus(isManyCharges: Boolean, active: Boolean) = if (isManyCharges) {
+      EntityStatus.MANY_CHARGES_DATA_FIX
+    } else if (active) {
+      EntityStatus.ACTIVE
+    } else {
+      EntityStatus.INACTIVE
+    }
+
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
       val sentenceEntity = SentenceEntity(
         sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
         countNumber = sentence.chargeNumber,
         statusId = EntityStatus.ACTIVE,
+        entityStatus = EntityStatus.ACTIVE,
         createdBy = createdBy,
         createdPrison = sentence.prisonId,
         supersedingSentence = null,
@@ -308,13 +321,8 @@ class SentenceEntity(
       countNumber: String? = null,
     ): SentenceEntity = SentenceEntity(
       sentenceUuid = sentenceUuid,
-      statusId = if (isManyCharges) {
-        EntityStatus.MANY_CHARGES_DATA_FIX
-      } else if (sentence.active) {
-        EntityStatus.ACTIVE
-      } else {
-        EntityStatus.INACTIVE
-      },
+      statusId = getStatus(isManyCharges, sentence.active),
+      entityStatus = getStatus(isManyCharges, sentence.active),
       createdBy = createdBy,
       supersedingSentence = null,
       charge = chargeEntity,
@@ -331,7 +339,8 @@ class SentenceEntity(
       sentence.legacyData.active = sentence.active
       return SentenceEntity(
         sentenceUuid = UUID.randomUUID(),
-        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        statusId = getStatus(false, sentence.active),
+        entityStatus = getStatus(false, sentence.active),
         createdBy = createdBy,
         createdPrison = null,
         supersedingSentence = null,
@@ -349,7 +358,8 @@ class SentenceEntity(
       sentence.legacyData.active = sentence.active
       return SentenceEntity(
         sentenceUuid = UUID.randomUUID(),
-        statusId = if (sentence.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE,
+        statusId = getStatus(false, sentence.active),
+        entityStatus = getStatus(false, sentence.active),
         createdBy = createdBy,
         createdPrison = null,
         supersedingSentence = null,
@@ -368,6 +378,7 @@ class SentenceEntity(
       return SentenceEntity(
         sentenceUuid = UUID.randomUUID(),
         statusId = EntityStatus.DUPLICATE,
+        entityStatus = EntityStatus.DUPLICATE,
         createdBy = createdBy,
         createdPrison = null,
         supersedingSentence = null,

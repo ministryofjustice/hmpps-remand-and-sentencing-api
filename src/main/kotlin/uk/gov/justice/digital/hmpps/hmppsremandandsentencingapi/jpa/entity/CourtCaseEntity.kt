@@ -198,6 +198,9 @@ class CourtCaseEntity(
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
 
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
+
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,
 
@@ -228,21 +231,24 @@ class CourtCaseEntity(
 
   companion object {
 
-    fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
+    fun getStatus(merged: Boolean, active: Boolean): EntityStatus = if (merged) {
+      EntityStatus.MERGED
+    } else if (active) {
+      EntityStatus.ACTIVE
+    } else {
+      EntityStatus.INACTIVE
+    }
 
-    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, legacyData = courtCase.legacyData)
+    fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, entityStatus = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
+
+    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = getStatus(false, courtCase.active), entityStatus = getStatus(false, courtCase.active), legacyData = courtCase.legacyData)
 
     fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
       prisonerId = prisonerId,
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
-      statusId = if (migrationCreateCourtCase.merged) {
-        EntityStatus.MERGED
-      } else if (migrationCreateCourtCase.active) {
-        EntityStatus.ACTIVE
-      } else {
-        EntityStatus.INACTIVE
-      },
+      statusId = getStatus(migrationCreateCourtCase.merged, migrationCreateCourtCase.active),
+      entityStatus = getStatus(migrationCreateCourtCase.merged, migrationCreateCourtCase.active),
       legacyData = migrationCreateCourtCase.courtCaseLegacyData,
     )
 
@@ -250,13 +256,8 @@ class CourtCaseEntity(
       prisonerId = prisonerId,
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
-      statusId = if (mergeCreateCourtCase.merged) {
-        EntityStatus.MERGED
-      } else if (mergeCreateCourtCase.active) {
-        EntityStatus.ACTIVE
-      } else {
-        EntityStatus.INACTIVE
-      },
+      statusId = getStatus(mergeCreateCourtCase.merged, mergeCreateCourtCase.active),
+      entityStatus = getStatus(mergeCreateCourtCase.merged, mergeCreateCourtCase.active),
       legacyData = mergeCreateCourtCase.courtCaseLegacyData,
     )
 
@@ -265,9 +266,10 @@ class CourtCaseEntity(
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
       statusId = EntityStatus.DUPLICATE,
+      entityStatus = EntityStatus.DUPLICATE,
       legacyData = bookingCreateCourtCase.courtCaseLegacyData,
     )
 
-    fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = EntityStatus.DRAFT)
+    fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = EntityStatus.DRAFT, entityStatus = EntityStatus.DRAFT)
   }
 }

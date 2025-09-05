@@ -43,6 +43,7 @@ class RecallSentenceHistoryEntityTest {
     val sentence = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       createdBy = "USER",
       sentenceServeType = "CONCURRENT",
       consecutiveTo = null,
@@ -51,6 +52,7 @@ class RecallSentenceHistoryEntityTest {
         chargeUuid = UUID.randomUUID(),
         offenceCode = "TEST123",
         statusId = EntityStatus.ACTIVE,
+        entityStatus = EntityStatus.ACTIVE,
         createdBy = "test-user",
         offenceStartDate = null,
         offenceEndDate = null,

@@ -69,6 +69,7 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
   private fun fixSentence(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, sentenceEventType: EventType, originalSentenceUuid: UUID, sentenceModifyFunction: (SentenceEntity) -> Unit = {}): EventMetadata {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) EntityStatus.INACTIVE else EntityStatus.ACTIVE
+    sentenceRecord.entityStatus = if (sentenceRecord.legacyData?.active == false) EntityStatus.INACTIVE else EntityStatus.ACTIVE
     sentenceRecord.updatedAt = ZonedDateTime.now()
     sentenceRecord.updatedBy = serviceUserService.getUsername()
     sentenceModifyFunction(sentenceRecord)
@@ -91,6 +92,7 @@ class FixManyChargesToSentenceService(private val sentenceHistoryRepository: Sen
     periodLengths.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
       .forEach { periodLength ->
         periodLength.statusId = EntityStatus.ACTIVE
+        periodLength.entityStatus = EntityStatus.ACTIVE
         periodLength.updatedAt = ZonedDateTime.now()
         periodLength.updatedBy = serviceUserService.getUsername()
         periodLengthModifyFunction(periodLength)
