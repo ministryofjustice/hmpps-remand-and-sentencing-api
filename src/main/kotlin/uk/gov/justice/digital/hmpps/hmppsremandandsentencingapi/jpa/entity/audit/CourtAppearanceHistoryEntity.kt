@@ -35,6 +35,8 @@ class CourtAppearanceHistoryEntity(
   val appearanceDate: LocalDate,
   @Enumerated(EnumType.ORDINAL)
   val statusId: EntityStatus,
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
   val previousAppearanceId: Int?,
   val warrantId: String?,
   val createdAt: ZonedDateTime,
@@ -64,6 +66,7 @@ class CourtAppearanceHistoryEntity(
       courtCaseReference = courtAppearanceEntity.courtCaseReference,
       appearanceDate = courtAppearanceEntity.appearanceDate,
       statusId = courtAppearanceEntity.statusId,
+      entityStatus = courtAppearanceEntity.entityStatus,
       previousAppearanceId = courtAppearanceEntity.previousAppearance?.id,
       warrantId = courtAppearanceEntity.warrantId,
       createdAt = courtAppearanceEntity.createdAt,

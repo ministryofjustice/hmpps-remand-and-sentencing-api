@@ -169,6 +169,7 @@ class BookingService(
                 val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
                 targetCharge.supersedingCharge = sourceCharge
                 sourceCharge.statusId = EntityStatus.MERGED
+                sourceCharge.entityStatus = EntityStatus.MERGED
               } else {
                 log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
               }
@@ -333,6 +334,7 @@ class BookingService(
     val existingSentences = tracking.createdSentencesMap[bookingCreateSentence.sentenceId] ?: mutableListOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
       existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+      existingSentence.entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX
       existingSentence.copyFrom(bookingCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     } ?: SentenceEntity.from(bookingCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
@@ -346,6 +348,7 @@ class BookingService(
       val existingPeriodLengths = tracking.createdPeriodLengthMap[it.periodLengthId] ?: mutableListOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
         existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+        existingPeriodLength.entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX
         val copiedPeriodLength = existingPeriodLength.copy()
         copiedPeriodLength.sentenceEntity = createdSentence
         copiedPeriodLength

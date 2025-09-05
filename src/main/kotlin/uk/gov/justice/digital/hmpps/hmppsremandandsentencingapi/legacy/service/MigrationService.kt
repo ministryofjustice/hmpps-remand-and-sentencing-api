@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CustomPrisonerDataRepository
@@ -62,6 +64,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceU
 @Service
 class MigrationService(
   private val courtCaseRepository: CourtCaseRepository,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val chargeRepository: ChargeRepository,
   private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
@@ -100,6 +103,7 @@ class MigrationService(
     linkMergedCases(migrationCreateCourtCases, tracking)
     linkConsecutiveToSentences(migrationCreateCourtCases, tracking)
     auditCreatedRecords(
+      tracking.createdCourtCasesMap.values.map { it.record },
       tracking.createdCourtAppearancesMap.values,
       tracking.createdChargesMap.values.flatMap { it.map { it.second } }.distinct(),
       tracking.createdSentencesMap.values.flatMap { it }.distinct(),
@@ -168,6 +172,7 @@ class MigrationService(
                 val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
                 targetCharge.supersedingCharge = sourceCharge
                 sourceCharge.statusId = EntityStatus.MERGED
+                sourceCharge.entityStatus = EntityStatus.MERGED
               } else {
                 log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
               }
@@ -200,11 +205,13 @@ class MigrationService(
   }
 
   private fun auditCreatedRecords(
+    courtCases: List<CourtCaseEntity>,
     courtAppearances: MutableCollection<CourtAppearanceEntity>,
     charges: List<ChargeEntity>,
     sentences: List<SentenceEntity>,
     periodLengths: List<PeriodLengthEntity>,
   ) {
+    courtCaseHistoryRepository.saveAll(courtCases.map { CourtCaseHistoryEntity.from(it) })
     courtAppearanceHistoryRepository.saveAll(courtAppearances.map { CourtAppearanceHistoryEntity.from(it) })
     appearanceChargeHistoryRepository.saveAll(courtAppearances.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
     chargeHistoryRepository.saveAll(charges.map { ChargeHistoryEntity.from(it) })
@@ -304,6 +311,7 @@ class MigrationService(
     val existingSentences = tracking.createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableListOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
       existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+      existingSentence.entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX
       existingSentence.copyFrom(migrationCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     } ?: SentenceEntity.from(migrationCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
@@ -317,6 +325,7 @@ class MigrationService(
       val existingPeriodLengths = tracking.createdPeriodLengthMap[it.periodLengthId] ?: mutableListOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
         existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+        existingPeriodLength.entityStatus = EntityStatus.MANY_CHARGES_DATA_FIX
         val copiedPeriodLength = existingPeriodLength.copy()
         copiedPeriodLength.sentenceEntity = createdSentence
         copiedPeriodLength

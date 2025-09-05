@@ -39,6 +39,8 @@ class PeriodLengthEntity(
   var periodLengthType: PeriodLengthType,
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
   val createdPrison: String? = null,
@@ -72,6 +74,7 @@ class PeriodLengthEntity(
     periodOrder = getDefaultPeriodOrder()
     periodLengthType = periodLength.periodLengthType
     statusId = periodLength.statusId
+    entityStatus = periodLength.entityStatus
     legacyData = periodLength.legacyData
     updatedAt = ZonedDateTime.now()
     updatedBy = username
@@ -111,6 +114,7 @@ class PeriodLengthEntity(
     periodOrder,
     periodLengthType,
     statusId,
+    entityStatus,
     createdAt,
     createdBy,
     createdPrison,
@@ -131,6 +135,7 @@ class PeriodLengthEntity(
     periodOrder: String = this.periodOrder,
     periodLengthType: PeriodLengthType = this.periodLengthType,
     statusId: EntityStatus = this.statusId,
+    entityStatus: EntityStatus? = this.entityStatus,
     createdAt: ZonedDateTime = this.createdAt,
     createdBy: String = this.createdBy,
     createdPrison: String? = this.createdPrison,
@@ -150,6 +155,7 @@ class PeriodLengthEntity(
     periodOrder = periodOrder,
     periodLengthType = periodLengthType,
     statusId = statusId,
+    entityStatus = entityStatus,
     createdAt = createdAt,
     createdBy = createdBy,
     createdPrison = createdPrison,
@@ -163,6 +169,7 @@ class PeriodLengthEntity(
 
   fun delete(username: String) {
     statusId = EntityStatus.DELETED
+    entityStatus = EntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
@@ -176,6 +183,7 @@ class PeriodLengthEntity(
       periodOrder = periodLength.periodOrder,
       periodLengthType = periodLength.type,
       statusId = EntityStatus.ACTIVE,
+      entityStatus = EntityStatus.ACTIVE,
       sentenceEntity = null,
       appearanceEntity = null,
       createdBy = createdBy,
@@ -196,6 +204,7 @@ class PeriodLengthEntity(
         periodOrder = order,
         periodLengthType = type,
         statusId = sentenceEntity.statusId,
+        entityStatus = sentenceEntity.entityStatus,
         sentenceEntity = sentenceEntity,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,
@@ -215,6 +224,7 @@ class PeriodLengthEntity(
         periodOrder = order,
         periodLengthType = type,
         statusId = EntityStatus.ACTIVE,
+        entityStatus = EntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,
@@ -235,6 +245,7 @@ class PeriodLengthEntity(
         periodOrder = order,
         periodLengthType = type,
         statusId = EntityStatus.ACTIVE,
+        entityStatus = EntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,
@@ -255,6 +266,7 @@ class PeriodLengthEntity(
         periodOrder = order,
         periodLengthType = type,
         statusId = EntityStatus.DUPLICATE,
+        entityStatus = EntityStatus.DUPLICATE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,

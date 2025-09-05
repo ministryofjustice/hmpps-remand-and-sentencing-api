@@ -176,7 +176,8 @@ class ChargeService(
   @Transactional
   fun deleteCharge(charge: ChargeEntity, prisonerId: String?, courtCaseId: String?, courtAppearanceId: String): RecordResponse<ChargeEntity> {
     val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
-    charge.statusId = EntityStatus.DELETED
+    charge.delete(serviceUserService.getUsername())
+    chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     charge.getActiveSentence()?.let { eventsToEmit.addAll(sentenceService.deleteSentence(it, charge, prisonerId!!, courtCaseId!!, courtAppearanceId).eventsToEmit) }
     if (changeStatus == EntityChangeStatus.DELETED) {

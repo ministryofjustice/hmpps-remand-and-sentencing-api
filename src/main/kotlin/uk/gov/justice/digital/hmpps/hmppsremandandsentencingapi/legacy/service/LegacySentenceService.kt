@@ -308,6 +308,7 @@ class LegacySentenceService(
       .filter { it.statusId != existingSentence.statusId }
       .onEach {
         it.statusId = existingSentence.statusId
+        it.entityStatus = existingSentence.entityStatus
         it.updatedBy = serviceUserService.getUsername()
         it.updatedAt = ZonedDateTime.now()
       }
@@ -381,6 +382,7 @@ class LegacySentenceService(
     if (sentences.size == 1) {
       val sentenceRecord = sentences.first()
       sentenceRecord.statusId = EntityStatus.ACTIVE
+      sentenceRecord.entityStatus = EntityStatus.ACTIVE
       sentenceRecord.updatedAt = ZonedDateTime.now()
       sentenceRecord.updatedBy = serviceUserService.getUsername()
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))

@@ -38,6 +38,8 @@ class PeriodLengthHistoryEntity(
   val legacyData: PeriodLengthLegacyData?,
   @Enumerated(EnumType.ORDINAL)
   val statusId: EntityStatus,
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,
@@ -52,7 +54,7 @@ class PeriodLengthHistoryEntity(
     fun from(periodLength: PeriodLengthEntity) = PeriodLengthHistoryEntity(
       0, periodLength.periodLengthUuid, periodLength.years, periodLength.months, periodLength.weeks, periodLength.days,
       periodLength.periodOrder, periodLength.periodLengthType, periodLength.sentenceEntity?.id, periodLength.appearanceEntity?.id,
-      periodLength.legacyData, periodLength.statusId, periodLength.createdAt, periodLength.createdBy, periodLength.createdPrison,
+      periodLength.legacyData, periodLength.statusId, periodLength.entityStatus, periodLength.createdAt, periodLength.createdBy, periodLength.createdPrison,
       periodLength.updatedAt, periodLength.updatedBy, periodLength.updatedPrison, periodLength,
     )
   }

@@ -29,6 +29,8 @@ class SentenceHistoryEntity(
   val chargeNumber: String?,
   @Enumerated(EnumType.ORDINAL)
   val statusId: EntityStatus,
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,
@@ -50,7 +52,7 @@ class SentenceHistoryEntity(
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): SentenceHistoryEntity = SentenceHistoryEntity(
-      0, sentenceEntity.sentenceUuid, sentenceEntity.countNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
+      0, sentenceEntity.sentenceUuid, sentenceEntity.countNumber, sentenceEntity.statusId, sentenceEntity.entityStatus, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
       sentenceEntity.updatedAt, sentenceEntity.updatedBy, sentenceEntity.updatedPrison, sentenceEntity.sentenceServeType, sentenceEntity.supersedingSentence?.id, sentenceEntity.charge.id, sentenceEntity.consecutiveTo?.id,
       sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity.fineAmount, sentenceEntity,
     )

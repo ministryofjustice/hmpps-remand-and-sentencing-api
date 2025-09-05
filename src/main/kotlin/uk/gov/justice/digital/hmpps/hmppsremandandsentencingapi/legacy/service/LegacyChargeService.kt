@@ -141,6 +141,7 @@ class LegacyChargeService(
         appearanceChargeInTargetCase.appearance = null
         chargeRecordsOnSourceCase.map { it.charge!! }.filter { it.statusId != EntityStatus.DELETED }.forEach { chargeRecordOnSourceCase ->
           chargeRecordOnSourceCase.statusId = EntityStatus.MERGED
+          chargeRecordOnSourceCase.entityStatus = EntityStatus.MERGED
           chargeRecordOnSourceCase.updatedBy = serviceUserService.getUsername()
           chargeRecordOnSourceCase.updatedAt = ZonedDateTime.now()
           chargeHistoryRepository.save(ChargeHistoryEntity.from(chargeRecordOnSourceCase))

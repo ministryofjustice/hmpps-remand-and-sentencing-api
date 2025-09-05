@@ -1,0 +1,10 @@
+ALTER TABLE court_case ADD COLUMN entity_status VARCHAR;
+ALTER TABLE court_case_history ADD COLUMN entity_status VARCHAR;
+ALTER TABLE court_appearance ADD COLUMN entity_status VARCHAR;
+ALTER TABLE court_appearance_history ADD COLUMN entity_status VARCHAR;
+ALTER TABLE charge ADD COLUMN entity_status VARCHAR;
+ALTER TABLE charge_history ADD COLUMN entity_status VARCHAR;
+ALTER TABLE sentence ADD COLUMN entity_status VARCHAR;
+ALTER TABLE sentence_history ADD COLUMN entity_status VARCHAR;
+ALTER TABLE period_length ADD COLUMN entity_status VARCHAR;
+ALTER TABLE period_length_history ADD COLUMN entity_status VARCHAR;

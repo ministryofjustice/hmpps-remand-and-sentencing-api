@@ -63,6 +63,8 @@ class CourtAppearanceEntity(
   @Column
   @Enumerated(EnumType.ORDINAL)
   var statusId: EntityStatus,
+  @Enumerated(EnumType.STRING)
+  var entityStatus: EntityStatus?,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "previous_appearance_id")
   var previousAppearance: CourtAppearanceEntity?,
@@ -130,6 +132,7 @@ class CourtAppearanceEntity(
       courtCaseReference,
       courtAppearance.appearanceDate,
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
+      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
       this,
       warrantId,
       ZonedDateTime.now(),
@@ -164,6 +167,7 @@ class CourtAppearanceEntity(
       courtAppearance.courtCode,
       courtAppearance.courtCaseReference,
       courtAppearance.appearanceDate,
+      EntityStatus.ACTIVE,
       EntityStatus.ACTIVE,
       this,
       courtAppearance.warrantId,
@@ -202,6 +206,7 @@ class CourtAppearanceEntity(
     courtCaseReference,
     nextCourtAppearance.appearanceDate,
     EntityStatus.FUTURE,
+    EntityStatus.FUTURE,
     this,
     null,
     ZonedDateTime.now(),
@@ -223,6 +228,7 @@ class CourtAppearanceEntity(
     courtCaseReference = courtAppearanceEntity.courtCaseReference
     appearanceDate = courtAppearanceEntity.appearanceDate
     statusId = courtAppearanceEntity.statusId
+    entityStatus = courtAppearanceEntity.entityStatus
     previousAppearance = courtAppearanceEntity.previousAppearance
     warrantId = courtAppearanceEntity.warrantId
     updatedAt = courtAppearanceEntity.updatedAt
@@ -247,6 +253,7 @@ class CourtAppearanceEntity(
 
   fun delete(username: String) {
     statusId = EntityStatus.DELETED
+    entityStatus = EntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
@@ -285,6 +292,7 @@ class CourtAppearanceEntity(
         courtCaseReference = courtAppearance.courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
         statusId = EntityStatus.ACTIVE,
+        entityStatus = EntityStatus.ACTIVE,
         warrantId = courtAppearance.warrantId,
         previousAppearance = null,
         createdPrison = courtAppearance.prisonId,
@@ -312,6 +320,7 @@ class CourtAppearanceEntity(
       courtCaseReference = courtCaseReference,
       appearanceDate = nextCourtAppearance.appearanceDate,
       statusId = EntityStatus.FUTURE,
+      entityStatus = EntityStatus.FUTURE,
       warrantId = null,
       appearanceCharges = mutableSetOf(),
       previousAppearance = null,
@@ -338,6 +347,7 @@ class CourtAppearanceEntity(
         courtCaseReference = courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
         statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
+        entityStatus = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
         warrantId = null,
         appearanceCharges = mutableSetOf(),
         previousAppearance = null,
@@ -365,6 +375,10 @@ class CourtAppearanceEntity(
       courtCaseReference = courtCaseReference,
       appearanceDate = migrationCreateCourtAppearance.appearanceDate,
       statusId = getStatus(
+        migrationCreateCourtAppearance.appearanceDate,
+        migrationCreateCourtAppearance.legacyData.appearanceTime,
+      ),
+      entityStatus = getStatus(
         migrationCreateCourtAppearance.appearanceDate,
         migrationCreateCourtAppearance.legacyData.appearanceTime,
       ),
@@ -397,6 +411,10 @@ class CourtAppearanceEntity(
         mergeCreateCourtAppearance.appearanceDate,
         mergeCreateCourtAppearance.legacyData.appearanceTime,
       ),
+      entityStatus = getStatus(
+        mergeCreateCourtAppearance.appearanceDate,
+        mergeCreateCourtAppearance.legacyData.appearanceTime,
+      ),
       warrantId = null,
       appearanceCharges = mutableSetOf(),
       previousAppearance = null,
@@ -423,6 +441,11 @@ class CourtAppearanceEntity(
       courtCaseReference = courtCaseReference,
       appearanceDate = bookingCreateCourtAppearance.appearanceDate,
       statusId = getStatus(
+        bookingCreateCourtAppearance.appearanceDate,
+        bookingCreateCourtAppearance.legacyData.appearanceTime,
+        EntityStatus.DUPLICATE,
+      ),
+      entityStatus = getStatus(
         bookingCreateCourtAppearance.appearanceDate,
         bookingCreateCourtAppearance.legacyData.appearanceTime,
         EntityStatus.DUPLICATE,
