@@ -44,10 +44,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
     @Param("bookingId") bookingId: String,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
-    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
-      EntityStatus.ACTIVE,
-      EntityStatus.MANY_CHARGES_DATA_FIX,
+    @Param("status") status: String = EntityStatus.ACTIVE.toString(),
+    @Param("sentenceStatuses") statuses: List<String> = listOf(
+      EntityStatus.ACTIVE.toString(),
+      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
   ): Long
 
@@ -122,10 +122,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
     @Param("bookingId") bookingId: String,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
-    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
-      EntityStatus.ACTIVE,
-      EntityStatus.MANY_CHARGES_DATA_FIX,
+    @Param("status") status: String = EntityStatus.ACTIVE.toString(),
+    @Param("sentenceStatuses") statuses: List<String> = listOf(
+      EntityStatus.ACTIVE.toString(),
+      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
   ): List<ConsecutiveToSentenceRow>
 
@@ -187,6 +187,6 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("targetSentenceId") targetSentenceId: UUID,
     @Param("prisonerId") prisonerId: String,
     @Param("currentAppearanceId") currentAppearanceId: UUID,
-    @Param("statusId") statusId: EntityStatus = EntityStatus.ACTIVE,
+    @Param("statusId") statusId: String = EntityStatus.ACTIVE.toString(),
   ): Boolean
 }

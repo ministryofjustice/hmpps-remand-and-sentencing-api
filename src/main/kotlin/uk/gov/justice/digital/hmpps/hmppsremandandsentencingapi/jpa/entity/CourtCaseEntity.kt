@@ -195,7 +195,7 @@ class CourtCaseEntity(
 
   val createdPrison: String? = null,
   @Column
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
 
   @JdbcTypeCode(SqlTypes.JSON)

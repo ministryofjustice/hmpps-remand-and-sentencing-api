@@ -25,8 +25,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     .setParameter("prisonerId", prisonerId)
     .setParameter("limit", limit)
     .setParameter("offset", offset)
-    .setParameter("appearanceStatus", appearanceStatus)
-    .setParameter("courtCaseStatus", courtCaseStatus)
+    .setParameter("appearanceStatus", appearanceStatus.toString())
+    .setParameter("courtCaseStatus", courtCaseStatus.toString())
     .resultList as List<CourtCaseRow>
 
   companion object {

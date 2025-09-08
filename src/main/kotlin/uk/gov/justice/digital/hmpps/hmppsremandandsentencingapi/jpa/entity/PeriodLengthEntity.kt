@@ -37,7 +37,7 @@ class PeriodLengthEntity(
   var periodOrder: String,
   @Enumerated(EnumType.STRING)
   var periodLengthType: PeriodLengthType,
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
