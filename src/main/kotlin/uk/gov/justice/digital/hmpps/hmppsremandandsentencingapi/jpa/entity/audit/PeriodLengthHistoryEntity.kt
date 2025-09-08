@@ -36,7 +36,7 @@ class PeriodLengthHistoryEntity(
   val appearanceId: Int?,
   @JdbcTypeCode(SqlTypes.JSON)
   val legacyData: PeriodLengthLegacyData?,
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   val statusId: EntityStatus,
   val createdAt: ZonedDateTime,
   val createdBy: String,

@@ -61,7 +61,7 @@ class CourtAppearanceEntity(
   @Column
   var appearanceDate: LocalDate,
   @Column
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "previous_appearance_id")

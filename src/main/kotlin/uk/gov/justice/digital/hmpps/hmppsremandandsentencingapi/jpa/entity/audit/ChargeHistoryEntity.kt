@@ -28,7 +28,7 @@ class ChargeHistoryEntity(
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   val chargeOutcomeId: Int?,
   var supersedingChargeId: Int?,

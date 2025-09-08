@@ -27,7 +27,7 @@ class SentenceHistoryEntity(
   val id: Int = 0,
   val sentenceUuid: UUID,
   val chargeNumber: String?,
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   val statusId: EntityStatus,
   val createdAt: ZonedDateTime,
   val createdBy: String,

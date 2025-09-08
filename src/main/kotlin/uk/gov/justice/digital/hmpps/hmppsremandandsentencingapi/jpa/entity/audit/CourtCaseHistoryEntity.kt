@@ -30,7 +30,7 @@ class CourtCaseHistoryEntity(
   val createdBy: String,
   val updatedAt: ZonedDateTime?,
   val updatedBy: String?,
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,

@@ -39,7 +39,7 @@ class ChargeEntity(
   var offenceCode: String,
   var offenceStartDate: LocalDate?,
   var offenceEndDate: LocalDate?,
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   @ManyToOne
   @JoinColumn(name = "charge_outcome_id")

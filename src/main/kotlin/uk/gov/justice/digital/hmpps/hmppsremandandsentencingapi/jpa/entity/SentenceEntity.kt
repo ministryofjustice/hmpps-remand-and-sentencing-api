@@ -88,7 +88,7 @@ class SentenceEntity(
   @Column
   var countNumber: String? = null,
   @Column
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
