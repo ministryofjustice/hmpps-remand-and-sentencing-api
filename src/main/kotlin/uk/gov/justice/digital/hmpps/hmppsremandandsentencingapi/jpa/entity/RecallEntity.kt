@@ -32,7 +32,7 @@ class RecallEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   val recallUuid: UUID = UUID.randomUUID(),
-  val prisonerId: String,
+  var prisonerId: String,
   var revocationDate: LocalDate?,
   var returnToCustodyDate: LocalDate?,
   var inPrisonOnRevocationDate: Boolean?,
