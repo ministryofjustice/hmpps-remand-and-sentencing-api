@@ -13,5 +13,6 @@ charge_history,
 court_appearance_history,
 period_length_history,
 sentence_history,
-uploaded_document
+uploaded_document,
+court_case_history
  RESTART IDENTITY CASCADE;
