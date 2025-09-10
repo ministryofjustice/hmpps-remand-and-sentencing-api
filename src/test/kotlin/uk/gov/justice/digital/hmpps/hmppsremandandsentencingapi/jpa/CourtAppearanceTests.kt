@@ -2,12 +2,17 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.stream.Stream
 
 class CourtAppearanceTests {
 
@@ -36,5 +41,23 @@ class CourtAppearanceTests {
     val courtCase = CourtCaseEntity.from(DataCreator.migrationCreateCourtCase(), "user", "PRI1")
     val result = CourtAppearanceEntity.from(migrationCourtAppearance, null, courtCase, "user", null)
     Assertions.assertThat(result.warrantType).isEqualTo("SENTENCING")
+  }
+
+  @ParameterizedTest(name = "appearance with legacy data outcome code {0} results in status of {1}")
+  @MethodSource("legacyDataOutcomeStatusParameters")
+  fun `legacy outcome code to entity status`(nomisOutcomeCode: String, expectedStatus: EntityStatus) {
+    val legacyCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(5), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
+    val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
+    val result = CourtAppearanceEntity.from(legacyCourtAppearance, null, courtCase, "user")
+    Assertions.assertThat(result.statusId).isEqualTo(expectedStatus)
+  }
+
+  companion object {
+    @JvmStatic
+    fun legacyDataOutcomeStatusParameters(): Stream<Arguments> = Stream.of(
+      Arguments.of("1501", EntityStatus.RECALL_APPEARANCE),
+      Arguments.of("5501", EntityStatus.IMMIGRATION_APPEARANCE),
+      Arguments.of("5502", EntityStatus.IMMIGRATION_APPEARANCE),
+    )
   }
 }

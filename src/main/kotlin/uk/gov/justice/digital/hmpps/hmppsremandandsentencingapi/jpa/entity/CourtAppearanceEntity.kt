@@ -129,7 +129,7 @@ class CourtAppearanceEntity(
       courtAppearance.courtCode,
       courtCaseReference,
       courtAppearance.appearanceDate,
-      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
+      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime, courtAppearance.legacyData.nomisOutcomeCode),
       this,
       warrantId,
       ZonedDateTime.now(),
@@ -164,7 +164,7 @@ class CourtAppearanceEntity(
       courtAppearance.courtCode,
       courtAppearance.courtCaseReference,
       courtAppearance.appearanceDate,
-      EntityStatus.ACTIVE,
+      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
       this,
       courtAppearance.warrantId,
       ZonedDateTime.now(),
@@ -284,7 +284,7 @@ class CourtAppearanceEntity(
         courtCode = courtAppearance.courtCode,
         courtCaseReference = courtAppearance.courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
-        statusId = EntityStatus.ACTIVE,
+        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
         warrantId = courtAppearance.warrantId,
         previousAppearance = null,
         createdPrison = courtAppearance.prisonId,
@@ -337,7 +337,7 @@ class CourtAppearanceEntity(
         courtCode = courtAppearance.courtCode,
         courtCaseReference = courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
-        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime),
+        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime, courtAppearance.legacyData.nomisOutcomeCode),
         warrantId = null,
         appearanceCharges = mutableSetOf(),
         previousAppearance = null,
@@ -367,6 +367,7 @@ class CourtAppearanceEntity(
       statusId = getStatus(
         migrationCreateCourtAppearance.appearanceDate,
         migrationCreateCourtAppearance.legacyData.appearanceTime,
+        migrationCreateCourtAppearance.legacyData.nomisOutcomeCode,
       ),
       warrantId = null,
       appearanceCharges = mutableSetOf(),
@@ -396,6 +397,7 @@ class CourtAppearanceEntity(
       statusId = getStatus(
         mergeCreateCourtAppearance.appearanceDate,
         mergeCreateCourtAppearance.legacyData.appearanceTime,
+        mergeCreateCourtAppearance.legacyData.nomisOutcomeCode,
       ),
       warrantId = null,
       appearanceCharges = mutableSetOf(),
@@ -425,6 +427,7 @@ class CourtAppearanceEntity(
       statusId = getStatus(
         bookingCreateCourtAppearance.appearanceDate,
         bookingCreateCourtAppearance.legacyData.appearanceTime,
+        bookingCreateCourtAppearance.legacyData.nomisOutcomeCode,
         EntityStatus.DUPLICATE,
       ),
       warrantId = null,
@@ -439,10 +442,18 @@ class CourtAppearanceEntity(
       source = NOMIS,
     )
 
-    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?, nonFutureStatus: EntityStatus = EntityStatus.ACTIVE): EntityStatus {
+    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?, nomisOutcomeCode: String?, nonFutureStatus: EntityStatus = EntityStatus.ACTIVE): EntityStatus {
       val compareDate = appearanceDate.atTime(appearanceTime ?: LocalTime.MIDNIGHT)
-      return if (compareDate.isAfter(LocalDateTime.now())) EntityStatus.FUTURE else nonFutureStatus
+      return when {
+        compareDate.isAfter(LocalDateTime.now()) -> EntityStatus.FUTURE
+        nomisOutcomeCode == RECALL_NOMIS_OUTCOME_CODE -> EntityStatus.RECALL_APPEARANCE
+        immigrationNomisOutcomeCodes.contains(nomisOutcomeCode) -> EntityStatus.IMMIGRATION_APPEARANCE
+        else -> nonFutureStatus
+      }
     }
+
+    private const val RECALL_NOMIS_OUTCOME_CODE = "1501"
+    private val immigrationNomisOutcomeCodes: Set<String> = setOf("5501", "5502")
 
     private fun deriveWarrantType(
       appearanceOutcome: AppearanceOutcomeEntity?,
