@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCaseCountNumbers
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LatestOffenceDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -34,7 +35,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
-import java.time.LocalDate
 
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -255,13 +255,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   fun getLatestOffenceDate(
     @PathVariable courtCaseUuid: String,
     @RequestParam(required = false) appearanceUuidToExclude: String?,
-  ): ResponseEntity<LocalDate> {
-    val latestOffenceDate = courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid, appearanceUuidToExclude)
-
-    return if (latestOffenceDate != null) {
-      ResponseEntity.ok(latestOffenceDate)
-    } else {
-      ResponseEntity.noContent().build()
-    }
-  }
+  ): LatestOffenceDate = LatestOffenceDate(
+    courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid, appearanceUuidToExclude),
+  )
 }
