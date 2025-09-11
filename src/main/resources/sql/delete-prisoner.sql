@@ -184,6 +184,10 @@ WHERE court_case_id IN (
     SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
 );
 
+-- Delete court cases history
+DELETE FROM court_case_history
+WHERE prisoner_id = :prisonerId;
+
 -- Delete court cases
 DELETE FROM court_case
 WHERE prisoner_id = :prisonerId;

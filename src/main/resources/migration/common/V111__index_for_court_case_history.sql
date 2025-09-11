@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_court_case_history_prisoner_id ON court_case_history(prisoner_id);

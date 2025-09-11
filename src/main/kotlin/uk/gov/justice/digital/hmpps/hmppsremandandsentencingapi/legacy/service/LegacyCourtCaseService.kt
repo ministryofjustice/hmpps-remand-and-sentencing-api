@@ -63,6 +63,8 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
     existingCourtCase.legacyData = existingCourtCase.legacyData?.copyFrom(courtCase.legacyData) ?: courtCase.legacyData
+    existingCourtCase.updatedAt = ZonedDateTime.now()
+    existingCourtCase.updatedBy = serviceUserService.getUsername()
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
   }
@@ -74,6 +76,8 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     sourceCourtCase.statusId = EntityStatus.MERGED
     sourceCourtCase.mergedToCase = targetCourtCase
     sourceCourtCase.mergedToDate = linkCase?.linkedDate ?: LocalDate.now()
+    sourceCourtCase.updatedAt = ZonedDateTime.now()
+    sourceCourtCase.updatedBy = serviceUserService.getUsername()
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(sourceCourtCase))
     return sourceCourtCaseUuid to sourceCourtCase.prisonerId
   }
@@ -87,6 +91,8 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
       sourceCourtCase.statusId = EntityStatus.ACTIVE
       sourceCourtCase.mergedToCase = null
       sourceCourtCase.mergedToDate = null
+      sourceCourtCase.updatedAt = ZonedDateTime.now()
+      sourceCourtCase.updatedBy = serviceUserService.getUsername()
       courtCaseEventMetadata = EventMetadataCreator.courtCaseEventMetadata(
         sourceCourtCase.prisonerId,
         sourceCourtCase.caseUniqueIdentifier,
@@ -118,7 +124,7 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
   @Transactional
   fun delete(courtCaseUuid: String) {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
-    existingCourtCase.statusId = EntityStatus.DELETED
+    existingCourtCase.delete(serviceUserService.getUsername())
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
     draftAppearanceRepository.deleteAll(existingCourtCase.draftAppearances)
   }
