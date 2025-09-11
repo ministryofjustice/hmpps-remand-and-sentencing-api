@@ -117,7 +117,6 @@ class DpsDataCreator {
       fineAmount: CreateFineAmount? = null,
       prisonId: String = "PRISON1",
     ): CreateSentence = CreateSentence(
-      // TODO 3
       sentenceUuid!!,
       chargeNumber,
       periodLengths,

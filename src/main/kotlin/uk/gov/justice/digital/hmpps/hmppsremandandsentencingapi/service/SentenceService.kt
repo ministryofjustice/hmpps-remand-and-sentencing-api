@@ -74,7 +74,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
         ),
       )
     }
-    // TODO 1 - done
     sentencesCreated.put(sentence.sentenceUuid, activeRecord)
     return RecordResponse(activeRecord, eventsToEmit)
   }
@@ -111,7 +110,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     )
     eventsToEmit.add(sentenceEvent)
     eventsToEmit.addAll(periodLengthResponse.eventsToEmit)
-    // TODO 2 -- Done
     sentencesCreated.put(sentence.sentenceUuid, createdSentence)
     return RecordResponse(createdSentence, eventsToEmit)
   }
