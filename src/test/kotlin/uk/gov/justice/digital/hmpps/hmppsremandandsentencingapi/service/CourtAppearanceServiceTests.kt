@@ -83,7 +83,6 @@ class CourtAppearanceServiceTests {
 
   private fun uuid(i: Long) = UUID(0L, i)
 
-  //  private fun createCharge(sentenceRef: String, consecutiveToRef: String?): CreateCharge = CreateCharge(
   private fun createCharge(sentenceUuid: UUID, consecutiveToUuid: UUID?): CreateCharge = CreateCharge(
     appearanceUuid = null,
     offenceCode = "X",
