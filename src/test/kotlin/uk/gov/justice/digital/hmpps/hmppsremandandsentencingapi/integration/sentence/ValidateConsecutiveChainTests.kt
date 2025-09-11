@@ -15,28 +15,28 @@ class ValidateConsecutiveChainTests : IntegrationTestBase() {
     val s1 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "1",
       sentenceServeType = "FORTHWITH",
-      sentenceReference = "0",
+      sentenceUuid = uuid(0),
     )
 
     val s2 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "2",
       sentenceServeType = "CONSECUTIVE",
-      sentenceReference = "1",
-      consecutiveToSentenceReference = "0",
+      sentenceUuid = uuid(1),
+      consecutiveToSentenceUuid = uuid(0),
     )
 
     val s3 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "3",
       sentenceServeType = "CONSECUTIVE",
-      sentenceReference = "2",
-      consecutiveToSentenceReference = "1",
+      sentenceUuid = uuid(2),
+      consecutiveToSentenceUuid = uuid(1),
     )
 
     val s4 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "4",
       sentenceServeType = "CONSECUTIVE",
-      sentenceReference = "3",
-      consecutiveToSentenceReference = "2",
+      sentenceUuid = uuid(3),
+      consecutiveToSentenceUuid = uuid(2),
     )
 
     val c1 = DpsDataCreator.dpsCreateCharge(sentence = s1)
@@ -48,7 +48,7 @@ class ValidateConsecutiveChainTests : IntegrationTestBase() {
 
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
 
-    val sentencesUUIDs = courtCase.second.appearances[0].charges.map { it.sentence!!.sentenceUuid!! }
+    val sentencesUUIDs = courtCase.second.appearances[0].charges.map { it.sentence!!.sentenceUuid }
 
     val sentenceEntities = sentenceRepository.findBySentenceUuidIn(sentencesUUIDs)
 
@@ -57,7 +57,7 @@ class ValidateConsecutiveChainTests : IntegrationTestBase() {
     // Case 2 (CC2): single sentence, consecutive to CC1 Count 3
     val sentenceInCC2 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "5",
-      sentenceReference = "1",
+      sentenceUuid = uuid(1),
       consecutiveToSentenceUuid = sentenceUUIDCount3,
     )
     val chargeInCC2 = DpsDataCreator.dpsCreateCharge(sentence = sentenceInCC2)
@@ -72,8 +72,8 @@ class ValidateConsecutiveChainTests : IntegrationTestBase() {
     }
 
     val sourceId =
-      courtCase.second.appearances[0].charges.first { it.sentence?.chargeNumber == "1" }.sentence!!.sentenceUuid!!
-    val targetId = courtCase2.second.appearances[0].charges[0].sentence!!.sentenceUuid!!
+      courtCase.second.appearances[0].charges.first { it.sentence?.chargeNumber == "1" }.sentence!!.sentenceUuid
+    val targetId = courtCase2.second.appearances[0].charges[0].sentence!!.sentenceUuid
 
     val consecDetails = ConsecutiveChainValidationRequest(
       prisonerId = courtCase.second.prisonerId,

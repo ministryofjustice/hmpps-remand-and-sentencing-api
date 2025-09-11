@@ -59,9 +59,9 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
     val forthWithSentence = DpsDataCreator.dpsCreateSentence()
     val forthWithCharge = DpsDataCreator.dpsCreateCharge(sentence = forthWithSentence)
-    val concurrentSentence = DpsDataCreator.dpsCreateSentence(chargeNumber = "2", sentenceServeType = "CONCURRENT", sentenceReference = "0")
+    val concurrentSentence = DpsDataCreator.dpsCreateSentence(chargeNumber = "2", sentenceServeType = "CONCURRENT", sentenceUuid = uuid(0))
     val concurrentCharge = DpsDataCreator.dpsCreateCharge(sentence = concurrentSentence)
-    val consecutiveToSentence = DpsDataCreator.dpsCreateSentence(chargeNumber = "3", sentenceServeType = "CONSECUTIVE_TO", sentenceReference = "1", consecutiveToSentenceReference = "0")
+    val consecutiveToSentence = DpsDataCreator.dpsCreateSentence(chargeNumber = "3", sentenceServeType = "CONSECUTIVE_TO", sentenceUuid = uuid(1), consecutiveToSentenceUuid = uuid(0))
     val consecutiveToCharge = DpsDataCreator.dpsCreateCharge(sentence = consecutiveToSentence)
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, charges = listOf(consecutiveToCharge, concurrentCharge, forthWithCharge), overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6))
     webTestClient
@@ -272,28 +272,28 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val s1 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "1",
       sentenceServeType = "FORTHWITH",
-      sentenceReference = "0",
+      sentenceUuid = uuid(0),
     )
 
     val s2 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "2",
       sentenceServeType = "CONSECUTIVE",
-      sentenceReference = "1",
-      consecutiveToSentenceReference = "0",
+      sentenceUuid = uuid(1),
+      consecutiveToSentenceUuid = uuid(0),
     )
 
     val s3 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "3",
       sentenceServeType = "CONSECUTIVE",
-      sentenceReference = "2",
-      consecutiveToSentenceReference = "1",
+      sentenceUuid = uuid(2),
+      consecutiveToSentenceUuid = uuid(1),
     )
 
     val s4 = DpsDataCreator.dpsCreateSentence(
       chargeNumber = "4",
       sentenceServeType = "CONSECUTIVE",
-      sentenceReference = "3",
-      consecutiveToSentenceReference = "2",
+      sentenceUuid = uuid(3),
+      consecutiveToSentenceUuid = uuid(2),
     )
 
     val c1 = DpsDataCreator.dpsCreateCharge(sentence = s1)

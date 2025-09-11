@@ -584,6 +584,8 @@ abstract class IntegrationTestBase {
     .expectStatus()
     .isNoContent
 
+  protected fun uuid(i: Long) = UUID(0L, i)
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
