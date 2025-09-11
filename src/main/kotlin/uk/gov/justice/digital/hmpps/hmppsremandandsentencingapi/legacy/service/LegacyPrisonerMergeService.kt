@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -44,6 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
@@ -87,6 +89,7 @@ class LegacyPrisonerMergeService(
   private val recallTypeRepository: RecallTypeRepository,
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
 
   @Transactional
@@ -174,6 +177,10 @@ class LegacyPrisonerMergeService(
     trackingData.editedSentences.forEach { sentenceEntity ->
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity))
     }
+    trackingData.editedCourtCases.forEach { courtCaseEntity ->
+      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity))
+    }
+    courtCaseHistoryRepository.saveAll(trackingData.createdCourtCasesMap.values.map { it.record }.map { CourtCaseHistoryEntity.from(it) })
     courtAppearanceHistoryRepository.saveAll(trackingData.createdCourtAppearancesMap.values.map { CourtAppearanceHistoryEntity.from(it) })
     appearanceChargeHistoryRepository.saveAll(trackingData.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
     chargeHistoryRepository.saveAll(trackingData.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map { ChargeHistoryEntity.from(it) })

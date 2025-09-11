@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -44,6 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
@@ -84,6 +86,7 @@ class BookingService(
   private val recallTypeRepository: RecallTypeRepository,
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
 
   @Transactional
@@ -97,12 +100,7 @@ class BookingService(
     }
     linkMergedCases(bookingCreateCourtCases, tracking)
     linkConsecutiveToSentences(bookingCreateCourtCases, tracking)
-    auditCreatedRecords(
-      tracking.createdCourtAppearancesMap.values,
-      tracking.createdChargesMap.values.flatMap { it.map { it.second } }.distinct(),
-      tracking.createdSentencesMap.values.flatMap { it }.distinct(),
-      tracking.createdPeriodLengthMap.values.flatMap { it }.distinct(),
-    )
+    auditCreatedRecords(tracking)
 
     return RecordResponse(
       BookingCreateCourtCasesResponse(
@@ -201,16 +199,14 @@ class BookingService(
   }
 
   private fun auditCreatedRecords(
-    courtAppearances: MutableCollection<CourtAppearanceEntity>,
-    charges: List<ChargeEntity>,
-    sentences: List<SentenceEntity>,
-    periodLengths: List<PeriodLengthEntity>,
+    tracking: BookingDataTracking,
   ) {
-    courtAppearanceHistoryRepository.saveAll(courtAppearances.map { CourtAppearanceHistoryEntity.from(it) })
-    appearanceChargeHistoryRepository.saveAll(courtAppearances.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
-    chargeHistoryRepository.saveAll(charges.map { ChargeHistoryEntity.from(it) })
-    sentenceHistoryRepository.saveAll(sentences.map { SentenceHistoryEntity.from(it) })
-    periodLengthHistoryRepository.saveAll(periodLengths.map { PeriodLengthHistoryEntity.from(it) })
+    courtCaseHistoryRepository.saveAll(tracking.createdCourtCasesMap.values.map { CourtCaseHistoryEntity.from(it.record) })
+    courtAppearanceHistoryRepository.saveAll(tracking.createdCourtAppearancesMap.values.map { CourtAppearanceHistoryEntity.from(it) })
+    appearanceChargeHistoryRepository.saveAll(tracking.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
+    chargeHistoryRepository.saveAll(tracking.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map { ChargeHistoryEntity.from(it) })
+    sentenceHistoryRepository.saveAll(tracking.createdSentencesMap.values.flatMap { it }.distinct().map { SentenceHistoryEntity.from(it) })
+    periodLengthHistoryRepository.saveAll(tracking.createdPeriodLengthMap.values.flatMap { it }.distinct().map { PeriodLengthHistoryEntity.from(it) })
   }
 
   fun createCourtCase(bookingCreateCourtCase: BookingCreateCourtCase, tracking: BookingDataTracking) {
