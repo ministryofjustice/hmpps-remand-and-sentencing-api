@@ -47,6 +47,10 @@ generic-service:
         DB_PASS: database_password
     hmpps-domain-events-topic:
       HMPPS_SQS_TOPICS_HMPPSDOMAINTOPIC_ARN: "topic_arn"
+    sqs-prisoner-events-secret:
+      HMPPS_SQS_QUEUES_PRISONERLISTENER_QUEUE_NAME: "sqs_queue_name"
+    sqs-prisoner-events-dlq-secret:
+      HMPPS_SQS_QUEUES_PRISONERLISTENER_DLQ_NAME: "sqs_queue_name"
 
   allowlist:
     cymulate-1: 54.217.50.18/32

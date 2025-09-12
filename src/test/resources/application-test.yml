@@ -26,6 +26,13 @@ hmpps:
   sqs:
     provider: localstack
     queues:
+      prisonerlistener:
+        queueName: "prisonerlistener-queue"
+        dlqName: "prisonerlistener-dlq"
+        subscribeTopicId: hmppsdomaintopic
+        subscribeFilter: "{\"eventType\":[\"prison-offender-events.prisoner.booking.moved\"]}"
+        dlqMaxReceiveCount: 3
+        visibilityTimeout: 120
       hmppsdomainqueue:
         queueName: hmpps_domain_queue
         dlqName: hmpps_domain_dlq
