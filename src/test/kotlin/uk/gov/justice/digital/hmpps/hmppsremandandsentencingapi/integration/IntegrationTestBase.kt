@@ -58,6 +58,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -500,11 +501,11 @@ abstract class IntegrationTestBase {
     return getAllDomainMessages()
   }
 
-  fun createCourtCaseTwoSentences(): Pair<CreateSentence, CreateSentence> {
+  fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID): Pair<CreateSentence, CreateSentence> {
     val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
     val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
-    val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = prisonerId, appearances = listOf(appearance)))
     val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
     val sentenceTwo = courtCase.appearances.first().charges[1].sentence!!
     return sentenceOne to sentenceTwo

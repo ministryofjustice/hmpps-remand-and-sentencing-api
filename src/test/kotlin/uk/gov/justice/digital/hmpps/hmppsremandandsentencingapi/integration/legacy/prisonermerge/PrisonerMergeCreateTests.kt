@@ -1,13 +1,17 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.prisonermerge
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.PrisonerMergeDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
+import java.util.*
 import java.util.regex.Pattern
 
 class PrisonerMergeCreateTests : IntegrationTestBase() {
@@ -88,7 +92,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       .isEqualTo(EntityStatus.INACTIVE.toString())
 
     val sentence = sentenceRepository.findBySentenceUuid(sentenceUuid).first()
-    Assertions.assertThat(sentence.statusId).isEqualTo(EntityStatus.INACTIVE)
+    assertThat(sentence.statusId).isEqualTo(EntityStatus.INACTIVE)
   }
 
   @Test
@@ -111,22 +115,82 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       .returnResult(MergeCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.courtCases).hasSize(mergePerson.casesCreated.size)
+    assertThat(response.courtCases).hasSize(mergePerson.casesCreated.size)
     val courtCaseResponse = response.courtCases.first()
 
-    Assertions.assertThat(courtCaseResponse.courtCaseUuid).matches(Pattern.compile("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
-    Assertions.assertThat(response.appearances).hasSize(mergePerson.casesCreated.flatMap { it.appearances }.size)
+    assertThat(courtCaseResponse.courtCaseUuid).matches(Pattern.compile("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+    assertThat(response.appearances).hasSize(mergePerson.casesCreated.flatMap { it.appearances }.size)
     val createdAppearance = response.appearances.first()
-    Assertions.assertThat(createdAppearance.eventId).isEqualTo(mergePerson.casesCreated.first().appearances.first().eventId)
-    Assertions.assertThat(response.charges).hasSize(mergePerson.casesCreated.flatMap { it.appearances.flatMap { it.charges } }.size)
+    assertThat(createdAppearance.eventId).isEqualTo(mergePerson.casesCreated.first().appearances.first().eventId)
+    assertThat(response.charges).hasSize(mergePerson.casesCreated.flatMap { it.appearances.flatMap { it.charges } }.size)
     val createdCharge = response.charges.first()
-    Assertions.assertThat(createdCharge.chargeNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().chargeNOMISId)
+    assertThat(createdCharge.chargeNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().chargeNOMISId)
     val createdSentence = response.sentences.first()
 
-    Assertions.assertThat(createdSentence.sentenceNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().sentence!!.sentenceId)
+    assertThat(createdSentence.sentenceNOMISId).isEqualTo(mergePerson.casesCreated.first().appearances.first().charges.first().sentence!!.sentenceId)
 
     val messagesOnQueue = getMessages(6)
-    Assertions.assertThat(messagesOnQueue).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-case.inserted", "court-appearance.inserted", "charge.inserted", "sentence.inserted", "sentence.period-length.inserted", "court-case.updated")
-    Assertions.assertThat(messagesOnQueue).extracting<String> { it.additionalInformation.get("source").asText() }.allMatch { it.equals("NOMIS") }
+    assertThat(messagesOnQueue).extracting<String> { it.eventType }.containsExactlyInAnyOrder(
+      "court-case.inserted",
+      "court-appearance.inserted",
+      "charge.inserted",
+      "sentence.inserted",
+      "sentence.period-length.inserted",
+      "court-case.updated",
+    )
+    assertThat(messagesOnQueue).extracting<String> { it.additionalInformation.get("source").asText() }
+      .allMatch { it.equals("NOMIS") }
+  }
+
+  @Test
+  fun `should merge recalls`() {
+    val removedPrisonerNumber = "RCLMER1"
+    val retainedPrisonerNumber = "RCLMER2"
+
+    val recallIdForPrisonerOne = createRecallForPrisoner(removedPrisonerNumber, LocalDate.of(2024, 2, 3))
+    val recallIdForPrisonerTwo = createRecallForPrisoner(retainedPrisonerNumber, LocalDate.of(2024, 1, 1))
+
+    val mergePerson = PrisonerMergeDataCreator.mergePerson(removedPrisonerNumber = removedPrisonerNumber)
+
+    val mergeResponse = webTestClient
+      .post()
+      .uri("/legacy/court-case/merge/person/$retainedPrisonerNumber")
+      .bodyValue(mergePerson)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MergeCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    assertThat(mergeResponse).isNotNull
+
+    val recallsForRetainedPrisoner = getRecallsByPrisonerId(retainedPrisonerNumber)
+    assertThat(recallsForRetainedPrisoner).hasSize(2)
+    assertThat(recallsForRetainedPrisoner)
+      .extracting<UUID> { it -> it.recallUuid }
+      .containsExactlyInAnyOrder(recallIdForPrisonerOne, recallIdForPrisonerTwo)
+
+    val recallsForRemovedPrisoner = getRecallsByPrisonerId(removedPrisonerNumber)
+    assertThat(recallsForRemovedPrisoner).isEmpty()
+  }
+
+  private fun createRecallForPrisoner(prisonerNumber: String, returnToCustodyDate: LocalDate): UUID {
+    documentManagementApi.stubPutDocumentMetadata("123", prisonerNumber)
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences(prisonerNumber)
+    val recall = DpsDataCreator.dpsCreateRecall(
+      prisonerId = prisonerNumber,
+      createdByUsername = "username1",
+      returnToCustodyDate = returnToCustodyDate,
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid!!,
+        sentenceTwo.sentenceUuid!!,
+      ),
+    )
+
+    return createRecall(recall).recallUuid
   }
 }

@@ -25,6 +25,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -47,6 +49,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
@@ -90,6 +94,8 @@ class LegacyPrisonerMergeService(
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+  private val recallHistoryRepository: RecallHistoryRepository,
+  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
 ) {
 
   @Transactional
@@ -100,6 +106,7 @@ class LegacyPrisonerMergeService(
     val trackingData = PrisonerMergeDataTracking(retainedPrisonerNumber, serviceUserService.getUsername())
     processExistingCourtCases(courtCases, deactivatedCourtCasesMap, trackingData)
     processExistingSentences(courtCases, deactivatedSentencesMap, trackingData)
+    processExistingRecalls(mergePerson, trackingData)
     val createdResponse = processCreateCourtCases(mergePerson, trackingData)
     auditRecords(trackingData)
     return RecordResponse(createdResponse, trackingData.eventsToEmit)
@@ -156,6 +163,32 @@ class LegacyPrisonerMergeService(
           }
       }
     }
+  }
+
+  private fun processExistingRecalls(
+    mergePerson: MergePerson,
+    trackingData: PrisonerMergeDataTracking,
+  ) {
+    recallRepository.findByPrisonerId(mergePerson.removedPrisonerNumber)
+      .forEach { recall ->
+        val recallHistoryEntity =
+          recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
+        recall.recallSentences.forEach {
+          recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
+        }
+        recall.prisonerId = trackingData.retainedPrisonerNumber
+        val sentenceIds = recall.recallSentences.map { it.sentence.sentenceUuid.toString() }
+        trackingData.eventsToEmit.add(
+          EventMetadataCreator.recallEventMetadata(
+            trackingData.retainedPrisonerNumber,
+            recall.recallUuid.toString(),
+            sentenceIds = sentenceIds,
+            previousSentenceIds = sentenceIds,
+            null,
+            EventType.RECALL_UPDATED,
+          ),
+        )
+      }
   }
 
   fun processCreateCourtCases(mergePerson: MergePerson, trackingData: PrisonerMergeDataTracking): MergeCreateCourtCasesResponse {

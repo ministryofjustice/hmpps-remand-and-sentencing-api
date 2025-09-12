@@ -322,12 +322,12 @@ class LegacySentenceService(
   private fun updateRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
     val latestRecall = updatedSentence.latestRecall()
     if (latestRecall != null) {
-      latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
       val recallHistoryEntity =
         recallHistoryRepository.save(RecallHistoryEntity.from(latestRecall, EntityStatus.EDITED))
       latestRecall.recallSentences.forEach {
         recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
       }
+      latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
     }
   }
 
