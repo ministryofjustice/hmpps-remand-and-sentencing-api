@@ -95,6 +95,14 @@ abstract class IntegrationTestBase {
   private val hmppsDomainQueueSqsClient by lazy { hmppsDomainQueue.sqsClient }
   private val hmppsDomainQueueSqsDlqClient by lazy { hmppsDomainQueue.sqsDlqClient!! }
 
+  private val prisonerListenerQueue by lazy {
+    hmppsQueueService.findByQueueId("prisonerlistener")
+      ?: throw MissingQueueException("HmppsQueue prisonerlistener not found")
+  }
+
+  private val prisonerListenerQueueSqsClient by lazy { hmppsDomainQueue.sqsClient }
+  private val prisonerListenerQueueSqsDlqClient by lazy { hmppsDomainQueue.sqsDlqClient!! }
+
   @Autowired
   protected lateinit var courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository
 
@@ -449,11 +457,27 @@ abstract class IntegrationTestBase {
             hmppsDomainQueue.dlqUrl!!,
           ),
         )
+        hmppsQueueService.purgeQueue(
+          PurgeQueueRequest(
+            "prisonerlistener-queue",
+            prisonerListenerQueueSqsClient,
+            prisonerListenerQueue.queueUrl,
+          ),
+        )
+        hmppsQueueService.purgeQueue(
+          PurgeQueueRequest(
+            "prisonerlistener-dlq",
+            prisonerListenerQueueSqsDlqClient,
+            prisonerListenerQueue.dlqUrl!!,
+          ),
+        )
       }
       currentAttempt++
     }
     val messagesOnQueue = getAllDomainMessages()
     log.info("message types on queue: {}", messagesOnQueue.joinToString { it.eventType })
+    val prisonerMessagesOnQueue = getAllPrisonerMessages()
+    log.info("messages on queue: {}", prisonerMessagesOnQueue.joinToString { it.eventType })
   }
 
   fun expectInsertedMessages(prisonerId: String) {
@@ -497,6 +521,27 @@ abstract class IntegrationTestBase {
         message.get().messages().map {
           hmppsDomainQueueSqsClient.deleteMessage(
             DeleteMessageRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).receiptHandle(it.receiptHandle())
+              .build(),
+          ).get()
+          val sqsMessage = objectMapper.readValue(it.body(), SQSMessage::class.java)
+          val courtCaseInsertedMessageType = object : TypeReference<HmppsMessage<ObjectNode>>() {}
+          objectMapper.readValue(sqsMessage.Message, courtCaseInsertedMessageType)
+        },
+      )
+    }
+    return messages
+  }
+
+  private fun getAllPrisonerMessages(): List<HmppsMessage<ObjectNode>> {
+    val messages = ArrayList<HmppsMessage<ObjectNode>>()
+    while (prisonerListenerQueueSqsClient.countAllMessagesOnQueue(prisonerListenerQueue.queueUrl).get() != 0) {
+      val message = prisonerListenerQueueSqsClient.receiveMessage(
+        ReceiveMessageRequest.builder().queueUrl(prisonerListenerQueue.queueUrl).build(),
+      )
+      messages.addAll(
+        message.get().messages().map {
+          prisonerListenerQueueSqsClient.deleteMessage(
+            DeleteMessageRequest.builder().queueUrl(prisonerListenerQueue.queueUrl).receiptHandle(it.receiptHandle())
               .build(),
           ).get()
           val sqsMessage = objectMapper.readValue(it.body(), SQSMessage::class.java)

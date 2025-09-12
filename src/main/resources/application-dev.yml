@@ -9,6 +9,14 @@ hmpps:
     url: http://localhost:9090/auth
   sqs:
     provider: localstack
+    queues:
+      prisonerlistener:
+        queueName: "prisonerlistener-${random.uuid}"
+        dlqName: "prisonerlistener-dlq-${random.uuid}"
+        subscribeTopicId: hmppsdomaintopic
+        subscribeFilter: "{\"eventType\":[\"prison-offender-events.prisoner.booking.moved\"]}"
+        dlqMaxReceiveCount: 3
+        visibilityTimeout: 120
     topics:
       hmppsdomaintopic:
         arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
