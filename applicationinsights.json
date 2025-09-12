@@ -26,6 +26,22 @@
           }
         ],
         "percentage": 10
+      },
+      {
+        "telemetryType": "dependency",
+        "attributes": [
+          {
+            "key": "db.system",
+            "value": "postgresql",
+            "matchType": "strict"
+          },
+          {
+            "key": "applicationinsights.internal.operation_name",
+            "value": "POST /legacy/court-case/migration",
+            "matchType": "strict"
+          }
+        ],
+        "percentage": 10
       }
     ]
   }
