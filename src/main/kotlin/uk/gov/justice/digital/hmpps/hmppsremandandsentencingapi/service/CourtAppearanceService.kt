@@ -437,7 +437,7 @@ class CourtAppearanceService(
     courtAppearanceEntity: CourtAppearanceEntity,
     courtAppearanceDateChanged: Boolean,
   ): MutableSet<RecordResponse<ChargeEntity>> {
-    val sentencesCreated = mutableMapOf<String, SentenceEntity>()
+    val sentencesCreated = mutableMapOf<UUID, SentenceEntity>()
     return orderChargesByConsecutiveChain(charges).map {
       val charge = chargeService.createCharge(
         it,
@@ -468,14 +468,15 @@ class CourtAppearanceService(
 
   @VisibleForTesting
   fun orderChargesByConsecutiveChain(charges: List<CreateCharge>): List<CreateCharge> {
-    val chargesByRef: Map<String, CreateCharge> =
-      charges.filter { it.sentence?.sentenceReference != null }.associateBy { it.sentence!!.sentenceReference }
+    val chargesWithSentences = charges.filter { it.sentence != null }
+    val chargesBySentenceUuid: Map<UUID, CreateCharge> =
+      chargesWithSentences.associateBy { it.sentence!!.sentenceUuid }
 
-    val chainPositionByRef = mutableMapOf<String, Int>()
+    val chainPositionByRef = mutableMapOf<UUID, Int>()
 
     val chargesWithSortKeys = charges.map { charge ->
-      val sentenceRef = charge.sentence?.sentenceReference
-      val positionInChain = chainPositionFor(sentenceRef, chargesByRef, chainPositionByRef)
+      val sentenceUuid = charge.sentence?.sentenceUuid
+      val positionInChain = chainPositionFor(sentenceUuid, chargesBySentenceUuid, chainPositionByRef)
       ChargeWithSortKeys(positionInChain, charge)
     }
 
@@ -489,30 +490,29 @@ class CourtAppearanceService(
   )
 
   /**
-   * Determines "position in chain" of a sentenceReference, called recursively
+   * Determines "position in chain" of a sentenceUuid, called recursively
    *
-   * - If `sentenceRef` is null, position = 0.
+   * - If `sentenceUuid` is null, position = 0 (implies charge has no sentence).
    * - If the parent is not present in this `charges` list: treat it as position 0.
    */
   private fun chainPositionFor(
-    sentenceRef: String?,
-    chargesBySentenceRef: Map<String, CreateCharge>,
-    chainPositionByRef: MutableMap<String, Int>,
+    sentenceUuid: UUID?,
+    chargesBySentenceUuid: Map<UUID, CreateCharge>,
+    chainPositionByUuid: MutableMap<UUID, Int>,
   ): Int {
-    if (sentenceRef == null) return 0
-
+    if (sentenceUuid == null) return 0
     // Already processed
-    chainPositionByRef[sentenceRef]?.let { return it }
+    chainPositionByUuid[sentenceUuid]?.let { return it }
 
-    val parentRef = chargesBySentenceRef[sentenceRef]?.sentence?.consecutiveToSentenceReference
-    val parentPosition = if (parentRef != null && chargesBySentenceRef.containsKey(parentRef)) {
-      chainPositionFor(parentRef, chargesBySentenceRef, chainPositionByRef)
+    val parentUuid = chargesBySentenceUuid[sentenceUuid]?.sentence?.consecutiveToSentenceUuid
+    val parentPosition = if (parentUuid != null && chargesBySentenceUuid.containsKey(parentUuid)) {
+      chainPositionFor(parentUuid, chargesBySentenceUuid, chainPositionByUuid)
     } else {
       0 // No parent in the chain
     }
     val chainPosition = parentPosition + 1
 
-    chainPositionByRef[sentenceRef] = chainPosition
+    chainPositionByUuid[sentenceUuid] = chainPosition
 
     return chainPosition
   }

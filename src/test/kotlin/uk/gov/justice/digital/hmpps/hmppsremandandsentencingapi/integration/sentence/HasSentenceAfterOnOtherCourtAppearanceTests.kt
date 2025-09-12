@@ -19,7 +19,7 @@ class HasSentenceAfterOnOtherCourtAppearanceTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/sentence/${sentence.sentenceUuid!!}/has-sentences-after-on-other-court-appearance")
+      .uri("/sentence/${sentence.sentenceUuid}/has-sentences-after-on-other-court-appearance")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
@@ -42,7 +42,7 @@ class HasSentenceAfterOnOtherCourtAppearanceTests : IntegrationTestBase() {
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(courtAppearance, otherCaseAppearance)))
     webTestClient
       .get()
-      .uri("/sentence/${sentence.sentenceUuid!!}/has-sentences-after-on-other-court-appearance")
+      .uri("/sentence/${sentence.sentenceUuid}/has-sentences-after-on-other-court-appearance")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
@@ -57,14 +57,14 @@ class HasSentenceAfterOnOtherCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `when sentence on same case same appearance is after return false`() {
     val sentence = DpsDataCreator.dpsCreateSentence()
-    val otherSentence = DpsDataCreator.dpsCreateSentence(sentenceReference = "1", consecutiveToSentenceReference = sentence.sentenceReference)
+    val otherSentence = DpsDataCreator.dpsCreateSentence(sentenceUuid = uuid(1), consecutiveToSentenceUuid = sentence.sentenceUuid)
     val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
     val otherCharge = DpsDataCreator.dpsCreateCharge(sentence = otherSentence)
     val courtAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge, otherCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(courtAppearance)))
     webTestClient
       .get()
-      .uri("/sentence/${sentence.sentenceUuid!!}/has-sentences-after-on-other-court-appearance")
+      .uri("/sentence/${sentence.sentenceUuid}/has-sentences-after-on-other-court-appearance")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
@@ -81,7 +81,7 @@ class HasSentenceAfterOnOtherCourtAppearanceTests : IntegrationTestBase() {
     val createdSentence = createCourtCase().second.appearances.first().charges.first().sentence!!
     webTestClient
       .get()
-      .uri("/sentence/${createdSentence.sentenceUuid!!}/has-sentences-after-on-other-court-appearance")
+      .uri("/sentence/${createdSentence.sentenceUuid}/has-sentences-after-on-other-court-appearance")
       .exchange()
       .expectStatus()
       .isUnauthorized
@@ -92,7 +92,7 @@ class HasSentenceAfterOnOtherCourtAppearanceTests : IntegrationTestBase() {
     val createdSentence = createCourtCase().second.appearances.first().charges.first().sentence!!
     webTestClient
       .get()
-      .uri("/sentence/${createdSentence.sentenceUuid!!}/has-sentences-after-on-other-court-appearance")
+      .uri("/sentence/${createdSentence.sentenceUuid}/has-sentences-after-on-other-court-appearance")
       .headers {
         it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
       }
