@@ -74,6 +74,36 @@ class SentenceController(private val sentenceService: SentenceService, private v
   )
   fun hasSentencesAfterOnOtherCase(@PathVariable sentenceUuid: UUID): HasSentenceAfterOnOtherCourtAppearanceResponse = sentenceService.hasSentencesAfterOnOtherCourtAppearance(sentenceUuid)
 
+  @GetMapping("/sentence/sentences-after-on-other-court-appearance-details")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Sentences after on other court appearance details",
+    description = "This endpoint will return details of the court appearances of sentences after this sentence",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns true or false"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun sentencesAfterOnOtherCourtAppearanceDetails(@RequestParam sentenceUuids: List<UUID>): SentencesAfterOnOtherCourtAppearanceDetailsResponse = sentenceService.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuids)
+
+  @GetMapping("/sentence/has-sentences-after-on-other-court-appearance")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Any sentences after on another appearance",
+    description = "This endpoint will return true if any other sentence has a consecutive to link to the sentence at sentenceUuid that is on a different court appearance",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns true or false"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun hasSentencesAfterOnOtherCase(@RequestParam sentenceUuids: List<UUID>): HasSentenceAfterOnOtherCourtAppearanceResponse = sentenceService.hasSentencesAfterOnOtherCourtAppearance(sentenceUuids)
+
   @GetMapping("/sentence/{sentenceUuid}/sentences-after-on-other-court-appearance-details")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
