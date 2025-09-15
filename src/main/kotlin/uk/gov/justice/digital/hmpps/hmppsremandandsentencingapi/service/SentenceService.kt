@@ -160,6 +160,15 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid),
   )
 
+  fun hasSentencesAfterOnOtherCourtAppearance(sentenceUuids: List<UUID>): HasSentenceAfterOnOtherCourtAppearanceResponse {
+    val count = sentenceRepository.countSentencesAfterOnOtherCourtAppearance(sentenceUuids)
+    return HasSentenceAfterOnOtherCourtAppearanceResponse(count > 0)
+  }
+
+  fun sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuids: List<UUID>): SentencesAfterOnOtherCourtAppearanceDetailsResponse = SentencesAfterOnOtherCourtAppearanceDetailsResponse.from(
+    sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuids),
+  )
+
   fun moveSentencesToNewCharge(
     existingCharge: ChargeEntity,
     newChargeRecord: ChargeEntity,
