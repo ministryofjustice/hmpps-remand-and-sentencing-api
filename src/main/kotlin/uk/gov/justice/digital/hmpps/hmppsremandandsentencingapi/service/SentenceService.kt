@@ -151,15 +151,6 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     return RecordResponse(SentenceConsecutiveToDetailsResponse.from(sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids)), eventsToEmit)
   }
 
-  fun hasSentencesAfterOnOtherCourtAppearance(sentenceUuid: UUID): HasSentenceAfterOnOtherCourtAppearanceResponse {
-    val count = sentenceRepository.countSentencesAfterOnOtherCourtAppearance(sentenceUuid)
-    return HasSentenceAfterOnOtherCourtAppearanceResponse(count > 0)
-  }
-
-  fun sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid: UUID): SentencesAfterOnOtherCourtAppearanceDetailsResponse = SentencesAfterOnOtherCourtAppearanceDetailsResponse.from(
-    sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuid),
-  )
-
   fun hasSentencesAfterOnOtherCourtAppearance(sentenceUuids: List<UUID>): HasSentenceAfterOnOtherCourtAppearanceResponse {
     val count = sentenceRepository.countSentencesAfterOnOtherCourtAppearance(sentenceUuids)
     return HasSentenceAfterOnOtherCourtAppearanceResponse(count > 0)
