@@ -185,7 +185,7 @@ class ChargeService(
     val changeStatus = if (charge.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.delete(serviceUserService.getUsername())
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
-    charge.getActiveSentence()?.let { eventsToEmit.addAll(sentenceService.deleteSentence(it, charge, prisonerId!!, courtCaseId!!, courtAppearanceId).eventsToEmit) }
+    charge.getActiveOrInactiveSentence()?.let { eventsToEmit.addAll(sentenceService.deleteSentence(it, charge, prisonerId!!, courtCaseId!!, courtAppearanceId).eventsToEmit) }
     if (changeStatus == EntityChangeStatus.DELETED) {
       eventsToEmit.add(
         EventMetadataCreator.chargeEventMetadata(

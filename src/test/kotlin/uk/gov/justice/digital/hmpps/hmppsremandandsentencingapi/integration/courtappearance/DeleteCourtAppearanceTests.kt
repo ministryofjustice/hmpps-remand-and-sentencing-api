@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class DeleteCourtAppearanceTests : IntegrationTestBase() {
@@ -14,8 +16,6 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
     val appearance = DpsDataCreator.dpsCreateCourtAppearance()
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
-
-    val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
 
     // When the court appearance is deleted
     webTestClient.delete()
@@ -29,7 +29,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .isNoContent
       .expectBody()
 
-    val deletedAppearance = courtAppearanceRepository.findById(appearanceId).get()
+    val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
     assertEquals(EntityStatus.DELETED, deletedAppearance.statusId)
 
     val deletedCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCase.first)
@@ -44,8 +44,6 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance1, appearance2)))
     val createdAppearance = courtCase.second.appearances.first()
 
-    val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
-
     // When the court appearance is deleted
     webTestClient.delete()
       .uri("/court-appearance/${createdAppearance.appearanceUuid}")
@@ -59,10 +57,42 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
 
     // Then the court case status should still be active
-    val deletedAppearance = courtAppearanceRepository.findById(appearanceId).get()
+    val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
     assertEquals(EntityStatus.DELETED, deletedAppearance.statusId)
 
     val deletedCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCase.first)
     assertEquals(EntityStatus.ACTIVE, deletedCourtCase?.statusId)
+  }
+
+  @Test
+  fun `must delete inactive sentences`() {
+    val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    webTestClient.delete()
+      .uri("/court-appearance/${response.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+      .expectBody()
+
+    val deletedSentence = sentenceRepository.findBySentenceUuid(response.lifetimeUuid)[0]
+    assertEquals(EntityStatus.DELETED, deletedSentence.statusId)
   }
 }
