@@ -19,7 +19,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
   packages: write
 
 concurrency:
@@ -34,7 +33,7 @@ jobs:
   helm_lint:
     strategy:
       matrix:
-        environments: ['dev', 'preprod', 'prod']
+        environments: [ 'dev', 'preprod', 'prod' ]
     name: helm lint
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/test_helm_lint.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
@@ -64,7 +63,7 @@ jobs:
       docker_multiplatform: false
   database_report:
     runs-on: ubuntu-latest
-#    if: github.ref == 'refs/heads/main'
+    #    if: github.ref == 'refs/heads/main'
     name: Generate Database Schema Report
     steps:
       - name: Checkout code
@@ -90,11 +89,24 @@ jobs:
           user: ras-user
           password: ras-pass
           database_name: ras
-      - name: publish HTML report
-        uses: JamesIves/github-pages-deploy-action@6c2d9db40f9296374acc17b90404b6e8864128c8 # v4.7.3
+      - name: Upload static files as artifact
+        id: upload_database_report
+        uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
         with:
-          folder: /tmp/schemaspy
-          target-folder: schema-spy-report
+          path: /tmp/schemaspy
+  deploy_database_report:
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    environment:
+      name: github-pages
+      url: ${{ steps.upload_database_report.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: database_report
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy_database_report
+        uses: actions/deploy-pages@v4
   deploy_dev:
     name: Deploy to the development environment
     needs:
