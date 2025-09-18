@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_court_case_booking_id ON court_case((legacy_data->>'bookingId'));

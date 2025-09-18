@@ -63,6 +63,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCr
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
+import uk.gov.justice.hmpps.sqs.MissingTopicException
 import uk.gov.justice.hmpps.sqs.PurgeQueueRequest
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
@@ -102,6 +103,13 @@ abstract class IntegrationTestBase {
 
   private val prisonerListenerQueueSqsClient by lazy { hmppsDomainQueue.sqsClient }
   private val prisonerListenerQueueSqsDlqClient by lazy { hmppsDomainQueue.sqsDlqClient!! }
+
+  private val hmppsDomainTopic by lazy {
+    hmppsQueueService.findByTopicId("hmppsdomaintopic") ?: throw MissingTopicException("HmppsTopic hmppsdomaintopic not found")
+  }
+
+  protected val hmppsTopicSnsClient by lazy { hmppsDomainTopic.snsClient }
+  protected val hmppsTopicArn by lazy { hmppsDomainTopic.arn }
 
   @Autowired
   protected lateinit var courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository
@@ -499,6 +507,11 @@ abstract class IntegrationTestBase {
       throw e
     }
     return getAllDomainMessages()
+  }
+
+  fun awaitUntilPrisonerQueueIsEmptyAndNoDlq() {
+    numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsClient, prisonerListenerQueue.queueUrl, 0)
+    numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsDlqClient, prisonerListenerQueue.dlqUrl!!, 0)
   }
 
   fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID): Pair<CreateSentence, CreateSentence> {

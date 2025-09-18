@@ -134,4 +134,17 @@ interface CourtCaseRepository :
     @Param("courtCaseUuid") courtCaseUuid: String,
     @Param("status") status: EntityStatus = EntityStatus.DELETED,
   ): List<SentenceEntity>
+
+  @Query(
+    value = """
+    select * from court_case cc
+    where cc.prisoner_id = :prisonerId
+    and cc.legacy_data ->> 'bookingId' = :bookingId
+  """,
+    nativeQuery = true,
+  )
+  fun findByPrisonerIdAndBookingId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("bookingId") bookingId: String,
+  ): List<CourtCaseEntity>
 }
