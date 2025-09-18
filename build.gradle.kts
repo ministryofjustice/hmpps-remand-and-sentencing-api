@@ -47,3 +47,12 @@ tasks {
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
   }
 }
+
+val test by testing.suites.existing(JvmTestSuite::class)
+
+tasks.register<Test>("initialiseDatabase") {
+  testClassesDirs = files(test.map { it.sources.output.classesDirs })
+  classpath = files(test.map { it.sources.runtimeClasspath })
+  include("**/InitialiseDatabase.class")
+  onlyIf { gradle.startParameter.taskNames.contains("initialiseDatabase") }
+}
