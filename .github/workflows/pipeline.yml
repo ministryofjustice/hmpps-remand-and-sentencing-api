@@ -33,7 +33,7 @@ jobs:
   helm_lint:
     strategy:
       matrix:
-        environments: ['dev', 'preprod', 'prod']
+        environments: [ 'dev', 'preprod', 'prod' ]
     name: helm lint
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/test_helm_lint.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
@@ -61,6 +61,52 @@ jobs:
       additional_docker_tag: ${{ inputs.additional_docker_tag }}
       push: ${{ inputs.push || true }}
       docker_multiplatform: false
+  database_report:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    name: Generate Database Schema Report
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Start Required Services
+        run: docker compose -f docker-compose-schemaspy.yml up -d
+
+      - name: Initialise DB
+        shell: bash
+        run: |
+          export JAVA_OPTS="${{ inputs.java_options }}"
+          ./gradlew initialiseDatabase
+      - uses: ministryofjustice/hmpps-github-actions/.github/actions/database_schema_report@v2 # WORKFLOW_VERSION
+        with:
+          schema: public
+          user: ras-user
+          password: ras-pass
+          database_name: ras
+      - name: Upload static files as artifact
+        id: upload_database_report
+        uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
+        with:
+          path: /tmp/schemaspy
+  deploy_database_report:
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    environment:
+      name: github-pages
+      url: ${{ steps.upload_database_report.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: database_report
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy_database_report
+        uses: actions/deploy-pages@v4
   deploy_dev:
     name: Deploy to the development environment
     needs:
