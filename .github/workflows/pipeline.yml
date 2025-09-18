@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  pages: write
   packages: write
 
 concurrency:
