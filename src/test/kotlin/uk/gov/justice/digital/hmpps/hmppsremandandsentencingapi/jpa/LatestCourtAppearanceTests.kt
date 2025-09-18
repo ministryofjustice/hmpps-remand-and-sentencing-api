@@ -29,7 +29,6 @@ class LatestCourtAppearanceTests {
     courtCode = "CODE1",
     courtCaseReference = "REF1",
     statusId = EntityStatus.ACTIVE,
-    previousAppearance = null,
     warrantId = "1",
     createdBy = "user",
     createdPrison = "PR1",
