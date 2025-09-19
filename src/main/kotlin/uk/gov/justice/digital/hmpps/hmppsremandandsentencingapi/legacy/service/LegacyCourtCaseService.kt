@@ -29,7 +29,7 @@ class LegacyCourtCaseService(
   private val courtCaseRepository: CourtCaseRepository,
   private val serviceUserService: ServiceUserService,
   private val chargeHistoryRepository: ChargeHistoryRepository,
-  private val courtCaseHistoryRepository: CourtCaseHistoryRepository
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
 
   @Transactional
