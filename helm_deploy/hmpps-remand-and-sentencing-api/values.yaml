@@ -20,7 +20,10 @@ generic-service:
           deny all;
           return 401;
         }
-
+        location /queue-admin/** {
+          deny all;
+          return 401;
+        }
   # Environment variables to load into the deployment
   env:
     JAVA_OPTS: "-Xmx512m"
@@ -59,6 +62,8 @@ generic-service:
     groups:
       - internal
 
+  retryDlqCronjob:
+    enabled: true
 generic-prometheus-alerts:
   targetApplication: hmpps-remand-and-sentencing-api
 
