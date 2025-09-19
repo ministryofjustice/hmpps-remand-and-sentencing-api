@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.DraftAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
@@ -26,7 +25,12 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 
 @Service
-class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val serviceUserService: ServiceUserService, private val draftAppearanceRepository: DraftAppearanceRepository, private val chargeHistoryRepository: ChargeHistoryRepository, private val courtCaseHistoryRepository: CourtCaseHistoryRepository) {
+class LegacyCourtCaseService(
+  private val courtCaseRepository: CourtCaseRepository,
+  private val serviceUserService: ServiceUserService,
+  private val chargeHistoryRepository: ChargeHistoryRepository,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+) {
 
   @Transactional
   fun create(courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
@@ -126,7 +130,6 @@ class LegacyCourtCaseService(private val courtCaseRepository: CourtCaseRepositor
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.delete(serviceUserService.getUsername())
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
-    draftAppearanceRepository.deleteAll(existingCourtCase.draftAppearances)
   }
 
   private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)

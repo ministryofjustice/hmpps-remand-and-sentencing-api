@@ -22,7 +22,6 @@ import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
@@ -207,9 +206,6 @@ class CourtCaseEntity(
   @BatchSize(size = 50)
   var appearances: Set<CourtAppearanceEntity> = emptySet()
 
-  @OneToMany(mappedBy = "courtCase")
-  var draftAppearances: MutableList<DraftAppearanceEntity> = mutableListOf()
-
   @OneToOne
   @JoinColumn(name = "latest_court_appearance_id")
   var latestCourtAppearance: CourtAppearanceEntity? = null
@@ -267,7 +263,5 @@ class CourtCaseEntity(
       statusId = EntityStatus.DUPLICATE,
       legacyData = bookingCreateCourtCase.courtCaseLegacyData,
     )
-
-    fun from(draftCourtCase: DraftCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = draftCourtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = EntityStatus.DRAFT)
   }
 }
