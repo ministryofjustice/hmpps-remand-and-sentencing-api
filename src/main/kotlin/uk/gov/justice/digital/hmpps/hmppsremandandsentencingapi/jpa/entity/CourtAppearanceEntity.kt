@@ -63,8 +63,6 @@ class CourtAppearanceEntity(
   @Enumerated(EnumType.STRING)
   var statusId: EntityStatus,
   @Column
-  var warrantId: String?,
-  @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   @Column
   val createdBy: String,
@@ -125,7 +123,6 @@ class CourtAppearanceEntity(
       courtCaseReference,
       courtAppearance.appearanceDate,
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime, courtAppearance.legacyData.nomisOutcomeCode),
-      warrantId,
       ZonedDateTime.now(),
       createdBy,
       createdPrison,
@@ -159,7 +156,6 @@ class CourtAppearanceEntity(
       courtAppearance.courtCaseReference,
       courtAppearance.appearanceDate,
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
-      courtAppearance.warrantId,
       ZonedDateTime.now(),
       createdBy,
       courtAppearance.prisonId,
@@ -195,7 +191,6 @@ class CourtAppearanceEntity(
     courtCaseReference,
     nextCourtAppearance.appearanceDate,
     EntityStatus.FUTURE,
-    null,
     ZonedDateTime.now(),
     createdBy,
     nextCourtAppearance.prisonId,
@@ -215,7 +210,6 @@ class CourtAppearanceEntity(
     courtCaseReference = courtAppearanceEntity.courtCaseReference
     appearanceDate = courtAppearanceEntity.appearanceDate
     statusId = courtAppearanceEntity.statusId
-    warrantId = courtAppearanceEntity.warrantId
     updatedAt = courtAppearanceEntity.updatedAt
     updatedBy = courtAppearanceEntity.updatedBy
     updatedPrison = courtAppearanceEntity.updatedPrison
@@ -276,7 +270,6 @@ class CourtAppearanceEntity(
         courtCaseReference = courtAppearance.courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
         statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
-        warrantId = courtAppearance.warrantId,
         createdPrison = courtAppearance.prisonId,
         createdBy = createdBy,
         nextCourtAppearance = null,
@@ -302,7 +295,6 @@ class CourtAppearanceEntity(
       courtCaseReference = courtCaseReference,
       appearanceDate = nextCourtAppearance.appearanceDate,
       statusId = EntityStatus.FUTURE,
-      warrantId = null,
       appearanceCharges = mutableSetOf(),
       createdPrison = nextCourtAppearance.prisonId,
       createdBy = createdBy,
@@ -327,7 +319,6 @@ class CourtAppearanceEntity(
         courtCaseReference = courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
         statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime, courtAppearance.legacyData.nomisOutcomeCode),
-        warrantId = null,
         appearanceCharges = mutableSetOf(),
         createdPrison = null,
         createdBy = createdBy,
@@ -357,7 +348,6 @@ class CourtAppearanceEntity(
         migrationCreateCourtAppearance.legacyData.appearanceTime,
         migrationCreateCourtAppearance.legacyData.nomisOutcomeCode,
       ),
-      warrantId = null,
       appearanceCharges = mutableSetOf(),
       createdPrison = null,
       createdBy = createdBy,
@@ -386,7 +376,6 @@ class CourtAppearanceEntity(
         mergeCreateCourtAppearance.legacyData.appearanceTime,
         mergeCreateCourtAppearance.legacyData.nomisOutcomeCode,
       ),
-      warrantId = null,
       appearanceCharges = mutableSetOf(),
       createdPrison = null,
       createdBy = createdBy,
@@ -416,7 +405,6 @@ class CourtAppearanceEntity(
         bookingCreateCourtAppearance.legacyData.nomisOutcomeCode,
         EntityStatus.DUPLICATE,
       ),
-      warrantId = null,
       appearanceCharges = mutableSetOf(),
       createdPrison = null,
       createdBy = createdBy,
