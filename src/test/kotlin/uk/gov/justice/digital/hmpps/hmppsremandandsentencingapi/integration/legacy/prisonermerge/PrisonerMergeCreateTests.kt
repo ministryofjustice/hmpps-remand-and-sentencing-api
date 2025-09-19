@@ -6,7 +6,6 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.PrisonerMergeDataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -179,7 +178,6 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
   }
 
   private fun createRecallForPrisoner(prisonerNumber: String, returnToCustodyDate: LocalDate): UUID {
-    documentManagementApi.stubPutDocumentMetadata("123", prisonerNumber)
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences(prisonerNumber)
     val recall = DpsDataCreator.dpsCreateRecall(
       prisonerId = prisonerNumber,

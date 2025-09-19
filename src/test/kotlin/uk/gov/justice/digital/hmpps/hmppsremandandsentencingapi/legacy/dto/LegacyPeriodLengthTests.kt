@@ -88,8 +88,6 @@ class LegacyPeriodLengthTests {
       warrantType = "TEST",
       appearanceOutcome = null,
       courtCaseReference = null,
-      previousAppearance = null,
-      warrantId = null,
       updatedAt = null,
       updatedBy = null,
       updatedPrison = null,
