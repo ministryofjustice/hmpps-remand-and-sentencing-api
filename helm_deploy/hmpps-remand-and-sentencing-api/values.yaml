@@ -64,6 +64,7 @@ generic-service:
 
   retryDlqCronjob:
     enabled: true
+
 generic-prometheus-alerts:
   targetApplication: hmpps-remand-and-sentencing-api
 
