@@ -145,8 +145,6 @@ class CourtCaseReferenceServiceTests {
     courtCaseReference = caseReference,
     appearanceDate = LocalDate.now(),
     statusId = statusId,
-    previousAppearance = null,
-    warrantId = null,
     createdBy = "U",
     createdPrison = "P",
     warrantType = "W",

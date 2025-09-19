@@ -5,7 +5,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
@@ -169,7 +168,6 @@ class CourtAppearanceService(
         },
       )
     }
-    updateDocumentMetadata(createdCourtAppearance, courtCaseEntity.prisonerId)
 
     nextCourtAppearance?.futureSkeletonAppearance?.also { courtAppearanceEntity ->
       eventsToEmit.add(
@@ -244,7 +242,6 @@ class CourtAppearanceService(
       activeRecord,
       existingCourtAppearanceEntity.nextCourtAppearance,
     )
-    updateDocumentMetadata(activeRecord, courtCaseEntity.prisonerId)
     if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
         EventMetadataCreator.courtAppearanceEventMetadata(
@@ -458,12 +455,6 @@ class CourtAppearanceService(
       appearanceOutcomeRepository.findByOutcomeUuid(it)
     } ?: appearanceLegacyData?.nomisOutcomeCode?.let { appearanceOutcomeRepository.findByNomisCode(it) }
     return appearanceLegacyData to appearanceOutcome
-  }
-
-  fun updateDocumentMetadata(courtAppearanceEntity: CourtAppearanceEntity, prisonerId: String) {
-    courtAppearanceEntity.takeIf { it.warrantId != null }?.let {
-      documentManagementApiClient.putDocumentMetadata(it.warrantId!!, DocumentMetadata(prisonerId))
-    }
   }
 
   @VisibleForTesting
