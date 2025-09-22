@@ -224,7 +224,6 @@ class CourtAppearanceService(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
-      shouldGenerateEvents = true,
     )
 
     periodLengthService.update(
