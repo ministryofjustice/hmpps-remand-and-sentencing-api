@@ -159,7 +159,7 @@ class CourtAppearanceService(
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
     courtAppearance.overallSentenceLength?.let { createPeriodLength ->
       // Ignore period-length events returned here because we do not emit them from createCourtAppearanceEntity
-      periodLengthService.upsert(
+      periodLengthService.create(
         listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())),
         createdCourtAppearance.periodLengths,
         courtCaseEntity.prisonerId,
@@ -220,14 +220,25 @@ class CourtAppearanceService(
       )
     } ?: emptyList<PeriodLengthEntity>()
     // Ignore period-length events returned here because we do not emit them from updateCourtAppearanceEntity
-    periodLengthService.upsert(
+    periodLengthService.delete(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
-      { createdPeriodLength ->
-        createdPeriodLength.appearanceEntity = existingCourtAppearanceEntity
-      },
     )
+
+    periodLengthService.update(
+      toCreatePeriodLengths,
+      existingCourtAppearanceEntity.periodLengths,
+      courtCaseEntity.prisonerId,
+    )
+
+    periodLengthService.create(
+      toCreatePeriodLengths,
+      existingCourtAppearanceEntity.periodLengths,
+      courtCaseEntity.prisonerId,
+      { created -> created.appearanceEntity = existingCourtAppearanceEntity },
+    )
+
     val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(
       courtAppearance.charges,
       courtCaseEntity.prisonerId,

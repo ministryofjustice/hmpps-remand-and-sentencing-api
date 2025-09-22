@@ -51,16 +51,38 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       sentenceChangeStatus = EntityChangeStatus.EDITED
     }
 
-    val periodLengthChangeRecord = periodLengthService.upsert(
-      createPeriodLengthEntities = sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) },
-      existingPeriodLengths = existingSentence.periodLengths,
-      prisonerId = prisonerId,
-      onCreateConsumer = { toCreatePeriodLength ->
-        toCreatePeriodLength.sentenceEntity = existingSentence
-      },
-      courtAppearanceId = courtAppearanceId,
-      courtCaseId = courtCaseId,
+    val newPeriodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }
+
+    val deleteResponse = periodLengthService.delete(
+      newPeriodLengths,
+      existingSentence.periodLengths,
+      prisonerId,
+      courtAppearanceId,
+      courtCaseId,
     )
+
+    val updateResponse = periodLengthService.update(
+      newPeriodLengths,
+      existingSentence.periodLengths,
+      prisonerId,
+      courtAppearanceId,
+      courtCaseId,
+    )
+
+    val createResponse = periodLengthService.create(
+      newPeriodLengths,
+      existingSentence.periodLengths,
+      prisonerId,
+      { created -> created.sentenceEntity = existingSentence },
+      courtAppearanceId,
+      courtCaseId,
+    )
+
+    val periodLengthChangeRecord = RecordResponse(
+      EntityChangeStatus.NO_CHANGE,
+      (deleteResponse.eventsToEmit + updateResponse.eventsToEmit + createResponse.eventsToEmit).toMutableSet(),
+    )
+
     eventsToEmit.addAll(periodLengthChangeRecord.eventsToEmit)
     if (sentenceChangeStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
@@ -85,20 +107,14 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
 
-    val periodLengthResponse = periodLengthService.upsert(
-      createPeriodLengthEntities = sentence.periodLengths.map {
-        PeriodLengthEntity.from(
-          it,
-          serviceUserService.getUsername(),
-        )
-      },
-      existingPeriodLengths = createdSentence.periodLengths,
-      prisonerId = prisonerId,
-      onCreateConsumer = { toCreatePeriodLength ->
-        toCreatePeriodLength.sentenceEntity = createdSentence
-      },
-      courtAppearanceId = courtAppearanceId,
-      courtCaseId = courtCaseId,
+    val newPeriodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }
+    val periodLengthResponse = periodLengthService.create(
+      newPeriodLengths,
+      createdSentence.periodLengths,
+      prisonerId,
+      { created -> created.sentenceEntity = createdSentence },
+      courtAppearanceId,
+      courtCaseId,
     )
     val sentenceEvent = EventMetadataCreator.sentenceEventMetadata(
       prisonerId,
