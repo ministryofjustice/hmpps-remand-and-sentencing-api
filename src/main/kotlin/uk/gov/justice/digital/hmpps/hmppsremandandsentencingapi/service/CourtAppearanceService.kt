@@ -166,7 +166,6 @@ class CourtAppearanceService(
         { createdPeriodLength ->
           createdPeriodLength.appearanceEntity = createdCourtAppearance
         },
-        shouldGenerateEvents = true,
       )
     }
 
