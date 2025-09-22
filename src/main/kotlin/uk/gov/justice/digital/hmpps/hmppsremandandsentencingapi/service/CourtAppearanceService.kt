@@ -166,6 +166,7 @@ class CourtAppearanceService(
         { createdPeriodLength ->
           createdPeriodLength.appearanceEntity = createdCourtAppearance
         },
+        shouldGenerateEvents = true,
       )
     }
 
@@ -224,12 +225,14 @@ class CourtAppearanceService(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
+      shouldGenerateEvents = true,
     )
 
     periodLengthService.update(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
+      shouldGenerateEvents = true,
     )
 
     periodLengthService.create(
@@ -237,6 +240,7 @@ class CourtAppearanceService(
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
       { created -> created.appearanceEntity = existingCourtAppearanceEntity },
+      shouldGenerateEvents = true,
     )
 
     val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(

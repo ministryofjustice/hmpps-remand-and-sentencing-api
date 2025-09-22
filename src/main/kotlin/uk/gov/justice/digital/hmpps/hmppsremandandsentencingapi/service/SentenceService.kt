@@ -42,7 +42,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
     val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
-    var activeRecord = existingSentence
+    val activeRecord = existingSentence
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     var sentenceChangeStatus = if (courtAppearanceDateChanged) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
     if (!existingSentence.isSame(compareSentence)) {
@@ -59,6 +59,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       prisonerId,
       courtAppearanceId,
       courtCaseId,
+      shouldGenerateEvents = true,
     )
 
     val updateResponse = periodLengthService.update(
@@ -67,6 +68,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       prisonerId,
       courtAppearanceId,
       courtCaseId,
+      shouldGenerateEvents = true,
     )
 
     val createResponse = periodLengthService.create(
@@ -76,6 +78,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       { created -> created.sentenceEntity = existingSentence },
       courtAppearanceId,
       courtCaseId,
+      shouldGenerateEvents = true,
     )
 
     val periodLengthChangeRecord = RecordResponse(
@@ -115,6 +118,7 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       { created -> created.sentenceEntity = createdSentence },
       courtAppearanceId,
       courtCaseId,
+      shouldGenerateEvents = true,
     )
     val sentenceEvent = EventMetadataCreator.sentenceEventMetadata(
       prisonerId,

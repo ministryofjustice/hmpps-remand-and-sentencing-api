@@ -26,6 +26,7 @@ class PeriodLengthService(
     onCreateConsumer: Consumer<PeriodLengthEntity>,
     courtAppearanceId: String? = null,
     courtCaseId: String? = null,
+    shouldGenerateEvents: Boolean = false,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -37,18 +38,19 @@ class PeriodLengthService(
         val saved = periodLengthRepository.save(it)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved))
         entityChangeStatus = EntityChangeStatus.CREATED
-
-        eventsToEmit.add(
-          EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId,
-            courtCaseId.toString(),
-            courtAppearanceId.toString(),
-            saved.sentenceEntity?.charge?.chargeUuid.toString(),
-            saved.sentenceEntity?.sentenceUuid.toString(),
-            saved.periodLengthUuid.toString(),
-            EventType.PERIOD_LENGTH_INSERTED,
-          ),
-        )
+        if (shouldGenerateEvents) {
+          eventsToEmit.add(
+            EventMetadataCreator.periodLengthEventMetadata(
+              prisonerId,
+              courtCaseId.toString(),
+              courtAppearanceId.toString(),
+              saved.sentenceEntity?.charge?.chargeUuid.toString(),
+              saved.sentenceEntity?.sentenceUuid.toString(),
+              saved.periodLengthUuid.toString(),
+              EventType.PERIOD_LENGTH_INSERTED,
+            ),
+          )
+        }
         saved
       }
 
@@ -62,6 +64,7 @@ class PeriodLengthService(
     prisonerId: String,
     courtAppearanceId: String? = null,
     courtCaseId: String? = null,
+    shouldGenerateEvents: Boolean = false,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -80,18 +83,19 @@ class PeriodLengthService(
         existing.updateFrom(updated, serviceUserService.getUsername())
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
         entityChangeStatus = EntityChangeStatus.EDITED
-
-        eventsToEmit.add(
-          EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId,
-            courtCaseId.toString(),
-            courtAppearanceId.toString(),
-            existing.sentenceEntity?.charge?.chargeUuid.toString(),
-            existing.sentenceEntity?.sentenceUuid.toString(),
-            existing.periodLengthUuid.toString(),
-            EventType.PERIOD_LENGTH_UPDATED,
-          ),
-        )
+        if (shouldGenerateEvents) {
+          eventsToEmit.add(
+            EventMetadataCreator.periodLengthEventMetadata(
+              prisonerId,
+              courtCaseId.toString(),
+              courtAppearanceId.toString(),
+              existing.sentenceEntity?.charge?.chargeUuid.toString(),
+              existing.sentenceEntity?.sentenceUuid.toString(),
+              existing.periodLengthUuid.toString(),
+              EventType.PERIOD_LENGTH_UPDATED,
+            ),
+          )
+        }
       }
     }
 
@@ -104,6 +108,7 @@ class PeriodLengthService(
     prisonerId: String,
     courtAppearanceId: String? = null,
     courtCaseId: String? = null,
+    shouldGenerateEvents: Boolean = false,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -116,18 +121,19 @@ class PeriodLengthService(
       existing.delete(serviceUserService.getUsername())
       periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
       entityChangeStatus = EntityChangeStatus.DELETED
-
-      eventsToEmit.add(
-        EventMetadataCreator.periodLengthEventMetadata(
-          prisonerId,
-          courtCaseId.toString(),
-          courtAppearanceId.toString(),
-          existing.sentenceEntity?.charge?.chargeUuid.toString(),
-          existing.sentenceEntity?.sentenceUuid.toString(),
-          existing.periodLengthUuid.toString(),
-          EventType.PERIOD_LENGTH_DELETED,
-        ),
-      )
+      if (shouldGenerateEvents) {
+        eventsToEmit.add(
+          EventMetadataCreator.periodLengthEventMetadata(
+            prisonerId,
+            courtCaseId.toString(),
+            courtAppearanceId.toString(),
+            existing.sentenceEntity?.charge?.chargeUuid.toString(),
+            existing.sentenceEntity?.sentenceUuid.toString(),
+            existing.periodLengthUuid.toString(),
+            EventType.PERIOD_LENGTH_DELETED,
+          ),
+        )
+      }
     }
 
     return RecordResponse(entityChangeStatus, eventsToEmit)
