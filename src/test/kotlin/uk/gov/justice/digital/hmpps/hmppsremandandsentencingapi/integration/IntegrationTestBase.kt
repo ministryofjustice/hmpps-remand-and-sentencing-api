@@ -25,10 +25,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtAppearanceCreatedResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCourtCaseCreatedResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DraftCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
@@ -59,7 +55,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DraftDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
@@ -349,37 +344,6 @@ abstract class IntegrationTestBase {
     purgeQueues()
     return response.periodLengthUuid to toCreatePeriodLength
   }
-
-  protected fun createDraftCourtCase(
-    draftCourtCase: DraftCreateCourtCase = DraftDataCreator.draftCreateCourtCase(),
-  ): DraftCourtCaseCreatedResponse = webTestClient
-    .post()
-    .uri("/draft/court-case")
-    .bodyValue(draftCourtCase)
-    .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
-      it.contentType = MediaType.APPLICATION_JSON
-    }
-    .exchange()
-    .expectStatus()
-    .isCreated.returnResult(DraftCourtCaseCreatedResponse::class.java)
-    .responseBody.blockFirst()!!
-
-  protected fun createDraftAppearance(
-    courtCaseUuid: String,
-    draftAppearance: DraftCreateCourtAppearance = DraftDataCreator.draftCreateCourtAppearance(),
-  ): DraftCourtAppearanceCreatedResponse = webTestClient
-    .post()
-    .uri("/draft/court-case/$courtCaseUuid/appearance")
-    .bodyValue(draftAppearance)
-    .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_REMAND_AND_SENTENCING_UI"))
-      it.contentType = MediaType.APPLICATION_JSON
-    }
-    .exchange()
-    .expectStatus()
-    .isCreated.returnResult(DraftCourtAppearanceCreatedResponse::class.java)
-    .responseBody.blockFirst()!!
 
   protected fun getRecallsByPrisonerId(prisonerId: String): List<Recall> = webTestClient
     .get()

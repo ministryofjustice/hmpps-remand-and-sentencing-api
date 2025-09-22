@@ -5,7 +5,6 @@ enum class EntityStatus {
   INACTIVE,
   EDITED,
   DELETED,
-  DRAFT,
   FUTURE,
   MERGED,
   MANY_CHARGES_DATA_FIX,
