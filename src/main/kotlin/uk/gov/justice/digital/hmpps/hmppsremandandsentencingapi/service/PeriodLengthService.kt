@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import java.util.function.Consumer
+import kotlin.toString
 
 @Service
 class PeriodLengthService(
@@ -18,86 +19,123 @@ class PeriodLengthService(
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
   private val serviceUserService: ServiceUserService,
 ) {
-  fun upsert(
+  fun create(
     createPeriodLengthEntities: List<PeriodLengthEntity>,
     existingPeriodLengths: MutableSet<PeriodLengthEntity>,
     prisonerId: String,
     onCreateConsumer: Consumer<PeriodLengthEntity>,
-    courtAppearanceId: String? = null, // courtAppearanceId and courtCaseId are optional because they're only used for the events which are only used by the SentenceServvice
+    courtAppearanceId: String? = null,
     courtCaseId: String? = null,
+    shouldGenerateEvents: Boolean = false,
   ): RecordResponse<EntityChangeStatus> {
-    // The events to emit (sent in the response) are currently only used by the SentenceService (not used by the CourtAppearanceService)
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
 
-    existingPeriodLengths.forEach { existingPeriodLength ->
-      val updatedPeriodLength = createPeriodLengthEntities.firstOrNull { it.periodLengthUuid == existingPeriodLength.periodLengthUuid }
-      if (updatedPeriodLength != null) {
-        if (!existingPeriodLength.isSame(updatedPeriodLength)) {
-          updatedPeriodLength.legacyData = updatedPeriodLength.legacyData?.let { legacyData ->
-            if (existingPeriodLength.periodLengthType != updatedPeriodLength.periodLengthType) {
-              legacyData.sentenceTermCode = null
-              legacyData.lifeSentence = null
-            }
-            legacyData
-          }
-          existingPeriodLength.updateFrom(updatedPeriodLength, serviceUserService.getUsername())
-          periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existingPeriodLength))
-          entityChangeStatus = EntityChangeStatus.EDITED
-
+    val toAddPeriodLengths = createPeriodLengthEntities
+      .filter { new -> existingPeriodLengths.none { it.periodLengthUuid == new.periodLengthUuid } }
+      .map {
+        onCreateConsumer.accept(it)
+        val saved = periodLengthRepository.save(it)
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved))
+        entityChangeStatus = EntityChangeStatus.CREATED
+        if (shouldGenerateEvents) {
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
-              prisonerId = prisonerId,
-              courtCaseId = courtCaseId.toString(),
-              courtAppearanceId = courtAppearanceId.toString(),
-              chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
-              sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
-              periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
-              eventType = EventType.PERIOD_LENGTH_UPDATED,
+              prisonerId,
+              courtCaseId.toString(),
+              courtAppearanceId.toString(),
+              saved.sentenceEntity?.charge?.chargeUuid.toString(),
+              saved.sentenceEntity?.sentenceUuid.toString(),
+              saved.periodLengthUuid.toString(),
+              EventType.PERIOD_LENGTH_INSERTED,
             ),
           )
         }
-      } else {
-        existingPeriodLength.delete(serviceUserService.getUsername())
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existingPeriodLength))
-        entityChangeStatus = EntityChangeStatus.DELETED
+        saved
+      }
 
+    existingPeriodLengths.addAll(toAddPeriodLengths)
+    return RecordResponse(entityChangeStatus, eventsToEmit)
+  }
+
+  fun update(
+    updatedPeriodLengths: List<PeriodLengthEntity>,
+    existingPeriodLengths: MutableSet<PeriodLengthEntity>,
+    prisonerId: String,
+    courtAppearanceId: String? = null,
+    courtCaseId: String? = null,
+    shouldGenerateEvents: Boolean = false,
+  ): RecordResponse<EntityChangeStatus> {
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
+
+    existingPeriodLengths.forEach { existing ->
+      val updated = updatedPeriodLengths.firstOrNull { it.periodLengthUuid == existing.periodLengthUuid }
+      if (updated != null && !existing.isSame(updated)) {
+        updated.legacyData = updated.legacyData?.let { legacyData ->
+          if (existing.periodLengthType != updated.periodLengthType) {
+            legacyData.sentenceTermCode = null
+            legacyData.lifeSentence = null
+          }
+          legacyData
+        }
+
+        existing.updateFrom(updated, serviceUserService.getUsername())
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
+        entityChangeStatus = EntityChangeStatus.EDITED
+        if (shouldGenerateEvents) {
+          eventsToEmit.add(
+            EventMetadataCreator.periodLengthEventMetadata(
+              prisonerId,
+              courtCaseId.toString(),
+              courtAppearanceId.toString(),
+              existing.sentenceEntity?.charge?.chargeUuid.toString(),
+              existing.sentenceEntity?.sentenceUuid.toString(),
+              existing.periodLengthUuid.toString(),
+              EventType.PERIOD_LENGTH_UPDATED,
+            ),
+          )
+        }
+      }
+    }
+
+    return RecordResponse(entityChangeStatus, eventsToEmit)
+  }
+
+  fun delete(
+    createPeriodLengthEntities: List<PeriodLengthEntity>,
+    existingPeriodLengths: MutableSet<PeriodLengthEntity>,
+    prisonerId: String,
+    courtAppearanceId: String? = null,
+    courtCaseId: String? = null,
+    shouldGenerateEvents: Boolean = false,
+  ): RecordResponse<EntityChangeStatus> {
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
+
+    val toDelete = existingPeriodLengths.filter { existing ->
+      createPeriodLengthEntities.none { it.periodLengthUuid == existing.periodLengthUuid }
+    }
+
+    toDelete.forEach { existing ->
+      existing.delete(serviceUserService.getUsername())
+      periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
+      entityChangeStatus = EntityChangeStatus.DELETED
+      if (shouldGenerateEvents) {
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId = prisonerId,
-            courtCaseId = courtCaseId.toString(),
-            courtAppearanceId = courtAppearanceId.toString(),
-            chargeId = existingPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
-            sentenceId = existingPeriodLength.sentenceEntity?.sentenceUuid.toString(),
-            periodLengthId = existingPeriodLength.periodLengthUuid.toString(),
-            eventType = EventType.PERIOD_LENGTH_DELETED,
+            prisonerId,
+            courtCaseId.toString(),
+            courtAppearanceId.toString(),
+            existing.sentenceEntity?.charge?.chargeUuid.toString(),
+            existing.sentenceEntity?.sentenceUuid.toString(),
+            existing.periodLengthUuid.toString(),
+            EventType.PERIOD_LENGTH_DELETED,
           ),
         )
       }
     }
 
-    val toAddPeriodLengths = createPeriodLengthEntities
-      .filter { toAddPeriodLength -> existingPeriodLengths.none { it.periodLengthUuid == toAddPeriodLength.periodLengthUuid } }
-      .map {
-        onCreateConsumer.accept(it)
-        val savedPeriodLength = periodLengthRepository.save(it)
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
-        entityChangeStatus = EntityChangeStatus.CREATED
-
-        eventsToEmit.add(
-          EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId = prisonerId,
-            courtCaseId = courtCaseId.toString(),
-            courtAppearanceId = courtAppearanceId.toString(),
-            chargeId = savedPeriodLength.sentenceEntity?.charge?.chargeUuid.toString(),
-            sentenceId = savedPeriodLength.sentenceEntity?.sentenceUuid.toString(),
-            periodLengthId = savedPeriodLength.periodLengthUuid.toString(),
-            eventType = EventType.PERIOD_LENGTH_INSERTED,
-          ),
-        )
-        savedPeriodLength
-      }
-    existingPeriodLengths.addAll(toAddPeriodLengths)
     return RecordResponse(entityChangeStatus, eventsToEmit)
   }
 }
