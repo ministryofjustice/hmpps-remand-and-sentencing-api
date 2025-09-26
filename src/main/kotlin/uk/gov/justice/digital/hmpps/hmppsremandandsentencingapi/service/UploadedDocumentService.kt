@@ -1,10 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import jakarta.persistence.EntityNotFoundException
-import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -69,5 +70,12 @@ class UploadedDocumentService(
       document.unlink(serviceUserService.getUsername())
       uploadedDocumentRepository.save(document)
     }
+  }
+
+  @Transactional(readOnly = true)
+  fun getDocumentsByPrisonerId(prisonerId: String): PrisonerDocuments {
+    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(prisonerId)
+    val prisonerCourtCases = prisonerDocuments.groupBy { it.appearance!!.courtCase }
+    return PrisonerDocuments.from(prisonerCourtCases)
   }
 }
