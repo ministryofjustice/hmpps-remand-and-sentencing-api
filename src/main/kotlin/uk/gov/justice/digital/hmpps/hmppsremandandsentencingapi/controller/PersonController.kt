@@ -14,17 +14,19 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
 import java.time.LocalDate
 
 @RestController
 @RequestMapping("/person", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "person-controller", description = "Get person details")
-class PersonController(private val personService: PersonService, private val courtCaseService: CourtCaseService, private val consecutiveToSentenceService: ConsecutiveToSentenceService, private val dpsDomainEventService: DpsDomainEventService) {
+class PersonController(private val personService: PersonService, private val courtCaseService: CourtCaseService, private val consecutiveToSentenceService: ConsecutiveToSentenceService, private val dpsDomainEventService: DpsDomainEventService, private val uploadedDocumentService: UploadedDocumentService) {
 
   @GetMapping("/{prisonerId}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -91,4 +93,7 @@ class PersonController(private val personService: PersonService, private val cou
     dpsDomainEventService.emitEvents(eventsToEmit)
     response
   }
+
+  @GetMapping("/{prisonerId}/documents")
+  fun allDocuments(@PathVariable prisonerId: String): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId)
 }
