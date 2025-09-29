@@ -95,5 +95,15 @@ class PersonController(private val personService: PersonService, private val cou
   }
 
   @GetMapping("/{prisonerId}/documents")
-  fun allDocuments(@PathVariable prisonerId: String): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId)
+  fun allDocuments(
+    @PathVariable prisonerId: String,
+    @RequestParam(required = false, defaultValue = AFTER_OR_ON_APPEARANCE_DATE_DEFAULT) afterOrOnAppearanceDate: LocalDate,
+    @RequestParam(required = false, defaultValue = BEFORE_OR_ON_APPEARANCE_DATE_DEFAULT) beforeOrOnAppearanceDate: LocalDate,
+  ): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId)
+
+  companion object {
+
+    const val AFTER_OR_ON_APPEARANCE_DATE_DEFAULT = "-999999999-01-01"
+    const val BEFORE_OR_ON_APPEARANCE_DATE_DEFAULT = "999999999-01-01"
+  }
 }
