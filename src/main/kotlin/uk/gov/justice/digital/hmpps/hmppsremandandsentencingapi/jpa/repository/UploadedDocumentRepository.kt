@@ -28,8 +28,8 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
     """
     select u from UploadedDocumentEntity u
     where u.appearance.courtCase.prisonerId = :prisonerId
-    and ((:caseReference is null or u.appearance.courtCaseReference ilike :caseReference)
-    or (:warrantTypeDocumentTypes is null or CONCAT(u.appearance.warrantType,'|',u.documentType) in :warrantTypeDocumentTypes))
+    and (((:warrantTypeDocumentTypes is null and :caseReference is null) or u.appearance.courtCaseReference ilike :caseReference)
+    or ((:warrantTypeDocumentTypes is null and :caseReference is null) or CONCAT(u.appearance.warrantType,'|',u.documentType) in :warrantTypeDocumentTypes))
   """,
   )
   fun searchDocuments(
