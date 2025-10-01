@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
@@ -97,13 +98,6 @@ class PersonController(private val personService: PersonService, private val cou
   @GetMapping("/{prisonerId}/documents")
   fun allDocuments(
     @PathVariable prisonerId: String,
-    @RequestParam(required = false, defaultValue = AFTER_OR_ON_APPEARANCE_DATE_DEFAULT) afterOrOnAppearanceDate: LocalDate,
-    @RequestParam(required = false, defaultValue = BEFORE_OR_ON_APPEARANCE_DATE_DEFAULT) beforeOrOnAppearanceDate: LocalDate,
-  ): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId)
-
-  companion object {
-
-    const val AFTER_OR_ON_APPEARANCE_DATE_DEFAULT = "-999999999-01-01"
-    const val BEFORE_OR_ON_APPEARANCE_DATE_DEFAULT = "999999999-01-01"
-  }
+    searchDocuments: SearchDocuments,
+  ): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId, searchDocuments)
 }

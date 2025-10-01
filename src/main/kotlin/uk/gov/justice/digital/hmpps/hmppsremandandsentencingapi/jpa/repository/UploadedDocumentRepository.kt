@@ -24,5 +24,15 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
     @Param("documentUUIDs") documentUUIDs: List<UUID>,
   ): List<UploadedDocumentEntity>
 
-  fun findByAppearanceCourtCasePrisonerId(prisonerId: String): List<UploadedDocumentEntity>
+  @Query(
+    """
+    select u from UploadedDocumentEntity u
+    where u.appearance.courtCase.prisonerId = :prisonerId
+    and (:caseReference is null or u.appearance.courtCaseReference like :caseReference)
+  """,
+  )
+  fun searchDocuments(
+    @Param("prisonerId") prisonerId: String,
+    @Param("caseReference") caseReference: String?,
+  ): List<UploadedDocumentEntity>
 }
