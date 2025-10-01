@@ -77,10 +77,10 @@ class UploadedDocumentService(
   fun getDocumentsByPrisonerId(prisonerId: String, searchDocuments: SearchDocuments): PrisonerDocuments {
     val prisonerDocuments = uploadedDocumentRepository.searchDocuments(
       prisonerId,
-      searchDocuments.caseReference,
+      "%${searchDocuments.caseReference}%",
+      searchDocuments.warrantTypeDocumentTypes.takeUnless { it.isEmpty() },
     )
     val prisonerCourtCases = prisonerDocuments
-      .filter { document -> searchDocuments.warrantTypeDocumentTypes.contains("${document.appearance!!.warrantType}|${document.documentType}") }
       .groupBy { it.appearance!!.courtCase }
     return PrisonerDocuments.from(prisonerCourtCases)
   }

@@ -28,11 +28,13 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
     """
     select u from UploadedDocumentEntity u
     where u.appearance.courtCase.prisonerId = :prisonerId
-    and (:caseReference is null or u.appearance.courtCaseReference like :caseReference)
+    and ((:caseReference is null or u.appearance.courtCaseReference ilike :caseReference)
+    or (:warrantTypeDocumentTypes is null or CONCAT(u.appearance.warrantType,'|',u.documentType) in :warrantTypeDocumentTypes))
   """,
   )
   fun searchDocuments(
     @Param("prisonerId") prisonerId: String,
     @Param("caseReference") caseReference: String?,
+    @Param("warrantTypeDocumentTypes") warrantTypeDocumentTypes: List<String>?,
   ): List<UploadedDocumentEntity>
 }
