@@ -75,7 +75,7 @@ class UploadedDocumentService(
 
   @Transactional(readOnly = true)
   fun getDocumentsByPrisonerId(prisonerId: String, searchDocuments: SearchDocuments): PrisonerDocuments {
-    val prisonerDocuments = uploadedDocumentRepository.searchDocuments(
+    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(
       prisonerId,
     )
     val prisonerCourtCases = prisonerDocuments
