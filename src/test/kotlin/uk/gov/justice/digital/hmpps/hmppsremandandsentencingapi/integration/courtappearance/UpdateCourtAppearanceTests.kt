@@ -24,25 +24,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update appearance in existing court case`() {
-    val oldDocumentUuid = UUID.randomUUID()
-    val oldDocument = DpsDataCreator.dpsCreateUploadedDocument(
-      documentUuid = oldDocumentUuid,
-      documentType = "REMAND_WARRANT",
-      documentName = "court-appearance-document.pdf",
-    )
-    uploadDocument(oldDocument)
+    val (oldDocument) = uploadDocument()
 
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(oldDocument))
+    val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
 
-    val newDocumentUuid = UUID.randomUUID()
-    val newDocument = DpsDataCreator.dpsCreateUploadedDocument(
-      documentUuid = newDocumentUuid,
-      documentType = "REMAND_WARRANT",
-      documentName = "court-appearance-document-2.pdf",
-    )
-    uploadDocument(newDocument)
+    val (newDocument) = uploadDocument()
 
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore =
@@ -89,11 +77,11 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newEntries).extracting<String> { it.createdPrison }.containsExactlyInAnyOrder("PRISON1", "PRISON1")
     assertThat(newEntries).extracting<String> { it.removedPrison }.containsExactlyInAnyOrder(null, "PRISON1")
 
-    val oldDoc = uploadedDocumentRepository.findByDocumentUuid(oldDocumentUuid)
+    val oldDoc = uploadedDocumentRepository.findByDocumentUuid(oldDocument.documentUUID)
     assertThat(oldDoc).isNotNull
     assertThat(oldDoc!!.appearance).isNull()
 
-    val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocumentUuid)
+    val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
   }

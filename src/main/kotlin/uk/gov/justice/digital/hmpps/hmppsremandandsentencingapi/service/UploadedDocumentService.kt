@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -73,9 +74,15 @@ class UploadedDocumentService(
   }
 
   @Transactional(readOnly = true)
-  fun getDocumentsByPrisonerId(prisonerId: String): PrisonerDocuments {
-    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(prisonerId)
-    val prisonerCourtCases = prisonerDocuments.groupBy { it.appearance!!.courtCase }
+  fun getDocumentsByPrisonerId(prisonerId: String, searchDocuments: SearchDocuments): PrisonerDocuments {
+    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(
+      prisonerId,
+    )
+    val prisonerCourtCases = prisonerDocuments
+      .filter { uploadedDocumentEntity ->
+        searchDocuments.isEmpty() || searchDocuments.caseReference?.let { uploadedDocumentEntity.appearance!!.courtCaseReference?.contains(it, true) } == true || searchDocuments.warrantTypeDocumentTypes.contains("${uploadedDocumentEntity.appearance!!.warrantType}|${uploadedDocumentEntity.documentType}")
+      }
+      .groupBy { it.appearance!!.courtCase }
     return PrisonerDocuments.from(prisonerCourtCases)
   }
 }
