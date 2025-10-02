@@ -18,14 +18,8 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create appearance in existing court case and link document`() {
     val courtCase = createCourtCase()
-    val documentUuid = UUID.randomUUID()
 
-    val uploadedDocument = DpsDataCreator.dpsCreateUploadedDocument(
-      documentUuid = documentUuid,
-      documentType = "REMAND_WARRANT",
-      documentName = "court-appearance-document.pdf",
-    )
-    uploadDocument(uploadedDocument)
+    val (uploadedDocument) = uploadDocument()
 
     val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, documents = listOf(uploadedDocument))
     webTestClient
@@ -49,7 +43,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
     assertThat(historyRecord.source).isEqualTo(DPS)
 
-    val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(documentUuid)
+    val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
   }
