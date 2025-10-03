@@ -569,10 +569,10 @@ abstract class IntegrationTestBase {
     .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
     .responseBody.blockFirst()!!
 
-  protected fun uploadDocument(document: UploadedDocument) {
+  protected fun uploadDocument(documents: List<UploadedDocument> = listOf(DpsDataCreator.dpsCreateUploadedDocument())): List<UploadedDocument> {
     webTestClient.post()
       .uri("/uploaded-documents")
-      .bodyValue(CreateUploadedDocument(appearanceUUID = null, documents = listOf(document)))
+      .bodyValue(CreateUploadedDocument(appearanceUUID = null, documents = documents))
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -580,6 +580,7 @@ abstract class IntegrationTestBase {
       .exchange()
       .expectStatus()
       .isCreated
+    return documents
   }
 
   protected fun migrateCases(courtCases: MigrationCreateCourtCases) = webTestClient
