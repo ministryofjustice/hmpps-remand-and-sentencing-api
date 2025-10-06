@@ -22,10 +22,13 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ViewSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateSentence
@@ -75,6 +78,85 @@ import java.util.UUID
     and s.legacy_data ->> 'bookingId' = :bookingId
 """,
   resultSetMapping = "consecutiveToSentenceRowMapping",
+)
+@SqlResultSetMapping(
+  name = "viewSentenceRowMapping",
+  classes = [
+    ConstructorResult(
+      targetClass = ViewSentenceRow::class,
+      columns = arrayOf(
+        ColumnResult(name = "sentenceUuid"),
+        ColumnResult(name = "offenceCode"),
+        ColumnResult(name = "offenceStartDate", type = LocalDate::class),
+        ColumnResult(name = "offenceEndDate", type = LocalDate::class),
+        ColumnResult(name = "dpsOffenceOutcome"),
+        ColumnResult(name = "countNumber"),
+        ColumnResult(name = "sentenceLegacyData", type = SentenceLegacyData::class),
+        ColumnResult(name = "convictionDate", type = LocalDate::class),
+        ColumnResult(name = "sentenceServeType"),
+        ColumnResult(name = "consecutiveToSentenceUuid"),
+        ColumnResult(name = "fineAmount", type = BigDecimal::class),
+        ColumnResult(name = "courtCode"),
+        ColumnResult(name = "courtCaseReference"),
+        ColumnResult(name = "appearanceDate", type = LocalDate::class),
+        ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),
+        ColumnResult(name = "dpsSentenceType"),
+        ColumnResult(name = "periodLengthUuid"),
+        ColumnResult(name = "years"),
+        ColumnResult(name = "months"),
+        ColumnResult(name = "weeks"),
+        ColumnResult(name = "days"),
+        ColumnResult(name = "periodOrder"),
+        ColumnResult(name = "periodLengthType", type = PeriodLengthType::class),
+        ColumnResult(name = "periodLengthLegacyData", type = PeriodLengthLegacyData::class),
+      ),
+    ),
+  ],
+)
+@NamedNativeQuery(
+  name = "SentenceEntity.findViewSentences",
+  query = """
+    select s.sentence_uuid as sentenceUuid, 
+      c.offence_code as offenceCode,
+      c.offence_start_date as offenceStartDate, 
+      c.offence_end_date as offenceEndDate,
+      co.outcome_name as dpsOffenceOutcome,
+      s.count_number as countNumber,
+      s.legacy_data as sentenceLegacyData,
+      s.conviction_date as convictionDate,
+      s.sentence_serve_type as sentenceServeType,
+      cts.sentence_uuid as consecutiveToSentenceUuid,
+      s.fine_amount as fineAmount,
+      ca.court_code as courtCode, 
+      ca.court_case_reference as courtCaseReference, 
+      ca.appearance_date as appearanceDate, 
+      c.legacy_data as chargeLegacyData,
+      st.description as dpsSentenceType,
+      pl.period_length_uuid as periodLengthUuid,
+      pl.years as years,
+      pl.months as months,
+      pl.weeks as weeks,
+      pl.days as days,
+      pl.period_order as periodOrder,
+      pl.period_length_type as periodLengthType,
+      pl.legacy_data as periodLengthLegacyData
+    from sentence s
+    join charge c on s.charge_id = c.id
+    left join charge_outcome co on co.id = c.charge_outcome_id
+    join appearance_charge ac on ac.charge_id = c.id
+    join court_appearance ca on ac.appearance_id = ca.id
+    join court_case cc on ca.court_case_id = cc.id
+    left join sentence cts on s.consecutive_to_id = cts.id
+    left join sentence_type st on s.sentence_type_id = st.id 
+    left join period_length pl on pl.sentence_id = s.id 
+    where s.status_id in :sentenceStatuses
+    and cc.prisoner_id = :prisonerId
+    and c.status_id = :status
+    and ca.status_id = :status
+    and cc.status_id in :courtCaseStatuses
+    and pl.status_id in :periodLengthStatuses
+  """,
+  resultSetMapping = "viewSentenceRowMapping",
 )
 @Entity
 @Table(name = "sentence")
