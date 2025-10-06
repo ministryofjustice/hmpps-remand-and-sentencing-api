@@ -18,19 +18,35 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
-class SentenceService(private val sentenceRepository: SentenceRepository, private val periodLengthService: PeriodLengthService, private val serviceUserService: ServiceUserService, private val sentenceTypeRepository: SentenceTypeRepository, private val sentenceHistoryRepository: SentenceHistoryRepository, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService, private val recallSentenceRepository: RecallSentenceRepository) {
+class SentenceService(
+  private val sentenceRepository: SentenceRepository,
+  private val periodLengthService: PeriodLengthService,
+  private val serviceUserService: ServiceUserService,
+  private val sentenceTypeRepository: SentenceTypeRepository,
+  private val sentenceHistoryRepository: SentenceHistoryRepository,
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
+  private val recallSentenceRepository: RecallSentenceRepository,
+  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
+  private val recallHistoryRepository: RecallHistoryRepository,
+) {
 
   @Transactional(TxType.REQUIRED)
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
@@ -158,10 +174,50 @@ class SentenceService(private val sentenceRepository: SentenceRepository, privat
       )
     }
 
-    sentence.recallSentences.forEach { recallSentenceRepository.delete(it) }
+    if (sentence.recallSentences.isNotEmpty()) {
+      if (sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
+        // delete recall as this will be the only sentence
+        val onlyRecallSentence = sentence.recallSentences.first()
+        deleteRecallWithOnlyOneSentence(onlyRecallSentence, eventsToEmit)
+      } else {
+        // update recalls with this sentence removed
+        sentence.recallSentences.groupBy { it.recall }.forEach { (recall, recallSentences) ->
+          if (recall.recallSentences.size == 1) {
+            deleteRecallWithOnlyOneSentence(recallSentences.first(), eventsToEmit)
+          } else {
+            val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
+            recallSentenceHistoryRepository.saveAll(recallSentences.map { RecallSentenceHistoryEntity.from(recallHistory, it) })
+            recall.updatedAt = ZonedDateTime.now()
+            recall.updatedBy = serviceUserService.getUsername()
+            recallSentences.forEach { recallSentenceRepository.delete(it) }
+          }
+        }
+      }
+    }
 
     sentence.periodLengths.forEach { it.delete(serviceUserService.getUsername()) }
     return RecordResponse(sentence, eventsToEmit)
+  }
+
+  private fun deleteRecallWithOnlyOneSentence(
+    onlyRecallSentence: RecallSentenceEntity,
+    eventsToEmit: MutableSet<EventMetadata>,
+  ) {
+    val recallHistory =
+      recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, EntityStatus.DELETED))
+    onlyRecallSentence.recall.statusId = EntityStatus.DELETED
+    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, onlyRecallSentence))
+    recallSentenceRepository.delete(onlyRecallSentence)
+    eventsToEmit.add(
+      EventMetadataCreator.recallEventMetadata(
+        onlyRecallSentence.recall.prisonerId,
+        onlyRecallSentence.recall.recallUuid.toString(),
+        onlyRecallSentence.recall.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
+        emptyList(),
+        null,
+        EventType.RECALL_DELETED,
+      ),
+    )
   }
 
   @Transactional
