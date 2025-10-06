@@ -174,6 +174,16 @@ class SentenceService(
       )
     }
 
+    handleRecallsForDeletedSentence(sentence, eventsToEmit)
+
+    sentence.periodLengths.forEach { it.delete(serviceUserService.getUsername()) }
+    return RecordResponse(sentence, eventsToEmit)
+  }
+
+  private fun handleRecallsForDeletedSentence(
+    sentence: SentenceEntity,
+    eventsToEmit: MutableSet<EventMetadata>,
+  ) {
     if (sentence.recallSentences.isNotEmpty()) {
       if (sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
         // delete recall as this will be the only sentence
@@ -186,17 +196,21 @@ class SentenceService(
             deleteRecallWithOnlyOneSentence(recallSentences.first(), eventsToEmit)
           } else {
             val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
-            recallSentenceHistoryRepository.saveAll(recallSentences.map { RecallSentenceHistoryEntity.from(recallHistory, it) })
+            recallSentenceHistoryRepository.saveAll(
+              recallSentences.map {
+                RecallSentenceHistoryEntity.from(
+                  recallHistory,
+                  it,
+                )
+              },
+            )
             recall.updatedAt = ZonedDateTime.now()
             recall.updatedBy = serviceUserService.getUsername()
             recallSentences.forEach { recallSentenceRepository.delete(it) }
           }
         }
       }
-    }
-
-    sentence.periodLengths.forEach { it.delete(serviceUserService.getUsername()) }
-    return RecordResponse(sentence, eventsToEmit)
+      }
   }
 
   private fun deleteRecallWithOnlyOneSentence(
