@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.TestCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.UnlinkEventsToEmit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
@@ -48,12 +47,6 @@ class LegacyCourtCaseService(
   fun get(courtCaseUuid: String): LegacyCourtCase {
     val courtCase = getUnlessDeleted(courtCaseUuid)
     return LegacyCourtCase.from(courtCase)
-  }
-
-  @Transactional(readOnly = true)
-  fun getTest(courtCaseUuid: String): TestCourtCase {
-    val courtCase = getUnlessDeleted(courtCaseUuid)
-    return TestCourtCase.from(courtCase)
   }
 
   @Transactional(readOnly = true)

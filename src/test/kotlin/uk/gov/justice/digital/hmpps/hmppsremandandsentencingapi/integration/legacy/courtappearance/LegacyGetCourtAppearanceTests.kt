@@ -27,6 +27,8 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.nomisOutcomeCode")
       .isEqualTo(createdAppearance.legacyData.nomisOutcomeCode!!)
+      .jsonPath("$.appearanceTypeUuid")
+      .isEqualTo("63e8fce0-033c-46ad-9edf-391b802d547a")
   }
 
   @Test

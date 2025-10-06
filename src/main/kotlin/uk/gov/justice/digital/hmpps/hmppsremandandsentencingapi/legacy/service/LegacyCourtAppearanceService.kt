@@ -96,7 +96,12 @@ class LegacyCourtAppearanceService(
   }
 
   @Transactional
-  fun get(lifetimeUuid: UUID): LegacyCourtAppearance = LegacyCourtAppearance.from(getUnlessDeleted(lifetimeUuid))
+  fun get(lifetimeUuid: UUID): LegacyCourtAppearance {
+    val courtAppearance = getUnlessDeleted(lifetimeUuid)
+    val associatedNextCourtAppearance = nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)
+    val appearanceTypeUuid = associatedNextCourtAppearance?.appearanceType?.appearanceTypeUuid ?: DEFAULT_APPEARANCE_TYPE_UUD
+    return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid)
+  }
 
   @Transactional
   fun delete(lifetimeUuid: UUID) {
@@ -163,4 +168,8 @@ class LegacyCourtAppearanceService(
     appearanceUuid,
     chargeUuid,
   )
+
+  companion object {
+    val DEFAULT_APPEARANCE_TYPE_UUD = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a") // Court appearance
+  }
 }
