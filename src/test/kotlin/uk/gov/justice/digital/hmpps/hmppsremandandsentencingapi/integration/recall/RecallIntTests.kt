@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.rec
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -12,21 +12,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 
 class RecallIntTests : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var recallHistoryRepository: RecallHistoryRepository
-
-  @Autowired
-  private lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
-
   @Test
   fun `Create recall and fetch it based on returned UUID`() {
     val recall = CreateRecall(
@@ -461,5 +453,36 @@ class RecallIntTests : IntegrationTestBase() {
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
     assertThat(historicalRecallSentences!!).hasSize(1)
     assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(legacySentenceUuid)
+  }
+
+  @Test
+  fun `Cannot create a recall on a legacy recall sentence`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val (legacySentenceUuid, _) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2023, 1, 1)),
+    )
+    val recall = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).first()
+    assertThat(recall.sentences!!.first().sentenceType!!.sentenceTypeUuid).isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid)
+    val recallIncludingALegacySentence = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+        legacySentenceUuid,
+      ),
+    )
+
+    webTestClient
+      .post()
+      .uri("/recall")
+      .bodyValue(recallIncludingALegacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(422)
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Tried to create a recall using a legacy recall sentence ($legacySentenceUuid)")
   }
 }
