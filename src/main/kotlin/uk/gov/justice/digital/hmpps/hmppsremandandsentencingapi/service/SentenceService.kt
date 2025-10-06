@@ -210,7 +210,7 @@ class SentenceService(
           }
         }
       }
-      }
+    }
   }
 
   private fun deleteRecallWithOnlyOneSentence(
