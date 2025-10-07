@@ -41,6 +41,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.U
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
@@ -129,6 +131,12 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var periodLengthRepository: PeriodLengthRepository
+
+  @Autowired
+  protected lateinit var recallHistoryRepository: RecallHistoryRepository
+
+  @Autowired
+  protected lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
 
   @BeforeEach
   fun clearDependencies() {
@@ -569,10 +577,10 @@ abstract class IntegrationTestBase {
     .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
     .responseBody.blockFirst()!!
 
-  protected fun uploadDocument(document: UploadedDocument) {
+  protected fun uploadDocument(documents: List<UploadedDocument> = listOf(DpsDataCreator.dpsCreateUploadedDocument())): List<UploadedDocument> {
     webTestClient.post()
       .uri("/uploaded-documents")
-      .bodyValue(CreateUploadedDocument(appearanceUUID = null, documents = listOf(document)))
+      .bodyValue(CreateUploadedDocument(appearanceUUID = null, documents = documents))
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
@@ -580,6 +588,7 @@ abstract class IntegrationTestBase {
       .exchange()
       .expectStatus()
       .isCreated
+    return documents
   }
 
   protected fun migrateCases(courtCases: MigrationCreateCourtCases) = webTestClient

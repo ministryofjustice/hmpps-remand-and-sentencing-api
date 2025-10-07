@@ -148,7 +148,7 @@ class DpsDataCreator {
 
     fun dpsCreateUploadedDocument(
       documentUuid: UUID = UUID.randomUUID(),
-      documentType: String = "COURT_APPEARANCE",
+      documentType: String = "REMAND_WARRANT",
       documentName: String = "document.pdf",
     ): UploadedDocument = UploadedDocument(documentUuid, documentType, documentName)
   }

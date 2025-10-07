@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
@@ -95,5 +96,8 @@ class PersonController(private val personService: PersonService, private val cou
   }
 
   @GetMapping("/{prisonerId}/documents")
-  fun allDocuments(@PathVariable prisonerId: String): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId)
+  fun allDocuments(
+    @PathVariable prisonerId: String,
+    searchDocuments: SearchDocuments,
+  ): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId, searchDocuments)
 }
