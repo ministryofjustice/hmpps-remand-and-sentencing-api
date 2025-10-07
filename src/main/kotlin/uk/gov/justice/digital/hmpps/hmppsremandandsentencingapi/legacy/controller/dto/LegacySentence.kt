@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.SentenceUtils
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -30,8 +31,8 @@ data class LegacySentence(
         .filter { it.statusId == EntityStatus.ACTIVE }
 
       val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
+      val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentenceEntity)
       val firstSentenceAppearance = activeAppearances
-        .filter { it.warrantType == "SENTENCING" }
         .minBy { it.appearanceDate }
 
       val latestRecall = sentenceEntity.latestRecall()
@@ -49,7 +50,7 @@ data class LegacySentence(
         sentenceEntity.consecutiveTo?.sentenceUuid,
         sentenceEntity.countNumber,
         sentenceEntity.fineAmount,
-        firstSentenceAppearance.appearanceDate,
+        sentenceStartDate,
         latestRecall?.returnToCustodyDate,
       )
     }

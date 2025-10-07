@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.ZonedDateTime
-import java.util.UUID
+import java.util.*
 
 @Service
 class RecallService(
@@ -40,12 +40,15 @@ class RecallService(
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
     val recall = recallRepository.save(RecallEntity.fromDps(createRecall, recallType!!, recallUuid))
-    // Temporarily nullable because CRDS data doesn't have sentence Ids
-    val recallSentences: List<RecallSentenceEntity>? =
-      createRecall.sentenceIds?.let { sentenceIds ->
-        sentenceRepository.findBySentenceUuidIn(sentenceIds)
-          .map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it)) }
-      }
+    createRecall.sentenceIds?.let { sentenceIds ->
+      sentenceRepository.findBySentenceUuidIn(sentenceIds)
+        .forEach {
+          if (LegacySentenceService.recallSentenceTypeBucketUuid == it.sentenceType?.sentenceTypeUuid) {
+            throw IllegalStateException("Tried to create a recall using a legacy recall sentence (${it.sentenceUuid})")
+          }
+          recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
+        }
+    }
 
     return RecordResponse(
       SaveRecallResponse.from(recall),
@@ -69,7 +72,8 @@ class RecallService(
     return if (recallToUpdate == null) {
       createRecall(recall, recallUuid)
     } else {
-      val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, EntityStatus.EDITED))
+      val recallHistoryEntity =
+        recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, EntityStatus.EDITED))
       recallToUpdate.recallSentences.forEach {
         recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it).apply {})
       }
@@ -84,7 +88,12 @@ class RecallService(
         recallSentenceRepository.delete(it)
       }
       sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
-        .map { recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recallToUpdate, it)) }
+        .forEach {
+          if (LegacySentenceService.recallSentenceTypeBucketUuid == it.sentenceType?.sentenceTypeUuid) {
+            throw IllegalStateException("Tried to update a recall with a legacy recall sentence (${it.sentenceUuid})")
+          }
+          recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recallToUpdate, it))
+        }
 
       recallToUpdate.apply {
         revocationDate = recall.revocationDate
@@ -117,52 +126,54 @@ class RecallService(
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
 
-    val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, EntityStatus.DELETED))
-    recallToDelete.recallSentences.forEach { recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it)) }
-
     val isLegacyRecall =
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
 
-    val deleteSentenceEvents = if (isLegacyRecall) {
-      deleteSentencesForLegacyRecall(recallToDelete)
+    val eventsToEmit = mutableListOf<EventMetadata>()
+    var previousRecall: RecallEntity? = null
+    if (isLegacyRecall) {
+      eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
-      emptyList()
-    }
-    recallToDelete.statusId = EntityStatus.DELETED
-
-    recallToDelete.recallSentences.forEach {
-      recallSentenceRepository.delete(it)
-    }
-
-    val previousRecall = if (!isLegacyRecall) {
-      recallToDelete.recallSentences.map {
+      val recallHistoryEntity =
+        recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, EntityStatus.DELETED))
+      recallToDelete.recallSentences.forEach {
+        recallSentenceHistoryRepository.save(
+          RecallSentenceHistoryEntity.from(
+            recallHistoryEntity,
+            it,
+          ),
+        )
+      }
+      previousRecall = recallToDelete.recallSentences.map {
         it.sentence
       }.flatMap { it.recallSentences }
         .map { it.recall }
         .filter { it.recallUuid != recallUuid }
         .maxByOrNull { it.createdAt }
-    } else {
-      null
-    }
 
+      // deleting the sentence for the legacy recall will delete the recall so it's only required here for DPS
+      recallToDelete.statusId = EntityStatus.DELETED
+      recallToDelete.recallSentences.forEach {
+        recallSentenceRepository.delete(it)
+      }
+      eventsToEmit.add(
+        EventMetadataCreator.recallEventMetadata(
+          recallToDelete.prisonerId,
+          recallToDelete.recallUuid.toString(),
+          recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
+          emptyList(),
+          previousRecall?.recallUuid?.toString(),
+          EventType.RECALL_DELETED,
+        ),
+      )
+    }
     return RecordResponse(
       DeleteRecallResponse.from(recallToDelete),
-      (
-        mutableSetOf(
-          EventMetadataCreator.recallEventMetadata(
-            recallToDelete.prisonerId,
-            recallToDelete.recallUuid.toString(),
-            recallToDelete.recallSentences.map { it.sentence.sentenceUuid.toString() }.distinct(),
-            emptyList(),
-            previousRecall?.recallUuid?.toString(),
-            EventType.RECALL_DELETED,
-          ),
-        ) + deleteSentenceEvents
-        ).toMutableSet(),
+      (eventsToEmit).toMutableSet(),
     )
   }
 
-  private fun deleteSentencesForLegacyRecall(recallToDelete: RecallEntity): List<EventMetadata> = recallToDelete.recallSentences.flatMap {
+  private fun deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete: RecallEntity): List<EventMetadata> = recallToDelete.recallSentences.flatMap {
     val appearance = it.sentence.charge.appearanceCharges.first().appearance
     if (appearance != null) {
       sentenceService.deleteSentence(
