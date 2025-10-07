@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -25,7 +24,6 @@ class CourtAppearanceServiceTests {
   private val appearanceOutcomeRepository = mockk<AppearanceOutcomeRepository>()
   private val periodLengthService = mockk<PeriodLengthService>()
   private val chargeService = mockk<ChargeService>()
-  private val documentManagementApiClient = mockk<DocumentManagementApiClient>()
   private val appearanceTypeRepository = mockk<AppearanceTypeRepository>()
   private val appearanceChargeHistoryRepository = mockk<AppearanceChargeHistoryRepository>()
   private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
@@ -38,7 +36,6 @@ class CourtAppearanceServiceTests {
     chargeService = chargeService,
     serviceUserService = serviceUserService,
     courtCaseRepository = courtCaseRepository,
-    documentManagementApiClient = documentManagementApiClient,
     appearanceTypeRepository = appearanceTypeRepository,
     courtAppearanceHistoryRepository = courtAppearanceHistoryRepository,
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
