@@ -4,7 +4,6 @@ import jakarta.persistence.EntityNotFoundException
 import org.jetbrains.annotations.VisibleForTesting
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
@@ -44,7 +43,6 @@ class CourtAppearanceService(
   private val chargeService: ChargeService,
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
-  private val documentManagementApiClient: DocumentManagementApiClient,
   private val appearanceTypeRepository: AppearanceTypeRepository,
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
@@ -320,7 +318,7 @@ class CourtAppearanceService(
         val legacyData =
           activeFutureSkeletonAppearance.legacyData?.copyFrom(courtAppearance.nextCourtAppearance.appearanceTime)
             ?: courtAppearance.nextCourtAppearance.appearanceTime?.let { CourtAppearanceLegacyData.from(it) }
-        var futureCourtAppearance = activeFutureSkeletonAppearance.copyFromFuture(
+        val futureCourtAppearance = activeFutureSkeletonAppearance.copyFromFuture(
           courtAppearance.nextCourtAppearance,
           activeRecord.courtCase,
           serviceUserService.getUsername(),
@@ -347,10 +345,14 @@ class CourtAppearanceService(
         activeRecord.nextCourtAppearance = existingNextCourtAppearance
         EntityChangeStatus.NO_CHANGE to null
       } else {
-        activeNextCourtAppearance.futureSkeletonAppearance.delete(serviceUserService.getUsername())
-        courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeNextCourtAppearance.futureSkeletonAppearance))
+        var futureSkeletonChangeStatus: Pair<EntityChangeStatus, CourtAppearanceEntity?> = EntityChangeStatus.NO_CHANGE to null
+        if (activeNextCourtAppearance.futureSkeletonAppearance.statusId == EntityStatus.FUTURE) {
+          activeNextCourtAppearance.futureSkeletonAppearance.delete(serviceUserService.getUsername())
+          courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeNextCourtAppearance.futureSkeletonAppearance))
+          futureSkeletonChangeStatus = EntityChangeStatus.DELETED to activeNextCourtAppearance.futureSkeletonAppearance
+        }
         activeRecord.nextCourtAppearance = null
-        EntityChangeStatus.DELETED to activeNextCourtAppearance.futureSkeletonAppearance
+        futureSkeletonChangeStatus
       }
     } ?: courtAppearance.nextCourtAppearance?.let { toCreateNextCourtAppearance ->
       val futureLegacyData = toCreateNextCourtAppearance.appearanceTime?.let { CourtAppearanceLegacyData.from(it) }
@@ -549,7 +551,7 @@ class CourtAppearanceService(
   }
 
   @Transactional(readOnly = true)
-  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.let {
+  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.takeUnless { it.statusId == EntityStatus.DELETED }?.let {
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
     RecordResponse(CourtAppearance.from(it), eventsToEmit)
   }
