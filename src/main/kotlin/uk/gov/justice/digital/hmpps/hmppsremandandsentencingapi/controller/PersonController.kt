@@ -16,18 +16,27 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.H
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentenceenvelopes.PrisonerSentenceEnvelopes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceEnvelopeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
 import java.time.LocalDate
 
 @RestController
 @RequestMapping("/person", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "person-controller", description = "Get person details")
-class PersonController(private val personService: PersonService, private val courtCaseService: CourtCaseService, private val consecutiveToSentenceService: ConsecutiveToSentenceService, private val dpsDomainEventService: DpsDomainEventService, private val uploadedDocumentService: UploadedDocumentService) {
+class PersonController(
+  private val personService: PersonService,
+  private val courtCaseService: CourtCaseService,
+  private val consecutiveToSentenceService: ConsecutiveToSentenceService,
+  private val dpsDomainEventService: DpsDomainEventService,
+  private val uploadedDocumentService: UploadedDocumentService,
+  private val sentenceEnvelopeService: SentenceEnvelopeService,
+) {
 
   @GetMapping("/{prisonerId}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
@@ -100,4 +109,9 @@ class PersonController(private val personService: PersonService, private val cou
     @PathVariable prisonerId: String,
     searchDocuments: SearchDocuments,
   ): PrisonerDocuments = uploadedDocumentService.getDocumentsByPrisonerId(prisonerId, searchDocuments)
+
+  @GetMapping("/{prisonerId}/sentence-envelopes")
+  fun allSentenceEnvelopes(
+    @PathVariable prisonerId: String,
+  ): PrisonerSentenceEnvelopes = sentenceEnvelopeService.findByPrisonerId(prisonerId)
 }

@@ -32,5 +32,5 @@ data class ViewSentenceRow(
   val days: Int?,
   val periodOrder: String?,
   val periodLengthType: PeriodLengthType?,
-  val periodLengthLegacyData: PeriodLengthLegacyData,
+  val periodLengthLegacyData: PeriodLengthLegacyData?,
 )
