@@ -21,6 +21,7 @@ data class PrisonerSentenceEnvelopeSentence(
   val courtCode: String,
   val caseReference: String?,
   val appearanceDate: LocalDate,
+  var orderInChain: Int,
 ) {
   companion object {
     fun from(viewSentenceRowEntry: Map.Entry<UUID, List<ViewSentenceRow>>): PrisonerSentenceEnvelopeSentence {
@@ -44,7 +45,7 @@ data class PrisonerSentenceEnvelopeSentence(
         firstRow.courtCode,
         firstRow.courtCaseReference,
         firstRow.appearanceDate,
-
+        0,
       )
     }
   }

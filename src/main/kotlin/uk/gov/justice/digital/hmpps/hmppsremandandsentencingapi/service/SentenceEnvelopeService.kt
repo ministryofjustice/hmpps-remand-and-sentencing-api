@@ -19,6 +19,10 @@ class SentenceEnvelopeService(private val sentenceRepository: SentenceRepository
       while (endOfChain.isNotEmpty()) {
         val endOfChainSentence = endOfChain.removeFirst()
         val nextSentences = sentences.filter { it.consecutiveToSentenceUuid == endOfChainSentence.sentenceUuid && chain.none { chainSentence -> chainSentence.sentenceUuid == it.sentenceUuid } }
+          .map {
+            it.orderInChain = chain.size
+            it
+          }
         chain.addAll(nextSentences)
         endOfChain.addAll(nextSentences)
       }
