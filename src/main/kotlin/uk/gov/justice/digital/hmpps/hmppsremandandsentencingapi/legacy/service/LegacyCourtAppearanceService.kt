@@ -109,6 +109,7 @@ class LegacyCourtAppearanceService(
     existingCourtAppearance.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearance))
     existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances)
+    nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(existingCourtAppearance)
   }
 
   @Transactional
