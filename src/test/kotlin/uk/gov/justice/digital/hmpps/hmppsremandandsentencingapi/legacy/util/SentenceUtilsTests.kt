@@ -35,7 +35,7 @@ class SentenceUtilsTests {
     val recalledAppearance = CourtAppearanceEntity.from(DpsDataCreator.dpsCreateCourtAppearance(), null, courtCase, username)
     recalledAppearance.statusId = EntityStatus.RECALL_APPEARANCE
     val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username)
-    Companion.charge.appearanceCharges.add(
+    charge.appearanceCharges.add(
       AppearanceChargeEntity(
         recalledAppearance,
         Companion.charge,
