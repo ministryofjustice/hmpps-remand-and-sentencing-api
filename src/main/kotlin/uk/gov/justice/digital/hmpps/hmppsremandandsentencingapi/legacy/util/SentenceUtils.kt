@@ -9,10 +9,10 @@ class SentenceUtils {
     fun calculateSentenceStartDate(sentenceEntity: SentenceEntity): LocalDate {
       val firstSentenceAppearance = sentenceEntity.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == EntityStatus.ACTIVE && it.warrantType == "SENTENCING" }
+        .filter { it.statusId != EntityStatus.DELETED && it.warrantType == "SENTENCING" }
         .minOfOrNull { it.appearanceDate }
 
-      return firstSentenceAppearance ?: sentenceEntity.charge.appearanceCharges.map { it.appearance!! }.filter { it.statusId == EntityStatus.ACTIVE }.minOf { it.appearanceDate }
+      return firstSentenceAppearance ?: sentenceEntity.charge.appearanceCharges.map { it.appearance!! }.filter { it.statusId != EntityStatus.DELETED }.minOf { it.appearanceDate }
     }
   }
 }
