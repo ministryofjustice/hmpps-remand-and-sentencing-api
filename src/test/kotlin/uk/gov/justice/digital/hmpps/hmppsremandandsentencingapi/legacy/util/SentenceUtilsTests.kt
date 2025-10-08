@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class SentenceUtilsTests {
@@ -27,6 +28,24 @@ class SentenceUtilsTests {
     val sentence = SentenceEntity.from(DpsDataCreator.dpsCreateSentence(), username, charge, null, null)
     val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentence)
     Assertions.assertEquals(remandCourtAppearance.appearanceDate, sentenceStartDate)
+  }
+
+  @Test
+  fun `process recall appearances with sentences on them`() {
+    val recalledAppearance = CourtAppearanceEntity.from(DpsDataCreator.dpsCreateCourtAppearance(), null, courtCase, username)
+    recalledAppearance.statusId = EntityStatus.RECALL_APPEARANCE
+    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username)
+    charge.appearanceCharges.add(
+      AppearanceChargeEntity(
+        recalledAppearance,
+        Companion.charge,
+        username,
+        null,
+      ),
+    )
+    val sentence = SentenceEntity.from(DpsDataCreator.dpsCreateSentence(), username, charge, null, null)
+    val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentence)
+    Assertions.assertEquals(recalledAppearance.appearanceDate, sentenceStartDate)
   }
 
   companion object {
