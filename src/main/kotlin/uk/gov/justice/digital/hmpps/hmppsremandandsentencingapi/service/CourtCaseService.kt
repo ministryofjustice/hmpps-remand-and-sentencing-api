@@ -25,21 +25,32 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 @Service
-class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, private val courtAppearanceService: CourtAppearanceService, private val serviceUserService: ServiceUserService, private val fixManyChargesToSentenceService: FixManyChargesToSentenceService) {
+class CourtCaseService(
+  private val courtCaseRepository: CourtCaseRepository,
+  private val courtAppearanceService: CourtAppearanceService,
+  private val serviceUserService: ServiceUserService,
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
+) {
 
   @Transactional
   fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
     var eventType = EventType.COURT_CASE_UPDATED
-    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername(), caseUniqueIdentifier)).also { eventType = EventType.COURT_CASE_INSERTED }
+    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(
+      CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername(), caseUniqueIdentifier),
+    ).also { eventType = EventType.COURT_CASE_INSERTED }
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
     }
     val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
     eventsToEmit.add(
-      EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, eventType),
+      EventMetadataCreator.courtCaseEventMetadata(
+        savedCourtCase.prisonerId,
+        savedCourtCase.caseUniqueIdentifier,
+        eventType,
+      ),
     )
     return RecordResponse(
       savedCourtCase,
@@ -52,7 +63,11 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     val courtCase = courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername()))
     val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
     eventsToEmit.add(
-      EventMetadataCreator.courtCaseEventMetadata(savedCourtCase.prisonerId, savedCourtCase.caseUniqueIdentifier, EventType.COURT_CASE_INSERTED),
+      EventMetadataCreator.courtCaseEventMetadata(
+        savedCourtCase.prisonerId,
+        savedCourtCase.caseUniqueIdentifier,
+        EventType.COURT_CASE_INSERTED,
+      ),
     )
     return RecordResponse(
       savedCourtCase,
@@ -60,10 +75,16 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     )
   }
 
-  private fun saveCourtCaseAppearances(courtCase: CourtCaseEntity, createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
-    val toDeleteAppearances = courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
-    val eventsToEmit = toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableSet()
-    val appearanceRecords = createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
+  private fun saveCourtCaseAppearances(
+    courtCase: CourtCaseEntity,
+    createCourtCase: CreateCourtCase,
+  ): RecordResponse<CourtCaseEntity> {
+    val toDeleteAppearances =
+      courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
+    val eventsToEmit =
+      toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableSet()
+    val appearanceRecords =
+      createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
     val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
@@ -72,7 +93,10 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
   @Transactional
   fun searchCourtCases(prisonerId: String, pageable: Pageable): RecordResponse<Page<CourtCase>> {
-    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(prisonerId, pageable = pageable)
+    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(
+      prisonerId,
+      pageable = pageable,
+    )
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasePage.content)
     return RecordResponse(
       courtCasePage.map {
@@ -83,7 +107,11 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   }
 
   @Transactional
-  fun pagedSearchCourtCases(prisonerId: String, pageable: Pageable, pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): RecordResponse<Page<PagedCourtCase>> {
+  fun pagedSearchCourtCases(
+    prisonerId: String,
+    pageable: Pageable,
+    pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
+  ): RecordResponse<Page<PagedCourtCase>> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
       pageable.pageSize,
@@ -92,7 +120,8 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
       EntityStatus.ACTIVE,
       EntityStatus.DELETED,
     )
-    val manyChargesToSentenceCourtCaseIds = courtCaseRows.filter { it.sentenceStatus == EntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
+    val manyChargesToSentenceCourtCaseIds =
+      courtCaseRows.filter { it.sentenceStatus == EntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCasesById(manyChargesToSentenceCourtCaseIds)
     val toReturnCourtCases = if (eventsToEmit.isEmpty()) {
       courtCaseRows
@@ -110,7 +139,10 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
 
     val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {
-      PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing(compareByDescending { it.latestCourtAppearance.warrantDate })
+      PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing(
+        compareByDescending { it.latestCourtAppearance.warrantDate },
+      )
+
       PagedCourtCaseOrderBy.APPEARANCE_DATE_ASC -> compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate }
       PagedCourtCaseOrderBy.APPEARANCE_DATE_DESC -> compareByDescending { it.latestCourtAppearance.warrantDate }
     }
@@ -143,98 +175,83 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
     sortBy: String = "date",
     sortOrder: String = "desc",
   ): RecordResponse<RecallableCourtCasesResponse> {
-    val courtCases = courtCaseRepository.findSentencedCourtCasesByPrisonerId(
+    val courtCasesWithAnAppearance = courtCaseRepository.findSentencedCourtCasesByPrisonerId(
       prisonerId,
+      statuses = listOf(EntityStatus.ACTIVE, EntityStatus.RECALL_APPEARANCE),
       sentenceStatuses = listOf(
         EntityStatus.ACTIVE,
         EntityStatus.INACTIVE,
       ),
-    )
-      .filter { courtCase ->
-        courtCase.statusId == EntityStatus.ACTIVE &&
-          courtCase.appearances.any { appearance ->
-            appearance.statusId == EntityStatus.ACTIVE &&
-              appearance.appearanceCharges.any { appearanceCharge ->
-                appearanceCharge.charge?.statusId == EntityStatus.ACTIVE &&
-                  appearanceCharge.charge?.sentences?.isNotEmpty() == true
-              }
-          }
-      }
+    ).filter { it.latestCourtAppearance != null }
 
-    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCases)
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasesWithAnAppearance)
 
-    val recallableCourtCases = courtCases
-      .filter { it.latestCourtAppearance != null }
+    val recallableCourtCases = courtCasesWithAnAppearance
       .map { courtCase ->
         val latestAppearance = courtCase.latestCourtAppearance!!
 
-        val firstDayInCustody = courtCase.appearances
+        val activeAppearances = courtCase.appearances
           .filter { it.statusId == EntityStatus.ACTIVE }
+
+        val firstDayInCustody = activeAppearances
           .minOfOrNull { it.appearanceDate }
 
-        val firstSentencingAppearance = courtCase.appearances
-          .filter { appearance ->
-            appearance.statusId == EntityStatus.ACTIVE &&
-              appearance.warrantType == "SENTENCING"
-          }
+        val firstSentencingAppearance = activeAppearances
+          .filter { appearance -> appearance.warrantType == "SENTENCING" }
           .minByOrNull { it.appearanceDate }
+
+        val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
+          appearance.appearanceCharges
+            .filter { it.charge?.statusId == EntityStatus.ACTIVE && it.charge?.getActiveOrInactiveSentence() != null }
+            .map { it.charge!!.getActiveOrInactiveSentence()!! to appearance }
+        }
 
         RecallableCourtCase(
           courtCaseUuid = courtCase.caseUniqueIdentifier,
           reference = latestAppearance.courtCaseReference ?: "",
           courtCode = latestAppearance.courtCode,
           status = courtCase.statusId,
-          isSentenced = courtCase.appearances.any { appearance ->
-            appearance.appearanceCharges.any { it.charge?.sentences?.isNotEmpty() == true }
+          isSentenced = activeAndInactiveSentencesWithAppearances.isNotEmpty(),
+          sentences = activeAndInactiveSentencesWithAppearances.map { (sentence, appearance) ->
+            val sentenceAppearance = if (appearance.warrantType == "SENTENCING") {
+              appearance
+            } else {
+              firstSentencingAppearance
+            }
+            RecallableCourtCaseSentence(
+              sentenceUuid = sentence.sentenceUuid,
+              offenceCode = sentence.charge.offenceCode,
+              offenceStartDate = sentence.charge.offenceStartDate,
+              offenceEndDate = sentence.charge.offenceEndDate,
+              outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
+              sentenceType = sentence.sentenceType?.description,
+              sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
+              classification = sentence.sentenceType?.classification,
+              systemOfRecord = "RAS",
+              fineAmount = sentence.fineAmount,
+              periodLengths = sentence.periodLengths.map { periodLength ->
+                PeriodLength(
+                  years = periodLength.years,
+                  months = periodLength.months,
+                  weeks = periodLength.weeks,
+                  days = periodLength.days,
+                  periodOrder = periodLength.periodOrder,
+                  periodLengthType = periodLength.periodLengthType,
+                  legacyData = periodLength.legacyData,
+                  periodLengthUuid = periodLength.periodLengthUuid,
+                )
+              },
+              convictionDate = sentence.convictionDate,
+              chargeLegacyData = sentence.charge.legacyData,
+              countNumber = sentence.countNumber,
+              lineNumber = sentence.legacyData?.nomisLineReference,
+              sentenceServeType = sentence.sentenceServeType,
+              sentenceLegacyData = sentence.legacyData,
+              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
+              isRecallable = sentence.sentenceType?.isRecallable ?: true,
+              sentenceDate = sentenceAppearance?.appearanceDate,
+            )
           },
-          sentences = courtCase.appearances
-            .filter { it.statusId == EntityStatus.ACTIVE }
-            .flatMap { appearance ->
-              appearance.appearanceCharges
-                .filter { it.charge?.statusId == EntityStatus.ACTIVE }
-                .flatMap { appearanceCharge ->
-                  appearanceCharge.charge?.sentences?.map { sentence ->
-                    val sentenceAppearance = if (appearance.warrantType == "SENTENCING") {
-                      appearance
-                    } else {
-                      firstSentencingAppearance
-                    }
-                    RecallableCourtCaseSentence(
-                      sentenceUuid = sentence.sentenceUuid,
-                      offenceCode = sentence.charge.offenceCode,
-                      offenceStartDate = sentence.charge.offenceStartDate,
-                      offenceEndDate = sentence.charge.offenceEndDate,
-                      outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
-                      sentenceType = sentence.sentenceType?.description,
-                      sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
-                      classification = sentence.sentenceType?.classification,
-                      systemOfRecord = "RAS",
-                      fineAmount = sentence.fineAmount,
-                      periodLengths = sentence.periodLengths.map { periodLength ->
-                        PeriodLength(
-                          years = periodLength.years,
-                          months = periodLength.months,
-                          weeks = periodLength.weeks,
-                          days = periodLength.days,
-                          periodOrder = periodLength.periodOrder,
-                          periodLengthType = periodLength.periodLengthType,
-                          legacyData = periodLength.legacyData,
-                          periodLengthUuid = periodLength.periodLengthUuid,
-                        )
-                      },
-                      convictionDate = sentence.convictionDate,
-                      chargeLegacyData = sentence.charge.legacyData,
-                      countNumber = sentence.countNumber,
-                      lineNumber = sentence.legacyData?.nomisLineReference,
-                      sentenceServeType = sentence.sentenceServeType,
-                      sentenceLegacyData = sentence.legacyData,
-                      outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
-                      isRecallable = sentence.sentenceType?.isRecallable ?: true,
-                      sentenceDate = sentenceAppearance?.appearanceDate,
-                    )
-                  } ?: emptyList()
-                }
-            },
           date = latestAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
@@ -275,6 +292,9 @@ class CourtCaseService(private val courtCaseRepository: CourtCaseRepository, pri
   ): LocalDate? = if (appearanceUuidToExclude == null) {
     courtCaseRepository.findLatestOffenceDate(courtCaseUuid)
   } else {
-    courtCaseRepository.findLatestOffenceDateExcludingAppearance(courtCaseUuid, UUID.fromString(appearanceUuidToExclude))
+    courtCaseRepository.findLatestOffenceDateExcludingAppearance(
+      courtCaseUuid,
+      UUID.fromString(appearanceUuidToExclude),
+    )
   }
 }
