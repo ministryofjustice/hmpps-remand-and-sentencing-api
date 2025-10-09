@@ -320,4 +320,111 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
+
+  @Test
+  fun `does not return sentences from deleted appearances`() {
+    val sentenceToBeKept = DpsDataCreator.dpsCreateSentence()
+    val chargeToBeKept = DpsDataCreator.dpsCreateCharge(sentence = sentenceToBeKept)
+    val originalOutcome = UUID.randomUUID()
+    val appearanceToBeKept = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeToBeKept),
+      outcomeUuid = originalOutcome,
+      nextCourtAppearance = null,
+      warrantType = "SENTENCING",
+    )
+
+    val sentenceToBeDeleted = DpsDataCreator.dpsCreateSentence()
+    val chargeToBeDeleted = DpsDataCreator.dpsCreateCharge(sentence = sentenceToBeDeleted)
+    val appearanceToBeDeleted = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeToBeDeleted),
+      outcomeUuid = UUID.randomUUID(),
+      nextCourtAppearance = null,
+      warrantType = "SENTENCING",
+    )
+    val (_, courtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          appearanceToBeDeleted,
+          appearanceToBeKept,
+        ),
+      ),
+    )
+
+    webTestClient.delete()
+      .uri("/court-appearance/${appearanceToBeDeleted.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+      .expectBody()
+
+    webTestClient
+      .get()
+      .uri("/court-case/${courtCase.prisonerId}/recallable-court-cases")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.cases.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
+  }
+
+  @Test
+  fun `does not return deleted sentences`() {
+    val sentenceToBeKept = DpsDataCreator.dpsCreateSentence()
+    val chargeToBeKept = DpsDataCreator.dpsCreateCharge(sentence = sentenceToBeKept)
+    val originalOutcome = UUID.randomUUID()
+    val appearanceToBeKept = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeToBeKept),
+      outcomeUuid = originalOutcome,
+      nextCourtAppearance = null,
+      warrantType = "SENTENCING",
+    )
+
+    val sentenceToBeDeleted = DpsDataCreator.dpsCreateSentence()
+    val appearanceWithSentenceToBeDeleted = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(DpsDataCreator.dpsCreateCharge(sentence = sentenceToBeDeleted)),
+      outcomeUuid = UUID.randomUUID(),
+      nextCourtAppearance = null,
+      warrantType = "SENTENCING",
+    )
+    val (_, courtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          appearanceWithSentenceToBeDeleted,
+          appearanceToBeKept,
+        ),
+      ),
+    )
+
+    webTestClient
+      .delete()
+      .uri("/legacy/sentence/${sentenceToBeDeleted.sentenceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri("/court-case/${courtCase.prisonerId}/recallable-court-cases")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.cases.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
+  }
 }
