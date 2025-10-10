@@ -92,7 +92,16 @@ class LegacyCourtAppearanceService(
       existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances + existingCourtAppearance)
       entityChangeStatus = EntityChangeStatus.EDITED
     }
+    updateAssociatedNextCourtAppearances(existingCourtAppearance, courtAppearance)
+
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
+  }
+
+  private fun updateAssociatedNextCourtAppearances(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance) {
+    val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(updateRequest.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${updateRequest.appearanceTypeUuid}")
+    nextCourtAppearanceRepository.findByFutureSkeletonAppearance(courtAppearance).forEach { nextCourtAppearanceEntity ->
+      nextCourtAppearanceEntity.updateFrom(updateRequest, appearanceType)
+    }
   }
 
   @Transactional
