@@ -22,7 +22,7 @@ data class Sentence(
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
       sentenceEntity.sentenceUuid,
       sentenceEntity.countNumber,
-      sentenceEntity.periodLengths.filter { it.statusId == EntityStatus.ACTIVE }.map { PeriodLength.from(it) },
+      sentenceEntity.periodLengths.filter { it.statusId != EntityStatus.DELETED }.map { PeriodLength.from(it) },
       sentenceEntity.sentenceServeType,
       sentenceEntity.sentenceType?.let { SentenceType.from(it) },
       sentenceEntity.convictionDate,
