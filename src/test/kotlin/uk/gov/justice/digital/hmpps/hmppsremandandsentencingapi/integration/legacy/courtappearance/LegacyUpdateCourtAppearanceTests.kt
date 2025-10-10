@@ -75,6 +75,50 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `updating future appearance type results in associated next court appearances being updated`() {
+    val (appearanceUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(futureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyCourtAppearanceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val editedFutureCourtAppearance = futureCourtAppearance.copy(appearanceTypeUuid = UUID.fromString("1da09b6e-55cb-4838-a157-ee6944f2094c"))
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${response.lifetimeUuid}")
+      .bodyValue(editedFutureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri("/court-case/${legacyCourtAppearance.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceType.appearanceTypeUuid")
+      .isEqualTo(editedFutureCourtAppearance.appearanceTypeUuid.toString())
+  }
+
+  @Test
   fun `must not update appearance when no court appearance exists`() {
     val toUpdate = DataCreator.legacyCreateCourtAppearance()
     webTestClient

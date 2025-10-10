@@ -25,14 +25,14 @@ class NextCourtAppearanceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  val appearanceDate: LocalDate,
+  var appearanceDate: LocalDate,
   @Column
-  val appearanceTime: LocalTime?,
+  var appearanceTime: LocalTime?,
   @Column
-  val courtCode: String,
+  var courtCode: String,
   @OneToOne
   @JoinColumn(name = "appearance_type_id")
-  val appearanceType: AppearanceTypeEntity,
+  var appearanceType: AppearanceTypeEntity,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "future_skeleton_appearance_id")
   val futureSkeletonAppearance: CourtAppearanceEntity,
@@ -51,6 +51,13 @@ class NextCourtAppearanceEntity(
     appearanceTypeEntity,
     futureAppearance,
   )
+
+  fun updateFrom(nomisAppearance: LegacyCreateCourtAppearance, appearanceTypeEntity: AppearanceTypeEntity) {
+    this.appearanceDate = nomisAppearance.appearanceDate
+    this.appearanceTime = nomisAppearance.legacyData.appearanceTime
+    this.courtCode = nomisAppearance.courtCode
+    this.appearanceType = appearanceTypeEntity
+  }
 
   companion object {
     fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
