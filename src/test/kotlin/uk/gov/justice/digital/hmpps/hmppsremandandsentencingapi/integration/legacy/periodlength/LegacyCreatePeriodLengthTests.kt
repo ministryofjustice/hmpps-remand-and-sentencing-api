@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.MANY_CHARGES_DATA_FIX
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 
 class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
 
@@ -53,6 +54,38 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
     val periodLengthsAfter = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
     assertThat(periodLengthsAfter).hasSize(1)
     assertThat(periodLengthsAfter.map { it.statusId }).containsExactlyElementsOf(listOf(ACTIVE))
+  }
+
+  @Test
+  fun `inactive period lengths are returned`() {
+    val (sentenceUuid, toCreateSentence) = createLegacySentence(legacySentence = DataCreator.legacyCreateSentence(active = false))
+    val periodLength = DataCreator.legacyCreatePeriodLength(sentenceUUID = sentenceUuid)
+    val response = webTestClient
+      .post()
+      .uri("/legacy/period-length")
+      .bodyValue(periodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(LegacyPeriodLengthCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    val appearanceUuid = toCreateSentence.appearanceUuid
+    webTestClient
+      .get()
+      .uri("/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].sentence.periodLengths.[0].periodLengthUuid")
+      .isEqualTo(response.periodLengthUuid.toString())
   }
 
   @Test
