@@ -116,6 +116,8 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceType.appearanceTypeUuid")
       .isEqualTo(editedFutureCourtAppearance.appearanceTypeUuid.toString())
+
+    Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
   }
 
   @Test

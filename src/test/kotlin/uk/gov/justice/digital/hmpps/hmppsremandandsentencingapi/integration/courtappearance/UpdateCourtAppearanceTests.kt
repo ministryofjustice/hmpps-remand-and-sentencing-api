@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
@@ -197,6 +198,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.nextCourtAppearance.appearanceTime")
       .isEqualTo(updateNextAppearance.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+    Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
   }
 
   @Test

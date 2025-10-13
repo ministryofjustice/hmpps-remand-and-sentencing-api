@@ -35,7 +35,7 @@ class NextCourtAppearanceEntity(
   var appearanceType: AppearanceTypeEntity,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "future_skeleton_appearance_id")
-  val futureSkeletonAppearance: CourtAppearanceEntity,
+  var futureSkeletonAppearance: CourtAppearanceEntity,
 ) {
   fun isSame(other: NextCourtAppearanceEntity?): Boolean = other != null &&
     appearanceDate.isEqual(other.appearanceDate) &&
@@ -51,6 +51,14 @@ class NextCourtAppearanceEntity(
     appearanceTypeEntity,
     futureAppearance,
   )
+
+  fun updateFrom(nextCourtAppearanceEntity: NextCourtAppearanceEntity) {
+    this.appearanceDate = nextCourtAppearanceEntity.appearanceDate
+    this.appearanceTime = nextCourtAppearanceEntity.appearanceTime
+    this.courtCode = nextCourtAppearanceEntity.courtCode
+    this.appearanceType = nextCourtAppearanceEntity.appearanceType
+    this.futureSkeletonAppearance = nextCourtAppearanceEntity.futureSkeletonAppearance
+  }
 
   fun updateFrom(nomisAppearance: LegacyCreateCourtAppearance, appearanceTypeEntity: AppearanceTypeEntity) {
     this.appearanceDate = nomisAppearance.appearanceDate
