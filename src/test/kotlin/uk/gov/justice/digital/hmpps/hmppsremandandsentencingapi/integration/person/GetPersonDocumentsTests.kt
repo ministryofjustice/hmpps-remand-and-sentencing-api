@@ -85,12 +85,12 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
     val shfAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       documents = listOf(shfDoc),
       courtCode = "SHF",
-      courtCaseReference = "SHF-REF"
+      courtCaseReference = "SHF-REF",
     )
     val manAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       documents = listOf(manDoc),
       courtCode = "MAN",
-      courtCaseReference = "MAN-REF"
+      courtCaseReference = "MAN-REF",
     )
 
     val (shfCourtCaseUuid, shfCourtCase) =
