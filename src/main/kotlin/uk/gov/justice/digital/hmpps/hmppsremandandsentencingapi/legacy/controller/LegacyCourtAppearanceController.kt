@@ -89,7 +89,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "404", description = "Not found if no court appearance at uuid"),
     ],
   )
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW', 'ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO', 'ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW', 'ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO')")
   fun get(@PathVariable lifetimeUuid: UUID): LegacyCourtAppearance = legacyCourtAppearanceService.get(lifetimeUuid)
 
   @DeleteMapping("/{lifetimeUuid}")
