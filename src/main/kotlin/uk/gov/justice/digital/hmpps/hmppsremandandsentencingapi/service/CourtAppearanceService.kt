@@ -333,13 +333,8 @@ class CourtAppearanceService(
         if (!activeNextCourtAppearance.isSame(nextCourtAppearance)) {
           activeFutureSkeletonAppearance.updateFrom(futureCourtAppearance)
           courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeFutureSkeletonAppearance))
-          activeRecord.nextCourtAppearance = nextCourtAppearanceRepository.save(
-            NextCourtAppearanceEntity.from(
-              courtAppearance.nextCourtAppearance,
-              activeFutureSkeletonAppearance,
-              appearanceType,
-            ),
-          )
+          nextCourtAppearance.futureSkeletonAppearance = activeFutureSkeletonAppearance
+          activeNextCourtAppearance.updateFrom(nextCourtAppearance)
           return@let EntityChangeStatus.EDITED to activeFutureSkeletonAppearance
         }
         activeRecord.nextCourtAppearance = existingNextCourtAppearance
