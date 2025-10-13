@@ -44,8 +44,8 @@ class PrisonerEventService(
 
   private fun handleBookingMovedForRecalls(event: PrisonerBookingMovedEvent) {
     val recalls = recallRepository.findByPrisonerIdAndBookingId(
-      event.additionalInformation.movedFromNomsNumber,
-      event.additionalInformation.bookingId,
+      prisonerId = event.additionalInformation.movedFromNomsNumber,
+      bookingId = event.additionalInformation.bookingId,
     )
 
     val now = ZonedDateTime.now()

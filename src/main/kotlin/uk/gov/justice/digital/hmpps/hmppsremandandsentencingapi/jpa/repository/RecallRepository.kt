@@ -18,13 +18,13 @@ interface RecallRepository : CrudRepository<RecallEntity, Int> {
     from recall r
       join recall_sentence rs on rs.recall_id = r.id
       join sentence s on s.id = rs.sentence_id
-    where r.prisoner_id = :fromNoms
+    where r.prisoner_id = :prisonerId
       and s.legacy_data ->> 'bookingId' = :bookingId
   """,
     nativeQuery = true,
   )
   fun findByPrisonerIdAndBookingId(
-    @Param("fromNoms") fromNoms: String,
+    @Param("prisonerId") prisonerId: String,
     @Param("bookingId") bookingId: String,
   ): List<RecallEntity>
 }
