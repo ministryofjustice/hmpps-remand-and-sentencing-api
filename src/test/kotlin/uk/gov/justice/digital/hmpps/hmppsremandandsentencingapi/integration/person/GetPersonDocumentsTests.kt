@@ -50,6 +50,50 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `keyword matches fileName - returns only documents whose filename OR caseRef contains the keyword`() {
+    // A matches keyword "bundle"; B does not
+    val docA = DpsDataCreator.dpsCreateUploadedDocument(
+      documentName = "warrant_bundle_A.pdf",
+      documentType = "REMAND_WARRANT",
+    )
+    val docB = DpsDataCreator.dpsCreateUploadedDocument(
+      documentName = "hearing_notes_B.pdf",
+      documentType = "REMAND_WARRANT",
+    )
+    uploadDocument(listOf(docA, docB))
+
+    val appearanceA = DpsDataCreator.dpsCreateCourtAppearance(
+      documents = listOf(docA),
+      courtCode = "COURT1",
+      courtCaseReference = "GH123456789",
+    )
+    val appearanceB = DpsDataCreator.dpsCreateCourtAppearance(
+      documents = listOf(docB),
+      courtCode = "COURT2",
+      courtCaseReference = "ZZ999",
+    )
+
+    val (_, caseA) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearanceA)))
+    val (_, caseB) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearanceB)))
+
+    webTestClient
+      .get()
+      .uri {
+        it.path("/person/${caseA.prisonerId}/documents")
+          .queryParam("keyword", "bundle")
+          .build()
+      }
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      // Doc A (fileName contains "bundle") must be present somewhere in the payload:
+      .jsonPath("$.courtCaseDocuments..[?(@.documentUUID == '${docA.documentUUID}')]").exists()
+      // Doc B (no match) must be absent everywhere:
+      .jsonPath("$.courtCaseDocuments..[?(@.documentUUID == '${docB.documentUUID}')]").doesNotExist()
+  }
+
+  @Test
   fun `match on warrant type document type combination`() {
     val document = DpsDataCreator.dpsCreateUploadedDocument()
     val otherDocument = DpsDataCreator.dpsCreateUploadedDocument(documentType = "OTHER_DOC_TYPE")
@@ -116,5 +160,39 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       // MAN court case is filtered out entirely
       .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$manCourtCaseUuid')]")
       .doesNotExist()
+  }
+
+  @Test
+  fun `OR semantics - returns documents that match keyword OR warrantTypeDocumentType OR courtCodes`() {
+    val docA = DpsDataCreator.dpsCreateUploadedDocument(documentName = "warrant_bundle_A.pdf")
+    val docB = DpsDataCreator.dpsCreateUploadedDocument(documentName = "hearing_notes_B.pdf")
+    uploadDocument(listOf(docA, docB))
+
+    val appearanceA = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(docA), courtCode = "SHF", courtCaseReference = "CASE-A")
+    val appearanceB = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(docB), courtCode = "MAN", courtCaseReference = "CASE-B")
+
+    val (_, caseA) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearanceA)))
+    val (_, caseB) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearanceB)))
+
+    webTestClient.get()
+      .uri {
+        it.path("/person/${caseA.prisonerId}/documents")
+          // keyword matches docA.fileName, courtCodes matches docB.courtCode → both should appear
+          .queryParam("keyword", "bundle")
+          .queryParam("courtCodes", "MAN")
+          .build()
+      }
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      // docA present via keyword
+      .jsonPath("$.courtCaseDocuments..documentUUID").value<List<String>> { ids ->
+        assert(ids.contains(docA.documentUUID.toString()))
+      }
+      // docB present via courtCodes
+      .jsonPath("$.courtCaseDocuments..documentUUID").value<List<String>> { ids ->
+        assert(ids.contains(docB.documentUUID.toString()))
+      }
   }
 }

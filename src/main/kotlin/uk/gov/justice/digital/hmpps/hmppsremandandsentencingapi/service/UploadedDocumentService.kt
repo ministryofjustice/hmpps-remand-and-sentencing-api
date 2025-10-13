@@ -75,24 +75,46 @@ class UploadedDocumentService(
 
   @Transactional(readOnly = true)
   fun getDocumentsByPrisonerId(prisonerId: String, searchDocuments: SearchDocuments): PrisonerDocuments {
-    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(
-      prisonerId,
-    )
-    val prisonerCourtCases = prisonerDocuments
-      .filter { uploadedDocumentEntity ->
-        val matchesKeyword = searchDocuments.keyword?.let {
-          uploadedDocumentEntity.appearance!!.courtCaseReference?.contains(it, true)
-        } ?: true
+    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(prisonerId)
 
-        val matchesWarrantTypeDocumentType = searchDocuments.warrantTypeDocumentTypes.isEmpty() ||
-          searchDocuments.warrantTypeDocumentTypes.contains("${uploadedDocumentEntity.appearance!!.warrantType}|${uploadedDocumentEntity.documentType}")
+    val hasKeyword = !searchDocuments.keyword.isNullOrBlank()
+    val hasTypes = searchDocuments.warrantTypeDocumentTypes.isNotEmpty()
+    val hasCourtCodes = searchDocuments.courtCodes.isNotEmpty()
+    val anyFilterActive = hasKeyword || hasTypes || hasCourtCodes
 
-        val matchesCourtCode = searchDocuments.courtCodes.isEmpty() ||
-          searchDocuments.courtCodes.contains(uploadedDocumentEntity.appearance!!.courtCode)
+    val filtered = prisonerDocuments.filter { e ->
+      val a = e.appearance!!
 
-        matchesKeyword && matchesWarrantTypeDocumentType && matchesCourtCode
+      val matchesKeyword =
+        if (hasKeyword) {
+          val kw = searchDocuments.keyword!!
+          (a.courtCaseReference?.contains(kw, ignoreCase = true) == true) || e.fileName.contains(kw, ignoreCase = true)
+        } else {
+          false
+        }
+
+      val matchesWarrantTypeDocumentType =
+        if (hasTypes) {
+          searchDocuments.warrantTypeDocumentTypes.contains("${a.warrantType}|${e.documentType}")
+        } else {
+          false
+        }
+
+      val matchesCourtCode =
+        if (hasCourtCodes) {
+          searchDocuments.courtCodes.contains(a.courtCode)
+        } else {
+          false
+        }
+
+      if (!anyFilterActive) {
+        true
+      } else {
+        (matchesKeyword || matchesWarrantTypeDocumentType || matchesCourtCode)
       }
+    }
       .groupBy { it.appearance!!.courtCase }
-    return PrisonerDocuments.from(prisonerCourtCases)
+
+    return PrisonerDocuments.from(filtered)
   }
 }
