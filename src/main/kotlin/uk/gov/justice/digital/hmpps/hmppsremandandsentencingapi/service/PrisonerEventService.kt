@@ -23,15 +23,8 @@ class PrisonerEventService(
 ) {
   @Transactional
   fun handleBookingMoved(event: PrisonerBookingMovedEvent) {
-    log.info(
-      "handling booking moved from {} to {}",
-      event.additionalInformation.movedFromNomsNumber,
-      event.additionalInformation.movedToNomsNumber,
-    )
-    val courtCases = courtCaseRepository.findByPrisonerIdAndBookingId(
-      event.additionalInformation.movedFromNomsNumber,
-      event.additionalInformation.bookingId,
-    )
+    log.info("handling booking moved from {} to {}", event.additionalInformation.movedFromNomsNumber, event.additionalInformation.movedToNomsNumber)
+    val courtCases = courtCaseRepository.findByPrisonerIdAndBookingId(event.additionalInformation.movedFromNomsNumber, event.additionalInformation.bookingId)
     courtCases.forEach { courtCase ->
       courtCase.prisonerId = event.additionalInformation.movedToNomsNumber
       courtCase.updatedAt = ZonedDateTime.now()
