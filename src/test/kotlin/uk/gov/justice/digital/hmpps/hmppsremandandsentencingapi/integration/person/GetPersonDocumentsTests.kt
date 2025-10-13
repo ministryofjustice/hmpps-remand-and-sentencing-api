@@ -104,6 +104,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .get()
       .uri {
         it.path("/person/${courtCase.prisonerId}/documents")
+          .queryParam("keyword", "warrant")
           .queryParam("warrantTypeDocumentTypes", "${appearance.warrantType}|${document.documentType}")
           .build()
       }
