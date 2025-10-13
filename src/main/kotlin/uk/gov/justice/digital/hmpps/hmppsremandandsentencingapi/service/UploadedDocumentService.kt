@@ -77,37 +77,23 @@ class UploadedDocumentService(
   fun getDocumentsByPrisonerId(prisonerId: String, searchDocuments: SearchDocuments): PrisonerDocuments {
     val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(prisonerId)
 
-    val hasKeyword = !searchDocuments.keyword.isNullOrBlank()
-    val hasTypes = searchDocuments.warrantTypeDocumentTypes.isNotEmpty()
-    val hasCourtCodes = searchDocuments.courtCodes.isNotEmpty()
-    val anyFilterActive = hasKeyword || hasTypes || hasCourtCodes
-
-    val filtered = prisonerDocuments.filter { e ->
-      val a = e.appearance!!
-
+    val filtered = prisonerDocuments.filter { uploadedDocumentEntity ->
+      val appearance = uploadedDocumentEntity.appearance!!
       val matchesKeyword =
-        if (hasKeyword) {
-          val kw = searchDocuments.keyword!!
-          (a.courtCaseReference?.contains(kw, ignoreCase = true) == true) || e.fileName.contains(kw, ignoreCase = true)
-        } else {
-          false
-        }
-
+        !searchDocuments.keyword.isNullOrEmpty() &&
+          (
+            appearance.courtCaseReference?.contains(
+              searchDocuments.keyword,
+              ignoreCase = true,
+            ) == true ||
+              uploadedDocumentEntity.fileName.contains(searchDocuments.keyword, ignoreCase = true)
+            )
       val matchesWarrantTypeDocumentType =
-        if (hasTypes) {
-          searchDocuments.warrantTypeDocumentTypes.contains("${a.warrantType}|${e.documentType}")
-        } else {
-          false
-        }
-
+        searchDocuments.warrantTypeDocumentTypes.isNotEmpty() && searchDocuments.warrantTypeDocumentTypes.contains("${appearance.warrantType}|${uploadedDocumentEntity.documentType}")
       val matchesCourtCode =
-        if (hasCourtCodes) {
-          searchDocuments.courtCodes.contains(a.courtCode)
-        } else {
-          false
-        }
+        searchDocuments.courtCodes.isNotEmpty() && searchDocuments.courtCodes.contains(appearance.courtCode)
 
-      if (!anyFilterActive) {
+      if (searchDocuments.isEmpty()) {
         true
       } else {
         (matchesKeyword || matchesWarrantTypeDocumentType || matchesCourtCode)
