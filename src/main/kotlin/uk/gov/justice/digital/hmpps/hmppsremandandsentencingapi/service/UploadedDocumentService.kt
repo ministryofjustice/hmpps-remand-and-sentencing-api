@@ -80,23 +80,17 @@ class UploadedDocumentService(
     )
     val prisonerCourtCases = prisonerDocuments
       .filter { uploadedDocumentEntity ->
-        (
-          searchDocuments.isEmpty() ||
-            (
-              searchDocuments.keyword?.let {
-                uploadedDocumentEntity.appearance!!.courtCaseReference?.contains(
-                  it,
-                  true,
-                )
-              } == true
-              ) ||
-            searchDocuments.warrantTypeDocumentTypes.contains("${uploadedDocumentEntity.appearance!!.warrantType}|${uploadedDocumentEntity.documentType}")
-          ) &&
-          (
-            searchDocuments.courtCode?.takeUnless { it.isEmpty() }?.let {
-              uploadedDocumentEntity.appearance!!.courtCode == it
-            } != false
-            )
+        val matchesKeyword = searchDocuments.keyword?.let {
+          uploadedDocumentEntity.appearance!!.courtCaseReference?.contains(it, true)
+        } ?: true
+
+        val matchesWarrantTypeDocumentType = searchDocuments.warrantTypeDocumentTypes.isEmpty() ||
+          searchDocuments.warrantTypeDocumentTypes.contains("${uploadedDocumentEntity.appearance!!.warrantType}|${uploadedDocumentEntity.documentType}")
+
+        val matchesCourtCode = searchDocuments.courtCodes.isEmpty() ||
+          searchDocuments.courtCodes.contains(uploadedDocumentEntity.appearance!!.courtCode)
+
+        matchesKeyword && matchesWarrantTypeDocumentType && matchesCourtCode
       }
       .groupBy { it.appearance!!.courtCase }
     return PrisonerDocuments.from(prisonerCourtCases)

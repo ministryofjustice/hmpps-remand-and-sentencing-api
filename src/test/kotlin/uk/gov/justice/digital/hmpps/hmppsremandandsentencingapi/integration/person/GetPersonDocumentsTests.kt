@@ -60,7 +60,6 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .get()
       .uri {
         it.path("/person/${courtCase.prisonerId}/documents")
-          .queryParam("keyword", "warrant")
           .queryParam("warrantTypeDocumentTypes", "${appearance.warrantType}|${document.documentType}")
           .build()
       }
@@ -76,7 +75,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `filter by court code returns only matching documents`() {
+  fun `filter by court codes returns only matching documents`() {
     // two docs in two different courts
     val shfDoc = DpsDataCreator.dpsCreateUploadedDocument()
     val manDoc = DpsDataCreator.dpsCreateUploadedDocument()
@@ -102,17 +101,19 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .get()
       .uri {
         it.path("/person/${shfCourtCase.prisonerId}/documents")
-          .queryParam("courtCode", "SHF")
+          // pass the list param (single value here). You can pass multiple values:
+          // .queryParam("courtCodes", "SHF", "MAN")
+          .queryParam("courtCodes", "SHF")
           .build()
       }
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      // the SHF document is present under its court case
+      // SHF document is present
       .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$shfCourtCaseUuid')].appearanceDocumentsByType.${shfDoc.documentType}[0].documentUUID")
       .isEqualTo(shfDoc.documentUUID.toString())
-      // the MAN court case is filtered out entirely
+      // MAN court case is filtered out entirely
       .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$manCourtCaseUuid')]")
       .doesNotExist()
   }
