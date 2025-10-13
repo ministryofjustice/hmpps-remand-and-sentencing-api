@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 
 data class SearchDocuments(
   val warrantTypeDocumentTypes: List<String> = listOf(),
-  val caseReference: String?,
+  val keyword: String?,
+  val courtCode: String?,
 ) {
   @JsonIgnore
-  fun isEmpty(): Boolean = warrantTypeDocumentTypes.isEmpty() && caseReference?.takeUnless { it.isEmpty() } == null
+  fun isEmpty(): Boolean = warrantTypeDocumentTypes.isEmpty() && keyword?.takeUnless { it.isEmpty() } == null
 }
