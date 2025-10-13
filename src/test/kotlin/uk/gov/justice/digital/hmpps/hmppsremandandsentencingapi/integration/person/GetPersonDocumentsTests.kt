@@ -35,7 +35,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .get()
       .uri {
         it.path("/person/${courtCase.prisonerId}/documents")
-          .queryParam("caseReference", appearance.courtCaseReference)
+          .queryParam("keyword", appearance.courtCaseReference)
           .build()
       }
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
@@ -60,7 +60,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .get()
       .uri {
         it.path("/person/${courtCase.prisonerId}/documents")
-          .queryParam("caseReference", "warrant")
+          .queryParam("keyword", "warrant")
           .queryParam("warrantTypeDocumentTypes", "${appearance.warrantType}|${document.documentType}")
           .build()
       }
@@ -72,6 +72,48 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$courtCaseUuid')].appearanceDocumentsByType.${document.documentType}[0].documentUUID")
       .isEqualTo(document.documentUUID.toString())
       .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$courtCaseUuid')].appearanceDocumentsByType.${otherDocument.documentType}")
+      .doesNotExist()
+  }
+
+  @Test
+  fun `filter by court code returns only matching documents`() {
+    // two docs in two different courts
+    val shfDoc = DpsDataCreator.dpsCreateUploadedDocument()
+    val manDoc = DpsDataCreator.dpsCreateUploadedDocument()
+    uploadDocument(listOf(shfDoc, manDoc))
+
+    val shfAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      documents = listOf(shfDoc),
+      courtCode = "SHF",
+      courtCaseReference = "SHF-REF"
+    )
+    val manAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      documents = listOf(manDoc),
+      courtCode = "MAN",
+      courtCaseReference = "MAN-REF"
+    )
+
+    val (shfCourtCaseUuid, shfCourtCase) =
+      createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(shfAppearance)))
+    val (manCourtCaseUuid) =
+      createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(manAppearance)))
+
+    webTestClient
+      .get()
+      .uri {
+        it.path("/person/${shfCourtCase.prisonerId}/documents")
+          .queryParam("courtCode", "SHF")
+          .build()
+      }
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      // the SHF document is present under its court case
+      .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$shfCourtCaseUuid')].appearanceDocumentsByType.${shfDoc.documentType}[0].documentUUID")
+      .isEqualTo(shfDoc.documentUUID.toString())
+      // the MAN court case is filtered out entirely
+      .jsonPath("$.courtCaseDocuments[?(@.courtCaseUuid == '$manCourtCaseUuid')]")
       .doesNotExist()
   }
 }
