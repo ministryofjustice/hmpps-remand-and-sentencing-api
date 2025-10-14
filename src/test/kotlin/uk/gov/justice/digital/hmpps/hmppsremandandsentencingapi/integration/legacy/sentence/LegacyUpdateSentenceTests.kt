@@ -11,8 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -24,12 +22,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
-
-  @Autowired
-  private lateinit var recallHistoryRepository: RecallHistoryRepository
-
-  @Autowired
-  private lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
 
   @Test
   fun `update sentence for a recall sentence`() {

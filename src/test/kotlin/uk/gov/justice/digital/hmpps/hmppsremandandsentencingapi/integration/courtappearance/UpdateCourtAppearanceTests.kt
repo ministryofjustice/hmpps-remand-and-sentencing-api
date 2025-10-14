@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
@@ -196,6 +198,63 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.nextCourtAppearance.appearanceTime")
       .isEqualTo(updateNextAppearance.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+    Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
+  }
+
+  @Test
+  fun `do not delete the future appearance if its turned to an active appearance when clearing the next court appearance`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val createdAppearance = courtCase.appearances.first()
+    val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCaseUuid,
+      EntityStatus.FUTURE,
+    )
+
+    val futureAppearanceUpdate = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      appearanceUUID = futureAppearance.appearanceUuid,
+      nextCourtAppearance = null,
+    )
+
+    webTestClient
+      .put()
+      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
+      .bodyValue(futureAppearanceUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val updateCourtAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      appearanceUuid = createdAppearance.appearanceUuid,
+      nextCourtAppearance = null,
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
   }
 
   @Test

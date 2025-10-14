@@ -25,17 +25,17 @@ class NextCourtAppearanceEntity(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
   @Column
-  val appearanceDate: LocalDate,
+  var appearanceDate: LocalDate,
   @Column
-  val appearanceTime: LocalTime?,
+  var appearanceTime: LocalTime?,
   @Column
-  val courtCode: String,
+  var courtCode: String,
   @OneToOne
   @JoinColumn(name = "appearance_type_id")
-  val appearanceType: AppearanceTypeEntity,
+  var appearanceType: AppearanceTypeEntity,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "future_skeleton_appearance_id")
-  val futureSkeletonAppearance: CourtAppearanceEntity,
+  var futureSkeletonAppearance: CourtAppearanceEntity,
 ) {
   fun isSame(other: NextCourtAppearanceEntity?): Boolean = other != null &&
     appearanceDate.isEqual(other.appearanceDate) &&
@@ -51,6 +51,21 @@ class NextCourtAppearanceEntity(
     appearanceTypeEntity,
     futureAppearance,
   )
+
+  fun updateFrom(nextCourtAppearanceEntity: NextCourtAppearanceEntity) {
+    this.appearanceDate = nextCourtAppearanceEntity.appearanceDate
+    this.appearanceTime = nextCourtAppearanceEntity.appearanceTime
+    this.courtCode = nextCourtAppearanceEntity.courtCode
+    this.appearanceType = nextCourtAppearanceEntity.appearanceType
+    this.futureSkeletonAppearance = nextCourtAppearanceEntity.futureSkeletonAppearance
+  }
+
+  fun updateFrom(nomisAppearance: LegacyCreateCourtAppearance, appearanceTypeEntity: AppearanceTypeEntity) {
+    this.appearanceDate = nomisAppearance.appearanceDate
+    this.appearanceTime = nomisAppearance.legacyData.appearanceTime
+    this.courtCode = nomisAppearance.courtCode
+    this.appearanceType = appearanceTypeEntity
+  }
 
   companion object {
     fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(

@@ -75,14 +75,17 @@ class UploadedDocumentService(
 
   @Transactional(readOnly = true)
   fun getDocumentsByPrisonerId(prisonerId: String, searchDocuments: SearchDocuments): PrisonerDocuments {
-    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(
-      prisonerId,
-    )
-    val prisonerCourtCases = prisonerDocuments
-      .filter { uploadedDocumentEntity ->
-        searchDocuments.isEmpty() || searchDocuments.caseReference?.let { uploadedDocumentEntity.appearance!!.courtCaseReference?.contains(it, true) } == true || searchDocuments.warrantTypeDocumentTypes.contains("${uploadedDocumentEntity.appearance!!.warrantType}|${uploadedDocumentEntity.documentType}")
-      }
+    val prisonerDocuments = uploadedDocumentRepository.findByAppearanceCourtCasePrisonerId(prisonerId)
+
+    val filtered = prisonerDocuments.filter { uploadedDocumentEntity ->
+      val appearance = uploadedDocumentEntity.appearance!!
+      val matchesKeyword = searchDocuments.keyword?.let { appearance.courtCaseReference?.contains(it, true) == true || uploadedDocumentEntity.fileName.contains(it, true) } == true
+      val matchesWarrantTypeDocumentType = searchDocuments.warrantTypeDocumentTypes.contains("${appearance.warrantType}|${uploadedDocumentEntity.documentType}")
+      val matchesCourtCode = searchDocuments.courtCodes.contains(appearance.courtCode)
+      searchDocuments.isEmpty() || matchesKeyword || matchesWarrantTypeDocumentType || matchesCourtCode
+    }
       .groupBy { it.appearance!!.courtCase }
-    return PrisonerDocuments.from(prisonerCourtCases)
+
+    return PrisonerDocuments.from(filtered)
   }
 }
