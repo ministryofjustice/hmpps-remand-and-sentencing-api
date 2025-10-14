@@ -33,4 +33,9 @@ data class ViewSentenceRow(
   val periodOrder: String?,
   val periodLengthType: PeriodLengthType?,
   val periodLengthLegacyData: PeriodLengthLegacyData?,
+  val mergedFromAppearanceId: Int?,
+  val mergedFromCaseReference: String?,
+  val mergedFromCourtCode: String?,
+  val mergedFromWarrantDate: LocalDate?,
+  val mergedFromDate: LocalDate?,
 )

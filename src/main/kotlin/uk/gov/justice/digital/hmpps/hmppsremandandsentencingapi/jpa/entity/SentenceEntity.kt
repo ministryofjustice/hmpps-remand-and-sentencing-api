@@ -109,6 +109,11 @@ import java.util.UUID
         ColumnResult(name = "periodOrder"),
         ColumnResult(name = "periodLengthType", type = PeriodLengthType::class),
         ColumnResult(name = "periodLengthLegacyData", type = PeriodLengthLegacyData::class),
+        ColumnResult(name = "mergedFromAppearanceId"),
+        ColumnResult(name = "mergedFromCaseReference"),
+        ColumnResult(name = "mergedFromCourtCode"),
+        ColumnResult(name = "mergedFromWarrantDate", type = LocalDate::class),
+        ColumnResult(name = "mergedFromDate", type = LocalDate::class),
       ),
     ),
   ],
@@ -139,7 +144,12 @@ import java.util.UUID
       pl.days as days,
       pl.period_order as periodOrder,
       pl.period_length_type as periodLengthType,
-      pl.legacy_data as periodLengthLegacyData
+      pl.legacy_data as periodLengthLegacyData,
+      mca.id as mergedFromAppearanceId,
+      mca.court_case_reference as mergedFromCaseReference,
+      mca.court_code as mergedFromCourtCode,
+      mca.appearance_date as mergedFromWarrantDate,
+      c.merged_from_date as mergedFromDate
     from sentence s
     join charge c on s.charge_id = c.id
     left join charge_outcome co on co.id = c.charge_outcome_id
@@ -148,7 +158,9 @@ import java.util.UUID
     join court_case cc on ca.court_case_id = cc.id
     left join sentence cts on s.consecutive_to_id = cts.id
     left join sentence_type st on s.sentence_type_id = st.id 
-    left join period_length pl on pl.sentence_id = s.id 
+    left join period_length pl on pl.sentence_id = s.id
+    left join court_case mcc on mcc.id = c.merged_from_case_id
+    left join court_appearance mca on mca.court_case_id = mcc.id
     where s.status_id in :sentenceStatuses
     and cc.prisoner_id = :prisonerId
     and c.status_id = :status
