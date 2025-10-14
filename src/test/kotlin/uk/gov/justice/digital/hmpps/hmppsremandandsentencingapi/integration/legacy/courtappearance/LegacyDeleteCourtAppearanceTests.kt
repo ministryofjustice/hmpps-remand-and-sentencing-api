@@ -62,6 +62,23 @@ class LegacyDeleteCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `deleting appearance deletes all links to charges`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val originalAppearance = courtCase.appearances.first()
+    webTestClient
+      .delete()
+      .uri("/legacy/court-appearance/${originalAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    Assertions.assertThat(appearanceChargeRepository.countByAppearanceAppearanceUuid(originalAppearance.appearanceUuid)).isEqualTo(0)
+  }
+
+  @Test
   fun `no token results in unauthorized`() {
     webTestClient
       .delete()
