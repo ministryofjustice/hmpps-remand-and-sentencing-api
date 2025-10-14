@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ViewSentenceRow
 import java.time.LocalDate
 import java.util.*
 
@@ -187,4 +188,23 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("currentAppearanceId") currentAppearanceId: UUID,
     @Param("statusId") statusId: String = EntityStatus.ACTIVE.toString(),
   ): Boolean
+
+  fun findViewSentences(
+    @Param("prisonerId") prisonerId: String,
+    @Param("status") status: String = EntityStatus.ACTIVE.toString(),
+    @Param("sentenceStatuses") sentenceStatuses: List<String> = listOf(
+      EntityStatus.ACTIVE.toString(),
+      EntityStatus.INACTIVE.toString(),
+      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+    ),
+    @Param("courtCaseStatuses") courtCaseStatuses: List<String> = listOf(
+      EntityStatus.ACTIVE.toString(),
+      EntityStatus.INACTIVE.toString(),
+    ),
+    @Param("periodLengthStatuses") periodLengthStatuses: List<String> = listOf(
+      EntityStatus.ACTIVE.toString(),
+      EntityStatus.INACTIVE.toString(),
+      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+    ),
+  ): List<ViewSentenceRow>
 }
