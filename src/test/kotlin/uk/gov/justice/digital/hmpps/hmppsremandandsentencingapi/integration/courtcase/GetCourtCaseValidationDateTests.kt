@@ -49,7 +49,7 @@ class GetCourtCaseValidationDateTests : IntegrationTestBase() {
   fun `no token results in unauthorized`() {
     val (courtCaseUuid) = createCourtCase()
     webTestClient.get()
-      .uri("/court-case/$courtCaseUuid/validation-dates")
+      .uri("/court-case/$courtCaseUuid/validation-dates?appearanceUuidToExclude=${UUID.randomUUID()}")
       .exchange()
       .expectStatus().isUnauthorized
   }
@@ -58,7 +58,7 @@ class GetCourtCaseValidationDateTests : IntegrationTestBase() {
   fun `token with incorrect role is forbidden`() {
     val (courtCaseUuid) = createCourtCase()
     webTestClient.get()
-      .uri("/court-case/$courtCaseUuid/validation-dates")
+      .uri("/court-case/$courtCaseUuid/validation-dates?appearanceUuidToExclude=${UUID.randomUUID()}")
       .headers { it.authToken(roles = listOf("ROLE_OTHER_FUNCTION")) }
       .exchange()
       .expectStatus().isForbidden
