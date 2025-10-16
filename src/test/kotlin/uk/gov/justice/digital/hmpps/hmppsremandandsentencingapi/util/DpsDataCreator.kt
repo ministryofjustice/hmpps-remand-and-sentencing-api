@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
@@ -63,6 +64,7 @@ class DpsDataCreator {
       legacyData: CourtAppearanceLegacyData? = null,
       prisonId: String = "PRISON1",
       documents: List<UploadedDocument> = listOf(dpsCreateUploadedDocument()),
+      eventSource: EventSource= EventSource.DPS,
     ): CreateCourtAppearance = CreateCourtAppearance(
       courtCaseUuid,
       appearanceUUID,
@@ -78,6 +80,7 @@ class DpsDataCreator {
       legacyData,
       prisonId,
       documents,
+      eventSource,
     )
 
     fun dpsCreateCharge(

@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 import com.fasterxml.jackson.annotation.JsonSetter
 import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
 import java.util.UUID
@@ -24,4 +25,5 @@ data class CreateCourtAppearance(
   var legacyData: CourtAppearanceLegacyData?,
   val prisonId: String,
   val documents: List<UploadedDocument>?,
+  val eventSource: EventSource,
 )
