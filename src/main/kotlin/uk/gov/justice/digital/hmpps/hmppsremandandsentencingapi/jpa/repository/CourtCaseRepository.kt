@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 import org.springframework.data.repository.query.Param
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
@@ -115,6 +116,25 @@ interface CourtCaseRepository :
     @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
     @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
   ): LocalDate?
+
+  @Query(
+    """
+  select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate(max(coalesce(c.offenceEndDate, c.offenceStartDate)), max(CASE WHEN (a.warrantType = "REMAND") THEN a.appearanceDate ELSE null END))
+  from CourtCaseEntity cc
+  join cc.appearances a
+  join a.appearanceCharges ac
+  join ac.charge c
+  where cc.caseUniqueIdentifier = :uuid
+    and a.statusId = :status
+    and c.statusId = :status
+    and a.appearanceUuid != :appearanceUuidToExclude
+  """,
+  )
+  fun findValidationDates(
+    @Param("uuid") uuid: String,
+    @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
+    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+  ): CourtCaseValidationDate
 
   @Query(
     """

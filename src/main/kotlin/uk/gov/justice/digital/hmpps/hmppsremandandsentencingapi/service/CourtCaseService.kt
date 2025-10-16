@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -297,4 +298,10 @@ class CourtCaseService(
       UUID.fromString(appearanceUuidToExclude),
     )
   }
+
+  @Transactional(readOnly = true)
+  fun getValidationDates(
+    courtCaseUuid: String,
+    appearanceUuidToExclude: UUID,
+  ): CourtCaseValidationDate = courtCaseRepository.findValidationDates(courtCaseUuid, appearanceUuidToExclude)
 }

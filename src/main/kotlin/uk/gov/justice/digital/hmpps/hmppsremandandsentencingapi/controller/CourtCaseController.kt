@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LatestOffenceDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
@@ -35,6 +36,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
+import java.util.UUID
 
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -258,4 +260,19 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   ): LatestOffenceDate = LatestOffenceDate(
     courtCaseService.getLatestOffenceDateForCourtCase(courtCaseUuid, appearanceUuidToExclude),
   )
+
+  @GetMapping("/court-case/{courtCaseUuid}/validation-dates")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Retrieve all dates to be used in validation",
+    description = """
+      This endpoint returns the most recent offence start or end date across all appearances and charges for a given court case.  
+      This endpoint also returns the latest remand appearance date for a given court case.
+      Optionally, the result can exclude offences tied to a specific court appearance, used when editing a court appearance in the UI (the latest version of the offence dates are in the UI session).
+      """,
+  )
+  fun getValidationDates(
+    @PathVariable courtCaseUuid: String,
+    @RequestParam appearanceUuidToExclude: UUID,
+  ): CourtCaseValidationDate = courtCaseService.getValidationDates(courtCaseUuid, appearanceUuidToExclude)
 }
