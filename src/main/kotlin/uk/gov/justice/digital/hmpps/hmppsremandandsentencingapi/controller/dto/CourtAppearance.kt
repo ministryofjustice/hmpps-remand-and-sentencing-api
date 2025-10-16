@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -20,6 +21,7 @@ data class CourtAppearance(
   val overallConvictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
   val documents: List<UploadedDocument> = emptyList(),
+  val source: EventSource,
 ) {
   companion object {
 
@@ -38,6 +40,7 @@ data class CourtAppearance(
       courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.documents.map { UploadedDocument.from(it) },
+      courtAppearanceEntity.source,
     )
   }
 }
