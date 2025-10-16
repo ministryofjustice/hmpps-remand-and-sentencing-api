@@ -64,7 +64,7 @@ class DpsDataCreator {
       legacyData: CourtAppearanceLegacyData? = null,
       prisonId: String = "PRISON1",
       documents: List<UploadedDocument> = listOf(dpsCreateUploadedDocument()),
-      eventSource: EventSource= EventSource.DPS,
+      eventSource: EventSource = EventSource.DPS,
     ): CreateCourtAppearance = CreateCourtAppearance(
       courtCaseUuid,
       appearanceUUID,
