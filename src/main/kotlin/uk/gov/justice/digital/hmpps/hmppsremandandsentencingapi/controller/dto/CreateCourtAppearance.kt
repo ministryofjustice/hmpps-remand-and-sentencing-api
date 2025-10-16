@@ -25,5 +25,4 @@ data class CreateCourtAppearance(
   var legacyData: CourtAppearanceLegacyData?,
   val prisonId: String,
   val documents: List<UploadedDocument>?,
-  val eventSource: EventSource,
 )
