@@ -271,7 +271,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
       Optionally, the result can exclude offences tied to a specific court appearance, used when editing a court appearance in the UI (the latest version of the offence dates are in the UI session).
       """,
   )
-  fun getValidationDate(
+  fun getValidationDates(
     @PathVariable courtCaseUuid: String,
     @RequestParam appearanceUuidToExclude: UUID,
   ): CourtCaseValidationDate = courtCaseService.getValidationDates(courtCaseUuid, appearanceUuidToExclude)
