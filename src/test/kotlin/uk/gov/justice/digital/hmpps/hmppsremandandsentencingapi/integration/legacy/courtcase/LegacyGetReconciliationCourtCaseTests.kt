@@ -34,6 +34,8 @@ class LegacyGetReconciliationCourtCaseTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.appearances[?(@.appearanceDate == '${nextAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')]")
       .exists()
+      .jsonPath("$.appearances[?(@.appearanceDate == '${nextAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')].appearanceTypeUuid")
+      .isEqualTo(nextAppearance.appearanceTypeUuid.toString())
   }
 
   @Test
