@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import java.time.format.DateTimeFormatter
 
@@ -37,7 +37,7 @@ class LegacyLinkCourtCaseTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.content[?(@.courtCaseUuid == '$sourceCourtCaseUuid')].courtCaseStatus")
-      .isEqualTo(EntityStatus.MERGED.name)
+      .isEqualTo(CourtCaseEntityStatus.MERGED.name)
   }
 
   @Test

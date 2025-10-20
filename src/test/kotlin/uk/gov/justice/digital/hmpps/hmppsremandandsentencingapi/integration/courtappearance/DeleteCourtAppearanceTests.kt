@@ -6,7 +6,10 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -33,10 +36,10 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
 
     val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
-    assertEquals(EntityStatus.DELETED, deletedAppearance.statusId)
+    assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
 
     val deletedCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCase.first)
-    assertEquals(EntityStatus.DELETED, deletedCourtCase?.statusId)
+    assertEquals(CourtCaseEntityStatus.DELETED, deletedCourtCase?.statusId)
   }
 
   @Test
@@ -61,10 +64,10 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     // Then the court case status should still be active
     val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
-    assertEquals(EntityStatus.DELETED, deletedAppearance.statusId)
+    assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
 
     val deletedCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCase.first)
-    assertEquals(EntityStatus.ACTIVE, deletedCourtCase?.statusId)
+    assertEquals(CourtCaseEntityStatus.ACTIVE, deletedCourtCase?.statusId)
   }
 
   @Test
@@ -96,7 +99,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
 
     val deletedSentence = sentenceRepository.findBySentenceUuid(response.lifetimeUuid)[0]
-    assertEquals(EntityStatus.DELETED, deletedSentence.statusId)
+    assertEquals(SentenceEntityStatus.DELETED, deletedSentence.statusId)
   }
 
   @Test
@@ -140,7 +143,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
     val recall = recalls.first()
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recall.recallUuid)
     assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.DELETED)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
     assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
 
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)

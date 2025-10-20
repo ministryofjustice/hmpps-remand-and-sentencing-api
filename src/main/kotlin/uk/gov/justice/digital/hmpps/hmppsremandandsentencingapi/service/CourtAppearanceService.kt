@@ -22,8 +22,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -341,7 +341,7 @@ class CourtAppearanceService(
         EntityChangeStatus.NO_CHANGE to null
       } else {
         var futureSkeletonChangeStatus: Pair<EntityChangeStatus, CourtAppearanceEntity?> = EntityChangeStatus.NO_CHANGE to null
-        if (activeNextCourtAppearance.futureSkeletonAppearance.statusId == EntityStatus.FUTURE) {
+        if (activeNextCourtAppearance.futureSkeletonAppearance.statusId == CourtAppearanceEntityStatus.FUTURE) {
           activeNextCourtAppearance.futureSkeletonAppearance.delete(serviceUserService.getUsername())
           courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeNextCourtAppearance.futureSkeletonAppearance))
           futureSkeletonChangeStatus = EntityChangeStatus.DELETED to activeNextCourtAppearance.futureSkeletonAppearance
@@ -546,7 +546,7 @@ class CourtAppearanceService(
   }
 
   @Transactional(readOnly = true)
-  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.takeUnless { it.statusId == EntityStatus.DELETED }?.let {
+  fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let {
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
     RecordResponse(CourtAppearance.from(it), eventsToEmit)
   }
@@ -568,7 +568,7 @@ class CourtAppearanceService(
       eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
     }
 
-    if (courtCaseEntity.appearances.none { it.statusId == EntityStatus.ACTIVE || it.statusId == EntityStatus.FUTURE }) {
+    if (courtCaseEntity.appearances.none { it.statusId == CourtAppearanceEntityStatus.ACTIVE || it.statusId == CourtAppearanceEntityStatus.FUTURE }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())
       return DeleteCourtAppearanceResponse(

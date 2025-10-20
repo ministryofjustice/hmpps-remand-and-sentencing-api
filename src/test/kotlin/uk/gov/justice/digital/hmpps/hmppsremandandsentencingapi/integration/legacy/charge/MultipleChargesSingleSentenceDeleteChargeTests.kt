@@ -7,7 +7,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
@@ -41,7 +41,7 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       )
     }
 
-    Assertions.assertEquals(EntityStatus.ACTIVE, latestSentenceHistoryRecord.statusId)
+    Assertions.assertEquals(SentenceEntityStatus.ACTIVE, latestSentenceHistoryRecord.statusId)
   }
 
   fun createSentenceWithMultipleCharges(): TestData {

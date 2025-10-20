@@ -9,8 +9,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import java.time.LocalDate
 import java.time.ZoneId
@@ -31,7 +33,7 @@ class RecallSentenceHistoryEntityTest {
       returnToCustodyDate = LocalDate.of(2022, 2, 2),
       inPrisonOnRevocationDate = true,
       recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
-      statusId = EntityStatus.ACTIVE,
+      statusId = RecallEntityStatus.ACTIVE,
       createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
       createdByUsername = "CREATOR",
       createdPrison = "FOO",
@@ -42,7 +44,7 @@ class RecallSentenceHistoryEntityTest {
     )
     val sentence = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
-      statusId = EntityStatus.ACTIVE,
+      statusId = SentenceEntityStatus.ACTIVE,
       createdBy = "USER",
       sentenceServeType = "CONCURRENT",
       consecutiveTo = null,
@@ -50,7 +52,7 @@ class RecallSentenceHistoryEntityTest {
       charge = ChargeEntity(
         chargeUuid = UUID.randomUUID(),
         offenceCode = "TEST123",
-        statusId = EntityStatus.ACTIVE,
+        statusId = ChargeEntityStatus.ACTIVE,
         createdBy = "test-user",
         offenceStartDate = null,
         offenceEndDate = null,
@@ -79,7 +81,7 @@ class RecallSentenceHistoryEntityTest {
       createdPrison = "BAR",
     )
 
-    val historyRecall = RecallHistoryEntity.from(originalRecall, EntityStatus.EDITED)
+    val historyRecall = RecallHistoryEntity.from(originalRecall, RecallEntityStatus.EDITED)
     assertThat(RecallSentenceHistoryEntity.from(historyRecall, original))
       .usingRecursiveComparison()
       .ignoringFields("historyCreatedAt")

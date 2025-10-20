@@ -4,12 +4,12 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import java.util.*
 
 interface RecallRepository : CrudRepository<RecallEntity, Int> {
   fun findOneByRecallUuid(recallUuid: UUID): RecallEntity?
-  fun findByPrisonerIdAndStatusId(prisonerId: String, statusId: EntityStatus = EntityStatus.ACTIVE): List<RecallEntity>
+  fun findByPrisonerIdAndStatusId(prisonerId: String, statusId: RecallEntityStatus = RecallEntityStatus.ACTIVE): List<RecallEntity>
   fun findByPrisonerId(prisonerId: String): List<RecallEntity>
 
   @Query(

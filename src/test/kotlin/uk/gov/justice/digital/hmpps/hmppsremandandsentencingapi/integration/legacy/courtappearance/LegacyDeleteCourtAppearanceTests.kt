@@ -5,7 +5,7 @@ import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import java.util.UUID
 
 class LegacyDeleteCourtAppearanceTests : IntegrationTestBase() {
@@ -34,7 +34,7 @@ class LegacyDeleteCourtAppearanceTests : IntegrationTestBase() {
     val originalAppearance = courtCase.appearances.first()
     val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
       courtCaseUuid,
-      EntityStatus.FUTURE,
+      CourtAppearanceEntityStatus.FUTURE,
     )
     webTestClient
       .delete()

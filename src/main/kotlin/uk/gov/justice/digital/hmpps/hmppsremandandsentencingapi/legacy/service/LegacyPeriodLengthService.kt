@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
@@ -117,7 +117,7 @@ class LegacyPeriodLengthService(
 
   @Transactional(readOnly = true)
   fun getActivePeriodLengthWithSentence(periodLengthUuid: UUID): PeriodLengthEntity = periodLengthRepository.findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid)
-    ?.takeUnless { it.statusId == EntityStatus.DELETED }?.also { entity ->
+    ?.takeUnless { it.statusId == PeriodLengthEntityStatus.DELETED }?.also { entity ->
       if (entity.sentenceEntity == null) {
         throw IllegalStateException("Period length $periodLengthUuid has no associated sentence")
       }
@@ -125,7 +125,7 @@ class LegacyPeriodLengthService(
 
   @Transactional
   fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
-    .filter { it.statusId != EntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
+    .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
       delete(periodLength)
       LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
     }.firstOrNull()

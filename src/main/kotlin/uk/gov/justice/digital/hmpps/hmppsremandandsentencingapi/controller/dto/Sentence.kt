@@ -1,10 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 data class Sentence(
   val sentenceUuid: UUID,
@@ -22,13 +23,13 @@ data class Sentence(
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
       sentenceEntity.sentenceUuid,
       sentenceEntity.countNumber,
-      sentenceEntity.periodLengths.filter { it.statusId != EntityStatus.DELETED }.map { PeriodLength.from(it) },
+      sentenceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.map { PeriodLength.from(it) },
       sentenceEntity.sentenceServeType,
       sentenceEntity.sentenceType?.let { SentenceType.from(it) },
       sentenceEntity.convictionDate,
       sentenceEntity.fineAmount?.let { FineAmount(it) },
       sentenceEntity.legacyData,
-      sentenceEntity.consecutiveTo?.takeUnless { it.statusId == EntityStatus.DELETED }?.sentenceUuid,
+      sentenceEntity.consecutiveTo?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.sentenceUuid,
       sentenceEntity.totalRecallSentences > 0,
     )
   }

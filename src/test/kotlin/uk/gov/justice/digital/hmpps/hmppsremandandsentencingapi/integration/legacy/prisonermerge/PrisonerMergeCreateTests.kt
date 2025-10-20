@@ -6,7 +6,8 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.PrisonerMergeDataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -88,10 +89,10 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuid')].courtCaseStatus")
-      .isEqualTo(EntityStatus.INACTIVE.toString())
+      .isEqualTo(CourtCaseEntityStatus.INACTIVE.toString())
 
     val sentence = sentenceRepository.findBySentenceUuid(sentenceUuid).first()
-    assertThat(sentence.statusId).isEqualTo(EntityStatus.INACTIVE)
+    assertThat(sentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
   }
 
   @Test

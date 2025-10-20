@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.ACTIVE
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus.MANY_CHARGES_DATA_FIX
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 
 class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
@@ -34,7 +33,7 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
     assertThat(message.eventType).isEqualTo("sentence.period-length.inserted")
     val periodLengthsAfterCreate = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceLifetimeUuid)
     assertThat(periodLengthsAfterCreate).hasSize(1)
-    assertThat(periodLengthsAfterCreate[0].statusId).isEqualTo(ACTIVE)
+    assertThat(periodLengthsAfterCreate[0].statusId).isEqualTo(PeriodLengthEntityStatus.ACTIVE)
   }
 
   @Test
@@ -46,14 +45,14 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
 
     val periodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
     assertThat(periodLengths).hasSize(2)
-    assertThat(periodLengths.map { it.statusId }).containsExactlyElementsOf(listOf(MANY_CHARGES_DATA_FIX, MANY_CHARGES_DATA_FIX))
+    assertThat(periodLengths.map { it.statusId }).containsExactlyElementsOf(listOf(PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX, PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX))
 
     val singleChargeSentence = createdSentence.copy(chargeUuids = listOf(createdSentence.chargeUuids[0]))
     legacyUpdateSentence(sentenceUuid, singleChargeSentence)
 
     val periodLengthsAfter = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
     assertThat(periodLengthsAfter).hasSize(1)
-    assertThat(periodLengthsAfter.map { it.statusId }).containsExactlyElementsOf(listOf(ACTIVE))
+    assertThat(periodLengthsAfter.map { it.statusId }).containsExactlyElementsOf(listOf(PeriodLengthEntityStatus.ACTIVE))
   }
 
   @Test

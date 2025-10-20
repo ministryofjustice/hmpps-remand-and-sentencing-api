@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -31,7 +31,7 @@ class CourtCaseHistoryEntity(
   val updatedAt: ZonedDateTime?,
   val updatedBy: String?,
   @Enumerated(EnumType.STRING)
-  var statusId: EntityStatus,
+  var statusId: CourtCaseEntityStatus,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,
   val createdPrison: String?,

@@ -1,7 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import java.time.LocalDate
 
 data class LegacyCourtCase(
@@ -15,8 +16,8 @@ data class LegacyCourtCase(
 ) {
   companion object {
     fun from(courtCaseEntity: CourtCaseEntity): LegacyCourtCase {
-      val firstAppearance = courtCaseEntity.appearances.firstOrNull { entity -> entity.statusId == EntityStatus.ACTIVE }
-      return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == EntityStatus.ACTIVE, firstAppearance?.appearanceDate, firstAppearance?.courtCode, firstAppearance?.courtCaseReference, courtCaseEntity.legacyData?.caseReferences ?: emptyList())
+      val firstAppearance = courtCaseEntity.appearances.firstOrNull { entity -> entity.statusId == CourtAppearanceEntityStatus.ACTIVE }
+      return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == CourtCaseEntityStatus.ACTIVE, firstAppearance?.appearanceDate, firstAppearance?.courtCode, firstAppearance?.courtCaseReference, courtCaseEntity.legacyData?.caseReferences ?: emptyList())
     }
   }
 }

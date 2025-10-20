@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import java.time.LocalDate
 import java.util.*
 
@@ -24,7 +24,7 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
   )
   fun findByNextEventDateTime(courtCaseId: Int, nextEventDate: LocalDate): CourtAppearanceEntity?
 
-  fun findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(courtCaseEntity: CourtCaseEntity, status: EntityStatus): CourtAppearanceEntity?
+  fun findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(courtCaseEntity: CourtCaseEntity, status: CourtAppearanceEntityStatus): CourtAppearanceEntity?
 
-  fun findByCourtCaseCaseUniqueIdentifierAndStatusId(courtCaseUuid: String, status: EntityStatus): CourtAppearanceEntity
+  fun findByCourtCaseCaseUniqueIdentifierAndStatusId(courtCaseUuid: String, status: CourtAppearanceEntityStatus): CourtAppearanceEntity
 }

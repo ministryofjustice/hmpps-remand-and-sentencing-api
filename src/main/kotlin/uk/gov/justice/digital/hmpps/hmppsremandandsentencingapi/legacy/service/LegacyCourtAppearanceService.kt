@@ -11,8 +11,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
@@ -45,7 +46,7 @@ class LegacyCourtAppearanceService(
 
   @Transactional
   fun create(courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse {
-    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtAppearance.courtCaseUuid)?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at ${courtAppearance.courtCaseUuid}")
+    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtAppearance.courtCaseUuid)?.takeUnless { entity -> entity.statusId == CourtCaseEntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at ${courtAppearance.courtCaseUuid}")
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val createdCourtAppearance = courtAppearanceRepository.save(
       CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, serviceUserService.getUsername()),
@@ -82,7 +83,7 @@ class LegacyCourtAppearanceService(
   }
 
   private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {
-    courtAppearance.takeIf { it.statusId == EntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate) }?.let { matchedCourtAppearance ->
+    courtAppearance.takeIf { it.statusId == CourtAppearanceEntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate) }?.let { matchedCourtAppearance ->
       val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(legacyRequest.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${legacyRequest.appearanceTypeUuid}")
       matchedCourtAppearance.nextCourtAppearance?.let { matchedNextCourtAppearance ->
         val toUpdate = NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceType)
@@ -97,7 +98,7 @@ class LegacyCourtAppearanceService(
 
   private fun getMatchedNextCourtAppearanceOrLatest(courtCase: CourtCaseEntity, appearanceDate: LocalDate): CourtAppearanceEntity? = courtAppearanceRepository.findByNextEventDateTime(courtCase.id, appearanceDate) ?: courtAppearanceRepository.findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(
     courtCase,
-    EntityStatus.ACTIVE,
+    CourtAppearanceEntityStatus.ACTIVE,
   )
 
   @Transactional
@@ -176,7 +177,7 @@ class LegacyCourtAppearanceService(
   }
 
   private fun getUnlessDeleted(appearanceUuid: UUID): CourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)
-    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
+    ?.takeUnless { entity -> entity.statusId == CourtAppearanceEntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
 
   private fun getChargeUnlessDelete(lifetimeChargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(lifetimeChargeUuid) ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
 
@@ -186,6 +187,6 @@ class LegacyCourtAppearanceService(
   )
 
   companion object {
-    val DEFAULT_APPEARANCE_TYPE_UUD = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a") // Court appearance
+    val DEFAULT_APPEARANCE_TYPE_UUD: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a") // Court appearance
   }
 }

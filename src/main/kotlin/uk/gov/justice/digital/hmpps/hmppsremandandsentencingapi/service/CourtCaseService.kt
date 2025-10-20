@@ -22,8 +22,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import java.time.LocalDate
 import java.util.*
@@ -118,11 +121,11 @@ class CourtCaseService(
       pageable.pageSize,
       pageable.offset,
       pagedCourtCaseOrderBy,
-      EntityStatus.ACTIVE,
-      EntityStatus.DELETED,
+      CourtAppearanceEntityStatus.ACTIVE,
+      CourtCaseEntityStatus.DELETED,
     )
     val manyChargesToSentenceCourtCaseIds =
-      courtCaseRows.filter { it.sentenceStatus == EntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
+      courtCaseRows.filter { it.sentenceStatus == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCasesById(manyChargesToSentenceCourtCaseIds)
     val toReturnCourtCases = if (eventsToEmit.isEmpty()) {
       courtCaseRows
@@ -132,8 +135,8 @@ class CourtCaseService(
         pageable.pageSize,
         pageable.offset,
         pagedCourtCaseOrderBy,
-        EntityStatus.ACTIVE,
-        EntityStatus.DELETED,
+        CourtAppearanceEntityStatus.ACTIVE,
+        CourtCaseEntityStatus.DELETED,
       )
     }
     val count = courtCaseRepository.countCourtCases(prisonerId)
@@ -178,11 +181,6 @@ class CourtCaseService(
   ): RecordResponse<RecallableCourtCasesResponse> {
     val courtCasesWithAnAppearance = courtCaseRepository.findSentencedCourtCasesByPrisonerId(
       prisonerId,
-      statuses = listOf(EntityStatus.ACTIVE, EntityStatus.RECALL_APPEARANCE),
-      sentenceStatuses = listOf(
-        EntityStatus.ACTIVE,
-        EntityStatus.INACTIVE,
-      ),
     ).filter { it.latestCourtAppearance != null }
 
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasesWithAnAppearance)
@@ -192,7 +190,7 @@ class CourtCaseService(
         val latestAppearance = courtCase.latestCourtAppearance!!
 
         val activeAppearances = courtCase.appearances
-          .filter { it.statusId == EntityStatus.ACTIVE }
+          .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
 
         val firstDayInCustody = activeAppearances
           .minOfOrNull { it.appearanceDate }
@@ -203,7 +201,7 @@ class CourtCaseService(
 
         val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
           appearance.appearanceCharges
-            .filter { it.charge?.statusId == EntityStatus.ACTIVE && it.charge?.getActiveOrInactiveSentence() != null }
+            .filter { it.charge?.statusId == ChargeEntityStatus.ACTIVE && it.charge?.getActiveOrInactiveSentence() != null }
             .map { it.charge!!.getActiveOrInactiveSentence()!! to appearance }
         }
 

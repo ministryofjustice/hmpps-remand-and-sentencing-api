@@ -1,7 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
@@ -17,7 +20,7 @@ data class CourtCaseRow(
   var courtCaseId: Int,
   var prisonerId: String,
   var courtCaseUuid: String,
-  var courtCaseStatus: EntityStatus,
+  var courtCaseStatus: CourtCaseEntityStatus,
   var courtCaseLegacyData: CourtCaseLegacyData?,
   var appearanceCount: Long,
   var caseReferences: String?,
@@ -42,7 +45,7 @@ data class CourtCaseRow(
   var latestCourtAppearanceOverallConvictionDate: LocalDate?,
   var chargeId: Int?,
   var chargeUuid: UUID?,
-  var chargeStatus: EntityStatus?,
+  var chargeStatus: ChargeEntityStatus?,
   var chargeOffenceCode: String?,
   var chargeOffenceStartDate: LocalDate?,
   var chargeOffenceEndDate: LocalDate?,
@@ -52,7 +55,7 @@ data class CourtCaseRow(
   var sentenceId: Int?,
   var sentenceUuid: UUID?,
   var sentenceCountNumber: String?,
-  var sentenceStatus: EntityStatus?,
+  var sentenceStatus: SentenceEntityStatus?,
   var sentenceServeType: String?,
   var sentenceConvictionDate: LocalDate?,
   var sentenceLegacyData: SentenceLegacyData?,
@@ -63,7 +66,7 @@ data class CourtCaseRow(
   var sentenceTypeClassification: SentenceTypeClassification?,
   var sentencePeriodLengthId: Int?,
   var sentencePeriodLengthUuid: UUID?,
-  var sentencePeriodLengthStatus: EntityStatus?,
+  var sentencePeriodLengthStatus: PeriodLengthEntityStatus?,
   var sentencePeriodLengthYears: Int?,
   var sentencePeriodLengthMonths: Int?,
   var sentencePeriodLengthWeeks: Int?,

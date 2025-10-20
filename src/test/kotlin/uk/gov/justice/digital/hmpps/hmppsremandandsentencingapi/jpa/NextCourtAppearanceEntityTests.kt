@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Appea
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -47,7 +47,7 @@ class NextCourtAppearanceEntityTests {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val futureAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), null, courtCase, "COURT", "CASE1", LocalDate.now(),
-      EntityStatus.ACTIVE, ZonedDateTime.now(), "user", null, null, null, null, "REMAND", mutableSetOf(), null, null, null,
+      CourtAppearanceEntityStatus.ACTIVE, ZonedDateTime.now(), "user", null, null, null, null, "REMAND", mutableSetOf(), null, null, null,
     )
   }
 }

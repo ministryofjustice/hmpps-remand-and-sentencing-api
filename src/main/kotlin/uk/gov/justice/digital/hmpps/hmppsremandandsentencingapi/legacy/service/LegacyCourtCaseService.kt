@@ -9,7 +9,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
@@ -58,7 +59,7 @@ class LegacyCourtCaseService(
   @Transactional
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
-    existingCourtCase.statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE
+    existingCourtCase.statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE
     existingCourtCase.legacyData = existingCourtCase.legacyData?.copyFrom(courtCase.legacyData) ?: courtCase.legacyData
     existingCourtCase.updatedAt = ZonedDateTime.now()
     existingCourtCase.updatedBy = serviceUserService.getUsername()
@@ -70,7 +71,7 @@ class LegacyCourtCaseService(
   fun linkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String, linkCase: LegacyLinkCase?): Pair<String, String> {
     val sourceCourtCase = getUnlessDeleted(sourceCourtCaseUuid)
     val targetCourtCase = getUnlessDeleted(targetCourtCaseUuid)
-    sourceCourtCase.statusId = EntityStatus.MERGED
+    sourceCourtCase.statusId = CourtCaseEntityStatus.MERGED
     sourceCourtCase.mergedToCase = targetCourtCase
     sourceCourtCase.mergedToDate = linkCase?.linkedDate ?: LocalDate.now()
     sourceCourtCase.updatedAt = ZonedDateTime.now()
@@ -85,7 +86,7 @@ class LegacyCourtCaseService(
     var courtCaseEventMetadata: EventMetadata? = null
     var chargeEventsToEmit = emptyList<EventMetadata>()
     if (sourceCourtCase.mergedToCase?.caseUniqueIdentifier == targetCourtCaseUuid) {
-      sourceCourtCase.statusId = EntityStatus.ACTIVE
+      sourceCourtCase.statusId = CourtCaseEntityStatus.ACTIVE
       sourceCourtCase.mergedToCase = null
       sourceCourtCase.mergedToDate = null
       sourceCourtCase.updatedAt = ZonedDateTime.now()
@@ -95,12 +96,12 @@ class LegacyCourtCaseService(
         sourceCourtCase.caseUniqueIdentifier,
         EventType.COURT_CASE_UPDATED,
       )
-      chargeEventsToEmit = sourceCourtCase.appearances.filter { it.appearanceCharges.any { appearanceCharge -> appearanceCharge.charge!!.statusId == EntityStatus.MERGED } }
+      chargeEventsToEmit = sourceCourtCase.appearances.filter { it.appearanceCharges.any { appearanceCharge -> appearanceCharge.charge!!.statusId == ChargeEntityStatus.MERGED } }
         .flatMap { appearance ->
-          appearance.appearanceCharges.filter { appearanceCharge -> appearanceCharge.charge!!.statusId == EntityStatus.MERGED }
+          appearance.appearanceCharges.filter { appearanceCharge -> appearanceCharge.charge!!.statusId == ChargeEntityStatus.MERGED }
             .map { appearanceCharge ->
               val charge = appearanceCharge.charge!!
-              charge.statusId = EntityStatus.ACTIVE
+              charge.statusId = ChargeEntityStatus.ACTIVE
               charge.updatedAt = ZonedDateTime.now()
               charge.updatedBy = serviceUserService.getUsername()
               chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
@@ -126,5 +127,5 @@ class LegacyCourtCaseService(
   }
 
   private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
-    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+    ?.takeUnless { entity -> entity.statusId == CourtCaseEntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 }

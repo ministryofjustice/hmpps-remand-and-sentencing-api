@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import java.util.UUID
 
 data class LegacySentenceDeletedResponse(
@@ -14,7 +14,7 @@ data class LegacySentenceDeletedResponse(
   companion object {
     fun from(sentenceEntity: SentenceEntity): LegacySentenceDeletedResponse? = sentenceEntity.charge.appearanceCharges
       .map { it.appearance!! }
-      .filter { it.statusId == EntityStatus.ACTIVE }
+      .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
       .maxByOrNull { it.appearanceDate }?.let { courtAppearance ->
         LegacySentenceDeletedResponse(
           courtAppearance.courtCase.prisonerId,

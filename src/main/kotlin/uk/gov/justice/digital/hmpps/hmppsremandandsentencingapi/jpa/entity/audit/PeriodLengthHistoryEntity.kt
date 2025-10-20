@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import java.time.ZonedDateTime
@@ -37,7 +37,7 @@ class PeriodLengthHistoryEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   val legacyData: PeriodLengthLegacyData?,
   @Enumerated(EnumType.STRING)
-  val statusId: EntityStatus,
+  val statusId: PeriodLengthEntityStatus,
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,

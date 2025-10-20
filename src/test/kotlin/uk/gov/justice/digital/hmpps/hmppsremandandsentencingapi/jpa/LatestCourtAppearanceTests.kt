@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -28,7 +28,7 @@ class LatestCourtAppearanceTests {
     courtCase = courtCase,
     courtCode = "CODE1",
     courtCaseReference = "REF1",
-    statusId = EntityStatus.ACTIVE,
+    statusId = CourtAppearanceEntityStatus.ACTIVE,
     createdBy = "user",
     createdPrison = "PR1",
     warrantType = "TYPE",

@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateSentence
@@ -43,7 +43,7 @@ class RecallEntity(
   // Audit and status columns
   @Column
   @Enumerated(EnumType.ORDINAL)
-  var statusId: EntityStatus,
+  var statusId: RecallEntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
   val createdPrison: String? = null,
@@ -60,7 +60,7 @@ class RecallEntity(
   fun delete(updatedUser: String) {
     updatedAt = ZonedDateTime.now()
     updatedBy = updatedUser
-    statusId = EntityStatus.DELETED
+    statusId = RecallEntityStatus.DELETED
   }
 
   companion object {
@@ -73,7 +73,7 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createRecall.createdByUsername,
       createdPrison = createRecall.createdByPrison,
-      statusId = EntityStatus.ACTIVE,
+      statusId = RecallEntityStatus.ACTIVE,
       source = DPS,
     )
 
@@ -89,7 +89,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = EntityStatus.ACTIVE,
+      statusId = RecallEntityStatus.ACTIVE,
       source = NOMIS,
     )
 
@@ -105,7 +105,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = EntityStatus.ACTIVE,
+      statusId = RecallEntityStatus.ACTIVE,
       source = NOMIS,
     )
 
@@ -121,7 +121,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = EntityStatus.DUPLICATE,
+      statusId = RecallEntityStatus.DUPLICATE,
       source = NOMIS,
     )
 
@@ -137,7 +137,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = EntityStatus.ACTIVE,
+      statusId = RecallEntityStatus.ACTIVE,
       source = NOMIS,
     )
   }

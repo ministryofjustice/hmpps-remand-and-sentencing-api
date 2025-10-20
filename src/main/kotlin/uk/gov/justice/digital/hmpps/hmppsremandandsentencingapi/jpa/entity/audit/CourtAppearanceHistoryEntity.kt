@@ -14,7 +14,7 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -34,7 +34,7 @@ class CourtAppearanceHistoryEntity(
   val courtCaseReference: String?,
   val appearanceDate: LocalDate,
   @Enumerated(EnumType.STRING)
-  val statusId: EntityStatus,
+  val statusId: CourtAppearanceEntityStatus,
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,

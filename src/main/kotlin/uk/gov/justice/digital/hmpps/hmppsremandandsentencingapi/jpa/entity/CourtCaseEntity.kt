@@ -22,8 +22,11 @@ import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
@@ -98,7 +101,7 @@ import java.util.UUID
         ColumnResult(name = "courtCaseId"),
         ColumnResult(name = "prisonerId"),
         ColumnResult(name = "courtCaseUuid"),
-        ColumnResult(name = "courtCaseStatus", type = EntityStatus::class),
+        ColumnResult(name = "courtCaseStatus", type = CourtCaseEntityStatus::class),
         ColumnResult(name = "courtCaseLegacyData", type = CourtCaseLegacyData::class),
         ColumnResult(name = "appearanceCount"),
         ColumnResult(name = "caseReferences"),
@@ -123,7 +126,7 @@ import java.util.UUID
         ColumnResult(name = "latestCourtAppearanceOverallConvictionDate", type = LocalDate::class),
         ColumnResult(name = "chargeId"),
         ColumnResult(name = "chargeUuid"),
-        ColumnResult(name = "chargeStatus", EntityStatus::class),
+        ColumnResult(name = "chargeStatus", ChargeEntityStatus::class),
         ColumnResult(name = "chargeOffenceCode"),
         ColumnResult(name = "chargeOffenceStartDate", type = LocalDate::class),
         ColumnResult(name = "chargeOffenceEndDate", type = LocalDate::class),
@@ -133,7 +136,7 @@ import java.util.UUID
         ColumnResult(name = "sentenceId"),
         ColumnResult(name = "sentenceUuid"),
         ColumnResult(name = "sentenceCountNumber"),
-        ColumnResult(name = "sentenceStatus", type = EntityStatus::class),
+        ColumnResult(name = "sentenceStatus", type = SentenceEntityStatus::class),
         ColumnResult(name = "sentenceServeType"),
         ColumnResult(name = "sentenceConvictionDate", type = LocalDate::class),
         ColumnResult(name = "sentenceLegacyData", type = SentenceLegacyData::class),
@@ -144,7 +147,7 @@ import java.util.UUID
         ColumnResult(name = "sentenceTypeClassification", type = SentenceTypeClassification::class),
         ColumnResult(name = "sentencePeriodLengthId"),
         ColumnResult(name = "sentencePeriodLengthUuid"),
-        ColumnResult(name = "sentencePeriodLengthStatus", type = EntityStatus::class),
+        ColumnResult(name = "sentencePeriodLengthStatus", type = PeriodLengthEntityStatus::class),
         ColumnResult(name = "sentencePeriodLengthYears"),
         ColumnResult(name = "sentencePeriodLengthMonths"),
         ColumnResult(name = "sentencePeriodLengthWeeks"),
@@ -196,7 +199,7 @@ class CourtCaseEntity(
   val createdPrison: String? = null,
   @Column
   @Enumerated(EnumType.STRING)
-  var statusId: EntityStatus,
+  var statusId: CourtCaseEntityStatus,
 
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,
@@ -218,27 +221,27 @@ class CourtCaseEntity(
   var mergedToDate: LocalDate? = null
 
   fun delete(username: String) {
-    statusId = EntityStatus.DELETED
+    statusId = CourtCaseEntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
 
   companion object {
 
-    fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = EntityStatus.ACTIVE, legacyData = courtCase.legacyData)
+    fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = CourtCaseEntityStatus.ACTIVE, legacyData = courtCase.legacyData)
 
-    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = if (courtCase.active) EntityStatus.ACTIVE else EntityStatus.INACTIVE, legacyData = courtCase.legacyData)
+    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE, legacyData = courtCase.legacyData)
 
     fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
       prisonerId = prisonerId,
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
       statusId = if (migrationCreateCourtCase.merged) {
-        EntityStatus.MERGED
+        CourtCaseEntityStatus.MERGED
       } else if (migrationCreateCourtCase.active) {
-        EntityStatus.ACTIVE
+        CourtCaseEntityStatus.ACTIVE
       } else {
-        EntityStatus.INACTIVE
+        CourtCaseEntityStatus.INACTIVE
       },
       legacyData = migrationCreateCourtCase.courtCaseLegacyData,
     )
@@ -248,11 +251,11 @@ class CourtCaseEntity(
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
       statusId = if (mergeCreateCourtCase.merged) {
-        EntityStatus.MERGED
+        CourtCaseEntityStatus.MERGED
       } else if (mergeCreateCourtCase.active) {
-        EntityStatus.ACTIVE
+        CourtCaseEntityStatus.ACTIVE
       } else {
-        EntityStatus.INACTIVE
+        CourtCaseEntityStatus.INACTIVE
       },
       legacyData = mergeCreateCourtCase.courtCaseLegacyData,
     )
@@ -261,7 +264,7 @@ class CourtCaseEntity(
       prisonerId = prisonerId,
       caseUniqueIdentifier = UUID.randomUUID().toString(),
       createdBy = createdByUsername,
-      statusId = EntityStatus.DUPLICATE,
+      statusId = CourtCaseEntityStatus.DUPLICATE,
       legacyData = bookingCreateCourtCase.courtCaseLegacyData,
     )
   }

@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
@@ -252,7 +252,7 @@ class RecallIntTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(uuid)
     assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.EDITED)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.EDITED)
     assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
 
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
@@ -385,7 +385,7 @@ class RecallIntTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(createRecall.recallUuid)
     assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.DELETED)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
     assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
 
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
@@ -447,7 +447,7 @@ class RecallIntTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recall.recallUuid)
     assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.DELETED)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
     assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
 
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)

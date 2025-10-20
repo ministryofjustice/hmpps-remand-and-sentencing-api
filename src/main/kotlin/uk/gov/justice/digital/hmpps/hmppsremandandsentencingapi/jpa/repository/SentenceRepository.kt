@@ -4,7 +4,11 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ViewSentenceRow
@@ -16,13 +20,13 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   fun findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid: UUID, chargeUUID: UUID): SentenceEntity?
 
-  fun findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid: UUID, chargeUuids: List<UUID>, statusId: EntityStatus = EntityStatus.DELETED): List<SentenceEntity>
+  fun findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid: UUID, chargeUuids: List<UUID>, statusId: SentenceEntityStatus = SentenceEntityStatus.DELETED): List<SentenceEntity>
 
   fun findBySentenceUuidIn(sentenceUuids: List<UUID>): List<SentenceEntity>
 
   fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
 
-  fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: EntityStatus): List<SentenceEntity>
+  fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: SentenceEntityStatus): List<SentenceEntity>
 
   @Query(
     value = """
@@ -45,10 +49,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
     @Param("bookingId") bookingId: String,
-    @Param("status") status: String = EntityStatus.ACTIVE.toString(),
+    @Param("status") status: String = SentenceEntityStatus.ACTIVE.toString(),
     @Param("sentenceStatuses") statuses: List<String> = listOf(
-      EntityStatus.ACTIVE.toString(),
-      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+      SentenceEntityStatus.ACTIVE.toString(),
+      SentenceEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
   ): Long
 
@@ -64,23 +68,25 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       join c.appearanceCharges ac
       join ac.appearance ca on ca != sctca
       join ca.courtCase cc on (cc != sctcc or ca != sctca)
-      where sct.sentenceUuid IN :sentenceUuids
-      and c.statusId = :#{#status}
-      and ca.statusId = :#{#status}
-      and cc.statusId = :#{#status}
-      and sctc.statusId = :#{#status}
-      and sctca.statusId = :#{#status}
-      and sctcc.statusId = :#{#status}
-      and s.statusId in :sentenceStatuses
+      where sct.sentenceUuid IN :sentenceUuids and
+      cc.statusId = :#{#courtCaseStatus} and 
+      ca.statusId = :#{#courtAppearanceStatus} and 
+      c.statusId = :#{#chargeStatus} and 
+      sctc.statusId = :#{#chargeStatus} and 
+      sctca.statusId = :#{#courtAppearanceStatus} and
+      sctcc.statusId = :#{#courtCaseStatus} and 
+      s.statusId in :sentenceStatuses
     """,
   )
   fun countSentencesAfterOnOtherCourtAppearance(
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
-    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
-      EntityStatus.ACTIVE,
-      EntityStatus.MANY_CHARGES_DATA_FIX,
-      EntityStatus.INACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+    @Param("sentenceStatuses") statuses: List<SentenceEntityStatus> = listOf(
+      SentenceEntityStatus.ACTIVE,
+      SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
+      SentenceEntityStatus.INACTIVE,
     ),
   ): Long
 
@@ -97,23 +103,25 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       join c.appearanceCharges ac
       join ac.appearance ca on ca != sctca
       join ca.courtCase cc on (cc != sctcc or ca != sctca)
-      where sct.sentenceUuid IN :sentenceUuids
-      and c.statusId = :#{#status}
-      and ca.statusId = :#{#status}
-      and cc.statusId = :#{#status}
-      and sctc.statusId = :#{#status}
-      and sctca.statusId = :#{#status}
-      and sctcc.statusId = :#{#status}
-      and s.statusId in :sentenceStatuses
+      where sct.sentenceUuid IN :sentenceUuids and 
+      cc.statusId = :#{#courtCaseStatus} and 
+      ca.statusId = :#{#courtAppearanceStatus} and 
+      c.statusId = :#{#chargeStatus} and 
+      sctc.statusId = :#{#chargeStatus} and 
+      sctca.statusId = :#{#courtAppearanceStatus} and
+      sctcc.statusId = :#{#courtCaseStatus} and 
+      s.statusId in :sentenceStatuses
     """,
   )
   fun sentencesAfterOnOtherCourtAppearanceDetails(
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
-    @Param("sentenceStatuses") statuses: List<EntityStatus> = listOf(
-      EntityStatus.ACTIVE,
-      EntityStatus.MANY_CHARGES_DATA_FIX,
-      EntityStatus.INACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+    @Param("sentenceStatuses") statuses: List<SentenceEntityStatus> = listOf(
+      SentenceEntityStatus.ACTIVE,
+      SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
+      SentenceEntityStatus.INACTIVE,
     ),
   ): List<SentenceAfterOnAnotherCourtAppearanceRow>
 
@@ -121,10 +129,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
     @Param("bookingId") bookingId: String,
-    @Param("status") status: String = EntityStatus.ACTIVE.toString(),
+    @Param("status") status: String = SentenceEntityStatus.ACTIVE.toString(),
     @Param("sentenceStatuses") statuses: List<String> = listOf(
-      EntityStatus.ACTIVE.toString(),
-      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+      SentenceEntityStatus.ACTIVE.toString(),
+      SentenceEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
   ): List<ConsecutiveToSentenceRow>
 
@@ -135,16 +143,19 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     join c.appearanceCharges ac
     join ac.appearance ca
     join ca.courtCase cc
-    where s.statusId != :#{#status}
-    and s.sentenceUuid in :sentenceUuids
-    and c.statusId != :#{#status}
-    and ca.statusId != :#{#status}
-    and cc.statusId != :#{#status}
+    where s.sentenceUuid in :sentenceUuids and
+    cc.statusId != :courtCaseStatus and 
+    ca.statusId != :courtAppearanceStatus and 
+    c.statusId != :chargeStatus and 
+    s.statusId != :sentenceStatus
   """,
   )
   fun findConsecutiveToSentenceDetails(
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
-    @Param("status") status: EntityStatus = EntityStatus.DELETED,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): List<ConsecutiveToSentenceRow>
 
   @Query(
@@ -186,25 +197,25 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     @Param("targetSentenceId") targetSentenceId: UUID,
     @Param("prisonerId") prisonerId: String,
     @Param("currentAppearanceId") currentAppearanceId: UUID,
-    @Param("statusId") statusId: String = EntityStatus.ACTIVE.toString(),
+    @Param("statusId") statusId: String = SentenceEntityStatus.ACTIVE.toString(),
   ): Boolean
 
   fun findViewSentences(
     @Param("prisonerId") prisonerId: String,
-    @Param("status") status: String = EntityStatus.ACTIVE.toString(),
+    @Param("status") status: String = SentenceEntityStatus.ACTIVE.toString(),
     @Param("sentenceStatuses") sentenceStatuses: List<String> = listOf(
-      EntityStatus.ACTIVE.toString(),
-      EntityStatus.INACTIVE.toString(),
-      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+      SentenceEntityStatus.ACTIVE.toString(),
+      SentenceEntityStatus.INACTIVE.toString(),
+      SentenceEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
     @Param("courtCaseStatuses") courtCaseStatuses: List<String> = listOf(
-      EntityStatus.ACTIVE.toString(),
-      EntityStatus.INACTIVE.toString(),
+      CourtCaseEntityStatus.ACTIVE.toString(),
+      CourtCaseEntityStatus.INACTIVE.toString(),
     ),
     @Param("periodLengthStatuses") periodLengthStatuses: List<String> = listOf(
-      EntityStatus.ACTIVE.toString(),
-      EntityStatus.INACTIVE.toString(),
-      EntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+      PeriodLengthEntityStatus.ACTIVE.toString(),
+      PeriodLengthEntityStatus.INACTIVE.toString(),
+      PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
   ): List<ViewSentenceRow>
 }

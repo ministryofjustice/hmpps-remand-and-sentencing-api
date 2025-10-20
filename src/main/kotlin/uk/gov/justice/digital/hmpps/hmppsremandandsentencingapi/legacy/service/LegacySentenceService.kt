@@ -14,9 +14,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.LegacySentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
@@ -106,7 +109,7 @@ class LegacySentenceService(
 
       val courtAppearance = charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == EntityStatus.ACTIVE }
+        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
       LegacySentenceCreatedResponse(
@@ -209,7 +212,7 @@ class LegacySentenceService(
             sentenceRepository.findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(
               sentenceUuid,
               chargeUuid,
-            )?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
+            )?.takeUnless { entity -> entity.statusId == SentenceEntityStatus.DELETED }
               ?.let { it to EntityChangeStatus.NO_CHANGE }
             )
             ?: (
@@ -268,7 +271,7 @@ class LegacySentenceService(
         if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
       val courtAppearance = activeRecord.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == EntityStatus.ACTIVE }
+        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")
       entityChangeStatus to LegacySentenceCreatedResponse(
@@ -305,9 +308,9 @@ class LegacySentenceService(
   private fun checkAndUpdatePeriodLengthStatus(existingSentence: SentenceEntity) {
     val periodLengths = periodLengthRepository
       .findAllBySentenceEntitySentenceUuidAndStatusIdNot(existingSentence.sentenceUuid)
-      .filter { it.statusId != existingSentence.statusId }
+      .filter { it.statusId != PeriodLengthEntityStatus.from(existingSentence.statusId) }
       .onEach {
-        it.statusId = existingSentence.statusId
+        it.statusId = PeriodLengthEntityStatus.from(existingSentence.statusId)
         it.updatedBy = serviceUserService.getUsername()
         it.updatedAt = ZonedDateTime.now()
       }
@@ -323,7 +326,7 @@ class LegacySentenceService(
     val latestRecall = updatedSentence.latestRecall()
     if (latestRecall != null) {
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(latestRecall, EntityStatus.EDITED))
+        recallHistoryRepository.save(RecallHistoryEntity.from(latestRecall, RecallEntityStatus.EDITED))
       latestRecall.recallSentences.forEach {
         recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
       }
@@ -336,7 +339,7 @@ class LegacySentenceService(
 
   @Transactional
   fun delete(sentenceUuid: UUID): LegacySentenceDeletedResponse? = sentenceRepository.findBySentenceUuid(sentenceUuid)
-    .filter { it.statusId != EntityStatus.DELETED }
+    .filter { it.statusId != SentenceEntityStatus.DELETED }
     .map { sentence ->
       delete(sentence)
       LegacySentenceDeletedResponse.from(sentence)
@@ -354,11 +357,11 @@ class LegacySentenceService(
       val recall = it.recall
 
       val recallHistoryEntity = if (recall.recallSentences.size == 1) {
-        val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.DELETED))
+        val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.DELETED))
         recall.delete(serviceUserService.getUsername())
         recallHistoryEntity
       } else {
-        recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
+        recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
       }
       recall.recallSentences.forEach { recallSentence ->
         recallSentenceHistoryRepository.save(
@@ -370,17 +373,17 @@ class LegacySentenceService(
   }
 
   private fun deletePeriodLengths(sentence: SentenceEntity) {
-    sentence.periodLengths.filter { it.statusId != EntityStatus.DELETED }
+    sentence.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }
       .forEach { periodLength ->
         legacyPeriodLengthService.delete(periodLength)
       }
   }
 
   fun handleManyChargesSentenceDeleted(sentenceUuid: UUID) {
-    val sentences = sentenceRepository.findBySentenceUuidAndStatusId(sentenceUuid, EntityStatus.MANY_CHARGES_DATA_FIX)
+    val sentences = sentenceRepository.findBySentenceUuidAndStatusId(sentenceUuid, SentenceEntityStatus.MANY_CHARGES_DATA_FIX)
     if (sentences.size == 1) {
       val sentenceRecord = sentences.first()
-      sentenceRecord.statusId = EntityStatus.ACTIVE
+      sentenceRecord.statusId = SentenceEntityStatus.ACTIVE
       sentenceRecord.updatedAt = ZonedDateTime.now()
       sentenceRecord.updatedBy = serviceUserService.getUsername()
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
@@ -408,12 +411,12 @@ class LegacySentenceService(
   }
 
   private fun getUnlessDeleted(sentenceUuid: UUID): SentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
-    ?.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }
+    ?.takeUnless { entity -> entity.statusId == SentenceEntityStatus.DELETED }
     ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
   @Transactional(readOnly = true)
   fun search(searchSentence: LegacySearchSentence): List<LegacySentence> = sentenceRepository.findBySentenceUuidIn(searchSentence.lifetimeUuids.distinct()).mapNotNull { sentence ->
-    sentence.takeUnless { entity -> entity.statusId == EntityStatus.DELETED }?.let { LegacySentence.from(it) }
+    sentence.takeUnless { entity -> entity.statusId == SentenceEntityStatus.DELETED }?.let { LegacySentence.from(it) }
   }
 
   companion object {

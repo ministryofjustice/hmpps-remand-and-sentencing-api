@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -29,7 +29,7 @@ class ChargeHistoryEntity(
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
   @Enumerated(EnumType.STRING)
-  var statusId: EntityStatus,
+  var statusId: ChargeEntityStatus,
   val chargeOutcomeId: Int?,
   var supersedingChargeId: Int?,
   val terrorRelated: Boolean?,

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
@@ -42,7 +42,7 @@ class SentenceTypeUpdateServiceTests {
   @Test
   fun `throw IllegalStateException when court case is deleted`() {
     // Given
-    val courtCase = createCourtCase(status = EntityStatus.DELETED)
+    val courtCase = createCourtCase(status = CourtCaseEntityStatus.DELETED)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString()) } returns courtCase
 
     val request = UpdateSentenceTypeRequest(
@@ -62,7 +62,7 @@ class SentenceTypeUpdateServiceTests {
       .hasMessage("Court case with UUID $courtCaseUuid is deleted")
   }
 
-  private fun createCourtCase(status: EntityStatus = EntityStatus.ACTIVE): CourtCaseEntity = CourtCaseEntity(
+  private fun createCourtCase(status: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE): CourtCaseEntity = CourtCaseEntity(
     id = 1,
     prisonerId = "PRISONER1",
     caseUniqueIdentifier = courtCaseUuid.toString(),

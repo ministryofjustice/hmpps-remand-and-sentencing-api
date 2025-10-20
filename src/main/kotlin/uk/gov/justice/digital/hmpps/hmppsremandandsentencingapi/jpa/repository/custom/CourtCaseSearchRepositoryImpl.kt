@@ -3,7 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.
 import jakarta.persistence.EntityManager
 import org.springframework.data.jpa.repository.JpaContext
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 
@@ -19,8 +20,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     limit: Int,
     offset: Long,
     pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
-    appearanceStatus: EntityStatus,
-    courtCaseStatus: EntityStatus,
+    appearanceStatus: CourtAppearanceEntityStatus,
+    courtCaseStatus: CourtCaseEntityStatus,
   ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<order_by>", pagedCourtCaseOrderBy.orderBy), "courtCaseRowMapping")
     .setParameter("prisonerId", prisonerId)
     .setParameter("limit", limit)

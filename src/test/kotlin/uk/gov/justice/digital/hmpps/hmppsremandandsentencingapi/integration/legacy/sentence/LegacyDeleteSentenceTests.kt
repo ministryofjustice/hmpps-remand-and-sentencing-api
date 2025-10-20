@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
@@ -55,7 +55,7 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recallsBeforeDelete[0].recallUuid)
     assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(EntityStatus.DELETED)
+    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
     assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
 
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)

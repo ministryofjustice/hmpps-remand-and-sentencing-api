@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import java.time.LocalDate
@@ -8,7 +9,7 @@ import java.time.LocalDate
 data class PagedCourtCase(
   val prisonerId: String,
   val courtCaseUuid: String,
-  val courtCaseStatus: EntityStatus,
+  val courtCaseStatus: CourtCaseEntityStatus,
   val legacyData: CourtCaseLegacyData?,
   val appearanceCount: Long,
   val caseReferences: Set<String>,
@@ -23,7 +24,7 @@ data class PagedCourtCase(
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
       val firstCourtCase = courtCaseRows.first()
       val legacyReferences = firstCourtCase.courtCaseLegacyData?.caseReferences?.map { it.offenderCaseReference } ?: emptyList()
-      val latestAppearanceCharges = courtCaseRows.filter { it.chargeId != null && it.chargeStatus != EntityStatus.DELETED }.groupBy { it.chargeId!! }
+      val latestAppearanceCharges = courtCaseRows.filter { it.chargeId != null && it.chargeStatus != ChargeEntityStatus.DELETED }.groupBy { it.chargeId!! }
       val mergedFromCases = courtCaseRows.filter { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }.groupBy { it.mergedFromCaseId!! }
       val mergedToCase = courtCaseRows.firstOrNull { it.mergedToCaseId != null && it.mergedToAppearanceId != null }
       return PagedCourtCase(

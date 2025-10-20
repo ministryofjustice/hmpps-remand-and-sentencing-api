@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
@@ -46,7 +46,7 @@ class PrisonerEventService(
       recall.prisonerId = event.additionalInformation.movedToNomsNumber
       recall.updatedAt = now
       recall.updatedBy = "NOMIS"
-      recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
+      recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
     }
 
     log.info("Updated {} recalls for bookingId={}", recalls.size, event.additionalInformation.bookingId)

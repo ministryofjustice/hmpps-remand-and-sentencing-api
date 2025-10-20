@@ -2,7 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.SentenceUtils
 import java.math.BigDecimal
@@ -28,7 +29,7 @@ data class LegacySentence(
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
       val activeAppearances = sentenceEntity.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == EntityStatus.ACTIVE }
+        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
 
       val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
       val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentenceEntity)
@@ -44,7 +45,7 @@ data class LegacySentence(
         sentenceEntity.charge.chargeUuid,
         sentenceEntity.sentenceUuid,
         firstSentenceAppearance.appearanceUuid,
-        sentenceEntity.statusId == EntityStatus.ACTIVE,
+        sentenceEntity.statusId == SentenceEntityStatus.ACTIVE,
         sentenceTypeAndCategory.first,
         sentenceTypeAndCategory.second,
         sentenceEntity.consecutiveTo?.sentenceUuid,
