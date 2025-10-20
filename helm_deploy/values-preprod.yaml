@@ -14,6 +14,7 @@ generic-service:
     DOCUMENT_MANAGEMENT_API_URL: https://document-api-preprod.hmpps.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PREPROD
+    FEATURES_FIX_MANY_CHARGES_TO_SENTENCE: disabled
 
   allowlist:
     penetration-test-ip-1: 54.37.241.156/30

@@ -56,3 +56,10 @@ ingress:
 delete:
   before:
     migrate: true
+
+features:
+  fix:
+    many:
+      charges:
+        to:
+          sentence: enabled
