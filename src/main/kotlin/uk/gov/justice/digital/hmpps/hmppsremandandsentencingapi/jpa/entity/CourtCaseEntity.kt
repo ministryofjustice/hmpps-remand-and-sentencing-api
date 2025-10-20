@@ -22,8 +22,11 @@ import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
@@ -123,7 +126,7 @@ import java.util.UUID
         ColumnResult(name = "latestCourtAppearanceOverallConvictionDate", type = LocalDate::class),
         ColumnResult(name = "chargeId"),
         ColumnResult(name = "chargeUuid"),
-        ColumnResult(name = "chargeStatus", CourtCaseEntityStatus::class),
+        ColumnResult(name = "chargeStatus", ChargeEntityStatus::class),
         ColumnResult(name = "chargeOffenceCode"),
         ColumnResult(name = "chargeOffenceStartDate", type = LocalDate::class),
         ColumnResult(name = "chargeOffenceEndDate", type = LocalDate::class),
@@ -133,7 +136,7 @@ import java.util.UUID
         ColumnResult(name = "sentenceId"),
         ColumnResult(name = "sentenceUuid"),
         ColumnResult(name = "sentenceCountNumber"),
-        ColumnResult(name = "sentenceStatus", type = CourtCaseEntityStatus::class),
+        ColumnResult(name = "sentenceStatus", type = SentenceEntityStatus::class),
         ColumnResult(name = "sentenceServeType"),
         ColumnResult(name = "sentenceConvictionDate", type = LocalDate::class),
         ColumnResult(name = "sentenceLegacyData", type = SentenceLegacyData::class),
@@ -144,7 +147,7 @@ import java.util.UUID
         ColumnResult(name = "sentenceTypeClassification", type = SentenceTypeClassification::class),
         ColumnResult(name = "sentencePeriodLengthId"),
         ColumnResult(name = "sentencePeriodLengthUuid"),
-        ColumnResult(name = "sentencePeriodLengthStatus", type = CourtCaseEntityStatus::class),
+        ColumnResult(name = "sentencePeriodLengthStatus", type = PeriodLengthEntityStatus::class),
         ColumnResult(name = "sentencePeriodLengthYears"),
         ColumnResult(name = "sentencePeriodLengthMonths"),
         ColumnResult(name = "sentencePeriodLengthWeeks"),
