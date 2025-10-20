@@ -493,6 +493,10 @@ abstract class IntegrationTestBase {
     return getAllDomainMessages()
   }
 
+  fun domainQueueIsEmpty() {
+    numberOfMessagesCurrentlyOnQueue(hmppsDomainQueueSqsClient, hmppsDomainQueue.queueUrl, 0)
+  }
+
   fun awaitUntilPrisonerQueueIsEmptyAndNoDlq() {
     numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsClient, prisonerListenerQueue.queueUrl, 0)
     numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsDlqClient, prisonerListenerQueue.dlqUrl!!, 0)

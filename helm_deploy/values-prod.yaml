@@ -12,6 +12,7 @@ generic-service:
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PROD
+    FEATURES_FIX_MANY_CHARGES_TO_SENTENCE: disabled
 
   resources:
     requests:
