@@ -11,7 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
@@ -49,7 +50,7 @@ class DefaultFixManyChargesToSentenceService(private val sentenceHistoryReposito
 
   override fun fixSentences(sentences: List<RecordEventMetadata<SentenceEntity>>): MutableSet<EventMetadata> {
     val toFixSentences = sentences
-      .filter { it.record.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
+      .filter { it.record.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
       .groupByTo(mutableMapOf()) { it.record.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
     toFixSentences.forEach { (originalSentenceUuid, sentenceRecords) ->
@@ -73,7 +74,7 @@ class DefaultFixManyChargesToSentenceService(private val sentenceHistoryReposito
 
   private fun fixSentence(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, sentenceEventType: EventType, originalSentenceUuid: UUID, sentenceModifyFunction: (SentenceEntity) -> Unit = {}): EventMetadata {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
-    sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) EntityStatus.INACTIVE else EntityStatus.ACTIVE
+    sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) SentenceEntityStatus.INACTIVE else SentenceEntityStatus.ACTIVE
     sentenceRecord.updatedAt = ZonedDateTime.now()
     sentenceRecord.updatedBy = serviceUserService.getUsername()
     sentenceModifyFunction(sentenceRecord)
@@ -93,9 +94,9 @@ class DefaultFixManyChargesToSentenceService(private val sentenceHistoryReposito
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     val periodLengthEventsToEmit = mutableSetOf<EventMetadata>()
     val periodLengths = sentenceRecordEventMetadata.record.periodLengths
-    periodLengths.filter { it.statusId == EntityStatus.MANY_CHARGES_DATA_FIX }
+    periodLengths.filter { it.statusId == PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX }
       .forEach { periodLength ->
-        periodLength.statusId = EntityStatus.ACTIVE
+        periodLength.statusId = PeriodLengthEntityStatus.ACTIVE
         periodLength.updatedAt = ZonedDateTime.now()
         periodLength.updatedBy = serviceUserService.getUsername()
         periodLengthModifyFunction(periodLength)

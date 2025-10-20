@@ -8,7 +8,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import java.time.LocalDate
@@ -167,7 +167,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
     // Check the period length is inserted and is active
     val periodLengthUuid = courtCaseBefore.appearances.first().charges.first().sentence?.periodLengths?.first()?.periodLengthUuid!!
     val periodLengthBefore = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid).first()
-    assertThat(periodLengthBefore.statusId).isEqualTo(EntityStatus.ACTIVE)
+    assertThat(periodLengthBefore.statusId).isEqualTo(PeriodLengthEntityStatus.ACTIVE)
 
     // Remove the first sentence then update the court case
     val editedCourtCase = courtCase.second.copy(
@@ -191,7 +191,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
 
     // Check the period length is now DELETED
     val periodLengthAfter = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid).first()
-    assertThat(periodLengthAfter.statusId).isEqualTo(EntityStatus.DELETED)
+    assertThat(periodLengthAfter.statusId).isEqualTo(PeriodLengthEntityStatus.DELETED)
   }
 
   private fun updateCourtCase(

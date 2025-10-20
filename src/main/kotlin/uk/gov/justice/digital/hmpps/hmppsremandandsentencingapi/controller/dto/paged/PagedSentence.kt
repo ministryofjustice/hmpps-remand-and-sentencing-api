@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
@@ -22,7 +22,7 @@ data class PagedSentence(
   companion object {
     fun from(sentenceRows: List<CourtCaseRow>): PagedSentence {
       val sentence = sentenceRows.first()
-      val periodLengths = sentenceRows.filter { it.sentencePeriodLengthId != null && it.sentencePeriodLengthStatus != EntityStatus.DELETED }.groupBy { it.sentencePeriodLengthId }
+      val periodLengths = sentenceRows.filter { it.sentencePeriodLengthId != null && it.sentencePeriodLengthStatus != PeriodLengthEntityStatus.DELETED }.groupBy { it.sentencePeriodLengthId }
       return PagedSentence(
         sentence.sentenceUuid!!,
         sentence.sentenceCountNumber,

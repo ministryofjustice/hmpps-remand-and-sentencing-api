@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -39,7 +39,7 @@ class RecallHistoryEntity(
   // Audit and status columns
   @Column
   @Enumerated(EnumType.ORDINAL)
-  val statusId: EntityStatus,
+  val statusId: RecallEntityStatus,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
   val createdPrison: String?,
@@ -50,12 +50,12 @@ class RecallHistoryEntity(
   var source: EventSource = DPS,
   @Column
   @Enumerated(EnumType.ORDINAL)
-  val historyStatusId: EntityStatus,
+  val historyStatusId: RecallEntityStatus,
   val historyCreatedAt: ZonedDateTime,
 ) {
 
   companion object {
-    fun from(original: RecallEntity, historyStatus: EntityStatus) = RecallHistoryEntity(
+    fun from(original: RecallEntity, historyStatus: RecallEntityStatus) = RecallHistoryEntity(
       id = 0,
       originalRecallId = original.id,
       recallUuid = original.recallUuid,

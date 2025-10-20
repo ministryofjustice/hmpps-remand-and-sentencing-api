@@ -13,8 +13,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
@@ -44,7 +46,7 @@ class SentenceTypeUpdateService(
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid.toString())
       ?: throw EntityNotFoundException("Court case with UUID $courtCaseUuid not found")
 
-    if (courtCase.statusId == EntityStatus.DELETED) {
+    if (courtCase.statusId == CourtCaseEntityStatus.DELETED) {
       throw IllegalStateException("Court case with UUID $courtCaseUuid is deleted")
     }
 
@@ -77,7 +79,7 @@ class SentenceTypeUpdateService(
         ?: throw IllegalStateException("Sentence $sentenceUuid not found in validated updates")
 
       val charge = sentence.charge
-      val appearanceCharge = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == EntityStatus.ACTIVE }
+      val appearanceCharge = charge.appearanceCharges.firstOrNull { it.appearance?.statusId == CourtAppearanceEntityStatus.ACTIVE }
       val appearance = appearanceCharge?.appearance
 
       if (appearance != null) {
@@ -118,7 +120,7 @@ class SentenceTypeUpdateService(
         ?: throw EntityNotFoundException("Sentence with UUID ${update.sentenceUuid} not found in court case")
 
       // Check sentence status
-      if (sentence.statusId == EntityStatus.DELETED) {
+      if (sentence.statusId == SentenceEntityStatus.DELETED) {
         throw IllegalStateException("Sentence with UUID ${update.sentenceUuid} is deleted")
       }
 

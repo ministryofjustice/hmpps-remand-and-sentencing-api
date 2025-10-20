@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreatePeriodLength
@@ -38,7 +38,7 @@ class PeriodLengthEntity(
   @Enumerated(EnumType.STRING)
   var periodLengthType: PeriodLengthType,
   @Enumerated(EnumType.STRING)
-  var statusId: EntityStatus,
+  var statusId: PeriodLengthEntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
   val createdPrison: String? = null,
@@ -130,7 +130,7 @@ class PeriodLengthEntity(
     days: Int? = this.days,
     periodOrder: String = this.periodOrder,
     periodLengthType: PeriodLengthType = this.periodLengthType,
-    statusId: EntityStatus = this.statusId,
+    statusId: PeriodLengthEntityStatus = this.statusId,
     createdAt: ZonedDateTime = this.createdAt,
     createdBy: String = this.createdBy,
     createdPrison: String? = this.createdPrison,
@@ -162,7 +162,7 @@ class PeriodLengthEntity(
   )
 
   fun delete(username: String) {
-    statusId = EntityStatus.DELETED
+    statusId = PeriodLengthEntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
@@ -175,7 +175,7 @@ class PeriodLengthEntity(
       days = periodLength.days,
       periodOrder = periodLength.periodOrder,
       periodLengthType = periodLength.type,
-      statusId = EntityStatus.ACTIVE,
+      statusId = PeriodLengthEntityStatus.ACTIVE,
       sentenceEntity = null,
       appearanceEntity = null,
       createdBy = createdBy,
@@ -195,7 +195,7 @@ class PeriodLengthEntity(
         days = periodLength.periodDays,
         periodOrder = order,
         periodLengthType = type,
-        statusId = sentenceEntity.statusId,
+        statusId = PeriodLengthEntityStatus.from(sentenceEntity.statusId),
         sentenceEntity = sentenceEntity,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,
@@ -214,7 +214,7 @@ class PeriodLengthEntity(
         days = periodLength.periodDays,
         periodOrder = order,
         periodLengthType = type,
-        statusId = EntityStatus.ACTIVE,
+        statusId = PeriodLengthEntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,
@@ -234,7 +234,7 @@ class PeriodLengthEntity(
         days = periodLength.periodDays,
         periodOrder = order,
         periodLengthType = type,
-        statusId = EntityStatus.ACTIVE,
+        statusId = PeriodLengthEntityStatus.ACTIVE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,
@@ -254,7 +254,7 @@ class PeriodLengthEntity(
         days = periodLength.periodDays,
         periodOrder = order,
         periodLengthType = type,
-        statusId = EntityStatus.DUPLICATE,
+        statusId = PeriodLengthEntityStatus.DUPLICATE,
         sentenceEntity = null,
         appearanceEntity = null,
         legacyData = periodLength.legacyData,

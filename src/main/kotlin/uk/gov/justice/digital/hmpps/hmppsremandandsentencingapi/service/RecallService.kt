@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
@@ -73,7 +73,7 @@ class RecallService(
       createRecall(recall, recallUuid)
     } else {
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, EntityStatus.EDITED))
+        recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, RecallEntityStatus.EDITED))
       recallToUpdate.recallSentences.forEach {
         recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it).apply {})
       }
@@ -135,7 +135,7 @@ class RecallService(
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, EntityStatus.DELETED))
+        recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, RecallEntityStatus.DELETED))
       recallToDelete.recallSentences.forEach {
         recallSentenceHistoryRepository.save(
           RecallSentenceHistoryEntity.from(
@@ -152,7 +152,7 @@ class RecallService(
         .maxByOrNull { it.createdAt }
 
       // deleting the sentence for the legacy recall will delete the recall so it's only required here for DPS
-      recallToDelete.statusId = EntityStatus.DELETED
+      recallToDelete.statusId = RecallEntityStatus.DELETED
       recallToDelete.recallSentences.forEach {
         recallSentenceRepository.delete(it)
       }

@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
@@ -61,7 +61,7 @@ class CourtAppearanceEntity(
   var appearanceDate: LocalDate,
   @Column
   @Enumerated(EnumType.STRING)
-  var statusId: EntityStatus,
+  var statusId: CourtAppearanceEntityStatus,
   @Column
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   @Column
@@ -190,7 +190,7 @@ class CourtAppearanceEntity(
     nextCourtAppearance.courtCode,
     courtCaseReference,
     nextCourtAppearance.appearanceDate,
-    EntityStatus.FUTURE,
+    CourtAppearanceEntityStatus.FUTURE,
     ZonedDateTime.now(),
     createdBy,
     nextCourtAppearance.prisonId,
@@ -231,7 +231,7 @@ class CourtAppearanceEntity(
   }
 
   fun delete(username: String) {
-    statusId = EntityStatus.DELETED
+    statusId = CourtAppearanceEntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
@@ -294,7 +294,7 @@ class CourtAppearanceEntity(
       courtCode = nextCourtAppearance.courtCode,
       courtCaseReference = courtCaseReference,
       appearanceDate = nextCourtAppearance.appearanceDate,
-      statusId = EntityStatus.FUTURE,
+      statusId = CourtAppearanceEntityStatus.FUTURE,
       appearanceCharges = mutableSetOf(),
       createdPrison = nextCourtAppearance.prisonId,
       createdBy = createdBy,
@@ -403,7 +403,7 @@ class CourtAppearanceEntity(
         bookingCreateCourtAppearance.appearanceDate,
         bookingCreateCourtAppearance.legacyData.appearanceTime,
         bookingCreateCourtAppearance.legacyData.nomisOutcomeCode,
-        EntityStatus.DUPLICATE,
+        CourtAppearanceEntityStatus.DUPLICATE,
       ),
       appearanceCharges = mutableSetOf(),
       createdPrison = null,
@@ -415,12 +415,12 @@ class CourtAppearanceEntity(
       source = NOMIS,
     )
 
-    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?, nomisOutcomeCode: String?, nonFutureStatus: EntityStatus = EntityStatus.ACTIVE): EntityStatus {
+    private fun getStatus(appearanceDate: LocalDate, appearanceTime: LocalTime?, nomisOutcomeCode: String?, nonFutureStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE): CourtAppearanceEntityStatus {
       val compareDate = appearanceDate.atTime(appearanceTime ?: LocalTime.MIDNIGHT)
       return when {
-        compareDate.isAfter(LocalDateTime.now()) -> EntityStatus.FUTURE
-        nomisOutcomeCode == RECALL_NOMIS_OUTCOME_CODE -> EntityStatus.RECALL_APPEARANCE
-        immigrationNomisOutcomeCodes.contains(nomisOutcomeCode) -> EntityStatus.IMMIGRATION_APPEARANCE
+        compareDate.isAfter(LocalDateTime.now()) -> CourtAppearanceEntityStatus.FUTURE
+        nomisOutcomeCode == RECALL_NOMIS_OUTCOME_CODE -> CourtAppearanceEntityStatus.RECALL_APPEARANCE
+        immigrationNomisOutcomeCodes.contains(nomisOutcomeCode) -> CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE
         else -> nonFutureStatus
       }
     }
@@ -435,7 +435,7 @@ class CourtAppearanceEntity(
     ): String = appearanceOutcome?.outcomeType
       ?: if ((legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") || anyChargeHasSentence == true) "SENTENCING" else "REMAND"
 
-    fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == EntityStatus.ACTIVE }.maxWithOrNull(
+    fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }.maxWithOrNull(
       compareBy(
         CourtAppearanceEntity::appearanceDate,
         CourtAppearanceEntity::createdAt,

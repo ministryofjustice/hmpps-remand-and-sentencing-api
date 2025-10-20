@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
 import java.time.ZoneId
@@ -25,7 +25,7 @@ class RecallHistoryEntityTest {
       returnToCustodyDate = LocalDate.of(2022, 2, 2),
       inPrisonOnRevocationDate = true,
       recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
-      statusId = EntityStatus.ACTIVE,
+      statusId = RecallEntityStatus.ACTIVE,
       createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
       createdByUsername = "CREATOR",
       createdPrison = "FOO",
@@ -35,7 +35,7 @@ class RecallHistoryEntityTest {
       source = EventSource.DPS,
     )
 
-    assertThat(RecallHistoryEntity.from(original, EntityStatus.DELETED))
+    assertThat(RecallHistoryEntity.from(original, RecallEntityStatus.DELETED))
       .usingRecursiveComparison()
       .ignoringFields("historyCreatedAt")
       .isEqualTo(
@@ -48,7 +48,7 @@ class RecallHistoryEntityTest {
           returnToCustodyDate = LocalDate.of(2022, 2, 2),
           inPrisonOnRevocationDate = true,
           recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
-          statusId = EntityStatus.ACTIVE,
+          statusId = RecallEntityStatus.ACTIVE,
           createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
           createdByUsername = "CREATOR",
           createdPrison = "FOO",
@@ -56,7 +56,7 @@ class RecallHistoryEntityTest {
           updatedBy = "UPDATER",
           updatedPrison = "BAR",
           source = EventSource.DPS,
-          historyStatusId = EntityStatus.DELETED,
+          historyStatusId = RecallEntityStatus.DELETED,
           historyCreatedAt = ZonedDateTime.now(), // ignored in assertion
         ),
       )

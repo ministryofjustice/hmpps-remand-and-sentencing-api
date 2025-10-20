@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -22,7 +22,7 @@ class CourtAppearanceTests {
     val legacyCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = twoHoursInFuture.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = twoHoursInFuture.toLocalTime()))
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val result = CourtAppearanceEntity.from(legacyCourtAppearance, null, courtCase, "user")
-    Assertions.assertThat(result.statusId).isEqualTo(EntityStatus.FUTURE)
+    Assertions.assertThat(result.statusId).isEqualTo(CourtAppearanceEntityStatus.FUTURE)
   }
 
   @Test
@@ -31,7 +31,7 @@ class CourtAppearanceTests {
     val legacyCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = twoHoursInPast.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = twoHoursInPast.toLocalTime()))
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val result = CourtAppearanceEntity.from(legacyCourtAppearance, null, courtCase, "user")
-    Assertions.assertThat(result.statusId).isEqualTo(EntityStatus.ACTIVE)
+    Assertions.assertThat(result.statusId).isEqualTo(CourtAppearanceEntityStatus.ACTIVE)
   }
 
   @Test
@@ -45,7 +45,7 @@ class CourtAppearanceTests {
 
   @ParameterizedTest(name = "appearance with legacy data outcome code {0} results in status of {1}")
   @MethodSource("legacyDataOutcomeStatusParameters")
-  fun `legacy outcome code to entity status`(nomisOutcomeCode: String, expectedStatus: EntityStatus) {
+  fun `legacy outcome code to entity status`(nomisOutcomeCode: String, expectedStatus: CourtAppearanceEntityStatus) {
     val legacyCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(5), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val result = CourtAppearanceEntity.from(legacyCourtAppearance, null, courtCase, "user")
@@ -55,9 +55,9 @@ class CourtAppearanceTests {
   companion object {
     @JvmStatic
     fun legacyDataOutcomeStatusParameters(): Stream<Arguments> = Stream.of(
-      Arguments.of("1501", EntityStatus.RECALL_APPEARANCE),
-      Arguments.of("5501", EntityStatus.IMMIGRATION_APPEARANCE),
-      Arguments.of("5502", EntityStatus.IMMIGRATION_APPEARANCE),
+      Arguments.of("1501", CourtAppearanceEntityStatus.RECALL_APPEARANCE),
+      Arguments.of("5501", CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
+      Arguments.of("5502", CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
     )
   }
 }

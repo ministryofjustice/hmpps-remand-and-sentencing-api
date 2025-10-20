@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedCo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
@@ -22,7 +22,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
 
   @Transactional
   fun updateCourtCaseReferences(caseUniqueIdentifier: String): UpdatedCourtCaseReferences? = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier)?.let { courtCaseEntity ->
-    val appearanceStatuses = courtCaseEntity.appearances.groupBy { it.statusId == EntityStatus.ACTIVE }
+    val appearanceStatuses = courtCaseEntity.appearances.groupBy { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
     val activeCaseReferences = appearanceStatuses.getOrDefault(true, emptySet())
       .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
       .map {
@@ -63,7 +63,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
       courtCase.legacyData = courtCaseLegacyData
       courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
       val legacyCourtCaseReferences = courtCaseLegacyData.caseReferences.map { it.offenderCaseReference }.toSet()
-      val toEditAppearances = courtCase.appearances.filter { it.statusId == EntityStatus.ACTIVE }.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
+      val toEditAppearances = courtCase.appearances.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
       toEditAppearances.forEach { editedAppearance ->
         editedAppearance.updatedAndRemoveCaseReference(serviceUserService.getUsername())
         courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(editedAppearance))

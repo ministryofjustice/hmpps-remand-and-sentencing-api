@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
 import java.time.LocalTime
@@ -28,7 +28,7 @@ data class ReconciliationCourtAppearance(
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.nextCourtAppearance?.let { ReconciliationNextCourtAppearance.from(it) },
       appearanceTypeUuid,
-      courtAppearanceEntity.appearanceCharges.filter { it.charge != null && it.charge!!.statusId != EntityStatus.DELETED }
+      courtAppearanceEntity.appearanceCharges.filter { it.charge != null && it.charge!!.statusId != ChargeEntityStatus.DELETED }
         .map { ReconciliationCharge.from(it.charge!!) },
 
     )

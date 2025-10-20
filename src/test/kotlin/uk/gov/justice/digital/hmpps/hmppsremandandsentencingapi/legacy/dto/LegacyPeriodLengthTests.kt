@@ -10,9 +10,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLength
 import java.time.LocalDate
@@ -36,7 +40,7 @@ class LegacyPeriodLengthTests {
   fun `legacy sentence with DPS period length`() {
     val legacySentence = SentenceEntity(
       sentenceUuid = testSentenceUuid,
-      statusId = EntityStatus.ACTIVE,
+      statusId = SentenceEntityStatus.ACTIVE,
       createdBy = "USER",
       sentenceServeType = "CONCURRENT",
       consecutiveTo = null,
@@ -61,7 +65,7 @@ class LegacyPeriodLengthTests {
       createdPrison = null,
       sentenceEntity = null,
       appearanceEntity = null,
-      statusId = EntityStatus.ACTIVE,
+      statusId = PeriodLengthEntityStatus.ACTIVE,
       periodOrder = "years,months,weeks,days",
       periodLengthType = PeriodLengthType.TARIFF_LENGTH,
       createdBy = "createdBy",
@@ -72,7 +76,7 @@ class LegacyPeriodLengthTests {
     private val testCourtCase = CourtCaseEntity(
       caseUniqueIdentifier = "CASE123",
       prisonerId = TEST_PRISONER_ID,
-      statusId = EntityStatus.ACTIVE,
+      statusId = CourtCaseEntityStatus.ACTIVE,
       createdBy = "test-user",
     )
 
@@ -82,7 +86,7 @@ class LegacyPeriodLengthTests {
       courtCase = testCourtCase,
       courtCode = "COURT1",
       appearanceDate = LocalDate.now(),
-      statusId = EntityStatus.ACTIVE,
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
       createdBy = "test-user",
       createdPrison = "TEST",
       warrantType = "TEST",
@@ -100,7 +104,7 @@ class LegacyPeriodLengthTests {
     private val testCharge = ChargeEntity(
       chargeUuid = UUID.randomUUID(),
       offenceCode = "TEST123",
-      statusId = EntityStatus.ACTIVE,
+      statusId = ChargeEntityStatus.ACTIVE,
       createdBy = "test-user",
       offenceStartDate = null,
       offenceEndDate = null,
@@ -144,7 +148,7 @@ class LegacyPeriodLengthTests {
     private val testSentence = SentenceEntity(
       sentenceUuid = testSentenceUuid,
       countNumber = "TEST123",
-      statusId = EntityStatus.ACTIVE,
+      statusId = SentenceEntityStatus.ACTIVE,
       createdBy = "test-user",
       createdPrison = "TEST",
       sentenceServeType = "LIFE",

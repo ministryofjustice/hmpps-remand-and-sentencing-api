@@ -1,7 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence.Companion.getSentenceCalcTypeAndCategory
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.SentenceUtils
@@ -30,11 +31,11 @@ data class ReconciliationSentence(
         sentenceEntity.fineAmount,
         sentenceTypeAndCategory.first,
         sentenceTypeAndCategory.second,
-        if (sentenceEntity.legacyData?.active != null) sentenceEntity.legacyData!!.active!! else sentenceEntity.statusId == EntityStatus.ACTIVE,
+        if (sentenceEntity.legacyData?.active != null) sentenceEntity.legacyData!!.active!! else sentenceEntity.statusId == SentenceEntityStatus.ACTIVE,
         sentenceStartDate,
         sentenceEntity.legacyData,
         sentenceEntity.consecutiveTo?.sentenceUuid,
-        sentenceEntity.periodLengths.filter { it.statusId != EntityStatus.DELETED }.map { ReconciliationPeriodLength.from(it) },
+        sentenceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.map { ReconciliationPeriodLength.from(it) },
       )
     }
   }

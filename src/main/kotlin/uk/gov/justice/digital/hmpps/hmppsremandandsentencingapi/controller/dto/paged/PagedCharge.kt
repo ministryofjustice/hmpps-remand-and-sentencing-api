@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
@@ -19,7 +19,7 @@ data class PagedCharge(
   companion object {
     fun from(chargeRows: List<CourtCaseRow>): PagedCharge {
       val charge = chargeRows.first()
-      val sentenceRows = chargeRows.filter { it.sentenceId != null && it.sentenceStatus != EntityStatus.DELETED }.groupBy { it.sentenceId!! }.values.firstOrNull()
+      val sentenceRows = chargeRows.filter { it.sentenceId != null && it.sentenceStatus != SentenceEntityStatus.DELETED }.groupBy { it.sentenceId!! }.values.firstOrNull()
       return PagedCharge(
         charge.chargeUuid!!,
         charge.chargeOffenceCode!!,

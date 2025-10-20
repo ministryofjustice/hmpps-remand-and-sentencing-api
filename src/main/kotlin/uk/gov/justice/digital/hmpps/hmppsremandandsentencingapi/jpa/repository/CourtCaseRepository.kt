@@ -10,10 +10,13 @@ import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
@@ -22,7 +25,7 @@ interface CourtCaseRepository :
   @EntityGraph(value = "CourtCaseEntity.withAppearancesAndOutcomes", type = EntityGraph.EntityGraphType.FETCH)
   fun findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(
     prisonerId: String,
-    statusId: EntityStatus = EntityStatus.DELETED,
+    statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
     pageable: Pageable,
   ): Page<CourtCaseEntity>
 
@@ -35,7 +38,7 @@ interface CourtCaseRepository :
   )
   fun countCourtCases(
     @Param("prisonerId") prisonerId: String,
-    @Param("courtCaseStatus") courtCaseStatus: EntityStatus = EntityStatus.DELETED,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
   ): Long
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
@@ -47,17 +50,19 @@ interface CourtCaseRepository :
     join ca.appearanceCharges ac
     join ac.charge c
     join c.sentences s
-    where cc.statusId in :#{#status} and 
-    ca.statusId in :#{#status} and 
-    c.statusId in :#{#status} and 
-    s.statusId in :#{#sentenceStatuses} and
+    where cc.statusId = :courtCaseStatus and 
+    ca.statusId in :courtAppearanceStatuses and 
+    c.statusId = :chargeStatus and 
+    s.statusId != :sentenceStatus and
     cc.prisonerId = :prisonerId
   """,
   )
   fun findSentencedCourtCasesByPrisonerId(
     @Param("prisonerId") prisonerId: String,
-    @Param("status") statuses: List<EntityStatus> = listOf(EntityStatus.ACTIVE),
-    sentenceStatuses: List<EntityStatus> = statuses,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatuses") courtAppearanceStatuses: List<CourtAppearanceEntityStatus> = listOf(CourtAppearanceEntityStatus.ACTIVE, CourtAppearanceEntityStatus.RECALL_APPEARANCE),
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+    @Param("sentenceStatus") sentenceStatuses: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): List<CourtCaseEntity>
 
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
@@ -69,16 +74,19 @@ interface CourtCaseRepository :
     join ca.appearanceCharges ac
     join ac.charge c
     join c.sentences s
-    where s.statusId != :#{#status}
-    and cc.caseUniqueIdentifier = :courtCaseUuid
-    and c.statusId != :#{#status}
-    and ca.statusId != :#{#status}
-    and cc.statusId != :#{#status}
+    where cc.caseUniqueIdentifier = :courtCaseUuid and
+    cc.statusId != :courtCaseStatus and 
+    ca.statusId != :courtAppearanceStatus and 
+    c.statusId != :chargeStatus and 
+    s.statusId != :sentenceStatus
   """,
   )
   fun findSentenceCountNumbers(
     @Param("courtCaseUuid") courtCaseUuid: String,
-    @Param("status") status: EntityStatus = EntityStatus.DELETED,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): List<String?>
 
   @Query(
@@ -88,14 +96,17 @@ interface CourtCaseRepository :
   join cc.appearances a
   join a.appearanceCharges ac
   join ac.charge c
-  where cc.caseUniqueIdentifier = :uuid
-    and a.statusId = :status
-    and c.statusId = :status
+  where cc.caseUniqueIdentifier = :uuid and
+  cc.statusId = :courtCaseStatus and 
+  a.statusId = :courtAppearanceStatus and 
+  c.statusId = :chargeStatus
   """,
   )
   fun findLatestOffenceDate(
     @Param("uuid") uuid: String,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
   ): LocalDate?
 
   @Query(
@@ -105,16 +116,19 @@ interface CourtCaseRepository :
   join cc.appearances a
   join a.appearanceCharges ac
   join ac.charge c
-  where cc.caseUniqueIdentifier = :uuid
-    and a.statusId = :status
-    and c.statusId = :status
-    and a.appearanceUuid != :appearanceUuidToExclude
+  where cc.caseUniqueIdentifier = :uuid and 
+  cc.statusId = :courtCaseStatus and 
+  a.statusId = :courtAppearanceStatus and 
+  c.statusId = :chargeStatus and 
+  a.appearanceUuid != :appearanceUuidToExclude
   """,
   )
   fun findLatestOffenceDateExcludingAppearance(
     @Param("uuid") uuid: String,
     @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
   ): LocalDate?
 
   @Query(
@@ -124,16 +138,19 @@ interface CourtCaseRepository :
   join cc.appearances a
   join a.appearanceCharges ac
   join ac.charge c
-  where cc.caseUniqueIdentifier = :uuid
-    and a.statusId = :status
-    and c.statusId = :status
-    and a.appearanceUuid != :appearanceUuidToExclude
+  where cc.caseUniqueIdentifier = :uuid and
+    cc.statusId = :courtCaseStatus and 
+    a.statusId = :courtAppearanceStatus and 
+    c.statusId = :chargeStatus and 
+    a.appearanceUuid != :appearanceUuidToExclude
   """,
   )
   fun findValidationDates(
     @Param("uuid") uuid: String,
     @Param("appearanceUuidToExclude") appearanceUuidToExclude: UUID,
-    @Param("status") status: EntityStatus = EntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
   ): CourtCaseValidationDate
 
   @Query(
@@ -143,16 +160,19 @@ interface CourtCaseRepository :
     join ca.appearanceCharges ac
     join ac.charge c
     join c.sentences s
-    where cc.caseUniqueIdentifier = :courtCaseUuid
-    and cc.statusId != :status
-    and ca.statusId != :status
-    and c.statusId != :status
-    and s.statusId != :status
+    where cc.caseUniqueIdentifier = :courtCaseUuid and
+    cc.statusId != :courtCaseStatus and 
+    ca.statusId != :courtAppearanceStatus and 
+    c.statusId != :chargeStatus and 
+    s.statusId != :sentenceStatus
   """,
   )
   fun findSentencesByCourtCaseUuid(
     @Param("courtCaseUuid") courtCaseUuid: String,
-    @Param("status") status: EntityStatus = EntityStatus.DELETED,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): List<SentenceEntity>
 
   @Query(

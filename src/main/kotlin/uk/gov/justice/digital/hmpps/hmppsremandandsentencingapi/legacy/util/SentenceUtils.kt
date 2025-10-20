@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import java.time.LocalDate
 
 class SentenceUtils {
@@ -9,10 +9,10 @@ class SentenceUtils {
     fun calculateSentenceStartDate(sentenceEntity: SentenceEntity): LocalDate {
       val firstSentenceAppearance = sentenceEntity.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId != EntityStatus.DELETED && it.warrantType == "SENTENCING" }
+        .filter { it.statusId != CourtAppearanceEntityStatus.DELETED && it.warrantType == "SENTENCING" }
         .minOfOrNull { it.appearanceDate }
 
-      return firstSentenceAppearance ?: sentenceEntity.charge.appearanceCharges.map { it.appearance!! }.filter { it.statusId != EntityStatus.DELETED }.minOf { it.appearanceDate }
+      return firstSentenceAppearance ?: sentenceEntity.charge.appearanceCharges.map { it.appearance!! }.filter { it.statusId != CourtAppearanceEntityStatus.DELETED }.minOf { it.appearanceDate }
     }
   }
 }

@@ -24,7 +24,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
@@ -157,7 +158,7 @@ class SentenceService(
 
   @Transactional(TxType.REQUIRED)
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
-    val changeStatus = if (sentence.statusId == EntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
+    val changeStatus = if (sentence.statusId == SentenceEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.delete(serviceUserService.getUsername())
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
@@ -195,7 +196,7 @@ class SentenceService(
           if (recall.recallSentences.size == 1) {
             deleteRecallWithOnlyOneSentence(recallSentences.first(), eventsToEmit)
           } else {
-            val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, EntityStatus.EDITED))
+            val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
             recallSentenceHistoryRepository.saveAll(
               recallSentences.map {
                 RecallSentenceHistoryEntity.from(
@@ -218,8 +219,8 @@ class SentenceService(
     eventsToEmit: MutableSet<EventMetadata>,
   ) {
     val recallHistory =
-      recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, EntityStatus.DELETED))
-    onlyRecallSentence.recall.statusId = EntityStatus.DELETED
+      recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, RecallEntityStatus.DELETED))
+    onlyRecallSentence.recall.statusId = RecallEntityStatus.DELETED
     recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, onlyRecallSentence))
     recallSentenceRepository.delete(onlyRecallSentence)
     eventsToEmit.add(
@@ -257,7 +258,7 @@ class SentenceService(
     courtCaseId: String,
     courtAppearanceId: String,
   ): MutableSet<EventMetadata> {
-    val existingSentences = existingCharge.sentences.filter { it.statusId != EntityStatus.DELETED }
+    val existingSentences = existingCharge.sentences.filter { it.statusId != SentenceEntityStatus.DELETED }
     return existingSentences.map { existingSentence ->
       newChargeRecord.sentences.add(existingSentence)
       existingSentence.charge = newChargeRecord

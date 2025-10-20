@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
@@ -25,7 +25,7 @@ data class CourtAppearance(
 ) {
   companion object {
 
-    val returnChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE, EntityStatus.MERGED)
+    val returnChargeStatuses: Set<ChargeEntityStatus> = setOf(ChargeEntityStatus.ACTIVE, ChargeEntityStatus.INACTIVE, ChargeEntityStatus.MERGED)
 
     fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearance = CourtAppearance(
       courtAppearanceEntity.appearanceUuid,

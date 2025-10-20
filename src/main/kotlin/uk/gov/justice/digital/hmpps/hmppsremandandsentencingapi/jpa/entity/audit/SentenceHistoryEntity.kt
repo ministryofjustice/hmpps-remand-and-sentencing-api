@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -28,7 +28,7 @@ class SentenceHistoryEntity(
   val sentenceUuid: UUID,
   val chargeNumber: String?,
   @Enumerated(EnumType.STRING)
-  val statusId: EntityStatus,
+  val statusId: SentenceEntityStatus,
   val createdAt: ZonedDateTime,
   val createdBy: String,
   val createdPrison: String?,

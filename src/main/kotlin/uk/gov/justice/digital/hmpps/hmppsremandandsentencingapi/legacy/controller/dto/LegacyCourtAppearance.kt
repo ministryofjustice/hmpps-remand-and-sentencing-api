@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.UUID
+import java.util.*
 
 data class LegacyCourtAppearance(
   val lifetimeUuid: UUID,
@@ -20,7 +20,7 @@ data class LegacyCourtAppearance(
 ) {
   companion object {
 
-    val returnChargeStatuses: Set<EntityStatus> = setOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE)
+    val returnChargeStatuses: Set<ChargeEntityStatus> = setOf(ChargeEntityStatus.ACTIVE, ChargeEntityStatus.INACTIVE)
 
     fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceTypeUuid: UUID): LegacyCourtAppearance = LegacyCourtAppearance(
       courtAppearanceEntity.appearanceUuid,

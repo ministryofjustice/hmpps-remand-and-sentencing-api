@@ -22,8 +22,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
@@ -136,8 +139,8 @@ class MigrationService(
   }
 
   fun managedNoMatchedDpsNextCourtAppearance(latestCourtAppearance: CourtAppearanceEntity, migrationCreateCourtCase: MigrationCreateCourtCase, createdAppearances: Map<Long, CourtAppearanceEntity>) {
-    if (latestCourtAppearance.nextCourtAppearance == null && createdAppearances.values.any { it.statusId == EntityStatus.FUTURE }) {
-      val (nextFutureDatedEventId, nextFutureDatedAppearance) = createdAppearances.filter { (_, courtAppearanceEntity) -> courtAppearanceEntity.statusId == EntityStatus.FUTURE }.minBy { (_, courtAppearanceEntity) -> courtAppearanceEntity.appearanceDate }
+    if (latestCourtAppearance.nextCourtAppearance == null && createdAppearances.values.any { it.statusId == CourtAppearanceEntityStatus.FUTURE }) {
+      val (nextFutureDatedEventId, nextFutureDatedAppearance) = createdAppearances.filter { (_, courtAppearanceEntity) -> courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE }.minBy { (_, courtAppearanceEntity) -> courtAppearanceEntity.appearanceDate }
       val nomisNextFutureDatedAppearance = migrationCreateCourtCase.appearances.first { it.eventId == nextFutureDatedEventId }
       val nextAppearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nomisNextFutureDatedAppearance.appearanceTypeUuid)!!
       latestCourtAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
@@ -167,7 +170,7 @@ class MigrationService(
               if (lastSourceAppearance != null) {
                 val (_, sourceCharge) = tracking.createdChargesMap[targetNomisCharge.chargeNOMISId]!!.first { it.first == lastSourceAppearance.eventId }
                 targetCharge.supersedingCharge = sourceCharge
-                sourceCharge.statusId = EntityStatus.MERGED
+                sourceCharge.statusId = ChargeEntityStatus.MERGED
               } else {
                 log.info("charge ${targetNomisCharge.chargeNOMISId} is no longer associated with source case ${targetNomisCharge.mergedFromCaseId} but is on target ${targetCourtCase.caseId}")
               }
@@ -216,7 +219,7 @@ class MigrationService(
     val createdAppearances = createAppearances(migrationCreateCourtCase.appearances, createdCourtCase, latestCourtCaseReference, tracking)
     tracking.createdCourtAppearancesMap.putAll(createdAppearances)
     manageMatchedDpsNextCourtAppearances(migrationCreateCourtCase, createdAppearances)
-    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == EntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
+    val latestCourtAppearance = createdAppearances.values.filter { courtAppearanceEntity -> courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.ACTIVE }.maxByOrNull { courtAppearanceEntity -> courtAppearanceEntity.appearanceDate }
     createdCourtCase.latestCourtAppearance = latestCourtAppearance
     latestCourtAppearance?.let { managedNoMatchedDpsNextCourtAppearance(it, migrationCreateCourtCase, createdAppearances) }
     tracking.createdCourtCasesMap.put(migrationCreateCourtCase.caseId, RequestToRecord(migrationCreateCourtCase, createdCourtCase))
@@ -301,7 +304,7 @@ class MigrationService(
 
     val existingSentences = tracking.createdSentencesMap[migrationCreateSentence.sentenceId] ?: mutableListOf()
     val toCreateSentence = existingSentences.firstOrNull()?.let { existingSentence ->
-      existingSentence.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+      existingSentence.statusId = SentenceEntityStatus.MANY_CHARGES_DATA_FIX
       existingSentence.copyFrom(migrationCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     } ?: SentenceEntity.from(migrationCreateSentence, tracking.createdByUsername, chargeEntity, dpsSentenceType)
     val createdSentence = sentenceRepository.save(toCreateSentence)
@@ -314,7 +317,7 @@ class MigrationService(
     createdSentence.periodLengths = migrationCreateSentence.periodLengths.map {
       val existingPeriodLengths = tracking.createdPeriodLengthMap[it.periodLengthId] ?: mutableListOf()
       val toCreatePeriodLength = existingPeriodLengths.firstOrNull()?.let { existingPeriodLength ->
-        existingPeriodLength.statusId = EntityStatus.MANY_CHARGES_DATA_FIX
+        existingPeriodLength.statusId = PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX
         val copiedPeriodLength = existingPeriodLength.copy()
         copiedPeriodLength.sentenceEntity = createdSentence
         copiedPeriodLength

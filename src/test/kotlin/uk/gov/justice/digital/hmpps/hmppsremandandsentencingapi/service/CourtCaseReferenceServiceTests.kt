@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
@@ -39,7 +39,7 @@ class CourtCaseReferenceServiceTests {
   fun `insert new active case references`() {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
 
-    val activeCourtAppearance = generateCourtAppearance("REFERENCE1", EntityStatus.ACTIVE, courtCase)
+    val activeCourtAppearance = generateCourtAppearance("REFERENCE1", CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(activeCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
@@ -54,7 +54,7 @@ class CourtCaseReferenceServiceTests {
     val oldCaseReference = "OLDCASEREFERENCE"
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
     courtCase.legacyData = generateLegacyData(listOf(oldCaseReference))
-    val deletedCourtAppearance = generateCourtAppearance(oldCaseReference, EntityStatus.DELETED, courtCase)
+    val deletedCourtAppearance = generateCourtAppearance(oldCaseReference, CourtAppearanceEntityStatus.DELETED, courtCase)
     courtCase.appearances = setOf(deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
@@ -70,8 +70,8 @@ class CourtCaseReferenceServiceTests {
     val existingReferences = listOf("A", "B", "C", "D")
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
     courtCase.legacyData = generateLegacyData(existingReferences + oldCaseReference)
-    val activeCourtAppearance = generateCourtAppearance("ANEWREFERENCE", EntityStatus.ACTIVE, courtCase)
-    val deletedCourtAppearance = generateCourtAppearance("OLDCASEREFERENCE", EntityStatus.DELETED, courtCase)
+    val activeCourtAppearance = generateCourtAppearance("ANEWREFERENCE", CourtAppearanceEntityStatus.ACTIVE, courtCase)
+    val deletedCourtAppearance = generateCourtAppearance("OLDCASEREFERENCE", CourtAppearanceEntityStatus.DELETED, courtCase)
     courtCase.appearances = setOf(activeCourtAppearance, deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
@@ -95,7 +95,7 @@ class CourtCaseReferenceServiceTests {
       1L,
     )
 
-    val active = generateCourtAppearance("ACTIVE-CASE-REF", EntityStatus.ACTIVE, courtCase)
+    val active = generateCourtAppearance("ACTIVE-CASE-REF", CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(active)
 
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
@@ -114,8 +114,8 @@ class CourtCaseReferenceServiceTests {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
     courtCase.legacyData = generateLegacyData(listOf(oldRef))
 
-    val stillUsingOld = generateCourtAppearance(oldRef, EntityStatus.ACTIVE, courtCase)
-    val editedToNew = generateCourtAppearance(newRef, EntityStatus.ACTIVE, courtCase)
+    val stillUsingOld = generateCourtAppearance(oldRef, CourtAppearanceEntityStatus.ACTIVE, courtCase)
+    val editedToNew = generateCourtAppearance(newRef, CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(stillUsingOld, editedToNew)
 
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
@@ -134,7 +134,7 @@ class CourtCaseReferenceServiceTests {
 
   private fun generateCourtAppearance(
     caseReference: String,
-    statusId: EntityStatus,
+    statusId: CourtAppearanceEntityStatus,
     courtCase: CourtCaseEntity,
   ): CourtAppearanceEntity = CourtAppearanceEntity(
     id = idInt++,

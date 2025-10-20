@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
 import java.util.UUID
@@ -23,7 +23,7 @@ data class ReconciliationCharge(
       chargeEntity.offenceEndDate,
       chargeEntity.legacyData?.nomisOutcomeCode ?: chargeEntity.chargeOutcome?.nomisCode,
       chargeEntity.legacyData,
-      chargeEntity.sentences.firstOrNull { it.statusId != EntityStatus.DELETED }?.let { ReconciliationSentence.from(it) },
+      chargeEntity.sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED }?.let { ReconciliationSentence.from(it) },
     )
   }
 }
