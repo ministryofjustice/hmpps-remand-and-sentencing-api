@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 class NoManyChargesToSentenceFixTests : IntegrationTestBase() {
 
   @Test
-  fun `many charges to a single sentence creates multiple sentence records`() {
+  fun `many charges to a single sentence remain as is without fix`() {
     val sentence = DataCreator.migrationCreateSentence()
     val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
     val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
