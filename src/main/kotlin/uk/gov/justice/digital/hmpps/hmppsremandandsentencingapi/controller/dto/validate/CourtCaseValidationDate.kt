@@ -5,4 +5,5 @@ import java.time.LocalDate
 data class CourtCaseValidationDate(
   val offenceDate: LocalDate?,
   val latestRemandAppearanceDate: LocalDate?,
+  val latestSentenceAppearanceDate: LocalDate?,
 )

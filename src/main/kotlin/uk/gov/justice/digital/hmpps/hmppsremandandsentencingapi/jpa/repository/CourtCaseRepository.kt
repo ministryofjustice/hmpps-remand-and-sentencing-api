@@ -133,16 +133,20 @@ interface CourtCaseRepository :
 
   @Query(
     """
-  select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate(max(coalesce(c.offenceEndDate, c.offenceStartDate)), max(CASE WHEN (a.warrantType = "REMAND") THEN a.appearanceDate ELSE null END))
+  select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate(
+    max(coalesce(c.offenceEndDate, c.offenceStartDate)),
+    max(CASE WHEN (a.warrantType = 'REMAND') THEN a.appearanceDate ELSE null END),
+    max(CASE WHEN (a.warrantType = 'SENTENCING') THEN a.appearanceDate ELSE null END)
+  )
   from CourtCaseEntity cc
   join cc.appearances a
   join a.appearanceCharges ac
   join ac.charge c
-  where cc.caseUniqueIdentifier = :uuid and
-    cc.statusId = :courtCaseStatus and 
-    a.statusId = :courtAppearanceStatus and 
-    c.statusId = :chargeStatus and 
-    a.appearanceUuid != :appearanceUuidToExclude
+  where cc.caseUniqueIdentifier = :uuid
+    and cc.statusId = :courtCaseStatus
+    and a.statusId = :courtAppearanceStatus
+    and c.statusId = :chargeStatus
+    and a.appearanceUuid != :appearanceUuidToExclude
   """,
   )
   fun findValidationDates(
