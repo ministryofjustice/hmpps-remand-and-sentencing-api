@@ -62,4 +62,53 @@ class NoManyChargesToSentenceFixTests : IntegrationTestBase() {
 
     domainQueueIsEmpty()
   }
+
+  @Test
+  fun `show many charges to single sentences on court case details`() {
+    val sentence = DataCreator.migrationCreateSentence()
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(courtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val courtCaseUuid = response.courtCases.first().courtCaseUuid
+    val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
+    val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[*].sentence.sentenceUuid")
+      .value<List<String>> { result ->
+        Assertions.assertThat(result).hasSize(2)
+        Assertions.assertThat(result).allMatch { it == sentenceUuid.toString() }
+      }
+      .jsonPath("$.appearances[*].charges[*].sentence.periodLengths[*].periodLengthUuid")
+      .value<List<String>> { result ->
+        Assertions.assertThat(result).hasSize(2)
+        Assertions.assertThat(result).allMatch { it == periodLengthUuid.toString() }
+      }
+
+    domainQueueIsEmpty()
+  }
 }
