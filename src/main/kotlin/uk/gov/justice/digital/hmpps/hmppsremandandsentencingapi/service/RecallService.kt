@@ -156,6 +156,7 @@ class RecallService(
       recallToDelete.recallSentences.forEach {
         recallSentenceRepository.delete(it)
       }
+      recallRepository.save(recallToDelete)
       eventsToEmit.add(
         EventMetadataCreator.recallEventMetadata(
           recallToDelete.prisonerId,
