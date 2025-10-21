@@ -198,7 +198,7 @@ class RecallService(
   }
 
   @Transactional(readOnly = true)
-  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerIdAndStatusId(prisonerId).map {
+  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerIdAndStatusId(prisonerId, RecallEntityStatus.ACTIVE).map {
     val recallSentences = recallSentenceRepository.findByRecallId(it.id).orEmpty()
     Recall.from(it, recallSentences)
   }
