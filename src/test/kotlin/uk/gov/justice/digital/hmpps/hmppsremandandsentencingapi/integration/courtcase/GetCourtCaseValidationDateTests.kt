@@ -14,11 +14,36 @@ class GetCourtCaseValidationDateTests : IntegrationTestBase() {
     val offenceStartToExclude = LocalDate.now().minusDays(10)
     val offenceEndToExclude = LocalDate.now().minusDays(5)
     val offenceStartToInclude = LocalDate.now().minusDays(15)
-    val chargeToExclude = DpsDataCreator.dpsCreateCharge(offenceStartDate = offenceStartToExclude, offenceEndDate = offenceEndToExclude)
-    val chargeToInclude = DpsDataCreator.dpsCreateCharge(offenceStartDate = offenceStartToInclude)
-    val appearanceToExclude = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(chargeToExclude), warrantType = "REMAND", appearanceDate = LocalDate.now().minusDays(5L))
-    val appearanceToInclude = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(chargeToInclude), warrantType = "REMAND", appearanceDate = LocalDate.now().minusDays(10L))
-    val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearanceToExclude, appearanceToInclude))
+
+    val chargeToExclude = DpsDataCreator.dpsCreateCharge(
+      offenceStartDate = offenceStartToExclude,
+      offenceEndDate = offenceEndToExclude,
+    )
+    val chargeToInclude = DpsDataCreator.dpsCreateCharge(
+      offenceStartDate = offenceStartToInclude,
+    )
+
+    val appearanceToExclude = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeToExclude),
+      warrantType = "REMAND",
+      appearanceDate = LocalDate.now().minusDays(5L),
+    )
+
+    val remandAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeToInclude),
+      warrantType = "REMAND",
+      appearanceDate = LocalDate.now().minusDays(10L),
+    )
+
+    val sentencingAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(chargeToInclude),
+      warrantType = "SENTENCING",
+      appearanceDate = LocalDate.now().minusDays(2L),
+    )
+
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(
+      appearances = listOf(appearanceToExclude, remandAppearance, sentencingAppearance),
+    )
     val (courtCaseUuid) = createCourtCase(courtCase)
 
     webTestClient.get()
@@ -27,7 +52,13 @@ class GetCourtCaseValidationDateTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody(CourtCaseValidationDate::class.java)
-      .isEqualTo(CourtCaseValidationDate(offenceStartToInclude, appearanceToInclude.appearanceDate))
+      .isEqualTo(
+        CourtCaseValidationDate(
+          offenceDate = offenceStartToInclude,
+          latestRemandAppearanceDate = remandAppearance.appearanceDate,
+          latestSentenceAppearanceDate = sentencingAppearance.appearanceDate,
+        ),
+      )
   }
 
   @Test
@@ -42,7 +73,8 @@ class GetCourtCaseValidationDateTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody(CourtCaseValidationDate::class.java)
-      .isEqualTo(CourtCaseValidationDate(null, null))
+      // 🟢 Must now include third null
+      .isEqualTo(CourtCaseValidationDate(null, null, null))
   }
 
   @Test
