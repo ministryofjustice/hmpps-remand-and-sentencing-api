@@ -37,6 +37,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
     assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
+    assertEquals(0, appearanceChargeRepository.countByAppearanceAppearanceUuid(createdAppearance.appearanceUuid))
 
     val deletedCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCase.first)
     assertEquals(CourtCaseEntityStatus.DELETED, deletedCourtCase?.statusId)

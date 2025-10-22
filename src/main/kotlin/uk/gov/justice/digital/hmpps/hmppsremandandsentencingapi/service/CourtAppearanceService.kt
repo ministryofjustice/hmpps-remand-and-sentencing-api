@@ -520,28 +520,36 @@ class CourtAppearanceService(
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
     courtAppearanceEntity.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity))
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+    eventsToEmit.add(
+      EventMetadataCreator.courtAppearanceEventMetadata(
+        courtAppearanceEntity.courtCase.prisonerId,
+        courtAppearanceEntity.courtCase.caseUniqueIdentifier,
+        courtAppearanceEntity.appearanceUuid.toString(),
+        EventType.COURT_APPEARANCE_DELETED,
+      ),
+    )
     courtAppearanceEntity.appearanceCharges
-      .map { it.charge!! }
-      .filter { it.hasNoActiveCourtAppearances() }
-      .forEach { charge ->
-        chargeService.deleteCharge(
-          charge,
-          courtAppearanceEntity.courtCase.prisonerId,
-          courtAppearanceEntity.courtCase.caseUniqueIdentifier,
-          courtAppearanceEntity.appearanceUuid.toString(),
-        )
+      .forEach { appearanceCharge ->
+        if (appearanceCharge.charge!!.hasNoActiveCourtAppearances()) {
+          eventsToEmit.addAll(
+            chargeService.deleteCharge(
+              appearanceCharge.charge!!,
+              courtAppearanceEntity.courtCase.prisonerId,
+              courtAppearanceEntity.courtCase.caseUniqueIdentifier,
+              courtAppearanceEntity.appearanceUuid.toString(),
+            ).eventsToEmit,
+          )
+        }
+        appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.removedFrom(appearanceCharge, serviceUserService.getUsername(), null))
+        courtAppearanceEntity.appearanceCharges.remove(appearanceCharge)
+        appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
+        appearanceCharge.appearance = null
+        appearanceCharge.charge = null
       }
-
     return RecordResponse(
       courtAppearanceEntity,
-      mutableSetOf(
-        EventMetadataCreator.courtAppearanceEventMetadata(
-          courtAppearanceEntity.courtCase.prisonerId,
-          courtAppearanceEntity.courtCase.caseUniqueIdentifier,
-          courtAppearanceEntity.appearanceUuid.toString(),
-          EventType.COURT_APPEARANCE_DELETED,
-        ),
-      ),
+      eventsToEmit,
     )
   }
 
@@ -564,7 +572,7 @@ class CourtAppearanceService(
       )
     }
 
-    courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.let { futureAppearance ->
+    courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.takeUnless { it.statusId == CourtAppearanceEntityStatus.ACTIVE }?.let { futureAppearance ->
       eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
     }
 
