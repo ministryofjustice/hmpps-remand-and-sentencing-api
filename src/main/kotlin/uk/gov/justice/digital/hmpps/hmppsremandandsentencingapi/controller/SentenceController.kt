@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.H
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceService
 import java.util.UUID
@@ -28,18 +29,22 @@ class SentenceController(private val sentenceService: SentenceService, private v
   @GetMapping("\${court.sentence.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
   @Operation(
-    summary = "Retrieve sentence details",
-    description = "This endpoint will retrieve sentence details",
+    summary = "Retrieve sentence information",
+    description = "This endpoint will retrieve sentence information",
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "Returns sentence details"),
+      ApiResponse(responseCode = "200", description = "Returns sentence information"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
       ApiResponse(responseCode = "404", description = "Not found if no sentence at uuid"),
     ],
   )
-  fun getSentenceDetails(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+  fun getSentence(@PathVariable sentenceUuid: UUID): Sentence = sentenceService.findSentenceByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
+
+  @GetMapping("/sentence/{sentenceUuid}/details")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  fun getSentenceDetails(@PathVariable sentenceUuid: UUID): SentenceDetails = sentenceService.findSentenceDetailsByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
   @GetMapping("/sentence/consecutive-to-details")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")

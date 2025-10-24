@@ -1,17 +1,17 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import jakarta.persistence.EntityNotFoundException
-import jakarta.transaction.Transactional
-import jakarta.transaction.Transactional.TxType
 import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -49,7 +49,7 @@ class SentenceService(
   private val recallHistoryRepository: RecallHistoryRepository,
 ) {
 
-  @Transactional(TxType.REQUIRED)
+  @Transactional
   fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val existingSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
     return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceDateChanged, courtAppearanceId) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceId)
@@ -153,10 +153,13 @@ class SentenceService(
 
   fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getActiveSentence() ?: sentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid) }
 
-  @Transactional(TxType.REQUIRED)
+  @Transactional(readOnly = true)
   fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)?.let { Sentence.from(it) }
 
-  @Transactional(TxType.REQUIRED)
+  @Transactional
+  fun findSentenceDetailsByUuid(sentenceUuid: UUID): SentenceDetails? = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.let { SentenceDetails.from(it) }
+
+  @Transactional
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == SentenceEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.delete(serviceUserService.getUsername())
