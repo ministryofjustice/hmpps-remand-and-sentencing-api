@@ -25,9 +25,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.repository.AppearanceChargeRepository
@@ -502,10 +502,10 @@ abstract class IntegrationTestBase {
     numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsDlqClient, prisonerListenerQueue.dlqUrl!!, 0)
   }
 
-  fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID): Pair<CreateSentence, CreateSentence> {
+  fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID, courtCaseReference: String? = "GH123456789"): Pair<CreateSentence, CreateSentence> {
     val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
     val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge), courtCaseReference = courtCaseReference)
     val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = prisonerId, appearances = listOf(appearance)))
     val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
     val sentenceTwo = courtCase.appearances.first().charges[1].sentence!!
