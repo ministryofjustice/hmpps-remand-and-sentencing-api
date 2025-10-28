@@ -37,7 +37,6 @@ class LegacyCourtCaseService(
     val createdCourtCase = courtCaseRepository.save(
       CourtCaseEntity.from(
         courtCase,
-        serviceUserService.getUsername(),
       ),
     )
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(createdCourtCase))

@@ -4,4 +4,5 @@ data class LegacyCreateCourtCase(
   val prisonerId: String,
   val active: Boolean,
   val legacyData: CourtCaseLegacyData,
+  val performedByUser: String,
 )
