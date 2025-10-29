@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCrea
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class RecallIntTests : IntegrationTestBase() {
@@ -207,11 +208,11 @@ class RecallIntTests : IntegrationTestBase() {
   fun `Get recalls builds correct court case and sentence groups for DPS recall`() {
     val appearanceDateOne = LocalDate.now().minusDays(30)
     val firstChargeCourtCaseOne = DpsDataCreator.dpsCreateCharge(
-      sentence = DpsDataCreator.dpsCreateSentence(),
+      sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDateOne),
       offenceStartDate = LocalDate.of(2025, 2, 3),
     )
     val secondChargeCourtCaseOne = DpsDataCreator.dpsCreateCharge(
-      sentence = DpsDataCreator.dpsCreateSentence(),
+      sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDateOne),
       offenceStartDate = LocalDate.of(2025, 3, 4),
       offenceEndDate = LocalDate.of(2025, 4, 5),
     )
@@ -231,7 +232,7 @@ class RecallIntTests : IntegrationTestBase() {
 
     val appearanceDateTwo = LocalDate.now().minusDays(20)
     val firstChargeCourtCaseTwo = DpsDataCreator.dpsCreateCharge(
-      sentence = DpsDataCreator.dpsCreateSentence(),
+      sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDateTwo),
       offenceStartDate = LocalDate.of(2025, 6, 7),
     )
     val appearanceCourtCaseTwo = DpsDataCreator.dpsCreateCourtAppearance(
@@ -299,7 +300,7 @@ class RecallIntTests : IntegrationTestBase() {
               hintText = null,
               displayOrder = 220,
             ),
-            convictionDate = LocalDate.of(2025, 10, 21),
+            convictionDate = appearanceDateOne,
             fineAmount = null,
             legacyData = null,
             consecutiveToSentenceUuid = null,
@@ -328,7 +329,7 @@ class RecallIntTests : IntegrationTestBase() {
               hintText = null,
               displayOrder = 220,
             ),
-            convictionDate = LocalDate.of(2025, 10, 21),
+            convictionDate = appearanceDateOne,
             fineAmount = null,
             legacyData = null,
             consecutiveToSentenceUuid = null,
@@ -357,7 +358,7 @@ class RecallIntTests : IntegrationTestBase() {
               hintText = null,
               displayOrder = 220,
             ),
-            convictionDate = LocalDate.of(2025, 10, 21),
+            convictionDate = appearanceDateTwo,
             fineAmount = null,
             legacyData = null,
             consecutiveToSentenceUuid = null,
@@ -516,7 +517,7 @@ class RecallIntTests : IntegrationTestBase() {
               sentenceCalcType = null,
               sentenceCategory = null,
               sentenceTypeDesc = null,
-              postedDate = "2025-10-28",
+              postedDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
               active = true,
               nomisLineReference = "4",
               bookingId = 1,
