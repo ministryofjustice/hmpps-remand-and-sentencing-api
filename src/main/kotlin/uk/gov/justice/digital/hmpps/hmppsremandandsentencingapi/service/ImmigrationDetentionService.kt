@@ -9,15 +9,19 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ImmigrationDetentionEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.ACTIVE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.DELETED
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.EDITED
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
 class ImmigrationDetentionService(
   private val immigrationDetentionRepository: ImmigrationDetentionRepository,
+  private val immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository,
 ) {
 
   @Transactional
@@ -45,6 +49,12 @@ class ImmigrationDetentionService(
     return if (immigrationDetentionToUpdate == null) {
       createImmigrationDetention(immigrationDetention, immigrationDetentionUuid)
     } else {
+      immigrationDetentionHistoryRepository.save(
+        ImmigrationDetentionHistoryEntity.from(
+          immigrationDetentionToUpdate,
+          EDITED,
+        ),
+      )
       immigrationDetentionToUpdate.apply {
         homeOfficeReferenceNumber = immigrationDetention.homeOfficeReferenceNumber
         recordDate = immigrationDetention.recordDate
@@ -68,6 +78,13 @@ class ImmigrationDetentionService(
         ?: throw EntityNotFoundException("Immigration Detention not found $immigrationDetentionUuid")
 
     immigrationDetentionToDelete.statusId = DELETED
+
+    immigrationDetentionHistoryRepository.save(
+      ImmigrationDetentionHistoryEntity.from(
+        immigrationDetentionToDelete,
+        DELETED,
+      ),
+    )
 
     return RecordResponse(
       DeleteImmigrationDetentionResponse.from(immigrationDetentionToDelete),

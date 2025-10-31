@@ -49,6 +49,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.U
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
@@ -72,7 +73,7 @@ import uk.gov.justice.hmpps.sqs.MissingTopicException
 import uk.gov.justice.hmpps.sqs.PurgeQueueRequest
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
-import java.util.*
+import java.util.UUID
 
 @Sql("classpath:test_data/reset-database.sql")
 @ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class, AdjustmentsApiExtension::class)
@@ -142,6 +143,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var recallHistoryRepository: RecallHistoryRepository
+
+  @Autowired
+  protected lateinit var immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository
 
   @Autowired
   protected lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
