@@ -39,8 +39,8 @@ class DataCreator {
       prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID,
       active: Boolean = true,
       legacyData: CourtCaseLegacyData = courtCaseLegacyData(),
-      performedByUser: String = "USER1",
-    ): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active, legacyData, performedByUser)
+//      performedByUser: String = "USER1",
+    ): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active, legacyData)
 
     fun courtAppearanceLegacyData(
       postedDate: String = LocalDate.now().format(
@@ -79,7 +79,14 @@ class DataCreator {
       outcomeDispositionCode: String = "INTERIM",
       outcomeConvictionFlag: Boolean = false,
       offenceDescription: String = "Offence Description",
-    ): ChargeLegacyData = ChargeLegacyData(postedDate, nomisOutcomeCode, outcomeDescription, outcomeDispositionCode, outcomeConvictionFlag, offenceDescription)
+    ): ChargeLegacyData = ChargeLegacyData(
+      postedDate,
+      nomisOutcomeCode,
+      outcomeDescription,
+      outcomeDispositionCode,
+      outcomeConvictionFlag,
+      offenceDescription,
+    )
 
     fun legacyCreateCharge(
       appearanceLifetimeUuid: UUID = UUID.randomUUID(),
@@ -101,7 +108,15 @@ class DataCreator {
       active: Boolean? = null,
       nomisLineReference: String? = "4",
       bookingId: Long? = 1L,
-    ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active, nomisLineReference, bookingId)
+    ): SentenceLegacyData = SentenceLegacyData(
+      sentenceCalcType,
+      sentenceCategory,
+      sentenceTypeDescription,
+      postedDate,
+      active,
+      nomisLineReference,
+      bookingId,
+    )
 
     fun legacyCreateSentence(
       chargeUuids: List<UUID> = listOf(UUID.randomUUID()),
@@ -134,7 +149,10 @@ class DataCreator {
       updatedDate: LocalDateTime = LocalDateTime.now(),
     ): CaseReferenceLegacyData = CaseReferenceLegacyData(offenderCaseReference, updatedDate)
 
-    fun courtCaseLegacyData(caseReferences: MutableList<CaseReferenceLegacyData> = mutableListOf(caseReferenceLegacyData()), bookingId: Long? = 1L): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences, bookingId)
+    fun courtCaseLegacyData(
+      caseReferences: MutableList<CaseReferenceLegacyData> = mutableListOf(caseReferenceLegacyData()),
+      bookingId: Long? = 1L,
+    ): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences, bookingId)
 
     fun migrationCreateCourtCases(
       prisonerId: String = "PRI123",
