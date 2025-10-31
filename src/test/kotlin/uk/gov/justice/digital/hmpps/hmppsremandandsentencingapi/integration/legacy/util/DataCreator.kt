@@ -68,8 +68,7 @@ class DataCreator {
       appearanceDate: LocalDate = LocalDate.now(),
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
-    ): LegacyCreateCourtAppearance =
-      LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
+    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
 
     fun chargeLegacyData(
       postedDate: String = LocalDate.now().format(
@@ -95,8 +94,7 @@ class DataCreator {
       offenceStartDate: LocalDate = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
-    ): LegacyCreateCharge =
-      LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData)
+    ): LegacyCreateCharge = LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData)
 
     fun legacyCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): LegacyCreateFine = LegacyCreateFine(fineAmount)
 
@@ -138,8 +136,7 @@ class DataCreator {
       returnToCustodyDate = returnToCustodyDate,
     )
 
-    fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge =
-      LegacyUpdateWholeCharge(offenceCode)
+    fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
 
     fun legacyUpdateCharge(
       offenceStartDate: LocalDate? = LocalDate.now().minusDays(20),
@@ -188,8 +185,7 @@ class DataCreator {
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
       charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge()),
-    ): MigrationCreateCourtAppearance =
-      MigrationCreateCourtAppearance(eventId, courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
+    ): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(eventId, courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
 
     fun migrationCreateCharge(
       chargeNOMISId: Long = 5453,
@@ -236,14 +232,11 @@ class DataCreator {
       periodWeeks: Int? = null,
       periodDays: Int? = 2,
       legacyData: PeriodLengthLegacyData = periodLengthLegacyData(),
-    ): MigrationCreatePeriodLength =
-      MigrationCreatePeriodLength(periodLengthId, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
+    ): MigrationCreatePeriodLength = MigrationCreatePeriodLength(periodLengthId, periodYears, periodMonths, periodWeeks, periodDays, legacyData)
 
-    fun migrationCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): MigrationCreateFine =
-      MigrationCreateFine(fineAmount)
+    fun migrationCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): MigrationCreateFine = MigrationCreateFine(fineAmount)
 
-    fun migrationSentenceId(offenderBookingId: Long = 1, sequence: Int = 1): MigrationSentenceId =
-      MigrationSentenceId(offenderBookingId, sequence)
+    fun migrationSentenceId(offenderBookingId: Long = 1, sequence: Int = 1): MigrationSentenceId = MigrationSentenceId(offenderBookingId, sequence)
 
     fun nomisPeriodLengthId(
       offenderBookingId: Long = 1,
