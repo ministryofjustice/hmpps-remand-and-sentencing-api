@@ -20,6 +20,7 @@ import java.time.Duration
 class WebClientConfiguration(
   @param:Value("\${prison.api.url}") private val prisonApiUri: String,
   @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
+  @param:Value("\${adjustments.api.url}") private val adjustmentsApiUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
@@ -51,6 +52,7 @@ class WebClientConfiguration(
     "document-management-api",
     documentManagementApiUri,
   )
+
   private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authentication: Authentication = SecurityContextHolder.getContext()
       .authentication
@@ -60,6 +62,16 @@ class WebClientConfiguration(
       .build()
     next.exchange(filtered)
   }
+
+  @Bean
+  fun adjustmentsApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "adjustments-api",
+    adjustmentsApiUri,
+  )
 
   // HMPPS Auth health ping is required if your service calls HMPPS Auth to get a token to call other services
   @Bean

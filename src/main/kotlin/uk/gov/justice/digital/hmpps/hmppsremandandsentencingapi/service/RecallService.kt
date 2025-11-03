@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
@@ -35,6 +37,7 @@ class RecallService(
   private val sentenceService: SentenceService,
   private val recallHistoryRepository: RecallHistoryRepository,
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
+  private val adjustmentsApiClient: AdjustmentsApiClient,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
@@ -130,7 +133,12 @@ class RecallService(
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
 
     val eventsToEmit = mutableListOf<EventMetadata>()
-    var previousRecall: RecallEntity? = null
+    var previousRecall: RecallEntity?
+    val ualAdjustmentToDelete: AdjustmentDto? = if (!isLegacyRecall) {
+      adjustmentsApiClient.getRecallAdjustment(recallToDelete.prisonerId, recallUuid)
+    } else {
+      null
+    }
     if (isLegacyRecall) {
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
@@ -167,6 +175,9 @@ class RecallService(
           EventType.RECALL_DELETED,
         ),
       )
+    }
+    if (ualAdjustmentToDelete != null) {
+      adjustmentsApiClient.deleteAdjustment(ualAdjustmentToDelete.id)
     }
     return RecordResponse(
       DeleteRecallResponse.from(recallToDelete),
