@@ -41,7 +41,7 @@ class LegacyCreateChargeTests : IntegrationTestBase() {
     val newEntries = appearanceChargeHistoryAfter.filter { it.id !in beforeIds }
     assertEquals(1, newEntries.size)
     assertNull(newEntries[0].removedBy)
-    assertEquals("SOME_USER", newEntries[0].createdBy)
+    assertEquals(legacyCharge.performedByUser, newEntries[0].createdBy)
   }
 
   @Test
