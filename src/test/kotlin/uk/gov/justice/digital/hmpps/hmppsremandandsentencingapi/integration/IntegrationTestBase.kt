@@ -21,10 +21,14 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
@@ -428,6 +432,71 @@ abstract class IntegrationTestBase {
     .expectStatus()
     .isOk
     .expectBody(DeleteRecallResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention) = webTestClient
+    .post()
+    .uri("/immigration-detention")
+    .bodyValue(immigrationDetention)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated
+    .expectBody(SaveImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun updateImmigrationDetention(immigrationDetention: CreateImmigrationDetention, uuid: UUID) = webTestClient
+    .put()
+    .uri("/immigration-detention/$uuid")
+    .bodyValue(immigrationDetention)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(SaveImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun getImmigrationDetentionByUUID(immigrationDetentionUuid: UUID): ImmigrationDetention = webTestClient
+    .get()
+    .uri("/immigration-detention/$immigrationDetentionUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(ImmigrationDetention::class.java)
+    .returnResult().responseBody!!
+
+  protected fun deleteImmigrationDetention(uuid: UUID) = webTestClient
+    .delete()
+    .uri("/immigration-detention/$uuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(DeleteImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun getImmigrationDetentionsByPrisonerId(prisonerId: String): List<ImmigrationDetention> = webTestClient
+    .get()
+    .uri("/immigration-detention/person/$prisonerId")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBodyList(ImmigrationDetention::class.java)
     .returnResult().responseBody!!
 
   fun purgeQueues() {

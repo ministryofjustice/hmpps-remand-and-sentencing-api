@@ -9,4 +9,5 @@ data class LegacyCreateCourtAppearance(
   val appearanceDate: LocalDate,
   val legacyData: CourtAppearanceLegacyData,
   val appearanceTypeUuid: UUID,
+  val performedByUser: String?,
 )

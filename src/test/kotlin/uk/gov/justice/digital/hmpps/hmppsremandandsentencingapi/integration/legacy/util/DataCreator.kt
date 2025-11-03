@@ -68,7 +68,8 @@ class DataCreator {
       appearanceDate: LocalDate = LocalDate.now(),
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
-    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
+      performedByUser: String = "USER1",
+    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid, performedByUser)
 
     fun chargeLegacyData(
       postedDate: String = LocalDate.now().format(
@@ -79,7 +80,14 @@ class DataCreator {
       outcomeDispositionCode: String = "INTERIM",
       outcomeConvictionFlag: Boolean = false,
       offenceDescription: String = "Offence Description",
-    ): ChargeLegacyData = ChargeLegacyData(postedDate, nomisOutcomeCode, outcomeDescription, outcomeDispositionCode, outcomeConvictionFlag, offenceDescription)
+    ): ChargeLegacyData = ChargeLegacyData(
+      postedDate,
+      nomisOutcomeCode,
+      outcomeDescription,
+      outcomeDispositionCode,
+      outcomeConvictionFlag,
+      offenceDescription,
+    )
 
     fun legacyCreateCharge(
       appearanceLifetimeUuid: UUID = UUID.randomUUID(),
@@ -87,7 +95,8 @@ class DataCreator {
       offenceStartDate: LocalDate = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
-    ): LegacyCreateCharge = LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData)
+      performedByUser: String = "USER1",
+    ): LegacyCreateCharge = LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData, performedByUser)
 
     fun legacyCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): LegacyCreateFine = LegacyCreateFine(fineAmount)
 
@@ -101,7 +110,15 @@ class DataCreator {
       active: Boolean? = null,
       nomisLineReference: String? = "4",
       bookingId: Long? = 1L,
-    ): SentenceLegacyData = SentenceLegacyData(sentenceCalcType, sentenceCategory, sentenceTypeDescription, postedDate, active, nomisLineReference, bookingId)
+    ): SentenceLegacyData = SentenceLegacyData(
+      sentenceCalcType,
+      sentenceCategory,
+      sentenceTypeDescription,
+      postedDate,
+      active,
+      nomisLineReference,
+      bookingId,
+    )
 
     fun legacyCreateSentence(
       chargeUuids: List<UUID> = listOf(UUID.randomUUID()),
@@ -111,6 +128,7 @@ class DataCreator {
       active: Boolean = true,
       sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(),
       returnToCustodyDate: LocalDate? = null,
+      performedByUser: String? = null,
     ): LegacyCreateSentence = LegacyCreateSentence(
       chargeUuids = chargeUuids,
       appearanceUuid = appearanceUuid,
@@ -119,6 +137,7 @@ class DataCreator {
       active = active,
       legacyData = sentenceLegacyData,
       returnToCustodyDate = returnToCustodyDate,
+      performedByUser = performedByUser,
     )
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
@@ -134,7 +153,10 @@ class DataCreator {
       updatedDate: LocalDateTime = LocalDateTime.now(),
     ): CaseReferenceLegacyData = CaseReferenceLegacyData(offenderCaseReference, updatedDate)
 
-    fun courtCaseLegacyData(caseReferences: MutableList<CaseReferenceLegacyData> = mutableListOf(caseReferenceLegacyData()), bookingId: Long? = 1L): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences, bookingId)
+    fun courtCaseLegacyData(
+      caseReferences: MutableList<CaseReferenceLegacyData> = mutableListOf(caseReferenceLegacyData()),
+      bookingId: Long? = 1L,
+    ): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences, bookingId)
 
     fun migrationCreateCourtCases(
       prisonerId: String = "PRI123",
