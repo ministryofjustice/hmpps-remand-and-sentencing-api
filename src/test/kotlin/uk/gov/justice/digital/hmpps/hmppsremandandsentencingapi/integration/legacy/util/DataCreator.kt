@@ -146,7 +146,8 @@ class DataCreator {
       offenceStartDate: LocalDate? = LocalDate.now().minusDays(20),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
-    ): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData)
+      performedByUser: String = "USER1",
+    ): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData, performedByUser)
 
     fun caseReferenceLegacyData(
       offenderCaseReference: String = "NOMIS123",
