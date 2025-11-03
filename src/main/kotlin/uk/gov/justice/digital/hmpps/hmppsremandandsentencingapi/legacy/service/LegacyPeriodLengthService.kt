@@ -34,7 +34,7 @@ class LegacyPeriodLengthService(
         periodLengthUuid = periodLengthUuid,
         periodLength = periodLength,
         sentenceEntity = sentenceEntity,
-        createdBy = serviceUserService.getUsername(),
+        createdBy = getPerformedByUsername(periodLength),
       )
       val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
       periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
@@ -63,7 +63,7 @@ class LegacyPeriodLengthService(
       .takeIf { it.isNotEmpty() }
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLengthUpdate.sentenceUuid}")
 
-    val username = serviceUserService.getUsername()
+    val username = getPerformedByUsername(periodLengthUpdate)
     var changesMade = false
 
     existingPeriodLengths.forEach { existingEntity ->
@@ -100,8 +100,10 @@ class LegacyPeriodLengthService(
     )
   }
 
-  fun delete(periodLength: PeriodLengthEntity) {
-    periodLength.delete(serviceUserService.getUsername())
+  private fun getPerformedByUsername(periodLength: LegacyCreatePeriodLength): String = periodLength.performedByUser ?: serviceUserService.getUsername()
+
+  fun delete(periodLength: PeriodLengthEntity, performedByUser: String) {
+    periodLength.delete(performedByUser)
     periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
   }
 
@@ -124,9 +126,9 @@ class LegacyPeriodLengthService(
     } ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 
   @Transactional
-  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
     .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
-      delete(periodLength)
+      delete(periodLength, performedByUser ?: serviceUserService.getUsername())
       LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
     }.firstOrNull()
 }

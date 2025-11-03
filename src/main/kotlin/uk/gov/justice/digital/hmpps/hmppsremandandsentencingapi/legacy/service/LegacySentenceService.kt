@@ -350,7 +350,7 @@ class LegacySentenceService(
   fun delete(sentence: SentenceEntity, performedByUser: String) {
     sentence.delete(performedByUser)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
-    deletePeriodLengths(sentence)
+    deletePeriodLengths(sentence, performedByUser)
     deleteRecallSentence(sentence, performedByUser)
   }
 
@@ -374,10 +374,10 @@ class LegacySentenceService(
     }
   }
 
-  private fun deletePeriodLengths(sentence: SentenceEntity) {
+  private fun deletePeriodLengths(sentence: SentenceEntity, performedByUser: String) {
     sentence.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }
       .forEach { periodLength ->
-        legacyPeriodLengthService.delete(periodLength)
+        legacyPeriodLengthService.delete(periodLength, performedByUser)
       }
   }
 

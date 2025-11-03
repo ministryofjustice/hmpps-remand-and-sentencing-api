@@ -261,6 +261,7 @@ class DataCreator {
       periodWeeks: Int? = null,
       periodDays: Int? = 2,
       legacyData: PeriodLengthLegacyData = periodLengthLegacyData(),
+      performedByUser: String? = null,
     ): LegacyCreatePeriodLength = LegacyCreatePeriodLength(
       sentenceUUID,
       periodYears,
@@ -268,6 +269,7 @@ class DataCreator {
       periodWeeks,
       periodDays,
       legacyData,
+      performedByUser,
     )
 
     fun legacyLinkChargeToCase(
