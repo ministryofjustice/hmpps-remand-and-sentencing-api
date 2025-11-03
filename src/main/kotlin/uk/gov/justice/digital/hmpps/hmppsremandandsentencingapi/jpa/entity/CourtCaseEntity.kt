@@ -230,7 +230,7 @@ class CourtCaseEntity(
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = CourtCaseEntityStatus.ACTIVE, legacyData = courtCase.legacyData)
 
-    fun from(courtCase: LegacyCreateCourtCase): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = courtCase.performedByUser, statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE, legacyData = courtCase.legacyData)
+    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = courtCase.performedByUser ?: createdByUsername, statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE, legacyData = courtCase.legacyData)
 
     fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
       prisonerId = prisonerId,

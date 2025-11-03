@@ -136,6 +136,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
       active = true,
       legacyData = sentenceLegacyData(),
       consecutiveToLifetimeUuid = null, // Not consecutive to anything so should preserve the FORTHWITH status
+      performedByUser = null,
     )
 
     putLegacySentence(sentenceUuid, legacyUpdate)
