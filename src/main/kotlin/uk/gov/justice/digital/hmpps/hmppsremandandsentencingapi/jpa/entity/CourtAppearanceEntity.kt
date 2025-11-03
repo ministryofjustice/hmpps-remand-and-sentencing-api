@@ -321,7 +321,7 @@ class CourtAppearanceEntity(
         statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime, courtAppearance.legacyData.nomisOutcomeCode),
         appearanceCharges = mutableSetOf(),
         createdPrison = null,
-        createdBy = createdBy,
+        createdBy = courtAppearance.performedByUser ?: createdBy,
         nextCourtAppearance = null,
         warrantType = deriveWarrantType(appearanceOutcome, courtAppearance.legacyData),
         overallConvictionDate = null,
