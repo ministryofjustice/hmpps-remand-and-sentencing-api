@@ -5,4 +5,5 @@ import java.time.LocalDate
 data class LegacyLinkChargeToCase(
   val sourceCourtCaseUuid: String,
   val linkedDate: LocalDate,
+  val performedByUser: String?,
 )

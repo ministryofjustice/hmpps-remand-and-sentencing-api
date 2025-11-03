@@ -17,7 +17,7 @@ abstract class LegacyBaseService(
   protected val serviceUserService: ServiceUserService,
 ) {
 
-  fun createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge: ChargeEntity, appearance: CourtAppearanceEntity, updatedCharge: ChargeEntity, chargeModifyFunction: (ChargeEntity) -> Unit = {}): ChargeEntity {
+  fun createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge: ChargeEntity, appearance: CourtAppearanceEntity, updatedCharge: ChargeEntity, performedByUsername: String, chargeModifyFunction: (ChargeEntity) -> Unit = {}): ChargeEntity {
     var chargeRecord = existingCharge
     if (existingCharge.hasTwoOrMoreActiveCourtAppearance(appearance)) {
       existingCharge.appearanceCharges.firstOrNull { it.appearance == appearance }
@@ -25,7 +25,7 @@ abstract class LegacyBaseService(
           appearanceChargeHistoryRepository.save(
             AppearanceChargeHistoryEntity.removedFrom(
               appearanceCharge = appearanceCharge,
-              removedBy = serviceUserService.getUsername(),
+              removedBy = performedByUsername,
               removedPrison = null,
             ),
           )
@@ -41,7 +41,7 @@ abstract class LegacyBaseService(
       val appearanceCharge = AppearanceChargeEntity(
         appearance,
         chargeRecord,
-        serviceUserService.getUsername(),
+        performedByUsername,
         null,
       )
       appearance.appearanceCharges.add(appearanceCharge)

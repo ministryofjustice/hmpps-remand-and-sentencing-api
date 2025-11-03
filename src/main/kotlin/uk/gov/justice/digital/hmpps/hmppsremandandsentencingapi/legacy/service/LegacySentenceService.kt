@@ -166,7 +166,7 @@ class LegacySentenceService(
     }
     val appearance = charge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
     val toUpdateCharge = charge.copyFrom(performedByUser)
-    return createChargeRecordIfOverManyAppearancesOrUpdate(charge, appearance, toUpdateCharge)
+    return createChargeRecordIfOverManyAppearancesOrUpdate(charge, appearance, toUpdateCharge, performedByUser)
   }
 
   fun getChargeAtAppearance(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(
@@ -381,13 +381,13 @@ class LegacySentenceService(
       }
   }
 
-  fun handleManyChargesSentenceDeleted(sentenceUuid: UUID) {
+  fun handleManyChargesSentenceDeleted(sentenceUuid: UUID, performedByUsername: String) {
     val sentences = sentenceRepository.findBySentenceUuidAndStatusId(sentenceUuid, SentenceEntityStatus.MANY_CHARGES_DATA_FIX)
     if (sentences.size == 1) {
       val sentenceRecord = sentences.first()
       sentenceRecord.statusId = SentenceEntityStatus.ACTIVE
       sentenceRecord.updatedAt = ZonedDateTime.now()
-      sentenceRecord.updatedBy = serviceUserService.getUsername()
+      sentenceRecord.updatedBy = performedByUsername
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
     }
   }
