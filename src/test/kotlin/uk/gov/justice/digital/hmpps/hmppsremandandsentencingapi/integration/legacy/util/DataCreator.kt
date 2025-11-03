@@ -126,6 +126,7 @@ class DataCreator {
       active: Boolean = true,
       sentenceLegacyData: SentenceLegacyData = sentenceLegacyData(),
       returnToCustodyDate: LocalDate? = null,
+      performedByUser: String? = null,
     ): LegacyCreateSentence = LegacyCreateSentence(
       chargeUuids = chargeUuids,
       appearanceUuid = appearanceUuid,
@@ -134,6 +135,7 @@ class DataCreator {
       active = active,
       legacyData = sentenceLegacyData,
       returnToCustodyDate = returnToCustodyDate,
+      performedByUser = performedByUser,
     )
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
