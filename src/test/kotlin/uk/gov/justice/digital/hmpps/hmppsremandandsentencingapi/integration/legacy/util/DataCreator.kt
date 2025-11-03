@@ -140,13 +140,13 @@ class DataCreator {
       performedByUser = performedByUser,
     )
 
-    fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE"): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode)
+    fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE", performedByUser: String? = null): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode, performedByUser)
 
     fun legacyUpdateCharge(
       offenceStartDate: LocalDate? = LocalDate.now().minusDays(20),
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
-      performedByUser: String = "USER1",
+      performedByUser: String? = null,
     ): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData, performedByUser)
 
     fun caseReferenceLegacyData(
@@ -276,6 +276,7 @@ class DataCreator {
     fun legacyLinkChargeToCase(
       sourceCourtCaseUuid: String,
       linkedDate: LocalDate = LocalDate.now(),
-    ): LegacyLinkChargeToCase = LegacyLinkChargeToCase(sourceCourtCaseUuid, linkedDate)
+      performedByUser: String? = null,
+    ): LegacyLinkChargeToCase = LegacyLinkChargeToCase(sourceCourtCaseUuid, linkedDate, performedByUser)
   }
 }
