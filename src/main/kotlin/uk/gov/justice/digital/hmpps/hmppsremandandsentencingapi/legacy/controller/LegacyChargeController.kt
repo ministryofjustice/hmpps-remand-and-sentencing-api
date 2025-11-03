@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -120,8 +121,12 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun delete(@PathVariable chargeUuid: UUID) {
-    legacyChargeService.delete(chargeUuid)?.also { legacyCharge ->
+  fun delete(
+    @PathVariable chargeUuid: UUID,
+    @RequestHeader("performedByUser", required = false)
+    performedByUser: String?,
+  ) {
+    legacyChargeService.delete(chargeUuid, performedByUser)?.also { legacyCharge ->
       eventService.delete(legacyCharge.prisonerId, legacyCharge.lifetimeUuid.toString(), legacyCharge.courtCaseUuid, EventSource.NOMIS)
     }
   }
