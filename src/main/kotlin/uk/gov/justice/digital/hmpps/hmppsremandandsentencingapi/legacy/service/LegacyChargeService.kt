@@ -105,7 +105,7 @@ class LegacyChargeService(
       charge.delete(serviceUserService.getUsername())
       chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
       val deletedManyChargesSentence = charge.sentences.filter { it.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }.map {
-        legacySentenceService.delete(it)
+        legacySentenceService.delete(it, serviceUserService.getUsername())
         it
       }.firstOrNull()
       deletedManyChargesSentence to LegacyCharge.from(charge)

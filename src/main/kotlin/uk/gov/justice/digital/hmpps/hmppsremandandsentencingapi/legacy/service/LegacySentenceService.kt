@@ -84,12 +84,12 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
 
     return sentence.chargeUuids.map { chargeUuid ->
-      val charge = getUnsentencedCharge(chargeUuid, sentence.appearanceUuid)
+      val charge = getUnsentencedCharge(chargeUuid, sentence.appearanceUuid, getPerformedByUsername(sentence))
       val createdSentence = createSentenceRecord(
         charge,
         SentenceEntity.from(
           sentence,
-          serviceUserService.getUsername(),
+          getPerformedByUsername(sentence),
           charge,
           dpsSentenceType,
           consecutiveToSentence,
@@ -144,7 +144,7 @@ class LegacySentenceService(
       RecallEntity.fromLegacy(
         sentence,
         prisonerId,
-        serviceUserService.getUsername(),
+        getPerformedByUsername(sentence),
         legacySentenceType?.recallType ?: defaultRecallType,
       ),
     )
@@ -153,19 +153,19 @@ class LegacySentenceService(
         sentence,
         createdSentence,
         recall,
-        serviceUserService.getUsername(),
+        getPerformedByUsername(sentence),
         legacyData,
       ),
     )
   }
 
-  fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity {
+  fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID, performedByUser: String): ChargeEntity {
     val charge = getChargeAtAppearance(chargeUuid, appearanceUuid)
     if (charge.getActiveOrInactiveSentence() != null) {
       throw ChargeAlreadySentencedException("charge at $chargeUuid is already sentenced")
     }
     val appearance = charge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
-    val toUpdateCharge = charge.copyFrom(serviceUserService.getUsername())
+    val toUpdateCharge = charge.copyFrom(performedByUser)
     return createChargeRecordIfOverManyAppearancesOrUpdate(charge, appearance, toUpdateCharge)
   }
 
@@ -204,7 +204,7 @@ class LegacySentenceService(
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val sourceSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
-      .forEach { delete(it) }
+      .forEach { delete(it, getPerformedByUsername(sentence)) }
     return sentence.chargeUuids.map { chargeUuid ->
       val (existingSentence, entityStatus) = (
         (
@@ -216,12 +216,12 @@ class LegacySentenceService(
               ?.let { it to EntityChangeStatus.NO_CHANGE }
             )
             ?: (
-              getUnsentencedCharge(chargeUuid, sentence.appearanceUuid).let { charge ->
+              getUnsentencedCharge(chargeUuid, sentence.appearanceUuid, getPerformedByUsername(sentence)).let { charge ->
                 createSentenceRecord(
                   charge,
                   SentenceEntity.from(
                     sentence = sentence,
-                    createdBy = serviceUserService.getUsername(),
+                    createdBy = getPerformedByUsername(sentence),
                     chargeEntity = charge,
                     sentenceTypeEntity = dpsSentenceType,
                     consecutiveTo = consecutiveToSentence,
@@ -233,7 +233,7 @@ class LegacySentenceService(
                 )
               }.also { newSentence ->
                 // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
-                copyPeriodLengthsForNewSentence(sentenceUuid, newSentence)
+                copyPeriodLengthsForNewSentence(sentenceUuid, newSentence, getPerformedByUsername(sentence))
 
                 if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
                   createRecall(
@@ -252,7 +252,7 @@ class LegacySentenceService(
       var entityChangeStatus = entityStatus
       val updatedSentence = existingSentence.copyFrom(
         sentence,
-        serviceUserService.getUsername(),
+        getPerformedByUsername(sentence),
         consecutiveToSentence,
         isManyCharges,
       )
@@ -265,7 +265,7 @@ class LegacySentenceService(
       }
       // Always update period lengths using the current sentence status. Required when the sentence is changed and to cover a race condition (RASS-1119)
       // This works for the race condition because `update-sentence` is invoked twice in such cases.
-      checkAndUpdatePeriodLengthStatus(existingSentence)
+      checkAndUpdatePeriodLengthStatus(existingSentence, getPerformedByUsername(sentence))
 
       entityChangeStatus =
         if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
@@ -284,15 +284,17 @@ class LegacySentenceService(
     }
   }
 
-  private fun copyPeriodLengthsForNewSentence(sentenceUuid: UUID, newSentence: SentenceEntity) {
+  private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()
+
+  private fun copyPeriodLengthsForNewSentence(sentenceUuid: UUID, newSentence: SentenceEntity, performedByUser: String) {
     val newPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
       .distinctBy { it.periodLengthUuid } // Ensure we only copy each unique periodLengthUuid once
       .map { periodLength ->
         periodLength.copy(
           sentenceEntity = newSentence,
-          createdBy = serviceUserService.getUsername(),
+          createdBy = performedByUser,
           createdAt = ZonedDateTime.now(),
-          updatedBy = serviceUserService.getUsername(),
+          updatedBy = performedByUser,
           updatedAt = ZonedDateTime.now(),
         )
       }
@@ -305,13 +307,13 @@ class LegacySentenceService(
     }
   }
 
-  private fun checkAndUpdatePeriodLengthStatus(existingSentence: SentenceEntity) {
+  private fun checkAndUpdatePeriodLengthStatus(existingSentence: SentenceEntity, performedByUser: String) {
     val periodLengths = periodLengthRepository
       .findAllBySentenceEntitySentenceUuidAndStatusIdNot(existingSentence.sentenceUuid)
       .filter { it.statusId != PeriodLengthEntityStatus.from(existingSentence.statusId) }
       .onEach {
         it.statusId = PeriodLengthEntityStatus.from(existingSentence.statusId)
-        it.updatedBy = serviceUserService.getUsername()
+        it.updatedBy = performedByUser
         it.updatedAt = ZonedDateTime.now()
       }
 
@@ -338,27 +340,27 @@ class LegacySentenceService(
   fun get(sentenceUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(sentenceUuid))
 
   @Transactional
-  fun delete(sentenceUuid: UUID): LegacySentenceDeletedResponse? = sentenceRepository.findBySentenceUuid(sentenceUuid)
+  fun delete(sentenceUuid: UUID, performedByUser: String?): LegacySentenceDeletedResponse? = sentenceRepository.findBySentenceUuid(sentenceUuid)
     .filter { it.statusId != SentenceEntityStatus.DELETED }
     .map { sentence ->
-      delete(sentence)
+      delete(sentence, performedByUser ?: serviceUserService.getUsername())
       LegacySentenceDeletedResponse.from(sentence)
     }.firstOrNull()
 
-  fun delete(sentence: SentenceEntity) {
-    sentence.delete(serviceUserService.getUsername())
+  fun delete(sentence: SentenceEntity, performedByUser: String) {
+    sentence.delete(performedByUser)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
     deletePeriodLengths(sentence)
-    deleteRecallSentence(sentence)
+    deleteRecallSentence(sentence, performedByUser)
   }
 
-  private fun deleteRecallSentence(sentence: SentenceEntity) {
+  private fun deleteRecallSentence(sentence: SentenceEntity, performedByUser: String) {
     sentence.recallSentences.forEach {
       val recall = it.recall
 
       val recallHistoryEntity = if (recall.recallSentences.size == 1) {
         val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.DELETED))
-        recall.delete(serviceUserService.getUsername())
+        recall.delete(performedByUser)
         recallHistoryEntity
       } else {
         recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
