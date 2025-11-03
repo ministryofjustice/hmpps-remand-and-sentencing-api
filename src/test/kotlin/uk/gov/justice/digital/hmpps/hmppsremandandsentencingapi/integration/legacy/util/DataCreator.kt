@@ -39,8 +39,8 @@ class DataCreator {
       prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID,
       active: Boolean = true,
       legacyData: CourtCaseLegacyData = courtCaseLegacyData(),
-//      performedByUser: String = "USER1",
-    ): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active, legacyData)
+      performedByUser: String = "USER1",
+    ): LegacyCreateCourtCase = LegacyCreateCourtCase(prisonerId, active, legacyData, performedByUser)
 
     fun courtAppearanceLegacyData(
       postedDate: String = LocalDate.now().format(
@@ -68,7 +68,8 @@ class DataCreator {
       appearanceDate: LocalDate = LocalDate.now(),
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
-    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid)
+      performedByUser: String = "USER1",
+    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid, performedByUser)
 
     fun chargeLegacyData(
       postedDate: String = LocalDate.now().format(
