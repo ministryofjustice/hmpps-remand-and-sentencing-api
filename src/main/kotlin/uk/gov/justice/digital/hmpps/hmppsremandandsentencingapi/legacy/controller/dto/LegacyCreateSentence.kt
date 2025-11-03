@@ -11,4 +11,5 @@ data class LegacyCreateSentence(
   val active: Boolean,
   var legacyData: SentenceLegacyData,
   val returnToCustodyDate: LocalDate? = null,
+  val performedByUser: String?,
 )
