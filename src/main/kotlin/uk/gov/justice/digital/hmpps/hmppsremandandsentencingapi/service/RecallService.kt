@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
@@ -52,7 +53,22 @@ class RecallService(
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
         }
     }
-
+    if (doesRecallRequireUAL(createRecall.revocationDate, createRecall.returnToCustodyDate)) {
+      adjustmentsApiClient.createAdjustments(
+        listOf(
+          AdjustmentDto(
+            id = null,
+            person = recall.prisonerId,
+            adjustmentType = "UNLAWFULLY_AT_LARGE",
+            fromDate = recall.revocationDate?.plusDays(1),
+            toDate = recall.returnToCustodyDate?.minusDays(1),
+            days = null,
+            recallId = recall.recallUuid.toString(),
+            unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+          ),
+        ),
+      )
+    }
     return RecordResponse(
       SaveRecallResponse.from(recall),
       mutableSetOf(
@@ -176,7 +192,7 @@ class RecallService(
         ),
       )
     }
-    if (ualAdjustmentToDelete != null) {
+    if (ualAdjustmentToDelete?.id != null) {
       adjustmentsApiClient.deleteAdjustment(ualAdjustmentToDelete.id)
     }
     return RecordResponse(
