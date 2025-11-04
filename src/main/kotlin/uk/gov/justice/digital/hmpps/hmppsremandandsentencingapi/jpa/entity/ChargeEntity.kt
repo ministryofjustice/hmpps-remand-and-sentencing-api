@@ -108,7 +108,7 @@ class ChargeEntity(
   fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, offenceCode, charge.offenceStartDate, charge.offenceEndDate,
     ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
-    createdAt, charge.performedByUser ?: createdBy, createdPrison, ZonedDateTime.now(), charge.performedByUser ?: createdBy, updatedPrison ?: createdPrison, charge.legacyData,
+    createdAt, createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,

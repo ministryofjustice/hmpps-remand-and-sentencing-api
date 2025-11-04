@@ -129,7 +129,7 @@ class LegacyCourtAppearanceService(
   }
 
   @Transactional
-  fun linkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): EntityChangeStatus {
+  fun linkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID, performedByUser: String?): EntityChangeStatus {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -137,7 +137,7 @@ class LegacyCourtAppearanceService(
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
         existingCharge,
-        serviceUserService.getUsername(),
+        performedByUser ?: serviceUserService.getUsername(),
         null,
       )
       existingCourtAppearance.appearanceCharges.add(appearanceCharge)
