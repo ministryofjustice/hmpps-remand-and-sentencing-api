@@ -33,6 +33,16 @@ class AdjustmentsApiClient(@Qualifier("adjustmentsApiWebClient") private val web
       .block()
   }
 
+  fun updateAdjustment(adjustment: AdjustmentDto) {
+    webClient
+      .put()
+      .uri("/adjustments/${adjustment.id}")
+      .bodyValue(adjustment)
+      .retrieve()
+      .toBodilessEntity()
+      .block()
+  }
+
   fun deleteAdjustment(adjustmentId: String) {
     webClient
       .delete()

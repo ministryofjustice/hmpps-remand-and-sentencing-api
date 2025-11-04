@@ -288,195 +288,198 @@ class RecallIntTests : IntegrationTestBase() {
     val allRecallsForPrisoner = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
     assertThat(allRecallsForPrisoner).containsOnly(recallByUuid) // ensure get all recalls populates fully
 
-    assertThat(recallByUuid).isEqualTo(
-      Recall(
-        recallUuid = uuidOne,
-        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
-        revocationDate = LocalDate.of(2024, 7, 1),
-        returnToCustodyDate = LocalDate.of(2024, 7, 20),
-        inPrisonOnRevocationDate = null,
-        recallType = LR,
-        createdByUsername = "user001",
-        createdAt = recallByUuid.createdAt,
-        createdByPrison = "PRISON1",
-        source = EventSource.DPS,
-        sentences = listOf(
-          Sentence(
-            sentenceUuid = sentenceOneOnCourtCaseOne.sentenceUuid,
-            chargeNumber = "1",
-            periodLengths = listOf(
-              PeriodLength(
-                years = 1,
-                months = null,
-                weeks = null,
-                days = null,
-                periodOrder = "years",
-                periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                legacyData = null,
-                periodLengthUuid = recallByUuid.sentences!![0].periodLengths[0].periodLengthUuid,
+    assertThat(recallByUuid)
+      .usingRecursiveComparison()
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuidOne,
+          prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+          revocationDate = LocalDate.of(2024, 7, 1),
+          returnToCustodyDate = LocalDate.of(2024, 7, 20),
+          inPrisonOnRevocationDate = null,
+          recallType = LR,
+          createdByUsername = "user001",
+          createdAt = recallByUuid.createdAt,
+          createdByPrison = "PRISON1",
+          source = EventSource.DPS,
+          sentences = listOf(
+            Sentence(
+              sentenceUuid = sentenceOneOnCourtCaseOne.sentenceUuid,
+              chargeNumber = "1",
+              periodLengths = listOf(
+                PeriodLength(
+                  years = 1,
+                  months = null,
+                  weeks = null,
+                  days = null,
+                  periodOrder = "years",
+                  periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                  legacyData = null,
+                  periodLengthUuid = recallByUuid.sentences!![0].periodLengths[0].periodLengthUuid,
+                ),
               ),
+              sentenceServeType = "FORTHWITH",
+              sentenceType = SentenceType(
+                sentenceTypeUuid = recallByUuid.sentences[0].sentenceType!!.sentenceTypeUuid,
+                description = "Serious Offence Sec 250 Sentencing Code (U18)",
+                classification = SentenceTypeClassification.STANDARD,
+                hintText = null,
+                displayOrder = 220,
+              ),
+              convictionDate = appearanceDateOne,
+              fineAmount = null,
+              legacyData = null,
+              consecutiveToSentenceUuid = null,
+              hasRecall = true,
             ),
-            sentenceServeType = "FORTHWITH",
-            sentenceType = SentenceType(
-              sentenceTypeUuid = recallByUuid.sentences[0].sentenceType!!.sentenceTypeUuid,
-              description = "Serious Offence Sec 250 Sentencing Code (U18)",
-              classification = SentenceTypeClassification.STANDARD,
-              hintText = null,
-              displayOrder = 220,
+            Sentence(
+              sentenceUuid = sentenceTwoOnCourtCaseOne.sentenceUuid,
+              chargeNumber = "1",
+              periodLengths = listOf(
+                PeriodLength(
+                  years = 1,
+                  months = null,
+                  weeks = null,
+                  days = null,
+                  periodOrder = "years",
+                  periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                  legacyData = null,
+                  periodLengthUuid = recallByUuid.sentences[1].periodLengths[0].periodLengthUuid,
+                ),
+              ),
+              sentenceServeType = "FORTHWITH",
+              sentenceType = SentenceType(
+                sentenceTypeUuid = recallByUuid.sentences[1].sentenceType!!.sentenceTypeUuid,
+                description = "Serious Offence Sec 250 Sentencing Code (U18)",
+                classification = SentenceTypeClassification.STANDARD,
+                hintText = null,
+                displayOrder = 220,
+              ),
+              convictionDate = appearanceDateOne,
+              fineAmount = null,
+              legacyData = null,
+              consecutiveToSentenceUuid = null,
+              hasRecall = true,
             ),
-            convictionDate = appearanceDateOne,
-            fineAmount = null,
-            legacyData = null,
-            consecutiveToSentenceUuid = null,
-            hasRecall = true,
+            Sentence(
+              sentenceUuid = sentenceThreeOnCourtCaseTwo.sentenceUuid,
+              chargeNumber = "1",
+              periodLengths = listOf(
+                PeriodLength(
+                  years = 1,
+                  months = null,
+                  weeks = null,
+                  days = null,
+                  periodOrder = "years",
+                  periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                  legacyData = null,
+                  periodLengthUuid = recallByUuid.sentences[2].periodLengths[0].periodLengthUuid,
+                ),
+              ),
+              sentenceServeType = "FORTHWITH",
+              sentenceType = SentenceType(
+                sentenceTypeUuid = recallByUuid.sentences[2].sentenceType!!.sentenceTypeUuid,
+                description = "Serious Offence Sec 250 Sentencing Code (U18)",
+                classification = SentenceTypeClassification.STANDARD,
+                hintText = null,
+                displayOrder = 220,
+              ),
+              convictionDate = appearanceDateTwo,
+              fineAmount = null,
+              legacyData = null,
+              consecutiveToSentenceUuid = null,
+              hasRecall = true,
+            ),
           ),
-          Sentence(
-            sentenceUuid = sentenceTwoOnCourtCaseOne.sentenceUuid,
-            chargeNumber = "1",
-            periodLengths = listOf(
-              PeriodLength(
-                years = 1,
-                months = null,
-                weeks = null,
-                days = null,
-                periodOrder = "years",
-                periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                legacyData = null,
-                periodLengthUuid = recallByUuid.sentences[1].periodLengths[0].periodLengthUuid,
+          courtCaseIds = listOf(courtCaseOneUuid, courtCaseOneUuid, courtCaseTwoUuid),
+          courtCases = listOf(
+            RecallCourtCaseDetails(
+              courtCaseReference = "CC1",
+              courtCode = "COURT1",
+              sentencingAppearanceDate = appearanceDateOne,
+              sentences = listOf(
+                RecalledSentence(
+                  sentenceUuid = sentenceOneOnCourtCaseOne.sentenceUuid,
+                  offenceCode = "OFF123",
+                  offenceStartDate = LocalDate.of(2025, 2, 3),
+                  offenceEndDate = null,
+                  sentenceDate = appearanceDateOne,
+                  lineNumber = null,
+                  countNumber = "1",
+                  periodLengths = listOf(
+                    PeriodLength(
+                      years = 1,
+                      months = null,
+                      weeks = null,
+                      days = null,
+                      periodOrder = "years",
+                      periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                      legacyData = null,
+                      periodLengthUuid = recallByUuid.sentences[0].periodLengths[0].periodLengthUuid,
+                    ),
+                  ),
+                  sentenceServeType = "FORTHWITH",
+                  sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
+                ),
+                RecalledSentence(
+                  sentenceUuid = sentenceTwoOnCourtCaseOne.sentenceUuid,
+                  offenceCode = "OFF123",
+                  offenceStartDate = LocalDate.of(2025, 3, 4),
+                  offenceEndDate = LocalDate.of(2025, 4, 5),
+                  sentenceDate = appearanceDateOne,
+                  lineNumber = null,
+                  countNumber = "1",
+                  periodLengths = listOf(
+                    PeriodLength(
+                      years = 1,
+                      months = null,
+                      weeks = null,
+                      days = null,
+                      periodOrder = "years",
+                      periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                      legacyData = null,
+                      periodLengthUuid = recallByUuid.sentences[1].periodLengths[0].periodLengthUuid,
+                    ),
+                  ),
+                  sentenceServeType = "FORTHWITH",
+                  sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
+                ),
               ),
             ),
-            sentenceServeType = "FORTHWITH",
-            sentenceType = SentenceType(
-              sentenceTypeUuid = recallByUuid.sentences[1].sentenceType!!.sentenceTypeUuid,
-              description = "Serious Offence Sec 250 Sentencing Code (U18)",
-              classification = SentenceTypeClassification.STANDARD,
-              hintText = null,
-              displayOrder = 220,
-            ),
-            convictionDate = appearanceDateOne,
-            fineAmount = null,
-            legacyData = null,
-            consecutiveToSentenceUuid = null,
-            hasRecall = true,
-          ),
-          Sentence(
-            sentenceUuid = sentenceThreeOnCourtCaseTwo.sentenceUuid,
-            chargeNumber = "1",
-            periodLengths = listOf(
-              PeriodLength(
-                years = 1,
-                months = null,
-                weeks = null,
-                days = null,
-                periodOrder = "years",
-                periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                legacyData = null,
-                periodLengthUuid = recallByUuid.sentences[2].periodLengths[0].periodLengthUuid,
+            RecallCourtCaseDetails(
+              courtCaseReference = "CC2",
+              courtCode = "COURT1",
+              sentencingAppearanceDate = appearanceDateTwo,
+              sentences = listOf(
+                RecalledSentence(
+                  sentenceUuid = sentenceThreeOnCourtCaseTwo.sentenceUuid,
+                  offenceCode = "OFF123",
+                  offenceStartDate = LocalDate.of(2025, 6, 7),
+                  offenceEndDate = null,
+                  sentenceDate = appearanceDateTwo,
+                  lineNumber = null,
+                  countNumber = "1",
+                  periodLengths = listOf(
+                    PeriodLength(
+                      years = 1,
+                      months = null,
+                      weeks = null,
+                      days = null,
+                      periodOrder = "years",
+                      periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                      legacyData = null,
+                      periodLengthUuid = recallByUuid.sentences[2].periodLengths[0].periodLengthUuid,
+                    ),
+                  ),
+                  sentenceServeType = "FORTHWITH",
+                  sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
+                ),
               ),
             ),
-            sentenceServeType = "FORTHWITH",
-            sentenceType = SentenceType(
-              sentenceTypeUuid = recallByUuid.sentences[2].sentenceType!!.sentenceTypeUuid,
-              description = "Serious Offence Sec 250 Sentencing Code (U18)",
-              classification = SentenceTypeClassification.STANDARD,
-              hintText = null,
-              displayOrder = 220,
-            ),
-            convictionDate = appearanceDateTwo,
-            fineAmount = null,
-            legacyData = null,
-            consecutiveToSentenceUuid = null,
-            hasRecall = true,
           ),
         ),
-        courtCaseIds = listOf(courtCaseOneUuid, courtCaseOneUuid, courtCaseTwoUuid),
-        courtCases = listOf(
-          RecallCourtCaseDetails(
-            courtCaseReference = "CC1",
-            courtCode = "COURT1",
-            sentencingAppearanceDate = appearanceDateOne,
-            sentences = listOf(
-              RecalledSentence(
-                sentenceUuid = sentenceOneOnCourtCaseOne.sentenceUuid,
-                offenceCode = "OFF123",
-                offenceStartDate = LocalDate.of(2025, 2, 3),
-                offenceEndDate = null,
-                sentenceDate = appearanceDateOne,
-                lineNumber = null,
-                countNumber = "1",
-                periodLengths = listOf(
-                  PeriodLength(
-                    years = 1,
-                    months = null,
-                    weeks = null,
-                    days = null,
-                    periodOrder = "years",
-                    periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                    legacyData = null,
-                    periodLengthUuid = recallByUuid.sentences[0].periodLengths[0].periodLengthUuid,
-                  ),
-                ),
-                sentenceServeType = "FORTHWITH",
-                sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
-              ),
-              RecalledSentence(
-                sentenceUuid = sentenceTwoOnCourtCaseOne.sentenceUuid,
-                offenceCode = "OFF123",
-                offenceStartDate = LocalDate.of(2025, 3, 4),
-                offenceEndDate = LocalDate.of(2025, 4, 5),
-                sentenceDate = appearanceDateOne,
-                lineNumber = null,
-                countNumber = "1",
-                periodLengths = listOf(
-                  PeriodLength(
-                    years = 1,
-                    months = null,
-                    weeks = null,
-                    days = null,
-                    periodOrder = "years",
-                    periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                    legacyData = null,
-                    periodLengthUuid = recallByUuid.sentences[1].periodLengths[0].periodLengthUuid,
-                  ),
-                ),
-                sentenceServeType = "FORTHWITH",
-                sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
-              ),
-            ),
-          ),
-          RecallCourtCaseDetails(
-            courtCaseReference = "CC2",
-            courtCode = "COURT1",
-            sentencingAppearanceDate = appearanceDateTwo,
-            sentences = listOf(
-              RecalledSentence(
-                sentenceUuid = sentenceThreeOnCourtCaseTwo.sentenceUuid,
-                offenceCode = "OFF123",
-                offenceStartDate = LocalDate.of(2025, 6, 7),
-                offenceEndDate = null,
-                sentenceDate = appearanceDateTwo,
-                lineNumber = null,
-                countNumber = "1",
-                periodLengths = listOf(
-                  PeriodLength(
-                    years = 1,
-                    months = null,
-                    weeks = null,
-                    days = null,
-                    periodOrder = "years",
-                    periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                    legacyData = null,
-                    periodLengthUuid = recallByUuid.sentences[2].periodLengths[0].periodLengthUuid,
-                  ),
-                ),
-                sentenceServeType = "FORTHWITH",
-                sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
-              ),
-            ),
-          ),
-        ),
-      ),
-    )
+      )
   }
 
   @Test
@@ -580,7 +583,7 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `Update a recall`() {
+  fun `Updating a recall with the same UAL does not make any changes to adjustments`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val originalRecall = DpsDataCreator.dpsCreateRecall(
       sentenceIds = listOf(
@@ -590,6 +593,7 @@ class RecallIntTests : IntegrationTestBase() {
     )
     val uuid = createRecall(originalRecall).recallUuid
     purgeQueues()
+    adjustmentsApi.resetRequests()
 
     updateRecall(
       CreateRecall(
@@ -651,6 +655,218 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceOne.sentenceUuid,
       sentenceTwo.sentenceUuid,
     )
+    adjustmentsApi.verifyNoAdjustmentsCreated()
+    adjustmentsApi.verifyNoAdjustmentsUpdated()
+    adjustmentsApi.verifyNoAdjustmentsDeleted()
+  }
+
+  @Test
+  fun `Updating a recall to require UAL when it previously had none creates the adjustment`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = null,
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+    adjustmentsApi.resetRequests()
+
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = LocalDate.of(2024, 1, 13),
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt", "sentences", "courtCaseIds", "courtCases")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuid,
+          prisonerId = originalRecall.prisonerId,
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = LocalDate.of(2024, 1, 13),
+          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          recallType = FTR_14,
+          createdByUsername = originalRecall.createdByUsername,
+          createdByPrison = originalRecall.createdByPrison,
+          createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
+        ),
+      )
+
+    adjustmentsApi.verifyAdjustmentCreated(
+      AdjustmentDto(
+        id = null,
+        person = originalRecall.prisonerId,
+        adjustmentType = "UNLAWFULLY_AT_LARGE",
+        fromDate = LocalDate.of(2024, 1, 2),
+        toDate = LocalDate.of(2024, 1, 12),
+        days = null,
+        recallId = uuid.toString(),
+        unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+      ),
+    )
+    adjustmentsApi.verifyNoAdjustmentsUpdated()
+    adjustmentsApi.verifyNoAdjustmentsDeleted()
+  }
+
+  @Test
+  fun `Updating a recall to no longer require UAL when it previously had some deletes the adjustment`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+      revocationDate = LocalDate.of(2024, 1, 13),
+      returnToCustodyDate = LocalDate.of(2024, 1, 23),
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+    adjustmentsApi.resetRequests()
+    val originalAdjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = originalRecall.prisonerId,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      fromDate = LocalDate.of(2024, 1, 14),
+      toDate = LocalDate.of(2024, 1, 22),
+      days = null,
+      recallId = uuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+
+    adjustmentsApi.stubDeleteAdjustment(originalAdjustment.id!!)
+    adjustmentsApi.stubGetRecallAdjustments(originalRecall.prisonerId, uuid.toString(), listOf(originalAdjustment))
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = null,
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt", "sentences", "courtCaseIds", "courtCases")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuid,
+          prisonerId = originalRecall.prisonerId,
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = null,
+          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          recallType = FTR_14,
+          createdByUsername = originalRecall.createdByUsername,
+          createdByPrison = originalRecall.createdByPrison,
+          createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
+        ),
+      )
+
+    adjustmentsApi.verifyNoAdjustmentsCreated()
+    adjustmentsApi.verifyNoAdjustmentsUpdated()
+    adjustmentsApi.verifyAdjustmentDeleted(originalAdjustment.id)
+  }
+
+  @Test
+  fun `Updating a recall to require different UAL updates the adjustment`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+      revocationDate = LocalDate.of(2024, 1, 13),
+      returnToCustodyDate = LocalDate.of(2024, 1, 23),
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+    adjustmentsApi.resetRequests()
+    val originalAdjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = originalRecall.prisonerId,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      fromDate = LocalDate.of(2024, 1, 14),
+      toDate = LocalDate.of(2024, 1, 22),
+      days = null,
+      recallId = uuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+
+    adjustmentsApi.stubAllowUpdateAdjustments()
+    adjustmentsApi.stubGetRecallAdjustments(originalRecall.prisonerId, uuid.toString(), listOf(originalAdjustment))
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = LocalDate.of(2024, 1, 13),
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt", "sentences", "courtCaseIds", "courtCases")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuid,
+          prisonerId = originalRecall.prisonerId,
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = LocalDate.of(2024, 1, 13),
+          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          recallType = FTR_14,
+          createdByUsername = originalRecall.createdByUsername,
+          createdByPrison = originalRecall.createdByPrison,
+          createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
+        ),
+      )
+
+    adjustmentsApi.verifyNoAdjustmentsCreated()
+    adjustmentsApi.verifyAdjustmentUpdated(
+      originalAdjustment.id!!,
+      AdjustmentDto(
+        id = originalAdjustment.id,
+        person = originalRecall.prisonerId,
+        adjustmentType = "UNLAWFULLY_AT_LARGE",
+        fromDate = LocalDate.of(2024, 1, 2),
+        toDate = LocalDate.of(2024, 1, 12),
+        days = null,
+        recallId = uuid.toString(),
+        unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+      ),
+    )
+    adjustmentsApi.verifyNoAdjustmentsDeleted()
   }
 
   @Test
@@ -843,7 +1059,7 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceIds = listOf(
         sentenceOne.sentenceUuid,
       ),
-      revocationDate = recallOne.revocationDate!!.plusWeeks(4),
+      revocationDate = recallOne.revocationDate.plusWeeks(4),
       returnToCustodyDate = recallOne.returnToCustodyDate!!.plusWeeks(4),
     )
     val recallOneId = createRecall(recallOne).recallUuid
