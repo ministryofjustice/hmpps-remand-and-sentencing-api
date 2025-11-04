@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -105,9 +106,13 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun delete(@PathVariable lifetimeUuid: UUID) {
+  fun delete(
+    @PathVariable lifetimeUuid: UUID,
+    @RequestHeader("performedByUser", required = false)
+    performedByUser: String?,
+  ) {
     legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      legacyCourtAppearanceService.delete(lifetimeUuid)
+      legacyCourtAppearanceService.delete(lifetimeUuid, performedByUser)
       eventService.delete(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
     }
   }
@@ -168,9 +173,14 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun unlinkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID) {
+  fun unlinkAppearanceWithCharge(
+    @PathVariable lifetimeUuid: UUID,
+    @PathVariable chargeLifetimeUuid: UUID,
+    @RequestHeader("performedByUser", required = false)
+    performedByUser: String?,
+  ) {
     legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      val (appearanceChangeStatus, chargeChangeStatus) = legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
+      val (appearanceChangeStatus, chargeChangeStatus) = legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid, performedByUser)
       if (appearanceChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
       }
