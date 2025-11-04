@@ -74,6 +74,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergePerson
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeSentenceId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.ZonedDateTime
 import java.util.*
 
 @Service
@@ -108,7 +109,7 @@ class LegacyPrisonerMergeService(
     val courtCases = courtCaseRepository.findAllByPrisonerId(mergePerson.removedPrisonerNumber)
     val deactivatedCourtCasesMap = mergePerson.casesDeactivated.associateBy { it.dpsCourtCaseUuid }
     val deactivatedSentencesMap = mergePerson.sentencesDeactivated.associateBy { it.dpsSentenceUuid }
-    val trackingData = PrisonerMergeDataTracking(retainedPrisonerNumber, serviceUserService.getUsername())
+    val trackingData = PrisonerMergeDataTracking(retainedPrisonerNumber, mergePerson.performedByUser ?: serviceUserService.getUsername())
     processExistingCourtCases(courtCases, deactivatedCourtCasesMap, trackingData)
     processExistingSentences(courtCases, deactivatedSentencesMap, trackingData)
     processExistingRecalls(mergePerson, trackingData)
@@ -124,6 +125,8 @@ class LegacyPrisonerMergeService(
         val newStatus = if (it.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE
         courtCase.statusId = newStatus
       }
+      courtCase.updatedAt = ZonedDateTime.now()
+      courtCase.updatedBy = trackingData.username
       trackingData.editedCourtCases.add(courtCase)
       trackingData.eventsToEmit.add(
         EventMetadataCreator.courtCaseEventMetadata(
@@ -153,6 +156,8 @@ class LegacyPrisonerMergeService(
             hasChanged = hasChanged || active != sentenceEntity.legacyData?.active
             sentenceEntity.legacyData?.active = active
             if (hasChanged) {
+              sentenceEntity.updatedAt = ZonedDateTime.now()
+              sentenceEntity.updatedBy = trackingData.username
               trackingData.editedSentences.add(sentenceEntity)
               trackingData.eventsToEmit.add(
                 EventMetadataCreator.sentenceEventMetadata(
@@ -182,6 +187,8 @@ class LegacyPrisonerMergeService(
           recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
         }
         recall.prisonerId = trackingData.retainedPrisonerNumber
+        recall.updatedAt = ZonedDateTime.now()
+        recall.updatedBy = trackingData.username
         val sentenceIds = recall.recallSentences.map { it.sentence.sentenceUuid.toString() }
         trackingData.eventsToEmit.add(
           EventMetadataCreator.recallEventMetadata(
