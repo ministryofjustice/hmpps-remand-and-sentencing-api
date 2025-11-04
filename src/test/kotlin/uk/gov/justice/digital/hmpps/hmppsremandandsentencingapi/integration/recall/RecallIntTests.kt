@@ -2,7 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.rec
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.FineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
@@ -14,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
@@ -31,6 +35,9 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 class RecallIntTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var adjustmentsApiClient: AdjustmentsApiClient
 
   @Test
   fun `Create recall and fetch it based on returned UUID`() {
@@ -729,7 +736,7 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `Delete a recall`() {
+  fun `Delete a recall with UAL deletes the adjustment as well`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val recall = DpsDataCreator.dpsCreateRecall(
       sentenceIds = listOf(
@@ -740,6 +747,21 @@ class RecallIntTests : IntegrationTestBase() {
     val createRecall = createRecall(recall)
     purgeQueues()
 
+    val adjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = DpsDataCreator.DEFAULT_PRISONER_ID,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      toDate = LocalDate.of(2024, 1, 1),
+      fromDate = LocalDate.of(2024, 1, 11),
+      days = 10,
+      recallId = createRecall.recallUuid.toString(),
+    )
+    adjustmentsApi.stubGetRecallAdjustments(
+      DpsDataCreator.DEFAULT_PRISONER_ID,
+      createRecall.recallUuid.toString(),
+      listOf(adjustment),
+    )
+    adjustmentsApi.stubDeleteAdjustment(adjustment.id)
     deleteRecall(createRecall.recallUuid)
 
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
@@ -760,6 +782,31 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceOne.sentenceUuid,
       sentenceTwo.sentenceUuid,
     )
+    adjustmentsApi.verifyAdjustmentDeleted(adjustment.id)
+  }
+
+  @Test
+  fun `Delete a recall without UAL`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val recall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+    )
+    val createRecall = createRecall(recall)
+    purgeQueues()
+
+    adjustmentsApi.stubGetRecallAdjustments(
+      DpsDataCreator.DEFAULT_PRISONER_ID,
+      createRecall.recallUuid.toString(),
+      emptyList(),
+    )
+    deleteRecall(createRecall.recallUuid)
+
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(recalls).isEmpty()
   }
 
   @Test
@@ -781,6 +828,12 @@ class RecallIntTests : IntegrationTestBase() {
     val recallOneId = createRecall(recallOne).recallUuid
     val recallTwoId = createRecall(recallTwo).recallUuid
     purgeQueues()
+
+    adjustmentsApi.stubGetRecallAdjustments(
+      DpsDataCreator.DEFAULT_PRISONER_ID,
+      recallTwoId.toString(),
+      emptyList(),
+    )
 
     deleteRecall(recallTwoId)
 

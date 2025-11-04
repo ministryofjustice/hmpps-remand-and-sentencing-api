@@ -1,0 +1,3 @@
+INSERT INTO sentence_type (sentence_type_uuid, description, min_age_inclusive, max_age_exclusive, min_date_inclusive, max_date_exclusive, classification, hint_text, nomis_cja_code, nomis_sentence_calc_type, display_order, status, min_offence_date_inclusive, max_offence_date_exclusive, is_recallable) VALUES
+('4f8c2a67-3b5d-4a9f-bd2a-7d0e39c8c432', 'Imprisonment in Default of Fine', null, null, null, '01/12/2020', 'FINE', null, '2003', 'A/FINE', 112, 'ACTIVE', null, null, false),
+('b7e1f0a3-9c24-4db8-8f62-5a1d0b71c9de', 'Imprisonment in Default of Fine (1991 Act)', null, null, null, '01/12/2020', 'FINE', null, '1991', 'A/FINE', 114, 'ACTIVE', null, null, false);
