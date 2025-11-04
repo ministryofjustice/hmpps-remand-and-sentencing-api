@@ -2,10 +2,13 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.PrisonerMergeDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
@@ -15,6 +18,9 @@ import java.util.*
 import java.util.regex.Pattern
 
 class PrisonerMergeCreateTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var adjustmentsApiClient: AdjustmentsApiClient
 
   @Test
   fun `moved all records to new prisoner number`() {
@@ -144,6 +150,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
 
   @Test
   fun `should merge recalls`() {
+    adjustmentsApi.stubAllowCreateAdjustments()
     val removedPrisonerNumber = "RCLMER1"
     val retainedPrisonerNumber = "RCLMER2"
 
@@ -185,8 +192,8 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       createdByUsername = "username1",
       returnToCustodyDate = returnToCustodyDate,
       sentenceIds = listOf(
-        sentenceOne.sentenceUuid!!,
-        sentenceTwo.sentenceUuid!!,
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
       ),
     )
 

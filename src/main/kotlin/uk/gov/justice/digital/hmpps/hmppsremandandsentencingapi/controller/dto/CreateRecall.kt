@@ -7,7 +7,7 @@ import java.util.UUID
 
 data class CreateRecall(
   val prisonerId: String,
-  val revocationDate: LocalDate? = null,
+  val revocationDate: LocalDate,
   val returnToCustodyDate: LocalDate? = null,
   val inPrisonOnRevocationDate: Boolean? = null,
   val recallTypeCode: RecallType,

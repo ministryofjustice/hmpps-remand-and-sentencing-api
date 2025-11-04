@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
+import java.time.LocalDate
 
 class MoveBookingTests : IntegrationTestBase() {
 
@@ -50,6 +51,7 @@ class MoveBookingTests : IntegrationTestBase() {
 
     val (recallUuid) = createRecall(
       CreateRecall(
+        revocationDate = LocalDate.now(),
         prisonerId = DEFAULT_PRISONER_ID,
         recallTypeCode = RecallType.FTR_14,
         createdByUsername = "integration-test",
