@@ -1,0 +1,2 @@
+INSERT INTO charge_outcome (outcome_name, outcome_uuid, nomis_code, outcome_type, display_order, disposition_code, status)
+VALUES('Community order', 'c3a0e1a2-5a7c-4a56-8f3f-2a4d8c78d611', '1116', 'NON_CUSTODIAL', 2070, 'FINAL', 'ACTIVE');
