@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
@@ -9,6 +10,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.delete
 import com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
+import java.util.*
 
 class AdjustmentsApiExtension :
   BeforeAllCallback,
@@ -45,7 +49,9 @@ class AdjustmentsApiExtension :
 class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().port(WIREMOCK_PORT).notifier(ConsoleNotifier(false))) {
   companion object {
     private const val WIREMOCK_PORT = 8552
-    private val OBJECT_MAPPER: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+    private val OBJECT_MAPPER: ObjectMapper = jacksonObjectMapper()
+      .registerModule(JavaTimeModule())
+      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
   }
 
   fun stubGetRecallAdjustments(
@@ -72,4 +78,31 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
   fun verifyAdjustmentDeleted(adjustmentId: String) {
     verify(deleteRequestedFor(urlPathEqualTo("/adjustments/$adjustmentId")))
   }
+
+  fun stubAllowCreateAdjustments(): StubMapping = stubFor(
+    post("/adjustments")
+      .willReturn(
+        aResponse().withStatus(201)
+          .withBody(OBJECT_MAPPER.writeValueAsString(StubAdjustmentCreatedResponse(listOf(UUID.randomUUID())))),
+      ),
+  )
+
+  fun verifyAdjustmentCreated(adjustment: AdjustmentDto) {
+    verify(
+      postRequestedFor(urlPathEqualTo("/adjustments")).withRequestBody(
+        equalTo(
+          OBJECT_MAPPER.writeValueAsString(listOf(adjustment)),
+        ),
+      ),
+    )
+  }
+
+  fun verifyNoAdjustmentsCreated() {
+    verify(
+      0,
+      postRequestedFor(urlPathEqualTo("/adjustments")),
+    )
+  }
+
+  private data class StubAdjustmentCreatedResponse(val adjustmentIds: List<UUID>)
 }

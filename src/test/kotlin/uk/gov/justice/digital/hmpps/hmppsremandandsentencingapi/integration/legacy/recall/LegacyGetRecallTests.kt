@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
@@ -9,12 +10,13 @@ class LegacyGetRecallTests : IntegrationTestBase() {
 
   @Test
   fun `get recall by uuid`() {
+    adjustmentsApi.stubAllowCreateAdjustments()
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val recall = DpsDataCreator.dpsCreateRecall(
       createdByUsername = "username1",
       sentenceIds = listOf(
-        sentenceOne.sentenceUuid!!,
-        sentenceTwo.sentenceUuid!!,
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
       ),
     )
     val createRecall = createRecall(recall)

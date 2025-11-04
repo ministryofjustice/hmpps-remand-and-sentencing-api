@@ -23,6 +23,16 @@ class AdjustmentsApiClient(@Qualifier("adjustmentsApiWebClient") private val web
     .apply { require(size <= 1) { "Received more than one adjustment for a recall. Should be impossible." } }
     .firstOrNull()
 
+  fun createAdjustments(adjustments: List<AdjustmentDto>) {
+    webClient
+      .post()
+      .uri("/adjustments")
+      .bodyValue(adjustments)
+      .retrieve()
+      .toBodilessEntity()
+      .block()
+  }
+
   fun deleteAdjustment(adjustmentId: String) {
     webClient
       .delete()

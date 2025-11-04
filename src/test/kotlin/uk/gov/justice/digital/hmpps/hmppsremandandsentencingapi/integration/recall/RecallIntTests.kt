@@ -1,11 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.recall
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.FineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
@@ -36,15 +36,17 @@ import java.util.*
 
 class RecallIntTests : IntegrationTestBase() {
 
-  @Autowired
-  private lateinit var adjustmentsApiClient: AdjustmentsApiClient
+  @BeforeEach
+  fun setUp() {
+    adjustmentsApi.stubAllowCreateAdjustments()
+  }
 
   @Test
-  fun `Create recall and fetch it based on returned UUID`() {
+  fun `Create recall with UAL and fetch it based on returned UUID`() {
     val recall = CreateRecall(
       prisonerId = "A12345B",
       revocationDate = LocalDate.of(2024, 1, 2),
-      returnToCustodyDate = LocalDate.of(2024, 2, 3),
+      returnToCustodyDate = LocalDate.of(2024, 1, 13),
       recallTypeCode = FTR_14,
       createdByUsername = "user001",
       createdByPrison = "PRI",
@@ -61,7 +63,7 @@ class RecallIntTests : IntegrationTestBase() {
           recallUuid = createRecall.recallUuid,
           prisonerId = "A12345B",
           revocationDate = LocalDate.of(2024, 1, 2),
-          returnToCustodyDate = LocalDate.of(2024, 2, 3),
+          returnToCustodyDate = LocalDate.of(2024, 1, 13),
           inPrisonOnRevocationDate = null,
           recallType = FTR_14,
           createdByUsername = "user001",
@@ -73,13 +75,26 @@ class RecallIntTests : IntegrationTestBase() {
       )
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+
+    adjustmentsApi.verifyAdjustmentCreated(
+      AdjustmentDto(
+        id = null,
+        person = "A12345B",
+        adjustmentType = "UNLAWFULLY_AT_LARGE",
+        fromDate = LocalDate.of(2024, 1, 3),
+        toDate = LocalDate.of(2024, 1, 12),
+        days = null,
+        recallId = createRecall.recallUuid.toString(),
+        unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+      ),
+    )
   }
 
   @Test
-  fun `Create recall with no dates and fetch it based on returned UUID`() {
+  fun `Create recall with no UAL`() {
     val recall = CreateRecall(
       prisonerId = "A12345B",
-      revocationDate = null,
+      revocationDate = LocalDate.of(2024, 1, 2),
       returnToCustodyDate = null,
       recallTypeCode = FTR_14,
       createdByUsername = "user001",
@@ -96,8 +111,8 @@ class RecallIntTests : IntegrationTestBase() {
         Recall(
           recallUuid = createRecall.recallUuid,
           prisonerId = "A12345B",
-          revocationDate = null,
-          returnToCustodyDate = null,
+          revocationDate = LocalDate.of(2024, 1, 2),
+          null,
           inPrisonOnRevocationDate = null,
           recallType = FTR_14,
           createdByUsername = "user001",
@@ -109,6 +124,8 @@ class RecallIntTests : IntegrationTestBase() {
       )
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.inserted")
+
+    adjustmentsApi.verifyNoAdjustmentsCreated()
   }
 
   @Test
@@ -755,13 +772,14 @@ class RecallIntTests : IntegrationTestBase() {
       fromDate = LocalDate.of(2024, 1, 11),
       days = 10,
       recallId = createRecall.recallUuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
     )
     adjustmentsApi.stubGetRecallAdjustments(
       DpsDataCreator.DEFAULT_PRISONER_ID,
       createRecall.recallUuid.toString(),
       listOf(adjustment),
     )
-    adjustmentsApi.stubDeleteAdjustment(adjustment.id)
+    adjustmentsApi.stubDeleteAdjustment(adjustment.id!!)
     deleteRecall(createRecall.recallUuid)
 
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)

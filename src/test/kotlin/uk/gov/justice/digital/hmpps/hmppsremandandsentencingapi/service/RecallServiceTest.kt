@@ -6,6 +6,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -73,6 +74,7 @@ class RecallServiceTest {
       fromDate = LocalDate.of(2024, 1, 11),
       days = 10,
       recallId = recallUuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
     )
     every {
       adjustmentsApiClient.getRecallAdjustment(
@@ -83,7 +85,7 @@ class RecallServiceTest {
 
     service.deleteRecall(recallUuid)
 
-    verify { adjustmentsApiClient.deleteAdjustment(adjustment.id) }
+    verify { adjustmentsApiClient.deleteAdjustment(adjustment.id!!) }
   }
 
   @Test
