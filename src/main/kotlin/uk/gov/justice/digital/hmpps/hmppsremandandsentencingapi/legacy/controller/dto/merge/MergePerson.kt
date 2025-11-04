@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controll
 
 data class MergePerson(
   val removedPrisonerNumber: String,
+  val performedByUser: String?,
   val casesCreated: List<MergeCreateCourtCase>,
   val casesDeactivated: List<DeactivatedCourtCase>,
   val sentencesDeactivated: List<DeactivatedSentence>,

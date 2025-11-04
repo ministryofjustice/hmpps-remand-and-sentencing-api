@@ -31,10 +31,11 @@ class PrisonerMergeDataCreator {
 
     fun mergePerson(
       removedPrisonerNumber: String = "PRI123",
+      performedByUser: String? = null,
       casesCreated: List<MergeCreateCourtCase> = listOf(mergeCreateCourtCase()),
       casesDeactivated: List<DeactivatedCourtCase> = listOf(),
       sentencesDeactivated: List<DeactivatedSentence> = listOf(),
-    ): MergePerson = MergePerson(removedPrisonerNumber, casesCreated, casesDeactivated, sentencesDeactivated)
+    ): MergePerson = MergePerson(removedPrisonerNumber, performedByUser, casesCreated, casesDeactivated, sentencesDeactivated)
 
     fun deactivatedCourtCase(
       dpsCourtCaseUuid: String = "",

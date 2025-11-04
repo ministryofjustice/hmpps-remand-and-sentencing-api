@@ -108,7 +108,7 @@ class LegacyPrisonerMergeService(
     val courtCases = courtCaseRepository.findAllByPrisonerId(mergePerson.removedPrisonerNumber)
     val deactivatedCourtCasesMap = mergePerson.casesDeactivated.associateBy { it.dpsCourtCaseUuid }
     val deactivatedSentencesMap = mergePerson.sentencesDeactivated.associateBy { it.dpsSentenceUuid }
-    val trackingData = PrisonerMergeDataTracking(retainedPrisonerNumber, serviceUserService.getUsername())
+    val trackingData = PrisonerMergeDataTracking(retainedPrisonerNumber, mergePerson.performedByUser ?: serviceUserService.getUsername())
     processExistingCourtCases(courtCases, deactivatedCourtCasesMap, trackingData)
     processExistingSentences(courtCases, deactivatedSentencesMap, trackingData)
     processExistingRecalls(mergePerson, trackingData)
