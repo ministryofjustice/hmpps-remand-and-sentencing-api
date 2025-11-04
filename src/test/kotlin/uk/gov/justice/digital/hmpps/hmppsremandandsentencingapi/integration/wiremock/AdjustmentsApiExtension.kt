@@ -12,7 +12,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.put
+import com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
@@ -97,10 +100,39 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
     )
   }
 
+  fun stubAllowUpdateAdjustments(): StubMapping = stubFor(
+    put(urlPathMatching("/adjustments/.+"))
+      .willReturn(aResponse().withStatus(200)),
+  )
+
+  fun verifyAdjustmentUpdated(adjustmentId: String, updatedAdjustment: AdjustmentDto) {
+    verify(
+      putRequestedFor(urlPathEqualTo("/adjustments/$adjustmentId")).withRequestBody(
+        equalTo(
+          OBJECT_MAPPER.writeValueAsString(updatedAdjustment),
+        ),
+      ),
+    )
+  }
+
   fun verifyNoAdjustmentsCreated() {
     verify(
       0,
       postRequestedFor(urlPathEqualTo("/adjustments")),
+    )
+  }
+
+  fun verifyNoAdjustmentsUpdated() {
+    verify(
+      0,
+      putRequestedFor(urlPathMatching("/adjustments/.+")),
+    )
+  }
+
+  fun verifyNoAdjustmentsDeleted() {
+    verify(
+      0,
+      deleteRequestedFor(urlPathMatching("/adjustments/.+")),
     )
   }
 

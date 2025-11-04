@@ -580,7 +580,7 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `Update a recall`() {
+  fun `Updating a recall with the same UAL does not make any changes to adjustments`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val originalRecall = DpsDataCreator.dpsCreateRecall(
       sentenceIds = listOf(
@@ -590,6 +590,7 @@ class RecallIntTests : IntegrationTestBase() {
     )
     val uuid = createRecall(originalRecall).recallUuid
     purgeQueues()
+    adjustmentsApi.resetRequests()
 
     updateRecall(
       CreateRecall(
@@ -651,6 +652,218 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceOne.sentenceUuid,
       sentenceTwo.sentenceUuid,
     )
+    adjustmentsApi.verifyNoAdjustmentsCreated()
+    adjustmentsApi.verifyNoAdjustmentsUpdated()
+    adjustmentsApi.verifyNoAdjustmentsDeleted()
+  }
+
+  @Test
+  fun `Updating a recall to require UAL when it previously had none creates the adjustment`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = null,
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+    adjustmentsApi.resetRequests()
+
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = LocalDate.of(2024, 1, 13),
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt", "sentences", "courtCaseIds", "courtCases")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuid,
+          prisonerId = originalRecall.prisonerId,
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = LocalDate.of(2024, 1, 13),
+          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          recallType = FTR_14,
+          createdByUsername = originalRecall.createdByUsername,
+          createdByPrison = originalRecall.createdByPrison,
+          createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
+        ),
+      )
+
+    adjustmentsApi.verifyAdjustmentCreated(
+      AdjustmentDto(
+        id = null,
+        person = originalRecall.prisonerId,
+        adjustmentType = "UNLAWFULLY_AT_LARGE",
+        fromDate = LocalDate.of(2024, 1, 2),
+        toDate = LocalDate.of(2024, 1, 12),
+        days = null,
+        recallId = uuid.toString(),
+        unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+      ),
+    )
+    adjustmentsApi.verifyNoAdjustmentsUpdated()
+    adjustmentsApi.verifyNoAdjustmentsDeleted()
+  }
+
+  @Test
+  fun `Updating a recall to no longer require UAL when it previously had some deletes the adjustment`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+      revocationDate = LocalDate.of(2024, 1, 13),
+      returnToCustodyDate = LocalDate.of(2024, 1, 23),
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+    adjustmentsApi.resetRequests()
+    val originalAdjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = originalRecall.prisonerId,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      fromDate = LocalDate.of(2024, 1, 14),
+      toDate = LocalDate.of(2024, 1, 22),
+      days = null,
+      recallId = uuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+
+    adjustmentsApi.stubDeleteAdjustment(originalAdjustment.id!!)
+    adjustmentsApi.stubGetRecallAdjustments(originalRecall.prisonerId, uuid.toString(), listOf(originalAdjustment))
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = null,
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt", "sentences", "courtCaseIds", "courtCases")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuid,
+          prisonerId = originalRecall.prisonerId,
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = null,
+          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          recallType = FTR_14,
+          createdByUsername = originalRecall.createdByUsername,
+          createdByPrison = originalRecall.createdByPrison,
+          createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
+        ),
+      )
+
+    adjustmentsApi.verifyNoAdjustmentsCreated()
+    adjustmentsApi.verifyNoAdjustmentsUpdated()
+    adjustmentsApi.verifyAdjustmentDeleted(originalAdjustment.id)
+  }
+
+  @Test
+  fun `Updating a recall to require different UAL updates the adjustment`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+      revocationDate = LocalDate.of(2024, 1, 13),
+      returnToCustodyDate = LocalDate.of(2024, 1, 23),
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+    adjustmentsApi.resetRequests()
+    val originalAdjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = originalRecall.prisonerId,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      fromDate = LocalDate.of(2024, 1, 14),
+      toDate = LocalDate.of(2024, 1, 22),
+      days = null,
+      recallId = uuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+
+    adjustmentsApi.stubAllowUpdateAdjustments()
+    adjustmentsApi.stubGetRecallAdjustments(originalRecall.prisonerId, uuid.toString(), listOf(originalAdjustment))
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = LocalDate.of(2024, 1, 13),
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+
+    assertThat(savedRecall)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt", "sentences", "courtCaseIds", "courtCases")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = uuid,
+          prisonerId = originalRecall.prisonerId,
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = LocalDate.of(2024, 1, 13),
+          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          recallType = FTR_14,
+          createdByUsername = originalRecall.createdByUsername,
+          createdByPrison = originalRecall.createdByPrison,
+          createdAt = ZonedDateTime.now(),
+          source = EventSource.DPS,
+        ),
+      )
+
+    adjustmentsApi.verifyNoAdjustmentsCreated()
+    adjustmentsApi.verifyAdjustmentUpdated(
+      originalAdjustment.id!!,
+      AdjustmentDto(
+        id = originalAdjustment.id,
+        person = originalRecall.prisonerId,
+        adjustmentType = "UNLAWFULLY_AT_LARGE",
+        fromDate = LocalDate.of(2024, 1, 2),
+        toDate = LocalDate.of(2024, 1, 12),
+        days = null,
+        recallId = uuid.toString(),
+        unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+      ),
+    )
+    adjustmentsApi.verifyNoAdjustmentsDeleted()
   }
 
   @Test
@@ -843,7 +1056,7 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceIds = listOf(
         sentenceOne.sentenceUuid,
       ),
-      revocationDate = recallOne.revocationDate!!.plusWeeks(4),
+      revocationDate = recallOne.revocationDate.plusWeeks(4),
       returnToCustodyDate = recallOne.returnToCustodyDate!!.plusWeeks(4),
     )
     val recallOneId = createRecall(recallOne).recallUuid

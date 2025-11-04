@@ -129,7 +129,7 @@ class DpsDataCreator {
     fun dpsCreateRecall(
       prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID,
       revocationDate: LocalDate = LocalDate.of(2024, 1, 2),
-      returnToCustodyDate: LocalDate = LocalDate.of(2024, 2, 3),
+      returnToCustodyDate: LocalDate? = LocalDate.of(2024, 2, 3),
       inPrisonOnRevocationDate: Boolean? = null,
       recallTypeCode: RecallType = FTR_14,
       createdByUsername: String = "user001",

@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -56,15 +57,11 @@ class RecallService(
     if (doesRecallRequireUAL(createRecall.revocationDate, createRecall.returnToCustodyDate)) {
       adjustmentsApiClient.createAdjustments(
         listOf(
-          AdjustmentDto(
-            id = null,
-            person = recall.prisonerId,
-            adjustmentType = "UNLAWFULLY_AT_LARGE",
-            fromDate = recall.revocationDate!!.plusDays(1),
-            toDate = recall.returnToCustodyDate!!.minusDays(1),
-            days = null,
-            recallId = recall.recallUuid.toString(),
-            unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+          createUalDtoForRecall(
+            recall.prisonerId,
+            recall.revocationDate!!,
+            recall.returnToCustodyDate!!,
+            recall.recallUuid,
           ),
         ),
       )
@@ -91,6 +88,9 @@ class RecallService(
     return if (recallToUpdate == null) {
       createRecall(recall, recallUuid)
     } else {
+      val originalRevocationDate = requireNotNull(recallToUpdate.revocationDate) { "Can only update DPS recall which requires revocation date" }
+      val originalRTCDate = recallToUpdate.returnToCustodyDate
+
       val recallHistoryEntity =
         recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, RecallEntityStatus.EDITED))
       recallToUpdate.recallSentences.forEach {
@@ -123,6 +123,14 @@ class RecallService(
         updatedPrison = recall.createdByPrison
       }
       val savedRecall = recallRepository.save(recallToUpdate)
+      updateAdjustmentsIfRequired(
+        recallToUpdate.recallUuid,
+        recallToUpdate.prisonerId,
+        originalRevocationDate,
+        originalRTCDate,
+        recall.revocationDate,
+        recall.returnToCustodyDate,
+      )
 
       return RecordResponse(
         SaveRecallResponse.from(savedRecall),
@@ -137,6 +145,28 @@ class RecallService(
           ),
         ),
       )
+    }
+  }
+
+  private fun updateAdjustmentsIfRequired(
+    recallUuid: UUID,
+    prisonerId: String,
+    originalRevocationDate: LocalDate,
+    originalRTCDate: LocalDate?,
+    newRevocationDate: LocalDate,
+    newRTCDate: LocalDate?,
+  ) {
+    val originalRequiresAdjustment = doesRecallRequireUAL(originalRevocationDate, originalRTCDate)
+    val newRequiresAdjustment = doesRecallRequireUAL(newRevocationDate, newRTCDate)
+    if (originalRequiresAdjustment && !newRequiresAdjustment) {
+      adjustmentsApiClient.getRecallAdjustment(prisonerId, recallUuid)?.id?.let {
+        adjustmentsApiClient.deleteAdjustment(it)
+      }
+    } else if (!originalRequiresAdjustment && newRequiresAdjustment) {
+      adjustmentsApiClient.createAdjustments(listOf(createUalDtoForRecall(prisonerId, newRevocationDate, newRTCDate!!, recallUuid)))
+    } else if (originalRequiresAdjustment && (originalRevocationDate != newRevocationDate || originalRTCDate != newRTCDate)) {
+      val originalAdjustment = requireNotNull(adjustmentsApiClient.getRecallAdjustment(prisonerId, recallUuid)) { "Original adjustment is missing" }
+      adjustmentsApiClient.updateAdjustment(createUalDtoForRecall(prisonerId, newRevocationDate, newRTCDate!!, recallUuid).copy(id = originalAdjustment.id))
     }
   }
 
@@ -229,4 +259,20 @@ class RecallService(
     val recallSentences = recallSentenceRepository.findByRecallId(it.id).orEmpty()
     Recall.from(it, recallSentences)
   }
+
+  private fun createUalDtoForRecall(
+    prisonerId: String,
+    revocationDate: LocalDate,
+    rtcDate: LocalDate,
+    recallUuid: UUID,
+  ): AdjustmentDto = AdjustmentDto(
+    id = null,
+    person = prisonerId,
+    adjustmentType = "UNLAWFULLY_AT_LARGE",
+    fromDate = revocationDate.plusDays(1),
+    toDate = rtcDate.minusDays(1),
+    days = null,
+    recallId = recallUuid.toString(),
+    unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+  )
 }
