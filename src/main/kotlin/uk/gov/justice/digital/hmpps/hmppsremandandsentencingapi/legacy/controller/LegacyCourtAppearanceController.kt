@@ -127,7 +127,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   )
   fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge): ResponseEntity<Void> {
     legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
+      val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid, updateCharge.performedByUser)
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
       }
