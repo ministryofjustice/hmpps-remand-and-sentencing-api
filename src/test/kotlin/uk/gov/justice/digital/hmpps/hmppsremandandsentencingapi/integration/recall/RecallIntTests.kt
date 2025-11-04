@@ -510,70 +510,73 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(recalls).hasSize(1)
 
     val theRecall = recalls[0]
-    assertThat(theRecall).isEqualTo(
-      Recall(
-        recallUuid = theRecall.recallUuid,
-        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
-        revocationDate = null,
-        returnToCustodyDate = LocalDate.of(2023, 1, 1),
-        inPrisonOnRevocationDate = null,
-        recallType = FTR_28,
-        createdByUsername = "SOME_USER",
-        createdAt = theRecall.createdAt,
-        createdByPrison = null,
-        source = EventSource.NOMIS,
-        sentences = listOf(
-          Sentence(
-            sentenceUuid = response.lifetimeUuid,
-            chargeNumber = null,
-            periodLengths = emptyList(),
-            sentenceServeType = "CONCURRENT",
-            sentenceType = SentenceType(
-              sentenceTypeUuid = theRecall.sentences!![0].sentenceType!!.sentenceTypeUuid,
-              description = "Unknown pre-recall sentence",
-              classification = SentenceTypeClassification.LEGACY_RECALL,
-              hintText = null,
-              displayOrder = 0,
+    assertThat(theRecall)
+      .usingRecursiveComparison()
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        Recall(
+          recallUuid = theRecall.recallUuid,
+          prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+          revocationDate = null,
+          returnToCustodyDate = LocalDate.of(2023, 1, 1),
+          inPrisonOnRevocationDate = null,
+          recallType = FTR_28,
+          createdByUsername = "SOME_USER",
+          createdAt = theRecall.createdAt,
+          createdByPrison = null,
+          source = EventSource.NOMIS,
+          sentences = listOf(
+            Sentence(
+              sentenceUuid = response.lifetimeUuid,
+              chargeNumber = null,
+              periodLengths = emptyList(),
+              sentenceServeType = "CONCURRENT",
+              sentenceType = SentenceType(
+                sentenceTypeUuid = theRecall.sentences!![0].sentenceType!!.sentenceTypeUuid,
+                description = "Unknown pre-recall sentence",
+                classification = SentenceTypeClassification.LEGACY_RECALL,
+                hintText = null,
+                displayOrder = 0,
+              ),
+              convictionDate = null,
+              fineAmount = FineAmount(fineAmount = BigDecimal("10.00")),
+              legacyData = SentenceLegacyData(
+                sentenceCalcType = null,
+                sentenceCategory = null,
+                sentenceTypeDesc = null,
+                postedDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
+                active = true,
+                nomisLineReference = "4",
+                bookingId = 1,
+              ),
+              consecutiveToSentenceUuid = null,
+              hasRecall = true,
             ),
-            convictionDate = null,
-            fineAmount = FineAmount(fineAmount = BigDecimal("10.00")),
-            legacyData = SentenceLegacyData(
-              sentenceCalcType = null,
-              sentenceCategory = null,
-              sentenceTypeDesc = null,
-              postedDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
-              active = true,
-              nomisLineReference = "4",
-              bookingId = 1,
-            ),
-            consecutiveToSentenceUuid = null,
-            hasRecall = true,
           ),
-        ),
-        courtCaseIds = listOf(response.courtCaseId),
-        courtCases = listOf(
-          RecallCourtCaseDetails(
-            courtCaseReference = null,
-            courtCode = null,
-            sentencingAppearanceDate = null,
-            sentences = listOf(
-              RecalledSentence(
-                sentenceUuid = response.lifetimeUuid,
-                offenceCode = "OFF1",
-                offenceStartDate = LocalDate.of(2025, 6, 7),
-                offenceEndDate = null,
-                sentenceDate = null,
-                lineNumber = "4",
-                countNumber = null,
-                periodLengths = emptyList(),
-                sentenceServeType = "CONCURRENT",
-                sentenceTypeDescription = "Unknown pre-recall sentence",
+          courtCaseIds = listOf(response.courtCaseId),
+          courtCases = listOf(
+            RecallCourtCaseDetails(
+              courtCaseReference = null,
+              courtCode = null,
+              sentencingAppearanceDate = null,
+              sentences = listOf(
+                RecalledSentence(
+                  sentenceUuid = response.lifetimeUuid,
+                  offenceCode = "OFF1",
+                  offenceStartDate = LocalDate.of(2025, 6, 7),
+                  offenceEndDate = null,
+                  sentenceDate = null,
+                  lineNumber = "4",
+                  countNumber = null,
+                  periodLengths = emptyList(),
+                  sentenceServeType = "CONCURRENT",
+                  sentenceTypeDescription = "Unknown pre-recall sentence",
+                ),
               ),
             ),
           ),
         ),
-      ),
-    )
+      )
   }
 
   @Test
