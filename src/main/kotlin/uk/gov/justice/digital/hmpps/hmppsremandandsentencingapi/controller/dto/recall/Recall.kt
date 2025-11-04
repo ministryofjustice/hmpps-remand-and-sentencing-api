@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -25,9 +26,10 @@ data class Recall(
   val sentences: List<Sentence>? = emptyList(),
   val courtCaseIds: List<String>? = emptyList(),
   val courtCases: List<RecallCourtCaseDetails> = emptyList(),
+  val ual: RecallUALAdjustment? = null,
 ) {
   companion object {
-    fun from(recall: RecallEntity, sentences: List<RecallSentenceEntity>): Recall = Recall(
+    fun from(recall: RecallEntity, sentences: List<RecallSentenceEntity>, ualAdjustment: AdjustmentDto?): Recall = Recall(
       recallUuid = recall.recallUuid,
       prisonerId = recall.prisonerId,
       revocationDate = recall.revocationDate,
@@ -70,6 +72,7 @@ data class Recall(
             },
           )
         },
+      ual = ualAdjustment?.let { RecallUALAdjustment(it.id!!, it.days!!) },
     )
 
     private fun createRecallCourtCaseDetailsForGrouping(recallSentence: RecallSentenceEntity): RecallCourtCaseDetails {

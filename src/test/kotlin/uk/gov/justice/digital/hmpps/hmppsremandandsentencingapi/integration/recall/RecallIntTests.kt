@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallCourtCaseDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallUALAdjustment
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecalledSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -39,6 +40,7 @@ class RecallIntTests : IntegrationTestBase() {
   @BeforeEach
   fun setUp() {
     adjustmentsApi.stubAllowCreateAdjustments()
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
   }
 
   @Test
@@ -53,8 +55,26 @@ class RecallIntTests : IntegrationTestBase() {
     )
 
     val createRecall = createRecall(recall)
-    val actualRecall = getRecallByUUID(createRecall.recallUuid)
 
+    val ualAdjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = "A12345B",
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      fromDate = LocalDate.of(2024, 1, 14),
+      toDate = LocalDate.of(2024, 1, 22),
+      days = 9,
+      recallId = createRecall.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+    adjustmentsApi.stubGetRecallAdjustments(
+      "A12345B",
+      createRecall.recallUuid.toString(),
+      listOf(
+        ualAdjustment,
+      ),
+    )
+
+    val actualRecall = getRecallByUUID(createRecall.recallUuid)
     assertThat(actualRecall)
       .usingRecursiveComparison()
       .ignoringFields("createdAt")
@@ -71,6 +91,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = "PRI",
           source = EventSource.DPS,
           sentences = emptyList(),
+          ual = RecallUALAdjustment(ualAdjustment.id!!, 9),
         ),
       )
     val messages = getMessages(1)
@@ -173,7 +194,7 @@ class RecallIntTests : IntegrationTestBase() {
     val (sentenceOne, _) = createCourtCaseTwoSentences()
     val recallOne = DpsDataCreator.dpsCreateRecall(
       revocationDate = LocalDate.of(2024, 7, 1),
-      returnToCustodyDate = LocalDate.of(2024, 7, 1),
+      returnToCustodyDate = null,
       recallTypeCode = LR,
       sentenceIds = listOf(
         sentenceOne.sentenceUuid,
@@ -190,6 +211,29 @@ class RecallIntTests : IntegrationTestBase() {
     )
     val uuidTwo = createRecall(recallTwo).recallUuid
 
+    val adjustmentForRecall2 = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = DpsDataCreator.DEFAULT_PRISONER_ID,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      fromDate = LocalDate.of(2024, 1, 14),
+      toDate = LocalDate.of(2024, 1, 22),
+      days = 9,
+      recallId = uuidTwo.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+    val randomAdjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = DpsDataCreator.DEFAULT_PRISONER_ID,
+      adjustmentType = "ADDITIONAL_DAYS_AWARDED",
+      fromDate = LocalDate.of(2024, 1, 1),
+      toDate = LocalDate.of(2024, 1, 21),
+      days = 20,
+      recallId = null,
+      unlawfullyAtLarge = null,
+    )
+
+    adjustmentsApi.stubGetPrisonerAdjustments(DpsDataCreator.DEFAULT_PRISONER_ID, listOf(randomAdjustment, adjustmentForRecall2))
+
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
 
     assertThat(recalls)
@@ -202,13 +246,14 @@ class RecallIntTests : IntegrationTestBase() {
             recallUuid = uuidOne,
             prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
             revocationDate = LocalDate.of(2024, 7, 1),
-            returnToCustodyDate = LocalDate.of(2024, 7, 1),
+            returnToCustodyDate = null,
             inPrisonOnRevocationDate = null,
             recallType = LR,
             createdByUsername = "user001",
             createdAt = ZonedDateTime.now(),
             createdByPrison = "PRISON1",
             source = EventSource.DPS,
+            ual = null,
           ),
           Recall(
             recallUuid = uuidTwo,
@@ -221,6 +266,7 @@ class RecallIntTests : IntegrationTestBase() {
             createdAt = ZonedDateTime.now(),
             createdByPrison = "PRISON1",
             source = EventSource.DPS,
+            ual = RecallUALAdjustment(adjustmentForRecall2.id!!, 9),
           ),
         ),
       )
@@ -811,7 +857,7 @@ class RecallIntTests : IntegrationTestBase() {
       adjustmentType = "UNLAWFULLY_AT_LARGE",
       fromDate = LocalDate.of(2024, 1, 14),
       toDate = LocalDate.of(2024, 1, 22),
-      days = null,
+      days = 9,
       recallId = uuid.toString(),
       unlawfullyAtLarge = UnlawfullyAtLargeDto(),
     )
@@ -849,6 +895,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = originalRecall.createdByPrison,
           createdAt = ZonedDateTime.now(),
           source = EventSource.DPS,
+          ual = RecallUALAdjustment(originalAdjustment.id!!, 9),
         ),
       )
 
