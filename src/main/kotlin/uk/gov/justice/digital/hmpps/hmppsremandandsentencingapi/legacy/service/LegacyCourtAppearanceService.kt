@@ -49,7 +49,7 @@ class LegacyCourtAppearanceService(
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtAppearance.courtCaseUuid)?.takeUnless { entity -> entity.statusId == CourtCaseEntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at ${courtAppearance.courtCaseUuid}")
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val createdCourtAppearance = courtAppearanceRepository.save(
-      CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, serviceUserService.getUsername()),
+      CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, getPerformedByUsername(courtAppearance)),
     )
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance))
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCase.appearances + createdCourtAppearance)
@@ -62,7 +62,7 @@ class LegacyCourtAppearanceService(
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
-    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, serviceUserService.getUsername())
+    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, getPerformedByUsername(courtAppearance))
     if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
       existingCourtAppearance.updateFrom(updatedCourtAppearance)
       courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearance))
@@ -90,11 +90,13 @@ class LegacyCourtAppearanceService(
         matchedNextCourtAppearance.updateFrom(toUpdate)
       } ?: NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceType).let { toCreateNextCourtAppearance ->
         val savedNextCourtAppearance = nextCourtAppearanceRepository.save(toCreateNextCourtAppearance)
-        matchedCourtAppearance.updateNextCourtAppearance(serviceUserService.getUsername(), savedNextCourtAppearance)
+        matchedCourtAppearance.updateNextCourtAppearance(getPerformedByUsername(legacyRequest), savedNextCourtAppearance)
         courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(matchedCourtAppearance))
       }
     }
   }
+
+  private fun getPerformedByUsername(courtAppearance: LegacyCreateCourtAppearance): String = courtAppearance.performedByUser ?: serviceUserService.getUsername()
 
   private fun getMatchedNextCourtAppearanceOrLatest(courtCase: CourtCaseEntity, appearanceDate: LocalDate): CourtAppearanceEntity? = courtAppearanceRepository.findByNextEventDateTime(courtCase.id, appearanceDate) ?: courtAppearanceRepository.findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(
     courtCase,
@@ -110,15 +112,16 @@ class LegacyCourtAppearanceService(
   }
 
   @Transactional
-  fun delete(lifetimeUuid: UUID) {
+  fun delete(lifetimeUuid: UUID, performedByUser: String?) {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
-    existingCourtAppearance.delete(serviceUserService.getUsername())
+    val performedByUsername = performedByUser ?: serviceUserService.getUsername()
+    existingCourtAppearance.delete(performedByUsername)
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearance))
     existingCourtAppearance.appearanceCharges.removeAll { appearanceCharge ->
       appearanceChargeHistoryRepository.save(
         AppearanceChargeHistoryEntity.removedFrom(
           appearanceCharge,
-          serviceUserService.getUsername(),
+          performedByUsername,
           null,
         ),
       )
@@ -149,9 +152,10 @@ class LegacyCourtAppearanceService(
   }
 
   @Transactional
-  fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID): Pair<EntityChangeStatus, EntityChangeStatus> {
+  fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID, performedByUser: String?): Pair<EntityChangeStatus, EntityChangeStatus> {
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val existingCharge = getChargeAtAppearanceUnlessDeleted(lifetimeUuid, lifetimeChargeUuid)
+    val performedByUsername = performedByUser ?: serviceUserService.getUsername()
     var appearanceEntityChangeStatus = EntityChangeStatus.NO_CHANGE
     var chargeEntityStatus = EntityChangeStatus.NO_CHANGE
     if (existingCharge != null) {
@@ -160,14 +164,14 @@ class LegacyCourtAppearanceService(
       existingCharge.appearanceCharges.remove(appearanceCharge)
       appearanceEntityChangeStatus = EntityChangeStatus.EDITED
       if (existingCharge.hasNoActiveCourtAppearances()) {
-        existingCharge.delete(serviceUserService.getUsername())
+        existingCharge.delete(performedByUsername)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
         chargeEntityStatus = EntityChangeStatus.DELETED
       }
       appearanceChargeHistoryRepository.save(
         AppearanceChargeHistoryEntity.removedFrom(
           appearanceCharge = appearanceCharge,
-          removedBy = serviceUserService.getUsername(),
+          removedBy = performedByUsername,
           removedPrison = null,
         ),
       )
