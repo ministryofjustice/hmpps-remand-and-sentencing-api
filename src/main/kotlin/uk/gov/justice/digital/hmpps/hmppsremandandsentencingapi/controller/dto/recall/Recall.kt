@@ -64,7 +64,7 @@ data class Recall(
                 sentenceServeType = it.sentence.sentenceServeType,
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
               )
-            },
+            }.sortedBy { it.offenceStartDate },
           )
         },
       ual = ualAdjustment?.let { RecallUALAdjustment(it.id!!, it.days!!) },
