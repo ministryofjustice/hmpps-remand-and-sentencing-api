@@ -37,7 +37,6 @@ class CourtCaseService(
   private val courtAppearanceService: CourtAppearanceService,
   private val serviceUserService: ServiceUserService,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
-  private val appearanceTypeService: AppearanceTypeService,
 ) {
 
   @Transactional
