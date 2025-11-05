@@ -37,7 +37,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
     assertThat(recalls).hasSize(1)
     assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
-    assertThat(recalls[0].sentences).hasSize(1)
+    assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
     assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recalls[0].recallUuid)

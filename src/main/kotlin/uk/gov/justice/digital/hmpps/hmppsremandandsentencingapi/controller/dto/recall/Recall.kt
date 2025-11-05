@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
@@ -23,8 +22,6 @@ data class Recall(
   val createdByUsername: String,
   val createdByPrison: String?,
   val source: EventSource,
-  val sentences: List<Sentence>? = emptyList(),
-  val courtCaseIds: List<String>? = emptyList(),
   val courtCases: List<RecallCourtCaseDetails> = emptyList(),
   val ual: RecallUALAdjustment? = null,
 ) {
@@ -40,8 +37,6 @@ data class Recall(
       createdAt = recall.createdAt,
       createdByPrison = recall.createdPrison,
       source = recall.source,
-      sentences = sentences.map { Sentence.Companion.from(it.sentence) },
-      courtCaseIds = sentences.flatMap { it.sentence.charge.appearanceCharges.map { ac -> ac.appearance!!.courtCase.caseUniqueIdentifier } },
       courtCases = sentences.groupBy { recallSentence -> createRecallCourtCaseDetailsForGrouping(recallSentence) }
         .map { (group, groupedSentences) ->
           group.copy(
