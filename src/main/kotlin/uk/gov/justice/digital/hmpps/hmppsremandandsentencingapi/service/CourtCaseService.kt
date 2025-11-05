@@ -196,8 +196,7 @@ class CourtCaseService(
           .minOfOrNull { it.appearanceDate }
 
         val firstSentencingAppearance = activeAppearances
-          .filter { appearance -> appearance.warrantType == "SENTENCING" }
-          .minByOrNull { it.appearanceDate }
+          .first { appearance -> appearance.warrantType == "SENTENCING" }
 
         val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
           appearance.appearanceCharges
@@ -251,7 +250,7 @@ class CourtCaseService(
               sentenceDate = sentenceAppearance?.appearanceDate,
             )
           },
-          date = latestAppearance.appearanceDate,
+          appearanceDate = firstSentencingAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
       }
@@ -268,8 +267,8 @@ class CourtCaseService(
       }
 
       else -> when (sortOrder.lowercase()) {
-        "asc" -> recallableCourtCases.sortedBy { it.date }
-        else -> recallableCourtCases.sortedByDescending { it.date }
+        "asc" -> recallableCourtCases.sortedBy { it.appearanceDate }
+        else -> recallableCourtCases.sortedByDescending { it.appearanceDate }
       }
     }
 

@@ -54,7 +54,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(sentencedCourtCaseUuid)
       .jsonPath("$.cases[0].isSentenced").isEqualTo(true)
-      .jsonPath("$.cases[0].date").exists()
+      .jsonPath("$.cases[0].appearanceDate").exists()
       .jsonPath("$.cases[0].firstDayInCustody").exists()
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences[0].sentenceUuid").exists()
