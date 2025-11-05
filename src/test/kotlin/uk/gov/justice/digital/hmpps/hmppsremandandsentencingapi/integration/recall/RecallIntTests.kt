@@ -286,11 +286,19 @@ class RecallIntTests : IntegrationTestBase() {
 
     val recallByUuid = getRecallByUUID(uuidOne)
     val allRecallsForPrisoner = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
-    assertThat(allRecallsForPrisoner).containsOnly(recallByUuid) // ensure get all recalls populates fully
+    assertThat(allRecallsForPrisoner).containsOnly(recallByUuid)
 
     assertThat(recallByUuid)
       .usingRecursiveComparison()
-      .ignoringCollectionOrder()
+      .ignoringCollectionOrderInFields(
+        "sentences",
+        "courtCases",
+        "courtCases.sentences",
+        "courtCases[*].sentences",
+        "sentences[*].periodLengths",
+        "courtCases[*].sentences[*].periodLengths"
+      )
+      .ignoringCollectionOrder() 
       .isEqualTo(
         Recall(
           recallUuid = uuidOne,
