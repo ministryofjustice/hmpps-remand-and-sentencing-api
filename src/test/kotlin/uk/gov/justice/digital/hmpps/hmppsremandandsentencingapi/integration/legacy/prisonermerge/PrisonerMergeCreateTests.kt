@@ -175,6 +175,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
 
     assertThat(mergeResponse).isNotNull
 
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
     val recallsForRetainedPrisoner = getRecallsByPrisonerId(retainedPrisonerNumber)
     assertThat(recallsForRetainedPrisoner).hasSize(2)
     assertThat(recallsForRetainedPrisoner)

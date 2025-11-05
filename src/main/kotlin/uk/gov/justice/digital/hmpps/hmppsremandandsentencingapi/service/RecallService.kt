@@ -88,7 +88,8 @@ class RecallService(
     return if (recallToUpdate == null) {
       createRecall(recall, recallUuid)
     } else {
-      val originalRevocationDate = requireNotNull(recallToUpdate.revocationDate) { "Can only update DPS recall which requires revocation date" }
+      val originalRevocationDate =
+        requireNotNull(recallToUpdate.revocationDate) { "Can only update DPS recall which requires revocation date" }
       val originalRTCDate = recallToUpdate.returnToCustodyDate
 
       val recallHistoryEntity =
@@ -163,10 +164,31 @@ class RecallService(
         adjustmentsApiClient.deleteAdjustment(it)
       }
     } else if (!originalRequiresAdjustment && newRequiresAdjustment) {
-      adjustmentsApiClient.createAdjustments(listOf(createUalDtoForRecall(prisonerId, newRevocationDate, newRTCDate!!, recallUuid)))
+      adjustmentsApiClient.createAdjustments(
+        listOf(
+          createUalDtoForRecall(
+            prisonerId,
+            newRevocationDate,
+            newRTCDate!!,
+            recallUuid,
+          ),
+        ),
+      )
     } else if (originalRequiresAdjustment && (originalRevocationDate != newRevocationDate || originalRTCDate != newRTCDate)) {
-      val originalAdjustment = requireNotNull(adjustmentsApiClient.getRecallAdjustment(prisonerId, recallUuid)) { "Original adjustment is missing" }
-      adjustmentsApiClient.updateAdjustment(createUalDtoForRecall(prisonerId, newRevocationDate, newRTCDate!!, recallUuid).copy(id = originalAdjustment.id))
+      val originalAdjustment = requireNotNull(
+        adjustmentsApiClient.getRecallAdjustment(
+          prisonerId,
+          recallUuid,
+        ),
+      ) { "Original adjustment is missing" }
+      adjustmentsApiClient.updateAdjustment(
+        createUalDtoForRecall(
+          prisonerId,
+          newRevocationDate,
+          newRTCDate!!,
+          recallUuid,
+        ).copy(id = originalAdjustment.id),
+      )
     }
   }
 
@@ -251,13 +273,22 @@ class RecallService(
     val recall = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
     val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
-    return Recall.from(recall, recallSentences)
+    val adjustment =
+      if (recall.revocationDate != null && doesRecallRequireUAL(recall.revocationDate!!, recall.returnToCustodyDate)) {
+        adjustmentsApiClient.getRecallAdjustment(recall.prisonerId, recall.recallUuid)
+      } else {
+        null
+      }
+    return Recall.from(recall, recallSentences, adjustment)
   }
 
   @Transactional(readOnly = true)
-  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> = recallRepository.findByPrisonerIdAndStatusId(prisonerId).map {
-    val recallSentences = recallSentenceRepository.findByRecallId(it.id).orEmpty()
-    Recall.from(it, recallSentences)
+  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {
+    val recallAdjustments = adjustmentsApiClient.getAdjustments(prisonerId).filter { it.recallId != null }
+    return recallRepository.findByPrisonerIdAndStatusId(prisonerId).map { recall ->
+      val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
+      Recall.from(recall, recallSentences, recallAdjustments.find { it.recallId == recall.recallUuid.toString() })
+    }
   }
 
   private fun createUalDtoForRecall(

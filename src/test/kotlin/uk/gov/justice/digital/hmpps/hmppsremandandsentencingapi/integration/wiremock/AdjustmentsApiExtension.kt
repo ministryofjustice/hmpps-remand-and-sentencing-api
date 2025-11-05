@@ -73,6 +73,30 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
       ),
   )
 
+  fun stubGetPrisonerAdjustments(
+    prisonerNumber: String,
+    adjustments: List<AdjustmentDto>,
+  ): StubMapping = stubFor(
+    get(urlPathEqualTo("/adjustments"))
+      .withQueryParam("person", equalTo(prisonerNumber))
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(OBJECT_MAPPER.writeValueAsString(adjustments))
+          .withStatus(200),
+      ),
+  )
+
+  fun stubGetAdjustmentsDefaultToNone(): StubMapping = stubFor(
+    get(urlPathEqualTo("/adjustments"))
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody("[]")
+          .withStatus(200),
+      ),
+  )
+
   fun stubDeleteAdjustment(adjustmentId: String): StubMapping = stubFor(
     delete("/adjustments/$adjustmentId")
       .willReturn(aResponse().withStatus(200)),

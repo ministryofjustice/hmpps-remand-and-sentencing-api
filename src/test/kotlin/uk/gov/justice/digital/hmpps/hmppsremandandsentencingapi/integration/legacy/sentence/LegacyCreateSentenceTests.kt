@@ -10,6 +10,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
@@ -79,6 +80,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .jsonPath("$.sentence.sentenceType.sentenceTypeUuid")
       .isEqualTo("f9a1551e-86b1-425b-96f7-23465a0f05fc")
 
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
     assertThat(recalls).hasSize(1)
     assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
