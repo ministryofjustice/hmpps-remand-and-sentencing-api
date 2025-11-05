@@ -8,7 +8,7 @@ data class AdjustmentDto(
   val adjustmentType: String,
   val toDate: LocalDate?,
   val fromDate: LocalDate?,
-  val days: Int?,
+  val days: Long?,
   val recallId: String?,
   val unlawfullyAtLarge: UnlawfullyAtLargeDto?,
 )

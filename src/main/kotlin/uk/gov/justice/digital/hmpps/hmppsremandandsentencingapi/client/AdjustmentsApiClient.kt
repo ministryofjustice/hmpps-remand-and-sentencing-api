@@ -23,6 +23,17 @@ class AdjustmentsApiClient(@Qualifier("adjustmentsApiWebClient") private val web
     .apply { require(size <= 1) { "Received more than one adjustment for a recall. Should be impossible." } }
     .firstOrNull()
 
+  fun getAdjustments(prisonerId: String): List<AdjustmentDto> = webClient
+    .get()
+    .uri { builder ->
+      builder.path("/adjustments")
+      builder.queryParam("person", prisonerId)
+      builder.build()
+    }
+    .retrieve()
+    .bodyToMono(typeReference<List<AdjustmentDto>>())
+    .block()!!
+
   fun createAdjustments(adjustments: List<AdjustmentDto>) {
     webClient
       .post()
