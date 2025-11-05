@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import java.util.function.Consumer
@@ -114,7 +115,7 @@ class PeriodLengthService(
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
 
     val toDelete = existingPeriodLengths.filter { existing ->
-      createPeriodLengthEntities.none { it.periodLengthUuid == existing.periodLengthUuid }
+      createPeriodLengthEntities.none { it.periodLengthUuid == existing.periodLengthUuid } && existing.statusId != PeriodLengthEntityStatus.DELETED
     }
 
     toDelete.forEach { existing ->

@@ -37,7 +37,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore =
       appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+    val updateCourtAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCase.first,
       appearanceUUID = createdAppearance.appearanceUuid,
       courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE",
@@ -384,12 +384,50 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update appearance does not emit delete period length events on deleted period lengths`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val appearance = courtCase.appearances.first().copy(courtCaseUuid = courtCaseUuid)
+    val charge = appearance.charges.first()
+    val sentenceWithoutPeriodLength = charge.sentence!!.copy(periodLengths = listOf())
+    val editedCharge = charge.copy(sentence = sentenceWithoutPeriodLength)
+    val editedAppearance = appearance.copy(charges = listOf(editedCharge))
+
+    webTestClient
+      .put()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .bodyValue(editedAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    purgeQueues()
+    val appearanceWithSentenceEdit = editedAppearance.copy(charges = listOf(editedCharge.copy(sentence = sentenceWithoutPeriodLength.copy(convictionDate = sentenceWithoutPeriodLength.convictionDate!!.minusDays(2L)))))
+    webTestClient
+      .put()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .bodyValue(appearanceWithSentenceEdit)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.doesNotContain("sentence.period-length.deleted")
+  }
+
+  @Test
   fun `updating the appearance changing sentence type`() {
     val sdsUuid = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39")
     val edsUuid = UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0")
     val sentence = DpsDataCreator.dpsCreateSentence(sentenceTypeId = sdsUuid)
     val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+    val appearance = dpsCreateCourtAppearance(
       charges = listOf(charge),
       overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6),
     )
@@ -451,7 +489,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `no token results in unauthorized`() {
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance()
+    val updateCourtAppearance = dpsCreateCourtAppearance()
     webTestClient
       .put()
       .uri("/court-appearance/${updateCourtAppearance.appearanceUuid}")
@@ -466,7 +504,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `token with incorrect role is forbidden`() {
-    val updateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance()
+    val updateCourtAppearance = dpsCreateCourtAppearance()
     webTestClient
       .put()
       .uri("/court-appearance/${updateCourtAppearance.appearanceUuid}")
