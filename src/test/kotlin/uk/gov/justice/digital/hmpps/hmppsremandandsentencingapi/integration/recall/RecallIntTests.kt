@@ -197,6 +197,7 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceIds = listOf(
         sentenceOne.sentenceUuid,
       ),
+      calculationRequestId = 9991,
     )
     val uuidTwo = createRecall(recallTwo).recallUuid
 
@@ -243,6 +244,7 @@ class RecallIntTests : IntegrationTestBase() {
             createdByPrison = "PRISON1",
             source = EventSource.DPS,
             ual = null,
+            calculationRequestId = null,
           ),
           Recall(
             recallUuid = uuidTwo,
@@ -256,9 +258,16 @@ class RecallIntTests : IntegrationTestBase() {
             createdByPrison = "PRISON1",
             source = EventSource.DPS,
             ual = RecallUALAdjustment(adjustmentForRecall2.id!!, 9),
+            calculationRequestId = 9991,
           ),
         ),
       )
+
+    val recall1 = recalls.first { it.recallUuid == uuidOne }
+    val recall2 = recalls.first { it.recallUuid == uuidTwo }
+
+    assertThat(recall1.isManual).isTrue()
+    assertThat(recall2.isManual).isFalse()
 
     assertThat(recalls).allMatch { it.courtCases[0].sentences.size == 1 && it.courtCases.size == 1 }
   }
@@ -528,6 +537,7 @@ class RecallIntTests : IntegrationTestBase() {
         createdByUsername = "user001",
         createdByPrison = "New prison",
         sentenceIds = listOf(sentenceOne.sentenceUuid),
+        calculationRequestId = 9993,
       ),
       uuid,
     )
@@ -550,12 +560,14 @@ class RecallIntTests : IntegrationTestBase() {
           createdByPrison = originalRecall.createdByPrison,
           createdAt = ZonedDateTime.now(),
           source = EventSource.DPS,
+          calculationRequestId = 9993,
         ),
       )
 
     assertThat(savedRecall.courtCases).hasSize(1)
     assertThat(savedRecall.courtCases[0].sentences).hasSize(1)
     assertThat(savedRecall.courtCases[0].sentences).extracting<UUID> { it.sentenceUuid }.contains(sentenceOne.sentenceUuid)
+    assertThat(savedRecall.isManual).isFalse
 
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.updated")

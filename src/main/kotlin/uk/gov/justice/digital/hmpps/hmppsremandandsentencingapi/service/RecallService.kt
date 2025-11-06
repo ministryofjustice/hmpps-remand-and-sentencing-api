@@ -122,6 +122,7 @@ class RecallService(
         updatedAt = ZonedDateTime.now()
         updatedBy = recall.createdByUsername
         updatedPrison = recall.createdByPrison
+        calculationRequestId = recall.calculationRequestId
       }
       val savedRecall = recallRepository.save(recallToUpdate)
       updateAdjustmentsIfRequired(
