@@ -2,12 +2,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.imm
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType.OTHER_REASON
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
@@ -16,7 +15,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
-class ImmigrationDetentionIntTests(@Autowired private val clientRegistrationRepository: InMemoryClientRegistrationRepository) : IntegrationTestBase() {
+class ImmigrationDetentionIntTests : IntegrationTestBase() {
   @Test
   fun `Create an Immigration Detention record and fetch it based on returned UUID`() {
     val immigrationDetention = CreateImmigrationDetention(
@@ -55,21 +54,31 @@ class ImmigrationDetentionIntTests(@Autowired private val clientRegistrationRepo
     )
 
     val uuid = UUID.randomUUID()
-    val immigrationDetentionResponse = updateImmigrationDetention(immigrationDetention, uuid)
+    val createResponse = updateImmigrationDetention(immigrationDetention, uuid)
     val actualImmigrationDetention =
-      getImmigrationDetentionByUUID(immigrationDetentionResponse.immigrationDetentionUuid)
+      getImmigrationDetentionByUUID(createResponse.immigrationDetentionUuid)
 
     assertThat(actualImmigrationDetention).usingRecursiveComparison()
       .ignoringFields("createdAt")
       .isEqualTo(
         ImmigrationDetention(
-          immigrationDetentionUuid = immigrationDetentionResponse.immigrationDetentionUuid,
+          immigrationDetentionUuid = createResponse.immigrationDetentionUuid,
           prisonerId = "B12345B",
           immigrationDetentionRecordType = DEPORTATION_ORDER,
           recordDate = LocalDate.of(2021, 1, 1),
           createdAt = ZonedDateTime.now(),
         ),
       )
+
+    immigrationDetention.immigrationDetentionRecordType = NO_LONGER_OF_INTEREST
+    val updateResponse = updateImmigrationDetention(immigrationDetention, uuid)
+
+    val historicImmigrationDetention =
+      immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(updateResponse.immigrationDetentionUuid)
+    assertThat(historicImmigrationDetention).hasSize(1)
+    assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.EDITED)
+    assertThat(historicImmigrationDetention[0].immigrationDetentionRecordType).isEqualTo(DEPORTATION_ORDER)
+    assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
   }
 
   @Test
@@ -164,6 +173,12 @@ class ImmigrationDetentionIntTests(@Autowired private val clientRegistrationRepo
     val immigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
 
     deleteImmigrationDetention(immigrationDetentionResponse.immigrationDetentionUuid)
+
+    val historicImmigrationDetention =
+      immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(immigrationDetentionResponse.immigrationDetentionUuid)
+    assertThat(historicImmigrationDetention).hasSize(1)
+    assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.DELETED)
+    assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
 
     assertThat(getImmigrationDetentionsByPrisonerId("B12345B")).isEmpty()
   }

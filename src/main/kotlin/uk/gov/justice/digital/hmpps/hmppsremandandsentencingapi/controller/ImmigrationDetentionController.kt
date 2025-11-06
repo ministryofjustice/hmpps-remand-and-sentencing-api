@@ -119,6 +119,7 @@ class ImmigrationDetentionController(private val immigrationDetentionService: Im
       ApiResponse(responseCode = "200", description = "Immigration Detention deleted"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Immigration Detention not found"),
     ],
   )
   fun deleteImmigrationDetention(
