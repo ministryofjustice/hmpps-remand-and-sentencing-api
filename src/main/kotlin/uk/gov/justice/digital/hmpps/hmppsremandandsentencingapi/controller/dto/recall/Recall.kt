@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -24,7 +26,12 @@ data class Recall(
   val source: EventSource,
   val courtCases: List<RecallCourtCaseDetails> = emptyList(),
   val ual: RecallUALAdjustment? = null,
+  val calculationRequestId: Int? = null,
 ) {
+  @get:JsonProperty
+  @get:Schema(description = "True if the recall was created manually (i.e. calculationRequestId is null)")
+  val isManual: Boolean
+    get() = calculationRequestId == null
   companion object {
     fun from(recall: RecallEntity, sentences: List<RecallSentenceEntity>, ualAdjustment: AdjustmentDto?): Recall = Recall(
       recallUuid = recall.recallUuid,
@@ -68,6 +75,7 @@ data class Recall(
           )
         },
       ual = ualAdjustment?.let { RecallUALAdjustment(it.id!!, it.days!!) },
+      calculationRequestId = recall.calculationRequestId,
     )
 
     private fun createRecallCourtCaseDetailsForGrouping(recallSentence: RecallSentenceEntity): RecallCourtCaseDetails {

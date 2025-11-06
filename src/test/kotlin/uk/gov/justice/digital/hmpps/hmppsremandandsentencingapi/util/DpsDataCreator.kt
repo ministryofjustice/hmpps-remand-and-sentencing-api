@@ -135,6 +135,7 @@ class DpsDataCreator {
       createdByUsername: String = "user001",
       createdByPrison: String = "PRISON1",
       sentenceIds: List<UUID> = listOf(UUID.randomUUID()),
+      calculationRequestId: Int? = null,
     ): CreateRecall = CreateRecall(
       prisonerId,
       revocationDate,
@@ -144,6 +145,7 @@ class DpsDataCreator {
       createdByUsername,
       createdByPrison,
       sentenceIds,
+      calculationRequestId = calculationRequestId,
     )
 
     fun dpsCreateUploadedDocument(

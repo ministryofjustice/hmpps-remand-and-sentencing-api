@@ -39,6 +39,7 @@ class RecallEntity(
   @ManyToOne
   @JoinColumn(name = "recall_type_id")
   var recallType: RecallTypeEntity,
+  var calculationRequestId: Int? = null,
 
   // Audit and status columns
   @Column
@@ -75,6 +76,7 @@ class RecallEntity(
       createdPrison = createRecall.createdByPrison,
       statusId = RecallEntityStatus.ACTIVE,
       source = DPS,
+      calculationRequestId = createRecall.calculationRequestId,
     )
 
     fun fromMigration(

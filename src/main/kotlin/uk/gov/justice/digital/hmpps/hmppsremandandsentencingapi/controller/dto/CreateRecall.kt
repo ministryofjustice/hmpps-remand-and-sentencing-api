@@ -14,4 +14,5 @@ data class CreateRecall(
   val createdByUsername: String,
   val createdByPrison: String,
   val sentenceIds: List<UUID>? = emptyList(),
+  val calculationRequestId: Int? = null,
 )
