@@ -40,6 +40,7 @@ class GetAllAppearanceOutcomesByStatusesTests : IntegrationTestBase() {
         relatedChargeOutcomeUuid = UUID.randomUUID(),
         isSubList = false,
         status = ReferenceEntityStatus.INACTIVE,
+        warrantType = "REMAND",
       ),
     )
 
