@@ -20,7 +20,12 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `delete court appearance should change court appearance status to be deleted and court case as well if no more court appearance is ACTIVE`() {
     // Given a court appearance exists
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance()
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(
+        DpsDataCreator.dpsCreateCharge(),
+        DpsDataCreator.dpsCreateCharge(),
+      ),
+    )
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
 

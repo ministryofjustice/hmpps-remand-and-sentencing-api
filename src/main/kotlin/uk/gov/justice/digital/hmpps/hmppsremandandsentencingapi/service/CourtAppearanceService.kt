@@ -530,7 +530,7 @@ class CourtAppearanceService(
       ),
     )
     courtAppearanceEntity.appearanceCharges
-      .forEach { appearanceCharge ->
+      .removeAll { appearanceCharge ->
         if (appearanceCharge.charge!!.hasNoActiveCourtAppearances()) {
           eventsToEmit.addAll(
             chargeService.deleteCharge(
@@ -542,10 +542,10 @@ class CourtAppearanceService(
           )
         }
         appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.removedFrom(appearanceCharge, serviceUserService.getUsername(), null))
-        courtAppearanceEntity.appearanceCharges.remove(appearanceCharge)
         appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
         appearanceCharge.appearance = null
         appearanceCharge.charge = null
+        true
       }
     return RecordResponse(
       courtAppearanceEntity,
