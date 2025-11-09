@@ -216,12 +216,14 @@ class CourtAppearanceService(
           serviceUserService.getUsername(),
         ),
       )
-    } ?: emptyList<PeriodLengthEntity>()
+    } ?: emptyList()
     // Ignore period-length events returned here because we do not emit them from updateCourtAppearanceEntity
     periodLengthService.delete(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
+      existingCourtAppearanceEntity.appearanceUuid.toString(),
+      courtCaseEntity.caseUniqueIdentifier,
     )
 
     periodLengthService.update(

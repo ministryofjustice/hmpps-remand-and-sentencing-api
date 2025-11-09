@@ -58,8 +58,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearanceUuid")
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
-    val messages = getMessages(7)
-    assertThat(messages).hasSize(7).extracting<String> { it.eventType }.contains("court-appearance.updated")
+    val messages = getMessages(8)
+    assertThat(messages).hasSize(8).extracting<String> { it.eventType }.contains("court-appearance.updated")
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.period-length.inserted")
 
@@ -364,8 +364,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    val messages = getMessages(3)
-    assertThat(messages).hasSize(3).extracting<String> { it.eventType }.contains("court-appearance.updated")
+    val messages = getMessages(4)
+    assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("court-appearance.updated")
 
     webTestClient
       .get()
