@@ -171,6 +171,7 @@ import java.util.UUID
         ColumnResult(name = "mergedToCourtCode"),
         ColumnResult(name = "mergedToWarrantDate", type = LocalDate::class),
         ColumnResult(name = "futureSkeletonAppearanceUuid"),
+        ColumnResult(name = "minCourtAppearanceWarrantType"),
       ),
     ),
   ],
