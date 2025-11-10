@@ -66,6 +66,7 @@ class ChargeEntity(
   @JoinColumn(name = "merged_from_case_id")
   var mergedFromCourtCase: CourtCaseEntity? = null,
   var mergedFromDate: LocalDate? = null,
+  var replacedBy: UUID? = null,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()

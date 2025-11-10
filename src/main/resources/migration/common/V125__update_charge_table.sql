@@ -1,0 +1,1 @@
+ALTER TABLE charge ADD COLUMN replaced_by UUID NULL;

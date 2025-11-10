@@ -6,4 +6,5 @@ enum class ChargeEntityStatus {
   DELETED,
   MERGED,
   INACTIVE,
+  REPLACED,
 }
