@@ -2,7 +2,6 @@
 # Per environment values which override defaults in hmpps-remand-and-sentencing-api/values.yaml
 
 generic-service:
-  replicaCount: 10
 
   ingress:
     host: &ingressHost remand-and-sentencing-api.hmpps.service.justice.gov.uk
