@@ -163,9 +163,9 @@ class SentenceService(
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == SentenceEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.delete(serviceUserService.getUsername())
-    sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     if (changeStatus == EntityChangeStatus.DELETED) {
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
@@ -180,7 +180,10 @@ class SentenceService(
 
     handleRecallsForDeletedSentence(sentence, eventsToEmit)
 
-    sentence.periodLengths.forEach { it.delete(serviceUserService.getUsername()) }
+    sentence.periodLengths.forEach { periodLengths ->
+      val deletedPeriodLength = periodLengthService.delete(periodLengths, prisonerId, courtCaseId, courtAppearanceId)
+      eventsToEmit.addAll(deletedPeriodLength.eventsToEmit)
+    }
     return RecordResponse(sentence, eventsToEmit)
   }
 
