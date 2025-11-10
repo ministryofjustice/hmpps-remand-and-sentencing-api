@@ -216,12 +216,14 @@ class CourtAppearanceService(
           serviceUserService.getUsername(),
         ),
       )
-    } ?: emptyList<PeriodLengthEntity>()
+    } ?: emptyList()
     // Ignore period-length events returned here because we do not emit them from updateCourtAppearanceEntity
     periodLengthService.delete(
       toCreatePeriodLengths,
       existingCourtAppearanceEntity.periodLengths,
       courtCaseEntity.prisonerId,
+      existingCourtAppearanceEntity.appearanceUuid.toString(),
+      courtCaseEntity.caseUniqueIdentifier,
     )
 
     periodLengthService.update(
@@ -530,7 +532,7 @@ class CourtAppearanceService(
       ),
     )
     courtAppearanceEntity.appearanceCharges
-      .forEach { appearanceCharge ->
+      .removeAll { appearanceCharge ->
         if (appearanceCharge.charge!!.hasNoActiveCourtAppearances()) {
           eventsToEmit.addAll(
             chargeService.deleteCharge(
@@ -542,10 +544,10 @@ class CourtAppearanceService(
           )
         }
         appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.removedFrom(appearanceCharge, serviceUserService.getUsername(), null))
-        courtAppearanceEntity.appearanceCharges.remove(appearanceCharge)
         appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
         appearanceCharge.appearance = null
         appearanceCharge.charge = null
+        true
       }
     return RecordResponse(
       courtAppearanceEntity,
