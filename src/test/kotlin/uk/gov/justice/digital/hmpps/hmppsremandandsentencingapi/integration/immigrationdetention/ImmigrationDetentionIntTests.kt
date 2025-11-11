@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Immigra
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
+import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -181,5 +182,50 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
 
     assertThat(getImmigrationDetentionsByPrisonerId("B12345B")).isEmpty()
+  }
+
+  @Test
+  fun `Get the latest Immigration Detention record`() {
+    createImmigrationDetention(
+      CreateImmigrationDetention(
+        prisonerId = "B12345B",
+        immigrationDetentionRecordType = IS91,
+        recordDate = LocalDate.of(2021, 1, 1),
+        createdByUsername = "aUser",
+        createdByPrison = "PRI",
+      ),
+    )
+    assertThat(getLatestImmigrationDetentionByPrisonerId("B12345B").immigrationDetentionRecordType).isEqualTo(IS91)
+
+    sleep(1000) // Ensure createdAt timestamps differ
+
+    createImmigrationDetention(
+      CreateImmigrationDetention(
+        prisonerId = "B12345B",
+        immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+        recordDate = LocalDate.of(2021, 2, 1),
+        createdByUsername = "aUser",
+        createdByPrison = "PRI",
+      ),
+    )
+    assertThat(getLatestImmigrationDetentionByPrisonerId("B12345B").immigrationDetentionRecordType).isEqualTo(
+      NO_LONGER_OF_INTEREST,
+    )
+  }
+
+  @Test
+  fun `Check behaviour when there are no records`() {
+    webTestClient
+      .get()
+      .uri("/immigration-detention/person/NOTFOUND/latest")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isNotFound
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("not found: No immigration detention records exist for the prisoner ID: NOTFOUND")
+      .jsonPath("$.developerMessage").isEqualTo("No immigration detention records exist for the prisoner ID: NOTFOUND")
   }
 }
