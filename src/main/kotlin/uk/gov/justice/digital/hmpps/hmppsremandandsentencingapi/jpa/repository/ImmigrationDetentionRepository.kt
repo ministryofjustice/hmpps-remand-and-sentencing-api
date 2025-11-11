@@ -12,4 +12,9 @@ interface ImmigrationDetentionRepository : CrudRepository<ImmigrationDetentionEn
     prisonerId: String,
     statusId: ImmigrationDetentionEntityStatus = ACTIVE,
   ): List<ImmigrationDetentionEntity>
+
+  fun findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(
+    prisonerId: String,
+    statusId: ImmigrationDetentionEntityStatus = ACTIVE,
+  ): ImmigrationDetentionEntity?
 }

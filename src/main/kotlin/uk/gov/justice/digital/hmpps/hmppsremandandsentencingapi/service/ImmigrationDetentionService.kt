@@ -104,4 +104,12 @@ class ImmigrationDetentionService(
   fun findImmigrationDetentionByPrisonerId(prisonerId: String): List<ImmigrationDetention> = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE).map {
     ImmigrationDetention.from(it)
   }
+
+  @Transactional(readOnly = true)
+  fun findLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention {
+    val immigrationDetention =
+      immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(prisonerId)
+        ?: throw EntityNotFoundException("No immigration detention records exist for the prisoner ID: $prisonerId")
+    return ImmigrationDetention.from(immigrationDetention)
+  }
 }

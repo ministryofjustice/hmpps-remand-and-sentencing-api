@@ -504,6 +504,18 @@ abstract class IntegrationTestBase {
     .expectBodyList(ImmigrationDetention::class.java)
     .returnResult().responseBody!!
 
+  protected fun getLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention = webTestClient
+    .get()
+    .uri("/immigration-detention/person/$prisonerId/latest")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(ImmigrationDetention::class.java)
+    .returnResult().responseBody!!
+
   fun purgeQueues() {
     val totalAttempts = 5
     var currentAttempt = 0

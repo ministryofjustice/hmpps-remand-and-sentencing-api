@@ -85,6 +85,24 @@ class ImmigrationDetentionController(private val immigrationDetentionService: Im
     @PathVariable prisonerId: String,
   ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId)
 
+  @GetMapping("/person/{prisonerId}/latest")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
+  @Operation(
+    summary = "Retrieve the last active record for the prisoner, sorted by created date descending",
+    description = "This endpoint will retrieve the last active immigration detention record for the prisoner, sorted by created date descending",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns all active immigration detention records for person"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "No active records found for this person"),
+    ],
+  )
+  fun getLatestImmigrationDetentionByPrisonerId(
+    @PathVariable prisonerId: String,
+  ): ImmigrationDetention = immigrationDetentionService.findLatestImmigrationDetentionByPrisonerId(prisonerId)
+
   @PutMapping("/{immigrationDetentionUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
   @Operation(
