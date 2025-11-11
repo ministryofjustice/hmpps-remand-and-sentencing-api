@@ -254,6 +254,7 @@ class CourtCaseService(
           firstDayInCustody = firstDayInCustody,
         )
       }
+      .filter { it.sentences.any { s -> s.isRecallable } }
 
     val sortedCases = when (sortBy.lowercase()) {
       "reference" -> when (sortOrder.lowercase()) {

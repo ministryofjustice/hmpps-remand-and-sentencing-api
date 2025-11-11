@@ -278,8 +278,8 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `returns non-recallable sentence types`() {
-    // Create a court case with a non-recallable sentence type (A/FINE)
+  fun `does not return court cases that have no recallable sentences`() {
+    // Create a court case with only a non-recallable sentence type (A/FINE)
     val chargeWithNonRecallableSentence = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(
         sentenceTypeId = UUID.fromString("c71ceefe-932b-4a69-b87c-7c1294e37cf7"), // A/FINE sentence type
@@ -290,7 +290,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       warrantType = "SENTENCING",
     )
     val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
-    val (courtCaseUuid, createdCase) = createCourtCase(courtCase)
+    val (_, createdCase) = createCourtCase(courtCase)
 
     webTestClient
       .get()
@@ -302,11 +302,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.cases.length()").isEqualTo(1)
-      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid)
-      .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
-      .jsonPath("$.cases[0].sentences[0].isRecallable").isEqualTo(false)
-      .jsonPath("$.cases[0].sentences[0].classification").isEqualTo("FINE")
+      .jsonPath("$.cases.length()").isEqualTo(0)
   }
 
   @Test
