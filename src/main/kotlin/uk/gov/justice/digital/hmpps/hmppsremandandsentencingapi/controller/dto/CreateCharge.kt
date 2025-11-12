@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 data class CreateCharge(
   val appearanceUuid: UUID?,
@@ -20,4 +20,5 @@ data class CreateCharge(
   val sentence: CreateSentence?,
   var legacyData: ChargeLegacyData?,
   val prisonId: String,
+  val supersedingChargeId: String?,
 )
