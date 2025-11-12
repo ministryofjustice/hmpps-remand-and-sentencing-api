@@ -140,6 +140,27 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `must be able to add a sentence to a charge which is associated to a recall appearance`() {
+    val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge(
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "1501")),
+    )
+
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid)
+
+    webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+  }
+
+  @Test
   fun `must not be able to create a sentence on a already sentenced charge`() {
     val (_, sentence) = createLegacySentence()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(sentence.chargeUuids.first()), appearanceUuid = sentence.appearanceUuid)

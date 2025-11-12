@@ -109,7 +109,7 @@ class LegacySentenceService(
 
       val courtAppearance = charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
+        .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
       LegacySentenceCreatedResponse(
@@ -271,7 +271,7 @@ class LegacySentenceService(
         if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
       val courtAppearance = activeRecord.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
+        .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")
       entityChangeStatus to LegacySentenceCreatedResponse(
