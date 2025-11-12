@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -51,6 +52,7 @@ class LegacyCourtCaseService(
     return LegacyCourtCase.from(courtCase)
   }
 
+  @WithSpan
   @Transactional(readOnly = true)
   fun getReconciliation(courtCaseUuid: String): ReconciliationCourtCase {
     val courtCase = getUnlessDeleted(courtCaseUuid)
