@@ -36,3 +36,10 @@ adjustments:
 
 ingress:
   url: localhost:8080
+
+features:
+  fix:
+    many:
+      charges:
+        to:
+          sentence: enabled
