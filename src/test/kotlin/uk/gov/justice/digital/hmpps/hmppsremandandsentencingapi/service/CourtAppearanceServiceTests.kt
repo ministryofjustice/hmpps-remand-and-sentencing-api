@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 class CourtAppearanceServiceTests {
   private val courtCaseRepository = mockk<CourtCaseRepository>()
@@ -100,5 +100,6 @@ class CourtAppearanceServiceTests {
       fineAmount = null,
       prisonId = null,
     ),
+    supersedingChargeId = null,
   )
 }

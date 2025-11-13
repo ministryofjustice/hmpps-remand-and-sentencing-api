@@ -23,7 +23,7 @@ class SentenceUtilsTests {
   @Test
   fun `fallback to the first court appearance when no sentenced court appearance`() {
     val remandCourtAppearance = CourtAppearanceEntity.from(DpsDataCreator.dpsCreateCourtAppearance(warrantType = "REMAND"), null, courtCase, username)
-    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username)
+    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username, null)
     charge.appearanceCharges.add(AppearanceChargeEntity(sentencedCourtAppearance, Companion.charge, username, null))
     val sentence = SentenceEntity.from(DpsDataCreator.dpsCreateSentence(), username, charge, null, null)
     val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentence)
@@ -34,7 +34,7 @@ class SentenceUtilsTests {
   fun `process recall appearances with sentences on them`() {
     val recalledAppearance = CourtAppearanceEntity.from(DpsDataCreator.dpsCreateCourtAppearance(), null, courtCase, username)
     recalledAppearance.statusId = CourtAppearanceEntityStatus.RECALL_APPEARANCE
-    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username)
+    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username, null)
     charge.appearanceCharges.add(
       AppearanceChargeEntity(
         recalledAppearance,
@@ -52,7 +52,7 @@ class SentenceUtilsTests {
     val username = "user"
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), username)
     val sentencedCourtAppearance = CourtAppearanceEntity.from(DpsDataCreator.dpsCreateCourtAppearance(), null, courtCase, username)
-    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username)
+    val charge = ChargeEntity.from(DpsDataCreator.dpsCreateCharge(), null, username, null)
 
     fun getSentencedCharge(): ChargeEntity {
       charge.appearanceCharges.add(AppearanceChargeEntity(sentencedCourtAppearance, charge, username, null))
