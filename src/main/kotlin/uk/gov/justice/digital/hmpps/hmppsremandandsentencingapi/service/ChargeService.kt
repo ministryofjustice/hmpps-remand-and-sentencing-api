@@ -294,8 +294,7 @@ class ChargeService(
   }
 
   @Transactional(readOnly = true)
-  fun findChargeByUuid(chargeUuid: UUID): Charge? =
-    chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)?.let { Charge.from(it) }
+  fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)?.let { Charge.from(it) }
 
   companion object {
     val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
