@@ -41,8 +41,9 @@ class ChargeService(
     prisonerId: String,
     courtCaseId: String,
     courtAppearanceId: String,
+    supersedingCharge: ChargeEntity?,
   ): RecordResponse<ChargeEntity> {
-    val supersedingCharge: ChargeEntity? = charge.replacedChargeUuid?.let { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
+    val chargeToSupersede: ChargeEntity? = supersedingCharge ?: charge.replacingChargeUuid?.let { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     charge.legacyData = chargeLegacyData
     val savedCharge = chargeRepository.save(
@@ -50,7 +51,7 @@ class ChargeService(
         charge,
         chargeOutcome,
         serviceUserService.getUsername(),
-        supersedingCharge,
+        chargeToSupersede,
       ),
     )
     chargeHistoryRepository.save(ChargeHistoryEntity.from(savedCharge))
@@ -220,6 +221,7 @@ class ChargeService(
     courtCaseId: String,
     courtAppearance: CourtAppearanceEntity,
     courtAppearanceDateChanged: Boolean,
+    supersedingCharge: ChargeEntity? = null,
   ): RecordResponse<ChargeEntity> {
     val existingCharge = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(charge.chargeUuid)
     val charge = if (existingCharge != null) {
@@ -233,7 +235,7 @@ class ChargeService(
         courtAppearanceDateChanged,
       )
     } else {
-      createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, courtAppearance.appearanceUuid.toString())
+      createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, courtAppearance.appearanceUuid.toString(), supersedingCharge)
     }
     return charge
   }

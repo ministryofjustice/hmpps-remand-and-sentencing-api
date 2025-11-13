@@ -7,7 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -54,7 +53,7 @@ class ChargeServiceTests {
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(any()) } returns null
     every { chargeRepository.save(any()) } returns savedCharge
     every { sentenceService.createSentence(any(), any(), any(), any(), any(), any(), any()) } returns
-      RecordResponse(savedSentence, mutableSetOf<EventMetadata>())
+      RecordResponse(savedSentence, mutableSetOf())
 
     val createCharge = CreateCharge(
       appearanceUuid = null,
@@ -76,7 +75,7 @@ class ChargeServiceTests {
         fineAmount = null,
         prisonId = null,
       ),
-      replacedChargeUuid = null,
+      replacingChargeUuid = null,
     )
 
     val result = chargeService.createCharge(
@@ -113,7 +112,7 @@ class ChargeServiceTests {
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(replacedUuid) } returns supersedingCharge
     every { chargeRepository.save(any()) } returns savedCharge
     every { sentenceService.createSentence(any(), any(), any(), any(), any(), any(), any()) } returns
-      RecordResponse(savedSentence, mutableSetOf<EventMetadata>())
+      RecordResponse(savedSentence, mutableSetOf())
 
     val createCharge = CreateCharge(
       appearanceUuid = null,
@@ -135,7 +134,7 @@ class ChargeServiceTests {
         fineAmount = null,
         prisonId = null,
       ),
-      replacedChargeUuid = replacedUuid,
+      replacingChargeUuid = replacedUuid,
     )
 
     val result = chargeService.createCharge(
