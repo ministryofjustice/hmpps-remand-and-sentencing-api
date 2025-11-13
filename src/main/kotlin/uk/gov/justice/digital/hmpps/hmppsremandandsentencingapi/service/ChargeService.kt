@@ -43,9 +43,9 @@ class ChargeService(
     courtAppearanceId: String,
   ): RecordResponse<ChargeEntity> {
     var supersedingCharge: ChargeEntity? = null
-    if (charge.supersedingChargeId != null) {
+    if (charge.replacedChargeUuid != null) {
       supersedingCharge =
-        chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(UUID.fromString(charge.supersedingChargeId))
+        chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(charge.replacedChargeUuid)
     }
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     charge.legacyData = chargeLegacyData

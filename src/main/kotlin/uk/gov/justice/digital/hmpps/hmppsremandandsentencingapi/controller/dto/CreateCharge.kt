@@ -20,5 +20,5 @@ data class CreateCharge(
   val sentence: CreateSentence?,
   var legacyData: ChargeLegacyData?,
   val prisonId: String,
-  val supersedingChargeId: String?,
+  val replacedChargeUuid: UUID?,
 )

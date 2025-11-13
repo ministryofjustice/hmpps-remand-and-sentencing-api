@@ -100,6 +100,6 @@ class CourtAppearanceServiceTests {
       fineAmount = null,
       prisonId = null,
     ),
-    supersedingChargeId = null,
+    replacedChargeUuid = null,
   )
 }
