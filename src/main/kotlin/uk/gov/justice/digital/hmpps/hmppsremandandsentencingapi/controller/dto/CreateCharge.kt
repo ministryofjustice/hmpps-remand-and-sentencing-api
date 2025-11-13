@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 
 data class CreateCharge(
   val appearanceUuid: UUID?,

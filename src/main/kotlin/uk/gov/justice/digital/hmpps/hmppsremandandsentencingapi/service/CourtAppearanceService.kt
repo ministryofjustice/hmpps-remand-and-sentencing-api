@@ -202,8 +202,9 @@ class CourtAppearanceService(
       courtCaseEntity,
       serviceUserService.getUsername(),
     )
+    var activeRecord = existingCourtAppearanceEntity
     val eventsToEmit = mutableSetOf<EventMetadata>()
-    val appearanceDateChanged = !existingCourtAppearanceEntity.appearanceDate.isEqual(compareAppearance.appearanceDate)
+    var appearanceDateChanged = !existingCourtAppearanceEntity.appearanceDate.isEqual(compareAppearance.appearanceDate)
     if (!existingCourtAppearanceEntity.isSame(compareAppearance)) {
       existingCourtAppearanceEntity.updateFrom(compareAppearance)
       appearanceChangeStatus = EntityChangeStatus.EDITED
@@ -242,64 +243,59 @@ class CourtAppearanceService(
       courtAppearance.charges,
       courtCaseEntity.prisonerId,
       courtCaseEntity.caseUniqueIdentifier,
-      existingCourtAppearanceEntity,
+      activeRecord,
       appearanceDateChanged,
       courtAppearance.prisonId,
     )
     eventsToEmit.addAll(chargeEventsToEmit)
     val (nextCourtAppearanceEntityChangeStatus, futureSkeletonAppearance) = updateNextCourtAppearance(
       courtAppearance,
-      existingCourtAppearanceEntity,
+      activeRecord,
       existingCourtAppearanceEntity.nextCourtAppearance,
     )
     if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
         EventMetadataCreator.courtAppearanceEventMetadata(
-          existingCourtAppearanceEntity.courtCase.prisonerId,
-          existingCourtAppearanceEntity.courtCase.caseUniqueIdentifier,
-          existingCourtAppearanceEntity.appearanceUuid.toString(),
+          activeRecord.courtCase.prisonerId,
+          activeRecord.courtCase.caseUniqueIdentifier,
+          activeRecord.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
         ),
       )
     }
 
-    when (nextCourtAppearanceEntityChangeStatus) {
-      EntityChangeStatus.CREATED -> {
-        eventsToEmit.add(
-          EventMetadataCreator.courtAppearanceEventMetadata(
-            futureSkeletonAppearance!!.courtCase.prisonerId,
-            futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
-            futureSkeletonAppearance.appearanceUuid.toString(),
-            EventType.COURT_APPEARANCE_INSERTED,
-          ),
-        )
-      }
-      EntityChangeStatus.EDITED -> {
-        eventsToEmit.add(
-          EventMetadataCreator.courtAppearanceEventMetadata(
-            futureSkeletonAppearance!!.courtCase.prisonerId,
-            futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
-            futureSkeletonAppearance.appearanceUuid.toString(),
-            EventType.COURT_APPEARANCE_UPDATED,
-          ),
-        )
-      }
-      EntityChangeStatus.DELETED -> {
-        eventsToEmit.add(
-          EventMetadataCreator.courtAppearanceEventMetadata(
-            futureSkeletonAppearance!!.courtCase.prisonerId,
-            futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
-            futureSkeletonAppearance.appearanceUuid.toString(),
-            EventType.COURT_APPEARANCE_DELETED,
-          ),
-        )
-      }
-      else -> {}
+    if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.CREATED) {
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          futureSkeletonAppearance!!.courtCase.prisonerId,
+          futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
+          futureSkeletonAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_INSERTED,
+        ),
+      )
+    } else if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.EDITED) {
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          futureSkeletonAppearance!!.courtCase.prisonerId,
+          futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
+          futureSkeletonAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_UPDATED,
+        ),
+      )
+    } else if (nextCourtAppearanceEntityChangeStatus == EntityChangeStatus.DELETED) {
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          futureSkeletonAppearance!!.courtCase.prisonerId,
+          futureSkeletonAppearance.courtCase.caseUniqueIdentifier,
+          futureSkeletonAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_DELETED,
+        ),
+      )
     }
 
     documentService.update(
       courtAppearance.documents?.map { it.documentUUID } ?: emptyList(),
-      existingCourtAppearanceEntity,
+      activeRecord,
     )
 
     if (appearanceChangeStatus != EntityChangeStatus.NO_CHANGE ||
@@ -310,7 +306,7 @@ class CourtAppearanceService(
     ) {
       courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearanceEntity))
     }
-    return RecordResponse(existingCourtAppearanceEntity, eventsToEmit)
+    return RecordResponse(activeRecord, eventsToEmit)
   }
 
   private fun updateNextCourtAppearance(
@@ -369,7 +365,7 @@ class CourtAppearanceService(
       courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(futureCourtAppearance))
       val appearanceType =
         appearanceTypeRepository.findByAppearanceTypeUuid(toCreateNextCourtAppearance.appearanceTypeUuid)
-          ?: throw EntityNotFoundException("No appearance type found at ${toCreateNextCourtAppearance.appearanceTypeUuid}")
+          ?: throw EntityNotFoundException("No appearance type found at ${courtAppearance.nextCourtAppearance.appearanceTypeUuid}")
       val savedNextCourtAppearance = nextCourtAppearanceRepository.save(
         NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance, appearanceType),
       )
