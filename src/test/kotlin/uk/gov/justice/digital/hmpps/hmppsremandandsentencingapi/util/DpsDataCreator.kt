@@ -91,7 +91,7 @@ class DpsDataCreator {
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
       prisonId: String = "PRISON1",
-      replacedChargeUuid: UUID? = UUID.randomUUID(),
+      replacedChargeUuid: UUID? = null,
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
