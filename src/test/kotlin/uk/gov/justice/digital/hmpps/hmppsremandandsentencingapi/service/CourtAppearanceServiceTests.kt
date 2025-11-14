@@ -89,8 +89,6 @@ class CourtAppearanceServiceTests {
 
   @Nested
   inner class CreateCharges {
-    private val replacedOutcomeUuid = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
-
     @Test
     fun `no charges are getting replaced`() {
       val charge = createCharge()
@@ -104,7 +102,7 @@ class CourtAppearanceServiceTests {
 
     @Test
     fun `one charge is getting replaced`() {
-      val replacedCharge = createCharge(outcomeUuid = replacedOutcomeUuid)
+      val replacedCharge = createCharge(outcomeUuid = ChargeService.replacedWithAnotherOutcomeUuid)
       val replacingCharge = createCharge(replacingChargeUuid = replacedCharge.chargeUuid)
       val charges = listOf(replacedCharge, replacingCharge)
       val courtAppearance = mockk<CourtAppearanceEntity>()
@@ -124,8 +122,8 @@ class CourtAppearanceServiceTests {
 
     @Test
     fun `multiple charges are getting replaced`() {
-      val replacedCharge1 = createCharge(outcomeUuid = replacedOutcomeUuid)
-      val replacedCharge2 = createCharge(outcomeUuid = replacedOutcomeUuid)
+      val replacedCharge1 = createCharge(outcomeUuid = ChargeService.replacedWithAnotherOutcomeUuid)
+      val replacedCharge2 = createCharge(outcomeUuid = ChargeService.replacedWithAnotherOutcomeUuid)
       val replacingCharge1 = createCharge(replacingChargeUuid = replacedCharge1.chargeUuid)
       val replacingCharge2 = createCharge(replacingChargeUuid = replacedCharge2.chargeUuid)
       val charges = listOf(replacedCharge1, replacingCharge1, replacedCharge2, replacingCharge2)

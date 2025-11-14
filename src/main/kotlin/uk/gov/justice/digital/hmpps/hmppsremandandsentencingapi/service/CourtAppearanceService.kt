@@ -446,9 +446,8 @@ class CourtAppearanceService(
   ): MutableSet<RecordResponse<ChargeEntity>> {
     val sentencesCreated = mutableMapOf<UUID, SentenceEntity>()
     val allChargeRecords = mutableSetOf<RecordResponse<ChargeEntity>>()
-    val replacedOutcomeUuid = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
 
-    val (replacedCharges, otherCharges) = charges.partition { it.outcomeUuid == replacedOutcomeUuid }
+    val (replacedCharges, otherCharges) = charges.partition { it.outcomeUuid == ChargeService.replacedWithAnotherOutcomeUuid }
 
     val createdReplacedCharges = replacedCharges.map { charge ->
       chargeService.createCharge(
