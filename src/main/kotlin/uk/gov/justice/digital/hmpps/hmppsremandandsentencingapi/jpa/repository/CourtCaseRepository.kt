@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.EntityGraph
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
@@ -191,4 +192,28 @@ interface CourtCaseRepository :
     @Param("prisonerId") prisonerId: String,
     @Param("bookingId") bookingId: String,
   ): List<CourtCaseEntity>
+
+  @Modifying
+  @Query(
+    """
+    UPDATE court_case
+    SET latest_court_appearance_id = NULL
+    WHERE latest_court_appearance_id IN (
+        SELECT a.id FROM court_appearance a
+        JOIN court_case cc ON a.court_case_id = cc.id
+        WHERE cc.prisoner_id = :prisonerId
+    )
+  """,
+    nativeQuery = true,
+  )
+  fun updateLatestCourtAppearanceNullByPrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM court_case WHERE prisoner_id = :prisonerId
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByPrisonerId(@Param("prisonerId") prisonerId: String)
 }

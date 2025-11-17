@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
@@ -218,4 +219,22 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
   ): List<ViewSentenceRow>
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM sentence s
+    USING (
+      SELECT DISTINCT c.id
+        FROM charge c
+          JOIN appearance_charge ac ON c.id = ac.charge_id
+          JOIN court_appearance a ON ac.appearance_id = a.id
+          JOIN court_case cc ON a.court_case_id = cc.id
+        WHERE cc.prisoner_id = :prisonerId
+    ) del
+    WHERE s.charge_id = del.id
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByChargeCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
 }
