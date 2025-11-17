@@ -18,4 +18,18 @@ interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEnti
   """,
   )
   fun deleteByFutureSkeletonAppearance(@Param("futureSkeletonAppearance")futureSkeletonAppearance: CourtAppearanceEntity)
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM next_court_appearance
+    WHERE future_skeleton_appearance_id IN (
+    SELECT a.id FROM court_appearance a
+    JOIN court_case cc ON a.court_case_id = cc.id
+    WHERE cc.prisoner_id = :prisonerId
+  )
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
 }

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
@@ -27,4 +28,18 @@ interface UploadedDocumentRepository : CrudRepository<UploadedDocumentEntity, In
   fun findByAppearanceCourtCasePrisonerId(
     @Param("prisonerId") prisonerId: String,
   ): List<UploadedDocumentEntity>
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM uploaded_document
+    WHERE appearance_id IN (
+        SELECT ca.id FROM court_appearance ca
+        JOIN court_case cc ON ca.court_case_id = cc.id
+        WHERE cc.prisoner_id = :prisonerId
+    )
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
 }
