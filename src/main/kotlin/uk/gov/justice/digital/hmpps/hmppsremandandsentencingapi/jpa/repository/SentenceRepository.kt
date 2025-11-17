@@ -237,4 +237,20 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     nativeQuery = true,
   )
   fun deleteByChargeCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying
+  @Query(
+    """
+    update sentence set consecutive_to_id = null where consecutive_to_id in (
+      SELECT s.id
+      FROM sentence s 
+      JOIN charge c on s.charge_id = c.id
+      JOIN appearance_charge ac ON ac.charge_id = c.id
+      JOIN court_appearance a ON ac.appearance_id = a.id
+      JOIN court_case cc ON a.court_case_id = cc.id
+      WHERE cc.prisoner_id = :prisonerId)
+  """,
+    nativeQuery = true,
+  )
+  fun updateConsecutiveToIdNullByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
 }
