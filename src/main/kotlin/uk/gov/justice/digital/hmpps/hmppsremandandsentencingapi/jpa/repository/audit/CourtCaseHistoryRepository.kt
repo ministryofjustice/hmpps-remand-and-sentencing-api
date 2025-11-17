@@ -19,7 +19,7 @@ interface CourtCaseHistoryRepository : CrudRepository<CourtCaseHistoryEntity, In
   @Modifying
   @Query(
     """
-    DELETE FROM court_case_history WHERE original_court_case_id in (select id from court_case cc where cc.prisoner_id = :prisonerId)
+    DELETE FROM court_case_history WHERE original_court_case_id in (select cc.id from court_case cc where cc.prisoner_id = :prisonerId)
   """,
     nativeQuery = true,
   )
