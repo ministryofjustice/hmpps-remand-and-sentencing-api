@@ -40,6 +40,19 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   @Modifying
   @Query(
     """
+    update charge set superseding_charge_id = null where superseding_charge_id in (
+      SELECT c.id
+      FROM charge c
+      JOIN court_case mfcc ON c.merged_from_case_id = mfcc.id
+      WHERE mfcc.prisoner_id = :prisonerId)
+  """,
+    nativeQuery = true,
+  )
+  fun updateSupersedingChargeIdNullByMergedCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying
+  @Query(
+    """
     WITH deleted_charges AS (
       DELETE FROM appearance_charge
       WHERE charge_id IN (
