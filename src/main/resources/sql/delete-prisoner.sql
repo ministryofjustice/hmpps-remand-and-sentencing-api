@@ -1,6 +1,17 @@
 -- Native sql script to delete all data for a prisoner - Only to be used for migration
 -- Delete recall sentence history
 DELETE FROM recall_sentence_history rsh
+WHERE rsh.sentence_id IN (
+    SELECT s.id
+        FROM sentence s
+                 JOIN charge c ON s.charge_id = c.id
+                 JOIN appearance_charge ac ON c.id = ac.charge_id
+                 JOIN court_appearance a ON ac.appearance_id = a.id
+                 join court_case cc on a.court_case_id = cc.id
+                 where cc.prisoner_id = :prisonerId
+);
+
+DELETE FROM recall_sentence_history rsh
 WHERE rsh.recall_history_id IN (
     SELECT id FROM recall_history rh WHERE rh.prisoner_id = :prisonerId
 );
@@ -26,9 +37,8 @@ WHERE original_period_length_id IN (
              JOIN charge c ON s.charge_id = c.id
              JOIN appearance_charge ac ON c.id = ac.charge_id
              JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+             join court_case cc on a.court_case_id = cc.id
+             where cc.prisoner_id = :prisonerId
 );
 
 -- Delete period lengths
@@ -39,9 +49,8 @@ WHERE sentence_id IN (
              JOIN charge c ON s.charge_id = c.id
              JOIN appearance_charge ac ON c.id = ac.charge_id
              JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+             join court_case cc on a.court_case_id = cc.id
+             where cc.prisoner_id = :prisonerId
 );
 
 -- Delete appearance period length history
@@ -50,9 +59,8 @@ WHERE original_period_length_id IN (
     SELECT DISTINCT pl.id
     FROM period_length pl
     JOIN court_appearance a ON pl.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+    join court_case cc on a.court_case_id = cc.id
+    where cc.prisoner_id = :prisonerId
 );
 
 -- Delete appearance period lengths
@@ -60,9 +68,8 @@ DELETE FROM period_length
 WHERE appearance_id IN (
     SELECT a.id
     FROM court_appearance a
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+    join court_case cc on a.court_case_id = cc.id
+    where cc.prisoner_id = :prisonerId
 );
 
 -- Delete sentence history
@@ -73,9 +80,8 @@ WHERE original_sentence_id IN (
              JOIN charge c ON s.charge_id = c.id
              JOIN appearance_charge ac ON c.id = ac.charge_id
              JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+             join court_case cc on a.court_case_id = cc.id
+             where cc.prisoner_id = :prisonerId
 );
 
 -- Delete sentences
@@ -97,9 +103,8 @@ WHERE original_charge_id IN (
     FROM charge c
              JOIN appearance_charge ac ON ac.charge_id = c.id
              JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+            JOIN court_case cc ON a.court_case_id = cc.id
+            WHERE cc.prisoner_id = :prisonerId
 );
 
 -- delete appearance_charge and charge
@@ -109,9 +114,8 @@ SELECT c.id
     FROM charge c
              JOIN appearance_charge ac ON ac.charge_id = c.id
              JOIN court_appearance a ON ac.appearance_id = a.id
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    ));
+             JOIN court_case cc ON a.court_case_id = cc.id
+             WHERE cc.prisoner_id = :prisonerId);
 
 WITH deleted_charges AS (
 DELETE FROM appearance_charge
@@ -131,7 +135,8 @@ DELETE from charge_history ch
 WHERE original_charge_id IN (
     SELECT c.id
     FROM charge c
-    where c.merged_from_case_id in (SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId)
+    JOIN court_case mfcc ON c.merged_from_case_id = mfcc.id
+    WHERE mfcc.prisoner_id = :prisonerId
 );
 
 DELETE FROM charge
@@ -146,28 +151,25 @@ DELETE FROM court_appearance_history
 WHERE original_appearance_id IN (
     SELECT a.id
     FROM court_appearance a
-    WHERE a.court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+    JOIN court_case cc ON a.court_case_id = cc.id
+    WHERE cc.prisoner_id = :prisonerId
 );
 
 -- Nullify latest court appearance reference
 UPDATE court_case
 SET latest_court_appearance_id = NULL
 WHERE latest_court_appearance_id IN (
-    SELECT id FROM court_appearance
-    WHERE court_case_id IN (
-        SELECT id FROM court_case WHERE prisoner_id = :prisonerId
-    )
+    SELECT a.id FROM court_appearance a
+    JOIN court_case cc ON a.court_case_id = cc.id
+    WHERE cc.prisoner_id = :prisonerId
 );
 
 -- Delete next court appearances
 DELETE FROM next_court_appearance
 WHERE future_skeleton_appearance_id IN (
-    SELECT id FROM court_appearance
-    WHERE court_case_id IN (
-        SELECT id FROM court_case cc WHERE cc.prisoner_id = :prisonerId
-    )
+    SELECT a.id FROM court_appearance a
+    JOIN court_case cc ON a.court_case_id = cc.id
+    WHERE cc.prisoner_id = :prisonerId
 );
 
 -- Delete documents
