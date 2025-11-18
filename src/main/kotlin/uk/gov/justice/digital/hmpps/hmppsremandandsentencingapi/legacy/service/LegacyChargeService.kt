@@ -86,6 +86,10 @@ class LegacyChargeService(
   fun updateInAppearance(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCharge = getAtAppearanceUnlessDeleted(appearanceUuid, lifetimeUuid)
+    val existingOutcomeCode = existingCharge.chargeOutcome?.nomisCode ?: existingCharge.legacyData?.nomisOutcomeCode
+    if (existingOutcomeCode != charge.legacyData.nomisOutcomeCode) {
+      log.info("charge at $lifetimeUuid in appearance $appearanceUuid is updating outcome from $existingOutcomeCode to ${charge.legacyData.nomisOutcomeCode}")
+    }
     val appearance = existingCharge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
@@ -96,9 +100,6 @@ class LegacyChargeService(
         charge.updateFrom(updatedCharge)
       }
       entityChangeStatus = EntityChangeStatus.EDITED
-      if (dpsOutcome == null) {
-        log.info("charge at $lifetimeUuid updated in appearance $appearanceUuid with no DPS outcome for nomisOutcomeCode ${charge.legacyData.nomisOutcomeCode}")
-      }
     }
     val courtCase = existingCharge.appearanceCharges.first().appearance!!.courtCase
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
