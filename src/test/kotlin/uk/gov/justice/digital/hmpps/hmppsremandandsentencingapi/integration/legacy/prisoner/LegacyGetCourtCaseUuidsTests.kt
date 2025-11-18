@@ -29,6 +29,32 @@ class LegacyGetCourtCaseUuidsTests : IntegrationTestBase() {
     Assertions.assertThat(result.courtCaseUuids).doesNotContain(secondCourtCaseUuid)
   }
 
+  @Test
+  fun `no token results in unauthorized`() {
+    val (_, createCourtCase) = createLegacyCourtCase()
+
+    webTestClient
+      .get()
+      .uri("/legacy/prisoner/${createCourtCase.prisonerId}/court-case-uuids")
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `token with incorrect role is forbidden`() {
+    val (_, createCourtCase) = createLegacyCourtCase()
+    webTestClient
+      .get()
+      .uri("/legacy/prisoner/${createCourtCase.prisonerId}/court-case-uuids")
+      .headers {
+        it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
+      }
+      .exchange()
+      .expectStatus()
+      .isForbidden
+  }
+
   private fun deleteCourtCase(courtCaseUuid: String) {
     webTestClient
       .delete()
