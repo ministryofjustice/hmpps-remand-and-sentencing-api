@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
@@ -45,9 +47,13 @@ class LegacyChargeService(
     val courtAppearance = courtAppearanceRepository.findByAppearanceUuid(charge.appearanceLifetimeUuid)?.takeUnless { entity -> entity.statusId == CourtAppearanceEntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at ${charge.appearanceLifetimeUuid}")
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
+
     val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, performedByUsername))
     chargeHistoryRepository.save(ChargeHistoryEntity.from(createdCharge))
+    if (dpsOutcome == null) {
+      log.info("charge at ${createdCharge.chargeUuid} created with no DPS outcome for nomisOutcomeCode ${charge.legacyData.nomisOutcomeCode}")
+    }
     val appearanceCharge = AppearanceChargeEntity(
       courtAppearance,
       createdCharge,
@@ -90,6 +96,9 @@ class LegacyChargeService(
         charge.updateFrom(updatedCharge)
       }
       entityChangeStatus = EntityChangeStatus.EDITED
+      if (dpsOutcome == null) {
+        log.info("charge at $lifetimeUuid updated in appearance $appearanceUuid with no DPS outcome for nomisOutcomeCode ${charge.legacyData.nomisOutcomeCode}")
+      }
     }
     val courtCase = existingCharge.appearanceCharges.first().appearance!!.courtCase
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
@@ -177,4 +186,8 @@ class LegacyChargeService(
   ) ?: throw EntityNotFoundException("No charge found at $chargeUuid for appearance $appearanceUuid")
 
   private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(lifetimeUUID) ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
+
+  companion object {
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 }
