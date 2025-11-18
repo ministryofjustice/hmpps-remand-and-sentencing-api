@@ -51,8 +51,8 @@ class LegacyChargeService(
     val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, performedByUsername))
     chargeHistoryRepository.save(ChargeHistoryEntity.from(createdCharge))
-    if (dpsOutcome == null) {
-      log.info("charge at ${createdCharge.chargeUuid} created with no DPS outcome for nomisOutcomeCode ${charge.legacyData.nomisOutcomeCode}")
+    if (charge.legacyData.nomisOutcomeCode == null) {
+      log.info("charge at ${createdCharge.chargeUuid} created in appearance ${charge.appearanceLifetimeUuid} with no outcome set")
     }
     val appearanceCharge = AppearanceChargeEntity(
       courtAppearance,
