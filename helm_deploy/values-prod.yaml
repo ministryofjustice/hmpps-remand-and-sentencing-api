@@ -24,6 +24,7 @@ generic-service:
 
   postgresDatabaseRestore:
     enabled: true
+    timeout: 3600
     namespace_secrets:
       rds-postgresql-instance-output:
         DB_NAME: "database_name"
