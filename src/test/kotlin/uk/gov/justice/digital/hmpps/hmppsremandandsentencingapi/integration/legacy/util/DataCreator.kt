@@ -75,10 +75,10 @@ class DataCreator {
       postedDate: String = LocalDate.now().format(
         DateTimeFormatter.ISO_DATE,
       ),
-      nomisOutcomeCode: String = "1",
-      outcomeDescription: String = "Outcome Description",
-      outcomeDispositionCode: String = "INTERIM",
-      outcomeConvictionFlag: Boolean = false,
+      nomisOutcomeCode: String? = "1",
+      outcomeDescription: String? = "Outcome Description",
+      outcomeDispositionCode: String? = "INTERIM",
+      outcomeConvictionFlag: Boolean? = false,
       offenceDescription: String = "Offence Description",
     ): ChargeLegacyData = ChargeLegacyData(
       postedDate,
