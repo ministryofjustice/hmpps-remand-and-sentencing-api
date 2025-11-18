@@ -216,4 +216,13 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun deleteByPrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Query(
+    """
+    select cc.caseUniqueIdentifier from CourtCaseEntity cc
+    where cc.prisonerId = :prisonerId
+    and cc.statusId != :statusId
+  """,
+  )
+  fun findCaseUniqueIdentifierByPrisonerIdAndStatusIdNot(prisonerId: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): List<String>
 }
