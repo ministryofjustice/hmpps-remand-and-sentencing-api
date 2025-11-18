@@ -82,10 +82,10 @@ documentCleanCronjob:
     capabilities:
       drop:
         - ALL
-      runAsNonRoot: true
-      allowPrivilegeEscalation: false
-      seccompProfile:
-        type: RuntimeDefault
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
 
 image:
   tag: app_version

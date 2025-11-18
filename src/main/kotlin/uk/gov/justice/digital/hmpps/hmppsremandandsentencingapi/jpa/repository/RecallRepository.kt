@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
@@ -27,4 +28,13 @@ interface RecallRepository : CrudRepository<RecallEntity, Int> {
     @Param("prisonerId") prisonerId: String,
     @Param("bookingId") bookingId: String,
   ): List<RecallEntity>
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM recall r WHERE r.prisoner_id = :prisonerId
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByPrisonerId(prisonerId: String)
 }

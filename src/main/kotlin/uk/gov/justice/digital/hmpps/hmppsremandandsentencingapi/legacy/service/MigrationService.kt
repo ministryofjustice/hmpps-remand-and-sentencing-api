@@ -41,13 +41,15 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.UploadedDocumentRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CustomPrisonerDataRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateChargeResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
@@ -86,8 +88,10 @@ class MigrationService(
   private val recallTypeRepository: RecallTypeRepository,
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
-  private val customPrisonerDataRepository: CustomPrisonerDataRepository,
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
+  private val recallHistoryRepository: RecallHistoryRepository,
+  private val uploadedDocumentRepository: UploadedDocumentRepository,
 ) {
 
   @Transactional
@@ -343,7 +347,32 @@ class MigrationService(
 
   fun deletePrisonerData(prisonerId: String) {
     log.info("Starting delete of prisoner data for $prisonerId")
-    customPrisonerDataRepository.deletePrisonerData(prisonerId)
+    recallSentenceHistoryRepository.deleteBySentencePrisonerId(prisonerId)
+    recallSentenceHistoryRepository.deleteByRecallHistoryPrisonerId(prisonerId)
+    recallSentenceRepository.deleteByRecallPrisonerId(prisonerId)
+    recallHistoryRepository.deleteByPrisonerId(prisonerId)
+    recallRepository.deleteByPrisonerId(prisonerId)
+    periodLengthHistoryRepository.deleteBySentenceCourtCasePrisonerId(prisonerId)
+    periodLengthRepository.deleteBySentenceCourtCasePrisonerId(prisonerId)
+    periodLengthHistoryRepository.deleteByAppearanceCourtCasePrisonerId(prisonerId)
+    periodLengthRepository.deleteByAppearanceCourtCasePrisonerId(prisonerId)
+    sentenceHistoryRepository.deleteBySentenceCourtCasePrisonerId(prisonerId)
+    sentenceRepository.updateConsecutiveToIdNullByCourtCasePrisonerId(prisonerId)
+    sentenceRepository.deleteByChargeCourtCasePrisonerId(prisonerId)
+    chargeHistoryRepository.deleteByCourtCasePrisonerId(prisonerId)
+    chargeRepository.updateSupersedingChargeIdNullByCourtCasePrisonerId(prisonerId)
+    chargeRepository.updateSupersedingChargeIdNullByMergedCourtCasePrisonerId(prisonerId)
+    chargeRepository.deleteByChargeCourtCasePrisonerId(prisonerId)
+    chargeHistoryRepository.deleteByChargeMergedFromCasePrisonerId(prisonerId)
+    chargeRepository.deleteByChargeMergedFromCasePrisonerId(prisonerId)
+    courtAppearanceHistoryRepository.deleteByCourtCasePrisonerId(prisonerId)
+    courtCaseRepository.updateLatestCourtAppearanceNullByPrisonerId(prisonerId)
+    nextCourtAppearanceRepository.deleteByCourtCasePrisonerId(prisonerId)
+    uploadedDocumentRepository.deleteByCourtCasePrisonerId(prisonerId)
+    courtAppearanceRepository.deleteByCourtCasePrisonerId(prisonerId)
+    courtCaseHistoryRepository.deleteByPrisonerId(prisonerId)
+    courtCaseHistoryRepository.deleteByCourtCaseId(prisonerId)
+    courtCaseRepository.deleteByPrisonerId(prisonerId)
     log.info("Finished delete of prisoner data for $prisonerId")
   }
 

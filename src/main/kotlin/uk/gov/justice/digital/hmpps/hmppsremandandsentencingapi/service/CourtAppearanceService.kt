@@ -403,7 +403,6 @@ class CourtAppearanceService(
       appearanceCharge.appearance = null
     }
 
-    val removedCharges = mutableSetOf<AppearanceChargeEntity>()
     toDeleteCharges.forEach { charge ->
       eventsToEmit.addAll(
         chargeService.deleteChargeIfOrphan(
@@ -437,7 +436,8 @@ class CourtAppearanceService(
     return (if (toAddCharges.isNotEmpty() || toDeleteCharges.isNotEmpty()) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE) to eventsToEmit
   }
 
-  private fun createCharges(
+  @VisibleForTesting
+  internal fun createCharges(
     charges: List<CreateCharge>,
     prisonerId: String,
     courtCaseUuid: String,
@@ -445,17 +445,40 @@ class CourtAppearanceService(
     courtAppearanceDateChanged: Boolean,
   ): MutableSet<RecordResponse<ChargeEntity>> {
     val sentencesCreated = mutableMapOf<UUID, SentenceEntity>()
-    return orderChargesByConsecutiveChain(charges).map {
-      val charge = chargeService.createCharge(
-        it,
+    val allChargeRecords = mutableSetOf<RecordResponse<ChargeEntity>>()
+
+    val (replacedCharges, otherCharges) = charges.partition { it.outcomeUuid == ChargeService.replacedWithAnotherOutcomeUuid }
+
+    val createdReplacedCharges = replacedCharges.map { charge ->
+      chargeService.createCharge(
+        charge,
         sentencesCreated,
         prisonerId,
         courtCaseUuid,
         courtAppearanceEntity,
         courtAppearanceDateChanged,
       )
-      charge
-    }.toMutableSet()
+    }
+    allChargeRecords.addAll(createdReplacedCharges)
+    val createdReplacedChargeMap = createdReplacedCharges.associate { it.record.chargeUuid to it.record }
+
+    val orderedOtherCharges = orderChargesByConsecutiveChain(otherCharges)
+
+    val createdOtherCharges = orderedOtherCharges.map { charge ->
+      val supersedingCharge = charge.replacingChargeUuid?.let { createdReplacedChargeMap[it] }
+      chargeService.createCharge(
+        charge,
+        sentencesCreated,
+        prisonerId,
+        courtCaseUuid,
+        courtAppearanceEntity,
+        courtAppearanceDateChanged,
+        supersedingCharge,
+      )
+    }
+    allChargeRecords.addAll(createdOtherCharges)
+
+    return allChargeRecords
   }
 
   private fun getAppearanceOutcome(courtAppearance: CreateCourtAppearance): Pair<CourtAppearanceLegacyData?, AppearanceOutcomeEntity?> {

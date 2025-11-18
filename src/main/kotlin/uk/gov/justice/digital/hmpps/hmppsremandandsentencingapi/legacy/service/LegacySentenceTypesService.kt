@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeDetail
@@ -30,6 +31,7 @@ class LegacySentenceTypesService(private val legacySentenceTypeRepository: Legac
     .groupBy { it.nomisSentenceTypeReference }
     .map { (key, group) -> summariseLegacySentenceGroup(key, group) }
 
+  @Cacheable("legacySentenceTypeSummaries")
   fun getLegacySentencesByNomisSentenceTypeReferenceAsSummary(nomisSentenceTypeReference: String): LegacySentenceTypeGroupingSummary = summariseLegacySentenceGroup(
     nomisSentenceTypeReference,
     getLegacySentencesByNomisSentenceTypeReference(nomisSentenceTypeReference),
