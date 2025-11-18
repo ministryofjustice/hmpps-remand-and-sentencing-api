@@ -15,4 +15,13 @@ interface CourtCaseHistoryRepository : CrudRepository<CourtCaseHistoryEntity, In
     nativeQuery = true,
   )
   fun deleteByPrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM court_case_history WHERE original_court_case_id in (select cc.id from court_case cc where cc.prisoner_id = :prisonerId)
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByCourtCaseId(@Param("prisonerId") prisonerId: String)
 }
