@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
@@ -129,26 +128,6 @@ class LegacyCourtAppearanceService(
     }
     existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances)
     nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(existingCourtAppearance)
-  }
-
-  @Transactional
-  fun linkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID, performedByUser: String?): EntityChangeStatus {
-    val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
-    val existingCharge = getChargeUnlessDelete(lifetimeChargeUuid)
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == lifetimeChargeUuid }) {
-      val appearanceCharge = AppearanceChargeEntity(
-        existingCourtAppearance,
-        existingCharge,
-        performedByUser ?: serviceUserService.getUsername(),
-        null,
-      )
-      existingCourtAppearance.appearanceCharges.add(appearanceCharge)
-      existingCharge.appearanceCharges.add(appearanceCharge)
-      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
-      entityChangeStatus = EntityChangeStatus.EDITED
-    }
-    return entityChangeStatus
   }
 
   @Transactional
