@@ -5,8 +5,13 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
@@ -83,9 +88,53 @@ class LegacyChargeService(
   }
 
   @Transactional
+  fun linkAppearanceAndUpdate(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): RecordResponse<LegacyChargeCreatedResponse> {
+    val existingCourtAppearance = getAppearanceUnlessDeleted(appearanceUuid)
+    val existingCharge = getUnlessDeleted(lifetimeUuid)
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+    if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == lifetimeUuid }) {
+      val appearanceCharge = AppearanceChargeEntity(
+        existingCourtAppearance,
+        existingCharge,
+        charge.performedByUser ?: serviceUserService.getUsername(),
+        null,
+      )
+      existingCourtAppearance.appearanceCharges.add(appearanceCharge)
+      existingCharge.appearanceCharges.add(appearanceCharge)
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          existingCourtAppearance.courtCase.prisonerId,
+          existingCourtAppearance.courtCase.caseUniqueIdentifier,
+          existingCourtAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_UPDATED,
+        ),
+      )
+    }
+    val (updateChargeEntityChangeStatus, legacyChargeCreatedResponse) = updateChargeInAppearance(existingCharge, lifetimeUuid, appearanceUuid, charge)
+    if (updateChargeEntityChangeStatus == EntityChangeStatus.EDITED) {
+      eventsToEmit.add(
+        EventMetadataCreator.chargeEventMetadata(
+          legacyChargeCreatedResponse.prisonerId,
+          legacyChargeCreatedResponse.courtCaseUuid,
+          appearanceUuid.toString(),
+          legacyChargeCreatedResponse.lifetimeUuid.toString(),
+          EventType.CHARGE_UPDATED,
+        ),
+      )
+    }
+    return RecordResponse(legacyChargeCreatedResponse, eventsToEmit)
+  }
+
+  @Transactional
   fun updateInAppearance(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCharge = getAtAppearanceUnlessDeleted(appearanceUuid, lifetimeUuid)
+    return updateChargeInAppearance(existingCharge, lifetimeUuid, appearanceUuid, charge)
+  }
+
+  private fun updateChargeInAppearance(existingCharge: ChargeEntity, lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
+    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingOutcomeCode = existingCharge.chargeOutcome?.nomisCode ?: existingCharge.legacyData?.nomisOutcomeCode
     if (existingOutcomeCode != charge.legacyData.nomisOutcomeCode) {
       log.info("charge at $lifetimeUuid in appearance $appearanceUuid is updating outcome from $existingOutcomeCode to ${charge.legacyData.nomisOutcomeCode}")
@@ -187,6 +236,9 @@ class LegacyChargeService(
   ) ?: throw EntityNotFoundException("No charge found at $chargeUuid for appearance $appearanceUuid")
 
   private fun getUnlessDeleted(lifetimeUUID: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(lifetimeUUID) ?: throw EntityNotFoundException("No charge found at $lifetimeUUID")
+
+  private fun getAppearanceUnlessDeleted(appearanceUuid: UUID): CourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)
+    ?.takeUnless { entity -> entity.statusId == CourtAppearanceEntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
