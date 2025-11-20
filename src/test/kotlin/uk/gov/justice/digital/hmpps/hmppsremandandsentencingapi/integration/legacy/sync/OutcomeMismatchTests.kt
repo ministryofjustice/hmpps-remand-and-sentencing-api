@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import java.time.LocalDate
 
 class OutcomeMismatchTests : IntegrationTestBase() {
 
@@ -33,11 +34,11 @@ class OutcomeMismatchTests : IntegrationTestBase() {
     val courtCaseResponse = response.courtCases.first()
     val createdCharge = response.charges.first()
     val createdAppearance = response.appearances.first()
-    val courtAppearanceWithNoOutcome = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = courtCaseResponse.courtCaseUuid, legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null, outcomeConvictionFlag = null))
+    val futureCourtAppearanceWithNoOutcome = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = courtCaseResponse.courtCaseUuid, appearanceDate = LocalDate.now().plusDays(5), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null, outcomeConvictionFlag = null))
     val courtAppearanceCreatedResponse = webTestClient
       .post()
       .uri("/legacy/court-appearance")
-      .bodyValue(courtAppearanceWithNoOutcome)
+      .bodyValue(futureCourtAppearanceWithNoOutcome)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
         it.contentType = MediaType.APPLICATION_JSON

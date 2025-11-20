@@ -127,7 +127,7 @@ class ChargeService(
             courtAppearance.appearanceUuid.toString(),
           ),
         )
-      } else if (existingCharge.hasTwoOrMoreActiveCourtAppearance(courtAppearance)) {
+      } else if (existingCharge.hasTwoOrMoreLiveCourtAppearance(courtAppearance)) {
         courtAppearance.appearanceCharges.filter { it.charge == existingCharge }
           .forEach { appearanceCharge ->
             appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
@@ -165,7 +165,7 @@ class ChargeService(
       activeRecord.sentences.add(sentence)
       eventsToEmit.addAll(sentenceEventsToEmit)
     } else {
-      activeRecord.getActiveSentence()?.let { sentenceEntity ->
+      activeRecord.getLiveSentence()?.let { sentenceEntity ->
         eventsToEmit.addAll(
           sentenceService.deleteSentence(
             sentenceEntity,
@@ -251,7 +251,7 @@ class ChargeService(
       if (charge.statusId == ChargeEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.delete(serviceUserService.getUsername())
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
-    charge.getActiveOrInactiveSentence()?.let {
+    charge.getLiveSentence()?.let {
       eventsToEmit.addAll(
         sentenceService.deleteSentence(
           it,

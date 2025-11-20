@@ -200,8 +200,8 @@ class CourtCaseService(
 
         val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
           appearance.appearanceCharges
-            .filter { it.charge?.statusId == ChargeEntityStatus.ACTIVE && it.charge?.getActiveOrInactiveSentence() != null }
-            .map { it.charge!!.getActiveOrInactiveSentence()!! to appearance }
+            .filter { it.charge?.statusId == ChargeEntityStatus.ACTIVE && it.charge?.getLiveSentence() != null }
+            .map { it.charge!!.getLiveSentence()!! to appearance }
         }
 
         RecallableCourtCase(

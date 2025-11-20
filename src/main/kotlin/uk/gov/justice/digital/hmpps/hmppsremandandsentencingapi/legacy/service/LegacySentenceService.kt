@@ -161,7 +161,7 @@ class LegacySentenceService(
 
   fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID, performedByUser: String): ChargeEntity {
     val charge = getChargeAtAppearance(chargeUuid, appearanceUuid)
-    if (charge.getActiveOrInactiveSentence() != null) {
+    if (charge.getLiveSentence() != null) {
       throw ChargeAlreadySentencedException("charge at $chargeUuid is already sentenced")
     }
     val appearance = charge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!

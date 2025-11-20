@@ -151,7 +151,7 @@ class SentenceService(
     return RecordResponse(createdSentence, eventsToEmit)
   }
 
-  fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getActiveSentence() ?: sentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid) }
+  fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getLiveSentence() ?: sentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid) }
 
   @Transactional(readOnly = true)
   fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)?.let { Sentence.from(it) }

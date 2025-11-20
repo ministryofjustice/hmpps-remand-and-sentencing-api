@@ -19,7 +19,7 @@ abstract class LegacyBaseService(
 
   fun createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge: ChargeEntity, appearance: CourtAppearanceEntity, updatedCharge: ChargeEntity, performedByUsername: String, chargeModifyFunction: (ChargeEntity) -> Unit = {}): ChargeEntity {
     var chargeRecord = existingCharge
-    if (existingCharge.hasTwoOrMoreActiveCourtAppearance(appearance)) {
+    if (existingCharge.hasTwoOrMoreLiveCourtAppearance(appearance)) {
       existingCharge.appearanceCharges.firstOrNull { it.appearance == appearance }
         ?.let { appearanceCharge ->
           appearanceChargeHistoryRepository.save(

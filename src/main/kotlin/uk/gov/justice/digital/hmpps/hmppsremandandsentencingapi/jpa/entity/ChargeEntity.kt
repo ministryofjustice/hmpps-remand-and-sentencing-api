@@ -70,19 +70,11 @@ class ChargeEntity(
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()
 
-  fun hasNoActiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId == CourtAppearanceEntityStatus.ACTIVE }
+  fun hasNoLiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId != CourtAppearanceEntityStatus.DELETED }
 
-  fun hasTwoOrMoreActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId == CourtAppearanceEntityStatus.ACTIVE } >= 2
+  fun hasTwoOrMoreLiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId != CourtAppearanceEntityStatus.DELETED } >= 2
 
-  fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId == SentenceEntityStatus.ACTIVE }
-
-  fun getActiveOrInactiveSentence(): SentenceEntity? = sentences.firstOrNull {
-    setOf(
-      SentenceEntityStatus.ACTIVE,
-      SentenceEntityStatus.INACTIVE,
-      SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
-    ).contains(it.statusId)
-  }
+  fun getLiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED }
 
   fun hasSentence(): Boolean = sentences.any { it.statusId != SentenceEntityStatus.DELETED }
   fun isSame(other: ChargeEntity, otherHasSentence: Boolean): Boolean = this.offenceCode == other.offenceCode &&
