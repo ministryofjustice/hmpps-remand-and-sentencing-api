@@ -142,8 +142,8 @@ class LegacyPrisonerMergeService(
     courtCases.forEach { courtCase ->
       courtCase.appearances.forEach { courtAppearance ->
         courtAppearance.appearanceCharges.filter { appearanceCharge ->
-          appearanceCharge.charge?.getActiveOrInactiveSentence() != null
-        }.map { it.charge!!.getActiveOrInactiveSentence()!! }
+          appearanceCharge.charge?.getLiveSentence() != null
+        }.map { it.charge!!.getLiveSentence()!! }
           .filter { deactivatedSentencesMap.containsKey(it.sentenceUuid) }
           .forEach { sentenceEntity ->
             val active = deactivatedSentencesMap[sentenceEntity.sentenceUuid]!!.active

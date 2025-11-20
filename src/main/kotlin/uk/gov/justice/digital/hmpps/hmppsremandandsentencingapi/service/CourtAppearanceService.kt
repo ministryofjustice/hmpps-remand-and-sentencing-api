@@ -556,7 +556,7 @@ class CourtAppearanceService(
     )
     courtAppearanceEntity.appearanceCharges
       .removeAll { appearanceCharge ->
-        if (appearanceCharge.charge!!.hasNoActiveCourtAppearances()) {
+        if (appearanceCharge.charge!!.hasNoLiveCourtAppearances()) {
           eventsToEmit.addAll(
             chargeService.deleteCharge(
               appearanceCharge.charge!!,

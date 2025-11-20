@@ -80,7 +80,7 @@ class LegacyChargeService(
     val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
     existingChargeRecords.forEach { existingCharge ->
       val updatedCharge = existingCharge.copyFrom(charge, performedByUsername)
-      if (!existingCharge.isSame(updatedCharge, existingCharge.getActiveOrInactiveSentence() != null)) {
+      if (!existingCharge.isSame(updatedCharge, existingCharge.getLiveSentence() != null)) {
         existingCharge.updateFrom(updatedCharge)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
       }
@@ -144,7 +144,7 @@ class LegacyChargeService(
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
     val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
     val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, performedByUsername)
-    if (!existingCharge.isSame(updatedCharge, existingCharge.getActiveOrInactiveSentence() != null)) {
+    if (!existingCharge.isSame(updatedCharge, existingCharge.getLiveSentence() != null)) {
       createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge, appearance, updatedCharge, performedByUsername) { charge ->
         charge.updateFrom(updatedCharge)
       }
@@ -186,7 +186,7 @@ class LegacyChargeService(
     val appearance = existingCharge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
     val performedByUsername = linkChargeToCase.performedByUser ?: serviceUserService.getUsername()
     val updatedCharge = existingCharge.copyFrom(linkChargeToCase, sourceCourtCase, performedByUsername)
-    if (!existingCharge.isSame(updatedCharge, existingCharge.getActiveOrInactiveSentence() != null)) {
+    if (!existingCharge.isSame(updatedCharge, existingCharge.getLiveSentence() != null)) {
       var chargeRecord = existingCharge
       val chargeRecordsOnSourceCase = existingCharge.appearanceCharges.filter {
         it.appearance!!.courtCase == sourceCourtCase

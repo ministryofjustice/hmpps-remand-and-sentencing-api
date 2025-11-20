@@ -24,7 +24,7 @@ data class Charge(
       chargeEntity.offenceEndDate,
       chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
       chargeEntity.terrorRelated,
-      chargeEntity.getActiveOrInactiveSentence()?.let { Sentence.from(it) },
+      chargeEntity.getLiveSentence()?.let { Sentence.from(it) },
       chargeEntity.legacyData,
       chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.let {
         MergedFromCase.from(

@@ -142,7 +142,7 @@ class LegacyCourtAppearanceService(
       existingCourtAppearance.appearanceCharges.remove(appearanceCharge)
       existingCharge.appearanceCharges.remove(appearanceCharge)
       appearanceEntityChangeStatus = EntityChangeStatus.EDITED
-      if (existingCharge.hasNoActiveCourtAppearances()) {
+      if (existingCharge.hasNoLiveCourtAppearances()) {
         existingCharge.delete(performedByUsername)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
         chargeEntityStatus = EntityChangeStatus.DELETED
