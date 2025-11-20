@@ -72,7 +72,7 @@ class ChargeEntity(
 
   fun hasNoLiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId != CourtAppearanceEntityStatus.DELETED }
 
-  fun hasTwoOrMoreLiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId == CourtAppearanceEntityStatus.DELETED } >= 2
+  fun hasTwoOrMoreLiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId != CourtAppearanceEntityStatus.DELETED } >= 2
 
   fun getLiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED }
 
