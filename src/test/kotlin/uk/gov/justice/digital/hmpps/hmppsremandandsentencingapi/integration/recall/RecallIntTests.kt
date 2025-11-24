@@ -358,6 +358,7 @@ class RecallIntTests : IntegrationTestBase() {
           courtCases = listOf(
             RecallCourtCaseDetails(
               courtCaseReference = "CC1",
+              courtCaseUuid = appearanceCourtCaseOne.courtCaseUuid.toString(),
               courtCode = "COURT1",
               sentencingAppearanceDate = appearanceDateOne,
               sentences = listOf(
@@ -411,6 +412,7 @@ class RecallIntTests : IntegrationTestBase() {
             ),
             RecallCourtCaseDetails(
               courtCaseReference = "CC2",
+              courtCaseUuid = appearanceCourtCaseTwo.courtCaseUuid.toString(),
               courtCode = "COURT1",
               sentencingAppearanceDate = appearanceDateTwo,
               sentences = listOf(
@@ -493,6 +495,7 @@ class RecallIntTests : IntegrationTestBase() {
           courtCases = listOf(
             RecallCourtCaseDetails(
               courtCaseReference = null,
+              courtCaseUuid = null,
               courtCode = null,
               sentencingAppearanceDate = null,
               sentences = listOf(
