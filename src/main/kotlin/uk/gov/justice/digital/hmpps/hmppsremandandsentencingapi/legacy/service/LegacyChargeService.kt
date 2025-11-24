@@ -108,7 +108,26 @@ class LegacyChargeService(
     val existingCourtAppearance = getAppearanceUnlessDeleted(appearanceUuid)
     val existingCharge = getUnlessDeleted(lifetimeUuid)
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
-    if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == lifetimeUuid }) {
+    val (updateChargeEntityChangeStatus, legacyChargeCreatedResponse) = updateChargeInAppearance(existingCharge, lifetimeUuid, existingCourtAppearance, charge)
+    if (updateChargeEntityChangeStatus == EntityChangeStatus.EDITED) {
+      eventsToEmit.add(
+        EventMetadataCreator.chargeEventMetadata(
+          legacyChargeCreatedResponse.prisonerId,
+          legacyChargeCreatedResponse.courtCaseUuid,
+          appearanceUuid.toString(),
+          legacyChargeCreatedResponse.lifetimeUuid.toString(),
+          EventType.CHARGE_UPDATED,
+        ),
+      )
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          existingCourtAppearance.courtCase.prisonerId,
+          existingCourtAppearance.courtCase.caseUniqueIdentifier,
+          existingCourtAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_UPDATED,
+        ),
+      )
+    } else if (updateChargeEntityChangeStatus == EntityChangeStatus.NO_CHANGE && existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == lifetimeUuid }) {
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
         existingCharge,
@@ -132,35 +151,22 @@ class LegacyChargeService(
         ),
       )
     }
-    val (updateChargeEntityChangeStatus, legacyChargeCreatedResponse) = updateChargeInAppearance(existingCharge, lifetimeUuid, appearanceUuid, charge)
-    if (updateChargeEntityChangeStatus == EntityChangeStatus.EDITED) {
-      eventsToEmit.add(
-        EventMetadataCreator.chargeEventMetadata(
-          legacyChargeCreatedResponse.prisonerId,
-          legacyChargeCreatedResponse.courtCaseUuid,
-          appearanceUuid.toString(),
-          legacyChargeCreatedResponse.lifetimeUuid.toString(),
-          EventType.CHARGE_UPDATED,
-        ),
-      )
-    }
     return RecordResponse(legacyChargeCreatedResponse, eventsToEmit)
   }
 
   @Transactional
   fun updateInAppearance(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCharge = getAtAppearanceUnlessDeleted(appearanceUuid, lifetimeUuid)
-    return updateChargeInAppearance(existingCharge, lifetimeUuid, appearanceUuid, charge)
+    val existingAppearance = existingCharge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
+    return updateChargeInAppearance(existingCharge, lifetimeUuid, existingAppearance, charge)
   }
 
-  private fun updateChargeInAppearance(existingCharge: ChargeEntity, lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
+  private fun updateChargeInAppearance(existingCharge: ChargeEntity, lifetimeUuid: UUID, appearance: CourtAppearanceEntity, charge: LegacyUpdateCharge): Pair<EntityChangeStatus, LegacyChargeCreatedResponse> {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingOutcomeCode = existingCharge.chargeOutcome?.nomisCode ?: existingCharge.legacyData?.nomisOutcomeCode
     if (existingOutcomeCode != charge.legacyData.nomisOutcomeCode) {
-      log.info("charge at $lifetimeUuid in appearance $appearanceUuid is updating outcome from $existingOutcomeCode to ${charge.legacyData.nomisOutcomeCode}")
+      log.info("charge at $lifetimeUuid in appearance ${appearance.appearanceUuid} is updating outcome from $existingOutcomeCode to ${charge.legacyData.nomisOutcomeCode}")
     }
-    val appearance = existingCharge.appearanceCharges.first { it.appearance!!.appearanceUuid == appearanceUuid }.appearance!!
     val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
     charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
     val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
