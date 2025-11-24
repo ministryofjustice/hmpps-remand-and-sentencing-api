@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
@@ -177,7 +178,12 @@ class LegacySentenceService(
 
   fun createSentenceRecord(charge: ChargeEntity, sentence: SentenceEntity): SentenceEntity {
     val createdSentence = sentenceRepository.save(sentence)
-    sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
+    sentenceHistoryRepository.save(
+      SentenceHistoryEntity.from(
+        createdSentence,
+        ChangeSource.NOMIS,
+      ),
+    )
     charge.sentences.add(createdSentence)
     return sentence
   }
@@ -259,7 +265,12 @@ class LegacySentenceService(
       updateRecall(existingSentence, sentence)
       if (!existingSentence.isSame(updatedSentence)) {
         existingSentence.updateFrom(updatedSentence)
-        sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
+        sentenceHistoryRepository.save(
+          SentenceHistoryEntity.from(
+            existingSentence,
+            ChangeSource.NOMIS,
+          ),
+        )
         entityChangeStatus = EntityChangeStatus.EDITED
         existingSentence.charge.sentences.add(activeRecord)
       }
@@ -302,7 +313,12 @@ class LegacySentenceService(
     if (newPeriodLengths.isNotEmpty()) {
       val savedPeriodLengths = periodLengthRepository.saveAll(newPeriodLengths)
       periodLengthHistoryRepository.saveAll(
-        savedPeriodLengths.map { PeriodLengthHistoryEntity.from(it) },
+        savedPeriodLengths.map {
+          PeriodLengthHistoryEntity.from(
+            it,
+            ChangeSource.NOMIS,
+          )
+        },
       )
     }
   }
@@ -319,7 +335,12 @@ class LegacySentenceService(
 
     if (periodLengths.isNotEmpty()) {
       periodLengthHistoryRepository.saveAll(
-        periodLengths.map { PeriodLengthHistoryEntity.from(it) },
+        periodLengths.map {
+          PeriodLengthHistoryEntity.from(
+            it,
+            ChangeSource.NOMIS,
+          )
+        },
       )
     }
   }
@@ -328,9 +349,21 @@ class LegacySentenceService(
     val latestRecall = updatedSentence.latestRecall()
     if (latestRecall != null) {
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(latestRecall, RecallEntityStatus.EDITED))
+        recallHistoryRepository.save(
+          RecallHistoryEntity.from(
+            latestRecall,
+            RecallEntityStatus.EDITED,
+            ChangeSource.NOMIS,
+          ),
+        )
       latestRecall.recallSentences.forEach {
-        recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
+        recallSentenceHistoryRepository.save(
+          RecallSentenceHistoryEntity.from(
+            recallHistoryEntity,
+            it,
+            ChangeSource.NOMIS,
+          ),
+        )
       }
       latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
     }
@@ -349,7 +382,12 @@ class LegacySentenceService(
 
   fun delete(sentence: SentenceEntity, performedByUser: String) {
     sentence.delete(performedByUser)
-    sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
+    sentenceHistoryRepository.save(
+      SentenceHistoryEntity.from(
+        sentence,
+        ChangeSource.NOMIS,
+      ),
+    )
     deletePeriodLengths(sentence, performedByUser)
     deleteRecallSentence(sentence, performedByUser)
   }
@@ -359,15 +397,31 @@ class LegacySentenceService(
       val recall = it.recall
 
       val recallHistoryEntity = if (recall.recallSentences.size == 1) {
-        val recallHistoryEntity = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.DELETED))
+        val recallHistoryEntity = recallHistoryRepository.save(
+          RecallHistoryEntity.from(
+            recall,
+            RecallEntityStatus.DELETED,
+            ChangeSource.NOMIS,
+          ),
+        )
         recall.delete(performedByUser)
         recallHistoryEntity
       } else {
-        recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
+        recallHistoryRepository.save(
+          RecallHistoryEntity.from(
+            recall,
+            RecallEntityStatus.EDITED,
+            ChangeSource.NOMIS,
+          ),
+        )
       }
       recall.recallSentences.forEach { recallSentence ->
         recallSentenceHistoryRepository.save(
-          RecallSentenceHistoryEntity.from(recallHistoryEntity, recallSentence),
+          RecallSentenceHistoryEntity.from(
+            recallHistoryEntity,
+            recallSentence,
+            ChangeSource.NOMIS,
+          ),
         )
       }
       recallSentenceRepository.delete(it)
@@ -388,7 +442,12 @@ class LegacySentenceService(
       sentenceRecord.statusId = SentenceEntityStatus.ACTIVE
       sentenceRecord.updatedAt = ZonedDateTime.now()
       sentenceRecord.updatedBy = performedByUsername
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
+      sentenceHistoryRepository.save(
+        SentenceHistoryEntity.from(
+          sentenceRecord,
+          ChangeSource.NOMIS,
+        ),
+      )
     }
   }
 

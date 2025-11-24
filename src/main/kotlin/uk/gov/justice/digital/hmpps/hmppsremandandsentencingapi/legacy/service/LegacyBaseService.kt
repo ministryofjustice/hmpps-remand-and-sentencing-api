@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
@@ -27,6 +28,7 @@ abstract class LegacyBaseService(
               appearanceCharge = appearanceCharge,
               removedBy = performedByUsername,
               removedPrison = null,
+              ChangeSource.NOMIS,
             ),
           )
           existingCharge.appearanceCharges.remove(appearanceCharge)
@@ -46,11 +48,11 @@ abstract class LegacyBaseService(
       )
       appearance.appearanceCharges.add(appearanceCharge)
       chargeRecord.appearanceCharges.add(appearanceCharge)
-      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge, ChangeSource.NOMIS))
     } else {
       chargeModifyFunction(existingCharge)
     }
-    chargeHistoryRepository.save(ChargeHistoryEntity.from(chargeRecord))
+    chargeHistoryRepository.save(ChargeHistoryEntity.from(chargeRecord, ChangeSource.NOMIS))
     return chargeRecord
   }
 }

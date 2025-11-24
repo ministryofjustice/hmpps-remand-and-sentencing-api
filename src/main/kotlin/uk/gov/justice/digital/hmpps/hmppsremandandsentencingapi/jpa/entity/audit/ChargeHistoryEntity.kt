@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
@@ -46,14 +47,16 @@ class ChargeHistoryEntity(
   @JoinColumn(name = "original_charge_id")
   val originalCharge: ChargeEntity,
   val mergedFromDate: LocalDate? = null,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
   companion object {
-    fun from(chargeEntity: ChargeEntity): ChargeHistoryEntity = ChargeHistoryEntity(
+    fun from(chargeEntity: ChargeEntity, changeSource: ChangeSource): ChargeHistoryEntity = ChargeHistoryEntity(
       0, chargeEntity.chargeUuid, chargeEntity.offenceCode, chargeEntity.offenceStartDate, chargeEntity.offenceEndDate,
       chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.terrorRelated,
       chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
       chargeEntity.updatedPrison, chargeEntity.legacyData, chargeEntity.mergedFromCourtCase?.id, chargeEntity,
-      mergedFromDate = chargeEntity.mergedFromDate,
+      mergedFromDate = chargeEntity.mergedFromDate, changeSource = changeSource,
     )
   }
 }

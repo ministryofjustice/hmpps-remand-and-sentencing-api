@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
@@ -29,7 +30,7 @@ class PrisonerEventService(
       courtCase.prisonerId = event.additionalInformation.movedToNomsNumber
       courtCase.updatedAt = ZonedDateTime.now()
       courtCase.updatedBy = "NOMIS"
-      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase))
+      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.NOMIS))
     }
 
     handleBookingMovedForRecalls(event)
@@ -46,7 +47,7 @@ class PrisonerEventService(
       recall.prisonerId = event.additionalInformation.movedToNomsNumber
       recall.updatedAt = now
       recall.updatedBy = "NOMIS"
-      recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
+      recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED, ChangeSource.NOMIS))
     }
 
     log.info("Updated {} recalls for bookingId={}", recalls.size, event.additionalInformation.bookingId)

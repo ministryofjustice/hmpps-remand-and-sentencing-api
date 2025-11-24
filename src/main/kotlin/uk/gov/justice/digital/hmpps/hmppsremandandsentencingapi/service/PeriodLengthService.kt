@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
@@ -37,7 +38,7 @@ class PeriodLengthService(
       .map {
         onCreateConsumer.accept(it)
         val saved = periodLengthRepository.save(it)
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved))
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved, ChangeSource.DPS))
         entityChangeStatus = EntityChangeStatus.CREATED
         if (shouldGenerateEvents) {
           eventsToEmit.add(
@@ -82,7 +83,7 @@ class PeriodLengthService(
         }
 
         existing.updateFrom(updated, serviceUserService.getUsername())
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing, ChangeSource.DPS))
         entityChangeStatus = EntityChangeStatus.EDITED
         if (shouldGenerateEvents) {
           eventsToEmit.add(
@@ -133,7 +134,7 @@ class PeriodLengthService(
     periodLength.delete(serviceUserService.getUsername())
 
     if (changeStatus == EntityChangeStatus.DELETED) {
-      periodLengthHistoryRepository.save(periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength)))
+      periodLengthHistoryRepository.save(periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength, ChangeSource.DPS)))
       eventsToEmit.add(
         EventMetadataCreator.periodLengthEventMetadata(
           prisonerId,

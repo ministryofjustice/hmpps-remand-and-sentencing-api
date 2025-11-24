@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
@@ -35,7 +36,7 @@ class RecallHistoryEntityTest {
       source = EventSource.DPS,
     )
 
-    assertThat(RecallHistoryEntity.from(original, RecallEntityStatus.DELETED))
+    assertThat(RecallHistoryEntity.from(original, RecallEntityStatus.DELETED, ChangeSource.DPS))
       .usingRecursiveComparison()
       .ignoringFields("historyCreatedAt")
       .isEqualTo(
@@ -58,6 +59,7 @@ class RecallHistoryEntityTest {
           source = EventSource.DPS,
           historyStatusId = RecallEntityStatus.DELETED,
           historyCreatedAt = ZonedDateTime.now(), // ignored in assertion
+          changeSource = ChangeSource.DPS,
         ),
       )
   }

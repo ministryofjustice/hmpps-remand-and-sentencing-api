@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -52,10 +53,12 @@ class RecallHistoryEntity(
   @Enumerated(EnumType.ORDINAL)
   val historyStatusId: RecallEntityStatus,
   val historyCreatedAt: ZonedDateTime,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
 
   companion object {
-    fun from(original: RecallEntity, historyStatus: RecallEntityStatus) = RecallHistoryEntity(
+    fun from(original: RecallEntity, historyStatus: RecallEntityStatus, changeSource: ChangeSource) = RecallHistoryEntity(
       id = 0,
       originalRecallId = original.id,
       recallUuid = original.recallUuid,
@@ -74,6 +77,7 @@ class RecallHistoryEntity(
       source = original.source,
       historyStatusId = historyStatus,
       historyCreatedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+      changeSource = changeSource,
     )
   }
 }

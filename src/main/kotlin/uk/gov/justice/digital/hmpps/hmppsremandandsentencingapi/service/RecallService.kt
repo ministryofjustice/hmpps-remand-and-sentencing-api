@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
@@ -93,9 +94,9 @@ class RecallService(
       val originalRTCDate = recallToUpdate.returnToCustodyDate
 
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, RecallEntityStatus.EDITED))
+        recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, RecallEntityStatus.EDITED, ChangeSource.DPS))
       recallToUpdate.recallSentences.forEach {
-        recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it).apply {})
+        recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it, ChangeSource.DPS).apply {})
       }
       val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
 
@@ -212,12 +213,13 @@ class RecallService(
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, RecallEntityStatus.DELETED))
+        recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, RecallEntityStatus.DELETED, ChangeSource.DPS))
       recallToDelete.recallSentences.forEach {
         recallSentenceHistoryRepository.save(
           RecallSentenceHistoryEntity.from(
             recallHistoryEntity,
             it,
+            ChangeSource.DPS,
           ),
         )
       }

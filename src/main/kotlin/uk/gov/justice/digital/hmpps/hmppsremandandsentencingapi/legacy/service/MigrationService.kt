@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
@@ -209,12 +210,54 @@ class MigrationService(
   private fun auditCreatedRecords(
     tracking: MigrationDataTracking,
   ) {
-    courtCaseHistoryRepository.saveAll(tracking.createdCourtCasesMap.values.map { CourtCaseHistoryEntity.from(it.record) })
-    courtAppearanceHistoryRepository.saveAll(tracking.createdCourtAppearancesMap.values.map { CourtAppearanceHistoryEntity.from(it) })
-    appearanceChargeHistoryRepository.saveAll(tracking.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
-    chargeHistoryRepository.saveAll(tracking.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map { ChargeHistoryEntity.from(it) })
-    sentenceHistoryRepository.saveAll(tracking.createdSentencesMap.values.flatMap { it }.distinct().map { SentenceHistoryEntity.from(it) })
-    periodLengthHistoryRepository.saveAll(tracking.createdPeriodLengthMap.values.flatMap { it }.distinct().map { PeriodLengthHistoryEntity.from(it) })
+    courtCaseHistoryRepository.saveAll(
+      tracking.createdCourtCasesMap.values.map {
+        CourtCaseHistoryEntity.from(
+          it.record,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    courtAppearanceHistoryRepository.saveAll(
+      tracking.createdCourtAppearancesMap.values.map {
+        CourtAppearanceHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    appearanceChargeHistoryRepository.saveAll(
+      tracking.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map {
+        AppearanceChargeHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    chargeHistoryRepository.saveAll(
+      tracking.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map {
+        ChargeHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    sentenceHistoryRepository.saveAll(
+      tracking.createdSentencesMap.values.flatMap { it }.distinct().map {
+        SentenceHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    periodLengthHistoryRepository.saveAll(
+      tracking.createdPeriodLengthMap.values.flatMap { it }.distinct().map {
+        PeriodLengthHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
   }
 
   fun createCourtCase(migrationCreateCourtCase: MigrationCreateCourtCase, tracking: MigrationDataTracking) {

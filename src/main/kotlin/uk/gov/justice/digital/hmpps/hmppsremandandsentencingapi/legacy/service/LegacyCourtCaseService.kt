@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
@@ -43,7 +44,12 @@ class LegacyCourtCaseService(
         getPerformedByUsername(courtCase),
       ),
     )
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(createdCourtCase))
+    courtCaseHistoryRepository.save(
+      CourtCaseHistoryEntity.from(
+        createdCourtCase,
+        ChangeSource.NOMIS,
+      ),
+    )
     return LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier)
   }
 
@@ -67,7 +73,12 @@ class LegacyCourtCaseService(
     existingCourtCase.legacyData = existingCourtCase.legacyData?.copyFrom(courtCase.legacyData) ?: courtCase.legacyData
     existingCourtCase.updatedAt = ZonedDateTime.now()
     existingCourtCase.updatedBy = getPerformedByUsername(courtCase)
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
+    courtCaseHistoryRepository.save(
+      CourtCaseHistoryEntity.from(
+        existingCourtCase,
+        ChangeSource.NOMIS,
+      ),
+    )
     return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
   }
 
@@ -82,7 +93,12 @@ class LegacyCourtCaseService(
     sourceCourtCase.mergedToDate = linkCase?.linkedDate ?: LocalDate.now()
     sourceCourtCase.updatedAt = ZonedDateTime.now()
     sourceCourtCase.updatedBy = linkCase?.performedByUser ?: serviceUserService.getUsername()
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(sourceCourtCase))
+    courtCaseHistoryRepository.save(
+      CourtCaseHistoryEntity.from(
+        sourceCourtCase,
+        ChangeSource.NOMIS,
+      ),
+    )
     return sourceCourtCaseUuid to sourceCourtCase.prisonerId
   }
 
@@ -111,7 +127,12 @@ class LegacyCourtCaseService(
               charge.statusId = ChargeEntityStatus.ACTIVE
               charge.updatedAt = ZonedDateTime.now()
               charge.updatedBy = performedByUsername
-              chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
+              chargeHistoryRepository.save(
+                ChargeHistoryEntity.from(
+                  charge,
+                  ChangeSource.NOMIS,
+                ),
+              )
               EventMetadataCreator.chargeEventMetadata(
                 sourceCourtCase.prisonerId,
                 sourceCourtCase.caseUniqueIdentifier,
@@ -122,7 +143,12 @@ class LegacyCourtCaseService(
             }
         }
     }
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(sourceCourtCase))
+    courtCaseHistoryRepository.save(
+      CourtCaseHistoryEntity.from(
+        sourceCourtCase,
+        ChangeSource.NOMIS,
+      ),
+    )
     return UnlinkEventsToEmit(courtCaseEventMetadata, chargeEventsToEmit)
   }
 
@@ -130,7 +156,12 @@ class LegacyCourtCaseService(
   fun delete(courtCaseUuid: String, performedByUser: String?) {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.delete(performedByUser ?: serviceUserService.getUsername())
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(existingCourtCase))
+    courtCaseHistoryRepository.save(
+      CourtCaseHistoryEntity.from(
+        existingCourtCase,
+        ChangeSource.NOMIS,
+      ),
+    )
   }
 
   private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
