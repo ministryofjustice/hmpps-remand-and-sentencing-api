@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import java.time.LocalDate
@@ -40,13 +41,15 @@ class CourtCaseHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_court_case_id")
   val originalCourtCase: CourtCaseEntity,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
   companion object {
-    fun from(courtCaseEntity: CourtCaseEntity): CourtCaseHistoryEntity = CourtCaseHistoryEntity(
+    fun from(courtCaseEntity: CourtCaseEntity, changeSource: ChangeSource): CourtCaseHistoryEntity = CourtCaseHistoryEntity(
       0, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.latestCourtAppearance?.id,
       courtCaseEntity.createdAt, courtCaseEntity.createdBy, courtCaseEntity.updatedAt, courtCaseEntity.updatedBy,
       courtCaseEntity.statusId, courtCaseEntity.legacyData, courtCaseEntity.createdPrison,
-      courtCaseEntity.mergedToCase?.id, courtCaseEntity.mergedToDate, courtCaseEntity,
+      courtCaseEntity.mergedToCase?.id, courtCaseEntity.mergedToDate, courtCaseEntity, changeSource = changeSource,
     )
   }
 }

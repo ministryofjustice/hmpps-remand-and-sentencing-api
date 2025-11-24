@@ -1,11 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import java.time.ZonedDateTime
 
 @Entity
@@ -22,18 +25,21 @@ class AppearanceChargeHistoryEntity(
   val removedAt: ZonedDateTime? = null,
   val removedBy: String? = null,
   val removedPrison: String? = null,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
   companion object {
-    fun from(appearanceCharge: AppearanceChargeEntity) = AppearanceChargeHistoryEntity(
+    fun from(appearanceCharge: AppearanceChargeEntity, changeSource: ChangeSource) = AppearanceChargeHistoryEntity(
       id = 0,
       appearanceId = appearanceCharge.appearance!!.id,
       chargeId = appearanceCharge.charge!!.id,
       createdAt = appearanceCharge.createdAt,
       createdBy = appearanceCharge.createdBy,
       createdPrison = appearanceCharge.createdPrison,
+      changeSource = changeSource,
     )
 
-    fun removedFrom(appearanceCharge: AppearanceChargeEntity, removedBy: String, removedPrison: String?) = AppearanceChargeHistoryEntity(
+    fun removedFrom(appearanceCharge: AppearanceChargeEntity, removedBy: String, removedPrison: String?, changeSource: ChangeSource) = AppearanceChargeHistoryEntity(
       id = 0,
       appearanceId = appearanceCharge.appearance!!.id,
       chargeId = appearanceCharge.charge!!.id,
@@ -43,6 +49,7 @@ class AppearanceChargeHistoryEntity(
       removedBy = removedBy,
       removedPrison = removedPrison,
       removedAt = ZonedDateTime.now(),
+      changeSource = changeSource,
     )
   }
 }

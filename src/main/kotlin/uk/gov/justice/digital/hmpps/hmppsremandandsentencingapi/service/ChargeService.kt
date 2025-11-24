@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
@@ -54,7 +55,7 @@ class ChargeService(
         chargeToSupersede,
       ),
     )
-    chargeHistoryRepository.save(ChargeHistoryEntity.from(savedCharge))
+    chargeHistoryRepository.save(ChargeHistoryEntity.from(savedCharge, ChangeSource.DPS))
     val eventsToEmit = mutableSetOf(
       EventMetadataCreator.chargeEventMetadata(
         prisonerId,
@@ -100,7 +101,7 @@ class ChargeService(
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
         val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
         existingCharge.updateFrom(replacedWithAnotherOutcome, serviceUserService.getUsername(), charge.prisonId)
-        chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
+        chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
 
         val appearanceChargeEntity = AppearanceChargeEntity(
           courtAppearance,
@@ -110,12 +111,12 @@ class ChargeService(
         )
         courtAppearance.appearanceCharges.add(appearanceChargeEntity)
         existingCharge.appearanceCharges.add(appearanceChargeEntity)
-        appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity))
+        appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity, ChangeSource.DPS))
 
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
 
         val newChargeRecord = chargeRepository.save(compareCharge.copyFromReplacedCharge(existingCharge))
-        chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord))
+        chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord, ChangeSource.DPS))
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
         eventsToEmit.addAll(
@@ -137,6 +138,7 @@ class ChargeService(
                 appearanceCharge = appearanceCharge,
                 removedBy = serviceUserService.getUsername(),
                 removedPrison = charge.prisonId,
+                ChangeSource.DPS,
               ),
             )
             appearanceCharge.charge = null
@@ -144,11 +146,11 @@ class ChargeService(
           }
         compareCharge.appearanceCharges.removeAll { it.appearance == null }
         activeRecord = chargeRepository.save(compareCharge)
-        chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord))
+        chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
       } else {
         existingCharge.updateFrom(compareCharge)
-        chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge))
+        chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
       }
     }
@@ -272,7 +274,7 @@ class ChargeService(
           EventType.CHARGE_DELETED,
         ),
       )
-      chargeHistoryRepository.save(ChargeHistoryEntity.from(charge))
+      chargeHistoryRepository.save(ChargeHistoryEntity.from(charge, ChangeSource.DPS))
     }
     return RecordResponse(charge, eventsToEmit)
   }

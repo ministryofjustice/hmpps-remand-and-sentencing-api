@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
@@ -37,7 +38,12 @@ class LegacyPeriodLengthService(
         createdBy = getPerformedByUsername(periodLength),
       )
       val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
-      periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
+      periodLengthHistoryRepository.save(
+        PeriodLengthHistoryEntity.from(
+          savedPeriodLength,
+          ChangeSource.NOMIS,
+        ),
+      )
     }
     val appearance = firstSentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
       ?: throw EntityNotFoundException("No appearance found for sentence ${firstSentenceEntity.sentenceUuid}")
@@ -77,7 +83,12 @@ class LegacyPeriodLengthService(
 
       if (!originalCopy.isSame(existingEntity)) {
         periodLengthRepository.save(existingEntity)
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existingEntity))
+        periodLengthHistoryRepository.save(
+          PeriodLengthHistoryEntity.from(
+            existingEntity,
+            ChangeSource.NOMIS,
+          ),
+        )
         changesMade = true
       }
     }
@@ -104,7 +115,12 @@ class LegacyPeriodLengthService(
 
   fun delete(periodLength: PeriodLengthEntity, performedByUser: String) {
     periodLength.delete(performedByUser)
-    periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
+    periodLengthHistoryRepository.save(
+      PeriodLengthHistoryEntity.from(
+        periodLength,
+        ChangeSource.NOMIS,
+      ),
+    )
   }
 
   @Transactional(readOnly = true)

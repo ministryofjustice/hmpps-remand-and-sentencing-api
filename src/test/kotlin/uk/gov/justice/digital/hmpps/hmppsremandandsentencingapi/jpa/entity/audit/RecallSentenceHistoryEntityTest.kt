@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -81,8 +82,8 @@ class RecallSentenceHistoryEntityTest {
       createdPrison = "BAR",
     )
 
-    val historyRecall = RecallHistoryEntity.from(originalRecall, RecallEntityStatus.EDITED)
-    assertThat(RecallSentenceHistoryEntity.from(historyRecall, original))
+    val historyRecall = RecallHistoryEntity.from(originalRecall, RecallEntityStatus.EDITED, ChangeSource.DPS)
+    assertThat(RecallSentenceHistoryEntity.from(historyRecall, original, ChangeSource.DPS))
       .usingRecursiveComparison()
       .ignoringFields("historyCreatedAt")
       .isEqualTo(
@@ -97,6 +98,7 @@ class RecallSentenceHistoryEntityTest {
           createdByUsername = "CREATOR",
           createdPrison = "BAR",
           historyCreatedAt = ZonedDateTime.now(), // ignored in assertions
+          changeSource = ChangeSource.DPS,
         ),
       )
   }

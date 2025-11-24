@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
@@ -64,7 +65,7 @@ class SentenceService(
     var sentenceChangeStatus = if (courtAppearanceDateChanged) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
     if (!existingSentence.isSame(compareSentence)) {
       existingSentence.updateFrom(compareSentence)
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence, ChangeSource.DPS))
       sentenceChangeStatus = EntityChangeStatus.EDITED
     }
 
@@ -125,7 +126,7 @@ class SentenceService(
     val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
-    sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence))
+    sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence, ChangeSource.DPS))
 
     val newPeriodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }
     val periodLengthResponse = periodLengthService.create(
@@ -165,7 +166,7 @@ class SentenceService(
     sentence.delete(serviceUserService.getUsername())
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     if (changeStatus == EntityChangeStatus.DELETED) {
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence, ChangeSource.DPS))
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
           prisonerId,
@@ -202,12 +203,13 @@ class SentenceService(
           if (recall.recallSentences.size == 1) {
             deleteRecallWithOnlyOneSentence(recallSentences.first(), eventsToEmit)
           } else {
-            val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
+            val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED, ChangeSource.DPS))
             recallSentenceHistoryRepository.saveAll(
               recallSentences.map {
                 RecallSentenceHistoryEntity.from(
                   recallHistory,
                   it,
+                  ChangeSource.DPS,
                 )
               },
             )
@@ -225,9 +227,9 @@ class SentenceService(
     eventsToEmit: MutableSet<EventMetadata>,
   ) {
     val recallHistory =
-      recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, RecallEntityStatus.DELETED))
+      recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, RecallEntityStatus.DELETED, ChangeSource.DPS))
     onlyRecallSentence.recall.statusId = RecallEntityStatus.DELETED
-    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, onlyRecallSentence))
+    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, onlyRecallSentence, ChangeSource.DPS))
     recallSentenceRepository.delete(onlyRecallSentence)
     eventsToEmit.add(
       EventMetadataCreator.recallEventMetadata(
@@ -270,7 +272,7 @@ class SentenceService(
       existingSentence.charge = newChargeRecord
       existingSentence.updatedBy = serviceUserService.getUsername()
       existingSentence.updatedAt = ZonedDateTime.now()
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence))
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence, ChangeSource.DPS))
       existingCharge.sentences.remove(existingSentence)
       EventMetadataCreator.sentenceEventMetadata(
         prisonerId,
