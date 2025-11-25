@@ -289,7 +289,7 @@ class RecallIntTests : IntegrationTestBase() {
       courtCaseReference = "CC1",
       appearanceDate = appearanceDateOne,
     )
-    val (_, courtCaseOne) = createCourtCase(
+    val (courtCaseOneUuid, courtCaseOne) = createCourtCase(
       DpsDataCreator.dpsCreateCourtCase(
         prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
         appearances = listOf(appearanceCourtCaseOne),
@@ -308,7 +308,7 @@ class RecallIntTests : IntegrationTestBase() {
       courtCaseReference = "CC2",
       appearanceDate = appearanceDateTwo,
     )
-    val (_, courtCaseTwo) = createCourtCase(
+    val (courtCaseTwoUuid, courtCaseTwo) = createCourtCase(
       DpsDataCreator.dpsCreateCourtCase(
         prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
         appearances = listOf(appearanceCourtCaseTwo),
@@ -358,6 +358,7 @@ class RecallIntTests : IntegrationTestBase() {
           courtCases = listOf(
             RecallCourtCaseDetails(
               courtCaseReference = "CC1",
+              courtCaseUuid = courtCaseOneUuid,
               courtCode = "COURT1",
               sentencingAppearanceDate = appearanceDateOne,
               sentences = listOf(
@@ -411,6 +412,7 @@ class RecallIntTests : IntegrationTestBase() {
             ),
             RecallCourtCaseDetails(
               courtCaseReference = "CC2",
+              courtCaseUuid = courtCaseTwoUuid,
               courtCode = "COURT1",
               sentencingAppearanceDate = appearanceDateTwo,
               sentences = listOf(
@@ -493,6 +495,7 @@ class RecallIntTests : IntegrationTestBase() {
           courtCases = listOf(
             RecallCourtCaseDetails(
               courtCaseReference = null,
+              courtCaseUuid = null,
               courtCode = null,
               sentencingAppearanceDate = null,
               sentences = listOf(

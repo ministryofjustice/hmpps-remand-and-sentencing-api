@@ -79,14 +79,16 @@ data class Recall(
     )
 
     private fun createRecallCourtCaseDetailsForGrouping(recallSentence: RecallSentenceEntity): RecallCourtCaseDetails {
+      // TODO I think potentially there will always be firstSentencingAppearance associated to a recall - so this doesn't need to be an optional var? to check
       val firstSentencingAppearance = recallSentence.sentence.charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId != CourtAppearanceEntityStatus.DELETED && it.warrantType == "SENTENCING" }
         .minByOrNull { it.appearanceDate }
       return RecallCourtCaseDetails(
-        firstSentencingAppearance?.courtCaseReference,
-        firstSentencingAppearance?.courtCode,
-        firstSentencingAppearance?.appearanceDate,
+        courtCaseReference = firstSentencingAppearance?.courtCaseReference,
+        courtCaseUuid = firstSentencingAppearance?.courtCase?.caseUniqueIdentifier,
+        courtCode = firstSentencingAppearance?.courtCode,
+        sentencingAppearanceDate = firstSentencingAppearance?.appearanceDate,
       )
     }
   }
