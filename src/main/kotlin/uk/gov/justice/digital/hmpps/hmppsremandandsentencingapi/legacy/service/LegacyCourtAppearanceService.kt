@@ -3,6 +3,9 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
@@ -127,7 +130,8 @@ class LegacyCourtAppearanceService(
   }
 
   @Transactional
-  fun delete(lifetimeUuid: UUID, performedByUser: String?) {
+  fun delete(lifetimeUuid: UUID, performedByUser: String?): MutableSet<EventMetadata> {
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val performedByUsername = performedByUser ?: serviceUserService.getUsername()
     existingCourtAppearance.delete(performedByUsername)
@@ -138,6 +142,25 @@ class LegacyCourtAppearanceService(
       ),
     )
     existingCourtAppearance.appearanceCharges.removeAll { appearanceCharge ->
+
+      if (appearanceCharge.charge!!.hasNoLiveCourtAppearances()) {
+        appearanceCharge.charge!!.delete(performedByUsername)
+        chargeHistoryRepository.save(
+          ChargeHistoryEntity.from(
+            appearanceCharge.charge!!,
+            ChangeSource.NOMIS,
+          ),
+        )
+        eventsToEmit.add(
+          EventMetadataCreator.chargeEventMetadata(
+            existingCourtAppearance.courtCase.prisonerId,
+            existingCourtAppearance.courtCase.caseUniqueIdentifier,
+            existingCourtAppearance.appearanceUuid.toString(),
+            appearanceCharge.charge!!.chargeUuid.toString(),
+            EventType.CHARGE_DELETED,
+          ),
+        )
+      }
       appearanceChargeHistoryRepository.save(
         AppearanceChargeHistoryEntity.removedFrom(
           appearanceCharge,
@@ -146,24 +169,40 @@ class LegacyCourtAppearanceService(
           ChangeSource.NOMIS,
         ),
       )
+      appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
       true
     }
     existingCourtAppearance.courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(existingCourtAppearance.courtCase.appearances)
     nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(existingCourtAppearance)
+    eventsToEmit.add(
+      EventMetadataCreator.courtAppearanceEventMetadata(
+        existingCourtAppearance.courtCase.prisonerId,
+        existingCourtAppearance.courtCase.caseUniqueIdentifier,
+        existingCourtAppearance.appearanceUuid.toString(),
+        EventType.COURT_APPEARANCE_DELETED,
+      ),
+    )
+    return eventsToEmit
   }
 
   @Transactional
-  fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID, performedByUser: String?): Pair<EntityChangeStatus, EntityChangeStatus> {
+  fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID, performedByUser: String?): MutableSet<EventMetadata> {
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val existingCharge = getChargeAtAppearanceUnlessDeleted(lifetimeUuid, lifetimeChargeUuid)
     val performedByUsername = performedByUser ?: serviceUserService.getUsername()
-    var appearanceEntityChangeStatus = EntityChangeStatus.NO_CHANGE
-    var chargeEntityStatus = EntityChangeStatus.NO_CHANGE
     if (existingCharge != null) {
       val appearanceCharge = existingCourtAppearance.appearanceCharges.first { it.charge == existingCharge }
       existingCourtAppearance.appearanceCharges.remove(appearanceCharge)
       existingCharge.appearanceCharges.remove(appearanceCharge)
-      appearanceEntityChangeStatus = EntityChangeStatus.EDITED
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          existingCourtAppearance.courtCase.prisonerId,
+          existingCourtAppearance.courtCase.caseUniqueIdentifier,
+          existingCourtAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_UPDATED,
+        ),
+      )
       if (existingCharge.hasNoLiveCourtAppearances()) {
         existingCharge.delete(performedByUsername)
         chargeHistoryRepository.save(
@@ -172,7 +211,15 @@ class LegacyCourtAppearanceService(
             ChangeSource.NOMIS,
           ),
         )
-        chargeEntityStatus = EntityChangeStatus.DELETED
+        eventsToEmit.add(
+          EventMetadataCreator.chargeEventMetadata(
+            existingCourtAppearance.courtCase.prisonerId,
+            existingCourtAppearance.courtCase.caseUniqueIdentifier,
+            existingCourtAppearance.appearanceUuid.toString(),
+            existingCharge.chargeUuid.toString(),
+            EventType.CHARGE_DELETED,
+          ),
+        )
       }
       appearanceChargeHistoryRepository.save(
         AppearanceChargeHistoryEntity.removedFrom(
@@ -184,13 +231,11 @@ class LegacyCourtAppearanceService(
       )
     }
 
-    return appearanceEntityChangeStatus to chargeEntityStatus
+    return eventsToEmit
   }
 
   private fun getUnlessDeleted(appearanceUuid: UUID): CourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)
     ?.takeUnless { entity -> entity.statusId == CourtAppearanceEntityStatus.DELETED } ?: throw EntityNotFoundException("No court appearance found at $appearanceUuid")
-
-  private fun getChargeUnlessDelete(lifetimeChargeUuid: UUID): ChargeEntity = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(lifetimeChargeUuid) ?: throw EntityNotFoundException("No charge found at $lifetimeChargeUuid")
 
   private fun getChargeAtAppearanceUnlessDeleted(appearanceUuid: UUID, chargeUuid: UUID): ChargeEntity? = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(
     appearanceUuid,
