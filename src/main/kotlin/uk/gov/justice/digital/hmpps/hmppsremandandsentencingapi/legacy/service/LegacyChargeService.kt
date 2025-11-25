@@ -177,7 +177,7 @@ class LegacyChargeService(
       }
       entityChangeStatus = EntityChangeStatus.EDITED
     }
-    val courtCase = existingCharge.appearanceCharges.first().appearance!!.courtCase
+    val courtCase = appearance.courtCase
     return entityChangeStatus to LegacyChargeCreatedResponse(lifetimeUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
   }
 
