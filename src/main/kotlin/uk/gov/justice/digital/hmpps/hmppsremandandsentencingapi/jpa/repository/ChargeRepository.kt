@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import java.time.ZonedDateTime
 import java.util.*
 
 interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
@@ -84,4 +85,12 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     nativeQuery = true,
   )
   fun deleteByChargeMergedFromCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+    """
+      update ChargeEntity c set c.offenceCode = :offenceCode, c.updatedBy = :updatedBy, c.updatedAt = :updatedAt where c = :charge
+    """,
+  )
+  fun updateOffenceCode(@Param("offenceCode") offenceCode: String, @Param("updatedBy") updatedBy: String, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("charge") chargeEntity: ChargeEntity)
 }
