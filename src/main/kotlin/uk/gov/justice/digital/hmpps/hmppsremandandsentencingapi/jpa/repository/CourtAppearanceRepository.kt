@@ -6,8 +6,10 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int> {
@@ -41,4 +43,12 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
     nativeQuery = true,
   )
   fun deleteByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+    """
+    update CourtAppearanceEntity ca set ca.nextCourtAppearance = :nextCourtAppearance, ca.updatedBy = :updatedBy, ca.updatedAt = :updatedAt where ca = :courtAppearance
+  """,
+  )
+  fun updateNextCourtAppearance(@Param("nextCourtAppearance") nextCourtAppearance: NextCourtAppearanceEntity, @Param("updatedBy") updatedBy: String, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("courtAppearance") courtAppearanceEntity: CourtAppearanceEntity)
 }

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -31,6 +32,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 @Service
@@ -103,10 +105,15 @@ class LegacyCourtAppearanceService(
         matchedNextCourtAppearance.updateFrom(toUpdate)
       } ?: NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceType).let { toCreateNextCourtAppearance ->
         val savedNextCourtAppearance = nextCourtAppearanceRepository.save(toCreateNextCourtAppearance)
-        matchedCourtAppearance.updateNextCourtAppearance(getPerformedByUsername(legacyRequest), savedNextCourtAppearance)
+        courtAppearanceRepository.updateNextCourtAppearance(
+          savedNextCourtAppearance,
+          getPerformedByUsername(legacyRequest),
+          ZonedDateTime.now(),
+          matchedCourtAppearance,
+        )
         courtAppearanceHistoryRepository.save(
           CourtAppearanceHistoryEntity.from(
-            matchedCourtAppearance,
+            courtAppearanceRepository.findByIdOrNull(matchedCourtAppearance.id)!!,
             ChangeSource.NOMIS,
           ),
         )
