@@ -11,6 +11,7 @@ data class CourtAppearanceOutcome(
   val displayOrder: Int,
   val relatedChargeOutcomeUuid: UUID,
   val isSubList: Boolean,
+  val dispositionCode: String,
 ) {
   companion object {
     fun from(appearanceOutcomeEntity: AppearanceOutcomeEntity): CourtAppearanceOutcome = CourtAppearanceOutcome(
@@ -21,6 +22,7 @@ data class CourtAppearanceOutcome(
       appearanceOutcomeEntity.displayOrder,
       appearanceOutcomeEntity.relatedChargeOutcomeUuid,
       appearanceOutcomeEntity.isSubList,
+      appearanceOutcomeEntity.dispositionCode,
     )
   }
 }
