@@ -234,6 +234,7 @@ class SentenceEntity(
     ((legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true)
 
   fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.statusId == RecallEntityStatus.ACTIVE }.maxByOrNull { it.createdAt }
+  fun earliestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.statusId == RecallEntityStatus.ACTIVE }.minByOrNull { it.createdAt }
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
     val sentenceEntity = SentenceEntity(
