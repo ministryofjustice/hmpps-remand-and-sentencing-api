@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -93,10 +92,10 @@ class LegacyChargeService(
     existingChargeRecords.forEach { existingCharge ->
       val updatedCharge = existingCharge.copyFrom(charge, performedByUsername)
       if (!existingCharge.isSame(updatedCharge, existingCharge.getLiveSentence() != null)) {
-        chargeRepository.updateOffenceCode(charge.offenceCode, performedByUsername, ZonedDateTime.now(), existingCharge)
+        existingCharge.updateFrom(updatedCharge)
         chargeHistoryRepository.save(
           ChargeHistoryEntity.from(
-            chargeRepository.findByIdOrNull(existingCharge.id)!!,
+            existingCharge,
             ChangeSource.NOMIS,
           ),
         )
