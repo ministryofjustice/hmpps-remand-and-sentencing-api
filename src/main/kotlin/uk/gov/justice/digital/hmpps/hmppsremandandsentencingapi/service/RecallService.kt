@@ -8,6 +8,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Adjus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -16,16 +19,20 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyRecallService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -94,9 +101,17 @@ class RecallService(
       val originalRTCDate = recallToUpdate.returnToCustodyDate
 
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(recallToUpdate, RecallEntityStatus.EDITED, ChangeSource.DPS))
+        recallHistoryRepository.save(
+          RecallHistoryEntity.from(
+            recallToUpdate,
+            RecallEntityStatus.EDITED,
+            ChangeSource.DPS,
+          ),
+        )
       recallToUpdate.recallSentences.forEach {
-        recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it, ChangeSource.DPS).apply {})
+        recallSentenceHistoryRepository.save(
+          RecallSentenceHistoryEntity.from(recallHistoryEntity, it, ChangeSource.DPS).apply {},
+        )
       }
       val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
 
@@ -213,7 +228,13 @@ class RecallService(
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
       val recallHistoryEntity =
-        recallHistoryRepository.save(RecallHistoryEntity.from(recallToDelete, RecallEntityStatus.DELETED, ChangeSource.DPS))
+        recallHistoryRepository.save(
+          RecallHistoryEntity.from(
+            recallToDelete,
+            RecallEntityStatus.DELETED,
+            ChangeSource.DPS,
+          ),
+        )
       recallToDelete.recallSentences.forEach {
         recallSentenceHistoryRepository.save(
           RecallSentenceHistoryEntity.from(
@@ -309,4 +330,73 @@ class RecallService(
     recallId = recallUuid.toString(),
     unlawfullyAtLarge = UnlawfullyAtLargeDto(),
   )
+
+  @Transactional(readOnly = true)
+  fun isRecallPossible(request: IsRecallPossibleRequest): IsRecallPossibleResponse {
+    val sentences = sentenceRepository.findBySentenceUuidIn(request.sentenceIds)
+    val isPossibleForEachSentence = sentences.map { isRecallPossibleForSentence(it, request.recallType) }
+    val isPossible = isPossibleForEachSentence.find { it == IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING }
+      ?: isPossibleForEachSentence.find { it == IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE }
+      ?: IsRecallPossible.YES
+
+    return IsRecallPossibleResponse(isPossible)
+  }
+
+  private fun isRecallPossibleForSentence(sentence: SentenceEntity, recallType: RecallType): IsRecallPossible {
+    if (sentence.sentenceType!!.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
+      return isRecallPossibleForLegacyRecall(sentence, recallType)
+    }
+    return isRecallPossibleForClassification(sentence.sentenceType!!.classification, recallType)
+  }
+
+  private fun isRecallPossibleForClassification(
+    classification: SentenceTypeClassification,
+    recallType: RecallType,
+  ): IsRecallPossible = when (classification) {
+    SentenceTypeClassification.STANDARD -> IsRecallPossible.YES
+    SentenceTypeClassification.EXTENDED, SentenceTypeClassification.INDETERMINATE -> if (recallType == RecallType.LR) IsRecallPossible.YES else IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    SentenceTypeClassification.SOPC -> if (listOf(RecallType.LR, RecallType.FTR_28).contains(recallType)) IsRecallPossible.YES else IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    else -> IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+  }
+
+  /* Is the new DPS recall possible for a sentence which has previously been recalled in NOMIS. */
+  private fun isRecallPossibleForLegacyRecall(
+    sentence: SentenceEntity,
+    recallType: RecallType,
+  ): IsRecallPossible {
+    val latestRecall = sentence.latestRecall()!!
+    val recallLegacyData =
+      latestRecall.let { recall -> sentence.recallSentences.find { it.recall.id == recall.id }?.legacyData }!!
+    val sentenceCalcType = recallLegacyData.sentenceCalcType
+
+    val classification =
+      LegacyRecallService.Companion.classificationToLegacySentenceTypeMap.mapNotNull { (classification, types) ->
+        if (types.contains(sentenceCalcType)) {
+          classification
+        } else {
+          null
+        }
+      }.firstOrNull()
+
+    if (classification != null) {
+      return isRecallPossibleForClassification(classification, recallType)
+    } else {
+      // Legacy recall can match more than one sentence type, but will all be standard sentences.
+      if (recallType == RecallType.LR && unknownPreRecallSentenceTypes.contains(sentenceCalcType)) {
+        return IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING
+      }
+    }
+    return IsRecallPossible.YES
+  }
+
+  companion object {
+    val unknownPreRecallSentenceTypes = listOf(
+      "CUR",
+      "CUR_ORA",
+      "FTR",
+      "FTR_HDC",
+      "FTR_HDC_ORA",
+      "HDR",
+    )
+  }
 }

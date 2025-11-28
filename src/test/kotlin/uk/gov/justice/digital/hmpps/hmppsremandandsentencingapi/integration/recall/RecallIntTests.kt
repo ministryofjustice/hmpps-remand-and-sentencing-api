@@ -3,10 +3,16 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.rec
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallCourtCaseDetails
@@ -18,16 +24,27 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.CUR_HDC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_HDC_14
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_HDC_28
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.IN_HDC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
+import java.util.stream.Stream
 
 class RecallIntTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var sentenceTypeRepository: SentenceTypeRepository
 
   @BeforeEach
   fun setUp() {
@@ -1093,5 +1110,155 @@ class RecallIntTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.developerMessage")
       .isEqualTo("Tried to create a recall using a legacy recall sentence ($legacySentenceUuid)")
+  }
+
+  @ParameterizedTest(name = "Test classification {0} and recall type {1} combination for a DPS sentence results in {2} possible recall")
+  @MethodSource("dpsSentenceAndClassificationCombinationParameters")
+  fun `Test each classification and recall type combination for a DPS sentence`(sentenceTypeClassification: SentenceTypeClassification, recallType: RecallType, expectedIsPossible: IsRecallPossible) {
+    val sentenceTypeId = sentenceTypeRepository.findAll()
+      .first { it.classification == sentenceTypeClassification }
+      .sentenceTypeUuid
+
+    val sentence = DpsDataCreator.dpsCreateSentence(
+      sentenceTypeId = sentenceTypeId,
+    )
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge))
+    val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    webTestClient
+      .post()
+      .uri("/recall/is-possible")
+      .bodyValue(IsRecallPossibleRequest(sentenceIds = listOf(sentence.sentenceUuid), recallType = recallType))
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(200)
+      .expectBody()
+      .jsonPath("$.isRecallPossible")
+      .isEqualTo(expectedIsPossible)
+  }
+
+  @ParameterizedTest(name = "Test legacy recall {0} and recall type {1} combination results in {2} possible recall")
+  @MethodSource("legacySentenceAndClassificationCombinationParameters")
+  fun `Test each legacy sentence and recall type combination for a DPS sentence`(legacySentenceType: String, recallType: RecallType, expectedIsPossible: IsRecallPossible) {
+    // Create a legacy sentence so that the legacy recall is also created.
+    val (legacySentenceUuid, _) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = DataCreator.sentenceLegacyData(
+          sentenceCalcType = legacySentenceType,
+          sentenceCategory = "2020",
+        ),
+        returnToCustodyDate = LocalDate.of(2023, 1, 1),
+      ),
+    )
+    webTestClient
+      .post()
+      .uri("/recall/is-possible")
+      .bodyValue(IsRecallPossibleRequest(sentenceIds = listOf(legacySentenceUuid), recallType = recallType))
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(200)
+      .expectBody()
+      .jsonPath("$.isRecallPossible")
+      .isEqualTo(expectedIsPossible)
+  }
+
+  companion object {
+    @JvmStatic
+    fun dpsSentenceAndClassificationCombinationParameters(): Stream<Arguments> = Stream.of(
+      Arguments.of(SentenceTypeClassification.STANDARD, LR, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, FTR_28, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, FTR_14, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, FTR_HDC_14, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, FTR_HDC_28, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, CUR_HDC, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, IN_HDC, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.EXTENDED, LR, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_HDC_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.EXTENDED, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.EXTENDED, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.SOPC, LR, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.SOPC, FTR_28, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.SOPC, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.SOPC, FTR_HDC_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.SOPC, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.SOPC, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.SOPC, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, LR, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_HDC_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+    )
+
+    @JvmStatic
+    fun legacySentenceAndClassificationCombinationParameters(): Stream<Arguments> = Stream.of(
+      Arguments.of("LR_EDS18", LR, IsRecallPossible.YES),
+      Arguments.of("LR_EDS18", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_EDS21", LR, IsRecallPossible.YES),
+      Arguments.of("LR_EDS21", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_EDSU18", LR, IsRecallPossible.YES),
+      Arguments.of("LR_EDSU18", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_LIFE", LR, IsRecallPossible.YES),
+      Arguments.of("LR_LIFE", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_MLP", LR, IsRecallPossible.YES),
+      Arguments.of("LR_MLP", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_ALP", LR, IsRecallPossible.YES),
+      Arguments.of("LR_ALP", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_ALP_CDE18", LR, IsRecallPossible.YES),
+      Arguments.of("LR_ALP_CDE18", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_DLP", LR, IsRecallPossible.YES),
+      Arguments.of("LR_DLP", FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_SOPC18", LR, IsRecallPossible.YES),
+      Arguments.of("LR_SOPC18", FTR_28, IsRecallPossible.YES),
+      Arguments.of("LR_SOPC18", FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR_SOPC21", LR, IsRecallPossible.YES),
+      Arguments.of("LR_SOPC21", FTR_28, IsRecallPossible.YES),
+      Arguments.of("LR_SOPC21", FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("LR", LR, IsRecallPossible.YES),
+      Arguments.of("LR_SOPC21", FTR_28, IsRecallPossible.YES),
+      Arguments.of("LR_SOPC21", FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+
+      Arguments.of("CUR", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("CUR", FTR_28, IsRecallPossible.YES),
+
+      Arguments.of("CUR_ORA", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("CUR_ORA", FTR_28, IsRecallPossible.YES),
+
+      Arguments.of("FTR", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("FTR", FTR_28, IsRecallPossible.YES),
+
+      Arguments.of("FTR_HDC", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("FTR_HDC", FTR_28, IsRecallPossible.YES),
+
+      Arguments.of("FTR_HDC_ORA", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("FTR_HDC_ORA", FTR_28, IsRecallPossible.YES),
+
+      Arguments.of("HDR", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("HDR", FTR_28, IsRecallPossible.YES),
+    )
   }
 }
