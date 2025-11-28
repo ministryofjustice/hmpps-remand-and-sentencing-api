@@ -50,7 +50,7 @@ class MultipleChargesSingleSentenceCreateTests : IntegrationTestBase() {
         val counts = result.groupingBy { it }.eachCount()
         Assertions.assertThat(counts.values).allMatch { it == 1 }
         result.forEach {
-          Assertions.assertThat(sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(UUID.fromString(it))?.updatedBy).isEqualTo("SOME_OTHER_USER")
+          Assertions.assertThat(sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(UUID.fromString(it))?.updatedBy).isEqualTo("SOME_OTHER_USER")
         }
       }
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${firstCharge.chargeUuid}')].sentence.sentenceUuid")

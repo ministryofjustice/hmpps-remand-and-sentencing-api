@@ -57,7 +57,7 @@ class SentenceService(
   }
 
   private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
-    val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
+    val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
     val activeRecord = existingSentence
@@ -123,7 +123,7 @@ class SentenceService(
 
   private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
-    val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(it) }
+    val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val createdSentence = sentenceRepository.save(SentenceEntity.from(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType))
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(createdSentence, ChangeSource.DPS))
@@ -152,13 +152,13 @@ class SentenceService(
     return RecordResponse(createdSentence, eventsToEmit)
   }
 
-  fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getLiveSentence() ?: sentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid) }
+  fun getSentenceFromChargeOrUuid(chargeEntity: ChargeEntity, sentenceUuid: UUID?): SentenceEntity? = chargeEntity.getLiveSentence() ?: sentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid) }
 
   @Transactional(readOnly = true)
-  fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)?.let { Sentence.from(it) }
+  fun findSentenceByUuid(sentenceUuid: UUID): Sentence? = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)?.let { Sentence.from(it) }
 
   @Transactional
-  fun findSentenceDetailsByUuid(sentenceUuid: UUID): SentenceDetails? = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.let { SentenceDetails.from(it) }
+  fun findSentenceDetailsByUuid(sentenceUuid: UUID): SentenceDetails? = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.let { SentenceDetails.from(it) }
 
   @Transactional
   fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {

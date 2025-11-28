@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
@@ -31,6 +32,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
+@DynamicUpdate
 @Entity
 @Table(name = "charge")
 class ChargeEntity(

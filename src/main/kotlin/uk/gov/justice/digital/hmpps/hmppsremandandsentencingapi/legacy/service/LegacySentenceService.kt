@@ -208,7 +208,7 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
-    val sourceSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
+    val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
     return sentence.chargeUuids.map { chargeUuid ->
@@ -471,8 +471,7 @@ class LegacySentenceService(
     return null
   }
 
-  private fun getUnlessDeleted(sentenceUuid: UUID): SentenceEntity = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
-    ?.takeUnless { entity -> entity.statusId == SentenceEntityStatus.DELETED }
+  private fun getUnlessDeleted(sentenceUuid: UUID): SentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
     ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
   @Transactional(readOnly = true)

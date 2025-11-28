@@ -28,4 +28,5 @@ class AppearanceOutcomeEntity(
   val isSubList: Boolean,
   @Enumerated(EnumType.STRING)
   val status: ReferenceEntityStatus,
+  val dispositionCode: String,
 )

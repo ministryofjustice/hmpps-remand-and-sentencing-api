@@ -70,7 +70,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody courtAppearance: LegacyCreateCourtAppearance): ResponseEntity<Void> {
-    legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also<Pair<EntityChangeStatus, LegacyCourtAppearanceCreatedResponse>> { (entityChangeStatus, legacyCourtAppearanceCreatedResponse) ->
+    legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also { (entityChangeStatus, legacyCourtAppearanceCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearanceCreatedResponse.prisonerId, legacyCourtAppearanceCreatedResponse.lifetimeUuid.toString(), legacyCourtAppearanceCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
@@ -112,9 +112,8 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
     @RequestHeader("performedByUser", required = false)
     performedByUser: String?,
   ) {
-    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      legacyCourtAppearanceService.delete(lifetimeUuid, performedByUser)
-      eventService.delete(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
+    legacyCourtAppearanceService.delete(lifetimeUuid, performedByUser).also { eventsToEmit ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
   }
 
@@ -172,14 +171,8 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
     @RequestHeader("performedByUser", required = false)
     performedByUser: String?,
   ) {
-    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      val (appearanceChangeStatus, chargeChangeStatus) = legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid, performedByUser)
-      if (appearanceChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
-      }
-      if (chargeChangeStatus == EntityChangeStatus.DELETED) {
-        chargeEventService.delete(legacyCourtAppearance.prisonerId, chargeLifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
-      }
+    legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid, performedByUser).also {
+      legacyDomainEventService.emitEvents(it)
     }
   }
 

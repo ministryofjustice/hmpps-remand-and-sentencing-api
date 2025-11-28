@@ -17,7 +17,7 @@ import java.time.LocalDate
 import java.util.*
 
 interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
-  fun findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid: UUID): SentenceEntity?
+  fun findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid: UUID, status: SentenceEntityStatus = SentenceEntityStatus.DELETED): SentenceEntity?
 
   fun findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid: UUID, chargeUUID: UUID): SentenceEntity?
 
