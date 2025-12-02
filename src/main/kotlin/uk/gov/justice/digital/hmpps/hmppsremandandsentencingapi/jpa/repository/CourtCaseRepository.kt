@@ -244,8 +244,8 @@ interface CourtCaseRepository :
   @Query(
     """
     UPDATE court_case
-    SET legacy_data['bookingId'] = :bookingId,
-    status_id = :statusId,
+    SET legacy_data['bookingId'] = to_jsonb(:bookingId),
+    status_id = :#{#statusId.name()},
     updated_at = :updatedAt,
     updated_by = :updatedBy
     where id = :id
