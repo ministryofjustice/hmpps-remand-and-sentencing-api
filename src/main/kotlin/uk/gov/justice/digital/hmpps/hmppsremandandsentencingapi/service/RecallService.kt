@@ -335,11 +335,10 @@ class RecallService(
   fun isRecallPossible(request: IsRecallPossibleRequest): IsRecallPossibleResponse {
     val sentences = sentenceRepository.findBySentenceUuidIn(request.sentenceIds)
     val isPossibleForEachSentence = sentences.map { it to isRecallPossibleForSentence(it, request.recallType) }
-    val isPossible = isPossibleForEachSentence.find { it.second == IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING }?.second
-      ?: isPossibleForEachSentence.find { it.second == IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE }?.second
-      ?: IsRecallPossible.YES
+    val isPossible = isPossibleForEachSentence.map { it.second }.minBy { it.priority }
+    val notPossibleSentences = isPossibleForEachSentence.filter { it.second === isPossible }.map { it.first.sentenceUuid }
 
-    return IsRecallPossibleResponse(isPossible, if (isPossible != IsRecallPossible.YES) isPossibleForEachSentence.map { it.first.sentenceUuid } else emptyList())
+    return IsRecallPossibleResponse(isPossible, if (isPossible != IsRecallPossible.YES) notPossibleSentences else emptyList())
   }
 
   private fun isRecallPossibleForSentence(sentence: SentenceEntity, recallType: RecallType): IsRecallPossible {
