@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -69,13 +70,11 @@ class LegacyCourtCaseService(
   @Transactional
   fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
-    existingCourtCase.statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE
-    existingCourtCase.legacyData = existingCourtCase.legacyData?.copyFrom(courtCase.legacyData) ?: courtCase.legacyData
-    existingCourtCase.updatedAt = ZonedDateTime.now()
-    existingCourtCase.updatedBy = getPerformedByUsername(courtCase)
+    val status = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE
+    courtCaseRepository.updateLegacyDataBookingIdById(courtCase.bookingId, status, ZonedDateTime.now(), getPerformedByUsername(courtCase), existingCourtCase.id)
     courtCaseHistoryRepository.save(
       CourtCaseHistoryEntity.from(
-        existingCourtCase,
+        courtCaseRepository.findByIdOrNull(existingCourtCase.id)!!,
         ChangeSource.NOMIS,
       ),
     )

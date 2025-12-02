@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 interface CourtCaseRepository :
@@ -225,4 +226,31 @@ interface CourtCaseRepository :
   """,
   )
   fun findCaseUniqueIdentifierByPrisonerIdAndStatusIdNot(prisonerId: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): List<String>
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+    """
+    UPDATE court_case
+    SET legacy_data['caseReferences'] = :caseReferences ::jsonb,
+    updated_at = :updatedAt,
+    updated_by = :updatedBy
+    where id = :id
+  """,
+    nativeQuery = true,
+  )
+  fun updateLegacyDataCaseReferencesById(@Param("caseReferences")caseReferences: String, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("updatedBy") updatedBy: String, @Param("id") id: Int)
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+    """
+    UPDATE court_case
+    SET legacy_data['bookingId'] = :bookingId,
+    status_id = :statusId,
+    updated_at = :updatedAt,
+    updated_by = :updatedBy
+    where id = :id
+  """,
+    nativeQuery = true,
+  )
+  fun updateLegacyDataBookingIdById(@Param("bookingId")bookingId: Long?, @Param("statusId") statusId: CourtCaseEntityStatus, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("updatedBy") updatedBy: String, @Param("id") id: Int)
 }

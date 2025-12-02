@@ -17,6 +17,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.SqlResultSetMapping
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -171,6 +172,7 @@ import java.util.UUID
   """,
   resultSetMapping = "viewSentenceRowMapping",
 )
+@DynamicUpdate
 @Entity
 @Table(name = "sentence")
 class SentenceEntity(
