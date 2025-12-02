@@ -7,8 +7,8 @@ data class IsRecallPossibleResponse(
   val sentenceIds: List<UUID>,
 )
 
-enum class IsRecallPossible {
-  YES,
-  UNKNOWN_PRE_RECALL_MAPPING,
-  RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+enum class IsRecallPossible(val priority: Int) {
+  YES(3),
+  UNKNOWN_PRE_RECALL_MAPPING(2),
+  RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE(1),
 }
