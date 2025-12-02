@@ -1129,7 +1129,7 @@ class RecallIntTests : IntegrationTestBase() {
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge))
     val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
 
-    webTestClient
+    val result = webTestClient
       .post()
       .uri("/recall/is-possible")
       .bodyValue(IsRecallPossibleRequest(sentenceIds = listOf(sentence.sentenceUuid), recallType = recallType))
@@ -1143,6 +1143,10 @@ class RecallIntTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.isRecallPossible")
       .isEqualTo(expectedIsPossible)
+
+    if (expectedIsPossible != IsRecallPossible.YES) {
+      result.jsonPath("$.sentenceIds").isEqualTo(listOf(sentence.sentenceUuid.toString()))
+    }
   }
 
   @ParameterizedTest(name = "Test legacy recall {0} and recall type {1} combination results in {2} possible recall")
@@ -1158,7 +1162,7 @@ class RecallIntTests : IntegrationTestBase() {
         returnToCustodyDate = LocalDate.of(2023, 1, 1),
       ),
     )
-    webTestClient
+    val result = webTestClient
       .post()
       .uri("/recall/is-possible")
       .bodyValue(IsRecallPossibleRequest(sentenceIds = listOf(legacySentenceUuid), recallType = recallType))
@@ -1172,6 +1176,10 @@ class RecallIntTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.isRecallPossible")
       .isEqualTo(expectedIsPossible)
+
+    if (expectedIsPossible != IsRecallPossible.YES) {
+      result.jsonPath("$.sentenceIds").isEqualTo(listOf(legacySentenceUuid.toString()))
+    }
   }
 
   companion object {
