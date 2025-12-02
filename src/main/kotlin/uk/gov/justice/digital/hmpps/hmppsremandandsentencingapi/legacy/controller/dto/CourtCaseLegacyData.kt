@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 data class CourtCaseLegacyData(
-  var caseReferences: MutableList<CaseReferenceLegacyData>,
-  var bookingId: Long?,
+  val caseReferences: MutableList<CaseReferenceLegacyData>,
+  val bookingId: Long?,
 ) {
   fun copyFrom(other: CourtCaseLegacyData): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences, other.bookingId)
 
