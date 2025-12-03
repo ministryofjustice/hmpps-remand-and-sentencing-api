@@ -1079,7 +1079,7 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `Cannot create a recall on a legacy recall sentence`() {
+  fun `Can create a recall on a legacy recall sentence with mapping`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val (legacySentenceUuid, _) = createLegacySentence(
       legacySentence = DataCreator.legacyCreateSentence(
@@ -1110,10 +1110,46 @@ class RecallIntTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
+      .isEqualTo(201)
+  }
+
+  @Test
+  fun `Cannot create a recall on a legacy recall sentence without mapping`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val (legacySentenceUuid, _) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = DataCreator.sentenceLegacyData(
+          sentenceCalcType = "FTR",
+          sentenceCategory = "2020",
+        ),
+        returnToCustodyDate = LocalDate.of(2023, 1, 1),
+      ),
+    )
+    val recall = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).first()
+    assertThat(recall.courtCases[0].sentences.first().sentenceUuid).isEqualTo(legacySentenceUuid)
+    val recallIncludingALegacySentence = DpsDataCreator.dpsCreateRecall(
+      recallTypeCode = LR,
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+        legacySentenceUuid,
+      ),
+    )
+
+    webTestClient
+      .post()
+      .uri("/recall")
+      .bodyValue(recallIncludingALegacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
       .isEqualTo(422)
       .expectBody()
       .jsonPath("$.developerMessage")
-      .isEqualTo("Tried to create a recall using a legacy recall sentence ($legacySentenceUuid)")
+      .isEqualTo("Tried to create a recall for sentence ($legacySentenceUuid) but not possible due to UNKNOWN_PRE_RECALL_MAPPING")
   }
 
   @ParameterizedTest(name = "Test classification {0} and recall type {1} combination for a DPS sentence results in {2} possible recall")
