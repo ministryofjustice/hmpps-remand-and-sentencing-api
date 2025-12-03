@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.CUR_HDC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_28
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_56
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_HDC_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_HDC_28
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.IN_HDC
@@ -1192,6 +1193,7 @@ class RecallIntTests : IntegrationTestBase() {
       Arguments.of(SentenceTypeClassification.STANDARD, FTR_HDC_28, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.STANDARD, CUR_HDC, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.STANDARD, IN_HDC, IsRecallPossible.YES),
+      Arguments.of(SentenceTypeClassification.STANDARD, FTR_56, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.EXTENDED, LR, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.EXTENDED, FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.EXTENDED, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
@@ -1199,6 +1201,7 @@ class RecallIntTests : IntegrationTestBase() {
       Arguments.of(SentenceTypeClassification.EXTENDED, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.EXTENDED, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.EXTENDED, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_56, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.SOPC, LR, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.SOPC, FTR_28, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.SOPC, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
@@ -1206,6 +1209,7 @@ class RecallIntTests : IntegrationTestBase() {
       Arguments.of(SentenceTypeClassification.SOPC, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.SOPC, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.SOPC, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.SOPC, FTR_56, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.INDETERMINATE, LR, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
@@ -1213,6 +1217,7 @@ class RecallIntTests : IntegrationTestBase() {
       Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.INDETERMINATE, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
       Arguments.of(SentenceTypeClassification.INDETERMINATE, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_56, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
     )
 
     @JvmStatic
@@ -1270,6 +1275,9 @@ class RecallIntTests : IntegrationTestBase() {
 
       Arguments.of("HDR", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
       Arguments.of("HDR", FTR_28, IsRecallPossible.YES),
+
+      Arguments.of("FTR_56ORA", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("FTR_56ORA", FTR_28, IsRecallPossible.YES),
     )
   }
 }
