@@ -46,7 +46,7 @@ class MoveBookingTests : IntegrationTestBase() {
   fun `move booking updates recall prisoner id`() {
     val bookingId = 9988771L
     val (sentenceUuid) = createLegacySentence(
-      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = sentenceLegacyData(bookingId = bookingId)),
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", bookingId = bookingId)),
     )
 
     val (recallUuid) = createRecall(

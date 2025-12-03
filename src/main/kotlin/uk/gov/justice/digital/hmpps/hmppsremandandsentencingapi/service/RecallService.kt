@@ -56,8 +56,9 @@ class RecallService(
     createRecall.sentenceIds?.let { sentenceIds ->
       sentenceRepository.findBySentenceUuidIn(sentenceIds)
         .forEach {
-          if (LegacySentenceService.recallSentenceTypeBucketUuid == it.sentenceType?.sentenceTypeUuid) {
-            throw IllegalStateException("Tried to create a recall using a legacy recall sentence (${it.sentenceUuid})")
+          val isPossibleForSentence = isRecallPossibleForSentence(it, createRecall.recallTypeCode)
+          if (isPossibleForSentence != IsRecallPossible.YES) {
+            throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
         }
@@ -125,8 +126,9 @@ class RecallService(
       }
       sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
         .forEach {
-          if (LegacySentenceService.recallSentenceTypeBucketUuid == it.sentenceType?.sentenceTypeUuid) {
-            throw IllegalStateException("Tried to update a recall with a legacy recall sentence (${it.sentenceUuid})")
+          val isPossibleForSentence = isRecallPossibleForSentence(it, recall.recallTypeCode)
+          if (isPossibleForSentence != IsRecallPossible.YES) {
+            throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recallToUpdate, it))
         }
