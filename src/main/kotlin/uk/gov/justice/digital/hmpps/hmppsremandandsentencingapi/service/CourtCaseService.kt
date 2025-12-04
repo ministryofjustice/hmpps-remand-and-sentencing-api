@@ -282,14 +282,12 @@ class CourtCaseService(
   }
 
   @Transactional(readOnly = true)
-  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? {
-    return courtCaseRepository.findAllByPrisonerId(prisonerId)
-      .filter { it.appearances.any { appearanceEntity -> appearanceEntity.courtCode == "IMM" } }
-      .sortedByDescending { courtCase ->
-        courtCase.appearances.filter { appearanceEntity -> appearanceEntity.courtCode == "IMM" }
-          .maxOfOrNull { it.appearanceDate }
-      }.firstOrNull()
-  }
+  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? = courtCaseRepository.findAllByPrisonerId(prisonerId)
+    .filter { it.appearances.any { appearanceEntity -> appearanceEntity.courtCode == "IMM" } }
+    .sortedByDescending { courtCase ->
+      courtCase.appearances.filter { appearanceEntity -> appearanceEntity.courtCode == "IMM" }
+        .maxOfOrNull { it.appearanceDate }
+    }.firstOrNull()
 
   @Transactional(readOnly = true)
   fun getAllCountNumbers(courtCaseUuid: String): CourtCaseCountNumbers = CourtCaseCountNumbers.from(courtCaseRepository.findSentenceCountNumbers(courtCaseUuid))
