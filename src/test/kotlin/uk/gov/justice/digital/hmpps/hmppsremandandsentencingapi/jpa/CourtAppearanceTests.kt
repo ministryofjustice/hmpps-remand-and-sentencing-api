@@ -56,8 +56,10 @@ class CourtAppearanceTests {
     @JvmStatic
     fun legacyDataOutcomeStatusParameters(): Stream<Arguments> = Stream.of(
       Arguments.of("1501", CourtAppearanceEntityStatus.RECALL_APPEARANCE),
+      Arguments.of("5500", CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
       Arguments.of("5501", CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
       Arguments.of("5502", CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
+      Arguments.of("5503", CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
     )
   }
 }
