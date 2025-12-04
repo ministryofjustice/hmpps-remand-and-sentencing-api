@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -182,9 +183,21 @@ class LegacyPrisonerMergeService(
     recallRepository.findByPrisonerId(mergePerson.removedPrisonerNumber)
       .forEach { recall ->
         val recallHistoryEntity =
-          recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED))
+          recallHistoryRepository.save(
+            RecallHistoryEntity.from(
+              recall,
+              RecallEntityStatus.EDITED,
+              ChangeSource.NOMIS,
+            ),
+          )
         recall.recallSentences.forEach {
-          recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistoryEntity, it))
+          recallSentenceHistoryRepository.save(
+            RecallSentenceHistoryEntity.from(
+              recallHistoryEntity,
+              it,
+              ChangeSource.NOMIS,
+            ),
+          )
         }
         recall.prisonerId = trackingData.retainedPrisonerNumber
         recall.updatedAt = ZonedDateTime.now()
@@ -220,17 +233,69 @@ class LegacyPrisonerMergeService(
 
   fun auditRecords(trackingData: PrisonerMergeDataTracking) {
     trackingData.editedSentences.forEach { sentenceEntity ->
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity))
+      sentenceHistoryRepository.save(
+        SentenceHistoryEntity.from(
+          sentenceEntity,
+          ChangeSource.NOMIS,
+        ),
+      )
     }
     trackingData.editedCourtCases.forEach { courtCaseEntity ->
-      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity))
+      courtCaseHistoryRepository.save(
+        CourtCaseHistoryEntity.from(
+          courtCaseEntity,
+          ChangeSource.NOMIS,
+        ),
+      )
     }
-    courtCaseHistoryRepository.saveAll(trackingData.createdCourtCasesMap.values.map { it.record }.map { CourtCaseHistoryEntity.from(it) })
-    courtAppearanceHistoryRepository.saveAll(trackingData.createdCourtAppearancesMap.values.map { CourtAppearanceHistoryEntity.from(it) })
-    appearanceChargeHistoryRepository.saveAll(trackingData.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map { AppearanceChargeHistoryEntity.from(it) })
-    chargeHistoryRepository.saveAll(trackingData.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map { ChargeHistoryEntity.from(it) })
-    sentenceHistoryRepository.saveAll(trackingData.createdSentencesMap.values.flatMap { it }.distinct().map { SentenceHistoryEntity.from(it) })
-    periodLengthHistoryRepository.saveAll(trackingData.createdPeriodLengthMap.values.flatMap { it }.distinct().map { PeriodLengthHistoryEntity.from(it) })
+    courtCaseHistoryRepository.saveAll(
+      trackingData.createdCourtCasesMap.values.map { it.record }.map {
+        CourtCaseHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    courtAppearanceHistoryRepository.saveAll(
+      trackingData.createdCourtAppearancesMap.values.map {
+        CourtAppearanceHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    appearanceChargeHistoryRepository.saveAll(
+      trackingData.createdCourtAppearancesMap.values.flatMap { it.appearanceCharges }.distinct().map {
+        AppearanceChargeHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    chargeHistoryRepository.saveAll(
+      trackingData.createdChargesMap.values.flatMap { it.map { it.second } }.distinct().map {
+        ChargeHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    sentenceHistoryRepository.saveAll(
+      trackingData.createdSentencesMap.values.flatMap { it }.distinct().map {
+        SentenceHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
+    periodLengthHistoryRepository.saveAll(
+      trackingData.createdPeriodLengthMap.values.flatMap { it }.distinct().map {
+        PeriodLengthHistoryEntity.from(
+          it,
+          ChangeSource.NOMIS,
+        )
+      },
+    )
   }
 
   fun manageMatchedDpsNextCourtAppearances(mergeCreateCourtCase: MergeCreateCourtCase, createdAppearances: Map<Long, CourtAppearanceEntity>) {

@@ -14,6 +14,7 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
@@ -51,9 +52,11 @@ class CourtAppearanceHistoryEntity(
   val originalAppearance: CourtAppearanceEntity,
   @Enumerated(EnumType.STRING)
   val source: EventSource,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
   companion object {
-    fun from(courtAppearanceEntity: CourtAppearanceEntity): CourtAppearanceHistoryEntity = CourtAppearanceHistoryEntity(
+    fun from(courtAppearanceEntity: CourtAppearanceEntity, changeSource: ChangeSource): CourtAppearanceHistoryEntity = CourtAppearanceHistoryEntity(
       id = 0,
       appearanceUuid = courtAppearanceEntity.appearanceUuid,
       appearanceOutcomeId = courtAppearanceEntity.appearanceOutcome?.id,
@@ -74,6 +77,7 @@ class CourtAppearanceHistoryEntity(
       legacyData = courtAppearanceEntity.legacyData,
       originalAppearance = courtAppearanceEntity,
       source = courtAppearanceEntity.source,
+      changeSource = changeSource,
     )
   }
 }

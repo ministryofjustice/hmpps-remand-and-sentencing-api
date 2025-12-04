@@ -8,6 +8,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
@@ -16,6 +17,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+@DynamicUpdate
 @Entity
 @Table(name = "recall_sentence")
 class RecallSentenceEntity(

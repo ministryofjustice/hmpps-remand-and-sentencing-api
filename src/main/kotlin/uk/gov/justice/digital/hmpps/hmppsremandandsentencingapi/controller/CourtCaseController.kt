@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
@@ -218,7 +219,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   fun refreshCaseReferences(@RequestBody courtCaseLegacyData: CourtCaseLegacyData, @PathVariable courtCaseUuid: String): ResponseEntity<Void> {
-    courtCaseReferenceService.refreshCaseReferences(courtCaseLegacyData, courtCaseUuid)
+    courtCaseReferenceService.refreshCaseReferences(RefreshCaseReferences(courtCaseLegacyData.caseReferences, null), courtCaseUuid)
     return ResponseEntity.noContent().build()
   }
 

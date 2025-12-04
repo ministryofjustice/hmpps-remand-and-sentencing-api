@@ -19,6 +19,7 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.SqlResultSetMapping
 import jakarta.persistence.Table
 import org.hibernate.annotations.BatchSize
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
@@ -45,6 +46,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+@DynamicUpdate
 @Entity
 @Table(name = "court_case")
 @NamedEntityGraph(
@@ -231,7 +233,7 @@ class CourtCaseEntity(
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = CourtCaseEntityStatus.ACTIVE, legacyData = courtCase.legacyData)
 
-    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE, legacyData = courtCase.legacyData)
+    fun from(courtCase: LegacyCreateCourtCase, createdByUsername: String): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = UUID.randomUUID().toString(), createdBy = createdByUsername, statusId = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE, legacyData = if (courtCase.bookingId != null) CourtCaseLegacyData.from(courtCase.bookingId) else courtCase.legacyData)
 
     fun from(migrationCreateCourtCase: MigrationCreateCourtCase, createdByUsername: String, prisonerId: String): CourtCaseEntity = CourtCaseEntity(
       prisonerId = prisonerId,

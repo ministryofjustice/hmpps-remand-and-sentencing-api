@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
@@ -47,13 +48,15 @@ class PeriodLengthHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_period_length_id")
   val originalPeriodLength: PeriodLengthEntity,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
   companion object {
-    fun from(periodLength: PeriodLengthEntity) = PeriodLengthHistoryEntity(
+    fun from(periodLength: PeriodLengthEntity, changeSource: ChangeSource) = PeriodLengthHistoryEntity(
       0, periodLength.periodLengthUuid, periodLength.years, periodLength.months, periodLength.weeks, periodLength.days,
       periodLength.periodOrder, periodLength.periodLengthType, periodLength.sentenceEntity?.id, periodLength.appearanceEntity?.id,
       periodLength.legacyData, periodLength.statusId, periodLength.createdAt, periodLength.createdBy, periodLength.createdPrison,
-      periodLength.updatedAt, periodLength.updatedBy, periodLength.updatedPrison, periodLength,
+      periodLength.updatedAt, periodLength.updatedBy, periodLength.updatedPrison, periodLength, changeSource,
     )
   }
 }
