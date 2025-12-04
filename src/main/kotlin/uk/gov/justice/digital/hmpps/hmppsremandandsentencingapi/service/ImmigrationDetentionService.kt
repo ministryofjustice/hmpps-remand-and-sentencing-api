@@ -12,11 +12,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ImmigrationDetentionEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.ACTIVE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.DELETED
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.EDITED
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import java.time.ZonedDateTime
@@ -30,6 +32,7 @@ class ImmigrationDetentionService(
   private val courtAppearanceService: CourtAppearanceService,
   private val chargeOutcomeService: ChargeOutcomeService,
   private val appearanceOutcomeService: AppearanceOutcomeService,
+  private val courtAppearanceRepository: CourtAppearanceRepository,
 ) {
 
   @Transactional
@@ -137,17 +140,30 @@ class ImmigrationDetentionService(
   }
 
   @Transactional(readOnly = true)
-  fun findImmigrationDetentionByPrisonerId(prisonerId: String): List<ImmigrationDetention> = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE)
-    .map {
-      ImmigrationDetention.from(it)
-    }
+  fun findImmigrationDetentionByPrisonerId(prisonerId: String): List<ImmigrationDetention> {
+    val dpsRecords = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE)
+      .map { ImmigrationDetention.from(it) }
+
+    val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId)
+      .map { courtAppearance: CourtAppearanceEntity -> ImmigrationDetention.fromCourtAppearance(courtAppearance, prisonerId) }
+
+    System.out.println("NOMIS Records: $nomisRecords")
+    return dpsRecords + nomisRecords
+  }
 
   @Transactional(readOnly = true)
   fun findLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention {
-    val immigrationDetention =
-      immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(prisonerId)
-        ?: throw EntityNotFoundException("No immigration detention records exist for the prisoner ID: $prisonerId")
-    return ImmigrationDetention.from(immigrationDetention)
+    val dpsRecords = immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(prisonerId)
+      ?.let { listOf(ImmigrationDetention.from(it)) }
+      ?: emptyList()
+
+    val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId).map {
+      ImmigrationDetention.fromCourtAppearance(it, prisonerId)
+    }
+
+    val allRecords = (dpsRecords + nomisRecords).sortedByDescending { it.createdAt }
+    return allRecords.firstOrNull()
+      ?: throw EntityNotFoundException("No immigration detention records exist for the prisoner ID: $prisonerId")
   }
 
   private fun createCourtAppearanceFromImmigrationDetention(
