@@ -47,7 +47,7 @@ class NextCourtAppearanceEntityTests {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val futureAppearance = CourtAppearanceEntity(
       0, UUID.randomUUID(), null, courtCase, "COURT", "CASE1", LocalDate.now(),
-      CourtAppearanceEntityStatus.ACTIVE, ZonedDateTime.now(), "user", null, null, null, null, "REMAND", mutableSetOf(), null, null, null,
+      CourtAppearanceEntityStatus.ACTIVE, ZonedDateTime.now(), "user", null, null, null, null, "NON_SENTENCING", mutableSetOf(), null, null, null,
     )
   }
 }
