@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.immigrationdetention
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
@@ -18,13 +19,14 @@ import java.util.UUID
 
 class ImmigrationDetentionIntTests : IntegrationTestBase() {
   @Test
-  fun `Create an Immigration Detention record and fetch it based on returned UUID`() {
+  fun `Create an Immigration Detention record and fetch it based on returned UUID also check the events are emitted`() {
     val immigrationDetention = CreateImmigrationDetention(
       prisonerId = "A12345B",
       immigrationDetentionRecordType = IS91,
       recordDate = LocalDate.of(2021, 1, 1),
       createdByUsername = "aUser",
       createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
     )
 
     val immigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
@@ -42,6 +44,33 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
           createdAt = ZonedDateTime.now(),
         ),
       )
+
+    var messages = getMessages(3)
+
+    Assertions.assertThat(messages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
+
+    val courtCase = courtCaseRepository.findAllByPrisonerId("A12345B").firstOrNull()
+
+    assertThat(courtCase?.latestCourtAppearance?.courtCode).isEqualTo("IMM")
+
+    purgeQueues()
+
+    val immigrationDetention2 = CreateImmigrationDetention(
+      prisonerId = "A12345B",
+      immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByUsername = "aUser",
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+    )
+
+    createImmigrationDetention(immigrationDetention2)
+
+    messages = getMessages(2)
+
+    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }
+      .contains("court-appearance.inserted", "charge.inserted")
   }
 
   @Test
@@ -52,6 +81,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       recordDate = LocalDate.of(2021, 1, 1),
       createdByUsername = "aUser",
       createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
     )
 
     val uuid = UUID.randomUUID()
@@ -92,6 +122,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       recordDate = LocalDate.of(2021, 1, 1),
       createdByUsername = "aUser",
       createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
     )
 
     val uuid = UUID.randomUUID()
@@ -123,6 +154,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       createdByUsername = "aUser",
       recordDate = LocalDate.of(2021, 1, 1),
       createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
     )
     val id1Uuid = createImmigrationDetention(id1).immigrationDetentionUuid
 
@@ -132,6 +164,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       createdByUsername = "aUser",
       recordDate = LocalDate.of(2021, 1, 2),
       createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
     )
     val id2Uuid = createImmigrationDetention(id2).immigrationDetentionUuid
 
@@ -169,6 +202,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       recordDate = LocalDate.of(2021, 1, 1),
       createdByUsername = "aUser",
       createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
     )
 
     val immigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
@@ -193,6 +227,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
         recordDate = LocalDate.of(2021, 1, 1),
         createdByUsername = "aUser",
         createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
       ),
     )
     assertThat(getLatestImmigrationDetentionByPrisonerId("B12345B").immigrationDetentionRecordType).isEqualTo(IS91)
@@ -206,6 +241,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
         recordDate = LocalDate.of(2021, 2, 1),
         createdByUsername = "aUser",
         createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
       ),
     )
     assertThat(getLatestImmigrationDetentionByPrisonerId("B12345B").immigrationDetentionRecordType).isEqualTo(
@@ -225,7 +261,14 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       .expectStatus()
       .isNotFound
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("not found: No immigration detention records exist for the prisoner ID: NOTFOUND")
+      .jsonPath("$.userMessage")
+      .isEqualTo("not found: No immigration detention records exist for the prisoner ID: NOTFOUND")
       .jsonPath("$.developerMessage").isEqualTo("No immigration detention records exist for the prisoner ID: NOTFOUND")
+  }
+
+  companion object {
+    val IMMIGRATION_DECISION_TO_DEPORT_UUID = UUID.fromString("b28afb19-dd94-4970-8071-e616b33274cb")
+    val IMMIGRATION_IS91_UUID = UUID.fromString("5c670576-ffbf-4005-8d54-4aeba7bf1a22")
+    val IMMIGRATION_NO_LONGER_OF_INTEREST_UUID = UUID.fromString("15524814-3238-4e4b-86a7-cda31b0221ec")
   }
 }

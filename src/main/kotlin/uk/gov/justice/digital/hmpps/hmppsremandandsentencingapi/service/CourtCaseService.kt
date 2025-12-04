@@ -282,6 +282,12 @@ class CourtCaseService(
   }
 
   @Transactional(readOnly = true)
+  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? {
+    val courtCases = courtCaseRepository.findAllByPrisonerId(prisonerId)
+    return courtCases.filter { it.latestCourtAppearance?.courtCode == "IMM" }.sortedByDescending { it.latestCourtAppearance?.appearanceDate }.firstOrNull()
+  }
+
+  @Transactional(readOnly = true)
   fun getAllCountNumbers(courtCaseUuid: String): CourtCaseCountNumbers = CourtCaseCountNumbers.from(courtCaseRepository.findSentenceCountNumbers(courtCaseUuid))
 
   @Transactional(readOnly = true)
