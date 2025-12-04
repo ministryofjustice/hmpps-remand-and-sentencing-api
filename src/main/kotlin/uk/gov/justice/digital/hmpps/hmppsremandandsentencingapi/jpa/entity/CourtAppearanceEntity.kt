@@ -106,7 +106,7 @@ class CourtAppearanceEntity(
     this.statusId == other.statusId &&
     this.warrantType == other.warrantType &&
     this.overallConvictionDate == other.overallConvictionDate &&
-    this.legacyData == other.legacyData &&
+    ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
     this.createdPrison == other.createdPrison
 
   fun copyFrom(
