@@ -41,6 +41,7 @@ class GetAllAppearanceOutcomesByStatusesTests : IntegrationTestBase() {
         isSubList = false,
         status = ReferenceEntityStatus.INACTIVE,
         warrantType = "REMAND",
+        dispositionCode = "INTERIM",
       ),
     )
 

@@ -90,6 +90,52 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `creating a sentence with FTR 56 recall sentence type uses the DPS recall sentence type bucket`() {
+    val (_, courtCaseCreated) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(DpsDataCreator.dpsCreateCharge(sentence = null))),
+        ),
+      ),
+    )
+    val appearance = courtCaseCreated.appearances.first()
+    val charge = appearance.charges.first()
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_56ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
+    webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+
+    webTestClient
+      .get()
+      .uri("/charge/${charge.chargeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.sentence.sentenceType.sentenceTypeUuid")
+      .isEqualTo("f9a1551e-86b1-425b-96f7-23465a0f05fc")
+
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    assertThat(recalls).hasSize(1)
+    assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_56)
+    assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
+    assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
+    assertThat(recalls[0].source).isEqualTo(EventSource.NOMIS)
+  }
+
+  @Test
   fun `inactive sentences are returned`() {
     val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)

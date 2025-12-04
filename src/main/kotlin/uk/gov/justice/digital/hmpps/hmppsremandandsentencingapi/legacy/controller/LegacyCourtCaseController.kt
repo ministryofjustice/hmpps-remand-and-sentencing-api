@@ -24,15 +24,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUnlinkCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 
 @RestController
 @RequestMapping("/legacy/court-case", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-case-controller", description = "CRUD operations for syncing court case data from NOMIS into remand and sentencing api database.")
-class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService, private val chargeEventService: ChargeDomainEventService) {
+class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService, private val chargeEventService: ChargeDomainEventService, private val courtCaseReferenceService: CourtCaseReferenceService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -180,4 +182,22 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   )
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RO', 'ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun getReconciliation(@PathVariable courtCaseUuid: String): ReconciliationCourtCase = legacyCourtCaseService.getReconciliation(courtCaseUuid)
+
+  @PutMapping("/{courtCaseUuid}/case-references/refresh")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
+  @Operation(
+    summary = "Refresh case references",
+    description = "This endpoint will refresh case references",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "No content"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun refreshCaseReferences(@RequestBody refreshCaseReferences: RefreshCaseReferences, @PathVariable courtCaseUuid: String) {
+    courtCaseReferenceService.refreshCaseReferences(refreshCaseReferences, courtCaseUuid)
+  }
 }

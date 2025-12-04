@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -32,6 +33,7 @@ class CourtCaseReferenceServiceTests {
     serviceUserService,
     courtAppearanceHistoryRepository,
     courtCaseHistoryRepository,
+    ObjectMapper(),
   )
   private var idInt: Int = 0
 

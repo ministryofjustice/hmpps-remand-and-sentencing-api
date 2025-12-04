@@ -20,7 +20,7 @@ class MoveBookingTests : IntegrationTestBase() {
   fun `move booking from old prisoner id to new prisoner id`() {
     val oldPrisonerId = "OLDPRISONER"
     val bookingId = 1L
-    val (courtCaseUuid) = createLegacyCourtCase(DataCreator.legacyCreateCourtCase(prisonerId = oldPrisonerId, legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId)))
+    val (courtCaseUuid) = createLegacyCourtCase(DataCreator.legacyCreateCourtCase(prisonerId = oldPrisonerId, bookingId = bookingId))
     val newPrisonerId = "NEWPRISONER"
     val eventType = "prison-offender-events.prisoner.booking.moved"
     val payload = prisonerBookingMovedPayload(eventType, bookingId.toString(), oldPrisonerId, newPrisonerId)
@@ -46,7 +46,7 @@ class MoveBookingTests : IntegrationTestBase() {
   fun `move booking updates recall prisoner id`() {
     val bookingId = 9988771L
     val (sentenceUuid) = createLegacySentence(
-      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = sentenceLegacyData(bookingId = bookingId)),
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", bookingId = bookingId)),
     )
 
     val (recallUuid) = createRecall(

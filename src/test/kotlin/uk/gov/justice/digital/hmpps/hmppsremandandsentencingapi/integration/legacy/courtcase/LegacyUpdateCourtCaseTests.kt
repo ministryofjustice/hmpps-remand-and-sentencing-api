@@ -34,7 +34,7 @@ class LegacyUpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `write back booking id does not override case references`() {
     val (courtCaseUuid, dpsCourtCase) = createCourtCase()
-    val toUpdate = DataCreator.legacyCreateCourtCase(legacyData = DataCreator.courtCaseLegacyData(caseReferences = mutableListOf(), bookingId = 43869))
+    val toUpdate = DataCreator.legacyCreateCourtCase(bookingId = 43869)
     webTestClient
       .put()
       .uri("/legacy/court-case/$courtCaseUuid")
