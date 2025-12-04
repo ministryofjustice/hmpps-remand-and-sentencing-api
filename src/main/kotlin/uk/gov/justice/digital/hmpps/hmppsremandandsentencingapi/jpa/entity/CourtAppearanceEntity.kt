@@ -427,7 +427,7 @@ class CourtAppearanceEntity(
       legacyData: CourtAppearanceLegacyData,
       anyChargeHasSentence: Boolean? = null,
     ): String = appearanceOutcome?.warrantType
-      ?: if ((legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") || anyChargeHasSentence == true) "SENTENCING" else "REMAND"
+      ?: if ((legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") || anyChargeHasSentence == true) "SENTENCING" else "NON_SENTENCING"
 
     fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }.maxWithOrNull(
       compareBy(
