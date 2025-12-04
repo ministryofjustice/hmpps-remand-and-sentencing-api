@@ -25,13 +25,13 @@ class GetCourtCaseValidationDateTests : IntegrationTestBase() {
 
     val appearanceToExclude = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(chargeToExclude),
-      warrantType = "REMAND",
+      warrantType = "NON_SENTENCING",
       appearanceDate = LocalDate.now().minusDays(5L),
     )
 
     val remandAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(chargeToInclude),
-      warrantType = "REMAND",
+      warrantType = "NON_SENTENCING",
       appearanceDate = LocalDate.now().minusDays(10L),
     )
 

@@ -137,7 +137,7 @@ interface CourtCaseRepository :
     """
   select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate(
     max(coalesce(c.offenceEndDate, c.offenceStartDate)),
-    max(CASE WHEN (a.warrantType = 'REMAND') THEN a.appearanceDate ELSE null END),
+    max(CASE WHEN (a.warrantType = 'NON_SENTENCING') THEN a.appearanceDate ELSE null END),
     max(CASE WHEN (a.warrantType = 'SENTENCING') THEN a.appearanceDate ELSE null END)
   )
   from CourtCaseEntity cc
