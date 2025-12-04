@@ -3,21 +3,24 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.imm
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType.OTHER_REASON
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceService
 import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
-class ImmigrationDetentionIntTests : IntegrationTestBase() {
+class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService: CourtAppearanceService) : IntegrationTestBase() {
   @Test
   fun `Create an Immigration Detention record and fetch it based on returned UUID also check the events are emitted`() {
     val immigrationDetention = CreateImmigrationDetention(
@@ -50,10 +53,6 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
     Assertions.assertThat(messages).hasSize(3).extracting<String> { it.eventType }
       .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
 
-    val courtCase = courtCaseRepository.findAllByPrisonerId("A12345B").firstOrNull()
-
-    assertThat(courtCase?.latestCourtAppearance?.courtCode).isEqualTo("IMM")
-
     purgeQueues()
 
     val immigrationDetention2 = CreateImmigrationDetention(
@@ -71,6 +70,15 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
 
     Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }
       .contains("court-appearance.inserted", "charge.inserted")
+
+    val courtCase = courtCaseRepository.findAllByPrisonerId("A12345B").firstOrNull()
+
+    val appearances = courtAppearanceRepository.findAllByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCase?.caseUniqueIdentifier.toString(),
+      IMMIGRATION_APPEARANCE,
+    )
+
+    appearances.forEach { assertThat(it.courtCode).isEqualTo("IMM") }
   }
 
   @Test
@@ -267,8 +275,8 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
   }
 
   companion object {
-    val IMMIGRATION_DECISION_TO_DEPORT_UUID = UUID.fromString("b28afb19-dd94-4970-8071-e616b33274cb")
-    val IMMIGRATION_IS91_UUID = UUID.fromString("5c670576-ffbf-4005-8d54-4aeba7bf1a22")
-    val IMMIGRATION_NO_LONGER_OF_INTEREST_UUID = UUID.fromString("15524814-3238-4e4b-86a7-cda31b0221ec")
+    val IMMIGRATION_DECISION_TO_DEPORT_UUID: UUID = UUID.fromString("b28afb19-dd94-4970-8071-e616b33274cb")
+    val IMMIGRATION_IS91_UUID: UUID = UUID.fromString("5c670576-ffbf-4005-8d54-4aeba7bf1a22")
+    val IMMIGRATION_NO_LONGER_OF_INTEREST_UUID: UUID = UUID.fromString("15524814-3238-4e4b-86a7-cda31b0221ec")
   }
 }

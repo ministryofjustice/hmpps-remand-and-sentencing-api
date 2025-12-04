@@ -155,7 +155,7 @@ class CourtAppearanceEntity(
       courtAppearance.courtCode,
       courtAppearance.courtCaseReference,
       courtAppearance.appearanceDate,
-      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
+      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, appearanceOutcome?.nomisCode ?: courtAppearance.legacyData?.nomisOutcomeCode),
       ZonedDateTime.now(),
       createdBy,
       courtAppearance.prisonId,
@@ -263,7 +263,7 @@ class CourtAppearanceEntity(
         courtCode = courtAppearance.courtCode,
         courtCaseReference = courtAppearance.courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
-        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
+        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, appearanceOutcome?.nomisCode ?: courtAppearance.legacyData?.nomisOutcomeCode),
         createdPrison = courtAppearance.prisonId,
         createdBy = createdBy,
         nextCourtAppearance = null,
@@ -420,7 +420,7 @@ class CourtAppearanceEntity(
     }
 
     private const val RECALL_NOMIS_OUTCOME_CODE = "1501"
-    private val immigrationNomisOutcomeCodes: Set<String> = setOf("5501", "5502")
+    private val immigrationNomisOutcomeCodes: Set<String> = setOf("5500", "5501", "5502", "5503")
 
     private fun deriveWarrantType(
       appearanceOutcome: AppearanceOutcomeEntity?,
