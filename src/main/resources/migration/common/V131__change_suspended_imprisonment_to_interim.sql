@@ -1,0 +1,2 @@
+update appearance_outcome set disposition_code = 'INTERIM' where outcome_uuid = '8d3c7a71-f17f-4c6c-b7c0-69ebf9f0b10d';
+update charge_outcome set disposition_code = 'INTERIM' where outcome_uuid = 'fa6c0ada-c6e8-4f7a-ab57-ec46a51c41f7';
