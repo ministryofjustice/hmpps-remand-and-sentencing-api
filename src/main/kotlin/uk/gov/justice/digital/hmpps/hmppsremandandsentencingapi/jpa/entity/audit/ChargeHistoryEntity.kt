@@ -34,6 +34,8 @@ class ChargeHistoryEntity(
   val chargeOutcomeId: Int?,
   var supersedingChargeId: Int?,
   val terrorRelated: Boolean?,
+  val foreignPowerRelated: Boolean?,
+  val domesticViolenceRelated: Boolean?,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
   val createdPrison: String?,
@@ -54,7 +56,7 @@ class ChargeHistoryEntity(
     fun from(chargeEntity: ChargeEntity, changeSource: ChangeSource): ChargeHistoryEntity = ChargeHistoryEntity(
       0, chargeEntity.chargeUuid, chargeEntity.offenceCode, chargeEntity.offenceStartDate, chargeEntity.offenceEndDate,
       chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.terrorRelated,
-      chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
+      chargeEntity.foreignPowerRelated, chargeEntity.domesticViolenceRelated, chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
       chargeEntity.updatedPrison, chargeEntity.legacyData, chargeEntity.mergedFromCourtCase?.id, chargeEntity,
       mergedFromDate = chargeEntity.mergedFromDate, changeSource = changeSource,
     )

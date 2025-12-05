@@ -162,6 +162,8 @@ class CourtAppearanceServiceTests {
     offenceEndDate = null,
     outcomeUuid = outcomeUuid,
     terrorRelated = null,
+    foreignPowerRelated = null,
+    domesticViolenceRelated = null,
     prisonId = "P",
     legacyData = null,
     sentence = sentenceUuid?.let {
