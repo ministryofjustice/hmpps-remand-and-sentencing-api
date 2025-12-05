@@ -147,7 +147,6 @@ class ImmigrationDetentionService(
     val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId)
       .map { courtAppearance: CourtAppearanceEntity -> ImmigrationDetention.fromCourtAppearance(courtAppearance, prisonerId) }
 
-    System.out.println("NOMIS Records: $nomisRecords")
     return dpsRecords + nomisRecords
   }
 

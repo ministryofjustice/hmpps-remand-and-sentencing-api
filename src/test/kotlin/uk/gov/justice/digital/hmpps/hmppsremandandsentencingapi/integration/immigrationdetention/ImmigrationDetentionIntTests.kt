@@ -215,7 +215,7 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     )
     val id1Uuid = createImmigrationDetention(id1).immigrationDetentionUuid
 
-    Thread.sleep(1000)
+    sleep(1000)
 
     val id2 = CreateImmigrationDetention(
       prisonerId = "B12345B",
@@ -258,7 +258,7 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     )
     val id1Uuid = createImmigrationDetention(id1).immigrationDetentionUuid
 
-    Thread.sleep(1000)
+    sleep(1000)
 
     val immigrationDetentionNomisUUID = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
 
