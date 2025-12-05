@@ -14,9 +14,9 @@ class LegacyUpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `update charge in all court appearances`() {
-    val dpsCharge = DpsDataCreator.dpsCreateCharge()
+    val dpsCharge = DpsDataCreator.dpsCreateCharge(sentence = null, outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"))
     val firstAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
-    val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge.copy(outcomeUuid = UUID.fromString("8976a19b-ab84-4881-b8c7-cf7b1978a262"))))
     val createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))
     val courtCaseResponse = webTestClient
       .post()

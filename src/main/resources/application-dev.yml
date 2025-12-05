@@ -30,5 +30,16 @@ document:
     api:
       url: http://localhost:8442
 
+adjustments:
+  api:
+    url: http://localhost:8552
+
 ingress:
   url: localhost:8080
+
+features:
+  fix:
+    many:
+      charges:
+        to:
+          sentence: enabled

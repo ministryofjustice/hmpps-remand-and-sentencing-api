@@ -22,9 +22,11 @@ class AppearanceOutcomeEntity(
   val outcomeUuid: UUID,
   val nomisCode: String,
   val outcomeType: String,
+  val warrantType: String,
   val displayOrder: Int,
   val relatedChargeOutcomeUuid: UUID,
   val isSubList: Boolean,
   @Enumerated(EnumType.STRING)
   val status: ReferenceEntityStatus,
+  val dispositionCode: String,
 )

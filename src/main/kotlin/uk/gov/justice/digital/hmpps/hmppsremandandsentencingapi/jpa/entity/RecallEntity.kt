@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
@@ -25,6 +26,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+@DynamicUpdate
 @Entity
 @Table(name = "recall")
 class RecallEntity(
@@ -39,6 +41,7 @@ class RecallEntity(
   @ManyToOne
   @JoinColumn(name = "recall_type_id")
   var recallType: RecallTypeEntity,
+  var calculationRequestId: Int? = null,
 
   // Audit and status columns
   @Column
@@ -75,6 +78,7 @@ class RecallEntity(
       createdPrison = createRecall.createdByPrison,
       statusId = RecallEntityStatus.ACTIVE,
       source = DPS,
+      calculationRequestId = createRecall.calculationRequestId,
     )
 
     fun fromMigration(

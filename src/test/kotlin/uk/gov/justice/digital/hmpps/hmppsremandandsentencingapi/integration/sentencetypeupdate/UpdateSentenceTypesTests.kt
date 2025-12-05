@@ -67,7 +67,7 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .jsonPath("$.updatedSentenceUuids[0]").isEqualTo(sentenceUuid.toString())
 
     // Verify the sentence was updated
-    val updatedSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(sentenceUuid)
+    val updatedSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
       ?: throw IllegalStateException("Expected updated sentence to exist")
     assertThat(updatedSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
 
@@ -370,11 +370,11 @@ class UpdateSentenceTypesTests : IntegrationTestBase() {
       .jsonPath("$.updatedSentenceUuids[1]").isEqualTo(secondSentenceUuid.toString())
 
     // Verify both sentences were updated
-    val updatedFirstSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(firstSentenceUuid)
+    val updatedFirstSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(firstSentenceUuid)
       ?: throw IllegalStateException("Expected first updated sentence to exist")
     assertThat(updatedFirstSentence.sentenceType?.sentenceTypeUuid).isEqualTo(sdsType)
 
-    val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidOrderByUpdatedAtDesc(secondSentenceUuid)
+    val updatedSecondSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(secondSentenceUuid)
       ?: throw IllegalStateException("Expected second updated sentence to exist")
     assertThat(updatedSecondSentence.sentenceType?.sentenceTypeUuid).isEqualTo(edsType)
 

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.format.DateTimeFormatter
@@ -40,14 +41,15 @@ class LegacyGetReconciliationCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `get reconciliation court case with recall`() {
+    adjustmentsApi.stubAllowCreateAdjustments()
     val (uuid, createdCase) = createCourtCase()
     val appearance = createdCase.appearances.first()
     val sentence = appearance.charges[0].sentence!!
-    val recall = createRecall(
+    createRecall(
       DpsDataCreator.dpsCreateRecall(
         recallTypeCode = LR,
         sentenceIds = listOf(
-          sentence.sentenceUuid!!,
+          sentence.sentenceUuid,
         ),
       ),
     )

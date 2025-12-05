@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
@@ -78,7 +79,7 @@ class DefaultFixManyChargesToSentenceService(private val sentenceHistoryReposito
     sentenceRecord.updatedAt = ZonedDateTime.now()
     sentenceRecord.updatedBy = serviceUserService.getUsername()
     sentenceModifyFunction(sentenceRecord)
-    sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord))
+    sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord, ChangeSource.DPS))
     return EventMetadataCreator.fixSentenceEventMetadata(
       eventMetadata.prisonerId,
       eventMetadata.courtCaseId!!,
@@ -100,7 +101,7 @@ class DefaultFixManyChargesToSentenceService(private val sentenceHistoryReposito
         periodLength.updatedAt = ZonedDateTime.now()
         periodLength.updatedBy = serviceUserService.getUsername()
         periodLengthModifyFunction(periodLength)
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength, ChangeSource.DPS))
         periodLengthEventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
             periodLength.periodLengthUuid.toString(),

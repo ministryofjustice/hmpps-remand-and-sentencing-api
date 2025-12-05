@@ -91,6 +91,7 @@ class DpsDataCreator {
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
       prisonId: String = "PRISON1",
+      replacedChargeUuid: UUID? = null,
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
@@ -102,6 +103,7 @@ class DpsDataCreator {
       sentence,
       legacyData,
       prisonId,
+      replacedChargeUuid,
     )
 
     fun dpsCreateSentence(
@@ -129,12 +131,13 @@ class DpsDataCreator {
     fun dpsCreateRecall(
       prisonerId: String = DpsDataCreator.DEFAULT_PRISONER_ID,
       revocationDate: LocalDate = LocalDate.of(2024, 1, 2),
-      returnToCustodyDate: LocalDate = LocalDate.of(2024, 2, 3),
+      returnToCustodyDate: LocalDate? = LocalDate.of(2024, 2, 3),
       inPrisonOnRevocationDate: Boolean? = null,
       recallTypeCode: RecallType = FTR_14,
       createdByUsername: String = "user001",
       createdByPrison: String = "PRISON1",
       sentenceIds: List<UUID> = listOf(UUID.randomUUID()),
+      calculationRequestId: Int? = null,
     ): CreateRecall = CreateRecall(
       prisonerId,
       revocationDate,
@@ -144,6 +147,7 @@ class DpsDataCreator {
       createdByUsername,
       createdByPrison,
       sentenceIds,
+      calculationRequestId = calculationRequestId,
     )
 
     fun dpsCreateUploadedDocument(

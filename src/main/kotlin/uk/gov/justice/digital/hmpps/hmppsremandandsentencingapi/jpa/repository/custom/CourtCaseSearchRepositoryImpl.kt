@@ -104,7 +104,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         lmtca.court_case_reference as mergedToCaseReference,
         lmtca.court_code as mergedToCourtCode,
         lmtca.appearance_date as mergedToWarrantDate,
-        fca.appearance_uuid as futureSkeletonAppearanceUuid
+        fca.appearance_uuid as futureSkeletonAppearanceUuid,
+        minca.warrant_type as minCourtAppearanceWarrantType
       from court_case cc
       join (select cc1.id, count(ca1.id) as appearance_count, string_agg(ca1.court_case_reference, ',') as case_references, min(ca1.appearance_date) as first_day_in_custody 
         from court_case cc1
@@ -140,6 +141,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join court_case mtcc on mtcc.id = cc.merged_to_case_id
       left join court_appearance lmtca on mtcc.latest_court_appearance_id = lmtca.id
       left join court_appearance fca on fca.id = nlca.future_skeleton_appearance_id
+      join court_appearance minca on minca.court_case_id = cc.id and minca.appearance_date = appearanceData.first_day_in_custody
     """.trimIndent()
   }
 }

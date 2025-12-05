@@ -196,13 +196,12 @@ class CourtCaseService(
           .minOfOrNull { it.appearanceDate }
 
         val firstSentencingAppearance = activeAppearances
-          .filter { appearance -> appearance.warrantType == "SENTENCING" }
-          .minByOrNull { it.appearanceDate }
+          .first { appearance -> appearance.warrantType == "SENTENCING" }
 
         val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
           appearance.appearanceCharges
-            .filter { it.charge?.statusId == ChargeEntityStatus.ACTIVE && it.charge?.getActiveOrInactiveSentence() != null }
-            .map { it.charge!!.getActiveOrInactiveSentence()!! to appearance }
+            .filter { it.charge?.statusId == ChargeEntityStatus.ACTIVE && it.charge?.getLiveSentence() != null }
+            .map { it.charge!!.getLiveSentence()!! to appearance }
         }
 
         RecallableCourtCase(
@@ -251,10 +250,11 @@ class CourtCaseService(
               sentenceDate = sentenceAppearance?.appearanceDate,
             )
           },
-          date = latestAppearance.appearanceDate,
+          appearanceDate = firstSentencingAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
       }
+      .filter { it.sentences.any { s -> s.isRecallable } }
 
     val sortedCases = when (sortBy.lowercase()) {
       "reference" -> when (sortOrder.lowercase()) {
@@ -268,8 +268,8 @@ class CourtCaseService(
       }
 
       else -> when (sortOrder.lowercase()) {
-        "asc" -> recallableCourtCases.sortedBy { it.date }
-        else -> recallableCourtCases.sortedByDescending { it.date }
+        "asc" -> recallableCourtCases.sortedBy { it.appearanceDate }
+        else -> recallableCourtCases.sortedByDescending { it.appearanceDate }
       }
     }
 
@@ -280,6 +280,14 @@ class CourtCaseService(
       eventsToEmit,
     )
   }
+
+  @Transactional(readOnly = true)
+  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? = courtCaseRepository.findAllByPrisonerId(prisonerId)
+    .filter { it.appearances.any { appearanceEntity -> appearanceEntity.courtCode == "IMM" } }
+    .sortedByDescending { courtCase ->
+      courtCase.appearances.filter { appearanceEntity -> appearanceEntity.courtCode == "IMM" }
+        .maxOfOrNull { it.appearanceDate }
+    }.firstOrNull()
 
   @Transactional(readOnly = true)
   fun getAllCountNumbers(courtCaseUuid: String): CourtCaseCountNumbers = CourtCaseCountNumbers.from(courtCaseRepository.findSentenceCountNumbers(courtCaseUuid))

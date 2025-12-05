@@ -20,28 +20,45 @@
         "telemetryType": "request",
         "attributes": [
           {
-            "key": "http.url",
-            "value": "https?://[^/]+/health.*",
+            "key": "url.path",
+            "value": "/health.*",
             "matchType": "regexp"
           }
         ],
-        "percentage": 100
+        "percentage": 5
+      },
+      {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "url.path",
+            "value": "/info",
+            "matchType": "strict"
+          }
+        ],
+        "percentage": 5
+      },
+      {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "url.path",
+            "value": "/legacy/court-case/.*/reconciliation",
+            "matchType": "regexp"
+          }
+        ],
+        "percentage": 1
       },
       {
         "telemetryType": "dependency",
         "attributes": [
           {
-            "key": "db.system",
-            "value": "postgresql",
-            "matchType": "strict"
-          },
-          {
-            "key": "applicationinsights.internal.operation_name",
-            "value": "POST /legacy/court-case/migration",
+            "key": "code.function",
+            "value": "getReconciliation",
             "matchType": "strict"
           }
         ],
-        "percentage": 10
+        "percentage": 1
       }
     ]
   }

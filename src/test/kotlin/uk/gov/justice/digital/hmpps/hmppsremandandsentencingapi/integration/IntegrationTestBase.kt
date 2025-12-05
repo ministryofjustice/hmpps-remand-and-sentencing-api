@@ -21,19 +21,25 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Recall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.repository.AppearanceChargeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
@@ -44,8 +50,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.U
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
@@ -58,6 +66,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
@@ -67,10 +76,11 @@ import uk.gov.justice.hmpps.sqs.MissingTopicException
 import uk.gov.justice.hmpps.sqs.PurgeQueueRequest
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
-import java.util.*
+import java.time.LocalDateTime
+import java.util.UUID
 
 @Sql("classpath:test_data/reset-database.sql")
-@ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class)
+@ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class, AdjustmentsApiExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
@@ -121,6 +131,9 @@ abstract class IntegrationTestBase {
   protected lateinit var courtAppearanceRepository: CourtAppearanceRepository
 
   @Autowired
+  protected lateinit var chargeRepository: ChargeRepository
+
+  @Autowired
   protected lateinit var sentenceRepository: SentenceRepository
 
   @Autowired
@@ -137,6 +150,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var recallHistoryRepository: RecallHistoryRepository
+
+  @Autowired
+  protected lateinit var immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository
 
   @Autowired
   protected lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
@@ -209,6 +225,7 @@ abstract class IntegrationTestBase {
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
   ): Pair<UUID, LegacyCreateCourtAppearance> {
     val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
+    refreshCaseReferences(UUID.fromString(courtCase.first), mutableListOf("NOMIS123"))
     val toCreateAppearance = legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
     val response = webTestClient
       .post()
@@ -430,6 +447,95 @@ abstract class IntegrationTestBase {
     .expectBody(DeleteRecallResponse::class.java)
     .returnResult().responseBody!!
 
+  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention) = webTestClient
+    .post()
+    .uri("/immigration-detention")
+    .bodyValue(immigrationDetention)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isCreated
+    .expectBody(SaveImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun updateImmigrationDetention(immigrationDetention: CreateImmigrationDetention, uuid: UUID) = webTestClient
+    .put()
+    .uri("/immigration-detention/$uuid")
+    .bodyValue(immigrationDetention)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(SaveImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun getImmigrationDetentionByUUID(immigrationDetentionUuid: UUID): ImmigrationDetention = webTestClient
+    .get()
+    .uri("/immigration-detention/$immigrationDetentionUuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(ImmigrationDetention::class.java)
+    .returnResult().responseBody!!
+
+  protected fun deleteImmigrationDetention(uuid: UUID) = webTestClient
+    .delete()
+    .uri("/immigration-detention/$uuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(DeleteImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun getLatestImmigrationDetentionRecordByPrisonerId(prisonerId: String): List<ImmigrationDetention> = webTestClient
+    .get()
+    .uri("/immigration-detention/person/$prisonerId/latest")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBodyList(ImmigrationDetention::class.java)
+    .returnResult().responseBody!!
+
+  protected fun getImmigrationDetentionsByPrisonerId(prisonerId: String): List<ImmigrationDetention> = webTestClient
+    .get()
+    .uri("/immigration-detention/person/$prisonerId")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBodyList(ImmigrationDetention::class.java)
+    .returnResult().responseBody!!
+
+  protected fun getLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention = webTestClient
+    .get()
+    .uri("/immigration-detention/person/$prisonerId/latest")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(ImmigrationDetention::class.java)
+    .returnResult().responseBody!!
+
   fun purgeQueues() {
     val totalAttempts = 5
     var currentAttempt = 0
@@ -502,10 +608,10 @@ abstract class IntegrationTestBase {
     numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsDlqClient, prisonerListenerQueue.dlqUrl!!, 0)
   }
 
-  fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID): Pair<CreateSentence, CreateSentence> {
+  fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID, courtCaseReference: String? = "GH123456789"): Pair<CreateSentence, CreateSentence> {
     val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
     val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge), courtCaseReference = courtCaseReference)
     val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = prisonerId, appearances = listOf(appearance)))
     val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
     val sentenceTwo = courtCase.appearances.first().charges[1].sentence!!
@@ -620,6 +726,29 @@ abstract class IntegrationTestBase {
     .isCreated
     .returnResult(MigrationCreateCourtCasesResponse::class.java)
     .responseBody.blockFirst()!!
+
+  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String): UUID {
+    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId)
+    val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
+    val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = nomisOutcomeCode))
+    val legacyCreateChargeResult = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
+    return legacyCreateChargeResult.second.appearanceLifetimeUuid
+  }
+
+  protected fun refreshCaseReferences(courtCaseUuid: UUID, caseReferences: MutableList<String>) {
+    val refreshCaseReferences = RefreshCaseReferences(mutableListOf(CaseReferenceLegacyData("NOMIS123", LocalDateTime.now())), "SOME_USER")
+    webTestClient
+      .put()
+      .uri("/legacy/court-case/$courtCaseUuid/case-references/refresh")
+      .bodyValue(refreshCaseReferences)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+  }
 
   protected fun linkCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String) = webTestClient
     .put()

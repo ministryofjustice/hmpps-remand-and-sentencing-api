@@ -11,4 +11,5 @@ data class LegacyCreatePeriodLength(
   val periodWeeks: Int?,
   val periodDays: Int?,
   val legacyData: PeriodLengthLegacyData,
+  val performedByUser: String?,
 )

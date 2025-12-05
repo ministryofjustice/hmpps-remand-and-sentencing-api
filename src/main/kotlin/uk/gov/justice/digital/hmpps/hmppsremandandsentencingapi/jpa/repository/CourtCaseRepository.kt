@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.EntityGraph
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 interface CourtCaseRepository :
@@ -135,7 +137,7 @@ interface CourtCaseRepository :
     """
   select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate(
     max(coalesce(c.offenceEndDate, c.offenceStartDate)),
-    max(CASE WHEN (a.warrantType = 'REMAND') THEN a.appearanceDate ELSE null END),
+    max(CASE WHEN (a.warrantType = 'NON_SENTENCING') THEN a.appearanceDate ELSE null END),
     max(CASE WHEN (a.warrantType = 'SENTENCING') THEN a.appearanceDate ELSE null END)
   )
   from CourtCaseEntity cc
@@ -191,4 +193,64 @@ interface CourtCaseRepository :
     @Param("prisonerId") prisonerId: String,
     @Param("bookingId") bookingId: String,
   ): List<CourtCaseEntity>
+
+  @Modifying
+  @Query(
+    """
+    UPDATE court_case
+    SET latest_court_appearance_id = NULL
+    WHERE latest_court_appearance_id IN (
+        SELECT a.id FROM court_appearance a
+        JOIN court_case cc ON a.court_case_id = cc.id
+        WHERE cc.prisoner_id = :prisonerId
+    )
+  """,
+    nativeQuery = true,
+  )
+  fun updateLatestCourtAppearanceNullByPrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying
+  @Query(
+    """
+    DELETE FROM court_case WHERE prisoner_id = :prisonerId
+  """,
+    nativeQuery = true,
+  )
+  fun deleteByPrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Query(
+    """
+    select cc.caseUniqueIdentifier from CourtCaseEntity cc
+    where cc.prisonerId = :prisonerId
+    and cc.statusId != :statusId
+  """,
+  )
+  fun findCaseUniqueIdentifierByPrisonerIdAndStatusIdNot(prisonerId: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): List<String>
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+    """
+    UPDATE court_case
+    SET legacy_data['caseReferences'] = :caseReferences ::jsonb,
+    updated_at = :updatedAt,
+    updated_by = :updatedBy
+    where id = :id
+  """,
+    nativeQuery = true,
+  )
+  fun updateLegacyDataCaseReferencesById(@Param("caseReferences")caseReferences: String, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("updatedBy") updatedBy: String, @Param("id") id: Int)
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+    """
+    UPDATE court_case
+    SET legacy_data['bookingId'] = to_jsonb(:bookingId),
+    status_id = :#{#statusId.name()},
+    updated_at = :updatedAt,
+    updated_by = :updatedBy
+    where id = :id
+  """,
+    nativeQuery = true,
+  )
+  fun updateLegacyDataBookingIdById(@Param("bookingId")bookingId: Long?, @Param("statusId") statusId: CourtCaseEntityStatus, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("updatedBy") updatedBy: String, @Param("id") id: Int)
 }

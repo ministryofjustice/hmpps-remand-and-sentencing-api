@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
@@ -31,6 +32,7 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
+@DynamicUpdate
 @Entity
 @Table(name = "charge")
 class ChargeEntity(
@@ -70,19 +72,11 @@ class ChargeEntity(
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()
 
-  fun hasNoActiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId == CourtAppearanceEntityStatus.ACTIVE }
+  fun hasNoLiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId != CourtAppearanceEntityStatus.DELETED }
 
-  fun hasTwoOrMoreActiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId == CourtAppearanceEntityStatus.ACTIVE } >= 2
+  fun hasTwoOrMoreLiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId != CourtAppearanceEntityStatus.DELETED } >= 2
 
-  fun getActiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId == SentenceEntityStatus.ACTIVE }
-
-  fun getActiveOrInactiveSentence(): SentenceEntity? = sentences.firstOrNull {
-    setOf(
-      SentenceEntityStatus.ACTIVE,
-      SentenceEntityStatus.INACTIVE,
-      SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
-    ).contains(it.statusId)
-  }
+  fun getLiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED }
 
   fun hasSentence(): Boolean = sentences.any { it.statusId != SentenceEntityStatus.DELETED }
   fun isSame(other: ChargeEntity, otherHasSentence: Boolean): Boolean = this.offenceCode == other.offenceCode &&
@@ -91,7 +85,7 @@ class ChargeEntity(
     this.statusId == other.statusId &&
     this.chargeOutcome == other.chargeOutcome &&
     this.terrorRelated == other.terrorRelated &&
-    this.legacyData == other.legacyData &&
+    ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
     this.mergedFromCourtCase == other.mergedFromCourtCase &&
     this.mergedFromDate == other.mergedFromDate &&
     otherHasSentence == hasSentence()
@@ -242,7 +236,25 @@ class ChargeEntity(
   }
 
   companion object {
-    fun from(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = charge.chargeUuid, offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = ChargeEntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = charge.terrorRelated, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = charge.prisonId)
+    fun from(
+      charge: CreateCharge,
+      chargeOutcome: ChargeOutcomeEntity?,
+      createdBy: String,
+      supersedingCharge: ChargeEntity?,
+    ): ChargeEntity = ChargeEntity(
+      chargeUuid = charge.chargeUuid,
+      offenceCode = charge.offenceCode,
+      offenceStartDate = charge.offenceStartDate,
+      offenceEndDate = charge.offenceEndDate,
+      statusId = ChargeEntityStatus.ACTIVE,
+      chargeOutcome = chargeOutcome,
+      supersedingCharge = supersedingCharge,
+      terrorRelated = charge.terrorRelated,
+      legacyData = charge.legacyData,
+      appearanceCharges = mutableSetOf(),
+      createdBy = createdBy,
+      createdPrison = charge.prisonId,
+    )
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = ChargeEntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = null)
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import java.time.LocalDate
@@ -40,14 +41,15 @@ class MigrationRecallTests : IntegrationTestBase() {
       .returnResult(MigrationCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
 
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
     val recalls = getRecallsByPrisonerId(migrationCourtCases.prisonerId)
     assertThat(recalls).hasSize(2)
     assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
-    assertThat(recalls[0].sentences).hasSize(1)
+    assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
     assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
 
     assertThat(recalls[1].recallType).isEqualTo(RecallType.FTR_28)
-    assertThat(recalls[1].sentences).hasSize(1)
+    assertThat(recalls[1].courtCases[0].sentences).hasSize(1)
     assertThat(recalls[1].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
   }
 
@@ -80,14 +82,15 @@ class MigrationRecallTests : IntegrationTestBase() {
       .returnResult(MigrationCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
 
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
     val recalls = getRecallsByPrisonerId(migrationCourtCases.prisonerId)
     assertThat(recalls).hasSize(2)
     assertThat(recalls[0].recallType).isEqualTo(RecallType.LR)
-    assertThat(recalls[0].sentences).hasSize(1)
+    assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
     assertThat(recalls[0].returnToCustodyDate).isNull()
 
     assertThat(recalls[1].recallType).isEqualTo(RecallType.LR)
-    assertThat(recalls[1].sentences).hasSize(1)
+    assertThat(recalls[1].courtCases[0].sentences).hasSize(1)
     assertThat(recalls[1].returnToCustodyDate).isNull()
   }
 }

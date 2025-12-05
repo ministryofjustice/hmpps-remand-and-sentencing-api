@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
@@ -65,7 +66,7 @@ class SentenceTypeUpdateService(
       sentence.sentenceType = validatedUpdate.newSentenceTypeEntity
       sentence.updatedBy = username
 
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence))
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence, ChangeSource.DPS))
 
       updatedSentenceUuids.add(validatedUpdate.updateRequest.sentenceUuid)
     }

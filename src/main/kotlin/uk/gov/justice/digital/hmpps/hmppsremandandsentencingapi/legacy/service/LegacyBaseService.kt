@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
@@ -17,16 +18,17 @@ abstract class LegacyBaseService(
   protected val serviceUserService: ServiceUserService,
 ) {
 
-  fun createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge: ChargeEntity, appearance: CourtAppearanceEntity, updatedCharge: ChargeEntity, chargeModifyFunction: (ChargeEntity) -> Unit = {}): ChargeEntity {
+  fun createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge: ChargeEntity, appearance: CourtAppearanceEntity, updatedCharge: ChargeEntity, performedByUsername: String, chargeModifyFunction: (ChargeEntity) -> Unit = {}): ChargeEntity {
     var chargeRecord = existingCharge
-    if (existingCharge.hasTwoOrMoreActiveCourtAppearance(appearance)) {
+    if (existingCharge.hasTwoOrMoreLiveCourtAppearance(appearance)) {
       existingCharge.appearanceCharges.firstOrNull { it.appearance == appearance }
         ?.let { appearanceCharge ->
           appearanceChargeHistoryRepository.save(
             AppearanceChargeHistoryEntity.removedFrom(
               appearanceCharge = appearanceCharge,
-              removedBy = serviceUserService.getUsername(),
+              removedBy = performedByUsername,
               removedPrison = null,
+              ChangeSource.NOMIS,
             ),
           )
           existingCharge.appearanceCharges.remove(appearanceCharge)
@@ -41,16 +43,16 @@ abstract class LegacyBaseService(
       val appearanceCharge = AppearanceChargeEntity(
         appearance,
         chargeRecord,
-        serviceUserService.getUsername(),
+        performedByUsername,
         null,
       )
       appearance.appearanceCharges.add(appearanceCharge)
       chargeRecord.appearanceCharges.add(appearanceCharge)
-      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge))
+      appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceCharge, ChangeSource.NOMIS))
     } else {
       chargeModifyFunction(existingCharge)
     }
-    chargeHistoryRepository.save(ChargeHistoryEntity.from(chargeRecord))
+    chargeHistoryRepository.save(ChargeHistoryEntity.from(chargeRecord, ChangeSource.NOMIS))
     return chargeRecord
   }
 }

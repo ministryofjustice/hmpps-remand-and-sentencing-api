@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
@@ -47,12 +48,14 @@ class SentenceHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_sentence_id")
   val originalSentence: SentenceEntity?,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
   companion object {
-    fun from(sentenceEntity: SentenceEntity): SentenceHistoryEntity = SentenceHistoryEntity(
+    fun from(sentenceEntity: SentenceEntity, changeSource: ChangeSource): SentenceHistoryEntity = SentenceHistoryEntity(
       0, sentenceEntity.sentenceUuid, sentenceEntity.countNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
       sentenceEntity.updatedAt, sentenceEntity.updatedBy, sentenceEntity.updatedPrison, sentenceEntity.sentenceServeType, sentenceEntity.supersedingSentence?.id, sentenceEntity.charge.id, sentenceEntity.consecutiveTo?.id,
-      sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity.fineAmount, sentenceEntity,
+      sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity.fineAmount, sentenceEntity, changeSource,
     )
   }
 }

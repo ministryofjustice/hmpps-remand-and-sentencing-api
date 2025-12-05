@@ -4,4 +4,5 @@ import java.time.LocalDate
 
 data class LegacyLinkCase(
   val linkedDate: LocalDate?,
+  val performedByUser: String?,
 )

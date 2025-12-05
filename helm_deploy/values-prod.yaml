@@ -2,6 +2,7 @@
 # Per environment values which override defaults in hmpps-remand-and-sentencing-api/values.yaml
 
 generic-service:
+
   ingress:
     host: &ingressHost remand-and-sentencing-api.hmpps.service.justice.gov.uk
 
@@ -10,6 +11,7 @@ generic-service:
     HMPPS_AUTH_URL: https://sign-in.hmpps.service.justice.gov.uk/auth
     PRISON_API_URL: https://prison-api.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
+    ADJUSTMENTS_API_URL: "https://adjustments-api.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PROD
     FEATURES_FIX_MANY_CHARGES_TO_SENTENCE: disabled
@@ -22,6 +24,7 @@ generic-service:
 
   postgresDatabaseRestore:
     enabled: true
+    timeout: 3600
     namespace_secrets:
       rds-postgresql-instance-output:
         DB_NAME: "database_name"

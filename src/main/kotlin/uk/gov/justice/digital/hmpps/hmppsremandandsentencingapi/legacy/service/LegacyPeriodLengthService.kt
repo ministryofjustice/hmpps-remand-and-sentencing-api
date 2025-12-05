@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
@@ -34,10 +35,15 @@ class LegacyPeriodLengthService(
         periodLengthUuid = periodLengthUuid,
         periodLength = periodLength,
         sentenceEntity = sentenceEntity,
-        createdBy = serviceUserService.getUsername(),
+        createdBy = getPerformedByUsername(periodLength),
       )
       val savedPeriodLength = periodLengthRepository.save(periodLengthEntity)
-      periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(savedPeriodLength))
+      periodLengthHistoryRepository.save(
+        PeriodLengthHistoryEntity.from(
+          savedPeriodLength,
+          ChangeSource.NOMIS,
+        ),
+      )
     }
     val appearance = firstSentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
       ?: throw EntityNotFoundException("No appearance found for sentence ${firstSentenceEntity.sentenceUuid}")
@@ -63,7 +69,7 @@ class LegacyPeriodLengthService(
       .takeIf { it.isNotEmpty() }
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLengthUpdate.sentenceUuid}")
 
-    val username = serviceUserService.getUsername()
+    val username = getPerformedByUsername(periodLengthUpdate)
     var changesMade = false
 
     existingPeriodLengths.forEach { existingEntity ->
@@ -77,7 +83,12 @@ class LegacyPeriodLengthService(
 
       if (!originalCopy.isSame(existingEntity)) {
         periodLengthRepository.save(existingEntity)
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existingEntity))
+        periodLengthHistoryRepository.save(
+          PeriodLengthHistoryEntity.from(
+            existingEntity,
+            ChangeSource.NOMIS,
+          ),
+        )
         changesMade = true
       }
     }
@@ -100,9 +111,16 @@ class LegacyPeriodLengthService(
     )
   }
 
-  fun delete(periodLength: PeriodLengthEntity) {
-    periodLength.delete(serviceUserService.getUsername())
-    periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength))
+  private fun getPerformedByUsername(periodLength: LegacyCreatePeriodLength): String = periodLength.performedByUser ?: serviceUserService.getUsername()
+
+  fun delete(periodLength: PeriodLengthEntity, performedByUser: String) {
+    periodLength.delete(performedByUser)
+    periodLengthHistoryRepository.save(
+      PeriodLengthHistoryEntity.from(
+        periodLength,
+        ChangeSource.NOMIS,
+      ),
+    )
   }
 
   @Transactional(readOnly = true)
@@ -124,9 +142,9 @@ class LegacyPeriodLengthService(
     } ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 
   @Transactional
-  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
     .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
-      delete(periodLength)
+      delete(periodLength, performedByUser ?: serviceUserService.getUsername())
       LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
     }.firstOrNull()
 }

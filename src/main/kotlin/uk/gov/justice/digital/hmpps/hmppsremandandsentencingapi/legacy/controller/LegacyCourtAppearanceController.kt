@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -27,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtAppearanceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceDomainEventService
 import java.util.UUID
@@ -34,7 +36,7 @@ import java.util.UUID
 @RestController
 @RequestMapping("/legacy/court-appearance", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-appearance-controller", description = "CRUD operations for syncing court appearance data from NOMIS Court Events into remand and sentencing api database.")
-class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService, private val chargeEventService: ChargeDomainEventService, private val legacyChargeService: LegacyChargeService) {
+class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService, private val chargeEventService: ChargeDomainEventService, private val legacyChargeService: LegacyChargeService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -68,7 +70,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody courtAppearance: LegacyCreateCourtAppearance): ResponseEntity<Void> {
-    legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also<Pair<EntityChangeStatus, LegacyCourtAppearanceCreatedResponse>> { (entityChangeStatus, legacyCourtAppearanceCreatedResponse) ->
+    legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also { (entityChangeStatus, legacyCourtAppearanceCreatedResponse) ->
       if (entityChangeStatus == EntityChangeStatus.EDITED) {
         eventService.update(legacyCourtAppearanceCreatedResponse.prisonerId, legacyCourtAppearanceCreatedResponse.lifetimeUuid.toString(), legacyCourtAppearanceCreatedResponse.courtCaseUuid, EventSource.NOMIS)
       }
@@ -105,10 +107,13 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun delete(@PathVariable lifetimeUuid: UUID) {
-    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      legacyCourtAppearanceService.delete(lifetimeUuid)
-      eventService.delete(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
+  fun delete(
+    @PathVariable lifetimeUuid: UUID,
+    @RequestHeader("performedByUser", required = false)
+    performedByUser: String?,
+  ) {
+    legacyCourtAppearanceService.delete(lifetimeUuid, performedByUser).also { eventsToEmit ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
   }
 
@@ -125,19 +130,11 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge): ResponseEntity<Void> {
-    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      val entityChangeStatus = legacyCourtAppearanceService.linkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
-      }
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge) {
+    legacyChargeService.linkAppearanceAndUpdate(chargeLifetimeUuid, lifetimeUuid, updateCharge).also {
+      legacyDomainEventService.emitEvents(it.eventsToEmit)
     }
-    legacyChargeService.updateInAppearance(chargeLifetimeUuid, lifetimeUuid, updateCharge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        chargeEventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), lifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
-      }
-    }
-    return ResponseEntity.noContent().build()
   }
 
   @GetMapping("/{lifetimeUuid}/charge/{chargeLifetimeUuid}")
@@ -168,15 +165,14 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun unlinkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID) {
-    legacyCourtAppearanceService.get(lifetimeUuid).also { legacyCourtAppearance ->
-      val (appearanceChangeStatus, chargeChangeStatus) = legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid)
-      if (appearanceChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyCourtAppearance.prisonerId, legacyCourtAppearance.lifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
-      }
-      if (chargeChangeStatus == EntityChangeStatus.DELETED) {
-        chargeEventService.delete(legacyCourtAppearance.prisonerId, chargeLifetimeUuid.toString(), legacyCourtAppearance.courtCaseUuid, EventSource.NOMIS)
-      }
+  fun unlinkAppearanceWithCharge(
+    @PathVariable lifetimeUuid: UUID,
+    @PathVariable chargeLifetimeUuid: UUID,
+    @RequestHeader("performedByUser", required = false)
+    performedByUser: String?,
+  ) {
+    legacyCourtAppearanceService.unlinkAppearanceWithCharge(lifetimeUuid, chargeLifetimeUuid, performedByUser).also {
+      legacyDomainEventService.emitEvents(it)
     }
   }
 

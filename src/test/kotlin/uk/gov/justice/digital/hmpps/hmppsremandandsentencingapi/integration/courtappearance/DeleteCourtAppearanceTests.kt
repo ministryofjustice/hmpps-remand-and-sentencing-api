@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
@@ -19,7 +20,12 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `delete court appearance should change court appearance status to be deleted and court case as well if no more court appearance is ACTIVE`() {
     // Given a court appearance exists
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance()
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(
+        DpsDataCreator.dpsCreateCharge(),
+        DpsDataCreator.dpsCreateCharge(),
+      ),
+    )
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
 
@@ -125,6 +131,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
       .responseBody.blockFirst()!!
 
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
     val recalls = getRecallsByPrisonerId(response.prisonerId)
     assertThat(recalls).hasSize(1)
 

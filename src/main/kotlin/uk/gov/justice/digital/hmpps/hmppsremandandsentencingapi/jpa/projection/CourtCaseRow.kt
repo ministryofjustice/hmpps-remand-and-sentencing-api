@@ -90,4 +90,5 @@ data class CourtCaseRow(
   var mergedToCourtCode: String?,
   var mergedToWarrantDate: LocalDate?,
   var futureSkeletonAppearanceUuid: UUID?,
+  var minCourtAppearanceWarrantType: String,
 )

@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audi
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -12,6 +14,7 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -40,10 +43,12 @@ class RecallSentenceHistoryEntity(
   val createdByUsername: String,
   val createdPrison: String?,
   val historyCreatedAt: ZonedDateTime,
+  @Enumerated(EnumType.STRING)
+  val changeSource: ChangeSource,
 ) {
 
   companion object {
-    fun from(recall: RecallHistoryEntity, sentence: RecallSentenceEntity): RecallSentenceHistoryEntity = RecallSentenceHistoryEntity(
+    fun from(recall: RecallHistoryEntity, sentence: RecallSentenceEntity, changeSource: ChangeSource): RecallSentenceHistoryEntity = RecallSentenceHistoryEntity(
       id = 0,
       originalRecallSentenceId = sentence.id,
       recallSentenceUuid = sentence.recallSentenceUuid,
@@ -54,6 +59,7 @@ class RecallSentenceHistoryEntity(
       createdByUsername = sentence.createdByUsername,
       createdPrison = sentence.createdPrison,
       historyCreatedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+      changeSource = changeSource,
     )
   }
 }

@@ -7,7 +7,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import java.util.function.Consumer
@@ -36,7 +38,7 @@ class PeriodLengthService(
       .map {
         onCreateConsumer.accept(it)
         val saved = periodLengthRepository.save(it)
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved))
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved, ChangeSource.DPS))
         entityChangeStatus = EntityChangeStatus.CREATED
         if (shouldGenerateEvents) {
           eventsToEmit.add(
@@ -81,7 +83,7 @@ class PeriodLengthService(
         }
 
         existing.updateFrom(updated, serviceUserService.getUsername())
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
+        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing, ChangeSource.DPS))
         entityChangeStatus = EntityChangeStatus.EDITED
         if (shouldGenerateEvents) {
           eventsToEmit.add(
@@ -109,33 +111,42 @@ class PeriodLengthService(
     courtAppearanceId: String? = null,
     courtCaseId: String? = null,
     shouldGenerateEvents: Boolean = false,
-  ): RecordResponse<EntityChangeStatus> {
+  ): RecordResponse<List<PeriodLengthEntity>> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
 
     val toDelete = existingPeriodLengths.filter { existing ->
-      createPeriodLengthEntities.none { it.periodLengthUuid == existing.periodLengthUuid }
+      createPeriodLengthEntities.none { it.periodLengthUuid == existing.periodLengthUuid } && existing.statusId != PeriodLengthEntityStatus.DELETED
     }
 
     toDelete.forEach { existing ->
-      existing.delete(serviceUserService.getUsername())
-      periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing))
-      entityChangeStatus = EntityChangeStatus.DELETED
+      val deletedPeriodLength = delete(existing, prisonerId, courtCaseId!!, courtAppearanceId!!)
       if (shouldGenerateEvents) {
-        eventsToEmit.add(
-          EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId,
-            courtCaseId.toString(),
-            courtAppearanceId.toString(),
-            existing.sentenceEntity?.charge?.chargeUuid.toString(),
-            existing.sentenceEntity?.sentenceUuid.toString(),
-            existing.periodLengthUuid.toString(),
-            EventType.PERIOD_LENGTH_DELETED,
-          ),
-        )
+        eventsToEmit.addAll(deletedPeriodLength.eventsToEmit)
       }
     }
 
-    return RecordResponse(entityChangeStatus, eventsToEmit)
+    return RecordResponse(toDelete, eventsToEmit)
+  }
+
+  fun delete(periodLength: PeriodLengthEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<PeriodLengthEntity> {
+    val changeStatus = if (periodLength.statusId == PeriodLengthEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    periodLength.delete(serviceUserService.getUsername())
+
+    if (changeStatus == EntityChangeStatus.DELETED) {
+      periodLengthHistoryRepository.save(periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength, ChangeSource.DPS)))
+      eventsToEmit.add(
+        EventMetadataCreator.periodLengthEventMetadata(
+          prisonerId,
+          courtCaseId,
+          courtAppearanceId,
+          periodLength.sentenceEntity?.charge?.chargeUuid.toString(),
+          periodLength.sentenceEntity?.sentenceUuid.toString(),
+          periodLength.periodLengthUuid.toString(),
+          EventType.PERIOD_LENGTH_DELETED,
+        ),
+      )
+    }
+    return RecordResponse(periodLength, eventsToEmit)
   }
 }
