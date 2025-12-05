@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE
@@ -155,7 +156,7 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
   }
 
   @Test
-  fun `Get all immigration detention records for a prisoner`() {
+  fun `Get all immigration detention records for a prisoner without NOMIS records`() {
     val id1 = CreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,
@@ -197,6 +198,144 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
             immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
             recordDate = LocalDate.of(2021, 1, 2),
             createdAt = ZonedDateTime.now(),
+          ),
+        ),
+      )
+  }
+
+  @Test
+  fun `Get latest immigration detention record for a prisoner without NOMIS records`() {
+    val id1 = CreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = DEPORTATION_ORDER,
+      createdByUsername = "aUser",
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+    )
+    val id1Uuid = createImmigrationDetention(id1).immigrationDetentionUuid
+
+    sleep(1000)
+
+    val id2 = CreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+      createdByUsername = "aUser",
+      recordDate = LocalDate.of(2021, 1, 2),
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+    )
+    val id2Uuid = createImmigrationDetention(id2).immigrationDetentionUuid
+
+    val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B")
+
+    assertThat(immigrationDetentionRecords)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        listOf(
+          ImmigrationDetention(
+            immigrationDetentionUuid = id2Uuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+            recordDate = LocalDate.of(2021, 1, 2),
+            createdAt = ZonedDateTime.now(),
+          ),
+        ),
+      )
+  }
+
+  @Test
+  fun `Get latest immigration detention record for a prisoner with NOMIS records`() {
+    val id1 = CreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = DEPORTATION_ORDER,
+      createdByUsername = "aUser",
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+    )
+    val id1Uuid = createImmigrationDetention(id1).immigrationDetentionUuid
+
+    sleep(1000)
+
+    val immigrationDetentionNomisUUID = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
+
+    val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B")
+
+    assertThat(immigrationDetentionRecords)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        listOf(
+          ImmigrationDetention(
+            immigrationDetentionUuid = immigrationDetentionNomisUUID,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = IS91,
+            homeOfficeReferenceNumber = "NOMIS123",
+            recordDate = LocalDate.now(),
+            createdAt = ZonedDateTime.now(),
+            source = EventSource.NOMIS,
+          ),
+        ),
+      )
+  }
+
+  @Test
+  fun `Get all immigration detention records for a prisoner with NOMIS records`() {
+    val immigrationDetentionNomisUUID = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
+    val id1 = CreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = DEPORTATION_ORDER,
+      createdByUsername = "aUser",
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+    )
+    val id1Uuid = createImmigrationDetention(id1).immigrationDetentionUuid
+
+    val id2 = CreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+      createdByUsername = "aUser",
+      recordDate = LocalDate.of(2021, 1, 2),
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+    )
+    val id2Uuid = createImmigrationDetention(id2).immigrationDetentionUuid
+
+    val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B")
+
+    assertThat(immigrationDetentionRecords)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        listOf(
+          ImmigrationDetention(
+            immigrationDetentionUuid = id1Uuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = DEPORTATION_ORDER,
+            recordDate = LocalDate.of(2021, 1, 1),
+            createdAt = ZonedDateTime.now(),
+          ),
+          ImmigrationDetention(
+            immigrationDetentionUuid = id2Uuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+            recordDate = LocalDate.of(2021, 1, 2),
+            createdAt = ZonedDateTime.now(),
+          ),
+          ImmigrationDetention(
+            immigrationDetentionUuid = immigrationDetentionNomisUUID,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = DEPORTATION_ORDER,
+            homeOfficeReferenceNumber = "NOMIS123",
+            recordDate = LocalDate.now(),
+            createdAt = ZonedDateTime.now(),
+            source = EventSource.NOMIS,
           ),
         ),
       )

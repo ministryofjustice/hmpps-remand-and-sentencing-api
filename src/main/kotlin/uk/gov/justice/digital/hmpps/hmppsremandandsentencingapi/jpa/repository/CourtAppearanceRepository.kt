@@ -7,7 +7,9 @@ import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -53,4 +55,28 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
   """,
   )
   fun updateNextCourtAppearance(@Param("nextCourtAppearance") nextCourtAppearance: NextCourtAppearanceEntity, @Param("updatedBy") updatedBy: String, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("courtAppearance") courtAppearanceEntity: CourtAppearanceEntity)
+
+  @Query(
+    """
+      select ca from CourtAppearanceEntity ca
+      join ca.courtCase cc
+      join ca.appearanceCharges ac
+      join ac.charge c
+      where
+      ca.statusId in :courtAppearanceStatuses and
+      ca.courtCode = "IMM" and
+      ca.source = "NOMIS" and
+      cc.statusId = :courtCaseStatus and
+      cc.prisonerId = :prisonerId and
+      c.statusId = :chargeStatus and
+      c.offenceCode = "IA99000-001N"
+      order by ca.createdAt desc
+    """,
+  )
+  fun findNomisImmigrationDetentionRecordsForPrisoner(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatuses") courtAppearanceStatuses: List<CourtAppearanceEntityStatus> = listOf(CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+  ): List<CourtAppearanceEntity>
 }
