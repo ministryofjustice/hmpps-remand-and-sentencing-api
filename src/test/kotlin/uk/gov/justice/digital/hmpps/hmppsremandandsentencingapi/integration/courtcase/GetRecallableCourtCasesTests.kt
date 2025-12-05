@@ -36,7 +36,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
     val remandedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(remandedCharge),
       outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"), // Remanded outcome
-      warrantType = "REMAND",
+      warrantType = "NON_SENTENCING",
     )
     val remandedCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(remandedAppearance))
     createCourtCase(remandedCourtCase)
@@ -173,7 +173,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
     val charge = DpsDataCreator.dpsCreateCharge(sentence = null) // No sentence
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(charge),
-      warrantType = "REMAND", // Not sentenced
+      warrantType = "NON_SENTENCING", // Not sentenced
     )
     val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance))
     val (_, createdCase) = createCourtCase(courtCase)

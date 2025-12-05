@@ -21,13 +21,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ImmigrationDetentionService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/immigration-detention", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "immigration-detention-controller", description = "Immigration Detention")
-class ImmigrationDetentionController(private val immigrationDetentionService: ImmigrationDetentionService) {
+class ImmigrationDetentionController(
+  private val immigrationDetentionService: ImmigrationDetentionService,
+  private val dpsDomainEventService: DpsDomainEventService,
+) {
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
@@ -45,8 +49,8 @@ class ImmigrationDetentionController(private val immigrationDetentionService: Im
   @ResponseStatus(HttpStatus.CREATED)
   fun createImmigrationDetention(
     @RequestBody createImmigrationDetention: CreateImmigrationDetention,
-  ): SaveImmigrationDetentionResponse = immigrationDetentionService.createImmigrationDetention(createImmigrationDetention).let { (response, _) ->
-    // Events will be handled once agreed and implemented
+  ): SaveImmigrationDetentionResponse = immigrationDetentionService.createImmigrationDetention(createImmigrationDetention).let { (response, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
     response
   }
 

@@ -85,7 +85,7 @@ class ChargeEntity(
     this.statusId == other.statusId &&
     this.chargeOutcome == other.chargeOutcome &&
     this.terrorRelated == other.terrorRelated &&
-    this.legacyData == other.legacyData &&
+    ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
     this.mergedFromCourtCase == other.mergedFromCourtCase &&
     this.mergedFromDate == other.mergedFromDate &&
     otherHasSentence == hasSentence()

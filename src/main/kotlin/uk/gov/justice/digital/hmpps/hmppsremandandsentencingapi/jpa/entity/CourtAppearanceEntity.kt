@@ -106,7 +106,7 @@ class CourtAppearanceEntity(
     this.statusId == other.statusId &&
     this.warrantType == other.warrantType &&
     this.overallConvictionDate == other.overallConvictionDate &&
-    this.legacyData == other.legacyData &&
+    ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
     this.createdPrison == other.createdPrison
 
   fun copyFrom(
@@ -155,7 +155,7 @@ class CourtAppearanceEntity(
       courtAppearance.courtCode,
       courtAppearance.courtCaseReference,
       courtAppearance.appearanceDate,
-      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
+      getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, appearanceOutcome?.nomisCode ?: courtAppearance.legacyData?.nomisOutcomeCode),
       ZonedDateTime.now(),
       createdBy,
       courtAppearance.prisonId,
@@ -263,7 +263,7 @@ class CourtAppearanceEntity(
         courtCode = courtAppearance.courtCode,
         courtCaseReference = courtAppearance.courtCaseReference,
         appearanceDate = courtAppearance.appearanceDate,
-        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, courtAppearance.legacyData?.nomisOutcomeCode),
+        statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, appearanceOutcome?.nomisCode ?: courtAppearance.legacyData?.nomisOutcomeCode),
         createdPrison = courtAppearance.prisonId,
         createdBy = createdBy,
         nextCourtAppearance = null,
@@ -420,14 +420,14 @@ class CourtAppearanceEntity(
     }
 
     private const val RECALL_NOMIS_OUTCOME_CODE = "1501"
-    private val immigrationNomisOutcomeCodes: Set<String> = setOf("5501", "5502")
+    private val immigrationNomisOutcomeCodes: Set<String> = setOf("5500", "5501", "5502", "5503")
 
     private fun deriveWarrantType(
       appearanceOutcome: AppearanceOutcomeEntity?,
       legacyData: CourtAppearanceLegacyData,
       anyChargeHasSentence: Boolean? = null,
     ): String = appearanceOutcome?.warrantType
-      ?: if ((legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") || anyChargeHasSentence == true) "SENTENCING" else "REMAND"
+      ?: if ((legacyData.outcomeConvictionFlag == true && legacyData.outcomeDispositionCode == "F") || anyChargeHasSentence == true) "SENTENCING" else "NON_SENTENCING"
 
     fun getLatestCourtAppearance(courtAppearances: Set<CourtAppearanceEntity>): CourtAppearanceEntity? = courtAppearances.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }.maxWithOrNull(
       compareBy(
