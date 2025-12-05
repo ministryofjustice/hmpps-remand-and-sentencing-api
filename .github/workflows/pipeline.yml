@@ -44,7 +44,7 @@ jobs:
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
-      localstack-tag: "3"
+      localstack-tag: "4"
       postgres-tag: "17"
       postgres-db: ras
       postgres-username: ras-user
@@ -67,7 +67,7 @@ jobs:
     name: Generate Database Schema Report
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
