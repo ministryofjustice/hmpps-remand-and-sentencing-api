@@ -2,9 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.PrisonerMergeDataCreator
@@ -18,9 +16,6 @@ import java.util.*
 import java.util.regex.Pattern
 
 class PrisonerMergeCreateTests : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var adjustmentsApiClient: AdjustmentsApiClient
 
   @Test
   fun `moved all records to new prisoner number`() {
@@ -62,11 +57,14 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
   fun `deactivate court case and sentence on merge`() {
     val migratedRecords = migrateCases(DataCreator.migrationCreateSentenceCourtCases())
     val retainedPrisonerNumber = "PRI999"
+    val retainedPrisonerRecords = migrateCases(DataCreator.migrationCreateSentenceCourtCases(prisonerId = retainedPrisonerNumber))
     val courtCaseUuid = migratedRecords.courtCases.first().courtCaseUuid
     val sentenceUuid = migratedRecords.sentences.first().sentenceUuid
+    val retainedCourtCaseUuid = retainedPrisonerRecords.courtCases.first().courtCaseUuid
+    val retainedSentenceUuid = retainedPrisonerRecords.sentences.first().sentenceUuid
     val mergePerson = PrisonerMergeDataCreator.mergePerson(
-      casesDeactivated = listOf(PrisonerMergeDataCreator.deactivatedCourtCase(courtCaseUuid)),
-      sentencesDeactivated = listOf(PrisonerMergeDataCreator.deactivatedSentence(sentenceUuid)),
+      casesDeactivated = listOf(PrisonerMergeDataCreator.deactivatedCourtCase(courtCaseUuid), PrisonerMergeDataCreator.deactivatedCourtCase(retainedCourtCaseUuid)),
+      sentencesDeactivated = listOf(PrisonerMergeDataCreator.deactivatedSentence(sentenceUuid), PrisonerMergeDataCreator.deactivatedSentence(retainedSentenceUuid)),
     )
 
     webTestClient
@@ -96,9 +94,14 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuid')].courtCaseStatus")
       .isEqualTo(CourtCaseEntityStatus.INACTIVE.toString())
+      .jsonPath("$.content.[?(@.courtCaseUuid == '$retainedCourtCaseUuid')].courtCaseStatus")
+      .isEqualTo(CourtCaseEntityStatus.INACTIVE.toString())
 
     val sentence = sentenceRepository.findBySentenceUuid(sentenceUuid).first()
     assertThat(sentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+
+    val retainedSentence = sentenceRepository.findBySentenceUuid(retainedSentenceUuid).first()
+    assertThat(retainedSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
   }
 
   @Test

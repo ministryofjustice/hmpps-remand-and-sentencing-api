@@ -107,7 +107,7 @@ class LegacyPrisonerMergeService(
 
   @Transactional
   fun process(mergePerson: MergePerson, retainedPrisonerNumber: String): RecordResponse<MergeCreateCourtCasesResponse> {
-    val courtCases = courtCaseRepository.findAllByPrisonerId(mergePerson.removedPrisonerNumber)
+    val courtCases = courtCaseRepository.findAllByPrisonerIdInAndStatusIdNot(listOf(mergePerson.removedPrisonerNumber, retainedPrisonerNumber))
     val deactivatedCourtCasesMap = mergePerson.casesDeactivated.associateBy { it.dpsCourtCaseUuid }
     val deactivatedSentencesMap = mergePerson.sentencesDeactivated.associateBy { it.dpsSentenceUuid }
     val trackingData = PrisonerMergeDataTracking(retainedPrisonerNumber, mergePerson.performedByUser ?: serviceUserService.getUsername())
@@ -121,21 +121,31 @@ class LegacyPrisonerMergeService(
 
   fun processExistingCourtCases(courtCases: List<CourtCaseEntity>, deactivatedCourtCasesMap: Map<String, DeactivatedCourtCase>, trackingData: PrisonerMergeDataTracking) {
     courtCases.forEach { courtCase ->
-      courtCase.prisonerId = trackingData.retainedPrisonerNumber
+      var hasChanged = false
+      if (courtCase.prisonerId != trackingData.retainedPrisonerNumber) {
+        courtCase.prisonerId = trackingData.retainedPrisonerNumber
+        hasChanged = true
+      }
+
       deactivatedCourtCasesMap[courtCase.caseUniqueIdentifier]?.also {
         val newStatus = if (it.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE
-        courtCase.statusId = newStatus
+        if (newStatus != courtCase.statusId) {
+          courtCase.statusId = newStatus
+          hasChanged = true
+        }
       }
-      courtCase.updatedAt = ZonedDateTime.now()
-      courtCase.updatedBy = trackingData.username
-      trackingData.editedCourtCases.add(courtCase)
-      trackingData.eventsToEmit.add(
-        EventMetadataCreator.courtCaseEventMetadata(
-          trackingData.retainedPrisonerNumber,
-          courtCase.caseUniqueIdentifier,
-          EventType.COURT_CASE_UPDATED,
-        ),
-      )
+      if (hasChanged) {
+        courtCase.updatedAt = ZonedDateTime.now()
+        courtCase.updatedBy = trackingData.username
+        trackingData.editedCourtCases.add(courtCase)
+        trackingData.eventsToEmit.add(
+          EventMetadataCreator.courtCaseEventMetadata(
+            trackingData.retainedPrisonerNumber,
+            courtCase.caseUniqueIdentifier,
+            EventType.COURT_CASE_UPDATED,
+          ),
+        )
+      }
     }
   }
 
