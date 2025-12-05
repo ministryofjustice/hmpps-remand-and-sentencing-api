@@ -52,6 +52,8 @@ class ChargeEntity(
   @JoinColumn(name = "superseding_charge_id")
   var supersedingCharge: ChargeEntity?,
   var terrorRelated: Boolean?,
+  var foreignPowerRelated: Boolean?,
+  var domesticViolenceRelated: Boolean?,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
   val createdPrison: String?,
@@ -85,6 +87,8 @@ class ChargeEntity(
     this.statusId == other.statusId &&
     this.chargeOutcome == other.chargeOutcome &&
     this.terrorRelated == other.terrorRelated &&
+    this.foreignPowerRelated == other.foreignPowerRelated &&
+    this.domesticViolenceRelated == other.domesticViolenceRelated &&
     ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
     this.mergedFromCourtCase == other.mergedFromCourtCase &&
     this.mergedFromDate == other.mergedFromDate &&
@@ -92,7 +96,7 @@ class ChargeEntity(
 
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
+    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
@@ -101,7 +105,7 @@ class ChargeEntity(
 
   fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, offenceCode, charge.offenceStartDate, charge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
+    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
@@ -110,14 +114,14 @@ class ChargeEntity(
 
   fun copyFrom(linkChargeToCase: LegacyLinkChargeToCase, mergedFromCase: CourtCaseEntity, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
-    createdAt, this.createdBy, createdPrison,
+    foreignPowerRelated, domesticViolenceRelated, createdAt, this.createdBy, createdPrison,
     ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, legacyData, mutableSetOf(),
     mergedFromCase, linkChargeToCase.linkedDate,
   )
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, charge.terrorRelated,
+    ChargeEntityStatus.ACTIVE, chargeOutcome, this, charge.terrorRelated, charge.foreignPowerRelated, charge.domesticViolenceRelated,
     createdAt, this.createdBy, charge.prisonId, ZonedDateTime.now(), createdBy, charge.prisonId,
     charge.legacyData, appearanceCharges.toMutableSet(),
     mergedFromCourtCase,
@@ -127,7 +131,7 @@ class ChargeEntity(
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity {
     val charge = ChargeEntity(
       0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate,
-      ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
+      ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
       createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
       legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase,
@@ -139,21 +143,21 @@ class ChargeEntity(
 
   fun copyFrom(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, migrationCreateCharge.offenceCode, migrationCreateCharge.offenceStartDate, migrationCreateCharge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, null,
+    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, migrationCreateCharge.legacyData, mutableSetOf(), null,
     mergedFromDate = migrationCreateCharge.mergedFromDate,
   )
 
   fun copyFrom(mergeCreateCharge: MergeCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, mergeCreateCharge.offenceCode, mergeCreateCharge.offenceStartDate, mergeCreateCharge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, null,
+    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, mergeCreateCharge.legacyData, mutableSetOf(), null,
     mergedFromDate = mergeCreateCharge.mergedFromDate,
   )
 
   fun copyFrom(bookingCreateCharge: BookingCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, bookingCreateCharge.offenceCode, bookingCreateCharge.offenceStartDate, bookingCreateCharge.offenceEndDate,
-    ChargeEntityStatus.DUPLICATE, chargeOutcome, this, null,
+    ChargeEntityStatus.DUPLICATE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, bookingCreateCharge.legacyData, mutableSetOf(), null,
     mergedFromDate = bookingCreateCharge.mergedFromDate,
   )
@@ -161,7 +165,7 @@ class ChargeEntity(
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
     val chargeEntity = ChargeEntity(
       0, chargeUuid, charge.offenceCode, offenceStartDate, offenceEndDate,
-      ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
+      ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
       createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
       legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase,
@@ -175,7 +179,7 @@ class ChargeEntity(
     val currentDate = ZonedDateTime.now()
     val charge = ChargeEntity(
       0, UUID.randomUUID(), offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, chargeOutcome, replacedCharge,
-      terrorRelated,
+      terrorRelated, foreignPowerRelated, domesticViolenceRelated,
       currentDate, createdBy, createdPrison, currentDate, null, null, legacyData, appearanceCharges.toMutableSet(),
       mergedFromCourtCase, mergedFromDate,
     )
@@ -185,7 +189,7 @@ class ChargeEntity(
 
   fun copyFrom(updatedBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, statusId, chargeOutcome, this,
-    terrorRelated, createdAt, createdBy, createdPrison, ZonedDateTime.now(), updatedBy, null, legacyData, mutableSetOf(), mergedFromCourtCase, mergedFromDate,
+    terrorRelated, foreignPowerRelated, domesticViolenceRelated, createdAt, createdBy, createdPrison, ZonedDateTime.now(), updatedBy, null, legacyData, mutableSetOf(), mergedFromCourtCase, mergedFromDate,
   )
 
   fun updateFrom(chargeEntity: ChargeEntity) {
@@ -196,6 +200,8 @@ class ChargeEntity(
     chargeOutcome = chargeEntity.chargeOutcome
     supersedingCharge = chargeEntity.supersedingCharge
     terrorRelated = chargeEntity.terrorRelated
+    foreignPowerRelated = chargeEntity.foreignPowerRelated
+    domesticViolenceRelated = chargeEntity.domesticViolenceRelated
     updatedAt = chargeEntity.updatedAt
     updatedBy = chargeEntity.updatedBy
     updatedPrison = chargeEntity.updatedPrison
@@ -250,13 +256,15 @@ class ChargeEntity(
       chargeOutcome = chargeOutcome,
       supersedingCharge = supersedingCharge,
       terrorRelated = charge.terrorRelated,
+      foreignPowerRelated = charge.foreignPowerRelated,
+      domesticViolenceRelated = charge.domesticViolenceRelated,
       legacyData = charge.legacyData,
       appearanceCharges = mutableSetOf(),
       createdBy = createdBy,
       createdPrison = charge.prisonId,
     )
 
-    fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = ChargeEntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = null)
+    fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = ChargeEntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, terrorRelated = null, foreignPowerRelated = null, domesticViolenceRelated = null, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), createdBy = createdBy, createdPrison = null)
 
     fun from(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
       0,
@@ -266,6 +274,8 @@ class ChargeEntity(
       migrationCreateCharge.offenceEndDate,
       ChargeEntityStatus.ACTIVE,
       chargeOutcome,
+      null,
+      null,
       null,
       null,
       ZonedDateTime.now(),
@@ -291,6 +301,8 @@ class ChargeEntity(
       chargeOutcome,
       null,
       null,
+      null,
+      null,
       ZonedDateTime.now(),
       createdBy,
       null,
@@ -312,6 +324,8 @@ class ChargeEntity(
       bookingCreateCharge.offenceEndDate,
       ChargeEntityStatus.DUPLICATE,
       chargeOutcome,
+      null,
+      null,
       null,
       null,
       ZonedDateTime.now(),

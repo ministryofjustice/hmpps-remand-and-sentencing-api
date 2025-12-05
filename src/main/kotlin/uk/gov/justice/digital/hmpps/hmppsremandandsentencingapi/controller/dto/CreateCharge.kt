@@ -17,6 +17,8 @@ data class CreateCharge(
   val offenceEndDate: LocalDate?,
   val outcomeUuid: UUID?,
   val terrorRelated: Boolean?,
+  val foreignPowerRelated: Boolean?,
+  val domesticViolenceRelated: Boolean?,
   val sentence: CreateSentence?,
   var legacyData: ChargeLegacyData?,
   val prisonId: String,

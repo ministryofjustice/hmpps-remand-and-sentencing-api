@@ -62,6 +62,8 @@ class ChargeServiceTests {
       offenceEndDate = null,
       outcomeUuid = null,
       terrorRelated = null,
+      foreignPowerRelated = null,
+      domesticViolenceRelated = null,
       prisonId = "P",
       legacyData = null,
       sentence = CreateSentence(
@@ -121,6 +123,8 @@ class ChargeServiceTests {
       offenceEndDate = null,
       outcomeUuid = null,
       terrorRelated = null,
+      foreignPowerRelated = null,
+      domesticViolenceRelated = null,
       prisonId = "P",
       legacyData = null,
       sentence = CreateSentence(

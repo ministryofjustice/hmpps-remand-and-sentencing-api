@@ -111,6 +111,8 @@ class LegacyPeriodLengthTests {
       chargeOutcome = null,
       supersedingCharge = null,
       terrorRelated = null,
+      foreignPowerRelated = null,
+      domesticViolenceRelated = null,
       createdPrison = null,
       legacyData = null,
       appearanceCharges = mutableSetOf(),

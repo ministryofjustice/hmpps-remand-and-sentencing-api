@@ -190,6 +190,8 @@ class ImmigrationDetentionService(
           offenceEndDate = null,
           outcomeUuid = chargeOutcomeService.findByUuid(appearanceOutcome.relatedChargeOutcomeUuid)?.outcomeUuid,
           terrorRelated = null,
+          foreignPowerRelated = null,
+          domesticViolenceRelated = null,
           sentence = null,
           legacyData = null,
           prisonId = immigrationDetention.createdByPrison,
