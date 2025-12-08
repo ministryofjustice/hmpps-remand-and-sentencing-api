@@ -133,7 +133,7 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun linkAppearanceWithCharge(@PathVariable lifetimeUuid: UUID, @PathVariable chargeLifetimeUuid: UUID, @RequestBody updateCharge: LegacyUpdateCharge) {
     legacyChargeService.linkAppearanceAndUpdate(chargeLifetimeUuid, lifetimeUuid, updateCharge).also {
-      legacyDomainEventService.emitEvents(it.eventsToEmit)
+      legacyDomainEventService.emitEvents(it)
     }
   }
 

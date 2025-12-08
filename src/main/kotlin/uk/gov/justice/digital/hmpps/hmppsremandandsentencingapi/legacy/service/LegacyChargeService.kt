@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -103,32 +102,22 @@ class LegacyChargeService(
     }
   }
 
+  /*
+  A charge record must always be created in this scenario and then linked to the appearance in question because in prod the charge may be updated in
+  a different appearance at the same time as linking to this appearance. When that happens (and if the outcome previously was null and in this appearance
+  its null too) then the update in the different appearance will set the outcome in this appearance to a new outcome rather than being null.
+  This scenario normally happens when a user updates the future appearance in NOMIS at the same time as creating a new future appearance
+   */
   @Transactional
-  fun linkAppearanceAndUpdate(lifetimeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): RecordResponse<LegacyChargeCreatedResponse> {
+  fun linkAppearanceAndUpdate(chargeUuid: UUID, appearanceUuid: UUID, charge: LegacyUpdateCharge): MutableSet<EventMetadata> {
     val existingCourtAppearance = getAppearanceUnlessDeleted(appearanceUuid)
-    val existingCharge = getUnlessDeleted(lifetimeUuid)
+
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
-    val (updateChargeEntityChangeStatus, legacyChargeCreatedResponse, chargeEntity) = updateChargeInAppearance(existingCharge, lifetimeUuid, existingCourtAppearance, charge)
-    if (updateChargeEntityChangeStatus == EntityChangeStatus.EDITED) {
-      eventsToEmit.add(
-        EventMetadataCreator.chargeEventMetadata(
-          legacyChargeCreatedResponse.prisonerId,
-          legacyChargeCreatedResponse.courtCaseUuid,
-          appearanceUuid.toString(),
-          legacyChargeCreatedResponse.lifetimeUuid.toString(),
-          EventType.CHARGE_UPDATED,
-        ),
-      )
-      eventsToEmit.add(
-        EventMetadataCreator.courtAppearanceEventMetadata(
-          existingCourtAppearance.courtCase.prisonerId,
-          existingCourtAppearance.courtCase.caseUniqueIdentifier,
-          existingCourtAppearance.appearanceUuid.toString(),
-          EventType.COURT_APPEARANCE_UPDATED,
-        ),
-      )
-    }
-    if (existingCourtAppearance.appearanceCharges.none { it.charge!! == chargeEntity }) {
+
+    if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == chargeUuid }) {
+      val existingCharge = getUnlessDeleted(chargeUuid)
+      val chargeEntity = chargeRepository.save(getUpdatedChargeEntity(existingCharge, chargeUuid, existingCourtAppearance, charge))
+
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
         chargeEntity,
@@ -144,6 +133,15 @@ class LegacyChargeService(
         ),
       )
       eventsToEmit.add(
+        EventMetadataCreator.chargeEventMetadata(
+          existingCourtAppearance.courtCase.prisonerId,
+          existingCourtAppearance.courtCase.caseUniqueIdentifier,
+          appearanceUuid.toString(),
+          chargeUuid.toString(),
+          EventType.CHARGE_UPDATED,
+        ),
+      )
+      eventsToEmit.add(
         EventMetadataCreator.courtAppearanceEventMetadata(
           existingCourtAppearance.courtCase.prisonerId,
           existingCourtAppearance.courtCase.caseUniqueIdentifier,
@@ -152,7 +150,7 @@ class LegacyChargeService(
         ),
       )
     }
-    return RecordResponse(legacyChargeCreatedResponse, eventsToEmit)
+    return eventsToEmit
   }
 
   @Transactional
@@ -165,16 +163,10 @@ class LegacyChargeService(
 
   private fun updateChargeInAppearance(existingCharge: ChargeEntity, lifetimeUuid: UUID, appearance: CourtAppearanceEntity, charge: LegacyUpdateCharge): UpdateChargeInAppearanceTracking {
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-    val existingOutcomeCode = existingCharge.chargeOutcome?.nomisCode ?: existingCharge.legacyData?.nomisOutcomeCode
-    if (existingOutcomeCode != charge.legacyData.nomisOutcomeCode) {
-      log.info("charge at $lifetimeUuid in appearance ${appearance.appearanceUuid} is updating outcome from $existingOutcomeCode to ${charge.legacyData.nomisOutcomeCode}")
-    }
-    val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
-    charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
-    val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
-    val updatedCharge = existingCharge.copyFrom(charge, dpsOutcome, performedByUsername)
+    val updatedCharge = getUpdatedChargeEntity(existingCharge, lifetimeUuid, appearance, charge)
     var chargeRecord = existingCharge
     if (!existingCharge.isSame(updatedCharge, existingCharge.getLiveSentence() != null)) {
+      val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
       chargeRecord = createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge, appearance, updatedCharge, performedByUsername) { charge ->
         charge.updateFrom(updatedCharge)
       }
@@ -182,6 +174,17 @@ class LegacyChargeService(
     }
     val courtCase = appearance.courtCase
     return UpdateChargeInAppearanceTracking(entityChangeStatus, LegacyChargeCreatedResponse(lifetimeUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId), chargeRecord)
+  }
+
+  private fun getUpdatedChargeEntity(existingCharge: ChargeEntity, lifetimeUuid: UUID, appearance: CourtAppearanceEntity, charge: LegacyUpdateCharge): ChargeEntity {
+    val existingOutcomeCode = existingCharge.chargeOutcome?.nomisCode ?: existingCharge.legacyData?.nomisOutcomeCode
+    if (existingOutcomeCode != charge.legacyData.nomisOutcomeCode) {
+      log.info("charge at $lifetimeUuid in appearance ${appearance.appearanceUuid} is updating outcome from $existingOutcomeCode to ${charge.legacyData.nomisOutcomeCode}")
+    }
+    val dpsOutcome = charge.legacyData.nomisOutcomeCode?.let { nomisCode -> chargeOutcomeRepository.findByNomisCode(nomisCode) }
+    charge.legacyData = dpsOutcome?.let { charge.legacyData.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null) } ?: charge.legacyData
+    val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
+    return existingCharge.copyFrom(charge, dpsOutcome, performedByUsername)
   }
 
   @Transactional(readOnly = true)
