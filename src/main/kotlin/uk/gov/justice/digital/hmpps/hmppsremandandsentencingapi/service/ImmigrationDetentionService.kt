@@ -126,7 +126,11 @@ class ImmigrationDetentionService(
       } else {
         eventsToEmit.addAll(
           courtAppearanceService.createCourtAppearanceByAppearanceUuid(
-            createCourtAppearanceFromImmigrationDetention(immigrationDetention, courtCase.caseUniqueIdentifier),
+            createCourtAppearanceFromImmigrationDetention(
+              immigrationDetention,
+              courtCase.caseUniqueIdentifier,
+              latestMatchingAppearance.appearanceCharges.firstOrNull()?.charge?.chargeUuid,
+            ),
             latestMatchingAppearance.appearanceUuid,
           )?.eventsToEmit ?: emptySet(),
         )
@@ -194,6 +198,7 @@ class ImmigrationDetentionService(
   private fun createCourtAppearanceFromImmigrationDetention(
     immigrationDetention: CreateImmigrationDetention,
     courtCaseUuid: String? = null,
+    chargeUuid: UUID? = null,
   ): CreateCourtAppearance {
     val appearanceOutcome =
       appearanceOutcomeService.findByUuid(immigrationDetention.appearanceOutcomeUuid)
@@ -210,6 +215,7 @@ class ImmigrationDetentionService(
       nextCourtAppearance = null,
       charges = listOf(
         CreateCharge(
+          chargeUuid = chargeUuid ?: UUID.randomUUID(),
           appearanceUuid = null,
           offenceCode = "IA99000-001N",
           offenceStartDate = immigrationDetention.recordDate,

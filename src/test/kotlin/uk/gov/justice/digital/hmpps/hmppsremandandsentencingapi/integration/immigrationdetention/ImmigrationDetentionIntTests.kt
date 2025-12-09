@@ -136,10 +136,10 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
 
     assertThat(appearances[0].appearanceDate).isEqualTo(LocalDate.of(2021, 2, 1))
 
-    messages = getMessages(3)
+    messages = getMessages(2)
 
-    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
-      .contains("court-appearance.updated", "charge.deleted", "charge.inserted")
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }
+      .contains("court-appearance.updated", "charge.updated")
 
     purgeQueues()
   }
