@@ -125,8 +125,8 @@ class ImmigrationDetentionController(
     @RequestBody immigrationDetention: CreateImmigrationDetention,
     @PathVariable immigrationDetentionUuid: UUID,
   ): SaveImmigrationDetentionResponse = immigrationDetentionService.updateImmigrationDetention(immigrationDetention, immigrationDetentionUuid)
-    .let { (response, _) ->
-      // Events will be handled once agreed and implemented
+    .let { (response, eventsToEmit) ->
+      dpsDomainEventService.emitEvents(eventsToEmit)
       response
     }
 

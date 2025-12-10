@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.immigrationdetention
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,7 +50,7 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
 
     var messages = getMessages(3)
 
-    Assertions.assertThat(messages).hasSize(3).extracting<String> { it.eventType }
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
       .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
 
     purgeQueues()
@@ -69,7 +68,7 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
 
     messages = getMessages(2)
 
-    Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }
       .contains("court-appearance.inserted", "charge.inserted")
 
     val courtCase = courtCaseRepository.findAllByPrisonerId("A12345B").firstOrNull()
@@ -98,6 +97,13 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     val actualImmigrationDetention =
       getImmigrationDetentionByUUID(createResponse.immigrationDetentionUuid)
 
+    var messages = getMessages(3)
+
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
+
+    purgeQueues()
+
     assertThat(actualImmigrationDetention).usingRecursiveComparison()
       .ignoringFields("createdAt")
       .isEqualTo(
@@ -111,6 +117,7 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
       )
 
     immigrationDetention.immigrationDetentionRecordType = NO_LONGER_OF_INTEREST
+    immigrationDetention.recordDate = LocalDate.of(2021, 2, 1)
     val updateResponse = updateImmigrationDetention(immigrationDetention, uuid)
 
     val historicImmigrationDetention =
@@ -119,6 +126,22 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.EDITED)
     assertThat(historicImmigrationDetention[0].immigrationDetentionRecordType).isEqualTo(DEPORTATION_ORDER)
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
+
+    val courtCase = courtCaseRepository.findAllByPrisonerId("B12345B").firstOrNull()
+
+    val appearances = courtAppearanceRepository.findAllByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCase?.caseUniqueIdentifier.toString(),
+      IMMIGRATION_APPEARANCE,
+    )
+
+    assertThat(appearances[0].appearanceDate).isEqualTo(LocalDate.of(2021, 2, 1))
+
+    messages = getMessages(2)
+
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }
+      .contains("court-appearance.updated", "charge.updated")
+
+    purgeQueues()
   }
 
   @Test

@@ -106,7 +106,37 @@ class ImmigrationDetentionService(
       }
       val savedImmigrationDetention = immigrationDetentionRepository.save(immigrationDetentionToUpdate)
 
-      return RecordResponse(SaveImmigrationDetentionResponse.from(savedImmigrationDetention), mutableSetOf())
+      val courtCase = courtCaseService.getLatestImmigrationDetentionCourtCase(immigrationDetention.prisonerId)
+
+      val latestMatchingAppearance = courtCase?.appearances
+        ?.filter { it.appearanceOutcome?.outcomeUuid == immigrationDetention.appearanceOutcomeUuid }
+        ?.maxByOrNull { it.appearanceDate }
+
+      val eventsToEmit = mutableSetOf<EventMetadata>()
+
+      if (latestMatchingAppearance == null) {
+        eventsToEmit.addAll(
+          courtAppearanceService.createCourtAppearance(
+            createCourtAppearanceFromImmigrationDetention(
+              immigrationDetention,
+              courtCase?.caseUniqueIdentifier,
+            ),
+          )?.eventsToEmit ?: emptySet(),
+        )
+      } else {
+        eventsToEmit.addAll(
+          courtAppearanceService.createCourtAppearanceByAppearanceUuid(
+            createCourtAppearanceFromImmigrationDetention(
+              immigrationDetention,
+              courtCase.caseUniqueIdentifier,
+              latestMatchingAppearance.appearanceCharges.firstOrNull()?.charge?.chargeUuid,
+            ),
+            latestMatchingAppearance.appearanceUuid,
+          )?.eventsToEmit ?: emptySet(),
+        )
+      }
+
+      return RecordResponse(SaveImmigrationDetentionResponse.from(savedImmigrationDetention), eventsToEmit)
     }
   }
 
@@ -168,6 +198,7 @@ class ImmigrationDetentionService(
   private fun createCourtAppearanceFromImmigrationDetention(
     immigrationDetention: CreateImmigrationDetention,
     courtCaseUuid: String? = null,
+    chargeUuid: UUID? = null,
   ): CreateCourtAppearance {
     val appearanceOutcome =
       appearanceOutcomeService.findByUuid(immigrationDetention.appearanceOutcomeUuid)
@@ -184,6 +215,7 @@ class ImmigrationDetentionService(
       nextCourtAppearance = null,
       charges = listOf(
         CreateCharge(
+          chargeUuid = chargeUuid ?: UUID.randomUUID(),
           appearanceUuid = null,
           offenceCode = "IA99000-001N",
           offenceStartDate = immigrationDetention.recordDate,
