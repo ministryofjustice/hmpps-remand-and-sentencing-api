@@ -211,7 +211,7 @@ class LegacySentenceService(
     val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
-    sentenceRepository.findBySentenceUuidAndChargeUuidsAndNotAppearanceUuid(sentenceUuid, sentence.chargeUuids, sentence.appearanceUuid)
+    sentenceRepository.findBySentenceUuidAndChargeUuidsAndNotAppearanceUuidAndStatusIdNot(sentenceUuid, sentence.chargeUuids, sentence.appearanceUuid)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
     return sentence.chargeUuids.map { chargeUuid ->
       val (existingSentence, entityStatus) = (
