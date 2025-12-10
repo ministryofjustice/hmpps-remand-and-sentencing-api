@@ -215,7 +215,7 @@ class DataCreator {
 
     fun migrationCreateSentence(
       sentenceId: MigrationSentenceId = migrationSentenceId(),
-      fine: MigrationCreateFine = migrationCreateFine(),
+      fine: MigrationCreateFine? = migrationCreateFine(),
       active: Boolean = true,
       legacyData: SentenceLegacyData = sentenceLegacyData(),
       consecutiveToSentenceId: MigrationSentenceId? = null,

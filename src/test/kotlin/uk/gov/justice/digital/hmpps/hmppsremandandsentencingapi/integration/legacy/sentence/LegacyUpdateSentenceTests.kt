@@ -28,7 +28,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
   fun `update sentence for a recall sentence`() {
     // Create sentence with associated recall data.
     val (lifetimeUuid, createdSentence) = createLegacySentence(
-      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2023, 1, 1)),
+      legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2023, 1, 1)),
     )
     val toUpdate = createdSentence.copy(returnToCustodyDate = LocalDate.of(2024, 1, 1))
     putLegacySentence(lifetimeUuid, toUpdate)
