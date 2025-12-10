@@ -35,6 +35,7 @@ class ImmigrationDetentionEntity(
   @Enumerated(EnumType.STRING)
   var noLongerOfInterestReason: ImmigrationDetentionNoLongerOfInterestType?,
   var noLongerOfInterestComment: String?,
+  var courtAppearanceUuid: UUID? = null,
 
   // Audit and status columns
   @Column
@@ -54,6 +55,7 @@ class ImmigrationDetentionEntity(
     fun fromDPS(
       create: CreateImmigrationDetention,
       immigrationDetentionUuid: UUID? = null,
+      courtAppearanceUuid: UUID? = null,
     ): ImmigrationDetentionEntity = ImmigrationDetentionEntity(
       immigrationDetentionUuid = immigrationDetentionUuid ?: UUID.randomUUID(),
       prisonerId = create.prisonerId,
@@ -62,6 +64,7 @@ class ImmigrationDetentionEntity(
       homeOfficeReferenceNumber = create.homeOfficeReferenceNumber,
       noLongerOfInterestReason = create.noLongerOfInterestReason,
       noLongerOfInterestComment = create.noLongerOfInterestComment,
+      courtAppearanceUuid = courtAppearanceUuid,
       statusId = ACTIVE,
       createdByUsername = create.createdByUsername,
       source = DPS,
