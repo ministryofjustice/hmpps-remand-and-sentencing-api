@@ -23,6 +23,20 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   fun findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid: UUID, chargeUuids: List<UUID>, statusId: SentenceEntityStatus = SentenceEntityStatus.DELETED): List<SentenceEntity>
 
+  @Query(
+    """
+    select s from SentenceEntity s
+      join s.charge c
+      join c.appearanceCharges ac
+      join ac.appearance ca 
+      where s.sentenceUuid = :sentenceUuid
+      and c.chargeUuid in :chargeUuids
+      and ca.appearanceUuid != :appearanceUuid
+      and s.statusId != :statusId
+  """,
+  )
+  fun findBySentenceUuidAndChargeUuidsAndNotAppearanceUuid(sentenceUuid: UUID, chargeUuids: List<UUID>, appearanceUuid: UUID, statusId: SentenceEntityStatus = SentenceEntityStatus.DELETED): List<SentenceEntity>
+
   fun findBySentenceUuidIn(sentenceUuids: List<UUID>): List<SentenceEntity>
 
   fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
