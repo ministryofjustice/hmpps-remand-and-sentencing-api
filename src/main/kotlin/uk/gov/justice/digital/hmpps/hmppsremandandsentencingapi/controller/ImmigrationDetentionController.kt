@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import software.amazon.awssdk.core.internal.waiters.ResponseOrException.response
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
@@ -70,7 +69,7 @@ class ImmigrationDetentionController(
   )
   fun getImmigrationDetention(
     @PathVariable immigrationDetentionUuid: UUID,
-  ): ImmigrationDetention = immigrationDetentionService.findImmigrationDetentionRecallByUuid(immigrationDetentionUuid)
+  ): ImmigrationDetention = immigrationDetentionService.findImmigrationDetentionByUuid(immigrationDetentionUuid)
 
   @GetMapping("/person/{prisonerId}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
@@ -147,8 +146,8 @@ class ImmigrationDetentionController(
   fun deleteImmigrationDetention(
     @PathVariable immigrationDetentionUuid: UUID,
   ): DeleteImmigrationDetentionResponse = immigrationDetentionService.deleteImmigrationDetention(immigrationDetentionUuid)
-    .let { (response, _) ->
-      // Events will be handled once agreed and implemented
+    .let { (response, eventsToEmit) ->
+      dpsDomainEventService.emitEvents(eventsToEmit)
       response
     }
 }

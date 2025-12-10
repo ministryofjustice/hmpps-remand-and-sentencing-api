@@ -366,7 +366,15 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
 
   @Test
   fun `Delete an Immigration Detention record`() {
-    val immigrationDetention = CreateImmigrationDetention(
+    val id1 = CreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = DEPORTATION_ORDER,
+      createdByUsername = "aUser",
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+    )
+    val id2 = CreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
       recordDate = LocalDate.of(2021, 1, 1),
@@ -375,12 +383,36 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
       appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
     )
 
-    val immigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
+    val id1Response = createImmigrationDetention(id1)
+    val id2Response = createImmigrationDetention(id2)
 
-    deleteImmigrationDetention(immigrationDetentionResponse.immigrationDetentionUuid)
+    var messages = getMessages(5)
+
+    assertThat(messages).hasSize(5).extracting<String> { it.eventType }
+      .contains("court-case.inserted", "court-appearance.inserted", "charge.inserted", "court-appearance.inserted", "charge.inserted")
+
+    purgeQueues()
+
+    deleteImmigrationDetention(id1Response.immigrationDetentionUuid)
+
+    messages = getMessages(3)
+
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.deleted", "charge.deleted")
+
+    purgeQueues()
+
+    deleteImmigrationDetention(id2Response.immigrationDetentionUuid)
+
+    messages = getMessages(3)
+
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-case.deleted", "court-appearance.deleted", "charge.deleted")
+
+    purgeQueues()
 
     val historicImmigrationDetention =
-      immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(immigrationDetentionResponse.immigrationDetentionUuid)
+      immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(id1Response.immigrationDetentionUuid)
     assertThat(historicImmigrationDetention).hasSize(1)
     assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.DELETED)
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()

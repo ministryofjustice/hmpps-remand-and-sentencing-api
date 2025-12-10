@@ -40,34 +40,39 @@ class ImmigrationDetentionService(
     immigrationDetention: CreateImmigrationDetention,
     immigrationDetentionUuid: UUID? = null,
   ): RecordResponse<SaveImmigrationDetentionResponse> {
-    val courtCase = courtCaseService.getLatestImmigrationDetentionCourtCase(immigrationDetention.prisonerId)
+    var courtCase = courtCaseService.getLatestImmigrationDetentionCourtCase(immigrationDetention.prisonerId)
     val eventsToEmit = mutableSetOf<EventMetadata>()
+
     if (courtCase == null) {
-      eventsToEmit.addAll(
-        courtCaseService.createCourtCase(
-          CreateCourtCase(
-            prisonerId = immigrationDetention.prisonerId,
-            prisonId = immigrationDetention.createdByPrison,
-            appearances = listOf(createCourtAppearanceFromImmigrationDetention(immigrationDetention)),
-            legacyData = null,
-          ),
-        ).eventsToEmit,
+      val (createdCourtCase, events) = courtCaseService.createCourtCase(
+        CreateCourtCase(
+          prisonerId = immigrationDetention.prisonerId,
+          prisonId = immigrationDetention.createdByPrison,
+          appearances = emptyList(),
+          legacyData = null,
+        ),
       )
-    } else {
-      eventsToEmit.addAll(
-        courtAppearanceService.createCourtAppearance(
-          createCourtAppearanceFromImmigrationDetention(
-            immigrationDetention,
-            courtCase.caseUniqueIdentifier,
-          ),
-        )?.eventsToEmit ?: emptySet(),
-      )
+      courtCase = createdCourtCase
+      eventsToEmit.addAll(events)
+    }
+
+    var courtAppearanceUuid: UUID? = null
+
+    courtAppearanceService.createCourtAppearance(
+      createCourtAppearanceFromImmigrationDetention(
+        immigrationDetention,
+        courtCaseUuid = courtCase.caseUniqueIdentifier,
+      ),
+    )?.let { (courtAppearance, events) ->
+      eventsToEmit.addAll(events)
+      courtAppearanceUuid = courtAppearance.appearanceUuid
     }
 
     val savedImmigrationDetention = immigrationDetentionRepository.save(
       ImmigrationDetentionEntity.fromDPS(
         immigrationDetention,
         immigrationDetentionUuid,
+        courtAppearanceUuid,
       ),
     )
 
@@ -105,36 +110,20 @@ class ImmigrationDetentionService(
         updatedPrison = immigrationDetention.createdByPrison
       }
       val savedImmigrationDetention = immigrationDetentionRepository.save(immigrationDetentionToUpdate)
-
-      val courtCase = courtCaseService.getLatestImmigrationDetentionCourtCase(immigrationDetention.prisonerId)
-
-      val latestMatchingAppearance = courtCase?.appearances
-        ?.filter { it.appearanceOutcome?.outcomeUuid == immigrationDetention.appearanceOutcomeUuid }
-        ?.maxByOrNull { it.appearanceDate }
-
+      val courtAppearance =
+        courtAppearanceRepository.findByAppearanceUuid(immigrationDetentionToUpdate.courtAppearanceUuid!!)
       val eventsToEmit = mutableSetOf<EventMetadata>()
 
-      if (latestMatchingAppearance == null) {
-        eventsToEmit.addAll(
-          courtAppearanceService.createCourtAppearance(
-            createCourtAppearanceFromImmigrationDetention(
-              immigrationDetention,
-              courtCase?.caseUniqueIdentifier,
-            ),
-          )?.eventsToEmit ?: emptySet(),
-        )
-      } else {
-        eventsToEmit.addAll(
-          courtAppearanceService.createCourtAppearanceByAppearanceUuid(
-            createCourtAppearanceFromImmigrationDetention(
-              immigrationDetention,
-              courtCase.caseUniqueIdentifier,
-              latestMatchingAppearance.appearanceCharges.firstOrNull()?.charge?.chargeUuid,
-            ),
-            latestMatchingAppearance.appearanceUuid,
-          )?.eventsToEmit ?: emptySet(),
-        )
-      }
+      eventsToEmit.addAll(
+        courtAppearanceService.createCourtAppearanceByAppearanceUuid(
+          createCourtAppearanceFromImmigrationDetention(
+            immigrationDetention,
+            courtAppearance?.courtCase?.caseUniqueIdentifier,
+            courtAppearance?.appearanceCharges?.firstOrNull()?.charge?.chargeUuid,
+          ),
+          courtAppearance?.appearanceUuid!!,
+        )?.eventsToEmit ?: emptySet(),
+      )
 
       return RecordResponse(SaveImmigrationDetentionResponse.from(savedImmigrationDetention), eventsToEmit)
     }
@@ -145,6 +134,10 @@ class ImmigrationDetentionService(
     val immigrationDetentionToDelete =
       immigrationDetentionRepository.findOneByImmigrationDetentionUuid(immigrationDetentionUuid)
         ?: throw EntityNotFoundException("Immigration Detention not found $immigrationDetentionUuid")
+
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+
+    eventsToEmit.addAll(courtAppearanceService.delete(immigrationDetentionToDelete.courtAppearanceUuid!!).records.eventsToEmit)
 
     immigrationDetentionToDelete.statusId = DELETED
 
@@ -157,12 +150,12 @@ class ImmigrationDetentionService(
 
     return RecordResponse(
       DeleteImmigrationDetentionResponse.from(immigrationDetentionToDelete),
-      mutableSetOf(),
+      eventsToEmit,
     )
   }
 
   @Transactional(readOnly = true)
-  fun findImmigrationDetentionRecallByUuid(immigrationDetentionUuid: UUID): ImmigrationDetention {
+  fun findImmigrationDetentionByUuid(immigrationDetentionUuid: UUID): ImmigrationDetention {
     val immigrationDetention =
       immigrationDetentionRepository.findOneByImmigrationDetentionUuid(immigrationDetentionUuid)
         ?: throw EntityNotFoundException("No immigration detention exists for the passed in UUID")
