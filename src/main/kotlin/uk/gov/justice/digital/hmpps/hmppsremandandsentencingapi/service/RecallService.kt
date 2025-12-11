@@ -136,6 +136,7 @@ class RecallService(
       recallToUpdate.apply {
         revocationDate = recall.revocationDate
         returnToCustodyDate = recall.returnToCustodyDate
+        inPrisonOnRevocationDate = recall.inPrisonOnRevocationDate
         recallType = recallTypeEntity
         updatedAt = ZonedDateTime.now()
         updatedBy = recall.createdByUsername
