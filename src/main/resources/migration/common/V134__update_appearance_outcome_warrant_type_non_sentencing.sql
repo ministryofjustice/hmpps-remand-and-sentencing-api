@@ -1,0 +1,1 @@
+update appearance_outcome set warrant_type = 'NON_SENTENCING' where warrant_type = 'REMAND'
