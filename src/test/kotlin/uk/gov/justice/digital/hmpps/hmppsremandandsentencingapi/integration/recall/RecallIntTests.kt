@@ -628,6 +628,7 @@ class RecallIntTests : IntegrationTestBase() {
       ),
       revocationDate = LocalDate.of(2024, 1, 2),
       returnToCustodyDate = null,
+      inPrisonOnRevocationDate = true,
     )
     val uuid = createRecall(originalRecall).recallUuid
     purgeQueues()
@@ -642,6 +643,7 @@ class RecallIntTests : IntegrationTestBase() {
         createdByUsername = "user001",
         createdByPrison = "New prison",
         sentenceIds = listOf(sentenceOne.sentenceUuid),
+        inPrisonOnRevocationDate = false,
       ),
       uuid,
     )
@@ -658,7 +660,7 @@ class RecallIntTests : IntegrationTestBase() {
           prisonerId = originalRecall.prisonerId,
           revocationDate = LocalDate.of(2024, 1, 1),
           returnToCustodyDate = LocalDate.of(2024, 1, 13),
-          inPrisonOnRevocationDate = originalRecall.inPrisonOnRevocationDate,
+          inPrisonOnRevocationDate = false,
           recallType = FTR_14,
           createdByUsername = originalRecall.createdByUsername,
           createdByPrison = originalRecall.createdByPrison,

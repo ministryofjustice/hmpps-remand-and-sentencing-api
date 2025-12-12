@@ -3,10 +3,12 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -22,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
@@ -113,6 +116,32 @@ class RecallServiceTest {
 
     verify(exactly = 0) { adjustmentsApiClient.deleteAdjustment(any()) }
     verify(exactly = 0) { adjustmentsApiClient.getRecallAdjustment(any(), any()) }
+  }
+
+  @Nested
+  inner class UpdateRecallTests {
+    @Test
+    fun `update a dps recall happy path, updates correct fields`() {
+      val recallUuid = testNonLegacyRecallEntity.recallUuid
+      every { recallRepository.findOneByRecallUuid(recallUuid) } returns testNonLegacyRecallEntity
+      every { recallRepository.save(any()) } returns testNonLegacyRecallEntity
+      every { recallHistoryRepository.save(any()) } returns mockk()
+      every { recallSentenceHistoryRepository.save(any()) } returns mockk()
+      val recallToUpdate = baseRecall.copy(inPrisonOnRevocationDate = true)
+
+      service.updateRecall(recallUuid, baseRecall.copy(inPrisonOnRevocationDate = true))
+
+      verify(exactly = 1) {
+        recallRepository.save(
+          match { saved ->
+            saved.prisonerId == "PRI123" &&
+              saved.revocationDate == recallToUpdate.revocationDate &&
+              saved.returnToCustodyDate == recallToUpdate.returnToCustodyDate &&
+              saved.inPrisonOnRevocationDate == recallToUpdate.inPrisonOnRevocationDate
+          },
+        )
+      }
+    }
   }
 
   companion object {
@@ -265,5 +294,15 @@ class RecallServiceTest {
         ),
       )
     }
+
+    val baseRecall = CreateRecall(
+      prisonerId = "PRI123",
+      revocationDate = LocalDate.of(2024, 1, 2),
+      returnToCustodyDate = LocalDate.of(2024, 1, 2),
+      inPrisonOnRevocationDate = false,
+      recallTypeCode = FTR_14,
+      createdByUsername = "user001",
+      createdByPrison = "PRI",
+    )
   }
 }
