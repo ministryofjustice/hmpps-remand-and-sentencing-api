@@ -45,6 +45,16 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     value = """
+      select s from SentenceEntity s
+        join s.sentenceType st
+        where s.sentenceUuid in :sentenceUuids
+        and st.sentenceTypeUuid = :sentenceTypeUuid
+    """,
+  )
+  fun findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids: List<UUID>, sentenceTypeUuid: UUID): List<SentenceEntity>
+
+  @Query(
+    value = """
     select count(*) from sentence s
     join charge c on s.charge_id = c.id
     join appearance_charge ac on ac.charge_id = c.id
