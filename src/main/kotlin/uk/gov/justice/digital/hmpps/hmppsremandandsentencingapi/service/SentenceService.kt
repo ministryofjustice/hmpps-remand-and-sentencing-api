@@ -339,6 +339,9 @@ class SentenceService(
     return false
   }
 
+  @Transactional(readOnly = true)
+  fun getSentenceWithUnknownRecallType(sentenceUuids: List<UUID>): List<Sentence> = sentenceRepository.findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids, unknownRecallSentenceTypeUuid).map { Sentence.from(it) }
+
   @VisibleForTesting
   fun getUpstreamChains(
     sentencesOnAppearanceFromUI: List<SentenceDetailsForConsecValidation>,
@@ -378,5 +381,6 @@ class SentenceService(
   }
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private val unknownRecallSentenceTypeUuid = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
   }
 }

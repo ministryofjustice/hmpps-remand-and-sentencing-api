@@ -115,4 +115,19 @@ class SentenceController(private val sentenceService: SentenceService, private v
     targetSentenceUUID = request.targetSentenceUuid,
     sentencesOnAppearanceFromUI = request.sentences,
   )
+
+  @GetMapping("/sentence/unknown-recall-type")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Returns a list of sentences with an unknown recall type",
+    description = "Returns a list of sentences with an unknown recall type",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns a list of sentences with an unknown recall type"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun getUnknownRecallTypeSentences(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.getSentenceWithUnknownRecallType(sentenceUuids)
 }
