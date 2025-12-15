@@ -129,5 +129,5 @@ class SentenceController(private val sentenceService: SentenceService, private v
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getUnknownRecallTypeSentences(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.getSentenceWithUnknownRecallType(sentenceUuids)
+  fun getSentencesWithUnknownRecallType(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.getSentencesWithUnknownRecallType(sentenceUuids)
 }

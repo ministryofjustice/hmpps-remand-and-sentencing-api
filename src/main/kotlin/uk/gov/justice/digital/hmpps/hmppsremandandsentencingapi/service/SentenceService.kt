@@ -340,7 +340,7 @@ class SentenceService(
   }
 
   @Transactional(readOnly = true)
-  fun getSentenceWithUnknownRecallType(sentenceUuids: List<UUID>): List<Sentence> = sentenceRepository.findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids, unknownRecallSentenceTypeUuid).map { Sentence.from(it) }
+  fun getSentencesWithUnknownRecallType(sentenceUuids: List<UUID>): List<Sentence> = sentenceRepository.findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids, unknownRecallSentenceTypeUuid).map { Sentence.from(it) }
 
   @VisibleForTesting
   fun getUpstreamChains(
