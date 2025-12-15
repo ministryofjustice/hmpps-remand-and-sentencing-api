@@ -119,8 +119,8 @@ class SentenceController(private val sentenceService: SentenceService, private v
   @GetMapping("/sentence/unknown-recall-type")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
-    summary = "Returns a list of sentences with an unknown recall type",
-    description = "Returns a list of sentences with an unknown recall type",
+    summary = "Returns a list of sentences with the unknown recall type",
+    description = "Returns a list of sentences with the unknown recall type",
   )
   @ApiResponses(
     value = [
