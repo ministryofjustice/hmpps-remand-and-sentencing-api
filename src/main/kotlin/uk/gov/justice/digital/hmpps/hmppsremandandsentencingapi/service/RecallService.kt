@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
@@ -60,6 +61,7 @@ class RecallService(
           if (isPossibleForSentence != IsRecallPossible.YES) {
             throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
+          it.statusId = SentenceEntityStatus.ACTIVE
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
         }
     }
