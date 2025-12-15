@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
-class GetSentenceWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
+class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
 
   @Test
   fun `correctly filter sentences with at least one unknown recall type`() {
