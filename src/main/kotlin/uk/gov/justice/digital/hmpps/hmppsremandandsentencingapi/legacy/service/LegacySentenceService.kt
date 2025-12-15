@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.LegacySentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
@@ -211,8 +212,12 @@ class LegacySentenceService(
     val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
+    val periodLengthsByChargeUuid: MutableMap<UUID, MutableSet<PeriodLengthEntity>> = mutableMapOf()
     sentenceRepository.findBySentenceUuidAndChargeUuidsAndNotAppearanceUuidAndStatusIdNot(sentenceUuid, sentence.chargeUuids, sentence.appearanceUuid)
-      .forEach { delete(it, getPerformedByUsername(sentence), false) }
+      .forEach {
+        periodLengthsByChargeUuid[it.charge.chargeUuid] = it.periodLengths
+        delete(it, getPerformedByUsername(sentence))
+      }
     return sentence.chargeUuids.map { chargeUuid ->
       val (existingSentence, entityStatus) = (
         (
@@ -241,7 +246,7 @@ class LegacySentenceService(
                 )
               }.also { newSentence ->
                 // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
-                copyPeriodLengthsForNewSentence(sentenceUuid, newSentence, getPerformedByUsername(sentence))
+                copyPeriodLengthsForNewSentence(sentenceUuid, newSentence, getPerformedByUsername(sentence), periodLengthsByChargeUuid)
 
                 if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
                   createRecall(
@@ -299,12 +304,13 @@ class LegacySentenceService(
 
   private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()
 
-  private fun copyPeriodLengthsForNewSentence(sentenceUuid: UUID, newSentence: SentenceEntity, performedByUser: String) {
-    val newPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid)
+  private fun copyPeriodLengthsForNewSentence(sentenceUuid: UUID, newSentence: SentenceEntity, performedByUser: String, periodLengthsByChargeUuid: Map<UUID, MutableSet<PeriodLengthEntity>>) {
+    val newPeriodLengths = (periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid) + periodLengthsByChargeUuid.getOrDefault(newSentence.charge.chargeUuid, mutableSetOf()))
       .distinctBy { it.periodLengthUuid } // Ensure we only copy each unique periodLengthUuid once
       .map { periodLength ->
         periodLength.copy(
           sentenceEntity = newSentence,
+          statusId = PeriodLengthEntityStatus.from(newSentence.statusId),
           createdBy = performedByUser,
           createdAt = ZonedDateTime.now(),
           updatedBy = performedByUser,
@@ -382,7 +388,7 @@ class LegacySentenceService(
       LegacySentenceDeletedResponse.from(sentence)
     }.firstOrNull()
 
-  fun delete(sentence: SentenceEntity, performedByUser: String, deletePeriodLengths: Boolean = true) {
+  fun delete(sentence: SentenceEntity, performedByUser: String) {
     sentence.delete(performedByUser)
     sentenceHistoryRepository.save(
       SentenceHistoryEntity.from(
@@ -390,9 +396,7 @@ class LegacySentenceService(
         ChangeSource.NOMIS,
       ),
     )
-    if (deletePeriodLengths) {
-      deletePeriodLengths(sentence, performedByUser)
-    }
+    deletePeriodLengths(sentence, performedByUser)
     deleteRecallSentence(sentence, performedByUser)
   }
 
