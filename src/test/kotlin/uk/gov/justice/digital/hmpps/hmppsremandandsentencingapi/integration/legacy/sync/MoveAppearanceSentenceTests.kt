@@ -37,6 +37,7 @@ class MoveAppearanceSentenceTests : IntegrationTestBase() {
     val createdAppearance = response.appearances.first { it.eventId == migratedCourtAppearance.eventId }
     val otherCreatedCourtAppearance = response.appearances.first { it.eventId == otherCourtAppearance.eventId }
     val createdSentence = response.sentences.first()
+    val createdPeriodLength = response.sentenceTerms.first()
 
     val updateSentenceToOtherAppearance = DataCreator.legacyCreateSentence(
       chargeUuids = listOf(createdCharge.chargeUuid),
@@ -71,5 +72,7 @@ class MoveAppearanceSentenceTests : IntegrationTestBase() {
       .value(everyItem(IsNull.nullValue()))
       .jsonPath("$.appearances[?(@.appearanceUuid == '${otherCreatedCourtAppearance.appearanceUuid}')].charges[?(@.chargeUuid == '${createdCharge.chargeUuid}')].sentence.sentenceUuid")
       .isEqualTo(createdSentence.sentenceUuid.toString())
+      .jsonPath("$.appearances[?(@.appearanceUuid == '${otherCreatedCourtAppearance.appearanceUuid}')].charges[?(@.chargeUuid == '${createdCharge.chargeUuid}')].sentence.periodLengths[?(@.periodLengthUuid == '${createdPeriodLength.periodLengthUuid}')].periodLengthUuid")
+      .isEqualTo(createdPeriodLength.periodLengthUuid.toString())
   }
 }

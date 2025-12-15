@@ -212,7 +212,7 @@ class LegacySentenceService(
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
     sentenceRepository.findBySentenceUuidAndChargeUuidsAndNotAppearanceUuidAndStatusIdNot(sentenceUuid, sentence.chargeUuids, sentence.appearanceUuid)
-      .forEach { delete(it, getPerformedByUsername(sentence)) }
+      .forEach { delete(it, getPerformedByUsername(sentence), false) }
     return sentence.chargeUuids.map { chargeUuid ->
       val (existingSentence, entityStatus) = (
         (
@@ -382,7 +382,7 @@ class LegacySentenceService(
       LegacySentenceDeletedResponse.from(sentence)
     }.firstOrNull()
 
-  fun delete(sentence: SentenceEntity, performedByUser: String) {
+  fun delete(sentence: SentenceEntity, performedByUser: String, deletePeriodLengths: Boolean = true) {
     sentence.delete(performedByUser)
     sentenceHistoryRepository.save(
       SentenceHistoryEntity.from(
@@ -390,7 +390,9 @@ class LegacySentenceService(
         ChangeSource.NOMIS,
       ),
     )
-    deletePeriodLengths(sentence, performedByUser)
+    if (deletePeriodLengths) {
+      deletePeriodLengths(sentence, performedByUser)
+    }
     deleteRecallSentence(sentence, performedByUser)
   }
 
