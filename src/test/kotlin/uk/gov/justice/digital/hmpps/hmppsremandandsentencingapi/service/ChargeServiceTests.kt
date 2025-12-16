@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import java.time.LocalDate
@@ -27,6 +28,7 @@ class ChargeServiceTests {
   private val serviceUserService = mockk<ServiceUserService>(relaxed = true)
   private val chargeHistoryRepository = mockk<ChargeHistoryRepository>(relaxed = true)
   private val appearanceChargeHistoryRepository = mockk<AppearanceChargeHistoryRepository>(relaxed = true)
+  private val courtAppearanceRepository = mockk<CourtAppearanceRepository>(relaxed = true)
 
   private val chargeService = ChargeService(
     chargeRepository = chargeRepository,
@@ -35,6 +37,7 @@ class ChargeServiceTests {
     serviceUserService = serviceUserService,
     chargeHistoryRepository = chargeHistoryRepository,
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
+    courtAppearanceRepository = courtAppearanceRepository,
   )
 
   @Test
