@@ -60,6 +60,8 @@ jobs:
       postgres-db: ras
       postgres-username: ras-user
       postgres-password: ras-pass
+    needs:
+      - app_version
   build:
     name: Build docker image from hmpps-github-actions
     if: github.ref == 'refs/heads/main'
