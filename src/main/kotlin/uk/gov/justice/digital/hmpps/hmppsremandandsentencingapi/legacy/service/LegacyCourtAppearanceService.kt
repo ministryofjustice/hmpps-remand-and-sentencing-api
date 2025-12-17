@@ -1,8 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -136,7 +139,8 @@ class LegacyCourtAppearanceService(
     return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid)
   }
 
-  @Transactional
+  @Retryable(maxAttempts = 3, retryFor = [OptimisticLockingFailureException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun delete(lifetimeUuid: UUID, performedByUser: String?): MutableSet<EventMetadata> {
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
@@ -192,7 +196,8 @@ class LegacyCourtAppearanceService(
     return eventsToEmit
   }
 
-  @Transactional
+  @Retryable(maxAttempts = 3, retryFor = [OptimisticLockingFailureException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun unlinkAppearanceWithCharge(lifetimeUuid: UUID, lifetimeChargeUuid: UUID, performedByUser: String?): MutableSet<EventMetadata> {
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)

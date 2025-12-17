@@ -1,0 +1,1 @@
+alter table period_length drop constraint unique_uuid_status_sentence;
