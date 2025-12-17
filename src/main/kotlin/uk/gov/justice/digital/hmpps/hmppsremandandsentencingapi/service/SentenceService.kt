@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.MissingSentenceAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
@@ -340,7 +341,7 @@ class SentenceService(
   }
 
   @Transactional(readOnly = true)
-  fun getSentencesWithUnknownRecallType(sentenceUuids: List<UUID>): List<Sentence> = sentenceRepository.findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids, unknownRecallSentenceTypeUuid).map { Sentence.from(it) }
+  fun getSentencesWithUnknownRecallType(sentenceUuids: List<UUID>): List<MissingSentenceAppearance> = MissingSentenceAppearance.from(sentenceRepository.findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids, unknownRecallSentenceTypeUuid))
 
   @VisibleForTesting
   fun getUpstreamChains(
