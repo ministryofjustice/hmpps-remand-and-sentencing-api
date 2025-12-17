@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sentence
 
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.MissingSentenceAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
@@ -40,13 +40,13 @@ class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBodyList(Sentence::class.java)
+      .expectBodyList(MissingSentenceAppearance::class.java)
       .returnResult()
       .responseBody
 
     assert(response != null)
     assert(response!!.size == 1)
-    assert(response[0].sentenceUuid == sentenceWithUnknownRecallTypeUuid)
+    assert(response[0].sentences[0].sentenceUuid == sentenceWithUnknownRecallTypeUuid)
   }
 
   @Test
@@ -81,7 +81,7 @@ class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBodyList(Sentence::class.java)
+      .expectBodyList(MissingSentenceAppearance::class.java)
       .returnResult()
       .responseBody
 

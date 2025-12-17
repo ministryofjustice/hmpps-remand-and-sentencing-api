@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ConsecutiveChainValidationRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.MissingSentenceAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
@@ -119,15 +120,15 @@ class SentenceController(private val sentenceService: SentenceService, private v
   @GetMapping("/sentence/unknown-recall-type")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
-    summary = "Returns a list of sentences with the unknown recall type",
-    description = "Returns a list of sentences with the unknown recall type",
+    summary = "Returns a list of sentences with the unknown recall type grouped by appearance",
+    description = "Returns a list of sentences with the unknown recall type grouped by appearance",
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "Returns a list of sentences with an unknown recall type"),
+      ApiResponse(responseCode = "200", description = "Returns a list of sentences with an unknown recall type grouped by appearance"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getSentencesWithUnknownRecallType(@RequestParam sentenceUuids: List<UUID>): List<Sentence> = sentenceService.getSentencesWithUnknownRecallType(sentenceUuids)
+  fun getSentencesWithUnknownRecallType(@RequestParam sentenceUuids: List<UUID>): List<MissingSentenceAppearance> = sentenceService.getSentencesWithUnknownRecallType(sentenceUuids)
 }
