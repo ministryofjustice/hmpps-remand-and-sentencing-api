@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -119,6 +120,40 @@ class RecallServiceTest {
   }
 
   @Nested
+  inner class CreateRecallTests {
+    @Test
+    fun `create recall stores pre recall sentence status`() {
+      val sentenceUuid = UUID.randomUUID()
+      val sentence = SentenceEntity(
+        sentenceUuid = sentenceUuid,
+        statusId = SentenceEntityStatus.INACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = testStandardSentenceType,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+      )
+
+      every { recallTypeRepository.findOneByCode(any()) } returns
+        RecallTypeEntity(0, RecallType.LR, "Standard")
+      every { recallRepository.save(any()) } answers { firstArg() }
+      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+      val recallSentenceSaved = slot<RecallSentenceEntity>()
+      every { recallSentenceRepository.save(capture(recallSentenceSaved)) } answers { firstArg() }
+
+      service.createRecall(
+        baseRecall.copy(sentenceIds = listOf(sentenceUuid)),
+      )
+
+      assert(recallSentenceSaved.captured.preRecallSentenceStatus == SentenceEntityStatus.INACTIVE)
+      assert(sentence.statusId == SentenceEntityStatus.ACTIVE)
+    }
+  }
+
+  @Nested
   inner class UpdateRecallTests {
     @Test
     fun `update a dps recall happy path, updates correct fields`() {
@@ -171,6 +206,24 @@ class RecallServiceTest {
       nextCourtAppearance = null,
       overallConvictionDate = null,
       legacyData = null,
+    )
+
+    private val testStandardSentenceType = SentenceTypeEntity(
+      sentenceTypeUuid = UUID.randomUUID(),
+      description = "Life sentence",
+      classification = SentenceTypeClassification.STANDARD,
+      nomisCjaCode = "LIFE",
+      nomisSentenceCalcType = "LIFE",
+      displayOrder = 1,
+      status = ReferenceEntityStatus.ACTIVE,
+      minAgeInclusive = null,
+      maxAgeExclusive = null,
+      minDateInclusive = null,
+      maxDateExclusive = null,
+      minOffenceDateInclusive = null,
+      maxOffenceDateExclusive = null,
+      hintText = null,
+      isRecallable = true,
     )
 
     private val testNonLegacySentenceType = SentenceTypeEntity(

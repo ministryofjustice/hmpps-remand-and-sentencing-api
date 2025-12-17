@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -11,6 +13,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import java.time.ZonedDateTime
@@ -36,6 +39,8 @@ class RecallSentenceEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: RecallSentenceLegacyData? = null,
   // Audit and status columns
+  @Enumerated(EnumType.STRING)
+  var preRecallSentenceStatus: SentenceEntityStatus? = null,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
   val createdPrison: String? = null,
@@ -46,6 +51,7 @@ class RecallSentenceEntity(
       recallSentenceUuid = UUID.randomUUID(),
       sentence = sentence,
       recall = recall,
+      preRecallSentenceStatus = sentence.statusId,
       createdByUsername = recall.createdByUsername,
       createdPrison = recall.createdPrison,
     )

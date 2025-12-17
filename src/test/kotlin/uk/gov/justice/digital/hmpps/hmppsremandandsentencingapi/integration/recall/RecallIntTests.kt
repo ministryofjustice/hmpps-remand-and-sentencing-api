@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
@@ -35,6 +36,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -240,7 +242,10 @@ class RecallIntTests : IntegrationTestBase() {
       unlawfullyAtLarge = null,
     )
 
-    adjustmentsApi.stubGetPrisonerAdjustments(DpsDataCreator.DEFAULT_PRISONER_ID, listOf(randomAdjustment, adjustmentForRecall2))
+    adjustmentsApi.stubGetPrisonerAdjustments(
+      DpsDataCreator.DEFAULT_PRISONER_ID,
+      listOf(randomAdjustment, adjustmentForRecall2),
+    )
 
     val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
 
@@ -587,7 +592,8 @@ class RecallIntTests : IntegrationTestBase() {
 
     assertThat(savedRecall.courtCases).hasSize(1)
     assertThat(savedRecall.courtCases[0].sentences).hasSize(1)
-    assertThat(savedRecall.courtCases[0].sentences).extracting<UUID> { it.sentenceUuid }.contains(sentenceOne.sentenceUuid)
+    assertThat(savedRecall.courtCases[0].sentences).extracting<UUID> { it.sentenceUuid }
+      .contains(sentenceOne.sentenceUuid)
     assertThat(savedRecall.isManual).isFalse
 
     val messages = getMessages(1)
@@ -1090,6 +1096,7 @@ class RecallIntTests : IntegrationTestBase() {
           sentenceCategory = "2020",
         ),
         returnToCustodyDate = LocalDate.of(2023, 1, 1),
+        active = false,
       ),
     )
     val recall = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).first()
@@ -1113,6 +1120,9 @@ class RecallIntTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isEqualTo(201)
+
+    val sentence = getLegacySentence(legacySentenceUuid)
+    assertThat(sentence.active).isTrue
   }
 
   @Test
@@ -1156,7 +1166,11 @@ class RecallIntTests : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Test classification {0} and recall type {1} combination for a DPS sentence results in {2} possible recall")
   @MethodSource("dpsSentenceAndClassificationCombinationParameters")
-  fun `Test each classification and recall type combination for a DPS sentence`(sentenceTypeClassification: SentenceTypeClassification, recallType: RecallType, expectedIsPossible: IsRecallPossible) {
+  fun `Test each classification and recall type combination for a DPS sentence`(
+    sentenceTypeClassification: SentenceTypeClassification,
+    recallType: RecallType,
+    expectedIsPossible: IsRecallPossible,
+  ) {
     val sentenceTypeId = sentenceTypeRepository.findAll()
       .first { it.classification == sentenceTypeClassification }
       .sentenceTypeUuid
@@ -1190,7 +1204,11 @@ class RecallIntTests : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Test legacy recall {0} and recall type {1} combination results in {2} possible recall")
   @MethodSource("legacySentenceAndClassificationCombinationParameters")
-  fun `Test each legacy sentence and recall type combination for a DPS sentence`(legacySentenceType: String, recallType: RecallType, expectedIsPossible: IsRecallPossible) {
+  fun `Test each legacy sentence and recall type combination for a DPS sentence`(
+    legacySentenceType: String,
+    recallType: RecallType,
+    expectedIsPossible: IsRecallPossible,
+  ) {
     // Create a legacy sentence so that the legacy recall is also created.
     val (legacySentenceUuid, _) = createLegacySentence(
       legacySentence = DataCreator.legacyCreateSentence(
@@ -1221,6 +1239,16 @@ class RecallIntTests : IntegrationTestBase() {
     }
   }
 
+  private fun getLegacySentence(legacySentenceUuid: UUID): LegacySentence = webTestClient
+    .get()
+    .uri("/legacy/sentence/$legacySentenceUuid")
+    .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO")) }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody<LegacySentence>()
+    .returnResult().responseBody!!
+
   companion object {
     @JvmStatic
     fun dpsSentenceAndClassificationCombinationParameters(): Stream<Arguments> = Stream.of(
@@ -1233,29 +1261,109 @@ class RecallIntTests : IntegrationTestBase() {
       Arguments.of(SentenceTypeClassification.STANDARD, IN_HDC, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.STANDARD, FTR_56, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.EXTENDED, LR, IsRecallPossible.YES),
-      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_HDC_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.EXTENDED, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.EXTENDED, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.EXTENDED, FTR_56, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        FTR_28,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        FTR_14,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        FTR_HDC_14,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        FTR_HDC_28,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        CUR_HDC,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        IN_HDC,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.EXTENDED,
+        FTR_56,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
       Arguments.of(SentenceTypeClassification.SOPC, LR, IsRecallPossible.YES),
       Arguments.of(SentenceTypeClassification.SOPC, FTR_28, IsRecallPossible.YES),
-      Arguments.of(SentenceTypeClassification.SOPC, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.SOPC, FTR_HDC_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.SOPC, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.SOPC, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.SOPC, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.SOPC, FTR_56, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(
+        SentenceTypeClassification.SOPC,
+        FTR_14,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.SOPC,
+        FTR_HDC_14,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.SOPC,
+        FTR_HDC_28,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.SOPC,
+        CUR_HDC,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.SOPC,
+        IN_HDC,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.SOPC,
+        FTR_56,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
       Arguments.of(SentenceTypeClassification.INDETERMINATE, LR, IsRecallPossible.YES),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_HDC_14, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_HDC_28, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, CUR_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, IN_HDC, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
-      Arguments.of(SentenceTypeClassification.INDETERMINATE, FTR_56, IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        FTR_28,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        FTR_14,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        FTR_HDC_14,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        FTR_HDC_28,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        CUR_HDC,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        IN_HDC,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
+      Arguments.of(
+        SentenceTypeClassification.INDETERMINATE,
+        FTR_56,
+        IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE,
+      ),
     )
 
     @JvmStatic

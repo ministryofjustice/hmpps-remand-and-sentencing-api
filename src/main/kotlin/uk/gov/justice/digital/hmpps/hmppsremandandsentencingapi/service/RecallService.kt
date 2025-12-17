@@ -61,8 +61,8 @@ class RecallService(
           if (isPossibleForSentence != IsRecallPossible.YES) {
             throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
-          it.statusId = SentenceEntityStatus.ACTIVE
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
+          it.statusId = SentenceEntityStatus.ACTIVE
         }
     }
     if (doesRecallRequireUAL(createRecall.revocationDate, createRecall.returnToCustodyDate)) {

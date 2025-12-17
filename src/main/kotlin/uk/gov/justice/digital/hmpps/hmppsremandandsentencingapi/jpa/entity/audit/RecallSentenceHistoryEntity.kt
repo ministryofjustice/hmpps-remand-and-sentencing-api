@@ -15,6 +15,7 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -45,6 +46,8 @@ class RecallSentenceHistoryEntity(
   val historyCreatedAt: ZonedDateTime,
   @Enumerated(EnumType.STRING)
   val changeSource: ChangeSource,
+  @Enumerated(EnumType.STRING)
+  val preRecallSentenceStatus: SentenceEntityStatus?,
 ) {
 
   companion object {
@@ -60,6 +63,7 @@ class RecallSentenceHistoryEntity(
       createdPrison = sentence.createdPrison,
       historyCreatedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
       changeSource = changeSource,
+      preRecallSentenceStatus = sentence.preRecallSentenceStatus,
     )
   }
 }
