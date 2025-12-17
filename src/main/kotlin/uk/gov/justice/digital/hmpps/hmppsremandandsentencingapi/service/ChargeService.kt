@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
@@ -34,6 +35,7 @@ class ChargeService(
   private val serviceUserService: ServiceUserService,
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+  private val courtAppearanceRepository: CourtAppearanceRepository,
 ) {
 
   private fun createChargeEntity(
@@ -240,6 +242,11 @@ class ChargeService(
       createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, courtAppearance.appearanceUuid.toString(), supersedingCharge)
     }
     return charge
+  }
+
+  @Transactional
+  fun createCharge(createCharge: CreateCharge): RecordResponse<ChargeEntity>? = courtAppearanceRepository.findByAppearanceUuid(createCharge.appearanceUuid!!)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let { courtAppearanceEntity ->
+    createCharge(createCharge, mutableMapOf(), courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity, false)
   }
 
   @Transactional

@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.MissingSentenceInformationDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ViewSentenceRow
 import java.time.LocalDate
@@ -42,6 +43,41 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
 
   fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: SentenceEntityStatus): List<SentenceEntity>
+
+  @Query(
+    value = """
+      select
+      ca.appearance_uuid as appearanceUuid,
+      ca.appearance_date as appearanceDate,
+      ca.court_code as courtCode,
+      ca.court_case_reference as courtCaseReference,
+      s.sentence_uuid as sentenceUuid,
+      c.offence_code as offenceCode,
+      c.offence_start_date as offenceStartDate,
+      s.count_number as countNumber,
+      s.conviction_date as convictionDate,
+      s.sentence_serve_type as sentenceServeType,
+      st.id as sentenceTypeId,
+      st.description as sentenceTypeDescription,
+      pl.period_length_uuid as periodLengthUuid,
+      pl.years as years,
+      pl.months as months,
+      pl.weeks as weeks,
+      pl.days as days,
+      pl.period_order as periodOrder,
+      pl.period_length_type as periodLengthType
+    from sentence s
+    join sentence_type st on s.sentence_type_id = st.id
+    join charge c on s.charge_id = c.id
+    join appearance_charge ac on c.id = ac.charge_id
+    join court_appearance ca on ac.appearance_id = ca.id
+    left join period_length pl on s.id = pl.sentence_id
+    where s.sentence_uuid in :sentenceUuids
+    and st.sentence_type_uuid = :sentenceTypeUuid
+    """,
+    nativeQuery = true,
+  )
+  fun findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids: List<UUID>, sentenceTypeUuid: UUID): List<MissingSentenceInformationDetails>
 
   @Query(
     value = """

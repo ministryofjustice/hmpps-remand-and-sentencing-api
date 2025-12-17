@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.MissingSentenceAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
@@ -339,6 +340,9 @@ class SentenceService(
     return false
   }
 
+  @Transactional(readOnly = true)
+  fun getSentencesWithUnknownRecallType(sentenceUuids: List<UUID>): List<MissingSentenceAppearance> = MissingSentenceAppearance.from(sentenceRepository.findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids, unknownRecallSentenceTypeUuid))
+
   @VisibleForTesting
   fun getUpstreamChains(
     sentencesOnAppearanceFromUI: List<SentenceDetailsForConsecValidation>,
@@ -378,5 +382,6 @@ class SentenceService(
   }
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private val unknownRecallSentenceTypeUuid = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
   }
 }
