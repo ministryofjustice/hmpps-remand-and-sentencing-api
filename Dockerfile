@@ -1,13 +1,13 @@
-FROM --platform=$BUILDPLATFORM eclipse-temurin:21.0.9_10-jdk-jammy AS builder
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jre-jammy AS builder
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER=${BUILD_NUMBER:-1_0_0}
 
-WORKDIR /app
-ADD . .
-RUN ./gradlew --no-daemon assemble
+WORKDIR /builder
+COPY hmpps-remand-and-sentencing-api-${BUILD_NUMBER}.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
-FROM eclipse-temurin:21.0.9_10-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 LABEL maintainer="HMPPS Digital Studio <info@digital.justice.gov.uk>"
 
 ARG BUILD_NUMBER
@@ -28,11 +28,14 @@ RUN mkdir /home/appuser/.postgresql
 ADD --chown=appuser:appgroup https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /home/appuser/.postgresql/root.crt
 
 WORKDIR /app
-COPY --from=builder --chown=appuser:appgroup /app/build/libs/hmpps-remand-and-sentencing-api*.jar /app/app.jar
-COPY --from=builder --chown=appuser:appgroup /app/build/libs/applicationinsights-agent*.jar /app/agent.jar
-COPY --from=builder --chown=appuser:appgroup /app/applicationinsights.json /app
-COPY --from=builder --chown=appuser:appgroup /app/applicationinsights.dev.json /app
+COPY --chown=appuser:appgroup applicationinsights.json ./
+COPY --chown=appuser:appgroup applicationinsights.dev.json ./
+COPY --chown=appuser:appgroup applicationinsights-agent*.jar ./agent.jar
+COPY --from=builder --chown=appuser:appgroup /builder/extracted/dependencies/ ./
+COPY --from=builder --chown=appuser:appgroup /builder/extracted/spring-boot-loader/ ./
+COPY --from=builder --chown=appuser:appgroup /builder/extracted/snapshot-dependencies/ ./
+COPY --from=builder --chown=appuser:appgroup /builder/extracted/application/ ./
 
 USER 2000
 
-ENTRYPOINT ["java", "-XX:+AlwaysActAsServerClassMachine", "-javaagent:/app/agent.jar", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-XX:+AlwaysActAsServerClassMachine", "-javaagent:agent.jar", "-jar", "app.jar"]
