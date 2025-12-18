@@ -4,6 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -35,6 +37,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -50,6 +53,7 @@ class RecallServiceTest {
   private val recallHistoryRepository: RecallHistoryRepository = mockk(relaxed = true)
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository = mockk(relaxed = true)
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
+  private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
 
   private val service = RecallService(
     recallRepository,
@@ -60,6 +64,7 @@ class RecallServiceTest {
     recallHistoryRepository,
     recallSentenceHistoryRepository,
     adjustmentsApiClient,
+    sentenceHistoryRepository,
   )
 
   @Test
@@ -142,14 +147,18 @@ class RecallServiceTest {
       every { recallRepository.save(any()) } answers { firstArg() }
       every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
       val recallSentenceSaved = slot<RecallSentenceEntity>()
+      val sentenceHistory = slot<SentenceHistoryEntity>()
       every { recallSentenceRepository.save(capture(recallSentenceSaved)) } answers { firstArg() }
+      every { sentenceHistoryRepository.save(capture(sentenceHistory)) } answers { firstArg() }
 
       service.createRecall(
         baseRecall.copy(sentenceIds = listOf(sentenceUuid)),
       )
 
-      assert(recallSentenceSaved.captured.preRecallSentenceStatus == SentenceEntityStatus.INACTIVE)
-      assert(sentence.statusId == SentenceEntityStatus.ACTIVE)
+      assertThat(recallSentenceSaved.captured.preRecallSentenceStatus).isEqualTo(SentenceEntityStatus.INACTIVE)
+      assertThat(sentence.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+      assertThat(sentence.createdBy).isEqualTo("FOO")
+      assertThat(sentenceHistory.captured.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
     }
   }
 

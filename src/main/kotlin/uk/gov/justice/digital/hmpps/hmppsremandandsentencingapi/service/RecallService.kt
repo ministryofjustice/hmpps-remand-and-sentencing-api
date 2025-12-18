@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -33,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyRecallService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.LocalDate
@@ -49,6 +51,7 @@ class RecallService(
   private val recallHistoryRepository: RecallHistoryRepository,
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val adjustmentsApiClient: AdjustmentsApiClient,
+  private val sentenceHistoryRepository: SentenceHistoryRepository,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
@@ -63,6 +66,15 @@ class RecallService(
           }
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
           it.statusId = SentenceEntityStatus.ACTIVE
+          it.updatedAt = ZonedDateTime.now()
+          it.updatedBy = createRecall.createdByUsername
+          it.updatedPrison = createRecall.createdByPrison
+          sentenceHistoryRepository.save(
+            SentenceHistoryEntity.from(
+              it,
+              ChangeSource.DPS,
+            ),
+          )
         }
     }
     if (doesRecallRequireUAL(createRecall.revocationDate, createRecall.returnToCustodyDate)) {
