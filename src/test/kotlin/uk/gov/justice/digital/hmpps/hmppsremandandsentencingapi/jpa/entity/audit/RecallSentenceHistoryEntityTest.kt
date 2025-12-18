@@ -100,6 +100,7 @@ class RecallSentenceHistoryEntityTest {
           createdByUsername = "CREATOR",
           createdPrison = "BAR",
           historyCreatedAt = ZonedDateTime.now(), // ignored in assertions
+          preRecallSentenceStatus = null,
           changeSource = ChangeSource.DPS,
         ),
       )
