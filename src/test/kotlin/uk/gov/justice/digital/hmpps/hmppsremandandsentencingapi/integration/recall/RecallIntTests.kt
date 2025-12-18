@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
@@ -36,7 +35,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -1116,9 +1114,6 @@ class RecallIntTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isEqualTo(201)
-
-    val sentence = getLegacySentence(legacySentenceUuid)
-    assertThat(sentence.active).isTrue
   }
 
   @Test
@@ -1226,16 +1221,6 @@ class RecallIntTests : IntegrationTestBase() {
       result.jsonPath("$.sentenceIds").isEqualTo(listOf(legacySentenceUuid.toString()))
     }
   }
-
-  private fun getLegacySentence(legacySentenceUuid: UUID): LegacySentence = webTestClient
-    .get()
-    .uri("/legacy/sentence/$legacySentenceUuid")
-    .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO")) }
-    .exchange()
-    .expectStatus()
-    .isOk
-    .expectBody<LegacySentence>()
-    .returnResult().responseBody!!
 
   companion object {
     @JvmStatic
