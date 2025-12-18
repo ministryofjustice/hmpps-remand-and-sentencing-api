@@ -1,0 +1,1 @@
+update legacy_sentence_types set recall_type_description = 'FIXED_TERM_RECALL_56' where nomis_reference = 'FTR_56ORA'

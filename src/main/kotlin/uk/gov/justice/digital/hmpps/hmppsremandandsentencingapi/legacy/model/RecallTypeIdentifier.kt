@@ -7,6 +7,7 @@ enum class RecallTypeIdentifier(
   STANDARD_RECALL_255(false, null),
   FIXED_TERM_RECALL_14(true, 14),
   FIXED_TERM_RECALL_28(true, 28),
+  FIXED_TERM_RECALL_56(true, 56),
   NONE(false, null),
   ;
 
