@@ -17,35 +17,6 @@ data class SentenceCardDetails(
   val convictedDate: LocalDate?,
 ) {
   companion object {
-    fun from(missingSentenceInformationDetails: MissingSentenceInformationDetails): SentenceCardDetails {
-      val periodLengths = if (missingSentenceInformationDetails.periodLengthUuid != null) {
-        listOf(
-          PeriodLength(
-            years = missingSentenceInformationDetails.years,
-            months = missingSentenceInformationDetails.months,
-            weeks = missingSentenceInformationDetails.weeks,
-            days = missingSentenceInformationDetails.days,
-            periodOrder = missingSentenceInformationDetails.periodOrder!!,
-            periodLengthType = PeriodLengthType.valueOf(missingSentenceInformationDetails.periodLengthType!!),
-            legacyData = null,
-            periodLengthUuid = missingSentenceInformationDetails.periodLengthUuid,
-          ),
-        )
-      } else {
-        emptyList()
-      }
-      return SentenceCardDetails(
-        offenceCode = missingSentenceInformationDetails.offenceCode,
-        offenceStartDate = missingSentenceInformationDetails.offenceStartDate?.toLocalDate(),
-        sentenceUuid = missingSentenceInformationDetails.sentenceUuid,
-        chargeUuid = missingSentenceInformationDetails.chargeUuid,
-        countNumber = missingSentenceInformationDetails.countNumber,
-        sentenceType = missingSentenceInformationDetails.sentenceTypeDescription,
-        periodLengths = periodLengths,
-        sentenceServeType = missingSentenceInformationDetails.sentenceServeType,
-        convictedDate = missingSentenceInformationDetails.convictionDate?.toLocalDate(),
-      )
-    }
     fun fromList(sentenceRows: List<MissingSentenceInformationDetails>): SentenceCardDetails {
       val first = sentenceRows.first()
 
