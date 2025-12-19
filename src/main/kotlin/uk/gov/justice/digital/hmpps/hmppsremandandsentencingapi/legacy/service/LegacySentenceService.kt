@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.dao.CannotAcquireLockException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
@@ -384,7 +385,8 @@ class LegacySentenceService(
   @Transactional(readOnly = true)
   fun get(sentenceUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(sentenceUuid))
 
-  @Transactional
+  @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun delete(sentenceUuid: UUID, performedByUser: String?): LegacySentenceDeletedResponse? = sentenceRepository.findBySentenceUuid(sentenceUuid)
     .filter { it.statusId != SentenceEntityStatus.DELETED }
     .map { sentence ->
