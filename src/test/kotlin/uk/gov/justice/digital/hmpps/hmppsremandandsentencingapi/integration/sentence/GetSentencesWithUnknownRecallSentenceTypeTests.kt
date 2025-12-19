@@ -18,9 +18,9 @@ class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
     val sentenceWithMultiplePeriods = DpsDataCreator.dpsCreateSentence(
       sentenceTypeId = unknownRecallSentenceTypeId,
       periodLengths = listOf(
-        DpsDataCreator.dpsCreatePeriodLength(years = 10, type= PeriodLengthType.SENTENCE_LENGTH),
-        DpsDataCreator.dpsCreatePeriodLength(years = 4, type = PeriodLengthType.LICENCE_PERIOD)
-      )
+        DpsDataCreator.dpsCreatePeriodLength(years = 10, type = PeriodLengthType.SENTENCE_LENGTH),
+        DpsDataCreator.dpsCreatePeriodLength(years = 4, type = PeriodLengthType.LICENCE_PERIOD),
+      ),
     )
 
     val sentenceWithOtherType = DpsDataCreator.dpsCreateSentence()
