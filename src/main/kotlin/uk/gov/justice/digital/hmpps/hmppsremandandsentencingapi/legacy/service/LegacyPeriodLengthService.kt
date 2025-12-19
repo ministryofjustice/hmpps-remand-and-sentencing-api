@@ -147,8 +147,12 @@ class LegacyPeriodLengthService(
   @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
-    .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
+    .asSequence()
+    .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }
+    .map { periodLength ->
       delete(periodLength, performedByUser ?: serviceUserService.getUsername())
-      LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
-    }.firstOrNull()
+      periodLength
+    }.filter { periodLength -> periodLength.sentenceEntity!!.charge.appearanceCharges.isNotEmpty() }
+    .map { periodLength -> LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!) }
+    .firstOrNull()
 }
