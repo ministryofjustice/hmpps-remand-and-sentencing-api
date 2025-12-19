@@ -52,6 +52,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       ca.court_code as courtCode,
       ca.court_case_reference as courtCaseReference,
       s.sentence_uuid as sentenceUuid,
+      c.charge_uuid as chargeUuid,
       c.offence_code as offenceCode,
       c.offence_start_date as offenceStartDate,
       s.count_number as countNumber,
