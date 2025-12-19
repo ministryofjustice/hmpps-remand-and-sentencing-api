@@ -380,6 +380,10 @@ class SentenceService(
       currentChain.removeAt(currentChain.lastIndex)
     }
   }
+
+  @Transactional(readOnly = true)
+  fun hasSentences(prisonerId: String): Boolean = sentenceRepository.hasNonDeletedSentences(prisonerId)
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
     private val unknownRecallSentenceTypeUuid = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")

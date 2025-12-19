@@ -304,4 +304,21 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     nativeQuery = true,
   )
   fun updateConsecutiveToIdNullByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Query(
+    """
+  SELECT 
+    CASE WHEN COUNT(s) > 0 THEN true ELSE false END
+  FROM SentenceEntity s
+  JOIN s.charge c
+  JOIN c.appearanceCharges ac
+  JOIN ac.appearance ca
+  JOIN ca.courtCase cc
+  WHERE cc.prisonerId = :prisonerId
+    AND s.statusId != 'DELETED'
+  """,
+  )
+  fun hasNonDeletedSentences(
+    @Param("prisonerId") prisonerId: String,
+  ): Boolean
 }
