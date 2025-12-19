@@ -121,7 +121,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Returns a list of sentences with the unknown recall type grouped by appearance",
-    description = "Returns a list of sentences with NREADthe unknown recall type grouped by appearance",
+    description = "Returns a list of sentences with the unknown recall type grouped by appearance",
   )
   @ApiResponses(
     value = [
