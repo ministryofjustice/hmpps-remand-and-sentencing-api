@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_HDC_28
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.IN_HDC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
@@ -974,7 +975,11 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
 
     val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
-    assertThat(historicalRecallSentences!!).hasSize(2)
+    assertThat(historicalRecallSentences!!)
+      .hasSize(2)
+      .allSatisfy {
+        assertThat(it.sentence.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+      }
     assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(
       sentenceOne.sentenceUuid,
       sentenceTwo.sentenceUuid,
