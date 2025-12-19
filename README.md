@@ -5,13 +5,11 @@
 [![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://remand-and-sentencing-api-dev.hmpps.service.justice.gov.uk/swagger-ui.html)
 [![Github Pages](https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white)](https://ministryofjustice.github.io/hmpps-remand-and-sentencing-api)
 
-This is a skeleton project from which to create new kotlin projects from.
+This is the Remand and Sentencing API project.
 
 # Instructions
 
 If this is a HMPPS project then the project will be created as part of bootstrapping - 
-
-```
 
 will build the application and run it and HMPPS Auth within a local docker instance.
 
@@ -19,6 +17,7 @@ will build the application and run it and HMPPS Auth within a local docker insta
 
 ```bash
 docker compose pull && docker compose up --scale hmpps-remand-and-sentencing-api=0
+```
 If this is a HMPPS project then the project will be created as part of bootstrapping - 
 see https://github.com/ministryofjustice/dps-project-bootstrap.
 ## Running tests

@@ -270,9 +270,10 @@ class RecallService(
 
       // deleting the sentence for the legacy recall will delete the recall so it's only required here for DPS
       recallToDelete.statusId = RecallEntityStatus.DELETED
-      recallToDelete.recallSentences.forEach {
-        recallSentenceRepository.delete(it)
+      recallToDelete.recallSentences.forEach { recallSentence ->
+        deleteDpsRecallSentence(recallSentence)
       }
+
       recallRepository.save(recallToDelete)
       eventsToEmit.add(
         EventMetadataCreator.recallEventMetadata(
@@ -292,6 +293,24 @@ class RecallService(
       DeleteRecallResponse.from(recallToDelete),
       (eventsToEmit).toMutableSet(),
     )
+  }
+
+  private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity) {
+    recallSentence.preRecallSentenceStatus?.let { preRecallSentenceStatus ->
+      recallSentence.sentence.statusId = preRecallSentenceStatus
+      recallSentence.sentence.updatedAt = ZonedDateTime.now()
+      recallSentence.sentence.updatedBy = "DELETE RECALL" // TODO  pass in from caller to api - needs setting on the RecallEntity too
+      recallSentence.sentence.updatedPrison = null // TODO pass in from caller to api - needs setting on the RecallEntity too
+
+      sentenceHistoryRepository.save(
+        SentenceHistoryEntity.from(
+          recallSentence.sentence,
+          ChangeSource.DPS,
+        ),
+      )
+    }
+
+    recallSentenceRepository.delete(recallSentence)
   }
 
   private fun deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete: RecallEntity): List<EventMetadata> = recallToDelete.recallSentences.flatMap {
