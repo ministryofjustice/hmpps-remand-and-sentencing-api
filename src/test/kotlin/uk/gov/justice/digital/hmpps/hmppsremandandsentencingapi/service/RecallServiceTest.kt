@@ -124,6 +124,61 @@ class RecallServiceTest {
     verify(exactly = 0) { adjustmentsApiClient.getRecallAdjustment(any(), any()) }
   }
 
+  @Test
+  fun `delete a dps recall restores sentence status, writes history and deletes recall sentence`() {
+    val recallUuid = UUID.randomUUID()
+
+    val sentence = SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = SentenceEntityStatus.ACTIVE,
+      createdBy = "FOO",
+      sentenceServeType = "CONCURRENT",
+      consecutiveTo = null,
+      sentenceType = testNonLegacySentenceType,
+      supersedingSentence = null,
+      charge = testCharge,
+      convictionDate = null,
+      fineAmount = null,
+    )
+
+    val recall = RecallEntity(
+      recallUuid = recallUuid,
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      revocationDate = LocalDate.of(2024, 1, 1),
+      returnToCustodyDate = LocalDate.of(2024, 1, 11),
+      inPrisonOnRevocationDate = false,
+      recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
+      statusId = RecallEntityStatus.ACTIVE,
+      createdByUsername = "FOO",
+      source = EventSource.DPS,
+    )
+
+    val recallSentence = RecallSentenceEntity(
+      recallSentenceUuid = UUID.randomUUID(),
+      sentence = sentence,
+      recall = recall,
+      createdByUsername = "FOO",
+      preRecallSentenceStatus = SentenceEntityStatus.INACTIVE,
+    )
+
+    recall.recallSentences = mutableSetOf(recallSentence)
+
+    every { recallRepository.findOneByRecallUuid(recallUuid) } returns recall
+    every { recallRepository.save(any()) } returns recall
+    every { recallHistoryRepository.save(any()) } returns mockk()
+    every { recallSentenceHistoryRepository.save(any()) } returns mockk()
+
+    val sentenceHistory = slot<SentenceHistoryEntity>()
+    every { sentenceHistoryRepository.save(capture(sentenceHistory)) } answers { firstArg() }
+
+    service.deleteRecall(recallUuid)
+
+    assertThat(sentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+    assertThat(sentence.updatedBy).isEqualTo("DELETE RECALL")
+    assertThat(sentenceHistory.captured.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+    verify { recallSentenceRepository.delete(recallSentence) }
+  }
+
   @Nested
   inner class CreateRecallTests {
     @Test
