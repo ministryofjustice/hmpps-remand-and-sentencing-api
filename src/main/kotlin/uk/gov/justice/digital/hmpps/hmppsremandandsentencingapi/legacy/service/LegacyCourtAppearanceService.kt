@@ -204,17 +204,27 @@ class LegacyCourtAppearanceService(
     val existingCharge = getChargeAtAppearanceUnlessDeleted(lifetimeUuid, lifetimeChargeUuid)
     val performedByUsername = performedByUser ?: serviceUserService.getUsername()
     if (existingCharge != null) {
-      val appearanceCharge = existingCourtAppearance.appearanceCharges.first { it.charge == existingCharge }
-      existingCourtAppearance.appearanceCharges.remove(appearanceCharge)
-      existingCharge.appearanceCharges.remove(appearanceCharge)
-      eventsToEmit.add(
-        EventMetadataCreator.courtAppearanceEventMetadata(
-          existingCourtAppearance.courtCase.prisonerId,
-          existingCourtAppearance.courtCase.caseUniqueIdentifier,
-          existingCourtAppearance.appearanceUuid.toString(),
-          EventType.COURT_APPEARANCE_UPDATED,
-        ),
-      )
+      existingCourtAppearance.appearanceCharges.firstOrNull { it.charge == existingCharge }?.let { appearanceCharge ->
+        existingCourtAppearance.appearanceCharges.remove(appearanceCharge)
+        existingCharge.appearanceCharges.remove(appearanceCharge)
+        appearanceChargeHistoryRepository.save(
+          AppearanceChargeHistoryEntity.removedFrom(
+            appearanceCharge = appearanceCharge,
+            removedBy = performedByUsername,
+            removedPrison = null,
+            ChangeSource.NOMIS,
+          ),
+        )
+        eventsToEmit.add(
+          EventMetadataCreator.courtAppearanceEventMetadata(
+            existingCourtAppearance.courtCase.prisonerId,
+            existingCourtAppearance.courtCase.caseUniqueIdentifier,
+            existingCourtAppearance.appearanceUuid.toString(),
+            EventType.COURT_APPEARANCE_UPDATED,
+          ),
+        )
+      }
+
       if (existingCharge.hasNoLiveCourtAppearances()) {
         existingCharge.delete(performedByUsername)
         chargeHistoryRepository.save(
@@ -233,14 +243,6 @@ class LegacyCourtAppearanceService(
           ),
         )
       }
-      appearanceChargeHistoryRepository.save(
-        AppearanceChargeHistoryEntity.removedFrom(
-          appearanceCharge = appearanceCharge,
-          removedBy = performedByUsername,
-          removedPrison = null,
-          ChangeSource.NOMIS,
-        ),
-      )
     }
 
     return eventsToEmit

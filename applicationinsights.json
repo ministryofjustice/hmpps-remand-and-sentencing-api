@@ -50,6 +50,17 @@
         "percentage": 1
       },
       {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "url.path",
+            "value": "/legacy/prisoner/.*/court-case-uuids",
+            "matchType": "regexp"
+          }
+        ],
+        "percentage": 1
+      },
+      {
         "telemetryType": "dependency",
         "attributes": [
           {
