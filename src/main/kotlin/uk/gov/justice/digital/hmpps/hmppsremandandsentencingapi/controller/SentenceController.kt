@@ -121,7 +121,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Returns a list of sentences with the unknown recall type grouped by appearance",
-    description = "Returns a list of sentences with the unknown recall type grouped by appearance",
+    description = "Returns a list of sentences with NREADthe unknown recall type grouped by appearance",
   )
   @ApiResponses(
     value = [
@@ -131,4 +131,21 @@ class SentenceController(private val sentenceService: SentenceService, private v
     ],
   )
   fun getSentencesWithUnknownRecallType(@RequestParam sentenceUuids: List<UUID>): List<MissingSentenceAppearance> = sentenceService.getSentencesWithUnknownRecallType(sentenceUuids)
+
+  @GetMapping("/sentence/has-sentences/{prisonerId}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Check if prisoner has any sentences (non-deleted)",
+    description = "Returns true if the prisoner has at least one sentence, could be on any Court Case",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns true or false"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun hasSentences(
+    @PathVariable prisonerId: String,
+  ): Boolean = sentenceService.hasSentences(prisonerId)
 }
