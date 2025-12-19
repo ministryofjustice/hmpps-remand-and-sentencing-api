@@ -9,6 +9,7 @@ data class MissingSentenceInformationDetails(
   val courtCode: String,
   val courtCaseReference: String?,
   val sentenceUuid: UUID,
+  val chargeUuid: UUID,
   val offenceCode: String,
   val offenceStartDate: Date?,
   val countNumber: String?,

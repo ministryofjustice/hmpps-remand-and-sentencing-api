@@ -9,6 +9,7 @@ data class SentenceCardDetails(
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val sentenceUuid: UUID,
+  val chargeUuid: UUID,
   val countNumber: String?,
   val sentenceType: String,
   val periodLengths: List<PeriodLength>,
@@ -16,32 +17,34 @@ data class SentenceCardDetails(
   val convictedDate: LocalDate?,
 ) {
   companion object {
-    fun from(missingSentenceInformationDetails: MissingSentenceInformationDetails): SentenceCardDetails {
-      val periodLengths = if (missingSentenceInformationDetails.periodLengthUuid != null) {
-        listOf(
+    fun fromList(sentenceRows: List<MissingSentenceInformationDetails>): SentenceCardDetails {
+      val first = sentenceRows.first()
+
+      val periodLengths = sentenceRows
+        .filter { it.periodLengthUuid != null }
+        .map { row ->
           PeriodLength(
-            years = missingSentenceInformationDetails.years,
-            months = missingSentenceInformationDetails.months,
-            weeks = missingSentenceInformationDetails.weeks,
-            days = missingSentenceInformationDetails.days,
-            periodOrder = missingSentenceInformationDetails.periodOrder!!,
-            periodLengthType = PeriodLengthType.valueOf(missingSentenceInformationDetails.periodLengthType!!),
+            years = row.years,
+            months = row.months,
+            weeks = row.weeks,
+            days = row.days,
+            periodOrder = row.periodOrder!!,
+            periodLengthType = PeriodLengthType.valueOf(row.periodLengthType!!),
             legacyData = null,
-            periodLengthUuid = missingSentenceInformationDetails.periodLengthUuid,
-          ),
-        )
-      } else {
-        emptyList()
-      }
+            periodLengthUuid = row.periodLengthUuid!!,
+          )
+        }
+
       return SentenceCardDetails(
-        offenceCode = missingSentenceInformationDetails.offenceCode,
-        offenceStartDate = missingSentenceInformationDetails.offenceStartDate?.toLocalDate(),
-        sentenceUuid = missingSentenceInformationDetails.sentenceUuid,
-        countNumber = missingSentenceInformationDetails.countNumber,
-        sentenceType = missingSentenceInformationDetails.sentenceTypeDescription,
-        periodLengths = periodLengths,
-        sentenceServeType = missingSentenceInformationDetails.sentenceServeType,
-        convictedDate = missingSentenceInformationDetails.convictionDate?.toLocalDate(),
+        offenceCode = first.offenceCode,
+        offenceStartDate = first.offenceStartDate?.toLocalDate(),
+        sentenceUuid = first.sentenceUuid,
+        chargeUuid = first.chargeUuid,
+        countNumber = first.countNumber,
+        sentenceType = first.sentenceTypeDescription,
+        periodLengths = periodLengths, // This is now the full list
+        sentenceServeType = first.sentenceServeType,
+        convictedDate = first.convictionDate?.toLocalDate(),
       )
     }
   }

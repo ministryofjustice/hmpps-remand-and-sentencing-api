@@ -1,7 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.dao.CannotAcquireLockException
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
@@ -141,10 +144,15 @@ class LegacyPeriodLengthService(
       }
     } ?: throw EntityNotFoundException("No period-length found with UUID $periodLengthUuid")
 
-  @Transactional
+  @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
-    .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }.map { periodLength ->
+    .asSequence()
+    .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }
+    .map { periodLength ->
       delete(periodLength, performedByUser ?: serviceUserService.getUsername())
-      LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!)
-    }.firstOrNull()
+      periodLength
+    }.filter { periodLength -> periodLength.sentenceEntity!!.charge.appearanceCharges.isNotEmpty() }
+    .map { periodLength -> LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!) }
+    .firstOrNull()
 }

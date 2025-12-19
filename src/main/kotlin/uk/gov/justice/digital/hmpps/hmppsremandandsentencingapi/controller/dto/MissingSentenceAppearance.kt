@@ -24,7 +24,10 @@ data class MissingSentenceAppearance(
           courtCode = first.courtCode,
           courtCaseReference = first.courtCaseReference,
           appearanceDate = first.appearanceDate.toLocalDate(),
-          sentences = appearanceDetails.map(SentenceCardDetails::from),
+          sentences = appearanceDetails
+            .groupBy { it.sentenceUuid }
+            .values
+            .map(SentenceCardDetails::fromList),
         )
       }
   }
