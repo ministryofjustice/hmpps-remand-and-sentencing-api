@@ -54,6 +54,7 @@ class RecallServiceTest {
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository = mockk(relaxed = true)
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
   private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
+  private val serviceUserService: ServiceUserService = mockk(relaxed = true)
 
   private val service = RecallService(
     recallRepository,
@@ -65,6 +66,7 @@ class RecallServiceTest {
     recallSentenceHistoryRepository,
     adjustmentsApiClient,
     sentenceHistoryRepository,
+    serviceUserService,
   )
 
   @Test
@@ -167,6 +169,7 @@ class RecallServiceTest {
     every { recallRepository.save(any()) } returns recall
     every { recallHistoryRepository.save(any()) } returns mockk()
     every { recallSentenceHistoryRepository.save(any()) } returns mockk()
+    every { serviceUserService.getUsername() } returns "DELETE RECALL"
 
     val sentenceHistory = slot<SentenceHistoryEntity>()
     every { sentenceHistoryRepository.save(capture(sentenceHistory)) } answers { firstArg() }
@@ -204,6 +207,8 @@ class RecallServiceTest {
       val recallSentenceSaved = slot<RecallSentenceEntity>()
       val sentenceHistory = slot<SentenceHistoryEntity>()
       every { recallSentenceRepository.save(capture(recallSentenceSaved)) } answers { firstArg() }
+      every { recallHistoryRepository.save(any()) } answers { firstArg() }
+      every { recallSentenceHistoryRepository.save(any()) } answers { firstArg() }
       every { sentenceHistoryRepository.save(capture(sentenceHistory)) } answers { firstArg() }
 
       service.createRecall(

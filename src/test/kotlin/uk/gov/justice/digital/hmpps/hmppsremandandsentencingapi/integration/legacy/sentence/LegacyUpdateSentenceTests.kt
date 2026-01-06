@@ -41,13 +41,23 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recalls[0].recallUuid)
-    assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.EDITED)
-    assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
+    assertThat(historicalRecalls).hasSize(2)
+    val createdRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
+    assertThat(createdRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
+    assertThat(createdRecallHistoryEntry.historyCreatedAt).isNotNull()
+    assertThat(createdRecallHistoryEntry.returnToCustodyDate).isEqualTo(LocalDate.of(2023, 1, 1))
 
-    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
-    assertThat(historicalRecallSentences!!).hasSize(1)
-    assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(lifetimeUuid)
+    val historicalRecallSentencesForCreate = recallSentenceHistoryRepository.findByRecallHistoryId(createdRecallHistoryEntry.id)
+    assertThat(historicalRecallSentencesForCreate!!).hasSize(1)
+    assertThat(historicalRecallSentencesForCreate.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(lifetimeUuid)
+
+    val editRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.EDITED }!!
+    assertThat(editRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.EDITED)
+    assertThat(editRecallHistoryEntry.historyCreatedAt).isNotNull()
+    assertThat(editRecallHistoryEntry.returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
+
+    val historicalRecallSentencesForEdit = recallSentenceHistoryRepository.findByRecallHistoryId(editRecallHistoryEntry.id)
+    assertThat(historicalRecallSentencesForEdit!!).hasSize(1)
   }
 
   @Test

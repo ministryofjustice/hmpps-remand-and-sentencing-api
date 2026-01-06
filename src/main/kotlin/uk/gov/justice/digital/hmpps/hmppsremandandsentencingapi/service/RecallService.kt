@@ -52,11 +52,14 @@ class RecallService(
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val adjustmentsApiClient: AdjustmentsApiClient,
   private val sentenceHistoryRepository: SentenceHistoryRepository,
+  private val serviceUserService: ServiceUserService,
 ) {
   @Transactional
   fun createRecall(createRecall: CreateRecall, recallUuid: UUID? = null): RecordResponse<SaveRecallResponse> {
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
     val recall = recallRepository.save(RecallEntity.fromDps(createRecall, recallType!!, recallUuid))
+    val recallHistory =
+      recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.DPS))
     createRecall.sentenceIds?.let { sentenceIds ->
       sentenceRepository.findBySentenceUuidIn(sentenceIds)
         .forEach {
@@ -64,7 +67,7 @@ class RecallService(
           if (isPossibleForSentence != IsRecallPossible.YES) {
             throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
-          recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
+          val recallSentence = recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recall, it))
           it.statusId = SentenceEntityStatus.ACTIVE
           it.updatedAt = ZonedDateTime.now()
           it.updatedBy = createRecall.createdByUsername
@@ -72,6 +75,13 @@ class RecallService(
           sentenceHistoryRepository.save(
             SentenceHistoryEntity.from(
               it,
+              ChangeSource.DPS,
+            ),
+          )
+          recallSentenceHistoryRepository.save(
+            RecallSentenceHistoryEntity.from(
+              recallHistory,
+              recallSentence,
               ChangeSource.DPS,
             ),
           )
@@ -115,19 +125,6 @@ class RecallService(
         requireNotNull(recallToUpdate.revocationDate) { "Can only update DPS recall which requires revocation date" }
       val originalRTCDate = recallToUpdate.returnToCustodyDate
 
-      val recallHistoryEntity =
-        recallHistoryRepository.save(
-          RecallHistoryEntity.from(
-            recallToUpdate,
-            RecallEntityStatus.EDITED,
-            ChangeSource.DPS,
-          ),
-        )
-      recallToUpdate.recallSentences.forEach {
-        recallSentenceHistoryRepository.save(
-          RecallSentenceHistoryEntity.from(recallHistoryEntity, it, ChangeSource.DPS).apply {},
-        )
-      }
       val recallTypeEntity = recallTypeRepository.findOneByCode(recall.recallTypeCode)!!
 
       val previousSentenceIds = recallToUpdate.recallSentences.map { it.sentence.sentenceUuid }
@@ -157,6 +154,19 @@ class RecallService(
         updatedPrison = recall.createdByPrison
         calculationRequestId = recall.calculationRequestId
       }
+      val recallHistoryEntity =
+        recallHistoryRepository.save(
+          RecallHistoryEntity.from(
+            recallToUpdate,
+            RecallEntityStatus.EDITED,
+            ChangeSource.DPS,
+          ),
+        )
+      recallToUpdate.recallSentences.forEach {
+        recallSentenceHistoryRepository.save(
+          RecallSentenceHistoryEntity.from(recallHistoryEntity, it, ChangeSource.DPS).apply {},
+        )
+      }
       val savedRecall = recallRepository.save(recallToUpdate)
       updateAdjustmentsIfRequired(
         recallToUpdate.recallUuid,
@@ -167,7 +177,7 @@ class RecallService(
         recall.returnToCustodyDate,
       )
 
-      return RecordResponse(
+      RecordResponse(
         SaveRecallResponse.from(savedRecall),
         mutableSetOf(
           EventMetadataCreator.recallEventMetadata(
@@ -244,23 +254,6 @@ class RecallService(
     if (isLegacyRecall) {
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
-      val recallHistoryEntity =
-        recallHistoryRepository.save(
-          RecallHistoryEntity.from(
-            recallToDelete,
-            RecallEntityStatus.DELETED,
-            ChangeSource.DPS,
-          ),
-        )
-      recallToDelete.recallSentences.forEach {
-        recallSentenceHistoryRepository.save(
-          RecallSentenceHistoryEntity.from(
-            recallHistoryEntity,
-            it,
-            ChangeSource.DPS,
-          ),
-        )
-      }
       previousRecall = recallToDelete.recallSentences.map {
         it.sentence
       }.flatMap { it.recallSentences }
@@ -270,10 +263,19 @@ class RecallService(
 
       // deleting the sentence for the legacy recall will delete the recall so it's only required here for DPS
       recallToDelete.statusId = RecallEntityStatus.DELETED
+      recallToDelete.updatedBy = serviceUserService.getUsername()
+      recallToDelete.updatedPrison = null // unknown on delete
+      recallToDelete.updatedAt = ZonedDateTime.now()
       recallToDelete.recallSentences.forEach { recallSentence ->
         deleteDpsRecallSentence(recallSentence)
       }
-
+      recallHistoryRepository.save(
+        RecallHistoryEntity.from(
+          recallToDelete,
+          RecallEntityStatus.DELETED,
+          ChangeSource.DPS,
+        ),
+      )
       recallRepository.save(recallToDelete)
       eventsToEmit.add(
         EventMetadataCreator.recallEventMetadata(
@@ -299,8 +301,8 @@ class RecallService(
     recallSentence.preRecallSentenceStatus?.let { preRecallSentenceStatus ->
       recallSentence.sentence.statusId = preRecallSentenceStatus
       recallSentence.sentence.updatedAt = ZonedDateTime.now()
-      recallSentence.sentence.updatedBy = "DELETE RECALL" // TODO  pass in from caller to api - needs setting on the RecallEntity too
-      recallSentence.sentence.updatedPrison = null // TODO pass in from caller to api - needs setting on the RecallEntity too
+      recallSentence.sentence.updatedBy = serviceUserService.getUsername()
+      recallSentence.sentence.updatedPrison = null // unknown on delete
 
       sentenceHistoryRepository.save(
         SentenceHistoryEntity.from(
@@ -372,9 +374,13 @@ class RecallService(
     val sentences = sentenceRepository.findBySentenceUuidIn(request.sentenceIds)
     val isPossibleForEachSentence = sentences.map { it to isRecallPossibleForSentence(it, request.recallType) }
     val isPossible = isPossibleForEachSentence.map { it.second }.minBy { it.priority }
-    val notPossibleSentences = isPossibleForEachSentence.filter { it.second === isPossible }.map { it.first.sentenceUuid }
+    val notPossibleSentences =
+      isPossibleForEachSentence.filter { it.second === isPossible }.map { it.first.sentenceUuid }
 
-    return IsRecallPossibleResponse(isPossible, if (isPossible != IsRecallPossible.YES) notPossibleSentences else emptyList())
+    return IsRecallPossibleResponse(
+      isPossible,
+      if (isPossible != IsRecallPossible.YES) notPossibleSentences else emptyList(),
+    )
   }
 
   private fun isRecallPossibleForSentence(sentence: SentenceEntity, recallType: RecallType): IsRecallPossible {
@@ -390,7 +396,16 @@ class RecallService(
   ): IsRecallPossible = when (classification) {
     SentenceTypeClassification.STANDARD -> IsRecallPossible.YES
     SentenceTypeClassification.EXTENDED, SentenceTypeClassification.INDETERMINATE -> if (recallType == RecallType.LR) IsRecallPossible.YES else IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
-    SentenceTypeClassification.SOPC -> if (listOf(RecallType.LR, RecallType.FTR_28).contains(recallType)) IsRecallPossible.YES else IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    SentenceTypeClassification.SOPC -> if (listOf(
+        RecallType.LR,
+        RecallType.FTR_28,
+      ).contains(recallType)
+    ) {
+      IsRecallPossible.YES
+    } else {
+      IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    }
+
     else -> IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
   }
 
