@@ -135,8 +135,13 @@ class RecallService(
       val sentencesToDelete = previousSentenceIds.filterNot { (recall.sentenceIds ?: emptyList()).contains(it) }
       val sentencesToCreate = recall.sentenceIds?.filterNot { previousSentenceIds.contains(it) } ?: listOf()
 
-      recallToUpdate.recallSentences.filter { sentencesToDelete.contains(it.sentence.sentenceUuid) }.forEach {
-        recallSentenceRepository.delete(it)
+      val recallSentencesToDelete = recallToUpdate.recallSentences
+        .filter { sentencesToDelete.contains(it.sentence.sentenceUuid) }
+
+      recallToUpdate.recallSentences.removeAll(recallSentencesToDelete)
+
+      recallSentencesToDelete.forEach {
+        deleteDpsRecallSentence(it, recall.createdByUsername, recall.createdByPrison)
       }
       sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
         .forEach {
@@ -145,6 +150,13 @@ class RecallService(
             throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recallToUpdate, it))
+          it.statusId = SentenceEntityStatus.ACTIVE
+          it.updatedAt = ZonedDateTime.now()
+          it.updatedBy = recall.createdByUsername
+          it.updatedPrison = recall.createdByPrison
+          sentenceHistoryRepository.save(
+            SentenceHistoryEntity.from(it, ChangeSource.DPS),
+          )
         }
 
       recallToUpdate.apply {
@@ -295,12 +307,13 @@ class RecallService(
     )
   }
 
-  private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity) {
+  // TODO  pass in updatedBy and updatedPrison without defaults (affects  DELETE route - needs setting on the RecallEntity too)
+  private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity, updatedBy: String? = "DELETE RECALL", updatedPrison: String? = null) {
     recallSentence.preRecallSentenceStatus?.let { preRecallSentenceStatus ->
       recallSentence.sentence.statusId = preRecallSentenceStatus
       recallSentence.sentence.updatedAt = ZonedDateTime.now()
-      recallSentence.sentence.updatedBy = "DELETE RECALL" // TODO  pass in from caller to api - needs setting on the RecallEntity too
-      recallSentence.sentence.updatedPrison = null // TODO pass in from caller to api - needs setting on the RecallEntity too
+      recallSentence.sentence.updatedBy = updatedBy
+      recallSentence.sentence.updatedPrison = updatedPrison
 
       sentenceHistoryRepository.save(
         SentenceHistoryEntity.from(
