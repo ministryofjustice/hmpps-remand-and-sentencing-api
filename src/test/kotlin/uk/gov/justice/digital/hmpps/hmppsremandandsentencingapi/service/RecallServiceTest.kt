@@ -304,7 +304,7 @@ class RecallServiceTest {
             sentence = removedSentence,
             recall = this,
             createdByUsername = "FOO",
-            preRecallSentenceStatus = SentenceEntityStatus.INACTIVE, // ✅ minimal change
+            preRecallSentenceStatus = SentenceEntityStatus.INACTIVE,
           ),
         )
       }

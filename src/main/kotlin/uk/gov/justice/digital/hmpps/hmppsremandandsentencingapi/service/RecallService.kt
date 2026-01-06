@@ -309,7 +309,7 @@ class RecallService(
     )
   }
 
-  // The updatedPrison is unknown on DELETE
+  // This gets called on UPDATE and DELETE of a recall. The updatedPrison is unknown on DELETE
   private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity, updatedPrison: String? = null) {
     recallSentence.preRecallSentenceStatus?.let { preRecallSentenceStatus ->
       recallSentence.sentence.statusId = preRecallSentenceStatus
