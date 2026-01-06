@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Perio
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
@@ -32,7 +31,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.time.ZonedDateTime
@@ -47,7 +45,6 @@ class SentenceService(
   private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val recallSentenceRepository: RecallSentenceRepository,
-  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val recallHistoryRepository: RecallHistoryRepository,
 ) {
 
@@ -204,19 +201,10 @@ class SentenceService(
           if (recall.recallSentences.size == 1) {
             deleteRecallWithOnlyOneSentence(recallSentences.first(), eventsToEmit)
           } else {
-            val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED, ChangeSource.DPS))
-            recallSentenceHistoryRepository.saveAll(
-              recallSentences.map {
-                RecallSentenceHistoryEntity.from(
-                  recallHistory,
-                  it,
-                  ChangeSource.DPS,
-                )
-              },
-            )
             recall.updatedAt = ZonedDateTime.now()
             recall.updatedBy = serviceUserService.getUsername()
             recallSentences.forEach { recallSentenceRepository.delete(it) }
+            recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED, ChangeSource.DPS))
           }
         }
       }
@@ -227,10 +215,11 @@ class SentenceService(
     onlyRecallSentence: RecallSentenceEntity,
     eventsToEmit: MutableSet<EventMetadata>,
   ) {
-    val recallHistory =
-      recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, RecallEntityStatus.DELETED, ChangeSource.DPS))
     onlyRecallSentence.recall.statusId = RecallEntityStatus.DELETED
-    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, onlyRecallSentence, ChangeSource.DPS))
+    onlyRecallSentence.recall.updatedBy = serviceUserService.getUsername()
+    onlyRecallSentence.recall.updatedPrison = null // unknown on delete
+    onlyRecallSentence.recall.updatedAt = ZonedDateTime.now()
+    recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, RecallEntityStatus.DELETED, ChangeSource.DPS))
     recallSentenceRepository.delete(onlyRecallSentence)
     eventsToEmit.add(
       EventMetadataCreator.recallEventMetadata(

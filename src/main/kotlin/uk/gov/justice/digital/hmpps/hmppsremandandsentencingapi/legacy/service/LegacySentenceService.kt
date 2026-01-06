@@ -154,7 +154,7 @@ class LegacySentenceService(
         legacySentenceType?.recallType ?: defaultRecallType,
       ),
     )
-    recallSentenceRepository.save(
+    val recallSentence = recallSentenceRepository.save(
       RecallSentenceEntity.from(
         sentence,
         createdSentence,
@@ -163,6 +163,8 @@ class LegacySentenceService(
         legacyData,
       ),
     )
+    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.NOMIS))
+    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, recallSentence, ChangeSource.NOMIS))
   }
 
   fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID, performedByUser: String): ChargeEntity {
@@ -361,6 +363,7 @@ class LegacySentenceService(
   private fun updateRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
     val latestRecall = updatedSentence.latestRecall()
     if (latestRecall != null) {
+      latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
       val recallHistoryEntity =
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
@@ -378,7 +381,6 @@ class LegacySentenceService(
           ),
         )
       }
-      latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
     }
   }
 
@@ -425,15 +427,6 @@ class LegacySentenceService(
           RecallHistoryEntity.from(
             recall,
             RecallEntityStatus.EDITED,
-            ChangeSource.NOMIS,
-          ),
-        )
-      }
-      recall.recallSentences.forEach { recallSentence ->
-        recallSentenceHistoryRepository.save(
-          RecallSentenceHistoryEntity.from(
-            recallHistoryEntity,
-            recallSentence,
             ChangeSource.NOMIS,
           ),
         )
