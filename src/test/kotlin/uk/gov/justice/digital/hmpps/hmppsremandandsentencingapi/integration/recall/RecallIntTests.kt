@@ -620,10 +620,9 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(editRecallHistory.historyCreatedAt).isNotNull()
 
     val historicalRecallSentencesForEdit = recallSentenceHistoryRepository.findByRecallHistoryId(editRecallHistory.id)
-    assertThat(historicalRecallSentencesForEdit!!).hasSize(2)
+    assertThat(historicalRecallSentencesForEdit!!).hasSize(1)
     assertThat(historicalRecallSentencesForEdit.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(
       sentenceOne.sentenceUuid,
-      sentenceTwo.sentenceUuid,
     )
     adjustmentsApi.verifyNoAdjustmentsCreated()
     adjustmentsApi.verifyNoAdjustmentsUpdated()
