@@ -25,11 +25,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallSentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -51,6 +54,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
@@ -91,6 +96,8 @@ class BookingService(
   private val recallRepository: RecallRepository,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+  private val recallHistoryRepository: RecallHistoryRepository,
+  private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
 ) {
 
   @Transactional
@@ -439,7 +446,9 @@ class BookingService(
         EventType.RECALL_INSERTED,
       ),
     )
-    recallSentenceRepository.save(RecallSentenceEntity.fromBooking(createdSentence, recall, tracking.createdByUsername, recallSentenceLegacyData))
+    val recallSentence = recallSentenceRepository.save(RecallSentenceEntity.fromBooking(createdSentence, recall, tracking.createdByUsername, recallSentenceLegacyData))
+    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.NOMIS))
+    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, recallSentence, ChangeSource.NOMIS))
   }
 
   companion object {
