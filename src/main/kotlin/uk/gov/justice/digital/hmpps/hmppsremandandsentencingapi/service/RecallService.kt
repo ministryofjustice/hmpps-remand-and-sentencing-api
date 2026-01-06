@@ -132,8 +132,13 @@ class RecallService(
       val sentencesToDelete = previousSentenceIds.filterNot { (recall.sentenceIds ?: emptyList()).contains(it) }
       val sentencesToCreate = recall.sentenceIds?.filterNot { previousSentenceIds.contains(it) } ?: listOf()
 
-      recallToUpdate.recallSentences.filter { sentencesToDelete.contains(it.sentence.sentenceUuid) }.forEach {
-        recallSentenceRepository.delete(it)
+      val recallSentencesToDelete = recallToUpdate.recallSentences
+        .filter { sentencesToDelete.contains(it.sentence.sentenceUuid) }
+
+      recallToUpdate.recallSentences.removeAll(recallSentencesToDelete)
+
+      recallSentencesToDelete.forEach {
+        deleteDpsRecallSentence(recallSentence = it, updatedPrison = recall.createdByPrison)
       }
       sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
         .forEach {
@@ -142,6 +147,13 @@ class RecallService(
             throw IllegalStateException("Tried to create a recall for sentence (${it.sentenceUuid}) but not possible due to $isPossibleForSentence")
           }
           recallSentenceRepository.save(RecallSentenceEntity.placeholderEntity(recallToUpdate, it))
+          it.statusId = SentenceEntityStatus.ACTIVE
+          it.updatedAt = ZonedDateTime.now()
+          it.updatedBy = recall.createdByUsername
+          it.updatedPrison = recall.createdByPrison
+          sentenceHistoryRepository.save(
+            SentenceHistoryEntity.from(it, ChangeSource.DPS),
+          )
         }
 
       recallToUpdate.apply {
@@ -297,12 +309,13 @@ class RecallService(
     )
   }
 
-  private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity) {
+  // This gets called on UPDATE and DELETE of a recall. The updatedPrison is unknown on DELETE
+  private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity, updatedPrison: String? = null) {
     recallSentence.preRecallSentenceStatus?.let { preRecallSentenceStatus ->
       recallSentence.sentence.statusId = preRecallSentenceStatus
       recallSentence.sentence.updatedAt = ZonedDateTime.now()
       recallSentence.sentence.updatedBy = serviceUserService.getUsername()
-      recallSentence.sentence.updatedPrison = null // unknown on delete
+      recallSentence.sentence.updatedPrison = updatedPrison
 
       sentenceHistoryRepository.save(
         SentenceHistoryEntity.from(
