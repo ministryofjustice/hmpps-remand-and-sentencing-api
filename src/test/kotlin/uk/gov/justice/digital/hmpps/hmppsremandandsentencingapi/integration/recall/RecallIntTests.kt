@@ -604,15 +604,25 @@ class RecallIntTests : IntegrationTestBase() {
       .contains(sentenceTwo.sentenceUuid.toString())
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(uuid)
-    assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.EDITED)
-    assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
+    assertThat(historicalRecalls).hasSize(2)
+    val createRecallHistory = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
+    assertThat(createRecallHistory.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
+    assertThat(createRecallHistory.historyCreatedAt).isNotNull()
 
-    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
-    assertThat(historicalRecallSentences!!).hasSize(2)
-    assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(
+    val historicalRecallSentencesForCreate = recallSentenceHistoryRepository.findByRecallHistoryId(createRecallHistory.id)
+    assertThat(historicalRecallSentencesForCreate!!).hasSize(2)
+    assertThat(historicalRecallSentencesForCreate.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(
       sentenceOne.sentenceUuid,
       sentenceTwo.sentenceUuid,
+    )
+    val editRecallHistory = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.EDITED }!!
+    assertThat(editRecallHistory.historyStatusId).isEqualTo(RecallEntityStatus.EDITED)
+    assertThat(editRecallHistory.historyCreatedAt).isNotNull()
+
+    val historicalRecallSentencesForEdit = recallSentenceHistoryRepository.findByRecallHistoryId(editRecallHistory.id)
+    assertThat(historicalRecallSentencesForEdit!!).hasSize(1)
+    assertThat(historicalRecallSentencesForEdit.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(
+      sentenceOne.sentenceUuid,
     )
     adjustmentsApi.verifyNoAdjustmentsCreated()
     adjustmentsApi.verifyNoAdjustmentsUpdated()
@@ -970,11 +980,12 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("recall.deleted")
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(createRecall.recallUuid)
-    assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
-    assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
+    assertThat(historicalRecalls).hasSize(2)
+    val createRecallHistory = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
+    assertThat(createRecallHistory.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
+    assertThat(createRecallHistory.historyCreatedAt).isNotNull()
 
-    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
+    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(createRecallHistory.id)
     assertThat(historicalRecallSentences!!)
       .hasSize(2)
       .allSatisfy {
@@ -984,6 +995,12 @@ class RecallIntTests : IntegrationTestBase() {
       sentenceOne.sentenceUuid,
       sentenceTwo.sentenceUuid,
     )
+    val deleteRecallHistory = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.DELETED }!!
+    assertThat(deleteRecallHistory.historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
+    assertThat(deleteRecallHistory.historyCreatedAt).isNotNull()
+    assertThat(deleteRecallHistory.updatedBy).isEqualTo("SOME_USER")
+    assertThat(deleteRecallHistory.updatedPrison).isNull()
+    assertThat(recallSentenceHistoryRepository.findByRecallHistoryId(deleteRecallHistory.id)).isEmpty()
     adjustmentsApi.verifyAdjustmentDeleted(adjustment.id)
   }
 
@@ -1076,13 +1093,21 @@ class RecallIntTests : IntegrationTestBase() {
       .extracting<String> { it.eventType }.contains("recall.deleted", "sentence.deleted")
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recall.recallUuid)
-    assertThat(historicalRecalls).hasSize(1)
-    assertThat(historicalRecalls[0].historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
-    assertThat(historicalRecalls[0].historyCreatedAt).isNotNull()
+    assertThat(historicalRecalls).hasSize(2)
+    val createdRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
+    assertThat(createdRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
+    assertThat(createdRecallHistoryEntry.historyCreatedAt).isNotNull()
 
-    val historicalRecallSentences = recallSentenceHistoryRepository.findByRecallHistoryId(historicalRecalls[0].id)
-    assertThat(historicalRecallSentences!!).hasSize(1)
-    assertThat(historicalRecallSentences.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(legacySentenceUuid)
+    val historicalRecallSentencesForCreate = recallSentenceHistoryRepository.findByRecallHistoryId(createdRecallHistoryEntry.id)
+    assertThat(historicalRecallSentencesForCreate!!).hasSize(1)
+    assertThat(historicalRecallSentencesForCreate.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(legacySentenceUuid)
+
+    val deletedRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.DELETED }!!
+    assertThat(deletedRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
+    assertThat(deletedRecallHistoryEntry.historyCreatedAt).isNotNull()
+
+    val historicalRecallSentencesForDelete = recallSentenceHistoryRepository.findByRecallHistoryId(deletedRecallHistoryEntry.id)
+    assertThat(historicalRecallSentencesForDelete!!).hasSize(0)
   }
 
   @Test

@@ -54,6 +54,7 @@ class RecallServiceTest {
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository = mockk(relaxed = true)
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
   private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
+  private val serviceUserService: ServiceUserService = mockk(relaxed = true)
 
   private val service = RecallService(
     recallRepository,
@@ -65,6 +66,7 @@ class RecallServiceTest {
     recallSentenceHistoryRepository,
     adjustmentsApiClient,
     sentenceHistoryRepository,
+    serviceUserService,
   )
 
   @Test
@@ -167,6 +169,7 @@ class RecallServiceTest {
     every { recallRepository.save(any()) } returns recall
     every { recallHistoryRepository.save(any()) } returns mockk()
     every { recallSentenceHistoryRepository.save(any()) } returns mockk()
+    every { serviceUserService.getUsername() } returns "DELETE RECALL"
 
     val sentenceHistory = slot<SentenceHistoryEntity>()
     every { sentenceHistoryRepository.save(capture(sentenceHistory)) } answers { firstArg() }
@@ -204,6 +207,8 @@ class RecallServiceTest {
       val recallSentenceSaved = slot<RecallSentenceEntity>()
       val sentenceHistory = slot<SentenceHistoryEntity>()
       every { recallSentenceRepository.save(capture(recallSentenceSaved)) } answers { firstArg() }
+      every { recallHistoryRepository.save(any()) } answers { firstArg() }
+      every { recallSentenceHistoryRepository.save(any()) } answers { firstArg() }
       every { sentenceHistoryRepository.save(capture(sentenceHistory)) } answers { firstArg() }
 
       service.createRecall(
@@ -240,6 +245,131 @@ class RecallServiceTest {
           },
         )
       }
+    }
+
+    @Test
+    fun `update a dps recall when removing one sentence and adding another updates recall sentences and writes history`() {
+      // recall starts with TWO sentences
+      val recallUuid = UUID.randomUUID()
+
+      val keptSentenceUuid = UUID.randomUUID()
+      val removedSentenceUuid = UUID.randomUUID()
+
+      val keptSentence = SentenceEntity(
+        sentenceUuid = keptSentenceUuid,
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = testStandardSentenceType,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+      )
+
+      val removedSentence = SentenceEntity(
+        sentenceUuid = removedSentenceUuid,
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = testStandardSentenceType,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+      )
+
+      val recallToUpdate = RecallEntity(
+        recallUuid = recallUuid,
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = LocalDate.of(2024, 1, 11),
+        inPrisonOnRevocationDate = false,
+        recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
+        statusId = RecallEntityStatus.ACTIVE,
+        createdByUsername = "FOO",
+        source = EventSource.DPS,
+      ).apply {
+        recallSentences = mutableSetOf(
+          RecallSentenceEntity(
+            recallSentenceUuid = UUID.randomUUID(),
+            sentence = keptSentence,
+            recall = this,
+            createdByUsername = "FOO",
+          ),
+          RecallSentenceEntity(
+            recallSentenceUuid = UUID.randomUUID(),
+            sentence = removedSentence,
+            recall = this,
+            createdByUsername = "FOO",
+            preRecallSentenceStatus = SentenceEntityStatus.INACTIVE,
+          ),
+        )
+      }
+
+      // New sentence to add
+      val newSentenceUuid = UUID.randomUUID()
+      val newSentence = SentenceEntity(
+        sentenceUuid = newSentenceUuid,
+        statusId = SentenceEntityStatus.INACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = testStandardSentenceType,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+      )
+
+      every { recallRepository.findOneByRecallUuid(recallUuid) } returns recallToUpdate
+      every { recallHistoryRepository.save(any()) } returns mockk()
+      every { recallSentenceHistoryRepository.save(any()) } returns mockk()
+      every { recallTypeRepository.findOneByCode(any()) } returns RecallTypeEntity(0, RecallType.LR, "Standard")
+      every { sentenceRepository.findBySentenceUuidIn(match { it == listOf(newSentenceUuid) }) } returns listOf(newSentence)
+
+      val deletedRecallSentenceSlot = slot<RecallSentenceEntity>()
+      every { recallSentenceRepository.delete(capture(deletedRecallSentenceSlot)) } returns Unit
+
+      val sentenceHistorySaves = mutableListOf<SentenceHistoryEntity>()
+      every { sentenceHistoryRepository.save(capture(sentenceHistorySaves)) } answers { firstArg() }
+      every { recallSentenceRepository.save(any()) } answers {
+        val saved = firstArg<RecallSentenceEntity>()
+        recallToUpdate.recallSentences.add(saved)
+        saved
+      }
+      val savedRecallSlot = slot<RecallEntity>()
+      every { recallRepository.save(capture(savedRecallSlot)) } answers { firstArg() }
+
+      service.updateRecall(
+        recallUuid,
+        baseRecall.copy(
+          sentenceIds = listOf(keptSentenceUuid, newSentenceUuid),
+          createdByUsername = "user001",
+          createdByPrison = "PRI",
+        ),
+      )
+
+      assertThat(deletedRecallSentenceSlot.isCaptured).isTrue()
+      assertThat(deletedRecallSentenceSlot.captured.sentence.sentenceUuid).isEqualTo(removedSentenceUuid)
+
+      // recall now contains kept + new (and not the removed)
+      val savedRecall = savedRecallSlot.captured
+      val savedSentenceUuids = savedRecall.recallSentences.map { it.sentence.sentenceUuid }
+      assertThat(savedSentenceUuids).contains(keptSentenceUuid)
+      assertThat(savedSentenceUuids).contains(newSentenceUuid)
+      assertThat(savedSentenceUuids).doesNotContain(removedSentenceUuid)
+
+      // removed and new sentences status correct
+      assertThat(removedSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+      assertThat(newSentence.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+      assertThat(newSentence.updatedBy).isEqualTo("user001")
+      assertThat(newSentence.updatedPrison).isEqualTo("PRI")
+
+      assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.ACTIVE)
+      assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.INACTIVE)
     }
   }
 
