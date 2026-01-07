@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.math.BigDecimal
@@ -126,6 +127,52 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '$removedChargeUuid')].sentence.sentenceUuid")
       .doesNotExist()
+  }
+
+  @Test
+  fun `removing all charges and associating a new charge must keep the period length`() {
+    val sentenceWithMultipleCharges = createSentenceWithMultipleCharges()
+    val legacyCreatePeriodLength = DataCreator.legacyCreatePeriodLength(sentenceUUID = sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid)
+    val legacyPeriodLengthCreatedResponse = webTestClient
+      .post()
+      .uri("/legacy/period-length")
+      .bodyValue(legacyCreatePeriodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyPeriodLengthCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    val allChargeUuids = sentenceWithMultipleCharges.courtCase.appearances.first().charges.map { it.chargeUuid }
+    val currentChargeUuidsOnSentence = sentenceWithMultipleCharges.legacySentence.chargeUuids
+    val chargeUuidsNotOnSentence = allChargeUuids.filter { !currentChargeUuidsOnSentence.contains(it) }
+    val legacySentenceWithNewCharge = sentenceWithMultipleCharges.legacySentence.copy(chargeUuids = chargeUuidsNotOnSentence)
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/${sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid}")
+      .bodyValue(legacySentenceWithNewCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri("/court-case/${sentenceWithMultipleCharges.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[*].charges[?(@.chargeUuid == '${chargeUuidsNotOnSentence.first()}')].sentence.periodLengths[?(@.periodLengthUuid == '${legacyPeriodLengthCreatedResponse.periodLengthUuid}')]")
+      .exists()
   }
 
   fun createSentenceWithMultipleCharges(): TestData {
