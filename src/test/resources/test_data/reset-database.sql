@@ -14,5 +14,7 @@ period_length_history,
 sentence_history,
 uploaded_document,
 court_case_history,
-immigration_detention
+immigration_detention,
+recall_sentence_history,
+recall_history
  RESTART IDENTITY CASCADE;

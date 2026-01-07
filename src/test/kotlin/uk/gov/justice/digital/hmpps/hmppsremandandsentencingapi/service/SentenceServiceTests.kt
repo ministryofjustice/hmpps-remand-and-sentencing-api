@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.R
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import java.util.*
 
@@ -21,7 +20,6 @@ class SentenceServiceTests {
   private val sentenceTypeRepository = mockk<SentenceTypeRepository>(relaxed = true)
   private val sentenceHistoryRepository = mockk<SentenceHistoryRepository>(relaxed = true)
   private val recallSentenceRepository = mockk<RecallSentenceRepository>(relaxed = true)
-  private val recallSentenceHistoryRepository = mockk<RecallSentenceHistoryRepository>(relaxed = true)
   private val recallHistoryRepository = mockk<RecallHistoryRepository>(relaxed = true)
 
   private val sentenceService = SentenceService(
@@ -32,7 +30,6 @@ class SentenceServiceTests {
     sentenceHistoryRepository = sentenceHistoryRepository,
     fixManyChargesToSentenceService = fixManyChargesToSentenceService,
     recallSentenceRepository = recallSentenceRepository,
-    recallSentenceHistoryRepository = recallSentenceHistoryRepository,
     recallHistoryRepository = recallHistoryRepository,
   )
 

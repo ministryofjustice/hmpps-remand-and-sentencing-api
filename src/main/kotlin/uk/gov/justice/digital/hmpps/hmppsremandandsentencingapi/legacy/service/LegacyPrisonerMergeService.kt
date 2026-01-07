@@ -192,6 +192,10 @@ class LegacyPrisonerMergeService(
   ) {
     recallRepository.findByPrisonerId(mergePerson.removedPrisonerNumber)
       .forEach { recall ->
+        recall.prisonerId = trackingData.retainedPrisonerNumber
+        recall.updatedAt = ZonedDateTime.now()
+        recall.updatedBy = trackingData.username
+
         val recallHistoryEntity =
           recallHistoryRepository.save(
             RecallHistoryEntity.from(
@@ -209,9 +213,7 @@ class LegacyPrisonerMergeService(
             ),
           )
         }
-        recall.prisonerId = trackingData.retainedPrisonerNumber
-        recall.updatedAt = ZonedDateTime.now()
-        recall.updatedBy = trackingData.username
+
         val sentenceIds = recall.recallSentences.map { it.sentence.sentenceUuid.toString() }
         trackingData.eventsToEmit.add(
           EventMetadataCreator.recallEventMetadata(
@@ -574,7 +576,9 @@ class LegacyPrisonerMergeService(
         EventType.RECALL_INSERTED,
       ),
     )
-    recallSentenceRepository.save(RecallSentenceEntity.fromMerge(createdSentence, recall, tracking.username, recallSentenceLegacyData))
+    val recallSentence = recallSentenceRepository.save(RecallSentenceEntity.fromMerge(createdSentence, recall, tracking.username, recallSentenceLegacyData))
+    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.NOMIS))
+    recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, recallSentence, ChangeSource.NOMIS))
   }
 
   companion object {
