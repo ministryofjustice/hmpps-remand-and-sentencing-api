@@ -216,6 +216,7 @@ class LegacySentenceService(
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
+    val existingPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid).distinctBy { it.periodLengthUuid }
     val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
@@ -253,7 +254,7 @@ class LegacySentenceService(
                 )
               }.also { newSentence ->
                 // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
-                copyPeriodLengthsForNewSentence(sentenceUuid, newSentence, getPerformedByUsername(sentence), periodLengthsByChargeUuid)
+                copyPeriodLengthsForNewSentence(newSentence, getPerformedByUsername(sentence), periodLengthsByChargeUuid, existingPeriodLengths)
 
                 if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
                   createRecall(
@@ -311,8 +312,8 @@ class LegacySentenceService(
 
   private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()
 
-  private fun copyPeriodLengthsForNewSentence(sentenceUuid: UUID, newSentence: SentenceEntity, performedByUser: String, periodLengthsByChargeUuid: Map<UUID, MutableSet<PeriodLengthEntity>>) {
-    val newPeriodLengths = (periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid) + periodLengthsByChargeUuid.getOrDefault(newSentence.charge.chargeUuid, mutableSetOf()))
+  private fun copyPeriodLengthsForNewSentence(newSentence: SentenceEntity, performedByUser: String, periodLengthsByChargeUuid: Map<UUID, MutableSet<PeriodLengthEntity>>, existingPeriodLengths: List<PeriodLengthEntity>) {
+    val newPeriodLengths = (existingPeriodLengths + periodLengthsByChargeUuid.getOrDefault(newSentence.charge.chargeUuid, mutableSetOf()))
       .distinctBy { it.periodLengthUuid } // Ensure we only copy each unique periodLengthUuid once
       .map { periodLength ->
         periodLength.copy(
