@@ -37,14 +37,14 @@ data class SentenceCardDetails(
 
       return SentenceCardDetails(
         offenceCode = first.offenceCode,
-        offenceStartDate = first.offenceStartDate?.toLocalDate(),
+        offenceStartDate = first.offenceStartDate,
         sentenceUuid = first.sentenceUuid,
         chargeUuid = first.chargeUuid,
         countNumber = first.countNumber,
         sentenceType = first.sentenceTypeDescription,
         periodLengths = periodLengths, // This is now the full list
         sentenceServeType = first.sentenceServeType,
-        convictedDate = first.convictionDate?.toLocalDate(),
+        convictedDate = first.convictionDate,
       )
     }
   }
