@@ -6,7 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.ParameterizedTypeReference
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.typeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
@@ -19,8 +19,6 @@ import java.util.UUID
 import java.util.stream.Stream
 
 class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
-
-  private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
   @Autowired
   private lateinit var sentenceTypeRepository: SentenceTypeRepository
