@@ -3,8 +3,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
+import java.util.UUID
 
 data class PagedLatestCourtAppearance(
+  val appearanceUuid: UUID,
   val caseReference: String?,
   val courtCode: String,
   val warrantDate: LocalDate,
@@ -17,6 +19,7 @@ data class PagedLatestCourtAppearance(
 ) {
   companion object {
     fun from(courtCaseRow: CourtCaseRow, latestAppearanceCharges: Map<Int, List<CourtCaseRow>>): PagedLatestCourtAppearance = PagedLatestCourtAppearance(
+      courtCaseRow.latestCourtAppearanceUuid,
       courtCaseRow.latestCourtAppearanceCaseReference,
       courtCaseRow.latestCourtAppearanceCourtCode,
       courtCaseRow.latestCourtAppearanceDate,
