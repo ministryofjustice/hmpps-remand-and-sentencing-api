@@ -108,6 +108,7 @@ import java.util.UUID
         ColumnResult(name = "appearanceCount"),
         ColumnResult(name = "caseReferences"),
         ColumnResult(name = "firstDayInCustody", type = LocalDate::class),
+        ColumnResult(name = "appearancePeriodLengthUuid"),
         ColumnResult(name = "appearancePeriodLengthYears"),
         ColumnResult(name = "appearancePeriodLengthMonths"),
         ColumnResult(name = "appearancePeriodLengthWeeks"),

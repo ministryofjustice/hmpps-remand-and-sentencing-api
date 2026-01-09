@@ -2,8 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
+import java.util.UUID
 
 data class PagedAppearancePeriodLength(
+  val periodLengthUuid: UUID,
   val years: Int?,
   val months: Int?,
   val weeks: Int?,
@@ -13,6 +15,7 @@ data class PagedAppearancePeriodLength(
 ) {
   companion object {
     fun from(courtCaseRow: CourtCaseRow): PagedAppearancePeriodLength = PagedAppearancePeriodLength(
+      courtCaseRow.appearancePeriodLengthUuid!!,
       courtCaseRow.appearancePeriodLengthYears,
       courtCaseRow.appearancePeriodLengthMonths,
       courtCaseRow.appearancePeriodLengthWeeks,

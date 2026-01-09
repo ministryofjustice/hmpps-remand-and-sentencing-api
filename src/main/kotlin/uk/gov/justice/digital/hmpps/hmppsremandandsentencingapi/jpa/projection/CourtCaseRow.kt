@@ -25,6 +25,7 @@ data class CourtCaseRow(
   var appearanceCount: Long,
   var caseReferences: String?,
   var firstDayInCustody: LocalDate,
+  var appearancePeriodLengthUuid: UUID?,
   var appearancePeriodLengthYears: Int?,
   var appearancePeriodLengthMonths: Int?,
   var appearancePeriodLengthWeeks: Int?,
