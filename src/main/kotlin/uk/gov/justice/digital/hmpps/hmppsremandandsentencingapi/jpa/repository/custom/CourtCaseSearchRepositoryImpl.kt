@@ -40,6 +40,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         appearanceData.appearance_count as appearanceCount, 
         appearanceData.case_references as caseReferences, 
         appearanceData.first_day_in_custody as firstDayInCustody,
+        apl.period_length_uuid as appearancePeriodLengthUuid,
         apl.years as appearancePeriodLengthYears,
         apl.months as appearancePeriodLengthMonths,
         apl.weeks as appearancePeriodLengthWeeks,
