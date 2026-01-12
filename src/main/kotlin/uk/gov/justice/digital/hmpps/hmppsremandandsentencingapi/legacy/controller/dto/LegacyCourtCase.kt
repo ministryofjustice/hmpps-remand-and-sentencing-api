@@ -16,7 +16,7 @@ data class LegacyCourtCase(
 ) {
   companion object {
     fun from(courtCaseEntity: CourtCaseEntity): LegacyCourtCase {
-      val firstAppearance = courtCaseEntity.appearances.firstOrNull { entity -> entity.statusId == CourtAppearanceEntityStatus.ACTIVE }
+      val firstAppearance = courtCaseEntity.appearances.filter { it.statusId != CourtAppearanceEntityStatus.DELETED }.minByOrNull { it.appearanceDate }
       return LegacyCourtCase(courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.prisonerId, courtCaseEntity.statusId == CourtCaseEntityStatus.ACTIVE, firstAppearance?.appearanceDate, firstAppearance?.courtCode, firstAppearance?.courtCaseReference, courtCaseEntity.legacyData?.caseReferences ?: emptyList())
     }
   }
