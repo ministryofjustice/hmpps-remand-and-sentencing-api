@@ -6,6 +6,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class LegacyUpdateCourtCaseTests : IntegrationTestBase() {
@@ -59,6 +60,25 @@ class LegacyUpdateCourtCaseTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     Assertions.assertThat(retrievedCourtCase.legacyData!!.caseReferences).extracting<String> { it.offenderCaseReference }.containsExactlyInAnyOrder(dpsCourtCase.appearances.first().courtCaseReference)
+  }
+
+  @Test
+  fun `update immigration detention court case`() {
+    val createImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()
+    createImmigrationDetention(createImmigrationDetention)
+    val courtCase = courtCaseRepository.findAllByPrisonerId(createImmigrationDetention.prisonerId).first()
+    val toUpdate = DataCreator.legacyCreateCourtCase(bookingId = 43869)
+    webTestClient
+      .put()
+      .uri("/legacy/court-case/${courtCase.caseUniqueIdentifier}")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
   }
 
   @Test
