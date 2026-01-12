@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class LegacyGetCourtCaseTests : IntegrationTestBase() {
@@ -25,6 +27,27 @@ class LegacyGetCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(createdCase.second.prisonerId)
       .jsonPath("$.active")
       .isEqualTo(true)
+  }
+
+  @Test
+  fun `get immigration detention court case`() {
+    val createImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()
+    createImmigrationDetention(createImmigrationDetention)
+    val courtCase = courtCaseRepository.findAllByPrisonerId(createImmigrationDetention.prisonerId).first()
+    webTestClient
+      .get()
+      .uri("/legacy/court-case/${courtCase.caseUniqueIdentifier}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.startDate")
+      .isEqualTo(createImmigrationDetention.recordDate.format(DateTimeFormatter.ISO_DATE))
+      .jsonPath("$.courtId")
+      .isEqualTo("IMM")
   }
 
   @Test

@@ -447,7 +447,7 @@ abstract class IntegrationTestBase {
     .expectBody(DeleteRecallResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention) = webTestClient
+  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()) = webTestClient
     .post()
     .uri("/immigration-detention")
     .bodyValue(immigrationDetention)
