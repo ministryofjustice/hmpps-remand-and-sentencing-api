@@ -55,7 +55,7 @@
           {
             "key": "url.path",
             "value": "/legacy/court-case/migration",
-            "matchType": "regexp"
+            "matchType": "strict"
           }
         ],
         "percentage": 1
