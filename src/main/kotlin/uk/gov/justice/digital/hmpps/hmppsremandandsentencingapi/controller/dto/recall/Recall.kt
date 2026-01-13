@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -56,7 +57,9 @@ data class Recall(
                 sentenceDate = group.sentencingAppearanceDate,
                 countNumber = it.sentence.countNumber,
                 lineNumber = it.sentence.legacyData?.nomisLineReference,
-                periodLengths = it.sentence.periodLengths.map { periodLength ->
+                periodLengths = it.sentence.periodLengths
+                  .filter { pl -> pl.statusId != PeriodLengthEntityStatus.DELETED }
+                  .map { periodLength ->
                   PeriodLength(
                     years = periodLength.years,
                     months = periodLength.months,
