@@ -60,17 +60,17 @@ data class Recall(
                 periodLengths = it.sentence.periodLengths
                   .filter { pl -> pl.statusId != PeriodLengthEntityStatus.DELETED }
                   .map { periodLength ->
-                  PeriodLength(
-                    years = periodLength.years,
-                    months = periodLength.months,
-                    weeks = periodLength.weeks,
-                    days = periodLength.days,
-                    periodOrder = periodLength.periodOrder,
-                    periodLengthType = periodLength.periodLengthType,
-                    legacyData = periodLength.legacyData,
-                    periodLengthUuid = periodLength.periodLengthUuid,
-                  )
-                },
+                    PeriodLength(
+                      years = periodLength.years,
+                      months = periodLength.months,
+                      weeks = periodLength.weeks,
+                      days = periodLength.days,
+                      periodOrder = periodLength.periodOrder,
+                      periodLengthType = periodLength.periodLengthType,
+                      legacyData = periodLength.legacyData,
+                      periodLengthUuid = periodLength.periodLengthUuid,
+                    )
+                  },
                 sentenceServeType = it.sentence.sentenceServeType,
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
               )
