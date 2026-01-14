@@ -10,7 +10,7 @@ import java.util.*
 
 interface RecallRepository : CrudRepository<RecallEntity, Int> {
   fun findOneByRecallUuid(recallUuid: UUID): RecallEntity?
-  fun findByPrisonerIdAndStatusId(prisonerId: String, statusId: RecallEntityStatus = RecallEntityStatus.ACTIVE): List<RecallEntity>
+  fun findByPrisonerIdAndStatus(prisonerId: String, status: RecallEntityStatus = RecallEntityStatus.ACTIVE): List<RecallEntity>
   fun findByPrisonerId(prisonerId: String): List<RecallEntity>
 
   @Query(

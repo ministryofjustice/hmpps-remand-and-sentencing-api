@@ -163,7 +163,7 @@ class LegacySentenceService(
         legacyData,
       ),
     )
-    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.NOMIS))
+    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
     recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, recallSentence, ChangeSource.NOMIS))
   }
 
@@ -369,7 +369,6 @@ class LegacySentenceService(
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
             latestRecall,
-            RecallEntityStatus.EDITED,
             ChangeSource.NOMIS,
           ),
         )
@@ -417,7 +416,6 @@ class LegacySentenceService(
         val recallHistoryEntity = recallHistoryRepository.save(
           RecallHistoryEntity.from(
             recall,
-            RecallEntityStatus.DELETED,
             ChangeSource.NOMIS,
           ),
         )
@@ -427,7 +425,6 @@ class LegacySentenceService(
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
             recall,
-            RecallEntityStatus.EDITED,
             ChangeSource.NOMIS,
           ),
         )

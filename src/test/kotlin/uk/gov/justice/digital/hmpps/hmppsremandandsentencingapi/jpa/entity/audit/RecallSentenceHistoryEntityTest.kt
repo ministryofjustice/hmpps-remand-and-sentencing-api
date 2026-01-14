@@ -34,7 +34,7 @@ class RecallSentenceHistoryEntityTest {
       returnToCustodyDate = LocalDate.of(2022, 2, 2),
       inPrisonOnRevocationDate = true,
       recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
       createdByUsername = "CREATOR",
       createdPrison = "FOO",
@@ -84,7 +84,7 @@ class RecallSentenceHistoryEntityTest {
       createdPrison = "BAR",
     )
 
-    val historyRecall = RecallHistoryEntity.from(originalRecall, RecallEntityStatus.EDITED, ChangeSource.DPS)
+    val historyRecall = RecallHistoryEntity.from(originalRecall, ChangeSource.DPS)
     assertThat(RecallSentenceHistoryEntity.from(historyRecall, original, ChangeSource.DPS))
       .usingRecursiveComparison()
       .ignoringFields("historyCreatedAt")

@@ -6,9 +6,8 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
-import java.util.UUID
+import java.util.*
 
 class LegacyDeleteSentenceTests : IntegrationTestBase() {
 
@@ -58,20 +57,6 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recallsBeforeDelete[0].recallUuid)
     assertThat(historicalRecalls).hasSize(2)
-    val createdRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
-    assertThat(createdRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
-    assertThat(createdRecallHistoryEntry.historyCreatedAt).isNotNull()
-
-    val historicalRecallSentencesForCreate = recallSentenceHistoryRepository.findByRecallHistoryId(createdRecallHistoryEntry.id)
-    assertThat(historicalRecallSentencesForCreate!!).hasSize(1)
-    assertThat(historicalRecallSentencesForCreate.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(lifetimeUuid)
-
-    val deletedRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.DELETED }!!
-    assertThat(deletedRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
-    assertThat(deletedRecallHistoryEntry.historyCreatedAt).isNotNull()
-
-    val historicalRecallSentencesForDelete = recallSentenceHistoryRepository.findByRecallHistoryId(deletedRecallHistoryEntry.id)
-    assertThat(historicalRecallSentencesForDelete!!).hasSize(0)
   }
 
   @Test
