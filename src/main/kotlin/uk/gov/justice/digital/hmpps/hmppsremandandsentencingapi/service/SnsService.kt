@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.microsoft.applicationinsights.TelemetryClient
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
@@ -18,6 +20,7 @@ private const val STRING = "String"
 class SnsService(
   hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
+  private val telemetryClient: TelemetryClient,
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppsdomaintopic")
@@ -33,6 +36,15 @@ class SnsService(
     personReference: PersonReference,
   ) {
     val hmppsMessage = HmppsMessage(eventType, 1, description, detailsUrl, timeUpdated.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), additionalInformation, personReference)
-    domainEventsTopic.publish(hmppsMessage.eventType, objectMapper.writeValueAsString(hmppsMessage), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsMessage.eventType).build()))
+    runCatching {
+      domainEventsTopic.publish(hmppsMessage.eventType, objectMapper.writeValueAsString(hmppsMessage), attributes = mapOf(EVENT_TYPE to MessageAttributeValue.builder().dataType(STRING).stringValue(hmppsMessage.eventType).build()))
+    }.onFailure { exception ->
+      log.error("Error publishing domain event", exception)
+      telemetryClient.trackEvent("failed-domain-event-published", mapOf("eventType" to eventType, "description" to description, "additionalInformation" to objectMapper.writeValueAsString(additionalInformation), "personReference" to objectMapper.writeValueAsString(personReference)), null)
+    }.getOrNull()
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }

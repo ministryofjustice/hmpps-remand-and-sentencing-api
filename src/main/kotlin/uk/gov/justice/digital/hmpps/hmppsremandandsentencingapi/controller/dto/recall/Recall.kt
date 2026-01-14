@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -56,18 +57,20 @@ data class Recall(
                 sentenceDate = group.sentencingAppearanceDate,
                 countNumber = it.sentence.countNumber,
                 lineNumber = it.sentence.legacyData?.nomisLineReference,
-                periodLengths = it.sentence.periodLengths.map { periodLength ->
-                  PeriodLength(
-                    years = periodLength.years,
-                    months = periodLength.months,
-                    weeks = periodLength.weeks,
-                    days = periodLength.days,
-                    periodOrder = periodLength.periodOrder,
-                    periodLengthType = periodLength.periodLengthType,
-                    legacyData = periodLength.legacyData,
-                    periodLengthUuid = periodLength.periodLengthUuid,
-                  )
-                },
+                periodLengths = it.sentence.periodLengths
+                  .filter { pl -> pl.statusId != PeriodLengthEntityStatus.DELETED }
+                  .map { periodLength ->
+                    PeriodLength(
+                      years = periodLength.years,
+                      months = periodLength.months,
+                      weeks = periodLength.weeks,
+                      days = periodLength.days,
+                      periodOrder = periodLength.periodOrder,
+                      periodLengthType = periodLength.periodLengthType,
+                      legacyData = periodLength.legacyData,
+                      periodLengthUuid = periodLength.periodLengthUuid,
+                    )
+                  },
                 sentenceServeType = it.sentence.sentenceServeType,
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
               )

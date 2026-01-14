@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import java.time.LocalDate
@@ -227,18 +228,20 @@ class CourtCaseService(
               classification = sentence.sentenceType?.classification,
               systemOfRecord = "RAS",
               fineAmount = sentence.fineAmount,
-              periodLengths = sentence.periodLengths.map { periodLength ->
-                PeriodLength(
-                  years = periodLength.years,
-                  months = periodLength.months,
-                  weeks = periodLength.weeks,
-                  days = periodLength.days,
-                  periodOrder = periodLength.periodOrder,
-                  periodLengthType = periodLength.periodLengthType,
-                  legacyData = periodLength.legacyData,
-                  periodLengthUuid = periodLength.periodLengthUuid,
-                )
-              },
+              periodLengths = sentence.periodLengths
+                .filter { it.statusId != PeriodLengthEntityStatus.DELETED }
+                .map { periodLength ->
+                  PeriodLength(
+                    years = periodLength.years,
+                    months = periodLength.months,
+                    weeks = periodLength.weeks,
+                    days = periodLength.days,
+                    periodOrder = periodLength.periodOrder,
+                    periodLengthType = periodLength.periodLengthType,
+                    legacyData = periodLength.legacyData,
+                    periodLengthUuid = periodLength.periodLengthUuid,
+                  )
+                },
               convictionDate = sentence.convictionDate,
               chargeLegacyData = sentence.charge.legacyData,
               countNumber = sentence.countNumber,

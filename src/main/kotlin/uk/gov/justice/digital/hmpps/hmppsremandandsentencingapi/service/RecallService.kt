@@ -427,7 +427,8 @@ class RecallService(
     sentence: SentenceEntity,
     recallType: RecallType,
   ): IsRecallPossible {
-    val latestRecall = sentence.latestRecall()!!
+    val latestRecall = sentence.earliestRecall()!!
+
     val recallLegacyData =
       latestRecall.let { recall -> sentence.recallSentences.find { it.recall.id == recall.id }?.legacyData }!!
     val sentenceCalcType = recallLegacyData.sentenceCalcType

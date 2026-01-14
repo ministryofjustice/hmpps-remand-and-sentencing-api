@@ -4,11 +4,15 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
@@ -159,5 +163,19 @@ class DpsDataCreator {
       documentType: String = "REMAND_WARRANT",
       documentName: String = "document.pdf",
     ): UploadedDocument = UploadedDocument(documentUuid, documentType, documentName)
+
+    fun dpsCreateImmigrationDetention(
+      prisonerId: String = DEFAULT_PRISONER_ID,
+      immigrationDetentionRecordType: ImmigrationDetentionRecordType = ImmigrationDetentionRecordType.IS91,
+      recordDate: LocalDate = LocalDate.of(2021, 1, 1),
+      homeOfficeReferenceNumber: String? = null,
+      noLongerOfInterestReason: ImmigrationDetentionNoLongerOfInterestType? = null,
+      noLongerOfInterestComment: String? = null,
+      createdByUsername: String = "aUser",
+      createdByPrison: String = "PRI",
+      appearanceOutcomeUuid: UUID = UUID.fromString("5c670576-ffbf-4005-8d54-4aeba7bf1a22"),
+    ): CreateImmigrationDetention = CreateImmigrationDetention(
+      prisonerId, appearanceOutcomeUuid, immigrationDetentionRecordType, recordDate, homeOfficeReferenceNumber, noLongerOfInterestReason, noLongerOfInterestComment, createdByUsername, createdByPrison,
+    )
   }
 }

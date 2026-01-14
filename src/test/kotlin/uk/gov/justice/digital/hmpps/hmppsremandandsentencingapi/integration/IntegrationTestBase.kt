@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.microsoft.applicationinsights.TelemetryClient
 import kotlinx.coroutines.runBlocking
 import org.awaitility.core.ConditionTimeoutException
 import org.junit.jupiter.api.Assertions
@@ -16,6 +17,7 @@ import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
@@ -167,6 +169,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var appearanceChargeRepository: AppearanceChargeRepository
+
+  @MockitoSpyBean
+  protected lateinit var telemetryClient: TelemetryClient
 
   @BeforeEach
   fun clearDependencies() {
@@ -449,7 +454,7 @@ abstract class IntegrationTestBase {
     .expectBody(DeleteRecallResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention) = webTestClient
+  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()) = webTestClient
     .post()
     .uri("/immigration-detention")
     .bodyValue(immigrationDetention)
