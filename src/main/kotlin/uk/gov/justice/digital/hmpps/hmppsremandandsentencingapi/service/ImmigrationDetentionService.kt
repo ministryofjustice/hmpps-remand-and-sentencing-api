@@ -245,7 +245,7 @@ class ImmigrationDetentionService(
         CreateCharge(
           chargeUuid = chargeUuid ?: UUID.randomUUID(),
           appearanceUuid = null,
-          offenceCode = "IA99000-001N",
+          offenceCode = "ZI26000",
           offenceStartDate = immigrationDetention.recordDate,
           offenceEndDate = null,
           outcomeUuid = chargeOutcomeService.findByUuid(appearanceOutcome.relatedChargeOutcomeUuid)?.outcomeUuid,
