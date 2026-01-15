@@ -19,7 +19,7 @@ class LegacyRecallService(
   fun get(recallUuid: UUID): LegacyRecall = LegacyRecall.from(getUnlessDeleted(recallUuid))
 
   private fun getUnlessDeleted(uuid: UUID): RecallEntity = recallRepository.findOneByRecallUuid(uuid)
-    ?.takeUnless { entity -> entity.statusId == RecallEntityStatus.DELETED }
+    ?.takeUnless { entity -> entity.status == RecallEntityStatus.DELETED }
     ?: throw EntityNotFoundException("No recall found at $uuid")
 
   companion object {

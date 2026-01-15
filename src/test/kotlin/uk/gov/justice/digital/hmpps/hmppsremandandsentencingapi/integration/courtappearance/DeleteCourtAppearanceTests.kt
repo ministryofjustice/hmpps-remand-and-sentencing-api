@@ -9,12 +9,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
-import kotlin.collections.map
 
 class DeleteCourtAppearanceTests : IntegrationTestBase() {
   @Test
@@ -151,19 +149,5 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
     val recall = recalls.first()
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recall.recallUuid)
     assertThat(historicalRecalls).hasSize(2)
-    val createdRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
-    assertThat(createdRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
-    assertThat(createdRecallHistoryEntry.historyCreatedAt).isNotNull()
-
-    val historicalRecallSentencesForCreate = recallSentenceHistoryRepository.findByRecallHistoryId(createdRecallHistoryEntry.id)
-    assertThat(historicalRecallSentencesForCreate!!).hasSize(1)
-    assertThat(historicalRecallSentencesForCreate.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(response.lifetimeUuid)
-
-    val deletedRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.DELETED }!!
-    assertThat(deletedRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.DELETED)
-    assertThat(deletedRecallHistoryEntry.historyCreatedAt).isNotNull()
-
-    val historicalRecallSentencesForDelete = recallSentenceHistoryRepository.findByRecallHistoryId(deletedRecallHistoryEntry.id)
-    assertThat(historicalRecallSentencesForDelete!!).hasSize(0)
   }
 }

@@ -150,7 +150,7 @@ class RecallServiceTest {
       returnToCustodyDate = LocalDate.of(2024, 1, 11),
       inPrisonOnRevocationDate = false,
       recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       createdByUsername = "FOO",
       source = EventSource.DPS,
     )
@@ -288,7 +288,7 @@ class RecallServiceTest {
         returnToCustodyDate = LocalDate.of(2024, 1, 11),
         inPrisonOnRevocationDate = false,
         recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
-        statusId = RecallEntityStatus.ACTIVE,
+        status = RecallEntityStatus.ACTIVE,
         createdByUsername = "FOO",
         source = EventSource.DPS,
       ).apply {
@@ -486,7 +486,7 @@ class RecallServiceTest {
       returnToCustodyDate = LocalDate.of(2024, 1, 11),
       inPrisonOnRevocationDate = false,
       recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       createdByUsername = "FOO",
       source = EventSource.DPS,
     ).apply {
@@ -517,7 +517,7 @@ class RecallServiceTest {
       returnToCustodyDate = LocalDate.of(2024, 1, 11),
       inPrisonOnRevocationDate = false,
       recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       createdByUsername = "FOO",
       source = EventSource.DPS,
     ).apply {

@@ -45,8 +45,8 @@ class RecallEntity(
 
   // Audit and status columns
   @Column
-  @Enumerated(EnumType.ORDINAL)
-  var statusId: RecallEntityStatus,
+  @Enumerated(EnumType.STRING)
+  var status: RecallEntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
   val createdPrison: String? = null,
@@ -63,7 +63,7 @@ class RecallEntity(
   fun delete(updatedUser: String) {
     updatedAt = ZonedDateTime.now()
     updatedBy = updatedUser
-    statusId = RecallEntityStatus.DELETED
+    status = RecallEntityStatus.DELETED
   }
 
   companion object {
@@ -76,7 +76,7 @@ class RecallEntity(
       recallType = recallType,
       createdByUsername = createRecall.createdByUsername,
       createdPrison = createRecall.createdByPrison,
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       source = DPS,
       calculationRequestId = createRecall.calculationRequestId,
     )
@@ -93,7 +93,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       source = NOMIS,
     )
 
@@ -109,7 +109,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       source = NOMIS,
     )
 
@@ -125,7 +125,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = RecallEntityStatus.DUPLICATE,
+      status = RecallEntityStatus.DUPLICATE,
       source = NOMIS,
     )
 
@@ -141,7 +141,7 @@ class RecallEntity(
       inPrisonOnRevocationDate = null,
       recallType = recallType,
       createdByUsername = createdByUsername,
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       source = NOMIS,
     )
   }

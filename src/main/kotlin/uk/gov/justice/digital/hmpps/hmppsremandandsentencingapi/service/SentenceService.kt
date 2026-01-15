@@ -204,7 +204,7 @@ class SentenceService(
             recall.updatedAt = ZonedDateTime.now()
             recall.updatedBy = serviceUserService.getUsername()
             recallSentences.forEach { recallSentenceRepository.delete(it) }
-            recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.EDITED, ChangeSource.DPS))
+            recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.DPS))
           }
         }
       }
@@ -215,11 +215,11 @@ class SentenceService(
     onlyRecallSentence: RecallSentenceEntity,
     eventsToEmit: MutableSet<EventMetadata>,
   ) {
-    onlyRecallSentence.recall.statusId = RecallEntityStatus.DELETED
+    onlyRecallSentence.recall.status = RecallEntityStatus.DELETED
     onlyRecallSentence.recall.updatedBy = serviceUserService.getUsername()
     onlyRecallSentence.recall.updatedPrison = null // unknown on delete
     onlyRecallSentence.recall.updatedAt = ZonedDateTime.now()
-    recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, RecallEntityStatus.DELETED, ChangeSource.DPS))
+    recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, ChangeSource.DPS))
     recallSentenceRepository.delete(onlyRecallSentence)
     eventsToEmit.add(
       EventMetadataCreator.recallEventMetadata(

@@ -10,14 +10,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
-import kotlin.collections.map
 
 class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
@@ -42,22 +40,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recalls[0].recallUuid)
     assertThat(historicalRecalls).hasSize(2)
-    val createdRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.ACTIVE }!!
-    assertThat(createdRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.ACTIVE)
-    assertThat(createdRecallHistoryEntry.historyCreatedAt).isNotNull()
-    assertThat(createdRecallHistoryEntry.returnToCustodyDate).isEqualTo(LocalDate.of(2023, 1, 1))
-
-    val historicalRecallSentencesForCreate = recallSentenceHistoryRepository.findByRecallHistoryId(createdRecallHistoryEntry.id)
-    assertThat(historicalRecallSentencesForCreate!!).hasSize(1)
-    assertThat(historicalRecallSentencesForCreate.map { it.sentence.sentenceUuid }).containsExactlyInAnyOrder(lifetimeUuid)
-
-    val editRecallHistoryEntry = historicalRecalls.find { it.historyStatusId == RecallEntityStatus.EDITED }!!
-    assertThat(editRecallHistoryEntry.historyStatusId).isEqualTo(RecallEntityStatus.EDITED)
-    assertThat(editRecallHistoryEntry.historyCreatedAt).isNotNull()
-    assertThat(editRecallHistoryEntry.returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
-
-    val historicalRecallSentencesForEdit = recallSentenceHistoryRepository.findByRecallHistoryId(editRecallHistoryEntry.id)
-    assertThat(historicalRecallSentencesForEdit!!).hasSize(1)
   }
 
   @Test

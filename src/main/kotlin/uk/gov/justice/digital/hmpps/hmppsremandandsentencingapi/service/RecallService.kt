@@ -59,7 +59,7 @@ class RecallService(
     val recallType = recallTypeRepository.findOneByCode(createRecall.recallTypeCode)
     val recall = recallRepository.save(RecallEntity.fromDps(createRecall, recallType!!, recallUuid))
     val recallHistory =
-      recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.DPS))
+      recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.DPS))
     createRecall.sentenceIds?.let { sentenceIds ->
       sentenceRepository.findBySentenceUuidIn(sentenceIds)
         .forEach {
@@ -170,7 +170,6 @@ class RecallService(
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
             recallToUpdate,
-            RecallEntityStatus.EDITED,
             ChangeSource.DPS,
           ),
         )
@@ -274,7 +273,7 @@ class RecallService(
         .maxByOrNull { it.createdAt }
 
       // deleting the sentence for the legacy recall will delete the recall so it's only required here for DPS
-      recallToDelete.statusId = RecallEntityStatus.DELETED
+      recallToDelete.status = RecallEntityStatus.DELETED
       recallToDelete.updatedBy = serviceUserService.getUsername()
       recallToDelete.updatedPrison = null // unknown on delete
       recallToDelete.updatedAt = ZonedDateTime.now()
@@ -284,7 +283,6 @@ class RecallService(
       recallHistoryRepository.save(
         RecallHistoryEntity.from(
           recallToDelete,
-          RecallEntityStatus.DELETED,
           ChangeSource.DPS,
         ),
       )
@@ -360,7 +358,7 @@ class RecallService(
   @Transactional(readOnly = true)
   fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {
     val recallAdjustments = adjustmentsApiClient.getAdjustments(prisonerId).filter { it.recallId != null }
-    return recallRepository.findByPrisonerIdAndStatusId(prisonerId).map { recall ->
+    return recallRepository.findByPrisonerIdAndStatus(prisonerId).map { recall ->
       val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
       Recall.from(recall, recallSentences, recallAdjustments.find { it.recallId == recall.recallUuid.toString() })
     }
