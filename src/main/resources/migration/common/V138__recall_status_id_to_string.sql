@@ -30,12 +30,9 @@ SET status = CASE status_id
                  WHEN 9 THEN 'IMMIGRATION_APPEARANCE'
     END;
 
-
 ALTER TABLE recall ALTER COLUMN status SET NOT NULL;
-
 ALTER TABLE recall_history ALTER COLUMN status SET NOT NULL;
 
 ALTER TABLE recall DROP COLUMN status_id;
-
 ALTER TABLE recall_history DROP COLUMN status_id;
 ALTER TABLE recall_history DROP COLUMN history_status_id;
