@@ -69,7 +69,7 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
       cc.statusId = :courtCaseStatus and
       cc.prisonerId = :prisonerId and
       c.statusId = :chargeStatus and
-      c.offenceCode = "IA99000-001N"
+      c.offenceCode in ("IA99000-001N", "ZI26000")
       order by ca.createdAt desc
     """,
   )
