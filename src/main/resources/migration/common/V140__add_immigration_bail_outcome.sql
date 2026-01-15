@@ -1,0 +1,3 @@
+INSERT INTO appearance_outcome (outcome_name, outcome_uuid, nomis_code, outcome_type, display_order, related_charge_outcome_uuid, is_sub_list, status, warrant_type, disposition_code) VALUES('Immigration Bail', 'd774d9dd-12e8-4b6e-88e8-3e7739dff9e1', '5501', 'IMMIGRATION', 340, '75af661d-df31-4f1f-b8d6-f0c490a0b87d', false, 'ACTIVE', 'IMMIGRATION', 'INTERIM');
+
+INSERT INTO charge_outcome (outcome_name, outcome_uuid, nomis_code, outcome_type, display_order, disposition_code, status) VALUES( 'Immigration Bail', '75af661d-df31-4f1f-b8d6-f0c490a0b87d', '5501', 'IMMIGRATION', 340, 'INTERIM', 'ACTIVE');
