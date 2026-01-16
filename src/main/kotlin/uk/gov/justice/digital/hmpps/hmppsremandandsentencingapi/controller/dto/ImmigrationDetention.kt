@@ -42,7 +42,9 @@ data class ImmigrationDetention(
 
     private fun getImmigrationDetentionTypeFromNOMIS(code: String?): ImmigrationDetentionRecordType = when (code) {
       "5500" -> ImmigrationDetentionRecordType.IS91
+      "5501" -> ImmigrationDetentionRecordType.IMMIGRATION_BAIL
       "5502" -> ImmigrationDetentionRecordType.DEPORTATION_ORDER
+      "5503" -> ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
       else -> ImmigrationDetentionRecordType.UNKNOWN
     }
 
