@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.imm
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -13,13 +12,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Immigra
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceService
 import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
-class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService: CourtAppearanceService) : IntegrationTestBase() {
+class ImmigrationDetentionIntTests : IntegrationTestBase() {
+
   @Test
   fun `Create an Immigration Detention record and fetch it based on returned UUID also check the events are emitted`() {
     val immigrationDetention = CreateImmigrationDetention(
