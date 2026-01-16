@@ -33,7 +33,7 @@ class ImmigrationDetentionHistoryEntity(
   var noLongerOfInterestComment: String?,
 
   // Audit and status columns
-  @Column @Enumerated(EnumType.ORDINAL) val statusId: ImmigrationDetentionEntityStatus,
+  @Column @Enumerated(EnumType.STRING) val statusId: ImmigrationDetentionEntityStatus,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
   val createdPrison: String?,
@@ -41,12 +41,11 @@ class ImmigrationDetentionHistoryEntity(
   val updatedBy: String?,
   val updatedPrison: String?,
   @Enumerated(EnumType.STRING) var source: EventSource = DPS,
-  @Column @Enumerated(EnumType.ORDINAL) val historyStatusId: ImmigrationDetentionEntityStatus,
   val historyCreatedAt: ZonedDateTime,
 ) {
 
   companion object {
-    fun from(original: ImmigrationDetentionEntity, historyStatus: ImmigrationDetentionEntityStatus) = ImmigrationDetentionHistoryEntity(
+    fun from(original: ImmigrationDetentionEntity) = ImmigrationDetentionHistoryEntity(
       id = 0,
       originalImmigrationDetentionId = original.id,
       immigrationDetentionUuid = original.immigrationDetentionUuid,
@@ -64,7 +63,6 @@ class ImmigrationDetentionHistoryEntity(
       updatedBy = original.updatedBy,
       updatedPrison = original.updatedPrison,
       source = original.source,
-      historyStatusId = historyStatus,
       historyCreatedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
     )
   }

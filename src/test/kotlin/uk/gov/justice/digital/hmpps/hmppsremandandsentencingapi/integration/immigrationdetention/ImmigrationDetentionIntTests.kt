@@ -2,25 +2,23 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.imm
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType.OTHER_REASON
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceService
 import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
-class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService: CourtAppearanceService) : IntegrationTestBase() {
+class ImmigrationDetentionIntTests : IntegrationTestBase() {
+
   @Test
   fun `Create an Immigration Detention record and fetch it based on returned UUID also check the events are emitted`() {
     val immigrationDetention = CreateImmigrationDetention(
@@ -123,7 +121,6 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     val historicImmigrationDetention =
       immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(updateResponse.immigrationDetentionUuid)
     assertThat(historicImmigrationDetention).hasSize(1)
-    assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.EDITED)
     assertThat(historicImmigrationDetention[0].immigrationDetentionRecordType).isEqualTo(DEPORTATION_ORDER)
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
 
@@ -414,7 +411,6 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     val historicImmigrationDetention =
       immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(id1Response.immigrationDetentionUuid)
     assertThat(historicImmigrationDetention).hasSize(1)
-    assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.DELETED)
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
 
     assertThat(getImmigrationDetentionsByPrisonerId("B12345B")).isEmpty()

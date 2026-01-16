@@ -39,7 +39,7 @@ class ImmigrationDetentionEntity(
 
   // Audit and status columns
   @Column
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: ImmigrationDetentionEntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
