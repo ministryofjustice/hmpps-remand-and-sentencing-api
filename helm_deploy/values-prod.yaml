@@ -21,6 +21,7 @@ generic-service:
       memory: 2G
     limits:
       memory: 4G
+  replicaCount: 10
 
   postgresDatabaseRestore:
     enabled: true
