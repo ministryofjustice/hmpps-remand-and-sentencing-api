@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType.OTHER_REASON
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
@@ -123,7 +122,6 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     val historicImmigrationDetention =
       immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(updateResponse.immigrationDetentionUuid)
     assertThat(historicImmigrationDetention).hasSize(1)
-    assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.EDITED)
     assertThat(historicImmigrationDetention[0].immigrationDetentionRecordType).isEqualTo(DEPORTATION_ORDER)
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
 
@@ -414,7 +412,6 @@ class ImmigrationDetentionIntTests(@Autowired private val courtAppearanceService
     val historicImmigrationDetention =
       immigrationDetentionHistoryRepository.findByImmigrationDetentionUuid(id1Response.immigrationDetentionUuid)
     assertThat(historicImmigrationDetention).hasSize(1)
-    assertThat(historicImmigrationDetention[0].historyStatusId).isEqualTo(ImmigrationDetentionEntityStatus.DELETED)
     assertThat(historicImmigrationDetention[0].historyCreatedAt).isNotNull()
 
     assertThat(getImmigrationDetentionsByPrisonerId("B12345B")).isEmpty()

@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Immig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.ACTIVE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.DELETED
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.EDITED
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
@@ -111,7 +110,6 @@ class ImmigrationDetentionService(
       immigrationDetentionHistoryRepository.save(
         ImmigrationDetentionHistoryEntity.from(
           immigrationDetentionToUpdate,
-          EDITED,
         ),
       )
       immigrationDetentionToUpdate.apply {
@@ -177,10 +175,7 @@ class ImmigrationDetentionService(
     immigrationDetentionToDelete.statusId = DELETED
 
     immigrationDetentionHistoryRepository.save(
-      ImmigrationDetentionHistoryEntity.from(
-        immigrationDetentionToDelete,
-        DELETED,
-      ),
+      ImmigrationDetentionHistoryEntity.from(immigrationDetentionToDelete),
     )
 
     return RecordResponse(
