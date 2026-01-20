@@ -285,7 +285,7 @@ class CourtCaseService(
   }
 
   @Transactional(readOnly = true)
-  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? = courtCaseRepository.findAllByPrisonerId(prisonerId)
+  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId)
     .filter { it.appearances.any { appearanceEntity -> appearanceEntity.courtCode == "IMM" } }
     .sortedByDescending { courtCase ->
       courtCase.appearances.filter { appearanceEntity -> appearanceEntity.courtCode == "IMM" }

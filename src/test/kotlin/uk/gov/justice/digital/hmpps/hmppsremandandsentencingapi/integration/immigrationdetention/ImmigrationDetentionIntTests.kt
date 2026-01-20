@@ -80,6 +80,34 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `creating then deleting then creating an immigration detention should result in a new court case being created`() {
+    val immigrationDetention = CreateImmigrationDetention(
+      prisonerId = "A12345B",
+      immigrationDetentionRecordType = IS91,
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByUsername = "aUser",
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
+    )
+
+    val firstImmigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
+    val firstCreateMessages = getMessages(3)
+
+    assertThat(firstCreateMessages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
+    deleteImmigrationDetention(firstImmigrationDetentionResponse.immigrationDetentionUuid)
+    val deleteMessages = getMessages(3)
+
+    assertThat(deleteMessages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.deleted", "charge.deleted", "court-case.deleted")
+
+    val secondImmigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
+    val secondCreateMessages = getMessages(3)
+    assertThat(secondCreateMessages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
+  }
+
+  @Test
   fun `Update an Immigration Detention record and fetch it based on returned UUID`() {
     val immigrationDetention = CreateImmigrationDetention(
       prisonerId = "B12345B",
