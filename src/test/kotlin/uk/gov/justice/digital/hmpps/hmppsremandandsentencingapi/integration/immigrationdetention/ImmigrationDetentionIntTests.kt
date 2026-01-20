@@ -64,41 +64,17 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
 
     createImmigrationDetention(immigrationDetention2)
 
-    messages = getMessages(2)
+    messages = getMessages(3)
 
-    assertThat(messages).hasSize(2).extracting<String> { it.eventType }
-      .contains("court-appearance.inserted", "charge.inserted")
-
-    val courtCase = courtCaseRepository.findAllByPrisonerId("A12345B").firstOrNull()
-
-    val appearances = courtAppearanceRepository.findAllByCourtCaseCaseUniqueIdentifierAndStatusId(
-      courtCase?.caseUniqueIdentifier.toString(),
-      IMMIGRATION_APPEARANCE,
-    )
-
-    appearances.forEach { assertThat(it.courtCode).isEqualTo("IMM") }
-  }
-
-  @Test
-  fun `creating new immigration detention always results in new court case`() {
-    val immigrationDetention = CreateImmigrationDetention(
-      prisonerId = "A12345B",
-      immigrationDetentionRecordType = IS91,
-      recordDate = LocalDate.of(2021, 1, 1),
-      createdByUsername = "aUser",
-      createdByPrison = "PRI",
-      appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
-    )
-    createImmigrationDetention(immigrationDetention)
-    val firstCreateMessages = getMessages(3)
-
-    assertThat(firstCreateMessages).hasSize(3).extracting<String> { it.eventType }
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
       .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
 
-    createImmigrationDetention(immigrationDetention)
-    val secondCreateMessages = getMessages(3)
-    assertThat(secondCreateMessages).hasSize(3).extracting<String> { it.eventType }
-      .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
+    val courtAppearances = courtAppearanceRepository.findAllByCourtCasePrisonerIdAndStatusId("A12345B", IMMIGRATION_APPEARANCE)
+
+    courtAppearances
+      .forEach { appearance ->
+        assertThat(appearance.courtCode).isEqualTo("IMM")
+      }
   }
 
   @Test
@@ -405,10 +381,10 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
     val id1Response = createImmigrationDetention(id1)
     val id2Response = createImmigrationDetention(id2)
 
-    var messages = getMessages(5)
+    var messages = getMessages(6)
 
-    assertThat(messages).hasSize(5).extracting<String> { it.eventType }
-      .contains("court-case.inserted", "court-appearance.inserted", "charge.inserted", "court-appearance.inserted", "charge.inserted")
+    assertThat(messages).hasSize(6).extracting<String> { it.eventType }
+      .contains("court-case.inserted", "court-case.inserted", "court-appearance.inserted", "charge.inserted", "court-appearance.inserted", "charge.inserted")
 
     purgeQueues()
 
@@ -417,7 +393,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
     messages = getMessages(3)
 
     assertThat(messages).hasSize(3).extracting<String> { it.eventType }
-      .contains("court-appearance.deleted", "charge.deleted")
+      .contains("court-appearance.deleted", "charge.deleted", "court-case.deleted")
 
     purgeQueues()
 
