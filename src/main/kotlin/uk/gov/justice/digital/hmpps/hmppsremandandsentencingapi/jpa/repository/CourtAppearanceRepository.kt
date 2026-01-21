@@ -36,6 +36,8 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
 
   fun findAllByCourtCaseCaseUniqueIdentifierAndStatusId(courtCaseUuid: String, status: CourtAppearanceEntityStatus): List<CourtAppearanceEntity>
 
+  fun findAllByCourtCasePrisonerIdAndStatusId(prisonerId: String, status: CourtAppearanceEntityStatus): List<CourtAppearanceEntity>
+
   @Modifying
   @Query(
     """

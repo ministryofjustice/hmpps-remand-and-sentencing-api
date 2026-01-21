@@ -43,35 +43,31 @@ class ImmigrationDetentionService(
     immigrationDetention: CreateImmigrationDetention,
     immigrationDetentionUuid: UUID? = null,
   ): RecordResponse<SaveImmigrationDetentionResponse> {
-    var courtCase = courtCaseService.getLatestImmigrationDetentionCourtCase(immigrationDetention.prisonerId)
     val eventsToEmit = mutableSetOf<EventMetadata>()
 
-    if (courtCase == null) {
-      val (createdCourtCase, events) = courtCaseService.createCourtCase(
-        CreateCourtCase(
-          prisonerId = immigrationDetention.prisonerId,
-          prisonId = immigrationDetention.createdByPrison,
-          appearances = emptyList(),
-          legacyData = null,
-        ),
-      )
-      courtCase = createdCourtCase
-      eventsToEmit.addAll(events)
-    }
+    val (createdCourtCase, events) = courtCaseService.createCourtCase(
+      CreateCourtCase(
+        prisonerId = immigrationDetention.prisonerId,
+        prisonId = immigrationDetention.createdByPrison,
+        appearances = emptyList(),
+        legacyData = null,
+      ),
+    )
+    eventsToEmit.addAll(events)
 
     var courtAppearanceUuid: UUID? = null
 
     courtAppearanceService.createCourtAppearance(
       createCourtAppearanceFromImmigrationDetention(
         immigrationDetention,
-        courtCaseUuid = courtCase.caseUniqueIdentifier,
+        courtCaseUuid = createdCourtCase.caseUniqueIdentifier,
       ),
     )?.let { (courtAppearance, events) ->
       eventsToEmit.addAll(events)
       courtAppearanceUuid = courtAppearance.appearanceUuid
     }
 
-    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseEntity(courtCase)
+    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseEntity(createdCourtCase)
     if (updatedCourtCaseReferences.hasUpdated) {
       eventsToEmit.add(
         EventMetadataCreator.courtCaseEventMetadata(
