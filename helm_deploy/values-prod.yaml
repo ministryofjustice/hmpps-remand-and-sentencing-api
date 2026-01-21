@@ -41,3 +41,14 @@ generic-service:
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
   alertSeverity: legacy-replacement-alerts
+
+generic-data-analytics-extractor:
+  enabled: true
+  cronJobSchedule: "30 7 * * 1-5"
+  dataProductName: hmpps_remand_and_sentencing_prod
+  resources:
+    requests:
+      memory: 2G
+      cpu: 1
+    limits:
+      memory: 4G
