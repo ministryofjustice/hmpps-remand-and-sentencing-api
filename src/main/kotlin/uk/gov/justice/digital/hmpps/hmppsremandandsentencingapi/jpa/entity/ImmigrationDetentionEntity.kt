@@ -51,6 +51,12 @@ class ImmigrationDetentionEntity(
   var source: EventSource = DPS,
 ) {
 
+  fun delete(username: String) {
+    statusId = ImmigrationDetentionEntityStatus.DELETED
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+  }
+
   companion object {
     fun fromDPS(
       create: CreateImmigrationDetention,
