@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Immigra
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.ImmigrationDetentionRecordTypeOutcomeMapper
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionRecordTypeOutcomeMapper
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -69,7 +69,7 @@ class ImmigrationDetentionEntity(
     0,
     UUID.randomUUID(),
     courtAppearance.courtCase.prisonerId,
-    ImmigrationDetentionRecordTypeOutcomeMapper.outcomeToRecordType(courtAppearance.appearanceOutcome),
+    ImmigrationDetentionRecordTypeOutcomeMapper.appearanceOutcomeToRecordType(courtAppearance.appearanceOutcome),
     updateRequest.appearanceDate,
     homeOfficeReferenceNumber,
     noLongerOfInterestReason,
