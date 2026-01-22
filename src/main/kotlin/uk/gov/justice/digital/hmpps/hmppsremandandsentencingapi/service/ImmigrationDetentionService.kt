@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ImmigrationDetentionEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.ACTIVE
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.DELETED
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
@@ -36,6 +35,7 @@ class ImmigrationDetentionService(
   private val appearanceOutcomeService: AppearanceOutcomeService,
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val courtCaseReferenceService: CourtCaseReferenceService,
+  private val serviceUserService: ServiceUserService,
 ) {
 
   @Transactional
@@ -168,7 +168,7 @@ class ImmigrationDetentionService(
         ),
       )
     }
-    immigrationDetentionToDelete.statusId = DELETED
+    immigrationDetentionToDelete.delete(serviceUserService.getUsername())
 
     immigrationDetentionHistoryRepository.save(
       ImmigrationDetentionHistoryEntity.from(immigrationDetentionToDelete),
