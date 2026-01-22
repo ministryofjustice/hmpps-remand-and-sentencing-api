@@ -5,10 +5,11 @@ import java.util.UUID
 
 data class SaveImmigrationDetentionResponse(
   val immigrationDetentionUuid: UUID,
+  val courtAppearanceUuid: UUID?,
 ) {
   companion object {
     fun from(
       immigrationDetentionEntity: ImmigrationDetentionEntity,
-    ): SaveImmigrationDetentionResponse = SaveImmigrationDetentionResponse(immigrationDetentionUuid = immigrationDetentionEntity.immigrationDetentionUuid)
+    ): SaveImmigrationDetentionResponse = SaveImmigrationDetentionResponse(immigrationDetentionUuid = immigrationDetentionEntity.immigrationDetentionUuid, immigrationDetentionEntity.courtAppearanceUuid)
   }
 }
