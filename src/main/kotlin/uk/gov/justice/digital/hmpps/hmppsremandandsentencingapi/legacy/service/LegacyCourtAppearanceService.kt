@@ -80,7 +80,8 @@ class LegacyCourtAppearanceService(
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
-    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, getPerformedByUsername(courtAppearance))
+    val performedByUser = getPerformedByUsername(courtAppearance)
+    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, performedByUser)
     if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
       existingCourtAppearance.updateFrom(updatedCourtAppearance)
       courtAppearanceHistoryRepository.save(
@@ -93,7 +94,7 @@ class LegacyCourtAppearanceService(
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     handleNextCourtAppearance(existingCourtAppearance, courtAppearance)
-
+    handleImmigrationDetention(existingCourtAppearance, courtAppearance, performedByUser)
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
   }
 
@@ -103,6 +104,18 @@ class LegacyCourtAppearanceService(
       val toUpdate = NextCourtAppearanceEntity.from(updateRequest, courtAppearance, appearanceType)
       existingNextCourtAppearance.updateFrom(toUpdate)
     } ?: handleMatchingNextCourtAppearance(courtAppearance, updateRequest)
+  }
+
+  private fun handleImmigrationDetention(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance, performedByUser: String) {
+    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(courtAppearance.appearanceUuid).forEach { immigrationDetentionEntity ->
+      if (courtAppearance.appearanceOutcome?.outcomeType == "IMMIGRATION") {
+        val updatedImmigrationDetentionRecord = immigrationDetentionEntity.copyFrom(courtAppearance, updateRequest, performedByUser)
+        if (!immigrationDetentionEntity.isSame(updatedImmigrationDetentionRecord)) {
+          immigrationDetentionEntity.updateFrom(updatedImmigrationDetentionRecord)
+          immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
+        }
+      }
+    }
   }
 
   private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {

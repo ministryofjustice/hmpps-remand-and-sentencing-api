@@ -6,6 +6,8 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
@@ -118,6 +120,37 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(editedFutureCourtAppearance.appearanceTypeUuid.toString())
 
     Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
+  }
+
+  @Test
+  fun `updating immigration created court appearance results in an update to immigration detention record`() {
+    val createImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()
+    val createdImmigrationDetentionResponse = createImmigrationDetention(createImmigrationDetention)
+    val toUpdate = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", appearanceDate = createImmigrationDetention.recordDate.plusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "5500", nextEventDateTime = null))
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${createdImmigrationDetentionResponse.courtAppearanceUuid}")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri("/immigration-detention/${createdImmigrationDetentionResponse.immigrationDetentionUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.recordDate")
+      .isEqualTo(toUpdate.appearanceDate.format(DateTimeFormatter.ISO_DATE))
   }
 
   @Test
