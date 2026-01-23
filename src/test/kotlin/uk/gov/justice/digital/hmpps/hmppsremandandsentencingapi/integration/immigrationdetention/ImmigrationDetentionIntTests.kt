@@ -350,7 +350,6 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
             immigrationDetentionUuid = immigrationDetentionNomisUUID,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = DEPORTATION_ORDER,
-            homeOfficeReferenceNumber = "NOMIS123",
             recordDate = LocalDate.now(),
             createdAt = ZonedDateTime.now(),
             source = EventSource.NOMIS,
