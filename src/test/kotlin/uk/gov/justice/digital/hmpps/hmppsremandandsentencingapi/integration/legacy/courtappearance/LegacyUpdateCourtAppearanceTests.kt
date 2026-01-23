@@ -172,13 +172,16 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
     webTestClient
       .get()
-      .uri("/immigration-detention/${createdImmigrationDetentionResponse.immigrationDetentionUuid}")
+      .uri("/immigration-detention/person/${createImmigrationDetention.prisonerId}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
       }
       .exchange()
       .expectStatus()
-      .isNotFound
+      .isOk
+      .expectBody()
+      .jsonPath("$")
+      .isEmpty
   }
 
   @Test
