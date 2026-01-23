@@ -189,6 +189,41 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
     assertThat(recallsForRemovedPrisoner).isEmpty()
   }
 
+  @Test
+  fun `moves immigration records to new prisoner number`() {
+    val removedPrisonerNumber = "IMMMER1"
+    val retainedPrisonerNumber = "IMMMER2"
+    val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(prisonerId = removedPrisonerNumber)
+    val createdImmigrationDetention = createImmigrationDetention(immigrationDetention)
+
+    val mergePerson = PrisonerMergeDataCreator.mergePerson(removedPrisonerNumber = removedPrisonerNumber)
+
+    webTestClient
+      .post()
+      .uri("/legacy/court-case/merge/person/$retainedPrisonerNumber")
+      .bodyValue(mergePerson)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+
+    webTestClient
+      .get()
+      .uri("/immigration-detention/person/$retainedPrisonerNumber")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.[?(@.immigrationDetentionUuid == '${createdImmigrationDetention.immigrationDetentionUuid}')]")
+      .exists()
+  }
+
   private fun createRecallForPrisoner(prisonerNumber: String, returnToCustodyDate: LocalDate): UUID {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences(prisonerNumber)
     val recall = DpsDataCreator.dpsCreateRecall(

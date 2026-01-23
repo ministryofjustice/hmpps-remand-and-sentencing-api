@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -38,9 +37,8 @@ class RecallHistoryEntity(
   val recallType: RecallTypeEntity,
 
   // Audit and status columns
-  @Column
-  @Enumerated(EnumType.ORDINAL)
-  val statusId: RecallEntityStatus,
+  @Enumerated(EnumType.STRING)
+  val status: RecallEntityStatus,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
   val createdPrison: String?,
@@ -49,16 +47,13 @@ class RecallHistoryEntity(
   val updatedPrison: String?,
   @Enumerated(EnumType.STRING)
   var source: EventSource = DPS,
-  @Column
-  @Enumerated(EnumType.ORDINAL)
-  val historyStatusId: RecallEntityStatus,
   val historyCreatedAt: ZonedDateTime,
   @Enumerated(EnumType.STRING)
   val changeSource: ChangeSource,
 ) {
 
   companion object {
-    fun from(original: RecallEntity, historyStatus: RecallEntityStatus, changeSource: ChangeSource) = RecallHistoryEntity(
+    fun from(original: RecallEntity, changeSource: ChangeSource) = RecallHistoryEntity(
       id = 0,
       originalRecallId = original.id,
       recallUuid = original.recallUuid,
@@ -67,7 +62,7 @@ class RecallHistoryEntity(
       returnToCustodyDate = original.returnToCustodyDate,
       inPrisonOnRevocationDate = original.inPrisonOnRevocationDate,
       recallType = original.recallType,
-      statusId = original.statusId,
+      status = original.status,
       createdAt = original.createdAt,
       createdByUsername = original.createdByUsername,
       createdPrison = original.createdPrison,
@@ -75,7 +70,6 @@ class RecallHistoryEntity(
       updatedBy = original.updatedBy,
       updatedPrison = original.updatedPrison,
       source = original.source,
-      historyStatusId = historyStatus,
       historyCreatedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
       changeSource = changeSource,
     )

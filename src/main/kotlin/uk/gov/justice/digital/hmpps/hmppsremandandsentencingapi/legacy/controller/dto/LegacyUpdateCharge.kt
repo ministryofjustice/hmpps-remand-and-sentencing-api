@@ -7,4 +7,5 @@ data class LegacyUpdateCharge(
   val offenceEndDate: LocalDate?,
   var legacyData: ChargeLegacyData,
   val performedByUser: String?,
+  val offenceCode: String?,
 )

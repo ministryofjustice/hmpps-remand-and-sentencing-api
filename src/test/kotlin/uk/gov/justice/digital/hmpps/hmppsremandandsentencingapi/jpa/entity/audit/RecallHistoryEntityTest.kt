@@ -26,7 +26,7 @@ class RecallHistoryEntityTest {
       returnToCustodyDate = LocalDate.of(2022, 2, 2),
       inPrisonOnRevocationDate = true,
       recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
-      statusId = RecallEntityStatus.ACTIVE,
+      status = RecallEntityStatus.ACTIVE,
       createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
       createdByUsername = "CREATOR",
       createdPrison = "FOO",
@@ -36,7 +36,7 @@ class RecallHistoryEntityTest {
       source = EventSource.DPS,
     )
 
-    assertThat(RecallHistoryEntity.from(original, RecallEntityStatus.DELETED, ChangeSource.DPS))
+    assertThat(RecallHistoryEntity.from(original, ChangeSource.DPS))
       .usingRecursiveComparison()
       .ignoringFields("historyCreatedAt")
       .isEqualTo(
@@ -49,7 +49,7 @@ class RecallHistoryEntityTest {
           returnToCustodyDate = LocalDate.of(2022, 2, 2),
           inPrisonOnRevocationDate = true,
           recallType = RecallTypeEntity(0, RecallType.LR, "LR"),
-          statusId = RecallEntityStatus.ACTIVE,
+          status = RecallEntityStatus.ACTIVE,
           createdAt = ZonedDateTime.of(2023, 3, 3, 3, 3, 3, 3, ZoneId.systemDefault()),
           createdByUsername = "CREATOR",
           createdPrison = "FOO",
@@ -57,7 +57,6 @@ class RecallHistoryEntityTest {
           updatedBy = "UPDATER",
           updatedPrison = "BAR",
           source = EventSource.DPS,
-          historyStatusId = RecallEntityStatus.DELETED,
           historyCreatedAt = ZonedDateTime.now(), // ignored in assertion
           changeSource = ChangeSource.DPS,
         ),

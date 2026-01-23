@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
@@ -163,7 +162,7 @@ class LegacySentenceService(
         legacyData,
       ),
     )
-    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, RecallEntityStatus.ACTIVE, ChangeSource.NOMIS))
+    val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
     recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, recallSentence, ChangeSource.NOMIS))
   }
 
@@ -369,7 +368,6 @@ class LegacySentenceService(
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
             latestRecall,
-            RecallEntityStatus.EDITED,
             ChangeSource.NOMIS,
           ),
         )
@@ -417,7 +415,6 @@ class LegacySentenceService(
         val recallHistoryEntity = recallHistoryRepository.save(
           RecallHistoryEntity.from(
             recall,
-            RecallEntityStatus.DELETED,
             ChangeSource.NOMIS,
           ),
         )
@@ -427,7 +424,6 @@ class LegacySentenceService(
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
             recall,
-            RecallEntityStatus.EDITED,
             ChangeSource.NOMIS,
           ),
         )

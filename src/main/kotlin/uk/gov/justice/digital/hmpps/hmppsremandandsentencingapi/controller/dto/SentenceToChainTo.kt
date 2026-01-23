@@ -9,11 +9,12 @@ data class SentenceToChainTo(
   val offenceCode: String,
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
+  val chargeUuid: UUID,
   val sentenceUuid: UUID,
   val countNumber: String?,
   val chargeLegacyData: ChargeLegacyData?,
 ) {
   companion object {
-    fun from(consecutiveToSentenceRow: ConsecutiveToSentenceRow): SentenceToChainTo = SentenceToChainTo(consecutiveToSentenceRow.offenceCode, consecutiveToSentenceRow.offenceStartDate, consecutiveToSentenceRow.offenceEndDate, consecutiveToSentenceRow.sentenceUuid, consecutiveToSentenceRow.countNumber, consecutiveToSentenceRow.chargeLegacyData)
+    fun from(consecutiveToSentenceRow: ConsecutiveToSentenceRow): SentenceToChainTo = SentenceToChainTo(consecutiveToSentenceRow.offenceCode, consecutiveToSentenceRow.offenceStartDate, consecutiveToSentenceRow.offenceEndDate, consecutiveToSentenceRow.chargeUuid, consecutiveToSentenceRow.sentenceUuid, consecutiveToSentenceRow.countNumber, consecutiveToSentenceRow.chargeLegacyData)
   }
 }

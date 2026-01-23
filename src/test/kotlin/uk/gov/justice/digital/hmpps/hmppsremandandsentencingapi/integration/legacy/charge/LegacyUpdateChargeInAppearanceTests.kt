@@ -15,7 +15,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
     val (_, createdCourtCase) = createCourtCase()
     val appearance = createdCourtCase.appearances.first()
     val charge = appearance.charges.first()
-    val toUpdate = DataCreator.legacyUpdateCharge()
+    val toUpdate = DataCreator.legacyUpdateCharge(offenceCode = "ADIFFERENTCODE")
     webTestClient
       .put()
       .uri("/legacy/charge/${charge.chargeUuid}/appearance/${appearance.appearanceUuid}")
@@ -42,6 +42,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(charge.chargeUuid)
+      .jsonPath("$.charges[0].offenceCode")
+      .isEqualTo(toUpdate.offenceCode!!)
   }
 
   @Test

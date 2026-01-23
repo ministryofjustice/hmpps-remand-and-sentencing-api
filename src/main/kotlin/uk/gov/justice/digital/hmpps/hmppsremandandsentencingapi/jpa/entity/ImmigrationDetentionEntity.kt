@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
@@ -15,6 +16,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Immigra
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.ACTIVE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionRecordTypeOutcomeMapper
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -22,6 +25,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "immigration_detention")
+@DynamicUpdate
 class ImmigrationDetentionEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +43,7 @@ class ImmigrationDetentionEntity(
 
   // Audit and status columns
   @Column
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   var statusId: ImmigrationDetentionEntityStatus,
   val createdAt: ZonedDateTime = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
   val createdByUsername: String,
@@ -50,6 +54,38 @@ class ImmigrationDetentionEntity(
   @Enumerated(EnumType.STRING)
   var source: EventSource = DPS,
 ) {
+
+  fun delete(username: String) {
+    statusId = ImmigrationDetentionEntityStatus.DELETED
+    updatedAt = ZonedDateTime.now()
+    updatedBy = username
+  }
+
+  fun copyFrom(
+    courtAppearance: CourtAppearanceEntity,
+    updateRequest: LegacyCreateCourtAppearance,
+    performedByUser: String,
+  ): ImmigrationDetentionEntity = ImmigrationDetentionEntity(
+    0,
+    UUID.randomUUID(),
+    courtAppearance.courtCase.prisonerId,
+    ImmigrationDetentionRecordTypeOutcomeMapper.appearanceOutcomeToRecordType(courtAppearance.appearanceOutcome),
+    updateRequest.appearanceDate,
+    homeOfficeReferenceNumber,
+    noLongerOfInterestReason,
+    noLongerOfInterestComment,
+    courtAppearance.appearanceUuid,
+    ACTIVE,
+    ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+    performedByUser,
+  )
+
+  fun isSame(other: ImmigrationDetentionEntity): Boolean = recordDate == other.recordDate &&
+    prisonerId == other.prisonerId &&
+    immigrationDetentionRecordType == other.immigrationDetentionRecordType &&
+    homeOfficeReferenceNumber == other.homeOfficeReferenceNumber &&
+    noLongerOfInterestReason == other.noLongerOfInterestReason &&
+    noLongerOfInterestComment == other.noLongerOfInterestComment
 
   companion object {
     fun fromDPS(
