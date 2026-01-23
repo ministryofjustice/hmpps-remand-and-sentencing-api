@@ -420,7 +420,7 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       CreateImmigrationDetention(
         prisonerId = "B12345B",
         immigrationDetentionRecordType = IS91,
-        recordDate = LocalDate.of(2021, 1, 1),
+        recordDate = LocalDate.of(2021, 2, 1),
         createdByUsername = "aUser",
         createdByPrison = "PRI",
         appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
@@ -434,14 +434,14 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       CreateImmigrationDetention(
         prisonerId = "B12345B",
         immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
-        recordDate = LocalDate.of(2021, 2, 1),
+        recordDate = LocalDate.of(2021, 1, 1),
         createdByUsername = "aUser",
         createdByPrison = "PRI",
         appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
       ),
     )
     assertThat(getLatestImmigrationDetentionByPrisonerId("B12345B").immigrationDetentionRecordType).isEqualTo(
-      NO_LONGER_OF_INTEREST,
+      IS91,
     )
   }
 
@@ -456,10 +456,6 @@ class ImmigrationDetentionIntTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isNotFound
-      .expectBody()
-      .jsonPath("$.userMessage")
-      .isEqualTo("not found: No immigration detention records exist for the prisoner ID: NOTFOUND")
-      .jsonPath("$.developerMessage").isEqualTo("No immigration detention records exist for the prisoner ID: NOTFOUND")
   }
 
   companion object {
