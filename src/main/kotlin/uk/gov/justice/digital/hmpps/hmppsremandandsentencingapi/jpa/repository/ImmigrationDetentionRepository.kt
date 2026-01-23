@@ -13,7 +13,7 @@ interface ImmigrationDetentionRepository : CrudRepository<ImmigrationDetentionEn
     statusId: ImmigrationDetentionEntityStatus = ACTIVE,
   ): List<ImmigrationDetentionEntity>
 
-  fun findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(
+  fun findTop1ByPrisonerIdAndStatusIdOrderByRecordDateDescCreatedAtDesc(
     prisonerId: String,
     statusId: ImmigrationDetentionEntityStatus = ACTIVE,
   ): ImmigrationDetentionEntity?

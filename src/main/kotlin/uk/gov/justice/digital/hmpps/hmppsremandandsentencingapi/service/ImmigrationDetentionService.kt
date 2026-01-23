@@ -200,8 +200,8 @@ class ImmigrationDetentionService(
   }
 
   @Transactional(readOnly = true)
-  fun findLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention {
-    val dpsRecords = immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(prisonerId)
+  fun findLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention? {
+    val dpsRecords = immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByRecordDateDescCreatedAtDesc(prisonerId)
       ?.let { listOf(ImmigrationDetention.from(it)) }
       ?: emptyList()
 
@@ -209,9 +209,11 @@ class ImmigrationDetentionService(
       ImmigrationDetention.fromCourtAppearance(it, prisonerId)
     }
 
-    val allRecords = (dpsRecords + nomisRecords).sortedByDescending { it.createdAt }
+    val allRecords = (dpsRecords + nomisRecords).sortedWith(
+      compareByDescending(ImmigrationDetention::recordDate)
+        .thenByDescending(ImmigrationDetention::createdAt),
+    )
     return allRecords.firstOrNull()
-      ?: throw EntityNotFoundException("No immigration detention records exist for the prisoner ID: $prisonerId")
   }
 
   private fun createCourtAppearanceFromImmigrationDetention(

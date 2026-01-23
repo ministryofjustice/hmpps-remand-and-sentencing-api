@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -104,7 +105,11 @@ class ImmigrationDetentionController(
   )
   fun getLatestImmigrationDetentionByPrisonerId(
     @PathVariable prisonerId: String,
-  ): ImmigrationDetention = immigrationDetentionService.findLatestImmigrationDetentionByPrisonerId(prisonerId)
+  ): ResponseEntity<Any> = immigrationDetentionService.findLatestImmigrationDetentionByPrisonerId(prisonerId)?.let {
+    ResponseEntity.status(
+      HttpStatus.OK,
+    ).body(it)
+  } ?: ResponseEntity.notFound().build()
 
   @PutMapping("/{immigrationDetentionUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
