@@ -154,6 +154,37 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `updating immigration created court appearance to non immigration results in deleting the immigration detention record`() {
+    val createImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()
+    val createdImmigrationDetentionResponse = createImmigrationDetention(createImmigrationDetention)
+    val toUpdate = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", appearanceDate = createImmigrationDetention.recordDate.plusDays(7), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "1", nextEventDateTime = null))
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${createdImmigrationDetentionResponse.courtAppearanceUuid}")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri("/immigration-detention/person/${createImmigrationDetention.prisonerId}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$")
+      .isEmpty
+  }
+
+  @Test
   fun `must not update appearance when no court appearance exists`() {
     val toUpdate = DataCreator.legacyCreateCourtAppearance()
     webTestClient
