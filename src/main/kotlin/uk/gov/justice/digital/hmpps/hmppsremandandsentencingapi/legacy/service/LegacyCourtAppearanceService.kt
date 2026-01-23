@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionEntityUpdater
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -111,9 +112,12 @@ class LegacyCourtAppearanceService(
       if (courtAppearance.appearanceOutcome?.outcomeType == "IMMIGRATION") {
         val updatedImmigrationDetentionRecord = immigrationDetentionEntity.copyFrom(courtAppearance, updateRequest, performedByUser)
         if (!immigrationDetentionEntity.isSame(updatedImmigrationDetentionRecord)) {
-          immigrationDetentionEntity.updateFrom(updatedImmigrationDetentionRecord)
+          ImmigrationDetentionEntityUpdater.update(immigrationDetentionEntity, updatedImmigrationDetentionRecord)
           immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
         }
+      } else {
+        immigrationDetentionEntity.delete(performedByUser)
+        immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
       }
     }
   }

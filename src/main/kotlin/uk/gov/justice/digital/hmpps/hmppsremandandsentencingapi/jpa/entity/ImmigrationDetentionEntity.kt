@@ -80,18 +80,12 @@ class ImmigrationDetentionEntity(
     performedByUser,
   )
 
-  fun isSame(other: ImmigrationDetentionEntity): Boolean = recordDate == other.recordDate
-
-  fun updateFrom(updatedImmigrationDetentionRecord: ImmigrationDetentionEntity) {
-    this.prisonerId = updatedImmigrationDetentionRecord.prisonerId
-    this.immigrationDetentionRecordType = updatedImmigrationDetentionRecord.immigrationDetentionRecordType
-    this.recordDate = updatedImmigrationDetentionRecord.recordDate
-    this.homeOfficeReferenceNumber = updatedImmigrationDetentionRecord.homeOfficeReferenceNumber
-    this.noLongerOfInterestReason = updatedImmigrationDetentionRecord.noLongerOfInterestReason
-    this.noLongerOfInterestComment = updatedImmigrationDetentionRecord.noLongerOfInterestComment
-    this.updatedAt = updatedImmigrationDetentionRecord.createdAt
-    this.updatedBy = updatedImmigrationDetentionRecord.createdByUsername
-  }
+  fun isSame(other: ImmigrationDetentionEntity): Boolean = recordDate == other.recordDate &&
+    prisonerId == other.prisonerId &&
+    immigrationDetentionRecordType == other.immigrationDetentionRecordType &&
+    homeOfficeReferenceNumber == other.homeOfficeReferenceNumber &&
+    noLongerOfInterestReason == other.noLongerOfInterestReason &&
+    noLongerOfInterestComment == other.noLongerOfInterestComment
 
   companion object {
     fun fromDPS(
