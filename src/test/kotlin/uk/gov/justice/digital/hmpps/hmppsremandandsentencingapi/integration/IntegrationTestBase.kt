@@ -735,7 +735,7 @@ abstract class IntegrationTestBase {
   fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String): UUID {
     val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId)
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
-    val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = nomisOutcomeCode))
+    val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1"))
     val legacyCreateChargeResult = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
     return legacyCreateChargeResult.second.appearanceLifetimeUuid
   }
