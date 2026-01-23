@@ -201,7 +201,7 @@ class ImmigrationDetentionService(
 
   @Transactional(readOnly = true)
   fun findLatestImmigrationDetentionByPrisonerId(prisonerId: String): ImmigrationDetention? {
-    val dpsRecords = immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByCreatedAtDesc(prisonerId)
+    val dpsRecords = immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByRecordDateDescCreatedAtDesc(prisonerId)
       ?.let { listOf(ImmigrationDetention.from(it)) }
       ?: emptyList()
 
