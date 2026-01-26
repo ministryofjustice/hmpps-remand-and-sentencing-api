@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -167,16 +168,15 @@ class LegacySentenceServiceTests {
 
   private companion object {
 
-    fun legacySentenceUpdate(chargeUuid: UUID, appearanceUuid: UUID, rtc: LocalDate): LegacyCreateSentence =
-      LegacyCreateSentence(
-        chargeUuids = listOf(chargeUuid),
-        appearanceUuid = appearanceUuid,
-        consecutiveToLifetimeUuid = null,
-        active = true,
-        performedByUser = "SYNC_USER",
-        returnToCustodyDate = rtc,
-        legacyData = mockk(relaxed = true),
-      )
+    fun legacySentenceUpdate(chargeUuid: UUID, appearanceUuid: UUID, rtc: LocalDate): LegacyCreateSentence = LegacyCreateSentence(
+      chargeUuids = listOf(chargeUuid),
+      appearanceUuid = appearanceUuid,
+      consecutiveToLifetimeUuid = null,
+      active = true,
+      performedByUser = "SYNC_USER",
+      returnToCustodyDate = rtc,
+      legacyData = mockk(relaxed = true),
+    )
 
     fun getSentenceAndRecall(
       sentenceUuid: UUID,
@@ -194,7 +194,7 @@ class LegacySentenceServiceTests {
         recallType = RecallTypeEntity(0, recallType, recallType.name),
         status = RecallEntityStatus.ACTIVE,
         createdByUsername = "SYNC_USER",
-        source = uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS,
+        source = EventSource.NOMIS,
       )
 
       val sentenceType = SentenceTypeEntity(
