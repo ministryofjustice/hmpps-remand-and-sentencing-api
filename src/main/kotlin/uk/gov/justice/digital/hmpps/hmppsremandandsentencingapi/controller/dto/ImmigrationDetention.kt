@@ -13,6 +13,7 @@ import java.util.UUID
 
 data class ImmigrationDetention(
   val immigrationDetentionUuid: UUID,
+  val courtAppearanceUuid: UUID,
   val prisonerId: String,
   var immigrationDetentionRecordType: ImmigrationDetentionRecordType,
   var recordDate: LocalDate,
@@ -24,7 +25,8 @@ data class ImmigrationDetention(
 ) {
   companion object {
     fun fromCourtAppearance(courtAppearance: CourtAppearanceEntity, prisonerId: String): ImmigrationDetention = ImmigrationDetention(
-      immigrationDetentionUuid = courtAppearance.appearanceUuid,
+      immigrationDetentionUuid = UUID.randomUUID(),
+      courtAppearanceUuid = courtAppearance.appearanceUuid,
       prisonerId = prisonerId,
       immigrationDetentionRecordType = ImmigrationDetentionRecordTypeOutcomeMapper.appearanceOutcomeToRecordType(courtAppearance.appearanceOutcome),
       recordDate = courtAppearance.appearanceDate,
@@ -37,6 +39,7 @@ data class ImmigrationDetention(
 
     fun from(immigrationDetentionEntity: ImmigrationDetentionEntity): ImmigrationDetention = ImmigrationDetention(
       immigrationDetentionUuid = immigrationDetentionEntity.immigrationDetentionUuid,
+      courtAppearanceUuid = immigrationDetentionEntity.courtAppearanceUuid!!,
       prisonerId = immigrationDetentionEntity.prisonerId,
       immigrationDetentionRecordType = immigrationDetentionEntity.immigrationDetentionRecordType,
       recordDate = immigrationDetentionEntity.recordDate,

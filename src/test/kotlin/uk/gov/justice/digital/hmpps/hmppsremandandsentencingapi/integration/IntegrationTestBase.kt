@@ -736,8 +736,8 @@ abstract class IntegrationTestBase {
     val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId)
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
     val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1"))
-    val legacyCreateChargeResult = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    return legacyCreateChargeResult.second.appearanceLifetimeUuid
+    val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
+    return createdChargeResponse.appearanceLifetimeUuid
   }
 
   protected fun refreshCaseReferences(courtCaseUuid: UUID, caseReferences: MutableList<String>) {
@@ -770,6 +770,9 @@ abstract class IntegrationTestBase {
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
+    val IMMIGRATION_DECISION_TO_DEPORT_UUID: UUID = UUID.fromString("b28afb19-dd94-4970-8071-e616b33274cb")
+    val IMMIGRATION_IS91_UUID: UUID = UUID.fromString("5c670576-ffbf-4005-8d54-4aeba7bf1a22")
+    val IMMIGRATION_NO_LONGER_OF_INTEREST_UUID: UUID = UUID.fromString("15524814-3238-4e4b-86a7-cda31b0221ec")
   }
 }
 

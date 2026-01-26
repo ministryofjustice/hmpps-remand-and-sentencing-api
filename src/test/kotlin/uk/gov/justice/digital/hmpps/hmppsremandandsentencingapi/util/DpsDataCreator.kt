@@ -174,8 +174,9 @@ class DpsDataCreator {
       createdByUsername: String = "aUser",
       createdByPrison: String = "PRI",
       appearanceOutcomeUuid: UUID = UUID.fromString("5c670576-ffbf-4005-8d54-4aeba7bf1a22"),
+      courtAppearanceUuid: UUID? = null,
     ): CreateImmigrationDetention = CreateImmigrationDetention(
-      prisonerId, appearanceOutcomeUuid, immigrationDetentionRecordType, recordDate, homeOfficeReferenceNumber, noLongerOfInterestReason, noLongerOfInterestComment, createdByUsername, createdByPrison,
+      prisonerId, appearanceOutcomeUuid, immigrationDetentionRecordType, recordDate, homeOfficeReferenceNumber, noLongerOfInterestReason, noLongerOfInterestComment, createdByUsername, createdByPrison, courtAppearanceUuid,
     )
   }
 }
