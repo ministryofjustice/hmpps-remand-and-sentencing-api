@@ -272,4 +272,8 @@ class ImmigrationDetentionService(
       documents = null,
     )
   }
+
+  fun findByAppearanceUuidAndMap(appearanceUuid: UUID): ImmigrationDetention? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let {
+    ImmigrationDetention.fromCourtAppearance(it, it.courtCase.prisonerId)
+  }
 }
