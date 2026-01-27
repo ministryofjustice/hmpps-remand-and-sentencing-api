@@ -276,7 +276,7 @@ class LegacySentenceService(
         consecutiveToSentence,
         isManyCharges,
       )
-      updateRecall(existingSentence, sentence)
+      updateRtcDateIfFtrRecall(existingSentence, sentence)
       if (!existingSentence.isSame(updatedSentence)) {
         existingSentence.updateFrom(updatedSentence)
         sentenceHistoryRepository.save(
@@ -360,9 +360,9 @@ class LegacySentenceService(
     }
   }
 
-  private fun updateRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
-    val latestRecall = updatedSentence.latestRecall()
-    if (latestRecall != null) {
+  private fun updateRtcDateIfFtrRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
+    val latestRecall = updatedSentence.latestRecall() ?: return
+    if (latestRecall.returnToCustodyDate != sentence.returnToCustodyDate && latestRecall.recallType.code.isFixedTermRecall()) {
       latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
       val recallHistoryEntity =
         recallHistoryRepository.save(
