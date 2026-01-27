@@ -206,8 +206,8 @@ class ImmigrationDetentionService(
   fun findImmigrationDetentionByPrisonerId(prisonerId: String): List<ImmigrationDetention> {
     val dpsRecords = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE)
       .map { ImmigrationDetention.from(it) }
-
-    val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId)
+    val dpsCourtAppearanceUuids = dpsRecords.map { it.courtAppearanceUuid }.distinct()
+    val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId, dpsCourtAppearanceUuids)
       .map { courtAppearance: CourtAppearanceEntity -> ImmigrationDetention.fromCourtAppearance(courtAppearance, prisonerId) }
 
     return dpsRecords + nomisRecords
@@ -218,8 +218,8 @@ class ImmigrationDetentionService(
     val dpsRecords = immigrationDetentionRepository.findTop1ByPrisonerIdAndStatusIdOrderByRecordDateDescCreatedAtDesc(prisonerId)
       ?.let { listOf(ImmigrationDetention.from(it)) }
       ?: emptyList()
-
-    val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId).map {
+    val dpsCourtAppearanceUuids = dpsRecords.map { it.courtAppearanceUuid }.distinct()
+    val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId, dpsCourtAppearanceUuids).map {
       ImmigrationDetention.fromCourtAppearance(it, prisonerId)
     }
 

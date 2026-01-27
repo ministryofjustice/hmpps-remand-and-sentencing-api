@@ -72,11 +72,13 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
       cc.prisonerId = :prisonerId and
       c.statusId = :chargeStatus and
       c.offenceCode in ("IA99000-001N", "ZI26000")
+      and ca.appearanceUuid not in :excludeAppearanceUuids
       order by ca.createdAt desc
     """,
   )
   fun findNomisImmigrationDetentionRecordsForPrisoner(
     @Param("prisonerId") prisonerId: String,
+    @Param("excludeAppearanceUuids") excludeAppearanceUuids: List<UUID>,
     @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
     @Param("courtAppearanceStatuses") courtAppearanceStatuses: List<CourtAppearanceEntityStatus> = listOf(CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
