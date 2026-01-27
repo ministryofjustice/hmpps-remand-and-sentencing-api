@@ -67,6 +67,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
   @Test
   fun `Get all immigration detention records for a prisoner with NOMIS records`() {
     val nomisCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
+    val inactiveCourtCaseCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", false)
     val id1 = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,
@@ -114,6 +115,15 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
           ImmigrationDetention(
             immigrationDetentionUuid = UUID.randomUUID(),
             courtAppearanceUuid = nomisCourtAppearanceUuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = DEPORTATION_ORDER,
+            recordDate = LocalDate.now(),
+            createdAt = ZonedDateTime.now(),
+            source = EventSource.NOMIS,
+          ),
+          ImmigrationDetention(
+            immigrationDetentionUuid = UUID.randomUUID(),
+            courtAppearanceUuid = inactiveCourtCaseCourtAppearanceUuid,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = DEPORTATION_ORDER,
             recordDate = LocalDate.now(),
