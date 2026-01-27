@@ -732,8 +732,8 @@ abstract class IntegrationTestBase {
     .returnResult(MigrationCreateCourtCasesResponse::class.java)
     .responseBody.blockFirst()!!
 
-  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String): UUID {
-    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId)
+  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true): UUID {
+    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase)
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
     val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1"))
     val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
