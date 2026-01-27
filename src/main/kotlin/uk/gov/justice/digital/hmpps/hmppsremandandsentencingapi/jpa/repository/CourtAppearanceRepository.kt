@@ -59,7 +59,7 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
 
   @Query(
     """
-      select ca from CourtAppearanceEntity ca
+      select ca, cc, ca.appearanceOutcome from CourtAppearanceEntity ca
       join ca.courtCase cc
       where
       ca.statusId = :courtAppearanceStatus and
