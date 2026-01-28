@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.util.UUID
 
 class LegacyUpdateChargeTests : IntegrationTestBase() {
@@ -62,6 +63,47 @@ class LegacyUpdateChargeTests : IntegrationTestBase() {
       .forEach { charge ->
         Assertions.assertEquals(toUpdate.offenceCode, charge.offenceCode)
       }
+  }
+
+  @Test
+  fun `update charges in source court case when they have been linked`() {
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = 889)
+    val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(DataCreator.migrationCreateCourtAppearance(eventId = 556, charges = listOf(charge))))
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(caseId = 2, appearances = listOf(DataCreator.migrationCreateCourtAppearance(eventId = 560, charges = listOf(charge.copy(mergedFromCaseId = sourceCourtCase.caseId, mergedFromDate = LocalDate.now())))))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCourtCase, targetCourtCase))
+    val response = migrateCases(courtCases)
+    val sourceCourtCaseUuid = response.courtCases.first { it.caseId == sourceCourtCase.caseId }.courtCaseUuid
+    val chargeUuid = response.charges.first { it.chargeNOMISId == charge.chargeNOMISId }.chargeUuid
+
+    val toUpdate = DataCreator.legacyUpdateWholeCharge(offenceCode = "ANOTHERCODE")
+    webTestClient
+      .put()
+      .uri("/legacy/charge/$chargeUuid")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content[?(@.courtCaseUuid == '$sourceCourtCaseUuid')].latestCourtAppearance.charges[?(@.chargeUuid == '$chargeUuid')].offenceCode")
+      .isEqualTo(toUpdate.offenceCode)
   }
 
   @Test

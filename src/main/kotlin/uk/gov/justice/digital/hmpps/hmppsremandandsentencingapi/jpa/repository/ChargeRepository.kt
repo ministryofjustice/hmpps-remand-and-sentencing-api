@@ -20,7 +20,7 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     status: ChargeEntityStatus = ChargeEntityStatus.DELETED,
   ): ChargeEntity?
 
-  fun findByChargeUuidAndStatusId(lifetimeUUID: UUID, status: ChargeEntityStatus): List<ChargeEntity>
+  fun findByChargeUuidAndStatusIdNot(lifetimeUUID: UUID, status: ChargeEntityStatus): List<ChargeEntity>
 
   @Modifying
   @Query(
