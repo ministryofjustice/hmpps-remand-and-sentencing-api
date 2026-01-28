@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 data class LegacySentenceType(
   @JsonIgnore
-  val id: Int,
+  val id: Int?,
 
   val nomisSentenceTypeReference: String,
   val classification: SentenceTypeClassification,

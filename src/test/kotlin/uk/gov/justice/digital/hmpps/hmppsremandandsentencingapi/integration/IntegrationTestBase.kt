@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
@@ -21,6 +22,8 @@ import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
@@ -85,6 +88,7 @@ import java.util.UUID
 @ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class, AdjustmentsApiExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
+@AutoConfigureWebTestClient
 abstract class IntegrationTestBase {
 
   @Suppress("SpringJavaInjectionPointsAutowiringInspection")
@@ -206,6 +210,28 @@ abstract class IntegrationTestBase {
       purgeQueues()
     }
     return response.courtCaseUuid to createCourtCase
+  }
+
+  protected fun createCourtAppearance(
+    createCourtAppearance: CreateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(),
+    purgeQueues: Boolean = true,
+  ): Pair<UUID, CreateCourtAppearance> {
+    val response = webTestClient
+      .put()
+      .uri("/court-appearance/${createCourtAppearance.appearanceUuid}")
+      .bodyValue(createCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk.returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+    if (purgeQueues) {
+      purgeQueues()
+    }
+    return response.appearanceUuid to createCourtAppearance
   }
 
   protected fun createLegacyCourtCase(legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase()): Pair<String, LegacyCreateCourtCase> {
@@ -732,8 +758,8 @@ abstract class IntegrationTestBase {
     .returnResult(MigrationCreateCourtCasesResponse::class.java)
     .responseBody.blockFirst()!!
 
-  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String): UUID {
-    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId)
+  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true): UUID {
+    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase)
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
     val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1"))
     val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)

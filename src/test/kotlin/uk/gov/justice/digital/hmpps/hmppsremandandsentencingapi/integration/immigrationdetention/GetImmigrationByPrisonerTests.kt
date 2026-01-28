@@ -67,6 +67,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
   @Test
   fun `Get all immigration detention records for a prisoner with NOMIS records`() {
     val nomisCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
+    val inactiveCourtCaseCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", false)
     val id1 = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,
@@ -119,6 +120,49 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
             recordDate = LocalDate.now(),
             createdAt = ZonedDateTime.now(),
             source = EventSource.NOMIS,
+          ),
+          ImmigrationDetention(
+            immigrationDetentionUuid = UUID.randomUUID(),
+            courtAppearanceUuid = inactiveCourtCaseCourtAppearanceUuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = DEPORTATION_ORDER,
+            recordDate = LocalDate.now(),
+            createdAt = ZonedDateTime.now(),
+            source = EventSource.NOMIS,
+          ),
+        ),
+      )
+  }
+
+  @Test
+  fun `filter out court appearances when there is a corresponding immigration detention record`() {
+    val nomisCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
+    val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = DEPORTATION_ORDER,
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByUsername = "aUser",
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+      courtAppearanceUuid = nomisCourtAppearanceUuid,
+    )
+    val uuid = UUID.randomUUID()
+    updateImmigrationDetention(immigrationDetention, uuid)
+
+    val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B")
+    assertThat(immigrationDetentionRecords)
+      .usingRecursiveComparison()
+      .ignoringFields("createdAt")
+      .ignoringCollectionOrder()
+      .isEqualTo(
+        listOf(
+          ImmigrationDetention(
+            immigrationDetentionUuid = uuid,
+            courtAppearanceUuid = nomisCourtAppearanceUuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = DEPORTATION_ORDER,
+            recordDate = LocalDate.of(2021, 1, 1),
+            createdAt = ZonedDateTime.now(),
           ),
         ),
       )
