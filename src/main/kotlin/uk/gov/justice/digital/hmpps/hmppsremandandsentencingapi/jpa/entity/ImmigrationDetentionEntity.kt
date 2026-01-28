@@ -103,6 +103,7 @@ class ImmigrationDetentionEntity(
       courtAppearanceUuid = courtAppearanceUuid,
       statusId = ACTIVE,
       createdByUsername = create.createdByUsername,
+      createdPrison = create.createdByPrison,
       source = DPS,
     )
   }

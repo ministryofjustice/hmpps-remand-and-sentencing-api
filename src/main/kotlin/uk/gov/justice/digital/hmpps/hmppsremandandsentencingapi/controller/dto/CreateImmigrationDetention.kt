@@ -15,4 +15,5 @@ data class CreateImmigrationDetention(
   var noLongerOfInterestComment: String? = null,
   val createdByUsername: String,
   val createdByPrison: String,
+  val courtAppearanceUuid: UUID?,
 )

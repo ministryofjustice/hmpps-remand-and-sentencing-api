@@ -83,7 +83,7 @@ class LegacyChargeService(
 
   @Transactional
   fun updateInAllAppearances(chargeUuid: UUID, charge: LegacyUpdateWholeCharge) {
-    val existingChargeRecords = chargeRepository.findByChargeUuidAndStatusId(chargeUuid, ChargeEntityStatus.ACTIVE)
+    val existingChargeRecords = chargeRepository.findByChargeUuidAndStatusIdNot(chargeUuid, ChargeEntityStatus.DELETED)
     if (existingChargeRecords.isEmpty()) {
       throw EntityNotFoundException("No charge found at $chargeUuid")
     }
