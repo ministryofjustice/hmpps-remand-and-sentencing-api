@@ -2,13 +2,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sen
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
-import org.springframework.core.ParameterizedTypeReference
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.typeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 
 class GetSentenceCalculationTypesByUuidsTests : IntegrationTestBase() {
-
-  private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
   @Test
   fun `providing no parameters results in bad request`() {

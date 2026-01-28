@@ -35,7 +35,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       .get()
       .uri {
         it.path("/person/${courtCase.prisonerId}/documents")
-          .queryParam("keyword", appearance.courtCaseReference)
+          .queryParam("keyword", appearance.courtCaseReference!!)
           .build()
       }
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }

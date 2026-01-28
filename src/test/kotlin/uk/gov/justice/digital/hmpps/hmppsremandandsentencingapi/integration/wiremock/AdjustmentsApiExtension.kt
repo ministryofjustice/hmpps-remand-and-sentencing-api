@@ -36,15 +36,15 @@ class AdjustmentsApiExtension :
     val adjustmentsApi = AdjustmentsApiMockServer()
   }
 
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeAll(context: ExtensionContext) {
     adjustmentsApi.start()
   }
 
-  override fun beforeEach(context: ExtensionContext?) {
+  override fun beforeEach(context: ExtensionContext) {
     adjustmentsApi.resetRequests()
   }
 
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterAll(context: ExtensionContext) {
     adjustmentsApi.stop()
   }
 }

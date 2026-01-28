@@ -21,8 +21,6 @@ spring:
     locations: classpath:/migration/postgres,classpath:/migration/common
   jackson:
     date-format: "yyyy-MM-dd HH:mm:ss"
-    serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false
   jpa:
     open-in-view: false
     show-sql: false
