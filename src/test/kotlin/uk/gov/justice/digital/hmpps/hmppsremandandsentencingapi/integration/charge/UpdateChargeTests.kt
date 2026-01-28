@@ -37,7 +37,7 @@ class UpdateChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `updating charge when charge exists in multiple appearances`() {
+  fun `updating sentenced charge in specific appearance must keep sentence`() {
     val (courtCaseUuid, createdCourtCase) = createCourtCase()
     val createdAppearance = createdCourtCase.appearances.first()
     val createdSentencedCharge = createdAppearance.charges.first()
