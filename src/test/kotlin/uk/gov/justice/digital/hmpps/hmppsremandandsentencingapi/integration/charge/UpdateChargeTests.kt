@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
+import java.util.UUID
 
 class UpdateChargeTests : IntegrationTestBase() {
 
@@ -33,6 +34,45 @@ class UpdateChargeTests : IntegrationTestBase() {
       .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("charge.updated")
+  }
+
+  @Test
+  fun `updating charge when charge exists in multiple appearances`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+    val createdAppearance = createdCourtCase.appearances.first()
+    val createdSentencedCharge = createdAppearance.charges.first()
+
+    val createRemandCharge = createdSentencedCharge.copy(outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"), sentence = null)
+    createCourtAppearance(dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(createRemandCharge)))
+
+    val updateSentence = createdSentencedCharge.sentence!!.copy(convictionDate = createdSentencedCharge.sentence.convictionDate!!.minusDays(7))
+
+    val updatedSentenceCharge = createdSentencedCharge.copy(appearanceUuid = createdAppearance.appearanceUuid, sentence = updateSentence)
+
+    webTestClient
+      .put()
+      .uri("/charge/${updatedSentenceCharge.chargeUuid}")
+      .bodyValue(updatedSentenceCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.chargeUuid == '${updatedSentenceCharge.chargeUuid}')].sentence.sentenceUuid")
+      .isEqualTo(updateSentence.sentenceUuid.toString())
   }
 
   @Test

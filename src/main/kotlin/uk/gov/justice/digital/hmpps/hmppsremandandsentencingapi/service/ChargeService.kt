@@ -227,7 +227,7 @@ class ChargeService(
     courtAppearanceDateChanged: Boolean,
     supersedingCharge: ChargeEntity? = null,
   ): RecordResponse<ChargeEntity> {
-    val existingCharge = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(charge.chargeUuid)
+    val existingCharge = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(courtAppearance.appearanceUuid, charge.chargeUuid) ?: chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(charge.chargeUuid)
     val charge = if (existingCharge != null) {
       updateChargeEntity(
         charge,
