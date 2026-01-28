@@ -56,7 +56,7 @@ tasks {
   }
 }
 
-extra["hibernate.version"] = "7.2.0.Final"
+extra["hibernate.version"] = "7.2.2.Final"
 
 val test by testing.suites.existing(JvmTestSuite::class)
 
