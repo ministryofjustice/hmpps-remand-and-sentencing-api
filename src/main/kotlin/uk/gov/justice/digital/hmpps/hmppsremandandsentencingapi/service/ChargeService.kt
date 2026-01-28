@@ -43,10 +43,10 @@ class ChargeService(
     sentencesCreated: MutableMap<UUID, SentenceEntity>,
     prisonerId: String,
     courtCaseId: String,
-    courtAppearanceId: String,
+    courtAppearanceUuid: UUID,
     supersedingCharge: ChargeEntity?,
   ): RecordResponse<ChargeEntity> {
-    val chargeToSupersede: ChargeEntity? = supersedingCharge ?: charge.replacingChargeUuid?.let { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
+    val chargeToSupersede: ChargeEntity? = supersedingCharge ?: charge.replacingChargeUuid?.let { findCharge(courtAppearanceUuid, it) }
     val (chargeLegacyData, chargeOutcome) = getChargeOutcome(charge)
     charge.legacyData = chargeLegacyData
     val savedCharge = chargeRepository.save(
@@ -75,7 +75,7 @@ class ChargeService(
         prisonerId,
         courtCaseId,
         false,
-        courtAppearanceId,
+        courtAppearanceUuid.toString(),
       )
       savedCharge.sentences.add(sentence)
       eventsToEmit.addAll(sentenceEventsToEmit)
@@ -227,7 +227,7 @@ class ChargeService(
     courtAppearanceDateChanged: Boolean,
     supersedingCharge: ChargeEntity? = null,
   ): RecordResponse<ChargeEntity> {
-    val existingCharge = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(charge.chargeUuid)
+    val existingCharge = findCharge(courtAppearance.appearanceUuid, charge.chargeUuid)
     val charge = if (existingCharge != null) {
       updateChargeEntity(
         charge,
@@ -239,10 +239,12 @@ class ChargeService(
         courtAppearanceDateChanged,
       )
     } else {
-      createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, courtAppearance.appearanceUuid.toString(), supersedingCharge)
+      createChargeEntity(charge, sentencesCreated, prisonerId, courtCaseId, courtAppearance.appearanceUuid, supersedingCharge)
     }
     return charge
   }
+
+  fun findCharge(appearanceUuid: UUID, chargeUuid: UUID): ChargeEntity? = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, chargeUuid) ?: chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)
 
   @Transactional
   fun createCharge(createCharge: CreateCharge): RecordResponse<ChargeEntity>? = courtAppearanceRepository.findByAppearanceUuid(createCharge.appearanceUuid!!)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let { courtAppearanceEntity ->

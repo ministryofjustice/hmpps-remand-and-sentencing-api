@@ -21,6 +21,8 @@ import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
@@ -206,6 +208,28 @@ abstract class IntegrationTestBase {
       purgeQueues()
     }
     return response.courtCaseUuid to createCourtCase
+  }
+
+  protected fun createCourtAppearance(
+    createCourtAppearance: CreateCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(),
+    purgeQueues: Boolean = true,
+  ): Pair<UUID, CreateCourtAppearance> {
+    val response = webTestClient
+      .put()
+      .uri("/court-appearance/${createCourtAppearance.appearanceUuid}")
+      .bodyValue(createCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk.returnResult(CreateCourtAppearanceResponse::class.java)
+      .responseBody.blockFirst()!!
+    if (purgeQueues) {
+      purgeQueues()
+    }
+    return response.appearanceUuid to createCourtAppearance
   }
 
   protected fun createLegacyCourtCase(legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase()): Pair<String, LegacyCreateCourtCase> {
