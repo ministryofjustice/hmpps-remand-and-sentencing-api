@@ -56,6 +56,8 @@ tasks {
   }
 }
 
+extra["hibernate.version"] = "7.2.0.Final"
+
 val test by testing.suites.existing(JvmTestSuite::class)
 
 tasks.register<Test>("initialiseDatabase") {
