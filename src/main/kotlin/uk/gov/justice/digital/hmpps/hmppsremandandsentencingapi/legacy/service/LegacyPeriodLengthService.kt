@@ -63,13 +63,12 @@ class LegacyPeriodLengthService(
 
   @Transactional
   fun update(periodLengthUuid: UUID, periodLengthUpdate: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse? {
-    val existingPeriodLengths = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+    val existingPeriodLengths = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid)
       .filter { it.sentenceEntity != null }
       .takeIf { it.isNotEmpty() }
       ?: throw EntityNotFoundException("No sentence related period length found with UUID $periodLengthUuid")
 
-    val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLengthUpdate.sentenceUuid)
-      .takeIf { it.isNotEmpty() }
+    val sentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(periodLengthUpdate.sentenceUuid)
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLengthUpdate.sentenceUuid}")
 
     val username = getPerformedByUsername(periodLengthUpdate)
@@ -100,14 +99,13 @@ class LegacyPeriodLengthService(
       return null
     }
 
-    val firstSentenceEntity = sentenceEntities.first()
-    val appearance = firstSentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
-      ?: throw EntityNotFoundException("No appearance found for sentence ${firstSentenceEntity.sentenceUuid}")
+    val appearance = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
+      ?: throw EntityNotFoundException("No appearance found for sentence ${sentenceEntity.sentenceUuid}")
 
     return LegacyPeriodLengthCreatedResponse(
       periodLengthUuid = periodLengthUuid,
       sentenceUuid = periodLengthUpdate.sentenceUuid,
-      chargeUuid = firstSentenceEntity.charge.chargeUuid,
+      chargeUuid = sentenceEntity.charge.chargeUuid,
       appearanceUuid = appearance.appearanceUuid,
       courtCaseId = appearance.courtCase.id.toString(),
       prisonerId = appearance.courtCase.prisonerId,
@@ -146,9 +144,9 @@ class LegacyPeriodLengthService(
 
   @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid)
     .asSequence()
-    .filter { it.statusId != PeriodLengthEntityStatus.DELETED && it.sentenceEntity != null }
+    .filter { it.sentenceEntity != null }
     .map { periodLength ->
       delete(periodLength, performedByUser ?: serviceUserService.getUsername())
       periodLength

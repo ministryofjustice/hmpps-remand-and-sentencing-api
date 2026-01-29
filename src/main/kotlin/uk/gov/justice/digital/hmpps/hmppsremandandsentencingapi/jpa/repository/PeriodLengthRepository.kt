@@ -14,6 +14,9 @@ interface PeriodLengthRepository : CrudRepository<PeriodLengthEntity, Int> {
   fun findFirstByPeriodLengthUuidOrderByUpdatedAtDesc(periodLengthUuid: UUID): PeriodLengthEntity?
 
   @EntityGraph(attributePaths = ["sentenceEntity"])
+  fun findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid: UUID, statusId: PeriodLengthEntityStatus = PeriodLengthEntityStatus.DELETED): List<PeriodLengthEntity>
+
+  @EntityGraph(attributePaths = ["sentenceEntity"])
   fun findByPeriodLengthUuid(periodLengthUuid: UUID): List<PeriodLengthEntity>
 
   @EntityGraph(attributePaths = ["sentenceEntity"])
