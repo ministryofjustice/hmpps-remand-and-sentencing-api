@@ -166,7 +166,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
 
     // Check the period length is inserted and is active
     val periodLengthUuid = courtCaseBefore.appearances.first().charges.first().sentence?.periodLengths?.first()?.periodLengthUuid!!
-    val periodLengthBefore = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid).first()
+    val periodLengthBefore = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid).first()
     assertThat(periodLengthBefore.statusId).isEqualTo(PeriodLengthEntityStatus.ACTIVE)
 
     // Remove the first sentence then update the court case
@@ -190,7 +190,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
     updateCourtCase(courtCaseUuid, editedCourtCase)
 
     // Check the period length is now DELETED
-    val periodLengthAfter = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid).first()
+    val periodLengthAfter = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid).first()
     assertThat(periodLengthAfter.statusId).isEqualTo(PeriodLengthEntityStatus.DELETED)
   }
 
