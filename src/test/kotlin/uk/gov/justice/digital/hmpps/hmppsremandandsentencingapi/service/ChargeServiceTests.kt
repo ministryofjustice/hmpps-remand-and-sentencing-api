@@ -53,6 +53,7 @@ class ChargeServiceTests {
     every { chargeHistoryRepository.save(any()) } answers { firstArg<ChargeHistoryEntity>() }
     every { appearanceChargeHistoryRepository.save(any()) } answers { firstArg<AppearanceChargeHistoryEntity>() }
 
+    every { chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(any(), any()) } returns null
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(any()) } returns null
     every { chargeRepository.save(any()) } returns savedCharge
     every { sentenceService.createSentence(any(), any(), any(), any(), any(), any(), any()) } returns
@@ -113,7 +114,9 @@ class ChargeServiceTests {
 
     // Top-level existing-charge lookup returns null (create path)
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(any()) } returns null
+    every { chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(any(), any()) } returns null
     // When createChargeEntity sees replacedChargeUuid it should query the repository for that UUID
+    every { chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, replacedUuid) } returns null
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(replacedUuid) } returns supersedingCharge
     every { chargeRepository.save(any()) } returns savedCharge
     every { sentenceService.createSentence(any(), any(), any(), any(), any(), any(), any()) } returns

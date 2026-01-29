@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class LegacyDeleteCourtAppearanceTests : IntegrationTestBase() {
@@ -76,6 +77,35 @@ class LegacyDeleteCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
     Assertions.assertThat(appearanceChargeRepository.countByAppearanceAppearanceUuid(originalAppearance.appearanceUuid)).isEqualTo(0)
+  }
+
+  @Test
+  fun `deleting a court appearance which was created from immigration deletes the immigration record`() {
+    val createImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()
+    val createdImmigrationDetentionResponse = createImmigrationDetention(createImmigrationDetention)
+    webTestClient
+      .delete()
+      .uri("/legacy/court-appearance/${createdImmigrationDetentionResponse.courtAppearanceUuid!!}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/immigration-detention/person/${createImmigrationDetention.prisonerId}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$")
+      .isEmpty
   }
 
   @Test

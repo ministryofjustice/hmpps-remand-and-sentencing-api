@@ -603,7 +603,7 @@ class CourtAppearanceService(
       eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
     }
 
-    if (courtCaseEntity.appearances.none { it.statusId == CourtAppearanceEntityStatus.ACTIVE || it.statusId == CourtAppearanceEntityStatus.FUTURE }) {
+    if (courtCaseEntity.appearances.all { it.statusId == CourtAppearanceEntityStatus.DELETED }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())
       return DeleteCourtAppearanceResponse(

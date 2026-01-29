@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -26,14 +27,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionEntityUpdater
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -50,6 +54,8 @@ class LegacyCourtAppearanceService(
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
+  private val immigrationDetentionRepository: ImmigrationDetentionRepository,
+  private val immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository,
 ) {
 
   @Transactional
@@ -75,7 +81,8 @@ class LegacyCourtAppearanceService(
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
-    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, getPerformedByUsername(courtAppearance))
+    val performedByUser = getPerformedByUsername(courtAppearance)
+    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, performedByUser)
     if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
       existingCourtAppearance.updateFrom(updatedCourtAppearance)
       courtAppearanceHistoryRepository.save(
@@ -88,7 +95,7 @@ class LegacyCourtAppearanceService(
       entityChangeStatus = EntityChangeStatus.EDITED
     }
     handleNextCourtAppearance(existingCourtAppearance, courtAppearance)
-
+    handleImmigrationDetention(existingCourtAppearance, courtAppearance, performedByUser)
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
   }
 
@@ -98,6 +105,21 @@ class LegacyCourtAppearanceService(
       val toUpdate = NextCourtAppearanceEntity.from(updateRequest, courtAppearance, appearanceType)
       existingNextCourtAppearance.updateFrom(toUpdate)
     } ?: handleMatchingNextCourtAppearance(courtAppearance, updateRequest)
+  }
+
+  private fun handleImmigrationDetention(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance, performedByUser: String) {
+    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(courtAppearance.appearanceUuid).forEach { immigrationDetentionEntity ->
+      if (courtAppearance.appearanceOutcome?.outcomeType == "IMMIGRATION") {
+        val updatedImmigrationDetentionRecord = immigrationDetentionEntity.copyFrom(courtAppearance, updateRequest, performedByUser)
+        if (!immigrationDetentionEntity.isSame(updatedImmigrationDetentionRecord)) {
+          ImmigrationDetentionEntityUpdater.update(immigrationDetentionEntity, updatedImmigrationDetentionRecord)
+          immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
+        }
+      } else {
+        immigrationDetentionEntity.delete(performedByUser)
+        immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
+      }
+    }
   }
 
   private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {
@@ -193,6 +215,10 @@ class LegacyCourtAppearanceService(
         EventType.COURT_APPEARANCE_DELETED,
       ),
     )
+    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(lifetimeUuid).forEach { immigrationDetentionEntity ->
+      immigrationDetentionEntity.delete(performedByUsername)
+      immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
+    }
     return eventsToEmit
   }
 

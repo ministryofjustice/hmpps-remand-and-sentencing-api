@@ -34,7 +34,7 @@ class WebClientConfiguration(
 
   private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authenticationToken: Jwt = SecurityContextHolder.getContext()
-      .authentication
+      .authentication!!
       .credentials as Jwt
     val tokenString: String = authenticationToken.tokenValue
     val filtered = ClientRequest.from(request)
@@ -55,7 +55,7 @@ class WebClientConfiguration(
 
   private fun addDocumentManagementHeadersFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authentication: Authentication = SecurityContextHolder.getContext()
-      .authentication
+      .authentication!!
     val filtered = ClientRequest.from(request)
       .header("Username", authentication.name)
       .header("Service-Name", "Remand and Sentencing")
