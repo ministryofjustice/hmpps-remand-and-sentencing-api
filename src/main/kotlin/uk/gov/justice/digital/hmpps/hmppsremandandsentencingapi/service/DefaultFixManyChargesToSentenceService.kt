@@ -104,7 +104,7 @@ class DefaultFixManyChargesToSentenceService(private val sentenceHistoryReposito
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength, ChangeSource.DPS))
         periodLengthEventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
-            periodLength.periodLengthUuid.toString(),
+            eventMetadata.prisonerId,
             eventMetadata.courtCaseId!!,
             eventMetadata.courtAppearanceId!!,
             eventMetadata.chargeId!!,
