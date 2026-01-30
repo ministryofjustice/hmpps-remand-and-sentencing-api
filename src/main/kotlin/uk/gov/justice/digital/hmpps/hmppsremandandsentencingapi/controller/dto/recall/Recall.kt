@@ -20,7 +20,7 @@ data class Recall(
   val revocationDate: LocalDate?,
   val returnToCustodyDate: LocalDate?,
   val inPrisonOnRevocationDate: Boolean?,
-  val recallType: RecallType,
+  val recallType: RecallTypeDto,
   val createdAt: ZonedDateTime,
   val createdByUsername: String,
   val createdByPrison: String?,
@@ -40,7 +40,10 @@ data class Recall(
       revocationDate = recall.revocationDate,
       returnToCustodyDate = recall.returnToCustodyDate,
       inPrisonOnRevocationDate = recall.inPrisonOnRevocationDate,
-      recallType = recall.recallType.code,
+      recallType = RecallTypeDto(
+        code = recall.recallType.code.name,
+        description = recall.recallType.description
+      ),
       createdByUsername = recall.createdByUsername,
       createdAt = recall.createdAt,
       createdByPrison = recall.createdPrison,
