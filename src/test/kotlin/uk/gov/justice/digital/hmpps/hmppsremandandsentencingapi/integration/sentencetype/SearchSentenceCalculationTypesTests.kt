@@ -73,7 +73,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
     sentenceTypeRepository.delete(inactiveSentenceType)
   }
 
-  @ParameterizedTest(name = "Sentence type bucket test, age {0} on date {1}")
+  @ParameterizedTest(name = "Sentence type bucket test, age {0} on conviction date {1} and offence date {3}")
   @MethodSource("sentenceTypeParameters")
   fun `sentence type bucket tests`(age: Int, convictionDate: LocalDate, expectedDescriptions: List<String>, offenceDate: LocalDate) {
     val result = webTestClient.get()
@@ -101,6 +101,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
         listOf(
           "Imprisonment in Default of Fine",
           "ORA SDS (Offender rehabilitation act standard determinate sentence)",
+          "SDS (Standard Determinate Sentence)",
           "Automatic Life",
           "ORA Breach Top Up Supervision",
           "Civil Imprisonment",
@@ -152,6 +153,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
         LocalDate.parse("2020-11-15"),
         listOf(
           "ORA SDS (Offender rehabilitation act standard determinate sentence)",
+          "SDS (Standard Determinate Sentence)",
           "Automatic Life",
           "Automatic Life Sec 224A 03",
           "ORA Breach Top Up Supervision",
