@@ -44,7 +44,6 @@ generic-prometheus-alerts:
 
 generic-data-analytics-extractor:
   enabled: true
-  cronJobSchedule: "30 7 * * 1-5"
   dataProductName: hmpps_remand_and_sentencing_prod
   resources:
     requests:
