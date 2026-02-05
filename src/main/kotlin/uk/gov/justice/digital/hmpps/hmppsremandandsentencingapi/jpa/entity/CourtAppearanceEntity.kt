@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.BatchSize
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
@@ -35,6 +36,7 @@ import java.util.*
 
 private const val UNKNOWN_WARRANT_TYPE = "UNKNOWN"
 
+@DynamicUpdate
 @Entity
 @Table(name = "court_appearance")
 class CourtAppearanceEntity(
