@@ -170,7 +170,7 @@ class LegacySentenceServiceTests {
   }
 
   @Test
-  fun `delete saves recallHistory after deleting so status should be DELETED im history table`() {
+  fun `delete saves recallHistory after deleting so status should be DELETED in history table`() {
     val sentenceUuid = UUID.randomUUID()
     val chargeUuid = UUID.randomUUID()
     val appearanceUuid = UUID.randomUUID()
