@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -15,6 +16,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -164,6 +167,34 @@ class LegacySentenceServiceTests {
     every { sentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
     every { recallHistoryRepository.save(any()) } returns mockk(relaxed = true)
     every { recallSentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
+  }
+
+  @Test
+  fun `delete saves recallHistory after deleting so status should be DELETED im history table`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+
+    val (existingSentence, _) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.LR,
+      existingRtc = LocalDate.of(2024, 1, 11),
+    )
+
+    every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
+    every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
+
+    val recallHistorySlot = slot<RecallHistoryEntity>()
+
+    service.delete(existingSentence, "SYNC_USER")
+
+    verify {
+      recallHistoryRepository.save(capture(recallHistorySlot))
+    }
+
+    assertThat(recallHistorySlot.captured.status).isEqualTo(RecallEntityStatus.DELETED)
   }
 
   private companion object {
