@@ -139,6 +139,56 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `do not copy over edited offence to future when updated in current court appearance`() {
+    val remandCharge = DpsDataCreator.dpsCreateCharge(
+      outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      sentence = null,
+    )
+    val courtAppearanceWithNextCourtAppearance = dpsCreateCourtAppearance(
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      warrantType = "NON_SENTENCING",
+      charges = listOf(remandCharge),
+    )
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(courtAppearanceWithNextCourtAppearance)))
+
+    val editedCharge = remandCharge.copy(
+      offenceStartDate = remandCharge.offenceStartDate.minusDays(10),
+    )
+    val editAppearance = courtAppearanceWithNextCourtAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(editedCharge),
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${courtAppearanceWithNextCourtAppearance.appearanceUuid}")
+      .bodyValue(editAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCaseUuid,
+      CourtAppearanceEntityStatus.FUTURE,
+    )
+    webTestClient
+      .get()
+      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].offenceStartDate")
+      .isEqualTo(remandCharge.offenceStartDate.format(DateTimeFormatter.ISO_DATE))
+  }
+
+  @Test
   fun `updating only a court appearance keeps the next court appearance`() {
     val courtCase = createCourtCase()
     val createdAppearance = courtCase.second.appearances.first()
