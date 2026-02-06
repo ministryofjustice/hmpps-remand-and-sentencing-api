@@ -94,6 +94,14 @@ class ChargeEntity(
     this.mergedFromDate == other.mergedFromDate &&
     otherHasSentence == hasSentence()
 
+  fun isInterim(): Boolean = chargeOutcome?.dispositionCode == "INTERIM" || legacyData?.outcomeDispositionCode == "I"
+
+  fun toFutureCharge(): ChargeEntity = ChargeEntity(
+    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, null, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated, createdAt, createdBy,
+    createdPrison,
+    ZonedDateTime.now(), updatedBy, updatedPrison, legacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null), mutableSetOf(), null, null,
+  )
+
   fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
     ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,

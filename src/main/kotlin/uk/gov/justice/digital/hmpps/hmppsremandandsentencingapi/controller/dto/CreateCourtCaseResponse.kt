@@ -8,7 +8,7 @@ data class CreateCourtCaseResponse(
   companion object {
     fun from(courtCaseUuid: String, createCourtCase: CreateCourtCase): CreateCourtCaseResponse = CreateCourtCaseResponse(
       courtCaseUuid,
-      createCourtCase.appearances.map { CreateCourtAppearanceResponse.from(it.appearanceUuid, it) },
+      createCourtCase.appearances.map { CreateCourtAppearanceResponse.from(it.appearanceUuid) },
       createCourtCase.appearances.flatMap { it.charges }.map { CreateChargeResponse.from(it) },
     )
   }

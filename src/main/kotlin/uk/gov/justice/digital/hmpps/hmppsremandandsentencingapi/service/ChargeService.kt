@@ -244,6 +244,28 @@ class ChargeService(
     return charge
   }
 
+  @Transactional
+  fun createFutureDatedCharge(
+    existingCharge: ChargeEntity,
+    prisonerId: String,
+    courtCaseId: String,
+    courtAppearance: CourtAppearanceEntity,
+  ): RecordResponse<ChargeEntity> {
+    val futureCharge = existingCharge.toFutureCharge()
+    val savedCharge = chargeRepository.save(futureCharge)
+    chargeHistoryRepository.save(ChargeHistoryEntity.from(savedCharge, ChangeSource.DPS))
+    val eventsToEmit = mutableSetOf(
+      EventMetadataCreator.chargeEventMetadata(
+        prisonerId,
+        courtCaseId,
+        courtAppearance.appearanceUuid.toString(),
+        savedCharge.chargeUuid.toString(),
+        EventType.CHARGE_UPDATED,
+      ),
+    )
+    return RecordResponse(savedCharge, eventsToEmit)
+  }
+
   fun findCharge(appearanceUuid: UUID, chargeUuid: UUID): ChargeEntity? = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, chargeUuid) ?: chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)
 
   @Transactional

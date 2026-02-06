@@ -50,7 +50,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
+    CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @GetMapping("\${court.appearance.getByIdPath}")
@@ -93,7 +93,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
+    CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @DeleteMapping("/court-appearance/{appearanceUuid}")
