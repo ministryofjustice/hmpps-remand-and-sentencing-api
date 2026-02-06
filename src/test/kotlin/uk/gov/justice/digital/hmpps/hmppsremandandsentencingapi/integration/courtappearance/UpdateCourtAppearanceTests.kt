@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -57,7 +56,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.appearanceUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> { appearanceUuid ->
+        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
     val messages = getMessages(8)
     assertThat(messages).hasSize(8).extracting<String> { it.eventType }.contains("court-appearance.updated")
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
@@ -86,6 +87,105 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
+  }
+
+  @Test
+  fun `copy over interim charges to future appearance`() {
+    val remandCharge = DpsDataCreator.dpsCreateCharge(
+      outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      sentence = null,
+    )
+    val noNextAppearance = dpsCreateCourtAppearance(
+      nextCourtAppearance = null,
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      warrantType = "NON_SENTENCING",
+      charges = listOf(remandCharge),
+    )
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(noNextAppearance)))
+
+    val updateAppearanceToHaveNextCourtAppearance = noNextAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${noNextAppearance.appearanceUuid}")
+      .bodyValue(updateAppearanceToHaveNextCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCaseUuid,
+      CourtAppearanceEntityStatus.FUTURE,
+    )
+    webTestClient
+      .get()
+      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(remandCharge.chargeUuid.toString())
+      .jsonPath("$.charges[0].outcome")
+      .doesNotExist()
+  }
+
+  @Test
+  fun `do not copy over edited offence to future when updated in current court appearance`() {
+    val remandCharge = DpsDataCreator.dpsCreateCharge(
+      outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      sentence = null,
+    )
+    val courtAppearanceWithNextCourtAppearance = dpsCreateCourtAppearance(
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      warrantType = "NON_SENTENCING",
+      charges = listOf(remandCharge),
+    )
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(courtAppearanceWithNextCourtAppearance)))
+
+    val editedCharge = remandCharge.copy(
+      offenceStartDate = remandCharge.offenceStartDate.minusDays(10),
+    )
+    val editAppearance = courtAppearanceWithNextCourtAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(editedCharge),
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${courtAppearanceWithNextCourtAppearance.appearanceUuid}")
+      .bodyValue(editAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCaseUuid,
+      CourtAppearanceEntityStatus.FUTURE,
+    )
+    webTestClient
+      .get()
+      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].offenceStartDate")
+      .isEqualTo(remandCharge.offenceStartDate.format(DateTimeFormatter.ISO_DATE))
   }
 
   @Test

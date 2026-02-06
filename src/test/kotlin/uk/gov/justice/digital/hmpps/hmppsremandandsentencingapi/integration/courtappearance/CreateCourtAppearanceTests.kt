@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
@@ -10,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
@@ -35,7 +35,9 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.appearanceUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> { appearanceUuid ->
+        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
 
     val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == createCourtAppearance.appearanceUuid }
     Assertions.assertThat(historyRecords).hasSize(1)
@@ -46,6 +48,58 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
+  }
+
+  @Test
+  fun `copy over interim charges to future appearance`() {
+    val remandCharge = DpsDataCreator.dpsCreateCharge(
+      outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      sentence = null,
+    )
+    val noNextAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      nextCourtAppearance = null,
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      warrantType = "NON_SENTENCING",
+      charges = listOf(remandCharge),
+    )
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(noNextAppearance)))
+
+    val appearanceWithNextAppearance = DpsDataCreator.dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      warrantType = "NON_SENTENCING",
+      charges = listOf(remandCharge),
+    )
+    webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(appearanceWithNextAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+    val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
+      courtCaseUuid,
+      CourtAppearanceEntityStatus.FUTURE,
+    )
+    webTestClient
+      .get()
+      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(remandCharge.chargeUuid.toString())
+      .jsonPath("$.charges[0].outcome")
+      .doesNotExist()
   }
 
   @Test
@@ -71,7 +125,9 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.appearanceUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> { appearanceUuid ->
+        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
   }
 
   @Test

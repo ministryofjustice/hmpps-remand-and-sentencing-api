@@ -96,7 +96,7 @@ class CourtAppearanceServiceTests {
       val courtAppearance = mockk<CourtAppearanceEntity>()
       val chargeEntity = mockk<ChargeEntity>(relaxed = true)
       every { chargeService.createCharge(charge, any(), any(), any(), any(), any(), null) } returns RecordResponse(chargeEntity, mutableSetOf())
-      courtAppearanceService.createCharges(charges, "prisonerId", "courtCaseUuid", courtAppearance, false)
+      courtAppearanceService.createCharges(charges, "prisonerId", "courtCaseUuid", courtAppearance, false, null)
       verify(exactly = 1) { chargeService.createCharge(charge, any(), any(), any(), any(), any(), null) }
     }
 
@@ -112,9 +112,9 @@ class CourtAppearanceServiceTests {
       every { replacingChargeEntity.supersedingCharge } returns replacedChargeEntity
       every { chargeService.createCharge(replacedCharge, any(), any(), any(), any(), any(), null) } returns RecordResponse(replacedChargeEntity, mutableSetOf())
       every { chargeService.createCharge(replacingCharge, any(), any(), any(), any(), any(), replacedChargeEntity) } returns RecordResponse(replacingChargeEntity, mutableSetOf())
-      val result = courtAppearanceService.createCharges(charges, "prisonerId", "courtCaseUuid", courtAppearance, false)
+      val result = courtAppearanceService.createCharges(charges, "prisonerId", "courtCaseUuid", courtAppearance, false, null)
 
-      val resultReplacingCharge = result.find { it.record == replacingChargeEntity }
+      val resultReplacingCharge = result.heardCharges.find { it.record == replacingChargeEntity }
       assertThat(resultReplacingCharge).isNotNull
       assertThat(resultReplacingCharge!!.record.supersedingCharge).isEqualTo(replacedChargeEntity)
       verify(exactly = 1) { chargeService.createCharge(replacingCharge, any(), any(), any(), any(), any(), replacedChargeEntity) }
@@ -140,12 +140,12 @@ class CourtAppearanceServiceTests {
       every { chargeService.createCharge(replacingCharge1, any(), any(), any(), any(), any(), replacedChargeEntity1) } returns RecordResponse(replacingChargeEntity1, mutableSetOf())
       every { chargeService.createCharge(replacedCharge2, any(), any(), any(), any(), any(), null) } returns RecordResponse(replacedChargeEntity2, mutableSetOf())
       every { chargeService.createCharge(replacingCharge2, any(), any(), any(), any(), any(), replacedChargeEntity2) } returns RecordResponse(replacingChargeEntity2, mutableSetOf())
-      val result = courtAppearanceService.createCharges(charges, "prisonerId", "courtCaseUuid", courtAppearance, false)
+      val result = courtAppearanceService.createCharges(charges, "prisonerId", "courtCaseUuid", courtAppearance, false, null)
 
-      val resultReplacingCharge1 = result.find { it.record == replacingChargeEntity1 }
+      val resultReplacingCharge1 = result.heardCharges.find { it.record == replacingChargeEntity1 }
       assertThat(resultReplacingCharge1).isNotNull
       assertThat(resultReplacingCharge1!!.record.supersedingCharge).isEqualTo(replacedChargeEntity1)
-      val resultReplacingCharge2 = result.find { it.record == replacingChargeEntity2 }
+      val resultReplacingCharge2 = result.heardCharges.find { it.record == replacingChargeEntity2 }
       assertThat(resultReplacingCharge2).isNotNull
       assertThat(resultReplacingCharge2!!.record.supersedingCharge).isEqualTo(replacedChargeEntity2)
       verify(exactly = 1) { chargeService.createCharge(replacingCharge1, any(), any(), any(), any(), any(), replacedChargeEntity1) }

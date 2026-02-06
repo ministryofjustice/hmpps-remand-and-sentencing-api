@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -25,7 +25,9 @@ class CreateCourtCaseTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.courtCaseUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> { courtCaseUuid ->
+        Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
       .jsonPath("$.appearances[0].appearanceUuid")
       .isEqualTo(createCourtCase.appearances.first().appearanceUuid.toString())
       .jsonPath("$.charges[0].chargeUuid")
