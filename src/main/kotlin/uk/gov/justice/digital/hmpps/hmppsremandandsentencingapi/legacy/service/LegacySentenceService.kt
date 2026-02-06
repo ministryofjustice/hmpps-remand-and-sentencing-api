@@ -411,15 +411,9 @@ class LegacySentenceService(
     sentence.recallSentences.forEach {
       val recall = it.recall
 
-      val recallHistoryEntity = if (recall.recallSentences.size == 1) {
-        val recallHistoryEntity = recallHistoryRepository.save(
-          RecallHistoryEntity.from(
-            recall,
-            ChangeSource.NOMIS,
-          ),
-        )
+      if (recall.recallSentences.size == 1) {
         recall.delete(performedByUser)
-        recallHistoryEntity
+        recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
       } else {
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
