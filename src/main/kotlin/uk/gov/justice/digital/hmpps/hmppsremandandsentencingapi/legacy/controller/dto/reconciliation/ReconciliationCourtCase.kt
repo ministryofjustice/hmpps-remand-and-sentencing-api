@@ -11,6 +11,7 @@ data class ReconciliationCourtCase(
   val prisonerId: String,
   val active: Boolean,
   val merged: Boolean,
+  val status: CourtCaseEntityStatus,
   val courtCaseLegacyData: CourtCaseLegacyData?,
   val appearances: List<ReconciliationCourtAppearance>,
 ) {
@@ -23,6 +24,7 @@ data class ReconciliationCourtCase(
         courtCaseEntity.prisonerId,
         courtCaseEntity.statusId == CourtCaseEntityStatus.ACTIVE,
         courtCaseEntity.statusId == CourtCaseEntityStatus.MERGED,
+        courtCaseEntity.statusId,
         courtCaseEntity.legacyData,
         courtAppearances.map { ReconciliationCourtAppearance.from(it, courtAppearanceTypes.getOrDefault(it.id, DEFAULT_APPEARANCE_TYPE_UUD)) },
       )
