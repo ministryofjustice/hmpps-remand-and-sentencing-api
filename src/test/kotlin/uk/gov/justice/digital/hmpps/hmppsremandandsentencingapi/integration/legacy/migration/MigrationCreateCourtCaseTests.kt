@@ -214,8 +214,6 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
-    val firstChargeUuid = response.charges.first { firstCharge.chargeNOMISId == it.chargeNOMISId }.chargeUuid
-    val secondChargeUuid = response.charges.first { secondCharge.chargeNOMISId == it.chargeNOMISId }.chargeUuid
     val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
     webTestClient
       .get()
@@ -246,6 +244,7 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
 
     val messages = getMessages(3)
     Assertions.assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder("sentence.fix-single-charge.inserted", "sentence.updated", "sentence.period-length.inserted")
+    Assertions.assertThat(messages).extracting<String> { it.personReference.identifiers.first().value }.containsOnly(courtCases.prisonerId)
   }
 
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {

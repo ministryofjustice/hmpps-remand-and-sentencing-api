@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -198,6 +199,7 @@ class RecallServiceTest {
         charge = testCharge,
         convictionDate = null,
         fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(active = false),
       )
 
       every { recallTypeRepository.findOneByCode(any()) } returns
@@ -217,6 +219,7 @@ class RecallServiceTest {
 
       assertThat(recallSentenceSaved.captured.preRecallSentenceStatus).isEqualTo(SentenceEntityStatus.INACTIVE)
       assertThat(sentence.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+      assertThat(sentence.legacyData).isEqualTo(baseSentenceLegacyData.copy(active = null))
       assertThat(sentence.createdBy).isEqualTo("FOO")
       assertThat(sentenceHistory.captured.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
     }
@@ -279,6 +282,7 @@ class RecallServiceTest {
         charge = testCharge,
         convictionDate = null,
         fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(active = false),
       )
 
       val recallToUpdate = RecallEntity(
@@ -322,6 +326,7 @@ class RecallServiceTest {
         charge = testCharge,
         convictionDate = null,
         fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(active = false),
       )
 
       every { recallRepository.findOneByRecallUuid(recallUuid) } returns recallToUpdate
@@ -364,7 +369,9 @@ class RecallServiceTest {
 
       // removed and new sentences status correct
       assertThat(removedSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+      assertThat(removedSentence.legacyData).isEqualTo(baseSentenceLegacyData.copy(active = null))
       assertThat(newSentence.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+      assertThat(newSentence.legacyData).isEqualTo(baseSentenceLegacyData.copy(active = null))
       assertThat(newSentence.updatedBy).isEqualTo("user001")
       assertThat(newSentence.updatedPrison).isEqualTo("PRI")
 
@@ -552,6 +559,16 @@ class RecallServiceTest {
       recallTypeCode = FTR_14,
       createdByUsername = "user001",
       createdByPrison = "PRI",
+    )
+
+    val baseSentenceLegacyData = SentenceLegacyData(
+      postedDate = "2026-02-10",
+      sentenceCalcType = null,
+      sentenceCategory = null,
+      sentenceTypeDesc = null,
+      active = null,
+      nomisLineReference = null,
+      bookingId = null,
     )
   }
 }

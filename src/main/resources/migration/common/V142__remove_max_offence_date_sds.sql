@@ -1,0 +1,1 @@
+update sentence_type set max_offence_date_exclusive = null where sentence_type_uuid in ('8d04557c-8e54-4e2a-844f-272163fca833', '02fe3513-40a6-47e9-a72d-9dafdd936a0e')

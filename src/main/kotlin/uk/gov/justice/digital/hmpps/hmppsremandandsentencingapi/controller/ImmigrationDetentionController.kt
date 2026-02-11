@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -110,6 +111,22 @@ class ImmigrationDetentionController(
       HttpStatus.OK,
     ).body(it)
   } ?: ResponseEntity.notFound().build()
+
+  @GetMapping("/court-appearance/{courtAppearanceUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
+  @Operation(
+    summary = "Retrieve immigration record by court appearance uuid",
+    description = "This endpoint will retrieve the court appearance and map it to the immigration detention dto",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Return court appearance as immigration detention dto"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "No active records found for this person"),
+    ],
+  )
+  fun getImmigrationDetentionByCourtAppearanceUuid(@PathVariable courtAppearanceUuid: UUID): ImmigrationDetention = immigrationDetentionService.findByAppearanceUuidAndMap(courtAppearanceUuid) ?: throw EntityNotFoundException("No court appearance found for $courtAppearanceUuid")
 
   @PutMapping("/{immigrationDetentionUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")

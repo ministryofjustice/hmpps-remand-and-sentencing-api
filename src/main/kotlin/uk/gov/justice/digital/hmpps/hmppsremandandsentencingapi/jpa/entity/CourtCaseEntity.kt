@@ -134,6 +134,7 @@ import java.util.UUID
         ColumnResult(name = "chargeOffenceCode"),
         ColumnResult(name = "chargeOffenceStartDate", type = LocalDate::class),
         ColumnResult(name = "chargeOffenceEndDate", type = LocalDate::class),
+        ColumnResult(name = "chargeTerrorRelated"),
         ColumnResult(name = "chargeOutcomeUuid"),
         ColumnResult(name = "chargeOutcomeName"),
         ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),

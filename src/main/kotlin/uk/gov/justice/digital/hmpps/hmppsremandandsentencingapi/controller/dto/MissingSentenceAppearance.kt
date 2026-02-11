@@ -23,7 +23,7 @@ data class MissingSentenceAppearance(
           appearanceUuid = first.appearanceUuid.toString(),
           courtCode = first.courtCode,
           courtCaseReference = first.courtCaseReference,
-          appearanceDate = first.appearanceDate.toLocalDate(),
+          appearanceDate = first.appearanceDate,
           sentences = appearanceDetails
             .groupBy { it.sentenceUuid }
             .values

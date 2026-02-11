@@ -35,7 +35,7 @@ class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
     val sentenceWithUnknownRecallTypeUuid = firstAppearance.charges[0].sentence!!.sentenceUuid
     val sentenceWithOtherTypeUuid = firstAppearance.charges[1].sentence!!.sentenceUuid
 
-    val sentenceUuids = listOf(sentenceWithUnknownRecallTypeUuid, sentenceWithOtherTypeUuid)
+    val sentenceUuids = listOf(sentenceWithUnknownRecallTypeUuid, sentenceWithOtherTypeUuid).joinToString(",")
 
     val response = webTestClient
       .get()
@@ -87,7 +87,7 @@ class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
 
     val response = webTestClient
       .get()
-      .uri { it.path("/sentence/unknown-recall-type").queryParam("sentenceUuids", listOf(sentenceUuid)).build() }
+      .uri { it.path("/sentence/unknown-recall-type").queryParam("sentenceUuids", sentenceUuid).build() }
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
       .exchange()
       .expectStatus().isOk

@@ -72,6 +72,7 @@ class RecallService(
           it.updatedAt = ZonedDateTime.now()
           it.updatedBy = createRecall.createdByUsername
           it.updatedPrison = createRecall.createdByPrison
+          it.legacyData = it.legacyData?.copy(active = null)
           sentenceHistoryRepository.save(
             SentenceHistoryEntity.from(
               it,
@@ -151,6 +152,7 @@ class RecallService(
           it.updatedAt = ZonedDateTime.now()
           it.updatedBy = recall.createdByUsername
           it.updatedPrison = recall.createdByPrison
+          it.legacyData = it.legacyData?.copy(active = null)
           sentenceHistoryRepository.save(
             SentenceHistoryEntity.from(it, ChangeSource.DPS),
           )
@@ -312,6 +314,7 @@ class RecallService(
   private fun deleteDpsRecallSentence(recallSentence: RecallSentenceEntity, updatedPrison: String? = null) {
     recallSentence.preRecallSentenceStatus?.let { preRecallSentenceStatus ->
       recallSentence.sentence.statusId = preRecallSentenceStatus
+      recallSentence.sentence.legacyData = recallSentence.sentence.legacyData?.copy(active = null)
       recallSentence.sentence.updatedAt = ZonedDateTime.now()
       recallSentence.sentence.updatedBy = serviceUserService.getUsername()
       recallSentence.sentence.updatedPrison = updatedPrison

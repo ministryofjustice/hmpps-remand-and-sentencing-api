@@ -4,6 +4,6 @@ import java.util.UUID
 
 data class CreateCourtAppearanceResponse(val appearanceUuid: UUID) {
   companion object {
-    fun from(appearanceUuid: UUID, createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse = CreateCourtAppearanceResponse(appearanceUuid)
+    fun from(appearanceUuid: UUID): CreateCourtAppearanceResponse = CreateCourtAppearanceResponse(appearanceUuid)
   }
 }

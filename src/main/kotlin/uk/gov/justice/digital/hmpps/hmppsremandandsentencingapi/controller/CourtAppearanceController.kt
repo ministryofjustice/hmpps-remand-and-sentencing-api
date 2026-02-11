@@ -50,7 +50,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
+    CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @GetMapping("\${court.appearance.getByIdPath}")
@@ -93,11 +93,11 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    CreateCourtAppearanceResponse.from(appearance.appearanceUuid, createCourtAppearance)
+    CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @DeleteMapping("/court-appearance/{appearanceUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
   @Operation(
     summary = "Delete Court appearance",
     description = "This endpoint will delete a court appearance in a given court case",

@@ -7,7 +7,6 @@ import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import java.time.LocalDate
@@ -60,25 +59,21 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
 
   @Query(
     """
-      select ca from CourtAppearanceEntity ca
+      select ca, cc, ca.appearanceOutcome from CourtAppearanceEntity ca
       join ca.courtCase cc
-      join ca.appearanceCharges ac
-      join ac.charge c
       where
-      ca.statusId in :courtAppearanceStatuses and
-      ca.courtCode = "IMM" and
+      ca.statusId = :courtAppearanceStatus and
       ca.source = "NOMIS" and
-      cc.statusId = :courtCaseStatus and
+      cc.statusId in :courtCaseStatuses and
       cc.prisonerId = :prisonerId and
-      c.statusId = :chargeStatus and
-      c.offenceCode in ("IA99000-001N", "ZI26000")
+      ca.appearanceUuid not in :excludeAppearanceUuids
       order by ca.createdAt desc
     """,
   )
   fun findNomisImmigrationDetentionRecordsForPrisoner(
     @Param("prisonerId") prisonerId: String,
-    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
-    @Param("courtAppearanceStatuses") courtAppearanceStatuses: List<CourtAppearanceEntityStatus> = listOf(CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE),
-    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+    @Param("excludeAppearanceUuids") excludeAppearanceUuids: List<UUID>,
+    @Param("courtCaseStatuses") courtCaseStatus: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.ACTIVE, CourtCaseEntityStatus.INACTIVE),
+    @Param("courtAppearanceStatus") courtAppearanceStatuses: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE,
   ): List<CourtAppearanceEntity>
 }

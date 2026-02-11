@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.springframework.core.ParameterizedTypeReference
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.typeReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.LegacySentenceTypeGroupingSummary
@@ -11,8 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.model.Rec
 import java.time.LocalDate
 
 class GetLegacyTypeByLegacySentenceType : IntegrationTestBase() {
-
-  private inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
   @Test
   fun `getLegacyAllSentenceTypes is sorted by nomisActive desc, nomisExpiryDate desc, sentencingAct asc`() {

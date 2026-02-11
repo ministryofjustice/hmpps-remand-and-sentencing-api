@@ -45,6 +45,10 @@ class PeriodTypeMapperTests {
       Arguments.of(false, "IMP", "LR_EDS18", PeriodLengthType.CUSTODIAL_TERM),
       Arguments.of(false, "IMP", "LR_SEC236A", PeriodLengthType.SENTENCE_LENGTH),
       Arguments.of(false, "IMP", "SDOPCU18", PeriodLengthType.SENTENCE_LENGTH),
+      Arguments.of(false, "IMP", "BOTUS", PeriodLengthType.TERM_LENGTH),
+      Arguments.of(false, "IMP", "DTO", PeriodLengthType.TERM_LENGTH),
+      Arguments.of(false, "IMP", "DTO_ORA", PeriodLengthType.TERM_LENGTH),
+      Arguments.of(false, "IMP", "A/FINE", PeriodLengthType.TERM_LENGTH),
     )
 
     @JvmStatic

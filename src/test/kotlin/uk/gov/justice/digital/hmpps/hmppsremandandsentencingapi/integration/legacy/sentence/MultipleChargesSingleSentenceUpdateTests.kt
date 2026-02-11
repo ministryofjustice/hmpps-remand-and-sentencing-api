@@ -175,6 +175,65 @@ class MultipleChargesSingleSentenceUpdateTests : IntegrationTestBase() {
       .exists()
   }
 
+  @Test
+  fun `removing charges until sentence is active then updating a period length must be successful`() {
+    val sentenceWithMultipleCharges = createSentenceWithMultipleCharges()
+    val legacyCreatePeriodLength = DataCreator.legacyCreatePeriodLength(sentenceUUID = sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid)
+    val legacyPeriodLengthCreatedResponse = webTestClient
+      .post()
+      .uri("/legacy/period-length")
+      .bodyValue(legacyCreatePeriodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyPeriodLengthCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    val singleChargeUuid = sentenceWithMultipleCharges.legacySentence.chargeUuids.first()
+    val otherChargeUuids = sentenceWithMultipleCharges.legacySentence.chargeUuids.filter { it != singleChargeUuid }
+
+    val legacySentenceWithNewCharge = sentenceWithMultipleCharges.legacySentence.copy(chargeUuids = listOf(singleChargeUuid))
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/${sentenceWithMultipleCharges.legacySentenceResponse.lifetimeUuid}")
+      .bodyValue(legacySentenceWithNewCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    otherChargeUuids.forEach { chargeUuid ->
+      webTestClient
+        .delete()
+        .uri("/legacy/court-appearance/${sentenceWithMultipleCharges.courtCase.appearances.first().appearanceUuid}/charge/$chargeUuid")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus()
+        .isOk
+    }
+
+    val updatedPeriodLength = legacyCreatePeriodLength.copy(periodDays = legacyCreatePeriodLength.periodDays?.plus(10))
+    webTestClient
+      .put()
+      .uri("/legacy/period-length/${legacyPeriodLengthCreatedResponse.periodLengthUuid}")
+      .bodyValue(updatedPeriodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+  }
+
   fun createSentenceWithMultipleCharges(): TestData {
     val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = null)
     val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = null)
