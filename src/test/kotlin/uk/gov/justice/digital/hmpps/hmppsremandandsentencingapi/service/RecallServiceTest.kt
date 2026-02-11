@@ -545,7 +545,9 @@ class RecallServiceTest {
           ),
           recall = this,
           createdByUsername = "FOO",
-        ),
+        ).apply {
+          sentence.recallSentences = mutableSetOf(this)
+        },
       )
     }
 
