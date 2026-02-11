@@ -114,7 +114,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "204"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],

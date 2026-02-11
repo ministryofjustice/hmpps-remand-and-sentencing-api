@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.stream.LongStream
@@ -139,6 +140,33 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(courtCases[0].first)
       .jsonPath("$.content.[1].courtCaseUuid")
       .isEqualTo(courtCases[1].first)
+  }
+
+  @Test
+  fun `recalled court cases appear first when latest appearance is same date`() {
+    val (courtCaseUuid) = createCourtCase()
+    val (recalledCourtCaseUuid, recalledCourtCase) = createCourtCase()
+    val toBeRecalledSentence = recalledCourtCase.appearances.first().charges.first().sentence!!
+    adjustmentsApi.stubAllowCreateAdjustments()
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
+    createRecall(DpsDataCreator.dpsCreateRecall(sentenceIds = listOf(toBeRecalledSentence.sentenceUuid)))
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", recalledCourtCase.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].courtCaseUuid")
+      .isEqualTo(recalledCourtCaseUuid)
+      .jsonPath("$.content.[1].courtCaseUuid")
+      .isEqualTo(courtCaseUuid)
   }
 
   @Test
