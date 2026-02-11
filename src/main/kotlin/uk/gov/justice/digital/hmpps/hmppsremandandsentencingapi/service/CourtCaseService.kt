@@ -146,10 +146,10 @@ class CourtCaseService(
     val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {
       PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing(
         compareByDescending { it.latestCourtAppearance.warrantDate },
-      )
+      ).thenComparing { it.latestCourtAppearance.charges.all { charge -> charge.sentence?.hasRecall == false } }
 
-      PagedCourtCaseOrderBy.APPEARANCE_DATE_ASC -> compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate }
-      PagedCourtCaseOrderBy.APPEARANCE_DATE_DESC -> compareByDescending { it.latestCourtAppearance.warrantDate }
+      PagedCourtCaseOrderBy.APPEARANCE_DATE_ASC -> compareBy<PagedCourtCase> { it.latestCourtAppearance.warrantDate }.thenComparing { it.latestCourtAppearance.charges.all { charge -> charge.sentence?.hasRecall == false } }
+      PagedCourtCaseOrderBy.APPEARANCE_DATE_DESC -> compareByDescending<PagedCourtCase> { it.latestCourtAppearance.warrantDate }.thenComparing { it.latestCourtAppearance.charges.all { charge -> charge.sentence?.hasRecall == false } }
     }
     val pagedCourtCases = courtCaseMap.values.map { PagedCourtCase.from(it) }
       .sortedWith(appearanceDateCompareTo)
