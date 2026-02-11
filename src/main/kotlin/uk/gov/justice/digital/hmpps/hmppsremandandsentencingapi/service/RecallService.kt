@@ -254,6 +254,7 @@ class RecallService(
 
     val isLegacyRecall =
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
+    val isOnlyRecall = recallToDelete.recallSentences.all { it.sentence.recallSentences.size == 1 }
 
     val eventsToEmit = mutableListOf<EventMetadata>()
     var previousRecall: RecallEntity?
@@ -262,7 +263,7 @@ class RecallService(
     } else {
       null
     }
-    if (isLegacyRecall) {
+    if (isLegacyRecall && isOnlyRecall) {
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
       previousRecall = recallToDelete.recallSentences.map {
