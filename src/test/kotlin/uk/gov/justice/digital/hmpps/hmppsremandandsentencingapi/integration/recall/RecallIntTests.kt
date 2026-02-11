@@ -1057,6 +1057,42 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `Delete a DPS recall on-top of a NOMIS recall should not delete sentence`() {
+    // Create a legacy sentence so that the legacy recall is also created.
+    val (legacySentenceUuid, _) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = DataCreator.sentenceLegacyData(
+          sentenceCalcType = "FTR_ORA",
+          sentenceCategory = "2020",
+        ),
+        returnToCustodyDate = LocalDate.of(2023, 1, 1),
+      ),
+    )
+    val dpsRecall = createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(
+          legacySentenceUuid,
+        ),
+      ),
+    )
+
+    purgeQueues()
+
+    deleteRecall(dpsRecall.recallUuid)
+
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(recalls).hasSize(1)
+
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1)
+      .extracting<String> { it.eventType }.contains("recall.deleted")
+
+    val historicalRecalls = recallHistoryRepository.findByRecallUuid(dpsRecall.recallUuid)
+    assertThat(historicalRecalls).hasSize(2)
+  }
+
+  @Test
   fun `Can create a recall on a legacy recall sentence with mapping`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val (legacySentenceUuid, _) = createLegacySentence(
