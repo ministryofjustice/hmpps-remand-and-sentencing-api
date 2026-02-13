@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import java.util.UUID
 
@@ -27,4 +28,17 @@ class ChargeOutcomeEntity(
   val dispositionCode: String,
   @Enumerated(EnumType.STRING)
   val status: ReferenceEntityStatus,
-)
+) {
+  companion object {
+    fun from(createChargeOutcome: CreateChargeOutcome): ChargeOutcomeEntity = ChargeOutcomeEntity(
+      0,
+      createChargeOutcome.outcomeName,
+      createChargeOutcome.outcomeUuid ?: UUID.randomUUID(),
+      createChargeOutcome.nomisCode,
+      createChargeOutcome.outcomeType,
+      createChargeOutcome.displayOrder,
+      createChargeOutcome.dispositionCode,
+      createChargeOutcome.status,
+    )
+  }
+}

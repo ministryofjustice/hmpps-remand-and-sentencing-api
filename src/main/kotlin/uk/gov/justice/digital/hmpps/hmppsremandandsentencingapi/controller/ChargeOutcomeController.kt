@@ -5,15 +5,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeOutcomeService
 import java.util.UUID
@@ -22,6 +26,21 @@ import java.util.UUID
 @RequestMapping("/charge-outcome", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "charge-outcome-controller", description = "Charge outcome")
 class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeService) {
+
+  @PostMapping
+  @Operation(
+    summary = "Create charge outcome",
+    description = "This endpoint will create a new charge outcome and migrate any charge data over that needs to be mapped to the newly created charge outcome",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "201"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.CREATED)
+  fun createChargeOutcome(@RequestBody @Valid createChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.createChargeOutcome(createChargeOutcome)
 
   @GetMapping("/status")
   @Operation(

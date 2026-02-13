@@ -10,12 +10,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
@@ -177,6 +179,24 @@ class DpsDataCreator {
       courtAppearanceUuid: UUID? = null,
     ): CreateImmigrationDetention = CreateImmigrationDetention(
       prisonerId, appearanceOutcomeUuid, immigrationDetentionRecordType, recordDate, homeOfficeReferenceNumber, noLongerOfInterestReason, noLongerOfInterestComment, createdByUsername, createdByPrison, courtAppearanceUuid,
+    )
+
+    fun createChargeOutcome(
+      outcomeUuid: UUID? = null,
+      outcomeName: String = "A Charge outcome",
+      nomisCode: String = "56",
+      outcomeType: String = "REMAND",
+      displayOrder: Int = 50,
+      dispositionCode: String = "INTERIM",
+      status: ReferenceEntityStatus = ReferenceEntityStatus.ACTIVE,
+    ): CreateChargeOutcome = CreateChargeOutcome(
+      outcomeUuid,
+      outcomeName,
+      nomisCode,
+      outcomeType,
+      displayOrder,
+      dispositionCode,
+      status,
     )
   }
 }
