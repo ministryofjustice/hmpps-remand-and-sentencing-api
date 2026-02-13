@@ -19,7 +19,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.24.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.25.0")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
