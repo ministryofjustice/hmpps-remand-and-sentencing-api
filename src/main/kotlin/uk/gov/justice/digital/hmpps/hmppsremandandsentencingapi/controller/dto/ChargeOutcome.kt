@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import java.util.UUID
 
 data class ChargeOutcome(
@@ -10,6 +11,7 @@ data class ChargeOutcome(
   val outcomeType: String,
   val displayOrder: Int,
   val dispositionCode: String,
+  val status: ReferenceEntityStatus,
 ) {
   companion object {
     fun from(chargeOutcomeEntity: ChargeOutcomeEntity): ChargeOutcome = ChargeOutcome(
@@ -19,6 +21,7 @@ data class ChargeOutcome(
       chargeOutcomeEntity.outcomeType,
       chargeOutcomeEntity.displayOrder,
       chargeOutcomeEntity.dispositionCode,
+      chargeOutcomeEntity.status,
     )
   }
 }
