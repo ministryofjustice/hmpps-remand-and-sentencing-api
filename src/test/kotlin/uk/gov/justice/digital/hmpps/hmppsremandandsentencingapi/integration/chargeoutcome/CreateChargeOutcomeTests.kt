@@ -46,7 +46,7 @@ class CreateChargeOutcomeTests : IntegrationTestBase() {
       .jsonPath("$.fieldErrors[0].field")
       .isEqualTo("outcomeType")
       .jsonPath("$.fieldErrors[0].message")
-      .isEqualTo("Must use one of existing the outcome types SENTENCING, NON_CUSTODIAL, IMMIGRATION, REMAND")
+      .isEqualTo("Must use one of existing the outcome types IMMIGRATION, NON_CUSTODIAL, REMAND, SENTENCING")
   }
 
   @Test

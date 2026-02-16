@@ -19,12 +19,12 @@ class ChargeOutcomeService(private val chargeOutcomeRepository: ChargeOutcomeRep
     val outcomeTypes = chargeOutcomeRepository.findDistinctOutcomeTypes()
     val bindingResults = BeanPropertyBindingResult(createChargeOutcome, "createChargeOutcome")
     if (!outcomeTypes.contains(createChargeOutcome.outcomeType)) {
-      bindingResults.addError(FieldError("createChargeOutcome", "outcomeType", "Must use one of existing the outcome types ${outcomeTypes.joinToString()}"))
+      bindingResults.addError(FieldError("createChargeOutcome", "outcomeType", "Must use one of existing the outcome types ${outcomeTypes.sorted().joinToString()}"))
     }
     val dispositionCodes = chargeOutcomeRepository.findDistinctDispositionCodes()
     if (!dispositionCodes.contains(createChargeOutcome.dispositionCode)) {
       bindingResults.addError(
-        FieldError("createChargeOutcome", "dispositionCode", "Must use one of existing the disposition codes ${dispositionCodes.joinToString()}"),
+        FieldError("createChargeOutcome", "dispositionCode", "Must use one of existing the disposition codes ${dispositionCodes.sorted().joinToString()}"),
       )
     }
 
