@@ -31,6 +31,25 @@ class CreateChargeOutcomeTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `adding a charge outcome with a blank name results in error`() {
+    val createChargeOutcome = DpsDataCreator.createChargeOutcome(outcomeName = "")
+    webTestClient.post()
+      .uri("/charge-outcome")
+      .bodyValue(createChargeOutcome)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.fieldErrors[0].field")
+      .isEqualTo("outcomeName")
+      .jsonPath("$.fieldErrors[0].message")
+      .isEqualTo("Outcome name must not be blank")
+  }
+
+  @Test
   fun `trying to create a charge outcome with a type not currently in the database results in error`() {
     val createChargeOutcome = DpsDataCreator.createChargeOutcome(outcomeType = "SOME_RANDOM_TYPE")
     webTestClient.post()

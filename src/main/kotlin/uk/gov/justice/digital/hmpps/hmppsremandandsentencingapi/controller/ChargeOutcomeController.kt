@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FieldErrorErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
@@ -38,10 +41,11 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
       ApiResponse(responseCode = "201"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "400", description = "Bad request", content = [Content(mediaType = "application/json", schema = Schema(implementation = FieldErrorErrorResponse::class))]),
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createChargeOutcome(@RequestBody @Valid createChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.createChargeOutcome(createChargeOutcome).let { createdChargeOutcomeEntity ->
+  fun createChargeOutcome(@Valid @RequestBody createChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.createChargeOutcome(createChargeOutcome).let { createdChargeOutcomeEntity ->
     migrateChargeRecordOutcomes.migrateChargeRecordsToOutcome(createdChargeOutcomeEntity)
     ChargeOutcome.from(createdChargeOutcomeEntity)
   }
