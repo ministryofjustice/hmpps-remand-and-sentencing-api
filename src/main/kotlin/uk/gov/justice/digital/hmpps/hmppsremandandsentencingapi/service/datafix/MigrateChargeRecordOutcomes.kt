@@ -13,8 +13,9 @@ class MigrateChargeRecordOutcomes(private val chargeRepository: ChargeRepository
   @Async
   @Transactional
   fun migrateChargeRecordsToOutcome(chargeOutcomeEntity: ChargeOutcomeEntity) {
-    log.info("migrating charge records with nomis code ${chargeOutcomeEntity.nomisCode}")
+    log.info("starting migrating charge records with nomis code ${chargeOutcomeEntity.nomisCode}")
     chargeRepository.updateToSupportedChargeOutcome(chargeOutcomeEntity.id, chargeOutcomeEntity.nomisCode)
+    log.info("finished migrating charge records with nomis code ${chargeOutcomeEntity.nomisCode}")
   }
 
   companion object {
