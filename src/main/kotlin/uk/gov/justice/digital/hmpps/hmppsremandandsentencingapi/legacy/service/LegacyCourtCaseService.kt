@@ -107,7 +107,7 @@ class LegacyCourtCaseService(
     var courtCaseEventMetadata: EventMetadata? = null
     var chargeEventsToEmit: List<EventMetadata>
     val performedByUsername = unlinkCase?.performedByUser ?: serviceUserService.getUsername()
-    if (sourceCourtCase.statusId == CourtCaseEntityStatus.MERGED) {
+    if (sourceCourtCase.statusId != CourtCaseEntityStatus.ACTIVE || sourceCourtCase.mergedToCase != null) {
       sourceCourtCase.statusId = CourtCaseEntityStatus.ACTIVE
       sourceCourtCase.mergedToCase = null
       sourceCourtCase.mergedToDate = null
