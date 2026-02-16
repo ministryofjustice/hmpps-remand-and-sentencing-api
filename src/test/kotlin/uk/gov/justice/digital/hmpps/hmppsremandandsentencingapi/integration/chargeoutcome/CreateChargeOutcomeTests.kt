@@ -1,9 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.chargeoutcome
 
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.util.UUID
 
 class CreateChargeOutcomeTests : IntegrationTestBase() {
 
@@ -62,5 +66,42 @@ class CreateChargeOutcomeTests : IntegrationTestBase() {
       .isEqualTo("dispositionCode")
       .jsonPath("$.fieldErrors[0].message")
       .isEqualTo("Must use one of existing the disposition codes FINAL, INTERIM")
+  }
+
+  @Test
+  fun `migrate legacy charge records to the new supported charge outcome`() {
+    val (chargeUuid, createdCharge) = createLegacyCharge()
+    val chargeOutcomeUuid = UUID.randomUUID()
+    val createChargeOutcome = DpsDataCreator.createChargeOutcome(
+      outcomeUuid = chargeOutcomeUuid,
+      nomisCode = createdCharge.legacyData.nomisOutcomeCode!!,
+      outcomeName = "A new supported charge outcome",
+    )
+    webTestClient.post()
+      .uri("/charge-outcome")
+      .bodyValue(createChargeOutcome)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isCreated
+
+    await untilCallTo {
+      chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)?.chargeOutcome
+    } matches { it != null }
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${createdCharge.appearanceLifetimeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].outcome.outcomeUuid")
+      .isEqualTo(chargeOutcomeUuid.toString())
   }
 }
