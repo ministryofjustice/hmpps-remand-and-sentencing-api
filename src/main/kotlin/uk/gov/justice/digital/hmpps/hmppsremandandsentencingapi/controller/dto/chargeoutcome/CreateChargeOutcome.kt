@@ -7,15 +7,15 @@ import java.util.UUID
 
 data class CreateChargeOutcome(
   val outcomeUuid: UUID?,
-  @param:NotBlank
+  @field:NotBlank(message = "Outcome name must not be blank")
   val outcomeName: String,
-  @param:NotBlank
+  @field:NotBlank(message = "Nomis Code must not be blank")
   val nomisCode: String,
-  @param:NotBlank
+  @field:NotBlank(message = "Outcome type must not be blank")
   val outcomeType: String,
-  @param:Positive
+  @field:Positive(message = "Display Order must be a whole positive number")
   val displayOrder: Int,
-  @param:NotBlank
+  @field:NotBlank(message = "Disposition Code must not be blank")
   val dispositionCode: String,
   val status: ReferenceEntityStatus,
 )
