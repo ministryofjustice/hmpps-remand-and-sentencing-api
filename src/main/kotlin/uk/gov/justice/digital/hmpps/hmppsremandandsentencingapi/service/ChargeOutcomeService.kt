@@ -10,12 +10,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.c
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
-import java.util.UUID
+import java.util.*
 
 @Service
 class ChargeOutcomeService(private val chargeOutcomeRepository: ChargeOutcomeRepository) {
 
-  fun createChargeOutcome(createChargeOutcome: CreateChargeOutcome): ChargeOutcome {
+  fun createChargeOutcome(createChargeOutcome: CreateChargeOutcome): ChargeOutcomeEntity {
     val outcomeTypes = chargeOutcomeRepository.findDistinctOutcomeTypes()
     val bindingResults = BeanPropertyBindingResult(createChargeOutcome, "createChargeOutcome")
     if (!outcomeTypes.contains(createChargeOutcome.outcomeType)) {
@@ -35,8 +35,7 @@ class ChargeOutcomeService(private val chargeOutcomeRepository: ChargeOutcomeRep
       )
     }
 
-    val chargeOutcome = chargeOutcomeRepository.save(ChargeOutcomeEntity.from(createChargeOutcome))
-    return ChargeOutcome.from(chargeOutcome)
+    return chargeOutcomeRepository.save(ChargeOutcomeEntity.from(createChargeOutcome))
   }
 
   fun getAllByStatus(statuses: List<ReferenceEntityStatus>): List<ChargeOutcome> = chargeOutcomeRepository.findByStatusIn(statuses).map { ChargeOutcome.from(it) }

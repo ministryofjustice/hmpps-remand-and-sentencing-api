@@ -20,12 +20,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeOutcomeService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.datafix.MigrateChargeRecordOutcomes
 import java.util.UUID
 
 @RestController
 @RequestMapping("/charge-outcome", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "charge-outcome-controller", description = "Charge outcome")
-class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeService) {
+class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeService, private val migrateChargeRecordOutcomes: MigrateChargeRecordOutcomes) {
 
   @PostMapping
   @Operation(
@@ -40,7 +41,10 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
     ],
   )
   @ResponseStatus(HttpStatus.CREATED)
-  fun createChargeOutcome(@RequestBody @Valid createChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.createChargeOutcome(createChargeOutcome)
+  fun createChargeOutcome(@RequestBody @Valid createChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.createChargeOutcome(createChargeOutcome).let { createdChargeOutcomeEntity ->
+    migrateChargeRecordOutcomes.migrateChargeRecordsToOutcome(createdChargeOutcomeEntity)
+    ChargeOutcome.from(createdChargeOutcomeEntity)
+  }
 
   @GetMapping("/status")
   @Operation(
