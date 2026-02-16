@@ -69,6 +69,34 @@ class CreateChargeOutcomeTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `trying to create a charge outcome with a NOMIS code that is already mapped results in error`() {
+    val createChargeOutcome = DpsDataCreator.createChargeOutcome()
+    webTestClient.post()
+      .uri("/charge-outcome")
+      .bodyValue(createChargeOutcome)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isCreated
+    webTestClient.post()
+      .uri("/charge-outcome")
+      .bodyValue(createChargeOutcome)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.fieldErrors[0].field")
+      .isEqualTo("nomisCode")
+      .jsonPath("$.fieldErrors[0].message")
+      .isEqualTo("nomisCode outcome code is already mapped")
+  }
+
+  @Test
   fun `migrate legacy charge records to the new supported charge outcome`() {
     val (chargeUuid, createdCharge) = createLegacyCharge()
     val chargeOutcomeUuid = UUID.randomUUID()

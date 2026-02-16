@@ -28,6 +28,13 @@ class ChargeOutcomeService(private val chargeOutcomeRepository: ChargeOutcomeRep
       )
     }
 
+    val chargeOutcomeFromNomisCode = chargeOutcomeRepository.findByNomisCode(createChargeOutcome.nomisCode)
+    if (chargeOutcomeFromNomisCode != null) {
+      bindingResults.addError(
+        FieldError("createChargeOutcome", "nomisCode", "nomisCode outcome code is already mapped"),
+      )
+    }
+
     if (bindingResults.hasErrors()) {
       throw MethodArgumentNotValidException(
         MethodParameter(this.javaClass.getDeclaredMethod("createChargeOutcome", CreateChargeOutcome::class.java), 0),
