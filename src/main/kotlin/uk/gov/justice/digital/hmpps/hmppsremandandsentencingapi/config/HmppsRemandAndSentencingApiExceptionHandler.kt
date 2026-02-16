@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.ValidationException
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
@@ -37,16 +38,18 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException::class)
-  fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+  fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<FieldErrorErrorResponse> {
+    val fieldErrors = e.bindingResult.fieldErrors.map { FieldError(it.field, it.defaultMessage) }
     val errors = e.bindingResult.fieldErrors.joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
     log.info("Method argument not valid: {}", errors)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
-        ErrorResponse(
+        FieldErrorErrorResponse(
           status = BAD_REQUEST,
           userMessage = "Validation failure: $errors",
           developerMessage = errors,
+          fieldErrors = fieldErrors,
         ),
       )
   }
@@ -195,4 +198,28 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
+}
+
+data class FieldError(
+  val field: String,
+  val message: String?,
+)
+
+data class FieldErrorErrorResponse(
+  val status: Int,
+  val errorCode: String? = null,
+  val userMessage: String? = null,
+  val developerMessage: String? = null,
+  val moreInfo: String? = null,
+  val fieldErrors: List<FieldError>? = null,
+) {
+  constructor(
+    status: HttpStatus,
+    errorCode: String? = null,
+    userMessage: String? = null,
+    developerMessage: String? = null,
+    moreInfo: String? = null,
+    fieldErrors: List<FieldError>? = null,
+  ) :
+    this(status.value(), errorCode, userMessage, developerMessage, moreInfo, fieldErrors)
 }

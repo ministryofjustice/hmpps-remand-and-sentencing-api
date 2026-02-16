@@ -1,0 +1,1 @@
+create index idx_charge_legacy_data_nomis_outcome_code on charge((legacy_data->>'nomisOutcomeCode'));

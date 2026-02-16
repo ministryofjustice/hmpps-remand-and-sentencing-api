@@ -1,13 +1,49 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import org.springframework.core.MethodParameter
 import org.springframework.stereotype.Service
+import org.springframework.validation.BeanPropertyBindingResult
+import org.springframework.validation.FieldError
+import org.springframework.web.bind.MethodArgumentNotValidException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
-import java.util.UUID
+import java.util.*
 
 @Service
 class ChargeOutcomeService(private val chargeOutcomeRepository: ChargeOutcomeRepository) {
+
+  fun createChargeOutcome(createChargeOutcome: CreateChargeOutcome): ChargeOutcomeEntity {
+    val outcomeTypes = chargeOutcomeRepository.findDistinctOutcomeTypes()
+    val bindingResults = BeanPropertyBindingResult(createChargeOutcome, "createChargeOutcome")
+    if (!outcomeTypes.contains(createChargeOutcome.outcomeType)) {
+      bindingResults.addError(FieldError("createChargeOutcome", "outcomeType", "Must use one of existing the outcome types ${outcomeTypes.sorted().joinToString()}"))
+    }
+    val dispositionCodes = chargeOutcomeRepository.findDistinctDispositionCodes()
+    if (!dispositionCodes.contains(createChargeOutcome.dispositionCode)) {
+      bindingResults.addError(
+        FieldError("createChargeOutcome", "dispositionCode", "Must use one of existing the disposition codes ${dispositionCodes.sorted().joinToString()}"),
+      )
+    }
+
+    val chargeOutcomeFromNomisCode = chargeOutcomeRepository.findByNomisCode(createChargeOutcome.nomisCode)
+    if (chargeOutcomeFromNomisCode != null) {
+      bindingResults.addError(
+        FieldError("createChargeOutcome", "nomisCode", "nomisCode outcome code is already mapped"),
+      )
+    }
+
+    if (bindingResults.hasErrors()) {
+      throw MethodArgumentNotValidException(
+        MethodParameter(this.javaClass.getDeclaredMethod("createChargeOutcome", CreateChargeOutcome::class.java), 0),
+        bindingResults,
+      )
+    }
+
+    return chargeOutcomeRepository.save(ChargeOutcomeEntity.from(createChargeOutcome))
+  }
 
   fun getAllByStatus(statuses: List<ReferenceEntityStatus>): List<ChargeOutcome> = chargeOutcomeRepository.findByStatusIn(statuses).map { ChargeOutcome.from(it) }
 

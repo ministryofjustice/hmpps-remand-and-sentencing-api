@@ -84,4 +84,13 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     nativeQuery = true,
   )
   fun deleteByChargeMergedFromCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Modifying
+  @Query(
+    """
+      update charge set charge_outcome_id = :chargeOutcomeId where legacy_data->>'nomisOutcomeCode' = :nomisCode
+    """,
+    nativeQuery = true,
+  )
+  fun updateToSupportedChargeOutcome(@Param("chargeOutcomeId") chargeOutcomeId: Int, @Param("nomisCode") nomisCode: String)
 }
