@@ -21,7 +21,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
-class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService, private val courtCaseRepository: CourtCaseRepository, private val sentenceRepository: SentenceRepository)  {
+class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService, private val courtCaseRepository: CourtCaseRepository, private val sentenceRepository: SentenceRepository) {
 
   fun fixCourtCaseSentences(courtCases: List<CourtCaseEntity>): MutableSet<EventMetadata> = courtCases.flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase))
