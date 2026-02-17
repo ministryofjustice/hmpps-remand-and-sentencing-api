@@ -14,7 +14,6 @@ generic-service:
     ADJUSTMENTS_API_URL: "https://adjustments-api-dev.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: DEV
-    FEATURES_FIX_MANY_CHARGES_TO_SENTENCE: enabled
 
   resources:
     requests:
