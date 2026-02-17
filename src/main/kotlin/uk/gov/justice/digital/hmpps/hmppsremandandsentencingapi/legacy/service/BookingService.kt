@@ -338,7 +338,7 @@ class BookingService(
       EventMetadataCreator.chargeEventMetadata(
         bookingHierarchyData.prisonerId,
         bookingHierarchyData.courtCaseId,
-        null,
+        bookingHierarchyData.courtAppearanceId,
         createdCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
       ),

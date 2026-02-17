@@ -50,7 +50,7 @@ class LegacyDomainEventService(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
             eventMetaData.courtCaseId!!,
-            null,
+            eventMetaData.courtAppearanceId!!,
             EventSource.NOMIS,
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(

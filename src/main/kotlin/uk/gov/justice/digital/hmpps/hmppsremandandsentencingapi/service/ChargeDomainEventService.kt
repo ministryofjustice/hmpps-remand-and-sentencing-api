@@ -16,7 +16,7 @@ class ChargeDomainEventService(
   @Value("\${court.charge.getByIdPath}") private val courtChargeLookupPath: String,
 ) {
 
-  fun create(prisonerId: String, chargeId: String, courtCaseId: String, courtAppearanceId: String?, source: EventSource) {
+  fun create(prisonerId: String, chargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource) {
     snsService.publishDomainEvent(
       "charge.inserted",
       "Charge inserted",
