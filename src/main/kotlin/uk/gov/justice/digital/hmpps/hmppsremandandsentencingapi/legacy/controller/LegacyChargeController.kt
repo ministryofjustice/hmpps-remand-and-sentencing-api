@@ -49,7 +49,7 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
   fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse = legacyChargeService.create(charge).also {
-    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
+    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, charge.appearanceLifetimeUuid.toString(), EventSource.NOMIS)
   }
 
   @PutMapping("/{lifetimeUuid}")

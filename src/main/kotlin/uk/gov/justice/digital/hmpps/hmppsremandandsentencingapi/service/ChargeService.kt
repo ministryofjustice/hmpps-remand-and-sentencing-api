@@ -62,7 +62,7 @@ class ChargeService(
       EventMetadataCreator.chargeEventMetadata(
         prisonerId,
         courtCaseId,
-        null,
+        courtAppearanceUuid.toString(),
         savedCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
       ),
