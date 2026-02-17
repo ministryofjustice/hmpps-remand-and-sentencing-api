@@ -473,7 +473,7 @@ class LegacyPrisonerMergeService(
       EventMetadataCreator.chargeEventMetadata(
         mergeHierarchyData.prisonerId,
         mergeHierarchyData.courtCaseId,
-        null,
+        mergeHierarchyData.courtAppearanceId,
         createdCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
       ),

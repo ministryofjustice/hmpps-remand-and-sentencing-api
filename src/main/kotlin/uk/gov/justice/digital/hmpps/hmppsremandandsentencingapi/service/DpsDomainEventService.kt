@@ -44,6 +44,7 @@ class DpsDomainEventService(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
             eventMetaData.courtCaseId!!,
+            eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
