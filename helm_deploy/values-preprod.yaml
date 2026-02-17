@@ -14,7 +14,6 @@ generic-service:
     ADJUSTMENTS_API_URL: "https://adjustments-api-preprod.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PREPROD
-    FEATURES_FIX_MANY_CHARGES_TO_SENTENCE: enabled
 
   allowlist:
     penetration-test-ip-1: 54.37.241.156/30
