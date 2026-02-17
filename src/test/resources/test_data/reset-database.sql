@@ -19,4 +19,4 @@ recall_sentence_history,
 recall_history
  RESTART IDENTITY CASCADE;
 
-DELETE FROM charge_outcome where nomis_code in ('1', '56');
+DELETE FROM charge_outcome where nomis_code in ('1', '56', '99');

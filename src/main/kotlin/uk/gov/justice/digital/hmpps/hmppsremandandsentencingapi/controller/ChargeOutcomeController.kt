@@ -13,6 +13,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -48,6 +49,27 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
   fun createChargeOutcome(@Valid @RequestBody createChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.createChargeOutcome(createChargeOutcome).let { createdChargeOutcomeEntity ->
     migrateChargeRecordOutcomes.migrateChargeRecordsToOutcome(createdChargeOutcomeEntity)
     ChargeOutcome.from(createdChargeOutcomeEntity)
+  }
+
+  @PutMapping("/{chargeOutcomeUuid}")
+  @Operation(
+    summary = "Update charge outcome",
+    description = "This endpoint will update an existing charge outcome and migrate any charge data over that needs to be mapped to the newly updated charge outcome",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "400", description = "Bad request", content = [Content(mediaType = "application/json", schema = Schema(implementation = FieldErrorErrorResponse::class))]),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun updateChargeOutcome(@PathVariable chargeOutcomeUuid: UUID, @Valid @RequestBody updateChargeOutcome: CreateChargeOutcome): ChargeOutcome = chargeOutcomeService.updateChargeOutcome(chargeOutcomeUuid, updateChargeOutcome).let { (entity, migrateNomisCodeData) ->
+    if (migrateNomisCodeData) {
+      migrateChargeRecordOutcomes.migrateChargeRecordsToOutcome(entity)
+    }
+    ChargeOutcome.from(entity)
   }
 
   @GetMapping("/status")
