@@ -16,13 +16,13 @@ class ChargeDomainEventService(
   @Value("\${court.charge.getByIdPath}") private val courtChargeLookupPath: String,
 ) {
 
-  fun create(prisonerId: String, chargeId: String, courtCaseId: String, source: EventSource) {
+  fun create(prisonerId: String, chargeId: String, courtCaseId: String, courtAppearanceId: String?, source: EventSource) {
     snsService.publishDomainEvent(
       "charge.inserted",
       "Charge inserted",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       ZonedDateTime.now(),
-      HmppsCourtChargeMessage(chargeId, courtCaseId, source),
+      HmppsCourtChargeMessage(chargeId, courtCaseId, source, courtAppearanceId),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
