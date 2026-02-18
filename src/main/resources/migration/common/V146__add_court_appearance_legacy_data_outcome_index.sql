@@ -1,0 +1,1 @@
+create index idx_court_appearance_legacy_data_nomis_outcome_code on court_appearance((legacy_data->>'nomisOutcomeCode'));

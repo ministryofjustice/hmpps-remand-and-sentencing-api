@@ -20,3 +20,5 @@ recall_history
  RESTART IDENTITY CASCADE;
 
 DELETE FROM charge_outcome where nomis_code in ('1', '56', '99');
+
+DELETE FROM appearance_outcome where nomis_code in ('1', '56', '99');

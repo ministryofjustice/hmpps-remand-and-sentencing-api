@@ -14,6 +14,7 @@ data class CourtAppearanceOutcome(
   val isSubList: Boolean,
   val dispositionCode: String,
   val status: ReferenceEntityStatus,
+  val warrantType: String,
 ) {
   companion object {
     fun from(appearanceOutcomeEntity: AppearanceOutcomeEntity): CourtAppearanceOutcome = CourtAppearanceOutcome(
@@ -26,6 +27,7 @@ data class CourtAppearanceOutcome(
       appearanceOutcomeEntity.isSubList,
       appearanceOutcomeEntity.dispositionCode,
       appearanceOutcomeEntity.status,
+      appearanceOutcomeEntity.warrantType,
     )
   }
 }
