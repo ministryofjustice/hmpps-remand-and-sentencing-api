@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.appearanceoutcome.CreateAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
@@ -195,6 +196,30 @@ class DpsDataCreator {
       nomisCode,
       outcomeType,
       displayOrder,
+      dispositionCode,
+      status,
+    )
+
+    fun createAppearanceOutcome(
+      outcomeUuid: UUID? = null,
+      outcomeName: String = "An appearance outcome",
+      nomisCode: String = "56",
+      outcomeType: String = "REMAND",
+      warrantType: String = "NON_SENTENCING",
+      displayOrder: Int = 50,
+      relatedChargeOutcomeUuid: UUID = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      isSubList: Boolean = false,
+      dispositionCode: String = "INTERIM",
+      status: ReferenceEntityStatus = ReferenceEntityStatus.ACTIVE,
+    ): CreateAppearanceOutcome = CreateAppearanceOutcome(
+      outcomeUuid,
+      outcomeName,
+      nomisCode,
+      outcomeType,
+      warrantType,
+      displayOrder,
+      relatedChargeOutcomeUuid,
+      isSubList,
       dispositionCode,
       status,
     )
