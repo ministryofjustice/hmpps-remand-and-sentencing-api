@@ -80,9 +80,9 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
   @Modifying
   @Query(
     """
-      update court_appearance set appearance_outcome_id = :appearanceOutcomeId where legacy_data->>'nomisOutcomeCode' = :nomisCode
+      update court_appearance set appearance_outcome_id = :appearanceOutcomeId, warrant_type= :warrantType where legacy_data->>'nomisOutcomeCode' = :nomisCode
     """,
     nativeQuery = true,
   )
-  fun updateToSupportedAppearanceOutcome(@Param("appearanceOutcomeId") appearanceOutcomeId: Int, @Param("nomisCode") nomisCode: String)
+  fun updateToSupportedAppearanceOutcome(@Param("appearanceOutcomeId") appearanceOutcomeId: Int, @Param("warrantType") warrantType: String, @Param("nomisCode") nomisCode: String)
 }
