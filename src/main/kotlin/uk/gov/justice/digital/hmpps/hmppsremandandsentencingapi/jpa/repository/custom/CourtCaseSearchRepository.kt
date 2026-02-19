@@ -7,5 +7,5 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.C
 
 interface CourtCaseSearchRepository {
 
-  fun searchCourtCases(prisonerId: String, limit: Int, offset: Long, pagedCourtCaseOrderBy: PagedCourtCaseOrderBy, appearanceStatus: CourtAppearanceEntityStatus, courtCaseStatus: CourtCaseEntityStatus): List<CourtCaseRow>
+  fun searchCourtCases(prisonerId: String, bookingId: String, limit: Int, offset: Long, pagedCourtCaseOrderBy: PagedCourtCaseOrderBy, appearanceStatus: CourtAppearanceEntityStatus, courtCaseStatus: CourtCaseEntityStatus): List<CourtCaseRow>
 }

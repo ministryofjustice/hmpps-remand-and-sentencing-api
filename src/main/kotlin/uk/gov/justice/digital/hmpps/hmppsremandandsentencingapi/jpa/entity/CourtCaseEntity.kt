@@ -11,9 +11,6 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.NamedAttributeNode
-import jakarta.persistence.NamedEntityGraph
-import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.SqlResultSetMapping
@@ -49,51 +46,6 @@ import java.util.UUID
 @DynamicUpdate
 @Entity
 @Table(name = "court_case")
-@NamedEntityGraph(
-  name = "CourtCaseEntity.withAppearancesAndOutcomes",
-  attributeNodes = [
-    NamedAttributeNode("appearances", subgraph = "appearanceDetails"),
-    NamedAttributeNode("latestCourtAppearance", subgraph = "appearanceDetails"),
-  ],
-  subgraphs = [
-    NamedSubgraph(
-      name = "appearanceDetails",
-      attributeNodes = [
-        NamedAttributeNode("appearanceOutcome"),
-        NamedAttributeNode("periodLengths"),
-        NamedAttributeNode("nextCourtAppearance", subgraph = "nextAppearanceDetails"),
-        NamedAttributeNode("appearanceCharges", subgraph = "appearanceChargeChargeDetails"),
-      ],
-    ),
-    NamedSubgraph(
-      name = "nextAppearanceDetails",
-      attributeNodes = [
-        NamedAttributeNode("appearanceType"),
-      ],
-    ),
-    NamedSubgraph(
-      name = "appearanceChargeChargeDetails",
-      attributeNodes = [
-        NamedAttributeNode("charge", subgraph = "chargeDetails"),
-      ],
-    ),
-    NamedSubgraph(
-      name = "chargeDetails",
-      attributeNodes = [
-        NamedAttributeNode("chargeOutcome"),
-        NamedAttributeNode("sentences", subgraph = "sentenceDetails"),
-      ],
-    ),
-    NamedSubgraph(
-      name = "sentenceDetails",
-      attributeNodes = [
-        NamedAttributeNode("sentenceType"),
-        NamedAttributeNode("consecutiveTo"),
-        NamedAttributeNode("periodLengths"),
-      ],
-    ),
-  ],
-)
 @SqlResultSetMapping(
   name = "courtCaseRowMapping",
   classes = [

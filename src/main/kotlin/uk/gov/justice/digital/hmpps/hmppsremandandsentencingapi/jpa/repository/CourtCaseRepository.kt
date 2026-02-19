@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
@@ -24,12 +21,6 @@ interface CourtCaseRepository :
   CrudRepository<CourtCaseEntity, Int>,
   PagingAndSortingRepository<CourtCaseEntity, Int>,
   CourtCaseSearchRepository {
-  @EntityGraph(value = "CourtCaseEntity.withAppearancesAndOutcomes", type = EntityGraph.EntityGraphType.FETCH)
-  fun findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(
-    prisonerId: String,
-    statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
-    pageable: Pageable,
-  ): Page<CourtCaseEntity>
 
   @Query(
     """select count(cc)

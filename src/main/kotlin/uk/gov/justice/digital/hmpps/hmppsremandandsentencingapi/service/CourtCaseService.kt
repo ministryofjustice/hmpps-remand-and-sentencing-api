@@ -97,28 +97,15 @@ class CourtCaseService(
   }
 
   @Transactional
-  fun searchCourtCases(prisonerId: String, pageable: Pageable): RecordResponse<Page<CourtCase>> {
-    val courtCasePage = courtCaseRepository.findByPrisonerIdAndLatestCourtAppearanceIsNotNullAndStatusIdNot(
-      prisonerId,
-      pageable = pageable,
-    )
-    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasePage.content)
-    return RecordResponse(
-      courtCasePage.map {
-        CourtCase.from(it)
-      },
-      eventsToEmit,
-    )
-  }
-
-  @Transactional
   fun pagedSearchCourtCases(
     prisonerId: String,
+    bookingId: String,
     pageable: Pageable,
     pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
   ): RecordResponse<Page<PagedCourtCase>> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
+      bookingId,
       pageable.pageSize,
       pageable.offset,
       pagedCourtCaseOrderBy,
@@ -133,6 +120,7 @@ class CourtCaseService(
     } else {
       courtCaseRepository.searchCourtCases(
         prisonerId,
+        bookingId,
         pageable.pageSize,
         pageable.offset,
         pagedCourtCaseOrderBy,
