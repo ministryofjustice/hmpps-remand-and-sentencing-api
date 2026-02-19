@@ -1,10 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.expectBody
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import java.time.LocalDate
 import java.util.UUID
 
@@ -422,5 +426,49 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.cases.length()").isEqualTo(1)
       .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
+  }
+
+  @Test
+  fun `get recallable court cases with consecutive sentences`() {
+    val s1 = DpsDataCreator.dpsCreateSentence(
+      chargeNumber = "1",
+      sentenceServeType = "FORTHWITH",
+      sentenceUuid = uuid(1),
+    )
+
+    val s2 = DpsDataCreator.dpsCreateSentence(
+      chargeNumber = "2",
+      sentenceServeType = "CONSECUTIVE",
+      sentenceUuid = uuid(2),
+      consecutiveToSentenceUuid = uuid(1),
+    )
+    val c1 = DpsDataCreator.dpsCreateCharge(sentence = s1)
+    val c2 = DpsDataCreator.dpsCreateCharge(sentence = s2)
+
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(c2, c1))
+
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    val response = webTestClient
+      .get()
+      .uri("/court-case/${DEFAULT_PRISONER_ID}/recallable-court-cases")
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW")) }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody<RecallableCourtCasesResponse>()
+      .returnResult()
+      .responseBody!!
+
+    val consecutiveUuidBySentenceUuid = response.cases[0].sentences.associate {
+      it.sentenceUuid to it.consecutiveToSentenceUuid
+    }
+
+    assertThat(consecutiveUuidBySentenceUuid).containsExactlyInAnyOrderEntriesOf(
+      mapOf(
+        s2.sentenceUuid to s1.sentenceUuid,
+        s1.sentenceUuid to null,
+      ),
+    )
   }
 }

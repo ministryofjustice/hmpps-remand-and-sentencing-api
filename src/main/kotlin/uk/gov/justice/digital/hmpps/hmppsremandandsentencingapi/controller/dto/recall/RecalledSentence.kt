@@ -15,4 +15,5 @@ data class RecalledSentence(
   val periodLengths: List<PeriodLength>,
   val sentenceServeType: String,
   val sentenceTypeDescription: String?,
+  val consecutiveToSentenceUuid: UUID? = null,
 )

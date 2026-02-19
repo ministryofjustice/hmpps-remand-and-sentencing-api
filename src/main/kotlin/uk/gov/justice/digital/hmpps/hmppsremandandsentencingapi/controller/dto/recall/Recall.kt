@@ -73,6 +73,7 @@ data class Recall(
                   },
                 sentenceServeType = it.sentence.sentenceServeType,
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
+                consecutiveToSentenceUuid = it.sentence.consecutiveTo?.sentenceUuid,
               )
             }.sortedBy { it.offenceStartDate },
           )

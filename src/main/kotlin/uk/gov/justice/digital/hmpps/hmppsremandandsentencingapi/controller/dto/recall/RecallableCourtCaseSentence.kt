@@ -29,4 +29,5 @@ data class RecallableCourtCaseSentence(
   val isRecallable: Boolean,
   val sentenceTypeUuid: String,
   val sentenceDate: LocalDate?,
+  val consecutiveToSentenceUuid: UUID? = null,
 )

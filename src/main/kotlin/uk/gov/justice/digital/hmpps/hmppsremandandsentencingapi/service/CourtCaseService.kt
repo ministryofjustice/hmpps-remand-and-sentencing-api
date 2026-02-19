@@ -250,7 +250,8 @@ class CourtCaseService(
               sentenceLegacyData = sentence.legacyData,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               isRecallable = sentence.sentenceType?.isRecallable ?: true,
-              sentenceDate = sentenceAppearance?.appearanceDate,
+              sentenceDate = sentenceAppearance.appearanceDate,
+              consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
             )
           },
           appearanceDate = firstSentencingAppearance.appearanceDate,
