@@ -104,25 +104,6 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
   }
 
-  @GetMapping("/court-case/search")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR')")
-  @Operation(
-    summary = "Retrieve all court cases for person (where each court case has at least one appearance in the past)",
-    description = "This endpoint will retrieve all court cases for a person (where each court case has at least one appearance in the past - i.e. there exists a latest court appearance)",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(responseCode = "200", description = "Returns court cases"),
-      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
-      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-    ],
-  )
-  @ResponseStatus(HttpStatus.OK)
-  fun searchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable): Page<CourtCase> = courtCaseService.searchCourtCases(prisonerId, pageable).let { (pageCourtCase, eventsToEmit) ->
-    dpsDomainEventService.emitEvents(eventsToEmit)
-    pageCourtCase
-  }
-
   @GetMapping("/court-case/paged/search")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
@@ -137,7 +118,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy).let { (pageCourtCase, eventsToEmit) ->
+  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, @RequestParam(value = "bookingId", defaultValue = "") bookingId: String, pageable: Pageable, @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, bookingId, pageable, pagedCourtCaseOrderBy).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }
