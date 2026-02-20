@@ -1,10 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.hibernate.exception.LockAcquisitionException
 import org.springframework.dao.CannotAcquireLockException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
@@ -194,8 +196,8 @@ class LegacySentenceService(
     return sentence
   }
 
-  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class])
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class, CannotAcquireLockException::class, LockAcquisitionException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
   fun update(
     sentenceUuid: UUID,
     sentence: LegacyCreateSentence,
@@ -216,7 +218,7 @@ class LegacySentenceService(
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val existingPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid).distinctBy { it.periodLengthUuid }
-    val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
+    val sourceSentence = sentenceRepository.findAndLockFirstBySentenceUuid(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
     val periodLengthsByChargeUuid: MutableMap<UUID, MutableSet<PeriodLengthEntity>> = mutableMapOf()
