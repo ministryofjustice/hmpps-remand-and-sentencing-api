@@ -1,10 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.dao.CannotAcquireLockException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
@@ -194,12 +196,13 @@ class LegacySentenceService(
     return sentence
   }
 
-  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class])
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class, CannotAcquireLockException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
   fun update(
     sentenceUuid: UUID,
     sentence: LegacyCreateSentence,
   ): List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>> {
+    log.info("update sentence called")
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacyData = sentence.legacyData
     sentence.legacyData.active = sentence.active
@@ -216,7 +219,7 @@ class LegacySentenceService(
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val existingPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid).distinctBy { it.periodLengthUuid }
-    val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
+    val sourceSentence = sentenceRepository.findAndLockFirstBySentenceUuid(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
     val periodLengthsByChargeUuid: MutableMap<UUID, MutableSet<PeriodLengthEntity>> = mutableMapOf()
@@ -520,5 +523,6 @@ class LegacySentenceService(
       "LR_YOI_ORA",
     )
     val recallSentenceTypeBucketUuid: UUID = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
