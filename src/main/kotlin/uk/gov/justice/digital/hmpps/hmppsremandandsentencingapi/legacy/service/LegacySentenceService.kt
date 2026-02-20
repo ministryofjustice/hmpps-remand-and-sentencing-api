@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
-import org.slf4j.LoggerFactory
 import org.springframework.dao.CannotAcquireLockException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.retry.annotation.Retryable
@@ -202,7 +201,6 @@ class LegacySentenceService(
     sentenceUuid: UUID,
     sentence: LegacyCreateSentence,
   ): List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>> {
-    log.info("update sentence called")
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacyData = sentence.legacyData
     sentence.legacyData.active = sentence.active
@@ -523,6 +521,5 @@ class LegacySentenceService(
       "LR_YOI_ORA",
     )
     val recallSentenceTypeBucketUuid: UUID = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
-    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
