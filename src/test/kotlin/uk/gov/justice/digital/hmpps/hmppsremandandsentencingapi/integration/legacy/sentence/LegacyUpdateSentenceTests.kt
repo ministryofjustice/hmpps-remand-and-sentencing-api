@@ -4,6 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.returnResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -16,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 
 class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
@@ -137,6 +140,54 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
 
     val courtCaseAfterLegacyUpdate = getCourtCase(caseUuid)
     assertThat(courtCaseAfterLegacyUpdate.appearances[0].charges[0].sentence?.sentenceServeType).isEqualTo("FORTHWITH")
+  }
+
+  @Test
+  fun `race condition adding new charges to sentence at the same time`() {
+    val sentence = DataCreator.migrationCreateSentence()
+    val firstCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1, sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 2, sentence = sentence)
+    val thirdCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 3)
+    val fourthCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 4)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge, thirdCharge, fourthCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val migrationResponse = migrateCases(DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase)))
+    val firstChargeUuid = migrationResponse.charges.first { it.chargeNOMISId == firstCharge.chargeNOMISId }.chargeUuid
+    val secondChargeUuid = migrationResponse.charges.first { it.chargeNOMISId == secondCharge.chargeNOMISId }.chargeUuid
+    val thirdChargeUuid = migrationResponse.charges.first { it.chargeNOMISId == thirdCharge.chargeNOMISId }.chargeUuid
+    val fourthChargeUuid = migrationResponse.charges.first { it.chargeNOMISId == fourthCharge.chargeNOMISId }.chargeUuid
+    val sentenceUuid = migrationResponse.sentences.first().sentenceUuid
+    val appearanceUuid = migrationResponse.appearances[0].appearanceUuid
+    val legacyUpdate = DataCreator.legacyCreateSentence(
+      chargeUuids = listOf(firstChargeUuid, secondChargeUuid, thirdChargeUuid, fourthChargeUuid),
+      appearanceUuid = appearanceUuid,
+    )
+
+    val firstCall = CompletableFuture.supplyAsync {
+      webTestClient.put()
+        .uri("/legacy/sentence/$sentenceUuid")
+        .bodyValue(legacyUpdate)
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }.exchange()
+        .expectStatus()
+        .isNoContent
+    }
+    val secondCall = CompletableFuture.supplyAsync {
+      webTestClient.put()
+        .uri("/legacy/sentence/$sentenceUuid")
+        .bodyValue(legacyUpdate)
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }.exchange()
+        .expectStatus()
+        .isNoContent
+    }
+    firstCall.thenCombine<WebTestClient.ResponseSpec, Pair<WebTestClient.ResponseSpec, WebTestClient.ResponseSpec>>(secondCall) { a, b -> a to b }.join()
+    val sentencesGroupedByStatus = sentenceRepository.findBySentenceUuid(sentenceUuid).groupBy { it.statusId to it.charge }
+    assertThat(sentencesGroupedByStatus.values.map { it.size }).allMatch { it == 1 } // check there is only ever 1 sentence record for the status, charge combination, in this race condition before the fix there were two entries for the same status, charge combination which causes adverse side effects when retrieving the sentence for a given charge
   }
 
   private fun putLegacySentence(

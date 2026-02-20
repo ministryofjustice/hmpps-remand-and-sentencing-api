@@ -1,7 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import jakarta.persistence.LockModeType
+import jakarta.persistence.QueryHint
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
@@ -18,7 +22,21 @@ import java.time.LocalDate
 import java.util.*
 
 interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
+
   fun findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid: UUID, status: SentenceEntityStatus = SentenceEntityStatus.DELETED): SentenceEntity?
+
+  @Lock(LockModeType.PESSIMISTIC_READ)
+  @QueryHints(value = [QueryHint(name = "jakarta.persistence.lock.timeout", value = "1000")])
+  @Query(
+    """
+    select s from SentenceEntity s
+    where s.sentenceUuid = :sentenceUuid
+    and s.statusId !=:status
+    order by s.updatedAt desc, s.id
+    limit 1
+  """,
+  )
+  fun findAndLockFirstBySentenceUuid(sentenceUuid: UUID, status: SentenceEntityStatus = SentenceEntityStatus.DELETED): SentenceEntity?
 
   fun findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid: UUID, chargeUUID: UUID): SentenceEntity?
 
