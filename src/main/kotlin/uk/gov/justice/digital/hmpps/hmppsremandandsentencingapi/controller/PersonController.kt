@@ -4,12 +4,15 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceToChainToResponse
@@ -21,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDet
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.FixManyChargesToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceEnvelopeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
@@ -36,6 +40,7 @@ class PersonController(
   private val dpsDomainEventService: DpsDomainEventService,
   private val uploadedDocumentService: UploadedDocumentService,
   private val sentenceEnvelopeService: SentenceEnvelopeService,
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
 ) {
 
   @GetMapping("/{prisonerId}")
@@ -114,4 +119,23 @@ class PersonController(
   fun allSentenceEnvelopes(
     @PathVariable prisonerId: String,
   ): PrisonerSentenceEnvelopes = sentenceEnvelopeService.findByPrisonerId(prisonerId)
+
+  @PutMapping("/{prisonerId}/fix-many-charges-to-sentence")
+  @PreAuthorize("hasAuthority('ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Ensure many-charges-to-sentence fix is applied for a prisoner",
+    description = "Applies the many-charges-to-sentence fix and emits domain events if changes occur.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "Fix applied"),
+      ApiResponse(responseCode = "401", description = "Unauthorised"),
+      ApiResponse(responseCode = "403", description = "Forbidden"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun fixManyChargesToSentence(@PathVariable prisonerId: String) {
+    val events = fixManyChargesToSentenceService.fixPrisoner(prisonerId)
+    dpsDomainEventService.emitEvents(events)
+  }
 }
