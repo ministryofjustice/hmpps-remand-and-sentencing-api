@@ -79,6 +79,8 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.content.length()")
       .isEqualTo(20)
+      .jsonPath("$.totalElements")
+      .isEqualTo(100)
   }
 
   @Test
@@ -193,6 +195,8 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
+      .jsonPath("$.totalElements")
+      .isEqualTo(1)
       .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuidInBooking')]")
       .exists()
       .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuidInOtherBooking')]")

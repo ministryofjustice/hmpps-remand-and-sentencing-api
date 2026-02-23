@@ -128,7 +128,7 @@ class CourtCaseService(
         CourtCaseEntityStatus.DELETED,
       )
     }
-    val count = courtCaseRepository.countCourtCases(prisonerId)
+    val count = if (bookingId.isNotEmpty()) courtCaseRepository.countCourtCasesByBookingId(prisonerId, bookingId) else courtCaseRepository.countCourtCases(prisonerId)
 
     val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {

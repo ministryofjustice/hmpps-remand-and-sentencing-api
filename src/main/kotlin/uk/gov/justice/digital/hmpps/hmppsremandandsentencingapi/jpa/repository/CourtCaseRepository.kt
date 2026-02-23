@@ -34,6 +34,19 @@ interface CourtCaseRepository :
     @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
   ): Long
 
+  @Query(
+    """select count(*)
+    from court_case cc
+    where cc.prisoner_id = :prisonerId and (cc.legacy_data->>'bookingId' = :bookingId or cc.legacy_data->>'bookingId' is null) and cc.latest_court_appearance_id is not null and cc.status_id != :courtCaseStatus
+  """,
+    nativeQuery = true,
+  )
+  fun countCourtCasesByBookingId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("bookingId") bookingId: String,
+    @Param("courtCaseStatus") courtCaseStatus: String = CourtCaseEntityStatus.DELETED.toString(),
+  ): Long
+
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 
   @Query(
