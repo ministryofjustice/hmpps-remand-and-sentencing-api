@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordEventMetadata
@@ -21,7 +22,17 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
-class FixManyChargesToSentenceService(private val sentenceHistoryRepository: SentenceHistoryRepository, private val periodLengthHistoryRepository: PeriodLengthHistoryRepository, private val serviceUserService: ServiceUserService, private val courtCaseRepository: CourtCaseRepository, private val sentenceRepository: SentenceRepository) {
+class FixManyChargesToSentenceService(
+  private val sentenceHistoryRepository: SentenceHistoryRepository,
+  private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
+  private val serviceUserService: ServiceUserService,
+  private val courtCaseRepository: CourtCaseRepository,
+  private val sentenceRepository: SentenceRepository,
+) {
+  @Transactional
+  fun fixPrisoner(prisonerId: String): MutableSet<EventMetadata> = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId).flatMap { courtCase ->
+    fixSentences(courtCaseToSentences(courtCase))
+  }.toMutableSet()
 
   fun fixCourtCaseSentences(courtCases: List<CourtCaseEntity>): MutableSet<EventMetadata> = courtCases.flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase))
