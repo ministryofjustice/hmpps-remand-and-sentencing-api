@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.PagingAndSortingRepository
 import org.springframework.data.repository.query.Param
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
@@ -261,4 +262,15 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun updateLegacyDataBookingIdById(@Param("bookingId")bookingId: Long?, @Param("statusId") statusId: CourtCaseEntityStatus, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("updatedBy") updatedBy: String, @Param("id") id: Int)
+
+  @Query(
+    """
+    select count(*) filter (where legacy_data->>'bookingId' = :bookingId or legacy_data->>'bookingId' is null) as suppliedBookingCount, 
+    count(*) filter(where legacy_data->>'bookingId' != :bookingId and legacy_data->>'bookingId' is not null) as otherBookingCount 
+    from court_case cc 
+    where cc.prisoner_id = :prisonerId and cc.status_id != :statusId
+  """,
+    nativeQuery = true,
+  )
+  fun countCourtCasesForBooking(@Param("prisonerId") prisonerId: String, @Param("bookingId") bookingId: String, @Param("statusId") excludedStatusId: String = CourtCaseEntityStatus.DELETED.toString()): PersonCourtCaseCount
 }

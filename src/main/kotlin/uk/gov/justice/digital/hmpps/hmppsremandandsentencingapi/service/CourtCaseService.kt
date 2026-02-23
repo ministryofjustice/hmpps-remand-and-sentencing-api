@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
@@ -302,4 +303,7 @@ class CourtCaseService(
     courtCaseUuid: String,
     appearanceUuidToExclude: UUID,
   ): CourtCaseValidationDate = courtCaseRepository.findValidationDates(courtCaseUuid, appearanceUuidToExclude)
+
+  @Transactional(readOnly = true)
+  fun getCourtCaseCount(prisonerId: String, bookingId: String): PersonCourtCaseCount = courtCaseRepository.countCourtCasesForBooking(prisonerId, bookingId)
 }

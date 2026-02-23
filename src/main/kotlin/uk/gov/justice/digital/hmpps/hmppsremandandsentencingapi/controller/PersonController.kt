@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.H
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentenceenvelopes.PrisonerSentenceEnvelopes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
@@ -138,4 +139,19 @@ class PersonController(
     val events = fixManyChargesToSentenceService.fixPrisoner(prisonerId)
     dpsDomainEventService.emitEvents(events)
   }
+
+  @GetMapping("/{prisonerId}/court-case-count")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "retrieve court case count for person",
+    description = "This endpoint will retrieve the court case count for a person by booking id",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns total count and optional booking count"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun courtCaseCount(@PathVariable prisonerId: String, @RequestParam("bookingId", defaultValue = "") bookingId: String): PersonCourtCaseCount = courtCaseService.getCourtCaseCount(prisonerId, bookingId)
 }
