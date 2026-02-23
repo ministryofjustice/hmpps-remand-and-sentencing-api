@@ -140,7 +140,7 @@ class PersonController(
     dpsDomainEventService.emitEvents(events)
   }
 
-  @GetMapping("/{prisonerId}/court-case-count")
+  @GetMapping("/{prisonerId}/booking-court-case-count")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "retrieve court case count for person",

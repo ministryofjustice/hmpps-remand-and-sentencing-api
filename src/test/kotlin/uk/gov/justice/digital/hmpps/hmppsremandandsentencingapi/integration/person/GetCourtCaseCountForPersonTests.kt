@@ -15,7 +15,7 @@ class GetCourtCaseCountForPersonTests : IntegrationTestBase() {
     migrateCases(migrateCourtCases)
     webTestClient.get()
       .uri {
-        it.path("/person/${migrateCourtCases.prisonerId}/court-case-count")
+        it.path("/person/${migrateCourtCases.prisonerId}/booking-court-case-count")
           .queryParam("bookingId", bookingId)
           .build()
       }
@@ -40,7 +40,7 @@ class GetCourtCaseCountForPersonTests : IntegrationTestBase() {
     val migrateCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCaseInBooking, courtCaseInOtherBooking))
     migrateCases(migrateCourtCases)
     webTestClient.get()
-      .uri("/person/${migrateCourtCases.prisonerId}/court-case-count")
+      .uri("/person/${migrateCourtCases.prisonerId}/booking-court-case-count")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
