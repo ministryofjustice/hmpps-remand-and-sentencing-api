@@ -17,7 +17,6 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
   }
   override fun searchCourtCases(
     prisonerId: String,
-    bookingId: String,
     limit: Int,
     offset: Long,
     pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
@@ -25,7 +24,6 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     courtCaseStatus: CourtCaseEntityStatus,
   ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<order_by>", pagedCourtCaseOrderBy.orderBy), "courtCaseRowMapping")
     .setParameter("prisonerId", prisonerId)
-    .setParameter("bookingId", bookingId)
     .setParameter("limit", limit)
     .setParameter("offset", offset)
     .setParameter("appearanceStatus", appearanceStatus.toString())
@@ -121,7 +119,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         where ca1.status_id = :appearanceStatus
           and cc1.status_id<>:courtCaseStatus
           and cc1.prisoner_id = :prisonerId
-          and cc1.latest_court_appearance_id is not null and ((cc1.legacy_data->>'bookingId' is null or cc1.legacy_data->>'bookingId' = :bookingId) or :bookingId = '')
+          and cc1.latest_court_appearance_id is not null
         group by cc1.id, lca1.appearance_date
         order by <order_by>
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id
