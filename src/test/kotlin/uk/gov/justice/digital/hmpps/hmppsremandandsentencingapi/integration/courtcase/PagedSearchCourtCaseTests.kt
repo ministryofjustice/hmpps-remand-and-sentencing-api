@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -170,37 +169,6 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(recalledCourtCaseUuid)
       .jsonPath("$.content.[1].courtCaseUuid")
       .isEqualTo(courtCaseUuid)
-  }
-
-  @Test
-  fun `can filter by booking id`() {
-    val bookingId = 1L
-    val courtCaseInBooking = DataCreator.migrationCreateCourtCase(courtCaseLegacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId))
-    val courtCaseInOtherBooking = DataCreator.migrationCreateCourtCase(caseId = 2, courtCaseLegacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId + 1))
-    val migrateCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCaseInBooking, courtCaseInOtherBooking))
-    val response = migrateCases(migrateCourtCases)
-    val courtCaseUuidInBooking = response.courtCases.first { it.caseId == courtCaseInBooking.caseId }.courtCaseUuid
-    val courtCaseUuidInOtherBooking = response.courtCases.first { it.caseId == courtCaseInOtherBooking.caseId }.courtCaseUuid
-    webTestClient.get()
-      .uri {
-        it.path("/court-case/paged/search")
-          .queryParam("prisonerId", migrateCourtCases.prisonerId)
-          .queryParam("bookingId", bookingId)
-          .build()
-      }
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.totalElements")
-      .isEqualTo(1)
-      .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuidInBooking')]")
-      .exists()
-      .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuidInOtherBooking')]")
-      .doesNotExist()
   }
 
   @Test
