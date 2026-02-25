@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtCaseMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-class TempController(private val telemetryClient: TelemetryClient, private val objectMapper: ObjectMapper) {
+class TempController(private val telemetryClient: TelemetryClient, private val objectMapper: ObjectMapper, private val courtCaseRepository: CourtCaseRepository) {
 
   @PostMapping("/temp/generate-failed-court-case-event-publish-telemetry")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun generateFailedEventPublishTelemetry() {
-    telemetryClient.trackEvent("failed-domain-event-published", mapOf("eventType" to "court-case.updated", "description" to "Court case updated", "additionalInformation" to objectMapper.writeValueAsString(HmppsCourtCaseMessage("1")), "personReference" to objectMapper.writeValueAsString(PersonReference(listOf(PersonReferenceType("NOMS", "1234"))))), null)
+    courtCaseRepository.findFirstByStatusId()?.let { activeCourtCase ->
+      telemetryClient.trackEvent("failed-domain-event-published", mapOf("eventType" to "court-case.updated", "description" to "Court case updated", "additionalInformation" to objectMapper.writeValueAsString(HmppsCourtCaseMessage(activeCourtCase.caseUniqueIdentifier)), "personReference" to objectMapper.writeValueAsString(PersonReference(listOf(PersonReferenceType("NOMS", activeCourtCase.prisonerId))))), null)
+    }
   }
 }
