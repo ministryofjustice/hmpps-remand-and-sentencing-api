@@ -1,11 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
-import jakarta.persistence.LockModeType
-import jakarta.persistence.QueryHint
-import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
@@ -25,18 +21,17 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   fun findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid: UUID, status: SentenceEntityStatus = SentenceEntityStatus.DELETED): SentenceEntity?
 
-  @Lock(LockModeType.PESSIMISTIC_READ)
-  @QueryHints(value = [QueryHint(name = "jakarta.persistence.lock.timeout", value = "1000")])
   @Query(
     """
-    select s from SentenceEntity s
-    where s.sentenceUuid = :sentenceUuid
-    and s.statusId !=:status
-    order by s.updatedAt desc, s.id
-    limit 1
+    select pg_try_advisory_xact_lock(s.id)
+    from sentence s
+      where s.sentence_uuid = :sentenceUuid and s.status_id != :sentenceStatus
+      order by s.updated_at desc, s.id
+      fetch first 1 row only
   """,
+    nativeQuery = true,
   )
-  fun findAndLockFirstBySentenceUuid(sentenceUuid: UUID, status: SentenceEntityStatus = SentenceEntityStatus.DELETED): SentenceEntity?
+  fun acquireSentenceTransactionLock(sentenceUuid: UUID, sentenceStatus: String = SentenceEntityStatus.DELETED.toString())
 
   fun findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(sentenceUuid: UUID, chargeUUID: UUID): SentenceEntity?
 
