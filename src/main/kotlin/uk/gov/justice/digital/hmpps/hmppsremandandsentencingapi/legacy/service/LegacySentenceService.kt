@@ -218,7 +218,8 @@ class LegacySentenceService(
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val existingPeriodLengths = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid).distinctBy { it.periodLengthUuid }
-    val sourceSentence = sentenceRepository.findAndLockFirstBySentenceUuid(sentenceUuid)
+    sentenceRepository.acquireSentenceTransactionLock(sentenceUuid)
+    val sourceSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)
     sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, sentence.chargeUuids)
       .forEach { delete(it, getPerformedByUsername(sentence)) }
     val periodLengthsByChargeUuid: MutableMap<UUID, MutableSet<PeriodLengthEntity>> = mutableMapOf()
