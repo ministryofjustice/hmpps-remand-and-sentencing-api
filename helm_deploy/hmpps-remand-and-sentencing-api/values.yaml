@@ -20,6 +20,10 @@ generic-service:
           deny all;
           return 401;
         }
+        location /event-admin/republish {
+          deny all;
+          return 401;
+        }
         location /queue-admin/** {
           deny all;
           return 401;
