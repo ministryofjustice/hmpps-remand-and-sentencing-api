@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
+import java.time.LocalDate
 
 class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
 
@@ -22,12 +23,16 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
     appearanceStatus: CourtAppearanceEntityStatus,
     courtCaseStatus: CourtCaseEntityStatus,
+    appearanceDateFrom: LocalDate,
+    appearanceDateTo: LocalDate,
   ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<order_by>", pagedCourtCaseOrderBy.orderBy), "courtCaseRowMapping")
     .setParameter("prisonerId", prisonerId)
     .setParameter("limit", limit)
     .setParameter("offset", offset)
     .setParameter("appearanceStatus", appearanceStatus.toString())
     .setParameter("courtCaseStatus", courtCaseStatus.toString())
+    .setParameter("appearanceDateFrom", appearanceDateFrom)
+    .setParameter("appearanceDateTo", appearanceDateTo)
     .resultList as List<CourtCaseRow>
 
   companion object {
@@ -120,6 +125,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
           and cc1.status_id<>:courtCaseStatus
           and cc1.prisoner_id = :prisonerId
           and cc1.latest_court_appearance_id is not null
+          and lca1.appearance_date >= :appearanceDateFrom
+          and lca1.appearance_date <= :appearanceDateTo
         group by cc1.id, lca1.appearance_date
         order by <order_by>
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id

@@ -26,11 +26,17 @@ interface CourtCaseRepository :
     """select count(cc)
     from CourtCaseEntity cc
     join cc.latestCourtAppearance lca
-    where cc.prisonerId = :prisonerId and cc.latestCourtAppearance is not null and cc.statusId != :courtCaseStatus
+    where cc.prisonerId = :prisonerId 
+    and lca.appearanceDate >= :appearanceDateFrom
+    and lca.appearanceDate <= :appearanceDateTo
+    and cc.latestCourtAppearance is not null 
+    and cc.statusId != :courtCaseStatus
   """,
   )
-  fun countCourtCases(
+  fun countCourtCasesByPrisonerAndDate(
     @Param("prisonerId") prisonerId: String,
+    @Param("appearanceDateFrom") appearanceDateFrom: LocalDate,
+    @Param("appearanceDateTo") appearanceDateTo: LocalDate,
     @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
   ): Long
 

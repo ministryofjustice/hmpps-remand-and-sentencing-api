@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
+import java.time.LocalDate
 import java.util.UUID
 
 @RestController
@@ -118,7 +119,13 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun pagedSearchCourtCases(@RequestParam("prisonerId") prisonerId: String, pageable: Pageable, @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy).let { (pageCourtCase, eventsToEmit) ->
+  fun pagedSearchCourtCases(
+    @RequestParam("prisonerId") prisonerId: String,
+    pageable: Pageable,
+    @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
+    @RequestParam("appearanceDateFrom", defaultValue = "0001-01-01") appearanceDateFrom: LocalDate,
+    @RequestParam("appearanceDateTo", defaultValue = "9999-12-31") appearanceDateTo: LocalDate,
+  ): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }

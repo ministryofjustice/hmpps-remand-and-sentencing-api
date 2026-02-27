@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.stream.LongStream
 
 class PagedSearchCourtCaseTests : IntegrationTestBase() {
@@ -169,6 +170,60 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(recalledCourtCaseUuid)
       .jsonPath("$.content.[1].courtCaseUuid")
       .isEqualTo(courtCaseUuid)
+  }
+
+  @Test
+  fun `can filter out court cases based on latest appearance date from date`() {
+    val appearanceDate = LocalDate.now()
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(appearanceDate = appearanceDate))))
+    val (pastCourtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(appearanceDate = appearanceDate.minusDays(10)))))
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", createdCourtCase.prisonerId)
+          .queryParam("appearanceDateFrom", appearanceDate.minusDays(5).format(DateTimeFormatter.ISO_LOCAL_DATE))
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.totalElements")
+      .isEqualTo(1)
+      .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuid')]")
+      .exists()
+      .jsonPath("$.content.[?(@.courtCaseUuid == '$pastCourtCaseUuid')]")
+      .doesNotExist()
+  }
+
+  @Test
+  fun `can filter out court cases based on latest appearance date to date`() {
+    val appearanceDate = LocalDate.now()
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(appearanceDate = appearanceDate))))
+    val (pastCourtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(appearanceDate = appearanceDate.minusDays(10)))))
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", createdCourtCase.prisonerId)
+          .queryParam("appearanceDateTo", appearanceDate.minusDays(5).format(DateTimeFormatter.ISO_LOCAL_DATE))
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.totalElements")
+      .isEqualTo(1)
+      .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuid')]")
+      .doesNotExist()
+      .jsonPath("$.content.[?(@.courtCaseUuid == '$pastCourtCaseUuid')]")
+      .exists()
   }
 
   @Test
