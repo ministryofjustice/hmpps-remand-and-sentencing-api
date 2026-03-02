@@ -8,29 +8,44 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.DynamicUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.appearanceoutcome.CreateAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import java.util.UUID
 
 @Entity
 @Table(name = "appearance_outcome")
+@DynamicUpdate
 class AppearanceOutcomeEntity(
   @Id
   @Column
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
-  val outcomeName: String,
-  val outcomeUuid: UUID,
-  val nomisCode: String,
-  val outcomeType: String,
-  val warrantType: String,
-  val displayOrder: Int,
-  val relatedChargeOutcomeUuid: UUID,
-  val isSubList: Boolean,
+  var outcomeName: String,
+  var outcomeUuid: UUID,
+  var nomisCode: String,
+  var outcomeType: String,
+  var warrantType: String,
+  var displayOrder: Int,
+  var relatedChargeOutcomeUuid: UUID,
+  var isSubList: Boolean,
   @Enumerated(EnumType.STRING)
-  val status: ReferenceEntityStatus,
-  val dispositionCode: String,
+  var status: ReferenceEntityStatus,
+  var dispositionCode: String,
 ) {
+
+  fun updateFrom(existingUuid: UUID, updateAppearanceOutcome: CreateAppearanceOutcome) {
+    outcomeName = updateAppearanceOutcome.outcomeName
+    outcomeUuid = updateAppearanceOutcome.outcomeUuid ?: existingUuid
+    nomisCode = updateAppearanceOutcome.nomisCode
+    outcomeType = updateAppearanceOutcome.outcomeType
+    warrantType = updateAppearanceOutcome.warrantType
+    displayOrder = updateAppearanceOutcome.displayOrder
+    relatedChargeOutcomeUuid = updateAppearanceOutcome.relatedChargeOutcomeUuid
+    isSubList = updateAppearanceOutcome.isSubList
+    status = updateAppearanceOutcome.status
+    dispositionCode = updateAppearanceOutcome.dispositionCode
+  }
   companion object {
     fun from(createAppearanceOutcome: CreateAppearanceOutcome): AppearanceOutcomeEntity = AppearanceOutcomeEntity(
       0,

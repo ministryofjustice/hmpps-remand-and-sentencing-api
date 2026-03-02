@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.appearanceoutcome.CreateAppearanceOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
@@ -37,6 +38,35 @@ class AppearanceOutcomeService(private val appearanceOutcomeRepository: Appearan
     }
 
     return appearanceOutcomeRepository.save(AppearanceOutcomeEntity.from(createAppearanceOutcome))
+  }
+
+  @Transactional
+  fun updateAppearanceOutcome(appearanceOutcomeUuid: UUID, updateAppearanceOutcome: CreateAppearanceOutcome): UpdatedAppearanceOutcome {
+    val bindingResults = BeanPropertyBindingResult(updateAppearanceOutcome, "updateAppearanceOutcome")
+    validateAppearanceOutcome(updateAppearanceOutcome, bindingResults)
+
+    val appearanceOutcomeFromNomisCode = appearanceOutcomeRepository.findByNomisCode(updateAppearanceOutcome.nomisCode)
+    if (appearanceOutcomeFromNomisCode != null && appearanceOutcomeFromNomisCode.outcomeUuid != appearanceOutcomeUuid) {
+      bindingResults.addError(
+        FieldError("updateAppearanceOutcome", "nomisCode", "nomisCode outcome code is already mapped"),
+      )
+    }
+    if (bindingResults.hasErrors()) {
+      throw MethodArgumentNotValidException(
+        MethodParameter(this.javaClass.getDeclaredMethod("updateAppearanceOutcome", UUID::class.java, CreateAppearanceOutcome::class.java), 1),
+        bindingResults,
+      )
+    }
+
+    val (existingAppearanceOutcome, isNew) = appearanceOutcomeRepository.findByOutcomeUuid(appearanceOutcomeUuid)
+      ?.let { it to false } ?: (
+      appearanceOutcomeRepository.save(
+        AppearanceOutcomeEntity.from(updateAppearanceOutcome.copy(outcomeUuid = appearanceOutcomeUuid)),
+      ) to true
+      )
+    val migrateNomisCodeData = isNew || existingAppearanceOutcome.nomisCode != updateAppearanceOutcome.nomisCode
+    existingAppearanceOutcome.updateFrom(appearanceOutcomeUuid, updateAppearanceOutcome)
+    return UpdatedAppearanceOutcome(existingAppearanceOutcome, migrateNomisCodeData)
   }
 
   private fun validateAppearanceOutcome(
