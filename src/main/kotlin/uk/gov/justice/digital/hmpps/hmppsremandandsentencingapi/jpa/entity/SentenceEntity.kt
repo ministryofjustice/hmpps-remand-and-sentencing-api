@@ -266,7 +266,6 @@ class SentenceEntity(
     createdBy: String,
     consecutiveTo: SentenceEntity?,
     isManyCharges: Boolean,
-    sentenceType: SentenceTypeEntity?,
   ): SentenceEntity {
     val newSentenceServeType =
       when {

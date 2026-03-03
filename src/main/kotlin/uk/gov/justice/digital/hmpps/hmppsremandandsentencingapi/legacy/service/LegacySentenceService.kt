@@ -287,7 +287,6 @@ class LegacySentenceService(
         getPerformedByUsername(sentence),
         consecutiveToSentence,
         isManyCharges,
-        dpsSentenceType,
       )
       updateRtcDateIfFtrRecall(existingSentence, sentence)
       if (!existingSentence.isSame(updatedSentence)) {

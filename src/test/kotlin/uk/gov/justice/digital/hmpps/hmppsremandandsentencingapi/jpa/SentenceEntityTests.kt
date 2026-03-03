@@ -72,7 +72,6 @@ class SentenceEntityTests {
       "USER",
       null,
       false,
-      sentenceEntity.sentenceType,
     )
     val result = sentenceEntity.isSame(compareSentenceEntity)
     Assertions.assertThat(result).isFalse
