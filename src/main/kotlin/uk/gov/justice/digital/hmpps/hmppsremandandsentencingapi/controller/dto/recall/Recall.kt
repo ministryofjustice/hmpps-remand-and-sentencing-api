@@ -83,7 +83,7 @@ data class Recall(
     )
 
     private fun createRecallCourtCaseDetailsForGrouping(recallSentence: RecallSentenceEntity): RecallCourtCaseDetails {
-      // TODO I think potentially there will always be firstSentencingAppearance associated to a recall - so this doesn't need to be an optional var? to check
+      // Doesn’t affect new DPS recalls, but in old nomis ones it can be null as recall has been done with a non-sentencing court case
       val firstSentencingAppearance = recallSentence.sentence.charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId != CourtAppearanceEntityStatus.DELETED && it.warrantType == "SENTENCING" }
