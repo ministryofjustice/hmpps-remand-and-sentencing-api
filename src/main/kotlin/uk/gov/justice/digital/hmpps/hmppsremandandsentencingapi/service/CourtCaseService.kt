@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -103,7 +102,7 @@ class CourtCaseService(
     pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
     appearanceDateFrom: LocalDate,
     appearanceDateTo: LocalDate,
-  ): RecordResponse<Page<PagedCourtCase>> {
+  ): RecordResponse<SearchCourtCasesPage> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
       pageable.pageSize,
