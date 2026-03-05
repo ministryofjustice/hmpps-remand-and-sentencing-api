@@ -197,6 +197,8 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.content.[?(@.courtCaseUuid == '$pastCourtCaseUuid')]")
       .doesNotExist()
+      .jsonPath("$.courtCaseTotal")
+      .isEqualTo(2)
   }
 
   @Test
@@ -224,6 +226,8 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .doesNotExist()
       .jsonPath("$.content.[?(@.courtCaseUuid == '$pastCourtCaseUuid')]")
       .exists()
+      .jsonPath("$.courtCaseTotal")
+      .isEqualTo(2)
   }
 
   @Test

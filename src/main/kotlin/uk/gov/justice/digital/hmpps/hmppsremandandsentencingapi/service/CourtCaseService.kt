@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
@@ -132,7 +132,7 @@ class CourtCaseService(
       )
     }
     val count = courtCaseRepository.countCourtCasesByPrisonerAndDate(prisonerId, appearanceDateFrom, appearanceDateTo)
-
+    val totalCount = courtCaseRepository.countCourtCasesByPrisoner(prisonerId)
     val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {
       PagedCourtCaseOrderBy.STATUS_APPEARANCE_DATE_DESC -> compareBy<PagedCourtCase> { it.courtCaseStatus }.thenComparing(
@@ -143,8 +143,8 @@ class CourtCaseService(
       PagedCourtCaseOrderBy.APPEARANCE_DATE_DESC -> compareByDescending<PagedCourtCase> { it.latestCourtAppearance.warrantDate }.thenComparing { it.latestCourtAppearance.charges.all { charge -> charge.sentence?.hasRecall == false } }
     }
     val pagedCourtCases = courtCaseMap.values.map { PagedCourtCase.from(it) }
-      .sortedWith(appearanceDateCompareTo)
-    return RecordResponse(PageImpl(pagedCourtCases, pageable, count), eventsToEmit)
+      .sortedWith(appearanceDateCompareTo).toMutableList()
+    return RecordResponse(SearchCourtCasesPage(pagedCourtCases, pageable, count, totalCount), eventsToEmit)
   }
 
   @Transactional

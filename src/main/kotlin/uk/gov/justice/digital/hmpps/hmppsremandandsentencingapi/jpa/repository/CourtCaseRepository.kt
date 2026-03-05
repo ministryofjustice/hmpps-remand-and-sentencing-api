@@ -41,16 +41,17 @@ interface CourtCaseRepository :
   ): Long
 
   @Query(
-    """select count(*)
-    from court_case cc
-    where cc.prisoner_id = :prisonerId and (cc.legacy_data->>'bookingId' = :bookingId or cc.legacy_data->>'bookingId' is null) and cc.latest_court_appearance_id is not null and cc.status_id != :courtCaseStatus
+    """select count(cc)
+    from CourtCaseEntity cc
+    join cc.latestCourtAppearance lca
+    where cc.prisonerId = :prisonerId 
+    and cc.latestCourtAppearance is not null 
+    and cc.statusId != :courtCaseStatus
   """,
-    nativeQuery = true,
   )
-  fun countCourtCasesByBookingId(
+  fun countCourtCasesByPrisoner(
     @Param("prisonerId") prisonerId: String,
-    @Param("bookingId") bookingId: String,
-    @Param("courtCaseStatus") courtCaseStatus: String = CourtCaseEntityStatus.DELETED.toString(),
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
   ): Long
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
