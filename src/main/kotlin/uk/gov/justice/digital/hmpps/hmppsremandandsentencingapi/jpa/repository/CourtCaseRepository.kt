@@ -267,6 +267,4 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun updateLegacyDataBookingIdById(@Param("bookingId")bookingId: Long?, @Param("statusId") statusId: CourtCaseEntityStatus, @Param("updatedAt") updatedAt: ZonedDateTime, @Param("updatedBy") updatedBy: String, @Param("id") id: Int)
-
-  fun findFirstByStatusId(statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE): CourtCaseEntity?
 }
