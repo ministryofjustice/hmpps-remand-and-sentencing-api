@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,7 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LatestOffenceDate
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -125,7 +124,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
     @RequestParam("appearanceDateFrom", defaultValue = "0001-01-01") appearanceDateFrom: LocalDate,
     @RequestParam("appearanceDateTo", defaultValue = "9999-12-31") appearanceDateTo: LocalDate,
-  ): Page<PagedCourtCase> = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo).let { (pageCourtCase, eventsToEmit) ->
+  ): SearchCourtCasesPage = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }
