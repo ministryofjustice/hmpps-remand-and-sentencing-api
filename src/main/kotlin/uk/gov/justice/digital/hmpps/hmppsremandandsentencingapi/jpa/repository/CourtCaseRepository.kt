@@ -30,14 +30,14 @@ interface CourtCaseRepository :
     and lca.appearanceDate >= :appearanceDateFrom
     and lca.appearanceDate <= :appearanceDateTo
     and cc.latestCourtAppearance is not null 
-    and cc.statusId != :courtCaseStatus
+    and cc.statusId not in :courtCaseStatuses
   """,
   )
   fun countCourtCasesByPrisonerAndDate(
     @Param("prisonerId") prisonerId: String,
     @Param("appearanceDateFrom") appearanceDateFrom: LocalDate,
     @Param("appearanceDateTo") appearanceDateTo: LocalDate,
-    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
+    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
   ): Long
 
   @Query(
@@ -46,12 +46,12 @@ interface CourtCaseRepository :
     join cc.latestCourtAppearance lca
     where cc.prisonerId = :prisonerId 
     and cc.latestCourtAppearance is not null 
-    and cc.statusId != :courtCaseStatus
+    and cc.statusId not in :courtCaseStatuses
   """,
   )
   fun countCourtCasesByPrisoner(
     @Param("prisonerId") prisonerId: String,
-    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
+    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
   ): Long
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
