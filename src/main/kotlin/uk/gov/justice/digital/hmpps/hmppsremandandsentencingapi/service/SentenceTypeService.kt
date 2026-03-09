@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeIsValid
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.AllSentenceTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
@@ -33,4 +34,6 @@ class SentenceTypeService(
     statuses: List<ReferenceEntityStatus>,
     offenceDate: LocalDate,
   ): SentenceTypeIsValid = SentenceTypeIsValid(sentenceTypeRepository.sentenceTypeStillValid(sentenceTypeUuid, age, convictionDate, statuses, offenceDate) != null)
+
+  fun getAllSentenceTypes(): AllSentenceTypes = AllSentenceTypes.from(sentenceTypeRepository.findAll().toList())
 }
