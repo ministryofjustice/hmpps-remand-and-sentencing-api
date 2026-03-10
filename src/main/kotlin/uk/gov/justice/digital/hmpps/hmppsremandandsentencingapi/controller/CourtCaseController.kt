@@ -147,9 +147,8 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @ResponseStatus(HttpStatus.OK)
   fun getRecallableCourtCases(
     @PathVariable prisonerId: String,
-    @RequestParam(defaultValue = "date") sortBy: String,
-    @RequestParam(defaultValue = "desc") sortOrder: String,
-  ): RecallableCourtCasesResponse = courtCaseService.getRecallableCourtCases(prisonerId, sortBy, sortOrder).let { (recallCourtCases, eventsToEmit) ->
+    @RequestParam(defaultValue = "false") mergeDuplicateCourtCases: Boolean,
+  ): RecallableCourtCasesResponse = courtCaseService.getRecallableCourtCases(prisonerId, mergeDuplicateCourtCases).let { (recallCourtCases, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     recallCourtCases
   }

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import org.jetbrains.annotations.VisibleForTesting
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,9 +12,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.CourtCaseMergedGroups
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentenceKey
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceWithCaseUuid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -29,7 +33,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
+import kotlin.collections.mapNotNull
 
 @Service
 class CourtCaseService(
@@ -167,8 +173,7 @@ class CourtCaseService(
   @Transactional
   fun getRecallableCourtCases(
     prisonerId: String,
-    sortBy: String = "date",
-    sortOrder: String = "desc",
+    mergeDuplicateCourtCases: Boolean = false,
   ): RecordResponse<RecallableCourtCasesResponse> {
     val courtCasesWithAnAppearance = courtCaseRepository.findSentencedCourtCasesByPrisonerId(
       prisonerId,
@@ -242,6 +247,9 @@ class CourtCaseService(
               isRecallable = sentence.sentenceType?.isRecallable ?: true,
               sentenceDate = sentenceAppearance.appearanceDate,
               consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
+              createdAt = sentence.legacyData?.postedDate
+                ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
+                ?: sentence.createdAt.toLocalDateTime(),
             )
           },
           appearanceDate = firstSentencingAppearance.appearanceDate,
@@ -250,30 +258,116 @@ class CourtCaseService(
       }
       .filter { it.sentences.any { s -> s.isRecallable } }
 
-    val sortedCases = when (sortBy.lowercase()) {
-      "reference" -> when (sortOrder.lowercase()) {
-        "asc" -> recallableCourtCases.sortedBy { it.reference }
-        else -> recallableCourtCases.sortedByDescending { it.reference }
-      }
+    if (!mergeDuplicateCourtCases) {
+      return RecordResponse(
+        record = RecallableCourtCasesResponse(cases = recallableCourtCases.sortedByDescending { it.appearanceDate }),
+        eventsToEmit = eventsToEmit,
+      )
+    } else {
+      return RecordResponse(
+        record = RecallableCourtCasesResponse(cases = mergeAndSortCourtCases(recallableCourtCases)),
+        eventsToEmit = eventsToEmit,
+      )
+    }
+  }
 
-      "court" -> when (sortOrder.lowercase()) {
-        "asc" -> recallableCourtCases.sortedBy { it.courtCode }
-        else -> recallableCourtCases.sortedByDescending { it.courtCode }
-      }
+  @VisibleForTesting
+  fun mergeAndSortCourtCases(cases: List<RecallableCourtCase>): List<RecallableCourtCase> {
+    if (cases.isEmpty()) return emptyList()
 
-      else -> when (sortOrder.lowercase()) {
-        "asc" -> recallableCourtCases.sortedBy { it.appearanceDate }
-        else -> recallableCourtCases.sortedByDescending { it.appearanceDate }
-      }
+    val caseByUuid = cases.associateBy { it.courtCaseUuid }
+    val sentencesByDupKey = buildSentencesByDupKey(cases, caseByUuid)
+    val duplicateKeys = findDuplicateKeys(sentencesByDupKey)
+    if (duplicateKeys.isEmpty()) return cases.sortedByDescending { it.appearanceDate }
+
+    val sentencesByKey = pickEarliestSentencePerDuplicateKey(sentencesByDupKey)
+    val sentencesPerCase = sentencesByCaseUuid(sentencesByKey)
+    val mergeGroups = groupCourtCasesToMergeByDuplicateKeys(cases, sentencesByDupKey, duplicateKeys)
+
+    val duplicateWinnerRefs = duplicateKeys.mapNotNull { sentencesByKey[it] }
+
+    val mergedCases = mergeGroups.mapNotNull { memberUuids ->
+      val repUuid = chooseRepresentative(memberUuids, duplicateWinnerRefs)
+      val rep = caseByUuid[repUuid] ?: return@mapNotNull null
+
+      val mergedSentences = memberUuids
+        .flatMap { sentencesPerCase[it].orEmpty() }
+        .distinctBy { it.sentenceUuid }
+        .sortedWith(compareBy<RecallableCourtCaseSentence> { it.createdAt }.thenBy { it.sentenceUuid })
+
+      if (mergedSentences.isEmpty()) return@mapNotNull null
+
+      rep.copy(sentences = mergedSentences, isSentenced = true)
     }
 
-    return RecordResponse(
-      RecallableCourtCasesResponse(
-        cases = sortedCases,
-      ),
-      eventsToEmit,
-    )
+    return mergedCases.sortedByDescending { it.appearanceDate }
   }
+
+  private fun buildSentencesByDupKey(
+    cases: List<RecallableCourtCase>,
+    caseByUuid: Map<String, RecallableCourtCase>,
+  ): Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>> = cases
+    .flatMap { cc -> cc.sentences.map { s -> SentenceWithCaseUuid(cc.courtCaseUuid, s) } }
+    .groupBy { ref ->
+      val courtCode = caseByUuid.getValue(ref.caseUuid).courtCode
+      DuplicateSentenceKey(
+        courtCode = courtCode,
+        offenceCode = ref.sentence.offenceCode,
+        offenceStartDate = ref.sentence.offenceStartDate,
+        sentenceDate = ref.sentence.sentenceDate,
+      )
+    }
+
+  private fun findDuplicateKeys(
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
+  ): Set<DuplicateSentenceKey> = sentencesByDuplicateSentenceKey
+    .filter { (_, refs) -> refs.map { it.caseUuid }.distinct().size > 1 }
+    .keys
+
+  private fun pickEarliestSentencePerDuplicateKey(
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
+  ): Map<DuplicateSentenceKey, SentenceWithCaseUuid> = sentencesByDuplicateSentenceKey.mapValues { (_, refs) ->
+    refs.minWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
+  }
+
+  private fun sentencesByCaseUuid(
+    sentencesByKey: Map<DuplicateSentenceKey, SentenceWithCaseUuid>,
+  ): Map<String, List<RecallableCourtCaseSentence>> = sentencesByKey.values
+    .groupBy { it.caseUuid }
+    .mapValues { (_, refs) -> refs.map { it.sentence } }
+
+  private fun groupCourtCasesToMergeByDuplicateKeys(
+    cases: List<RecallableCourtCase>,
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
+    duplicateKeys: Set<DuplicateSentenceKey>,
+  ): List<List<String>> {
+    val courtCaseMergedGroups = CourtCaseMergedGroups(cases.map { it.courtCaseUuid })
+
+    sentencesByDuplicateSentenceKey
+      .filterKeys { it in duplicateKeys }
+      .values
+      .forEach { refs ->
+        val caseUuids = refs.map { it.caseUuid }.distinct()
+        val first = caseUuids.first()
+        caseUuids.drop(1).forEach { courtCaseMergedGroups.mergeCasesIntoGroup(first, it) }
+      }
+
+    return cases
+      .map { it.courtCaseUuid }
+      .groupBy { courtCaseMergedGroups.findRepresentativeCase(it) }
+      .values
+      .toList()
+  }
+
+  private fun chooseRepresentative(
+    memberUuids: List<String>,
+    duplicateWinnerRefs: List<SentenceWithCaseUuid>,
+  ): String = duplicateWinnerRefs
+    .asSequence()
+    .filter { it.caseUuid in memberUuids }
+    .minWithOrNull(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
+    ?.caseUuid
+    ?: memberUuids.first()
 
   @Transactional(readOnly = true)
   fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId)
