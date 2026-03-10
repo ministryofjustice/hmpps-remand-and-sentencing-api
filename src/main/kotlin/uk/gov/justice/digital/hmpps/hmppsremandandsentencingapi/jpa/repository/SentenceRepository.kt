@@ -334,4 +334,13 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun hasNonDeletedSentences(
     @Param("prisonerId") prisonerId: String,
   ): Boolean
+
+  @Modifying
+  @Query(
+    """
+    update sentence set sentence_type_id = :sentenceTypeId where legacy_data->>'sentenceCategory' = :nomisCjaCode and legacy_data->>'sentenceCalcType' = :nomisSentenceCalcType
+  """,
+    nativeQuery = true,
+  )
+  fun updateToSupportedSentenceType(@Param("sentenceTypeId") sentenceTypeId: Int, @Param("nomisCjaCode") nomisCjaCode: String, @Param("nomisSentenceCalcType") nomisSentenceCalcType: String)
 }
