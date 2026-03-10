@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -43,7 +44,7 @@ class CourtCaseServiceTest {
       val dupStart = LocalDate.of(2020, 1, 1)
       val dupSentenceDate = LocalDate.of(2020, 2, 1)
 
-      val olderDup = sentence(
+      val olderDup = recallableSentence(
         uuid = UUID.randomUUID(),
         offenceCode = dupKeyOffence,
         offenceStartDate = dupStart,
@@ -55,16 +56,16 @@ class CourtCaseServiceTest {
         createdAt = LocalDateTime.of(2020, 2, 2, 10, 0),
       )
 
-      val uniqueA = sentence(UUID.randomUUID(), "A1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0))
-      val uniqueB = sentence(UUID.randomUUID(), "B1", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0))
+      val uniqueA = recallableSentence(UUID.randomUUID(), "A1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0))
+      val uniqueB = recallableSentence(UUID.randomUUID(), "B1", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0))
 
-      val case1 = courtCase(
+      val case1 = recallableCourtCase(
         uuid = "CASE-1",
         courtCode = "C1",
         appearanceDate = LocalDate.of(2024, 1, 10),
         sentences = listOf(olderDup, uniqueA),
       )
-      val case2 = courtCase(
+      val case2 = recallableCourtCase(
         uuid = "CASE-2",
         courtCode = "C1",
         appearanceDate = LocalDate.of(2024, 1, 5),
@@ -88,14 +89,14 @@ class CourtCaseServiceTest {
     fun `drops court cases that become empty after dedupe`() {
       val dupSentenceDate = LocalDate.of(2020, 2, 1)
 
-      val olderDup = sentence(
+      val olderDup = recallableSentence(
         uuid = UUID.randomUUID(),
         offenceCode = "OFF1",
         offenceStartDate = LocalDate.of(2020, 1, 1),
         sentenceDate = dupSentenceDate,
         createdAt = LocalDateTime.of(2020, 2, 1, 10, 0),
       )
-      val newerDupOnly = sentence(
+      val newerDupOnly = recallableSentence(
         uuid = UUID.randomUUID(),
         offenceCode = "OFF1",
         offenceStartDate = LocalDate.of(2020, 1, 1),
@@ -103,8 +104,8 @@ class CourtCaseServiceTest {
         createdAt = LocalDateTime.of(2020, 2, 2, 10, 0),
       )
 
-      val winnerCase = courtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(olderDup))
-      val loserOnlyCase = courtCase("CASE-2", "C1", LocalDate.of(2024, 1, 5), listOf(newerDupOnly))
+      val winnerCase = recallableCourtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(olderDup))
+      val loserOnlyCase = recallableCourtCase("CASE-2", "C1", LocalDate.of(2024, 1, 5), listOf(newerDupOnly))
 
       val result = service.mergeAndSortCourtCases(listOf(winnerCase, loserOnlyCase))
 
@@ -114,11 +115,11 @@ class CourtCaseServiceTest {
 
     @Test
     fun `sorts merged cases by appearanceDate desc`() {
-      val s1 = sentence(UUID.randomUUID(), "X1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
-      val s2 = sentence(UUID.randomUUID(), "Y1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 10, 0))
+      val s1 = recallableSentence(UUID.randomUUID(), "X1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
+      val s2 = recallableSentence(UUID.randomUUID(), "Y1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 10, 0))
 
-      val newer = courtCase("CASE-NEW", "C1", LocalDate.of(2024, 2, 1), listOf(s1))
-      val older = courtCase("CASE-OLD", "C2", LocalDate.of(2024, 1, 1), listOf(s2))
+      val newer = recallableCourtCase("CASE-NEW", "C1", LocalDate.of(2024, 2, 1), listOf(s1))
+      val older = recallableCourtCase("CASE-OLD", "C2", LocalDate.of(2024, 1, 1), listOf(s2))
 
       val result = service.mergeAndSortCourtCases(listOf(older, newer))
 
@@ -127,20 +128,20 @@ class CourtCaseServiceTest {
 
     @Test
     fun `merges 4 court cases with shared duplicate into earliest duplicate sentence court case`() {
-      val earliestDup1 = sentence(UUID.randomUUID(), "OFF-DUPLICATE", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
+      val earliestDup1 = recallableSentence(UUID.randomUUID(), "OFF-DUPLICATE", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
       val dup2 = earliestDup1.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 2, 10, 0))
       val dup3 = earliestDup1.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 3, 10, 0))
       val dup4 = earliestDup1.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 4, 10, 0))
 
-      val unique1 = sentence(UUID.randomUUID(), "U1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0))
-      val unique2 = sentence(UUID.randomUUID(), "U2", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0))
-      val unique3 = sentence(UUID.randomUUID(), "U3", LocalDate.of(2017, 1, 1), LocalDate.of(2017, 2, 1), LocalDateTime.of(2017, 2, 1, 9, 0))
-      val unique4 = sentence(UUID.randomUUID(), "U4", LocalDate.of(2016, 1, 1), LocalDate.of(2016, 2, 1), LocalDateTime.of(2016, 2, 1, 9, 0))
+      val unique1 = recallableSentence(UUID.randomUUID(), "U1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0))
+      val unique2 = recallableSentence(UUID.randomUUID(), "U2", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0))
+      val unique3 = recallableSentence(UUID.randomUUID(), "U3", LocalDate.of(2017, 1, 1), LocalDate.of(2017, 2, 1), LocalDateTime.of(2017, 2, 1, 9, 0))
+      val unique4 = recallableSentence(UUID.randomUUID(), "U4", LocalDate.of(2016, 1, 1), LocalDate.of(2016, 2, 1), LocalDateTime.of(2016, 2, 1, 9, 0))
 
-      val case1 = courtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(earliestDup1, unique1))
-      val case2 = courtCase("CASE-2", "C1", LocalDate.of(2024, 1, 9), listOf(dup2, unique2))
-      val case3 = courtCase("CASE-3", "C1", LocalDate.of(2024, 1, 8), listOf(dup3, unique3))
-      val case4 = courtCase("CASE-4", "C1", LocalDate.of(2024, 1, 7), listOf(dup4, unique4))
+      val case1 = recallableCourtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(earliestDup1, unique1))
+      val case2 = recallableCourtCase("CASE-2", "C1", LocalDate.of(2024, 1, 9), listOf(dup2, unique2))
+      val case3 = recallableCourtCase("CASE-3", "C1", LocalDate.of(2024, 1, 8), listOf(dup3, unique3))
+      val case4 = recallableCourtCase("CASE-4", "C1", LocalDate.of(2024, 1, 7), listOf(dup4, unique4))
 
       val result = service.mergeAndSortCourtCases(listOf(case4, case2, case3, case1))
 
@@ -161,29 +162,29 @@ class CourtCaseServiceTest {
 
     @Test
     fun `returns input unchanged when there are no duplicates across 4 court cases`() {
-      val c1 = courtCase(
+      val c1 = recallableCourtCase(
         "CASE-1",
         "C1",
         LocalDate.of(2024, 1, 10),
-        listOf(sentence(UUID.randomUUID(), "O1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "O1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))),
       )
-      val c2 = courtCase(
+      val c2 = recallableCourtCase(
         "CASE-2",
         "C2",
         LocalDate.of(2024, 1, 9),
-        listOf(sentence(UUID.randomUUID(), "O2", LocalDate.of(2020, 1, 2), LocalDate.of(2020, 2, 2), LocalDateTime.of(2020, 2, 2, 10, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "O2", LocalDate.of(2020, 1, 2), LocalDate.of(2020, 2, 2), LocalDateTime.of(2020, 2, 2, 10, 0))),
       )
-      val c3 = courtCase(
+      val c3 = recallableCourtCase(
         "CASE-3",
         "C3",
         LocalDate.of(2024, 1, 8),
-        listOf(sentence(UUID.randomUUID(), "O3", LocalDate.of(2020, 1, 3), LocalDate.of(2020, 2, 3), LocalDateTime.of(2020, 2, 3, 10, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "O3", LocalDate.of(2020, 1, 3), LocalDate.of(2020, 2, 3), LocalDateTime.of(2020, 2, 3, 10, 0))),
       )
-      val c4 = courtCase(
+      val c4 = recallableCourtCase(
         "CASE-4",
         "C4",
         LocalDate.of(2024, 1, 7),
-        listOf(sentence(UUID.randomUUID(), "O4", LocalDate.of(2020, 1, 4), LocalDate.of(2020, 2, 4), LocalDateTime.of(2020, 2, 4, 10, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "O4", LocalDate.of(2020, 1, 4), LocalDate.of(2020, 2, 4), LocalDateTime.of(2020, 2, 4, 10, 0))),
       )
 
       val result = service.mergeAndSortCourtCases(listOf(c3, c1, c4, c2))
@@ -195,7 +196,7 @@ class CourtCaseServiceTest {
       val dupStart = LocalDate.of(2020, 1, 1)
       val dupSentenceDate = LocalDate.of(2020, 2, 1)
 
-      val olderDup = sentence(
+      val olderDup = recallableSentence(
         UUID.randomUUID(),
         "OFF-DUP",
         dupStart,
@@ -207,39 +208,39 @@ class CourtCaseServiceTest {
         createdAt = LocalDateTime.of(2020, 2, 2, 10, 0),
       )
 
-      val case1 = courtCase(
+      val case1 = recallableCourtCase(
         "CASE-1",
         "C1",
         LocalDate.of(2024, 1, 10),
         listOf(
           olderDup,
-          sentence(UUID.randomUUID(), "U1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0)),
+          recallableSentence(UUID.randomUUID(), "U1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0)),
         ),
       )
-      val case2 = courtCase(
+      val case2 = recallableCourtCase(
         "CASE-2",
         "C1",
         LocalDate.of(2024, 1, 9),
         listOf(
           newerDup,
-          sentence(UUID.randomUUID(), "U2", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0)),
-          sentence(UUID.randomUUID(), "U3", LocalDate.of(2017, 1, 1), LocalDate.of(2017, 2, 1), LocalDateTime.of(2017, 2, 1, 9, 0)),
+          recallableSentence(UUID.randomUUID(), "U2", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0)),
+          recallableSentence(UUID.randomUUID(), "U3", LocalDate.of(2017, 1, 1), LocalDate.of(2017, 2, 1), LocalDateTime.of(2017, 2, 1, 9, 0)),
         ),
       )
-      val case3 = courtCase(
+      val case3 = recallableCourtCase(
         "CASE-3",
         "C3",
         LocalDate.of(2024, 1, 8),
         listOf(
-          sentence(UUID.randomUUID(), "O3", LocalDate.of(2020, 1, 3), LocalDate.of(2020, 2, 3), LocalDateTime.of(2020, 2, 3, 10, 0)),
+          recallableSentence(UUID.randomUUID(), "O3", LocalDate.of(2020, 1, 3), LocalDate.of(2020, 2, 3), LocalDateTime.of(2020, 2, 3, 10, 0)),
         ),
       )
-      val case4 = courtCase(
+      val case4 = recallableCourtCase(
         "CASE-4",
         "C4",
         LocalDate.of(2024, 1, 7),
         listOf(
-          sentence(UUID.randomUUID(), "O4", LocalDate.of(2020, 1, 4), LocalDate.of(2020, 2, 4), LocalDateTime.of(2020, 2, 4, 10, 0)),
+          recallableSentence(UUID.randomUUID(), "O4", LocalDate.of(2020, 1, 4), LocalDate.of(2020, 2, 4), LocalDateTime.of(2020, 2, 4, 10, 0)),
         ),
       )
 
@@ -262,7 +263,7 @@ class CourtCaseServiceTest {
 
     @Test
     fun `does not treat duplicate key within the same court case as a cross case duplicate`() {
-      val dup1 = sentence(
+      val dup1 = recallableSentence(
         UUID.randomUUID(),
         "OFF1",
         LocalDate.of(2020, 1, 1),
@@ -274,17 +275,17 @@ class CourtCaseServiceTest {
         createdAt = LocalDateTime.of(2020, 2, 2, 10, 0),
       )
 
-      val case1 = courtCase(
+      val case1 = recallableCourtCase(
         "CASE-1",
         "C1",
         LocalDate.of(2024, 1, 10),
         listOf(dup1, dup2),
       )
-      val case2 = courtCase(
+      val case2 = recallableCourtCase(
         "CASE-2",
         "C2",
         LocalDate.of(2024, 1, 9),
-        listOf(sentence(UUID.randomUUID(), "O2", LocalDate.of(2020, 1, 2), LocalDate.of(2020, 2, 2), LocalDateTime.of(2020, 2, 2, 9, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "O2", LocalDate.of(2020, 1, 2), LocalDate.of(2020, 2, 2), LocalDateTime.of(2020, 2, 2, 9, 0))),
       )
 
       val result = service.mergeAndSortCourtCases(listOf(case2, case1))
@@ -297,17 +298,17 @@ class CourtCaseServiceTest {
       val sentenceDate = LocalDate.of(2020, 2, 1)
       val startDate = LocalDate.of(2020, 1, 1)
 
-      val case1 = courtCase(
+      val case1 = recallableCourtCase(
         "CASE-1",
         "C1",
         LocalDate.of(2024, 1, 10),
-        listOf(sentence(UUID.randomUUID(), "OFF1", startDate, sentenceDate, LocalDateTime.of(2020, 2, 1, 10, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "OFF1", startDate, sentenceDate, LocalDateTime.of(2020, 2, 1, 10, 0))),
       )
-      val case2 = courtCase(
+      val case2 = recallableCourtCase(
         "CASE-2",
         "C2",
         LocalDate.of(2024, 1, 9),
-        listOf(sentence(UUID.randomUUID(), "OFF1", startDate, sentenceDate, LocalDateTime.of(2020, 2, 2, 10, 0))),
+        listOf(recallableSentence(UUID.randomUUID(), "OFF1", startDate, sentenceDate, LocalDateTime.of(2020, 2, 2, 10, 0))),
       )
 
       val result = service.mergeAndSortCourtCases(listOf(case2, case1))
@@ -322,32 +323,32 @@ class CourtCaseServiceTest {
       val keyBStart = LocalDate.of(2020, 3, 1)
       val keyBDate = LocalDate.of(2020, 4, 1)
 
-      val case1 = courtCase(
+      val case1 = recallableCourtCase(
         "CASE-1",
         "C1",
         LocalDate.of(2024, 1, 10),
         listOf(
-          sentence(UUID.randomUUID(), "A", keyAStart, keyADate, LocalDateTime.of(2020, 2, 1, 10, 0)),
-          sentence(UUID.randomUUID(), "U1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0)),
+          recallableSentence(UUID.randomUUID(), "A", keyAStart, keyADate, LocalDateTime.of(2020, 2, 1, 10, 0)),
+          recallableSentence(UUID.randomUUID(), "U1", LocalDate.of(2019, 1, 1), LocalDate.of(2019, 2, 1), LocalDateTime.of(2019, 2, 1, 9, 0)),
         ),
       )
-      val case2 = courtCase(
+      val case2 = recallableCourtCase(
         "CASE-2",
         "C1",
         LocalDate.of(2024, 1, 9),
         listOf(
-          sentence(UUID.randomUUID(), "A", keyAStart, keyADate, LocalDateTime.of(2020, 2, 2, 10, 0)),
-          sentence(UUID.randomUUID(), "B", keyBStart, keyBDate, LocalDateTime.of(2020, 4, 1, 10, 0)),
-          sentence(UUID.randomUUID(), "U2", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0)),
+          recallableSentence(UUID.randomUUID(), "A", keyAStart, keyADate, LocalDateTime.of(2020, 2, 2, 10, 0)),
+          recallableSentence(UUID.randomUUID(), "B", keyBStart, keyBDate, LocalDateTime.of(2020, 4, 1, 10, 0)),
+          recallableSentence(UUID.randomUUID(), "U2", LocalDate.of(2018, 1, 1), LocalDate.of(2018, 2, 1), LocalDateTime.of(2018, 2, 1, 9, 0)),
         ),
       )
-      val case3 = courtCase(
+      val case3 = recallableCourtCase(
         "CASE-3",
         "C1",
         LocalDate.of(2024, 1, 8),
         listOf(
-          sentence(UUID.randomUUID(), "B", keyBStart, keyBDate, LocalDateTime.of(2020, 4, 2, 10, 0)),
-          sentence(UUID.randomUUID(), "U3", LocalDate.of(2017, 1, 1), LocalDate.of(2017, 2, 1), LocalDateTime.of(2017, 2, 1, 9, 0)),
+          recallableSentence(UUID.randomUUID(), "B", keyBStart, keyBDate, LocalDateTime.of(2020, 4, 2, 10, 0)),
+          recallableSentence(UUID.randomUUID(), "U3", LocalDate.of(2017, 1, 1), LocalDate.of(2017, 2, 1), LocalDateTime.of(2017, 2, 1, 9, 0)),
         ),
       )
 
@@ -364,17 +365,17 @@ class CourtCaseServiceTest {
     fun `uses case uuid as tiebreaker when duplicate winners have the same created at`() {
       val createdAt = LocalDateTime.of(2020, 2, 1, 10, 0)
 
-      val case1 = courtCase(
+      val case1 = recallableCourtCase(
         "CASE-1",
         "C1",
         LocalDate.of(2024, 1, 10),
-        listOf(sentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), createdAt)),
+        listOf(recallableSentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), createdAt)),
       )
-      val case2 = courtCase(
+      val case2 = recallableCourtCase(
         "CASE-2",
         "C1",
         LocalDate.of(2024, 1, 9),
-        listOf(sentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), createdAt)),
+        listOf(recallableSentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), createdAt)),
       )
 
       val result = service.mergeAndSortCourtCases(listOf(case2, case1))
@@ -389,8 +390,8 @@ class CourtCaseServiceTest {
 
     @Test
     fun `returns normal sorted cases when merge duplicate court cases is false`() {
-      val case1 = courtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(sentence(UUID.randomUUID(), "O1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))))
-      val case2 = courtCase("CASE-2", "C1", LocalDate.of(2024, 1, 9), listOf(sentence(UUID.randomUUID(), "O2", LocalDate.of(2020, 1, 2), LocalDate.of(2020, 2, 2), LocalDateTime.of(2020, 2, 2, 10, 0))))
+      val case1 = recallableCourtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(recallableSentence(UUID.randomUUID(), "O1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))))
+      val case2 = recallableCourtCase("CASE-2", "C1", LocalDate.of(2024, 1, 9), listOf(recallableSentence(UUID.randomUUID(), "O2", LocalDate.of(2020, 1, 2), LocalDate.of(2020, 2, 2), LocalDateTime.of(2020, 2, 2, 10, 0))))
 
       val result = service.mergeAndSortCourtCases(listOf(case2, case1))
 
@@ -399,11 +400,11 @@ class CourtCaseServiceTest {
 
     @Test
     fun `returns merged cases when merge duplicate court cases is true`() {
-      val olderDup = sentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
+      val olderDup = recallableSentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
       val newerDup = olderDup.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 2, 10, 0))
 
-      val case1 = courtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(olderDup))
-      val case2 = courtCase("CASE-2", "C1", LocalDate.of(2024, 1, 9), listOf(newerDup))
+      val case1 = recallableCourtCase("CASE-1", "C1", LocalDate.of(2024, 1, 10), listOf(olderDup))
+      val case2 = recallableCourtCase("CASE-2", "C1", LocalDate.of(2024, 1, 9), listOf(newerDup))
 
       val result = service.mergeAndSortCourtCases(listOf(case2, case1))
 
@@ -420,7 +421,7 @@ class CourtCaseServiceTest {
       val createdAt = ZonedDateTime.parse("2020-02-07T10:00:00Z")
       val postedDate = "2020-02-06T12:48:05.692411"
 
-      every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(mockCourtCaseWithSentence(createdAt, postedDate))
+      every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(courtCaseWithSentence(createdAt, postedDate))
       every { fixManyChargesToSentenceService.fixCourtCaseSentences(any()) } returns mutableSetOf()
 
       val result = service.getRecallableCourtCases("A1234BC")
@@ -433,7 +434,7 @@ class CourtCaseServiceTest {
       val createdAt = ZonedDateTime.parse("2020-02-05T10:00:00Z")
       val postedDate = "2020-02-06T12:48:05.692411"
 
-      every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(mockCourtCaseWithSentence(createdAt, postedDate))
+      every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(courtCaseWithSentence(createdAt, postedDate))
       every { fixManyChargesToSentenceService.fixCourtCaseSentences(any()) } returns mutableSetOf()
 
       val result = service.getRecallableCourtCases("A1234BC")
@@ -445,7 +446,7 @@ class CourtCaseServiceTest {
     fun `uses created at when posted date is absent`() {
       val createdAt = ZonedDateTime.parse("2020-02-05T10:00:00Z")
 
-      every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(mockCourtCaseWithSentence(createdAt, null))
+      every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(courtCaseWithSentence(createdAt, null))
       every { fixManyChargesToSentenceService.fixCourtCaseSentences(any()) } returns mutableSetOf()
 
       val result = service.getRecallableCourtCases("A1234BC")
@@ -454,7 +455,7 @@ class CourtCaseServiceTest {
     }
   }
 
-  private fun courtCase(
+  private fun recallableCourtCase(
     uuid: String,
     courtCode: String,
     appearanceDate: LocalDate,
@@ -470,7 +471,7 @@ class CourtCaseServiceTest {
     firstDayInCustody = null,
   )
 
-  private fun sentence(
+  private fun recallableSentence(
     uuid: UUID,
     offenceCode: String?,
     offenceStartDate: LocalDate?,
@@ -501,55 +502,84 @@ class CourtCaseServiceTest {
     createdAt = createdAt,
   )
 
-  private fun mockCourtCaseWithSentence(
+  private fun courtCaseWithSentence(
     sentenceCreatedAt: ZonedDateTime,
     postedDate: String?,
   ): CourtCaseEntity {
-    val sentence = mockk<SentenceEntity>()
-    val charge = mockk<ChargeEntity>()
-    val appearanceCharge = mockk<AppearanceChargeEntity>()
-    val appearance = mockk<CourtAppearanceEntity>()
-    val courtCase = mockk<CourtCaseEntity>()
+    val courtCase = CourtCaseEntity(
+      prisonerId = "A1234BC",
+      caseUniqueIdentifier = "CASE-1",
+      createdBy = "TEST",
+      statusId = CourtCaseEntityStatus.ACTIVE,
+    )
 
-    every { sentence.id } returns 1
-    every { sentence.sentenceUuid } returns UUID.randomUUID()
-    every { sentence.charge } returns charge
-    every { sentence.createdAt } returns sentenceCreatedAt
-    every { sentence.legacyData } returns postedDate?.let {
-      SentenceLegacyData(
-        postedDate = it,
-        bookingId = 123L,
-      )
-    }
-    every { sentence.countNumber } returns null
-    every { sentence.sentenceServeType } returns "CONCURRENT"
-    every { sentence.periodLengths } returns mutableSetOf()
-    every { sentence.convictionDate } returns null
-    every { sentence.fineAmount } returns null
-    every { sentence.sentenceType } returns null
-    every { sentence.consecutiveTo } returns null
+    val charge = ChargeEntity(
+      chargeUuid = UUID.randomUUID(),
+      offenceCode = "OFF1",
+      offenceStartDate = LocalDate.of(2020, 1, 1),
+      offenceEndDate = null,
+      statusId = ChargeEntityStatus.ACTIVE,
+      chargeOutcome = null,
+      supersedingCharge = null,
+      terrorRelated = null,
+      foreignPowerRelated = null,
+      domesticViolenceRelated = null,
+      createdBy = "TEST",
+      createdPrison = null,
+      legacyData = null,
+    )
 
-    every { charge.statusId } returns ChargeEntityStatus.ACTIVE
-    every { charge.getLiveSentence() } returns sentence
-    every { charge.offenceCode } returns "OFF1"
-    every { charge.offenceStartDate } returns LocalDate.of(2020, 1, 1)
-    every { charge.offenceEndDate } returns null
-    every { charge.chargeOutcome } returns null
-    every { charge.legacyData } returns null
+    val sentence = SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = SentenceEntityStatus.ACTIVE,
+      createdAt = sentenceCreatedAt,
+      createdBy = "TEST",
+      createdPrison = null,
+      sentenceServeType = "CONCURRENT",
+      consecutiveTo = null,
+      sentenceType = null,
+      supersedingSentence = null,
+      charge = charge,
+      convictionDate = null,
+      legacyData = postedDate?.let {
+        SentenceLegacyData(
+          postedDate = it,
+          bookingId = 123L,
+        )
+      },
+      fineAmount = null,
+    )
 
-    every { appearanceCharge.charge } returns charge
+    charge.sentences = mutableSetOf(sentence)
 
-    every { appearance.statusId } returns CourtAppearanceEntityStatus.ACTIVE
-    every { appearance.warrantType } returns "SENTENCING"
-    every { appearance.appearanceDate } returns LocalDate.of(2020, 2, 1)
-    every { appearance.appearanceCharges } returns mutableSetOf(appearanceCharge)
-    every { appearance.courtCode } returns "C1"
-    every { appearance.courtCaseReference } returns "REF1"
+    val appearance = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "C1",
+      courtCaseReference = "REF1",
+      appearanceDate = LocalDate.of(2020, 2, 1),
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "TEST",
+      createdPrison = null,
+      warrantType = "SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+      legacyData = null,
+    )
 
-    every { courtCase.caseUniqueIdentifier } returns "CASE-1"
-    every { courtCase.latestCourtAppearance } returns appearance
-    every { courtCase.appearances } returns mutableSetOf(appearance)
-    every { courtCase.statusId } returns CourtCaseEntityStatus.ACTIVE
+    val appearanceCharge = AppearanceChargeEntity(
+      courtAppearanceEntity = appearance,
+      chargeEntity = charge,
+      createdBy = "TEST",
+      createdPrison = null,
+    )
+
+    appearance.appearanceCharges.add(appearanceCharge)
+    charge.appearanceCharges.add(appearanceCharge)
+
+    courtCase.appearances = setOf(appearance)
+    courtCase.latestCourtAppearance = appearance
 
     return courtCase
   }

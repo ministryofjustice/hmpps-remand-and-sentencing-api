@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceWithCaseRef
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceWithCaseUuid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -306,8 +306,8 @@ class CourtCaseService(
   private fun buildSentencesByDupKey(
     cases: List<RecallableCourtCase>,
     caseByUuid: Map<String, RecallableCourtCase>,
-  ): Map<DuplicateSentenceKey, List<SentenceWithCaseRef>> = cases
-    .flatMap { cc -> cc.sentences.map { s -> SentenceWithCaseRef(cc.courtCaseUuid, s) } }
+  ): Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>> = cases
+    .flatMap { cc -> cc.sentences.map { s -> SentenceWithCaseUuid(cc.courtCaseUuid, s) } }
     .groupBy { ref ->
       val courtCode = caseByUuid.getValue(ref.caseUuid).courtCode
       DuplicateSentenceKey(
@@ -319,26 +319,26 @@ class CourtCaseService(
     }
 
   private fun findDuplicateKeys(
-    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseRef>>,
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
   ): Set<DuplicateSentenceKey> = sentencesByDuplicateSentenceKey
     .filter { (_, refs) -> refs.map { it.caseUuid }.distinct().size > 1 }
     .keys
 
   private fun pickEarliestSentencePerDuplicateKey(
-    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseRef>>,
-  ): Map<DuplicateSentenceKey, SentenceWithCaseRef> = sentencesByDuplicateSentenceKey.mapValues { (_, refs) ->
-    refs.minWith(compareBy<SentenceWithCaseRef> { it.sentence.createdAt }.thenBy { it.caseUuid })
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
+  ): Map<DuplicateSentenceKey, SentenceWithCaseUuid> = sentencesByDuplicateSentenceKey.mapValues { (_, refs) ->
+    refs.minWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
   }
 
   private fun sentencesByCaseUuid(
-    sentencesByKey: Map<DuplicateSentenceKey, SentenceWithCaseRef>,
+    sentencesByKey: Map<DuplicateSentenceKey, SentenceWithCaseUuid>,
   ): Map<String, List<RecallableCourtCaseSentence>> = sentencesByKey.values
     .groupBy { it.caseUuid }
     .mapValues { (_, refs) -> refs.map { it.sentence } }
 
   private fun groupCourtCasesToMergeByDuplicateKeys(
     cases: List<RecallableCourtCase>,
-    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseRef>>,
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
     duplicateKeys: Set<DuplicateSentenceKey>,
   ): List<List<String>> {
     val courtCaseMergedGroups = CourtCaseMergedGroups(cases.map { it.courtCaseUuid })
@@ -361,11 +361,11 @@ class CourtCaseService(
 
   private fun chooseRepresentative(
     memberUuids: List<String>,
-    duplicateWinnerRefs: List<SentenceWithCaseRef>,
+    duplicateWinnerRefs: List<SentenceWithCaseUuid>,
   ): String = duplicateWinnerRefs
     .asSequence()
     .filter { it.caseUuid in memberUuids }
-    .minWithOrNull(compareBy<SentenceWithCaseRef> { it.sentence.createdAt }.thenBy { it.caseUuid })
+    .minWithOrNull(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
     ?.caseUuid
     ?: memberUuids.first()
 

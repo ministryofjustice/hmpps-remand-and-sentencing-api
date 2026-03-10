@@ -9,7 +9,7 @@ data class DuplicateSentenceKey(
   val sentenceDate: LocalDate?, // The Sentence Date is otherwise known as the Appearance Date or the Warrant Date
 )
 
-data class SentenceWithCaseRef(
+data class SentenceWithCaseUuid(
   val caseUuid: String,
   val sentence: RecallableCourtCaseSentence,
 )
