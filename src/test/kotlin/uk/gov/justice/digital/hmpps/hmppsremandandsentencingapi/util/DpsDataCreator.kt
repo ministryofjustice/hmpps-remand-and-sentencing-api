@@ -103,6 +103,7 @@ class DpsDataCreator {
       legacyData: ChargeLegacyData? = null,
       prisonId: String = "PRISON1",
       replacedChargeUuid: UUID? = null,
+      createChargeOrder: Int? = null,
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
@@ -117,6 +118,7 @@ class DpsDataCreator {
       legacyData,
       prisonId,
       replacedChargeUuid,
+      createChargeOrder,
     )
 
     fun dpsCreateSentence(

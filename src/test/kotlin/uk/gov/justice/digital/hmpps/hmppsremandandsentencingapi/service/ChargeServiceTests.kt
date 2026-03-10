@@ -82,6 +82,7 @@ class ChargeServiceTests {
         prisonId = null,
       ),
       replacingChargeUuid = null,
+      createChargeOrder = null,
     )
 
     val result = chargeService.createCharge(
@@ -145,6 +146,7 @@ class ChargeServiceTests {
         prisonId = null,
       ),
       replacingChargeUuid = replacedUuid,
+      createChargeOrder = null,
     )
 
     val result = chargeService.createCharge(
