@@ -1,0 +1,1 @@
+create index idx_sentence_legacy_data_type on court_appearance((legacy_data->>'sentenceCalcType'), (legacy_data->>'sentenceCategory'));

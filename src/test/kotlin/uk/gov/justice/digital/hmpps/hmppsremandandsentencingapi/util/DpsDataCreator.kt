@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.appearanceoutcome.CreateAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
@@ -19,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
@@ -222,6 +224,40 @@ class DpsDataCreator {
       isSubList,
       dispositionCode,
       status,
+    )
+
+    fun createSentenceType(
+      sentenceTypeUuid: UUID? = null,
+      description: String = "A Sentence Type description",
+      minAgeInclusive: Int? = null,
+      maxAgeExclusive: Int? = null,
+      minDateInclusive: LocalDate? = null,
+      maxDateExclusive: LocalDate? = null,
+      minOffenceDateInclusive: LocalDate? = null,
+      maxOffenceDateExclusive: LocalDate? = null,
+      classification: SentenceTypeClassification = SentenceTypeClassification.STANDARD,
+      hintText: String? = null,
+      nomisCjaCode: String = "56",
+      nomisSentenceCalcType: String = "2020",
+      displayOrder: Int = 50,
+      status: ReferenceEntityStatus = ReferenceEntityStatus.ACTIVE,
+      isRecallable: Boolean = true,
+    ): CreateSentenceType = CreateSentenceType(
+      sentenceTypeUuid,
+      description,
+      minAgeInclusive,
+      maxAgeExclusive,
+      minDateInclusive,
+      maxDateExclusive,
+      minOffenceDateInclusive,
+      maxOffenceDateExclusive,
+      classification,
+      hintText,
+      nomisCjaCode,
+      nomisSentenceCalcType,
+      displayOrder,
+      status,
+      isRecallable,
     )
   }
 }

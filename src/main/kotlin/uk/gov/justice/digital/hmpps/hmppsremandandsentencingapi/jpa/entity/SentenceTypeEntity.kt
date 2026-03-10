@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import java.time.LocalDate
@@ -38,4 +39,25 @@ class SentenceTypeEntity(
   val status: ReferenceEntityStatus,
   @Column(name = "is_recallable")
   val isRecallable: Boolean,
-)
+) {
+  companion object {
+    fun from(createSentenceType: CreateSentenceType): SentenceTypeEntity = SentenceTypeEntity(
+      0,
+      createSentenceType.sentenceTypeUuid ?: UUID.randomUUID(),
+      createSentenceType.description,
+      createSentenceType.minAgeInclusive,
+      createSentenceType.maxAgeExclusive,
+      createSentenceType.minDateInclusive,
+      createSentenceType.maxDateExclusive,
+      createSentenceType.minOffenceDateInclusive,
+      createSentenceType.maxOffenceDateExclusive,
+      createSentenceType.classification,
+      createSentenceType.hintText,
+      createSentenceType.nomisCjaCode,
+      createSentenceType.nomisSentenceCalcType,
+      createSentenceType.displayOrder,
+      createSentenceType.status,
+      createSentenceType.isRecallable,
+    )
+  }
+}

@@ -10,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -33,6 +34,7 @@ import java.util.UUID
 class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeService, private val migrateChargeRecordOutcomes: MigrateChargeRecordOutcomes) {
 
   @PostMapping
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Create charge outcome",
     description = "This endpoint will create a new charge outcome and migrate any charge data over that needs to be mapped to the newly created charge outcome",
@@ -52,6 +54,7 @@ class ChargeOutcomeController(private val chargeOutcomeService: ChargeOutcomeSer
   }
 
   @PutMapping("/{chargeOutcomeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Update charge outcome",
     description = "This endpoint will update an existing charge outcome and migrate any charge data over that needs to be mapped to the newly updated charge outcome",
