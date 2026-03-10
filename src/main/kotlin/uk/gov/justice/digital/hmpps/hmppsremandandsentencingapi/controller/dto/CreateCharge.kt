@@ -23,4 +23,5 @@ data class CreateCharge(
   var legacyData: ChargeLegacyData?,
   val prisonId: String,
   val replacingChargeUuid: UUID?,
+  val createChargeOrder: Int?,
 )

@@ -533,7 +533,7 @@ class CourtAppearanceService(
 
     val chargesWithSortKeys = charges.map { charge ->
       val sentenceUuid = charge.sentence?.sentenceUuid
-      val positionInChain = chainPositionFor(sentenceUuid, chargesBySentenceUuid, chainPositionByRef)
+      val positionInChain = chainPositionFor(sentenceUuid, chargesBySentenceUuid, chainPositionByRef, charge.createChargeOrder)
       ChargeWithSortKeys(positionInChain, charge)
     }
 
@@ -556,16 +556,17 @@ class CourtAppearanceService(
     sentenceUuid: UUID?,
     chargesBySentenceUuid: Map<UUID, CreateCharge>,
     chainPositionByUuid: MutableMap<UUID, Int>,
+    createChargeOrder: Int?,
   ): Int {
-    if (sentenceUuid == null) return 0
+    if (sentenceUuid == null) return createChargeOrder ?: 0
     // Already processed
     chainPositionByUuid[sentenceUuid]?.let { return it }
 
     val parentUuid = chargesBySentenceUuid[sentenceUuid]?.sentence?.consecutiveToSentenceUuid
     val parentPosition = if (parentUuid != null && chargesBySentenceUuid.containsKey(parentUuid)) {
-      chainPositionFor(parentUuid, chargesBySentenceUuid, chainPositionByUuid)
+      chainPositionFor(parentUuid, chargesBySentenceUuid, chainPositionByUuid, createChargeOrder)
     } else {
-      0 // No parent in the chain
+      createChargeOrder ?: 0 // No parent in the chain
     }
     val chainPosition = parentPosition + 1
 
