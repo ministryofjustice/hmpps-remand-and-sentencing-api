@@ -41,6 +41,25 @@ interface CourtCaseRepository :
   ): Long
 
   @Query(
+    """select count(*)
+    from court_case cc
+    join court_appearance lca on cc.latest_court_appearance_id = lca.id
+    where cc.prisoner_id = :prisonerId and (cc.legacy_data->>'bookingId' = :bookingId or cc.legacy_data->>'bookingId' is null or :bookingId = '') 
+    and lca.appearance_date >= :appearanceDateFrom
+    and lca.appearance_date <= :appearanceDateTo
+    and cc.status_id not in :courtCaseStatuses
+  """,
+    nativeQuery = true,
+  )
+  fun countCourtCasesForSearch(
+    @Param("prisonerId") prisonerId: String,
+    @Param("bookingId") bookingId: String,
+    @Param("appearanceDateFrom") appearanceDateFrom: LocalDate,
+    @Param("appearanceDateTo") appearanceDateTo: LocalDate,
+    @Param("courtCaseStatuses") courtCaseStatus: List<String> = listOf(CourtCaseEntityStatus.DELETED.toString(), CourtCaseEntityStatus.DUPLICATE.toString()),
+  ): Long
+
+  @Query(
     """select count(cc)
     from CourtCaseEntity cc
     join cc.latestCourtAppearance lca

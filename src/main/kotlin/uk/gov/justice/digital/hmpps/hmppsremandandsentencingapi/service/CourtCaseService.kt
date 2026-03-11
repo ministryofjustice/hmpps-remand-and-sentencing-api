@@ -96,6 +96,7 @@ class CourtCaseService(
     pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
     appearanceDateFrom: LocalDate,
     appearanceDateTo: LocalDate,
+    bookingId: String,
   ): RecordResponse<SearchCourtCasesPage> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
@@ -106,6 +107,7 @@ class CourtCaseService(
       CourtCaseEntityStatus.DELETED,
       appearanceDateFrom,
       appearanceDateTo,
+      bookingId,
     )
     val manyChargesToSentenceCourtCaseIds =
       courtCaseRows.filter { it.sentenceStatus == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
@@ -122,9 +124,10 @@ class CourtCaseService(
         CourtCaseEntityStatus.DELETED,
         appearanceDateFrom,
         appearanceDateTo,
+        bookingId,
       )
     }
-    val count = courtCaseRepository.countCourtCasesByPrisonerAndDate(prisonerId, appearanceDateFrom, appearanceDateTo)
+    val count = courtCaseRepository.countCourtCasesForSearch(prisonerId, bookingId, appearanceDateFrom, appearanceDateTo)
     val totalCount = courtCaseRepository.countCourtCasesByPrisoner(prisonerId)
     val courtCaseMap = toReturnCourtCases.groupBy { it.courtCaseId }
     val appearanceDateCompareTo = when (pagedCourtCaseOrderBy) {

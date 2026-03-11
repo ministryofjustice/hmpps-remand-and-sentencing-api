@@ -25,6 +25,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     courtCaseStatus: CourtCaseEntityStatus,
     appearanceDateFrom: LocalDate,
     appearanceDateTo: LocalDate,
+    bookingId: String,
   ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<order_by>", pagedCourtCaseOrderBy.orderBy), "courtCaseRowMapping")
     .setParameter("prisonerId", prisonerId)
     .setParameter("limit", limit)
@@ -33,6 +34,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     .setParameter("courtCaseStatus", courtCaseStatus.toString())
     .setParameter("appearanceDateFrom", appearanceDateFrom)
     .setParameter("appearanceDateTo", appearanceDateTo)
+    .setParameter("bookingId", bookingId)
     .resultList as List<CourtCaseRow>
 
   companion object {
@@ -127,6 +129,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
           and cc1.latest_court_appearance_id is not null
           and lca1.appearance_date >= :appearanceDateFrom
           and lca1.appearance_date <= :appearanceDateTo
+          and ((cc1.legacy_data->>'bookingId' is null or cc1.legacy_data->>'bookingId' = :bookingId) or :bookingId = '')
         group by cc1.id, lca1.appearance_date
         order by <order_by>
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id
