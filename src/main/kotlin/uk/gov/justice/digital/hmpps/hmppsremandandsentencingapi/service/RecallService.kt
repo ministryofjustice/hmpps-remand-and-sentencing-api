@@ -53,7 +53,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.L
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
-import java.util.*
+import java.util.UUID
 
 @Service
 class RecallService(
@@ -470,7 +470,6 @@ class RecallService(
     }
     return IsRecallPossible.YES
   }
-
 
   @Transactional
   fun getRecallableCourtCases(
