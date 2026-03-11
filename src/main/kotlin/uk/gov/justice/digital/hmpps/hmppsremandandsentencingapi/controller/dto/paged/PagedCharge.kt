@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.UUID
 
 data class PagedCharge(
@@ -16,6 +17,7 @@ data class PagedCharge(
   val legacyData: ChargeLegacyData?,
   val sentence: PagedSentence?,
   val mergedFromCase: PagedMergedFromCase?,
+  val createdAt: ZonedDateTime,
 ) {
   companion object {
     fun from(chargeRows: List<CourtCaseRow>): PagedCharge {
@@ -31,6 +33,7 @@ data class PagedCharge(
         charge.chargeLegacyData,
         sentenceRows?.let { PagedSentence.from(it) },
         charge.takeIf { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }?.let { PagedMergedFromCase.from(listOf(it)) },
+        charge.chargeCreatedAt!!,
       )
     }
   }
