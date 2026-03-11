@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
 import java.util.UUID
@@ -42,7 +43,12 @@ import java.util.UUID
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-controller", description = "Court case")
-class CourtCaseController(private val courtCaseService: CourtCaseService, private val courtCaseReferenceService: CourtCaseReferenceService, private val dpsDomainEventService: DpsDomainEventService) {
+class CourtCaseController(
+  private val courtCaseService: CourtCaseService,
+  private val courtCaseReferenceService: CourtCaseReferenceService,
+  private val dpsDomainEventService: DpsDomainEventService,
+  private val recallService: RecallService,
+) {
 
   @PostMapping("/court-case")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
@@ -148,7 +154,7 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   fun getRecallableCourtCases(
     @PathVariable prisonerId: String,
     @RequestParam(defaultValue = "false") mergeDuplicateCourtCases: Boolean,
-  ): RecallableCourtCasesResponse = courtCaseService.getRecallableCourtCases(prisonerId, mergeDuplicateCourtCases).let { (recallCourtCases, eventsToEmit) ->
+  ): RecallableCourtCasesResponse = recallService.getRecallableCourtCases(prisonerId, mergeDuplicateCourtCases).let { (recallCourtCases, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     recallCourtCases
   }
