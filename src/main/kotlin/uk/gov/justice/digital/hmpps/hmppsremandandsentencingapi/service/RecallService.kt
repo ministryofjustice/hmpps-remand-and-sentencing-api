@@ -581,7 +581,7 @@ class RecallService(
     val duplicateKeys = findDuplicateKeys(sentencesByDupKey)
     if (duplicateKeys.isEmpty()) return cases.sortedByDescending { it.appearanceDate }
 
-    val sentencesByKey = pickEarliestSentencePerDuplicateKey(sentencesByDupKey)
+    val sentencesByKey = pickLatestSentencePerDuplicateKey(sentencesByDupKey)
     val sentencesPerCase = sentencesByCaseUuid(sentencesByKey)
     val mergeGroups = groupCourtCasesToMergeByDuplicateKeys(cases, sentencesByDupKey, duplicateKeys)
 
@@ -642,10 +642,10 @@ class RecallService(
     .filter { (_, refs) -> refs.map { it.caseUuid }.distinct().size > 1 }
     .keys
 
-  private fun pickEarliestSentencePerDuplicateKey(
+  private fun pickLatestSentencePerDuplicateKey(
     sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
   ): Map<DuplicateSentenceKey, SentenceWithCaseUuid> = sentencesByDuplicateSentenceKey.mapValues { (_, refs) ->
-    refs.minWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
+    refs.maxWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
   }
 
   private fun sentencesByCaseUuid(
@@ -683,7 +683,7 @@ class RecallService(
   ): String = duplicateWinnerRefs
     .asSequence()
     .filter { it.caseUuid in memberUuids }
-    .minWithOrNull(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
+    .maxWithOrNull(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
     ?.caseUuid
     ?: memberUuids.first()
 
