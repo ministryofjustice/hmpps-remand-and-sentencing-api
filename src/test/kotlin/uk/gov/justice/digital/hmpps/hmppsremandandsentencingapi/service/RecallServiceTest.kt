@@ -56,6 +56,8 @@ class RecallServiceTest {
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
   private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
   private val serviceUserService: ServiceUserService = mockk(relaxed = true)
+  private val courtCaseRepository = mockk<uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository>()
+  private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
 
   private val service = RecallService(
     recallRepository,
@@ -68,6 +70,8 @@ class RecallServiceTest {
     adjustmentsApiClient,
     sentenceHistoryRepository,
     serviceUserService,
+    courtCaseRepository,
+    fixManyChargesToSentenceService,
   )
 
   @Test
