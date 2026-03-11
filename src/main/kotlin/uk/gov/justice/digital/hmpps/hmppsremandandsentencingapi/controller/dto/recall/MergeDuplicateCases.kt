@@ -7,6 +7,15 @@ data class DuplicateSentenceKey(
   val offenceCode: String?,
   val offenceStartDate: LocalDate?,
   val sentenceDate: LocalDate?, // The Sentence Date is otherwise known as the Appearance Date or the Warrant Date
+  val periodLengths: List<DuplicateSentencePeriodLength>,
+)
+
+data class DuplicateSentencePeriodLength(
+  val periodLengthType: String,
+  val years: Int?,
+  val months: Int?,
+  val weeks: Int?,
+  val days: Int?,
 )
 
 data class SentenceWithCaseUuid(
