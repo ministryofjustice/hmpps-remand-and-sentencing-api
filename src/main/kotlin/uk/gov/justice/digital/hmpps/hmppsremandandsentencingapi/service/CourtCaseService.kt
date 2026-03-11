@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.CourtCaseMergedGroups
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentenceKey
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentencePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
@@ -315,6 +316,23 @@ class CourtCaseService(
         offenceCode = ref.sentence.offenceCode,
         offenceStartDate = ref.sentence.offenceStartDate,
         sentenceDate = ref.sentence.sentenceDate,
+        periodLengths = ref.sentence.periodLengths
+          .map {
+            DuplicateSentencePeriodLength(
+              periodLengthType = it.periodLengthType.name,
+              years = it.years,
+              months = it.months,
+              weeks = it.weeks,
+              days = it.days,
+            )
+          }
+          .sortedWith(
+            compareBy<DuplicateSentencePeriodLength> { it.periodLengthType }
+              .thenBy { it.years }
+              .thenBy { it.months }
+              .thenBy { it.weeks }
+              .thenBy { it.days },
+          ),
       )
     }
 

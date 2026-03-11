@@ -5,6 +5,7 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Sente
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.time.LocalDate
@@ -383,6 +385,94 @@ class CourtCaseServiceTest {
       assertThat(result).hasSize(1)
       assertThat(result.single().courtCaseUuid).isEqualTo("CASE-1")
     }
+
+    @Test
+    fun `does not merge when duplicate sentence fields match but period lengths differ`() {
+      val sentenceDate = LocalDate.of(2020, 2, 1)
+      val startDate = LocalDate.of(2020, 1, 1)
+
+      val case1 = recallableCourtCase(
+        "CASE-1",
+        "C1",
+        LocalDate.of(2024, 1, 10),
+        listOf(
+          recallableSentence(
+            uuid = UUID.randomUUID(),
+            offenceCode = "OFF1",
+            offenceStartDate = startDate,
+            sentenceDate = sentenceDate,
+            createdAt = LocalDateTime.of(2020, 2, 1, 10, 0),
+          ).copy(
+            periodLengths = listOf(periodLength(years = 1)),
+          ),
+        ),
+      )
+
+      val case2 = recallableCourtCase(
+        "CASE-2",
+        "C1",
+        LocalDate.of(2024, 1, 9),
+        listOf(
+          recallableSentence(
+            uuid = UUID.randomUUID(),
+            offenceCode = "OFF1",
+            offenceStartDate = startDate,
+            sentenceDate = sentenceDate,
+            createdAt = LocalDateTime.of(2020, 2, 2, 10, 0),
+          ).copy(
+            periodLengths = listOf(periodLength(years = 2)),
+          ),
+        ),
+      )
+
+      val result = service.mergeAndSortCourtCases(listOf(case2, case1))
+
+      assertThat(result).isEqualTo(listOf(case1, case2))
+    }
+
+    @Test
+    fun `merges when duplicate sentence fields and period lengths match`() {
+      val sentenceDate = LocalDate.of(2020, 2, 1)
+      val startDate = LocalDate.of(2020, 1, 1)
+
+      val matchingPeriodLengths = listOf(periodLength(years = 1))
+
+      val olderSentence = recallableSentence(
+        uuid = UUID.randomUUID(),
+        offenceCode = "OFF1",
+        offenceStartDate = startDate,
+        sentenceDate = sentenceDate,
+        createdAt = LocalDateTime.of(2020, 2, 1, 10, 0),
+      ).copy(periodLengths = matchingPeriodLengths)
+
+      val newerSentence = recallableSentence(
+        uuid = UUID.randomUUID(),
+        offenceCode = "OFF1",
+        offenceStartDate = startDate,
+        sentenceDate = sentenceDate,
+        createdAt = LocalDateTime.of(2020, 2, 2, 10, 0),
+      ).copy(periodLengths = matchingPeriodLengths)
+
+      val case1 = recallableCourtCase(
+        "CASE-1",
+        "C1",
+        LocalDate.of(2024, 1, 10),
+        listOf(olderSentence),
+      )
+      val case2 = recallableCourtCase(
+        "CASE-2",
+        "C1",
+        LocalDate.of(2024, 1, 9),
+        listOf(newerSentence),
+      )
+
+      val result = service.mergeAndSortCourtCases(listOf(case2, case1))
+
+      assertThat(result).hasSize(1)
+      assertThat(result.single().courtCaseUuid).isEqualTo("CASE-1")
+      assertThat(result.single().sentences).hasSize(1)
+      assertThat(result.single().sentences.single().sentenceUuid).isEqualTo(olderSentence.sentenceUuid)
+    }
   }
 
   @Nested
@@ -583,4 +673,21 @@ class CourtCaseServiceTest {
 
     return courtCase
   }
+
+  private fun periodLength(
+    years: Int? = null,
+    months: Int? = null,
+    weeks: Int? = null,
+    days: Int? = null,
+    type: PeriodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+  ) = PeriodLength(
+    years = years,
+    months = months,
+    weeks = weeks,
+    days = days,
+    periodOrder = "years",
+    periodLengthType = type,
+    legacyData = null,
+    periodLengthUuid = UUID.randomUUID(),
+  )
 }
