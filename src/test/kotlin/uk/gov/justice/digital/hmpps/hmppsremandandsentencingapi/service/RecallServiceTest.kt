@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
@@ -42,7 +43,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 
 class RecallServiceTest {
 
@@ -56,8 +57,8 @@ class RecallServiceTest {
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
   private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
   private val serviceUserService: ServiceUserService = mockk(relaxed = true)
-  private val courtCaseRepository = mockk<uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository>()
-  private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
+  private val courtCaseRepository: CourtCaseRepository = mockk(relaxed = true)
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService = mockk(relaxed = true)
 
   private val service = RecallService(
     recallRepository,

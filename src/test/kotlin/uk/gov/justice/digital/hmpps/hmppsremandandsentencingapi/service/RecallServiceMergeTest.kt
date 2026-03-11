@@ -45,8 +45,8 @@ class RecallServiceMergeTest {
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
   private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
   private val serviceUserService: ServiceUserService = mockk(relaxed = true)
-  private val courtCaseRepository = mockk<CourtCaseRepository>()
-  private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
+  private val courtCaseRepository: CourtCaseRepository = mockk()
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService = mockk()
 
   private val service = RecallService(
     recallRepository,
