@@ -23,24 +23,6 @@ interface CourtCaseRepository :
   CourtCaseSearchRepository {
 
   @Query(
-    """select count(cc)
-    from CourtCaseEntity cc
-    join cc.latestCourtAppearance lca
-    where cc.prisonerId = :prisonerId 
-    and lca.appearanceDate >= :appearanceDateFrom
-    and lca.appearanceDate <= :appearanceDateTo
-    and cc.latestCourtAppearance is not null 
-    and cc.statusId not in :courtCaseStatuses
-  """,
-  )
-  fun countCourtCasesByPrisonerAndDate(
-    @Param("prisonerId") prisonerId: String,
-    @Param("appearanceDateFrom") appearanceDateFrom: LocalDate,
-    @Param("appearanceDateTo") appearanceDateTo: LocalDate,
-    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
-  ): Long
-
-  @Query(
     """select count(*)
     from court_case cc
     join court_appearance lca on cc.latest_court_appearance_id = lca.id
