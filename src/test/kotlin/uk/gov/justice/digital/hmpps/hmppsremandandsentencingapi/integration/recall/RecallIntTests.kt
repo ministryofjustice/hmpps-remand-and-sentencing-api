@@ -364,7 +364,7 @@ class RecallIntTests : IntegrationTestBase() {
         "courtCases[*].sentences[*].periodLengths",
       )
       .ignoringCollectionOrder()
-      .ignoringFieldsMatchingRegexes(".*periodLengthUuid") .ignoringFieldsMatchingRegexes(".*periodLengthUuid")
+      .ignoringFieldsMatchingRegexes(".*periodLengthUuid").ignoringFieldsMatchingRegexes(".*periodLengthUuid")
       .isEqualTo(
         Recall(
           recallUuid = uuidOne,
