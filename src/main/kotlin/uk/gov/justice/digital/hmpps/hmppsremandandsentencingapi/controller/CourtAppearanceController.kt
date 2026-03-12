@@ -75,8 +75,8 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   @PutMapping("/court-appearance/{appearanceUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
-    summary = "Create Court appearance",
-    description = "This endpoint will create a court appearance in a given court case",
+    summary = "Update Court appearance",
+    description = "This endpoint will update a court appearance in a given court case",
   )
   @ApiResponses(
     value = [
