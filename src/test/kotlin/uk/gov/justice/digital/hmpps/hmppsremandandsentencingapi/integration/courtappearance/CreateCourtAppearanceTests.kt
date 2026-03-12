@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
@@ -303,7 +304,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isNotFound
+      .isEqualTo(HttpStatus.CONFLICT)
   }
 
   @Test

@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cha
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -127,7 +128,7 @@ class UpdateChargeTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isNotFound
+      .isEqualTo(HttpStatus.CONFLICT)
   }
 
   private fun deleteCourtAppearance(appearanceUuid: UUID) {
