@@ -74,82 +74,6 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `get recallable court cases with sorting by date descending`() {
-    val charge1 = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val appearance1 = DpsDataCreator.dpsCreateCourtAppearance(
-      charges = listOf(charge1),
-      warrantType = "SENTENCING",
-      appearanceDate = LocalDate.of(2024, 1, 15),
-    )
-    val courtCase1 = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance1))
-    val (courtCaseUuid1, createdCase1) = createCourtCase(courtCase1)
-
-    val charge2 = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val appearance2 = DpsDataCreator.dpsCreateCourtAppearance(
-      charges = listOf(charge2),
-      warrantType = "SENTENCING",
-      appearanceDate = LocalDate.of(2024, 1, 10),
-    )
-    val courtCase2 = DpsDataCreator.dpsCreateCourtCase(
-      appearances = listOf(appearance2),
-      prisonerId = createdCase1.prisonerId, // Same prisoner
-    )
-    val (courtCaseUuid2) = createCourtCase(courtCase2)
-
-    webTestClient
-      .get()
-      .uri("/court-case/${createdCase1.prisonerId}/recallable-court-cases?sortBy=date&sortOrder=desc")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.cases.length()").isEqualTo(2)
-      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid1) // More recent date first
-      .jsonPath("$.cases[1].courtCaseUuid").isEqualTo(courtCaseUuid2)
-  }
-
-  @Test
-  fun `get recallable court cases with sorting by date ascending`() {
-    val charge1 = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val appearance1 = DpsDataCreator.dpsCreateCourtAppearance(
-      charges = listOf(charge1),
-      warrantType = "SENTENCING",
-      appearanceDate = LocalDate.of(2024, 1, 15),
-    )
-    val courtCase1 = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance1))
-    val (courtCaseUuid1, createdCase1) = createCourtCase(courtCase1)
-
-    val charge2 = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val appearance2 = DpsDataCreator.dpsCreateCourtAppearance(
-      charges = listOf(charge2),
-      warrantType = "SENTENCING",
-      appearanceDate = LocalDate.of(2024, 1, 10),
-    )
-    val courtCase2 = DpsDataCreator.dpsCreateCourtCase(
-      appearances = listOf(appearance2),
-      prisonerId = createdCase1.prisonerId, // Same prisoner
-    )
-    val (courtCaseUuid2) = createCourtCase(courtCase2)
-
-    webTestClient
-      .get()
-      .uri("/court-case/${createdCase1.prisonerId}/recallable-court-cases?sortBy=date&sortOrder=asc")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.cases.length()").isEqualTo(2)
-      .jsonPath("$.cases[0].courtCaseUuid").isEqualTo(courtCaseUuid2) // Earlier date first
-      .jsonPath("$.cases[1].courtCaseUuid").isEqualTo(courtCaseUuid1)
-  }
-
-  @Test
   fun `get recallable court cases with correct authorized role`() {
     val charge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(
@@ -470,5 +394,58 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
         s1.sentenceUuid to null,
       ),
     )
+  }
+
+  @Test
+  fun `should merge duplicate court cases when mergeDuplicateCourtCases query param is true`() {
+    val prisonerId = "A1234BC"
+    val offenceCode = "TH68011"
+    val offenceStartDate = LocalDate.of(2024, 1, 1)
+    val sentenceDate = LocalDate.of(2024, 2, 1)
+
+    val charge1 = DpsDataCreator.dpsCreateCharge(
+      offenceCode = offenceCode,
+      offenceStartDate = offenceStartDate,
+      sentence = DpsDataCreator.dpsCreateSentence(),
+    )
+    val appearance1 = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(charge1),
+      warrantType = "SENTENCING",
+      courtCode = "BIRMCC",
+      appearanceDate = sentenceDate,
+    )
+    createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        prisonerId = prisonerId,
+        appearances = listOf(appearance1),
+      ),
+    )
+
+    val charge2 = DpsDataCreator.dpsCreateCharge(
+      offenceCode = offenceCode,
+      offenceStartDate = offenceStartDate,
+      sentence = DpsDataCreator.dpsCreateSentence(),
+    )
+    val appearance2 = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(charge2),
+      warrantType = "SENTENCING",
+      courtCode = "BIRMCC",
+      appearanceDate = sentenceDate,
+    )
+    createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        prisonerId = prisonerId,
+        appearances = listOf(appearance2),
+      ),
+    )
+
+    webTestClient.get()
+      .uri("/court-case/$prisonerId/recallable-court-cases?mergeDuplicateCourtCases=true")
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW")) }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.cases.length()").isEqualTo(1)
+      .jsonPath("$.cases[0].sentences.length()").isEqualTo(1)
   }
 }

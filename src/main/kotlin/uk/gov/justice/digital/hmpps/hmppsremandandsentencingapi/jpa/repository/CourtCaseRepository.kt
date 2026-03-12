@@ -24,28 +24,36 @@ interface CourtCaseRepository :
   CourtCaseSearchRepository {
 
   @Query(
-    """select count(cc)
-    from CourtCaseEntity cc
-    join cc.latestCourtAppearance lca
-    where cc.prisonerId = :prisonerId and cc.latestCourtAppearance is not null and cc.statusId != :courtCaseStatus
-  """,
-  )
-  fun countCourtCases(
-    @Param("prisonerId") prisonerId: String,
-    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
-  ): Long
-
-  @Query(
     """select count(*)
     from court_case cc
-    where cc.prisoner_id = :prisonerId and (cc.legacy_data->>'bookingId' = :bookingId or cc.legacy_data->>'bookingId' is null) and cc.latest_court_appearance_id is not null and cc.status_id != :courtCaseStatus
+    join court_appearance lca on cc.latest_court_appearance_id = lca.id
+    where cc.prisoner_id = :prisonerId and (cc.legacy_data->>'bookingId' = :bookingId or cc.legacy_data->>'bookingId' is null or :bookingId = '') 
+    and lca.appearance_date >= :appearanceDateFrom
+    and lca.appearance_date <= :appearanceDateTo
+    and cc.status_id not in :courtCaseStatuses
   """,
     nativeQuery = true,
   )
-  fun countCourtCasesByBookingId(
+  fun countCourtCasesForSearch(
     @Param("prisonerId") prisonerId: String,
     @Param("bookingId") bookingId: String,
-    @Param("courtCaseStatus") courtCaseStatus: String = CourtCaseEntityStatus.DELETED.toString(),
+    @Param("appearanceDateFrom") appearanceDateFrom: LocalDate,
+    @Param("appearanceDateTo") appearanceDateTo: LocalDate,
+    @Param("courtCaseStatuses") courtCaseStatus: List<String> = listOf(CourtCaseEntityStatus.DELETED.toString(), CourtCaseEntityStatus.DUPLICATE.toString()),
+  ): Long
+
+  @Query(
+    """select count(cc)
+    from CourtCaseEntity cc
+    join cc.latestCourtAppearance lca
+    where cc.prisonerId = :prisonerId 
+    and cc.latestCourtAppearance is not null 
+    and cc.statusId not in :courtCaseStatuses
+  """,
+  )
+  fun countCourtCasesByPrisoner(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
   ): Long
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?

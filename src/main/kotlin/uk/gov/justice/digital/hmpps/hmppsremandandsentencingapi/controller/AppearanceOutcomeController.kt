@@ -10,9 +10,11 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -24,7 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AppearanceOutcomeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.datafix.MigrateCourtAppearanceRecordOutcomes
-import java.util.UUID
+import java.util.*
 
 @RestController
 @RequestMapping("/appearance-outcome", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -32,9 +34,10 @@ import java.util.UUID
 class AppearanceOutcomeController(private val appearanceOutcomeService: AppearanceOutcomeService, private val migrateCourtAppearanceRecordOutcomes: MigrateCourtAppearanceRecordOutcomes) {
 
   @PostMapping
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Create appearance outcome",
-    description = "This endpoint will create a new appearance outcome and migrate any charge data over that needs to be mapped to the newly created appearance outcome",
+    description = "This endpoint will create a new appearance outcome and migrate any appearance data over that needs to be mapped to the newly created appearance outcome",
   )
   @ApiResponses(
     value = [
@@ -48,6 +51,28 @@ class AppearanceOutcomeController(private val appearanceOutcomeService: Appearan
   fun createAppearanceOutcome(@Valid @RequestBody createAppearanceOutcome: CreateAppearanceOutcome): CourtAppearanceOutcome = appearanceOutcomeService.createAppearanceOutcome(createAppearanceOutcome).let { createdAppearanceOutcomeEntity ->
     migrateCourtAppearanceRecordOutcomes.migrateCourtAppearanceRecordsToOutcome(createdAppearanceOutcomeEntity)
     CourtAppearanceOutcome.from(createdAppearanceOutcomeEntity)
+  }
+
+  @PutMapping("/{appearanceOutcomeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Update appearance outcome",
+    description = "This endpoint will update an existing appearance outcome and migrate any appearance data over that needs to be mapped to the newly updated appearance outcome",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "400", description = "Bad request", content = [Content(mediaType = "application/json", schema = Schema(implementation = FieldErrorErrorResponse::class))]),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun updateAppearanceOutcome(@PathVariable appearanceOutcomeUuid: UUID, @Valid @RequestBody updateAppearanceOutcome: CreateAppearanceOutcome): CourtAppearanceOutcome = appearanceOutcomeService.updateAppearanceOutcome(appearanceOutcomeUuid, updateAppearanceOutcome).let { (entity, migrateNomisCodeData) ->
+    if (migrateNomisCodeData) {
+      migrateCourtAppearanceRecordOutcomes.migrateCourtAppearanceRecordsToOutcome(entity)
+    }
+    CourtAppearanceOutcome.from(entity)
   }
 
   @GetMapping("/status")

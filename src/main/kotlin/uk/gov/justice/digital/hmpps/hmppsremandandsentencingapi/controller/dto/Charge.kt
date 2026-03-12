@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.UUID
 
 data class Charge(
@@ -15,6 +16,7 @@ data class Charge(
   val sentence: Sentence?,
   val legacyData: ChargeLegacyData?,
   val mergedFromCase: MergedFromCase?,
+  val createdAt: ZonedDateTime,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): Charge = Charge(
@@ -32,6 +34,7 @@ data class Charge(
           chargeEntity.mergedFromDate,
         )
       },
+      chargeEntity.createdAt,
     )
   }
 }
