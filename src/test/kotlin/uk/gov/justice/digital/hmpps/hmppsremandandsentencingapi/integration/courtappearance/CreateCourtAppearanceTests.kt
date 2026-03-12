@@ -287,6 +287,26 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `must not create appearance when court appearance uuid provided exists and is deleted`() {
+    val (courtCaseUuid, courtCase) = createCourtCase()
+    val appearanceUuid = courtCase.appearances.first().appearanceUuid
+    deleteCourtAppearance(appearanceUuid)
+
+    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, appearanceUUID = appearanceUuid)
+    webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(createCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNotFound
+  }
+
+  @Test
   fun `no token results in unauthorized`() {
     val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance()
     webTestClient
@@ -379,5 +399,17 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(sentences[2].consecutiveToSentenceUuid).isEqualTo(sentences[1].sentenceUuid)
     assertThat(sentences[1].consecutiveToSentenceUuid).isEqualTo(sentences[0].sentenceUuid)
     assertThat(sentences[0].consecutiveToSentenceUuid).isNull()
+  }
+
+  private fun deleteCourtAppearance(appearanceUuid: UUID) {
+    webTestClient
+      .delete()
+      .uri("/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
   }
 }

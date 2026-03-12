@@ -107,4 +107,38 @@ class UpdateChargeTests : IntegrationTestBase() {
       .expectStatus()
       .isForbidden
   }
+
+  @Test
+  fun `cannot update charge if appearance is deleted`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge()
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+
+    deleteCourtAppearance(createAppearance.appearanceUuid)
+
+    val updateCharge = createCharge.copy(offenceStartDate = LocalDate.now().minusDays(10), appearanceUuid = createAppearance.appearanceUuid)
+    webTestClient
+      .put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNotFound
+  }
+
+  private fun deleteCourtAppearance(appearanceUuid: UUID) {
+    webTestClient
+      .delete()
+      .uri("/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+  }
 }

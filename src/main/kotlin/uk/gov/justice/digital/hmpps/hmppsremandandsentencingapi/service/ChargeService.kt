@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
@@ -8,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.AppearanceDeletedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
@@ -269,8 +271,11 @@ class ChargeService(
   fun findCharge(appearanceUuid: UUID, chargeUuid: UUID): ChargeEntity? = chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, chargeUuid) ?: chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)
 
   @Transactional
-  fun createCharge(createCharge: CreateCharge): RecordResponse<ChargeEntity>? = courtAppearanceRepository.findByAppearanceUuid(createCharge.appearanceUuid!!)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let { courtAppearanceEntity ->
-    createCharge(createCharge, mutableMapOf(), courtAppearanceEntity.courtCase.prisonerId, courtAppearanceEntity.courtCase.caseUniqueIdentifier, courtAppearanceEntity, false)
+  fun createCharge(createCharge: CreateCharge): RecordResponse<ChargeEntity>? = courtAppearanceRepository.findByAppearanceUuid(createCharge.appearanceUuid!!)?.let {
+    if (it.statusId == CourtAppearanceEntityStatus.DELETED) {
+      throw AppearanceDeletedException("Court appearance ${createCharge.appearanceUuid} has been deleted and cannot be modified")
+    }
+    createCharge(createCharge, mutableMapOf(), it.courtCase.prisonerId, it.courtCase.caseUniqueIdentifier, it, false)
   }
 
   @Transactional
