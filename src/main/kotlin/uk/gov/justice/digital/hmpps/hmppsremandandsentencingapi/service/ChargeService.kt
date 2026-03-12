@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
-import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
