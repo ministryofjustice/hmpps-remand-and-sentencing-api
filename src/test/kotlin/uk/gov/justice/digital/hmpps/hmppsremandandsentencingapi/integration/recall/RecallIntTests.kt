@@ -291,6 +291,10 @@ class RecallIntTests : IntegrationTestBase() {
 
   @Test
   fun `Get recalls builds correct court case and sentence groups for DPS recall`() {
+    // Added ignoredPeriodLengthUuid because courtCases/sentences lists have no explicit ordering in the main code (so test becomes flaky)
+    // May revisit and enforce a sort
+    val ignoredPeriodLengthUuid = UUID.fromString("00000000-0000-0000-0000-000000000001")
+
     val appearanceDateOne = LocalDate.now().minusDays(30)
     val firstChargeCourtCaseOne = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDateOne),
@@ -360,6 +364,7 @@ class RecallIntTests : IntegrationTestBase() {
         "courtCases[*].sentences[*].periodLengths",
       )
       .ignoringCollectionOrder()
+      .ignoringFieldsMatchingRegexes(".*periodLengthUuid").ignoringFieldsMatchingRegexes(".*periodLengthUuid")
       .isEqualTo(
         Recall(
           recallUuid = uuidOne,
@@ -396,7 +401,7 @@ class RecallIntTests : IntegrationTestBase() {
                       periodOrder = "years",
                       periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
                       legacyData = null,
-                      periodLengthUuid = recallByUuid.courtCases[0].sentences[0].periodLengths[0].periodLengthUuid,
+                      periodLengthUuid = ignoredPeriodLengthUuid,
                     ),
                   ),
                   sentenceServeType = "FORTHWITH",
@@ -419,7 +424,7 @@ class RecallIntTests : IntegrationTestBase() {
                       periodOrder = "years",
                       periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
                       legacyData = null,
-                      periodLengthUuid = recallByUuid.courtCases[0].sentences[1].periodLengths[0].periodLengthUuid,
+                      periodLengthUuid = ignoredPeriodLengthUuid,
                     ),
                   ),
                   sentenceServeType = "FORTHWITH",
@@ -450,7 +455,7 @@ class RecallIntTests : IntegrationTestBase() {
                       periodOrder = "years",
                       periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
                       legacyData = null,
-                      periodLengthUuid = recallByUuid.courtCases[1].sentences[0].periodLengths[0].periodLengthUuid,
+                      periodLengthUuid = ignoredPeriodLengthUuid,
                     ),
                   ),
                   sentenceServeType = "FORTHWITH",
