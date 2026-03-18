@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.AppearanceDeletedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -70,6 +71,9 @@ class CourtAppearanceService(
     return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)
       ?.let { courtCaseEntity ->
         val existingCourtAppearance = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)
+        if (existingCourtAppearance?.statusId == CourtAppearanceEntityStatus.DELETED) {
+          throw AppearanceDeletedException("Court appearance $appearanceUuid has been deleted and cannot be modified")
+        }
 
         val savedAppearance = if (existingCourtAppearance != null) {
           updateCourtAppearanceEntity(
@@ -91,6 +95,9 @@ class CourtAppearanceService(
     courtAppearance: CreateCourtAppearance,
     courtCaseEntity: CourtCaseEntity,
   ): RecordResponse<CourtAppearanceEntity> = courtAppearanceRepository.findByAppearanceUuid(courtAppearance.appearanceUuid)?.let { existingCourtAppearance ->
+    if (existingCourtAppearance.statusId == CourtAppearanceEntityStatus.DELETED) {
+      throw AppearanceDeletedException("Court appearance ${courtAppearance.appearanceUuid} has been deleted and cannot be modified")
+    }
     updateCourtAppearanceEntity(courtAppearance, courtCaseEntity, existingCourtAppearance)
   } ?: createCourtAppearanceEntity(courtAppearance, courtCaseEntity)
 
@@ -533,7 +540,7 @@ class CourtAppearanceService(
 
     val chargesWithSortKeys = charges.map { charge ->
       val sentenceUuid = charge.sentence?.sentenceUuid
-      val positionInChain = chainPositionFor(sentenceUuid, chargesBySentenceUuid, chainPositionByRef)
+      val positionInChain = chainPositionFor(sentenceUuid, chargesBySentenceUuid, chainPositionByRef, charge.createChargeOrder)
       ChargeWithSortKeys(positionInChain, charge)
     }
 
@@ -556,16 +563,17 @@ class CourtAppearanceService(
     sentenceUuid: UUID?,
     chargesBySentenceUuid: Map<UUID, CreateCharge>,
     chainPositionByUuid: MutableMap<UUID, Int>,
+    createChargeOrder: Int?,
   ): Int {
-    if (sentenceUuid == null) return 0
+    if (sentenceUuid == null) return createChargeOrder ?: 0
     // Already processed
     chainPositionByUuid[sentenceUuid]?.let { return it }
 
     val parentUuid = chargesBySentenceUuid[sentenceUuid]?.sentence?.consecutiveToSentenceUuid
     val parentPosition = if (parentUuid != null && chargesBySentenceUuid.containsKey(parentUuid)) {
-      chainPositionFor(parentUuid, chargesBySentenceUuid, chainPositionByUuid)
+      chainPositionFor(parentUuid, chargesBySentenceUuid, chainPositionByUuid, createChargeOrder)
     } else {
-      0 // No parent in the chain
+      createChargeOrder ?: 0 // No parent in the chain
     }
     val chainPosition = parentPosition + 1
 

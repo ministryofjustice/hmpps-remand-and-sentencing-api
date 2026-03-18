@@ -85,6 +85,18 @@ class CourtAppearanceServiceTests {
 
       assertThat(refs).containsExactly(uuid(5), uuid(1), uuid(6), uuid(2), uuid(3), uuid(7), uuid(4), uuid(8))
     }
+
+    @Test
+    fun `should fallback to sorting by charge create order when no sentences`() {
+      val c1 = createCharge(createChargeOrder = 1)
+      val c2 = createCharge(createChargeOrder = 2)
+      val c3 = createCharge(createChargeOrder = 3)
+
+      val mixedList = listOf(c3, c1, c2)
+      val sorted = courtAppearanceService.orderChargesByConsecutiveChain(mixedList)
+      val refs = sorted.map { it.chargeUuid }
+      assertThat(refs).containsExactly(c1.chargeUuid, c2.chargeUuid, c3.chargeUuid)
+    }
   }
 
   @Nested
@@ -155,7 +167,7 @@ class CourtAppearanceServiceTests {
 
   private fun uuid(i: Long) = UUID(0L, i)
 
-  private fun createCharge(sentenceUuid: UUID? = null, consecutiveToUuid: UUID? = null, replacingChargeUuid: UUID? = null, outcomeUuid: UUID? = null): CreateCharge = CreateCharge(
+  private fun createCharge(sentenceUuid: UUID? = null, consecutiveToUuid: UUID? = null, replacingChargeUuid: UUID? = null, outcomeUuid: UUID? = null, chargeUuid: UUID? = null, createChargeOrder: Int? = null): CreateCharge = CreateCharge(
     appearanceUuid = null,
     offenceCode = "X",
     offenceStartDate = LocalDate.now(),
@@ -180,5 +192,6 @@ class CourtAppearanceServiceTests {
       )
     },
     replacingChargeUuid = replacingChargeUuid,
+    createChargeOrder = createChargeOrder,
   )
 }

@@ -640,6 +640,44 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(courtCaseAfter.legacyData!!.caseReferences.map { it.offenderCaseReference }).containsExactly(newRef)
   }
 
+  @Test
+  fun `cannot update an appearance that is deleted`() {
+    val courtCase = createCourtCase()
+    val appearance = courtCase.second.appearances.first()
+    val appearanceUuid = appearance.appearanceUuid
+
+    deleteCourtAppearance(appearanceUuid)
+
+    val updateAppearance = appearance.copy(
+      courtCaseUuid = courtCase.first,
+      charges = listOf(DpsDataCreator.dpsCreateCharge()),
+    )
+
+    webTestClient
+      .put()
+      .uri("/court-appearance/$appearanceUuid")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .is4xxClientError
+  }
+
+  private fun deleteCourtAppearance(appearanceUuid: UUID) {
+    webTestClient
+      .delete()
+      .uri("/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
