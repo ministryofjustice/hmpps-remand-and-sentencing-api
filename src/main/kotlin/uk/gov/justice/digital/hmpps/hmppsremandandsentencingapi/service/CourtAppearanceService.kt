@@ -275,7 +275,13 @@ class CourtAppearanceService(
       activeRecord,
       existingCourtAppearanceEntity.nextCourtAppearance,
     )
-    if (appearanceChangeStatus == EntityChangeStatus.EDITED || chargesChangedStatus == EntityChangeStatus.EDITED) {
+    if (appearanceChangeStatus == EntityChangeStatus.EDITED ||
+      chargesChangedStatus == EntityChangeStatus.EDITED ||
+      setOf(
+        EntityChangeStatus.CREATED,
+        EntityChangeStatus.DELETED,
+      ).contains(nextCourtAppearanceRecord?.first)
+    ) {
       eventsToEmit.add(
         EventMetadataCreator.courtAppearanceEventMetadata(
           activeRecord.courtCase.prisonerId,

@@ -572,6 +572,39 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update court appearance only adding a next court appearance results in an appearance updated event`() {
+    val appearance = dpsCreateCourtAppearance(
+      nextCourtAppearance = null,
+    )
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          appearance,
+        ),
+      ),
+    )
+    val createdAppearance = createdCourtCase.appearances.first()
+    val updateAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val messages = getMessages(2)
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("court-appearance.updated")
+  }
+
+  @Test
   fun `must not update appearance when no court case exists`() {
     val updateCourtAppearance = dpsCreateCourtAppearance(courtCaseUuid = UUID.randomUUID().toString())
     webTestClient
