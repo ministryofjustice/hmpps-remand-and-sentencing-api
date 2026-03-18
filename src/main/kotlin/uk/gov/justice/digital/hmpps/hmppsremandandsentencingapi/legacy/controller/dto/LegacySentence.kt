@@ -35,7 +35,7 @@ data class LegacySentence(
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
       val activeAppearances = sentenceEntity.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
+        .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
 
       val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
       val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentenceEntity)
