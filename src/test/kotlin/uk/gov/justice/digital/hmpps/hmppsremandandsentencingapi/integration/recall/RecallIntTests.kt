@@ -1239,6 +1239,62 @@ class RecallIntTests : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `Creating a legacy recall sentence emits recall inserted event`() {
+    val (chargeLifetimeUuid, toCreateLegacyCharge) = createLegacyCharge(
+      legacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+        legacyData = DataCreator.courtAppearanceLegacyData(
+          outcomeConvictionFlag = true,
+          outcomeDispositionCode = "F",
+        ),
+      ),
+      legacyCharge = DataCreator.legacyCreateCharge(),
+    )
+
+    purgeQueues()
+
+    val toCreateSentence = DataCreator.legacyCreateSentence(
+      chargeUuids = listOf(chargeLifetimeUuid),
+      appearanceUuid = toCreateLegacyCharge.appearanceLifetimeUuid,
+      sentenceLegacyData = DataCreator.sentenceLegacyData(
+        sentenceCalcType = "FTR_ORA",
+        sentenceCategory = "2020",
+      ),
+      returnToCustodyDate = LocalDate.of(2023, 1, 1),
+      active = false,
+    )
+
+    val sentenceResponse = webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(toCreateSentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(LegacySentenceCreatedResponse::class.java)
+      .responseBody
+      .blockFirst()!!
+
+    val messages = getMessages(2)
+
+    assertThat(messages).hasSize(2)
+    assertThat(messages).extracting<String> { it.eventType }
+      .contains("sentence.inserted", "recall.inserted")
+
+    val recallInserted = messages.first { it.eventType == "recall.inserted" }
+
+    assertThat(recallInserted.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+    assertThat(recallInserted.additionalInformation.get("recallId").asText()).isNotBlank()
+    assertThat(recallInserted.additionalInformation.get("sentenceIds"))
+      .extracting<String> { it.asText() }
+      .contains(sentenceResponse.lifetimeUuid.toString())
+  }
+
   companion object {
     @JvmStatic
     fun dpsSentenceAndClassificationCombinationParameters(): Stream<Arguments> = Stream.of(

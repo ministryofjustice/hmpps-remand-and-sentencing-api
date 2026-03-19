@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.LegacySentenceTypeEntity
@@ -106,15 +109,18 @@ class LegacySentenceService(
           isManyCharges,
         ),
       )
-      if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
-        createRecall(
-          sentence,
-          createdSentence,
-          legacySentenceType,
-          RecallSentenceLegacyData.from(legacyData),
-          prisonerId!!,
-        )
-      }
+      val createRecallEvent =
+        if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
+          createRecall(
+            sentence,
+            createdSentence,
+            legacySentenceType,
+            RecallSentenceLegacyData.from(legacyData),
+            prisonerId!!,
+          )
+        } else {
+          null
+        }
 
       val courtAppearance = charge.appearanceCharges
         .map { it.appearance!! }
@@ -127,6 +133,7 @@ class LegacySentenceService(
         charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
+        eventMetadata = createRecallEvent?.let(::setOf) ?: emptySet(),
       )
     }
   }
@@ -147,7 +154,7 @@ class LegacySentenceService(
     legacySentenceType: LegacySentenceTypeEntity?,
     legacyData: RecallSentenceLegacyData,
     prisonerId: String,
-  ) {
+  ): EventMetadata {
     val defaultRecallType = recallTypeRepository.findOneByCode(RecallType.LR)!!
     val recall = recallRepository.save(
       RecallEntity.fromLegacy(
@@ -168,6 +175,14 @@ class LegacySentenceService(
     )
     val recallHistory = recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
     recallSentenceHistoryRepository.save(RecallSentenceHistoryEntity.from(recallHistory, recallSentence, ChangeSource.NOMIS))
+    return EventMetadataCreator.recallEventMetadata(
+      prisonerId = prisonerId,
+      recallId = recall.recallUuid.toString(),
+      sentenceIds = listOf(createdSentence.sentenceUuid.toString()),
+      previousSentenceIds = emptyList(),
+      previousRecallId = null,
+      eventType = EventType.RECALL_INSERTED,
+    )
   }
 
   fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID, performedByUser: String): ChargeEntity {
@@ -238,6 +253,8 @@ class LegacySentenceService(
         delete(it, getPerformedByUsername(sentence))
       }
     return sentence.chargeUuids.map { chargeUuid ->
+      var createRecallEvent: EventMetadata? = null
+
       val (existingSentence, entityStatus) = (
         (
           (
@@ -268,7 +285,7 @@ class LegacySentenceService(
                 copyPeriodLengthsForNewSentence(newSentence, getPerformedByUsername(sentence), periodLengthsByChargeUuid, existingPeriodLengths)
 
                 if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
-                  createRecall(
+                  createRecallEvent = createRecall(
                     sentence,
                     newSentence,
                     legacySentenceType,
@@ -317,6 +334,7 @@ class LegacySentenceService(
         activeRecord.charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
+        eventMetadata = createRecallEvent?.let(::setOf) ?: emptySet(),
       )
     }
   }
