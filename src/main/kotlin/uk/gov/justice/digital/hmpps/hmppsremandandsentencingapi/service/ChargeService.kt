@@ -103,22 +103,42 @@ class ChargeService(
     if (!existingCharge.isSame(compareCharge, charge.sentence != null)) {
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
         val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
-        existingCharge.updateFrom(replacedWithAnotherOutcome, serviceUserService.getUsername(), charge.prisonId)
-        chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
-
+        if (existingCharge.hasTwoOrMoreLiveCourtAppearance(courtAppearance)) {
+          courtAppearance.appearanceCharges.filter { it.charge == existingCharge }
+            .forEach { appearanceCharge ->
+              appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
+              appearanceCharge.appearance!!.appearanceCharges.remove(appearanceCharge)
+              appearanceChargeHistoryRepository.save(
+                AppearanceChargeHistoryEntity.removedFrom(
+                  appearanceCharge = appearanceCharge,
+                  removedBy = serviceUserService.getUsername(),
+                  removedPrison = charge.prisonId,
+                  ChangeSource.DPS,
+                ),
+              )
+              appearanceCharge.charge = null
+              appearanceCharge.appearance = null
+            }
+          val replacedWithAnotherRecord = existingCharge.copyFrom(replacedWithAnotherOutcome, serviceUserService.getUsername())
+          replacedWithAnotherRecord.appearanceCharges.removeAll { it.appearance == null }
+          activeRecord = chargeRepository.save(replacedWithAnotherRecord)
+          chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord, ChangeSource.DPS))
+        } else {
+          existingCharge.updateFrom(replacedWithAnotherOutcome, serviceUserService.getUsername(), charge.prisonId)
+          chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
+        }
         val appearanceChargeEntity = AppearanceChargeEntity(
           courtAppearance,
-          existingCharge,
+          activeRecord,
           serviceUserService.getUsername(),
           charge.prisonId,
         )
         courtAppearance.appearanceCharges.add(appearanceChargeEntity)
-        existingCharge.appearanceCharges.add(appearanceChargeEntity)
+        activeRecord.appearanceCharges.add(appearanceChargeEntity)
         appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.from(appearanceChargeEntity, ChangeSource.DPS))
+        chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
 
-        chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
-
-        val newChargeRecord = chargeRepository.save(compareCharge.copyFromReplacedCharge(existingCharge))
+        val newChargeRecord = chargeRepository.save(compareCharge.copyFromReplacedCharge(activeRecord))
         chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord, ChangeSource.DPS))
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
