@@ -107,12 +107,12 @@ class LegacySentenceServiceTests {
 
     val legacySentence = legacySentenceUpdate(chargeUuid, appearanceUuid, incomingRtc)
 
-    var response = service.update(sentenceUuid, legacySentence)
+    val response = service.update(sentenceUuid, legacySentence)
 
     assertThat(recall.returnToCustodyDate).isEqualTo(existingRtc)
     verify(exactly = 0) { recallHistoryRepository.save(any()) }
     verify(exactly = 0) { recallSentenceHistoryRepository.save(any()) }
-    assertThat(response.eventsToEmit).isEmpty()
+    assertThat(response.flatMap { it.eventsToEmit }).isEmpty()
   }
 
   @Test
@@ -209,7 +209,7 @@ class LegacySentenceServiceTests {
       legacyRecallSentenceUpdate(newChargeUuid, newAppearanceUuid, LocalDate.of(2024, 2, 1)),
     )
 
-    assertThat(response.eventsToEmit)
+    assertThat(response.flatMap { it.eventsToEmit })
       .extracting<String> { it.eventType.name }
       .contains("RECALL_INSERTED")
   }

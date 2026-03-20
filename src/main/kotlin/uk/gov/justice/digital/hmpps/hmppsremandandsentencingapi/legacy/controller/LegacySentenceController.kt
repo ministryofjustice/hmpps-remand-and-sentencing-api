@@ -54,11 +54,8 @@ class LegacySentenceController(
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).let {
-    it.record.forEach { sentence ->
-      eventService.create(sentence.prisonerId, sentence.lifetimeUuid.toString(), sentence.chargeLifetimeUuid.toString(), sentence.courtCaseId, sentence.appearanceUuid.toString(), EventSource.NOMIS)
-    }
     legacyEventService.emitEvents(it.eventsToEmit)
-    it.record.first()
+    it.record
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -76,7 +73,8 @@ class LegacySentenceController(
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
     legacySentenceService.update(lifetimeUuid, sentence).also {
-      it.record.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
+      it.forEach { response ->
+        val (entityChangeStatus, legacySentenceCreatedResponse) = response.record
         if (entityChangeStatus == EntityChangeStatus.EDITED) {
           eventService.update(
             legacySentenceCreatedResponse.prisonerId,
@@ -96,8 +94,8 @@ class LegacySentenceController(
             EventSource.NOMIS,
           )
         }
+        legacyEventService.emitEvents(response.eventsToEmit)
       }
-      legacyEventService.emitEvents(it.eventsToEmit)
     }
     return ResponseEntity.noContent().build()
   }

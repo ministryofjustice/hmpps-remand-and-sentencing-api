@@ -78,7 +78,7 @@ class LegacySentenceService(
 ) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
 
   @Transactional
-  fun create(sentence: LegacyCreateSentence): RecordResponse<List<LegacySentenceCreatedResponse>> {
+  fun create(sentence: LegacyCreateSentence): RecordResponse<LegacySentenceCreatedResponse> {
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
@@ -98,7 +98,7 @@ class LegacySentenceService(
 
     val eventMetaDataList = mutableSetOf<EventMetadata>()
 
-    val returnList = sentence.chargeUuids.map { chargeUuid ->
+    val responses = sentence.chargeUuids.map { chargeUuid ->
       val charge = getUnsentencedCharge(chargeUuid, sentence.appearanceUuid, getPerformedByUsername(sentence))
       val createdSentence = createSentenceRecord(
         charge,
@@ -125,15 +125,15 @@ class LegacySentenceService(
           null
         }
 
+      if (createRecallEvent != null) {
+        eventMetaDataList.add(createRecallEvent)
+      }
+
       val courtAppearance = charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
-
-      if (createRecallEvent != null) {
-        eventMetaDataList.add(createRecallEvent)
-      }
 
       LegacySentenceCreatedResponse(
         courtAppearance.courtCase.prisonerId,
@@ -144,7 +144,7 @@ class LegacySentenceService(
       )
     }
     return RecordResponse(
-      record = returnList,
+      record = responses.first(),
       eventsToEmit = eventMetaDataList,
     )
   }
@@ -229,7 +229,7 @@ class LegacySentenceService(
   fun update(
     sentenceUuid: UUID,
     createSentence: LegacyCreateSentence,
-  ): RecordResponse<List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>>> {
+  ): List<RecordResponse<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>>> {
     RetrySynchronizationManager.getContext()?.let { retryContext ->
       if (retryContext.retryCount > 0) {
         log.info("sentence update retry with context: count = ${retryContext.retryCount}, lastException = ${retryContext.lastThrowable?.javaClass?.name}, exhausted=${retryContext.isExhaustedOnly}")
@@ -264,53 +264,49 @@ class LegacySentenceService(
         delete(it, getPerformedByUsername(sentence))
       }
 
-    val eventMetaDataList = mutableSetOf<EventMetadata>()
-
-    val returnList = sentence.chargeUuids.map { chargeUuid ->
+    return sentence.chargeUuids.map { chargeUuid ->
+      val eventMetaDataList = mutableSetOf<EventMetadata>()
       var createRecallEvent: EventMetadata? = null
 
-      val (existingSentence, entityStatus) = (
+      val (existingSentence, entityStatus) =
         (
-          (
-            sentenceRepository.findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(
-              sentenceUuid,
-              chargeUuid,
-            )?.takeUnless { entity -> entity.statusId == SentenceEntityStatus.DELETED }
-              ?.let { it to EntityChangeStatus.NO_CHANGE }
-            )
-            ?: (
-              getUnsentencedCharge(chargeUuid, sentence.appearanceUuid, getPerformedByUsername(sentence)).let { charge ->
-                createSentenceRecord(
-                  charge,
-                  SentenceEntity.from(
-                    sentence = sentence,
-                    createdBy = getPerformedByUsername(sentence),
-                    chargeEntity = charge,
-                    sentenceTypeEntity = dpsSentenceType,
-                    consecutiveTo = consecutiveToSentence,
-                    sentenceUuid = sentenceUuid,
-                    isManyCharges = isManyCharges,
-                    convictionDate = sourceSentence?.convictionDate,
-                    countNumber = sourceSentence?.countNumber,
-                  ),
-                )
-              }.also { newSentence ->
-                // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
-                copyPeriodLengthsForNewSentence(newSentence, getPerformedByUsername(sentence), periodLengthsByChargeUuid, existingPeriodLengths)
-
-                if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
-                  createRecallEvent = createRecall(
-                    sentence,
-                    newSentence,
-                    legacySentenceType,
-                    RecallSentenceLegacyData.from(legacyData),
-                    prisonerId!!,
-                  )
-                }
-              } to EntityChangeStatus.CREATED
-              )
+          sentenceRepository.findFirstBySentenceUuidAndChargeChargeUuidOrderByUpdatedAtDesc(
+            sentenceUuid,
+            chargeUuid,
+          )?.takeUnless { entity -> entity.statusId == SentenceEntityStatus.DELETED }
+            ?.let { it to EntityChangeStatus.NO_CHANGE }
           )
-        )
+          ?: (
+            getUnsentencedCharge(chargeUuid, sentence.appearanceUuid, getPerformedByUsername(sentence)).let { charge ->
+              createSentenceRecord(
+                charge,
+                SentenceEntity.from(
+                  sentence = sentence,
+                  createdBy = getPerformedByUsername(sentence),
+                  chargeEntity = charge,
+                  sentenceTypeEntity = dpsSentenceType,
+                  consecutiveTo = consecutiveToSentence,
+                  sentenceUuid = sentenceUuid,
+                  isManyCharges = isManyCharges,
+                  convictionDate = sourceSentence?.convictionDate,
+                  countNumber = sourceSentence?.countNumber,
+                ),
+              )
+            }.also { newSentence ->
+              // potential to improve this if performance becomes an issue here, this copyPeriodLengthsForNewSentence could be done in a batch rather than in a loop for each sentence
+              copyPeriodLengthsForNewSentence(newSentence, getPerformedByUsername(sentence), periodLengthsByChargeUuid, existingPeriodLengths)
+
+              if (dpsSentenceType?.sentenceTypeUuid == recallSentenceTypeBucketUuid) {
+                createRecallEvent = createRecall(
+                  sentence,
+                  newSentence,
+                  legacySentenceType,
+                  RecallSentenceLegacyData.from(legacyData),
+                  prisonerId!!,
+                )
+              }
+            } to EntityChangeStatus.CREATED
+            )
       val activeRecord = existingSentence
       var entityChangeStatus = entityStatus
       val updatedSentence = existingSentence.copyFrom(
@@ -347,19 +343,17 @@ class LegacySentenceService(
         eventMetaDataList.add(createRecallEvent)
       }
 
-      entityChangeStatus to LegacySentenceCreatedResponse(
-        courtAppearance.courtCase.prisonerId,
-        activeRecord.sentenceUuid,
-        activeRecord.charge.chargeUuid,
-        courtAppearance.appearanceUuid,
-        courtAppearance.courtCase.caseUniqueIdentifier,
+      RecordResponse(
+        record = entityChangeStatus to LegacySentenceCreatedResponse(
+          courtAppearance.courtCase.prisonerId,
+          activeRecord.sentenceUuid,
+          activeRecord.charge.chargeUuid,
+          courtAppearance.appearanceUuid,
+          courtAppearance.courtCase.caseUniqueIdentifier,
+        ),
+        eventsToEmit = eventMetaDataList,
       )
     }
-
-    return RecordResponse(
-      record = returnList,
-      eventsToEmit = eventMetaDataList,
-    )
   }
 
   private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()
