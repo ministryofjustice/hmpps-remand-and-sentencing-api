@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -77,7 +78,7 @@ class LegacySentenceService(
 ) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
 
   @Transactional
-  fun create(sentence: LegacyCreateSentence): List<LegacySentenceCreatedResponse> {
+  fun create(sentence: LegacyCreateSentence): RecordResponse<List<LegacySentenceCreatedResponse>> {
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
     val legacySentenceType =
       getLegacySentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
@@ -95,7 +96,9 @@ class LegacySentenceService(
     val sentenceUuid = UUID.randomUUID()
     val prisonerId = getPrisonerIdIfSentenceIsRecall(dpsSentenceType, sentence)
 
-    return sentence.chargeUuids.map { chargeUuid ->
+    val eventMetaDataList = mutableSetOf<EventMetadata>()
+
+    val returnList = sentence.chargeUuids.map { chargeUuid ->
       val charge = getUnsentencedCharge(chargeUuid, sentence.appearanceUuid, getPerformedByUsername(sentence))
       val createdSentence = createSentenceRecord(
         charge,
@@ -127,15 +130,23 @@ class LegacySentenceService(
         .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
+
+      if (createRecallEvent != null) {
+        eventMetaDataList.add(createRecallEvent)
+      }
+
       LegacySentenceCreatedResponse(
         courtAppearance.courtCase.prisonerId,
         createdSentence.sentenceUuid,
         charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
-        eventMetadata = createRecallEvent?.let(::setOf) ?: emptySet(),
       )
     }
+    return RecordResponse(
+      record = returnList,
+      eventsToEmit = eventMetaDataList,
+    )
   }
 
   private fun getPrisonerIdIfSentenceIsRecall(
@@ -218,7 +229,7 @@ class LegacySentenceService(
   fun update(
     sentenceUuid: UUID,
     createSentence: LegacyCreateSentence,
-  ): List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>> {
+  ): RecordResponse<List<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>>> {
     RetrySynchronizationManager.getContext()?.let { retryContext ->
       if (retryContext.retryCount > 0) {
         log.info("sentence update retry with context: count = ${retryContext.retryCount}, lastException = ${retryContext.lastThrowable?.javaClass?.name}, exhausted=${retryContext.isExhaustedOnly}")
@@ -252,7 +263,10 @@ class LegacySentenceService(
         periodLengthsByChargeUuid[it.charge.chargeUuid] = it.periodLengths
         delete(it, getPerformedByUsername(sentence))
       }
-    return sentence.chargeUuids.map { chargeUuid ->
+
+    val eventMetaDataList = mutableSetOf<EventMetadata>()
+
+    val returnList = sentence.chargeUuids.map { chargeUuid ->
       var createRecallEvent: EventMetadata? = null
 
       val (existingSentence, entityStatus) = (
@@ -328,15 +342,24 @@ class LegacySentenceService(
         .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")
+
+      if (createRecallEvent != null) {
+        eventMetaDataList.add(createRecallEvent)
+      }
+
       entityChangeStatus to LegacySentenceCreatedResponse(
         courtAppearance.courtCase.prisonerId,
         activeRecord.sentenceUuid,
         activeRecord.charge.chargeUuid,
         courtAppearance.appearanceUuid,
         courtAppearance.courtCase.caseUniqueIdentifier,
-        eventMetadata = createRecallEvent?.let(::setOf) ?: emptySet(),
       )
     }
+
+    return RecordResponse(
+      record = returnList,
+      eventsToEmit = eventMetaDataList,
+    )
   }
 
   private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()

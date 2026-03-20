@@ -53,12 +53,12 @@ class LegacySentenceController(
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
-  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).let { responses ->
-    responses.forEach {
-      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), it.courtCaseId, it.appearanceUuid.toString(), EventSource.NOMIS)
-      legacyEventService.emitEvents(it.eventMetadata)
+  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).let {
+    it.record.forEach { sentence ->
+      eventService.create(sentence.prisonerId, sentence.lifetimeUuid.toString(), sentence.chargeLifetimeUuid.toString(), sentence.courtCaseId, sentence.appearanceUuid.toString(), EventSource.NOMIS)
     }
-    responses.first()
+    legacyEventService.emitEvents(it.eventsToEmit)
+    it.record.first()
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -76,9 +76,16 @@ class LegacySentenceController(
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
     legacySentenceService.update(lifetimeUuid, sentence).also {
-      it.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
+      it.record.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
         if (entityChangeStatus == EntityChangeStatus.EDITED) {
-          eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, legacySentenceCreatedResponse.appearanceUuid.toString(), EventSource.NOMIS)
+          eventService.update(
+            legacySentenceCreatedResponse.prisonerId,
+            legacySentenceCreatedResponse.lifetimeUuid.toString(),
+            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
+            legacySentenceCreatedResponse.courtCaseId,
+            legacySentenceCreatedResponse.appearanceUuid.toString(),
+            EventSource.NOMIS,
+          )
         } else if (entityChangeStatus == EntityChangeStatus.CREATED) {
           eventService.create(
             legacySentenceCreatedResponse.prisonerId,
@@ -90,6 +97,7 @@ class LegacySentenceController(
           )
         }
       }
+      legacyEventService.emitEvents(it.eventsToEmit)
     }
     return ResponseEntity.noContent().build()
   }
