@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCode
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCodes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import java.util.UUID
@@ -36,6 +38,10 @@ class GetAllAppearanceTypesByStatusesTests : IntegrationTestBase() {
         description = "Inactive type",
         displayOrder = 1000,
         status = ReferenceEntityStatus.INACTIVE,
+        dpsToNomisMappingCode = "1111",
+        nomisToDpsMappingCodes = AppearanceTypeCodes(
+          codes = listOf(AppearanceTypeCode("1111")),
+        ),
       ),
     )
     webTestClient.get()
