@@ -125,15 +125,26 @@ class LegacySentenceService(
           null
         }
 
-      if (createRecallEvent != null) {
-        eventMetaDataList.add(createRecallEvent)
-      }
-
       val courtAppearance = charge.appearanceCharges
         .map { it.appearance!! }
         .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
         .maxByOrNull { it.appearanceDate }
         ?: throw IllegalStateException("No active court appearance found for charge ${charge.chargeUuid}")
+
+      eventMetaDataList.add(
+        EventMetadataCreator.sentenceEventMetadata(
+          courtAppearance.courtCase.prisonerId,
+          courtAppearance.courtCase.caseUniqueIdentifier,
+          charge.chargeUuid.toString(),
+          createdSentence.sentenceUuid.toString(),
+          courtAppearance.appearanceUuid.toString(),
+          EventType.SENTENCE_INSERTED,
+        ),
+      )
+
+      if (createRecallEvent != null) {
+        eventMetaDataList.add(createRecallEvent)
+      }
 
       LegacySentenceCreatedResponse(
         courtAppearance.courtCase.prisonerId,
