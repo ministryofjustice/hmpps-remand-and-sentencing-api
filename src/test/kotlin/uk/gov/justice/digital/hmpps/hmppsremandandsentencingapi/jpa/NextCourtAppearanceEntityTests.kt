@@ -7,6 +7,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Appea
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCode
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCodes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -43,6 +45,10 @@ class NextCourtAppearanceEntityTests {
       "appearance type",
       0,
       ReferenceEntityStatus.ACTIVE,
+      dpsToNomisMappingCode = "1111",
+      nomisToDpsMappingCodes = AppearanceTypeCodes(
+        codes = listOf(AppearanceTypeCode("1111")),
+      ),
     )
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "user")
     val futureAppearance = CourtAppearanceEntity(
