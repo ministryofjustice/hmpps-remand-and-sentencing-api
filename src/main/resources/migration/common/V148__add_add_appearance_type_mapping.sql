@@ -1,0 +1,4 @@
+alter table appearance_type add column nomis_to_dps_mapping_codes jsonb, add column dps_to_nomis_mapping_code varchar;
+
+update appearance_type set nomis_to_dps_mapping_codes = '{"codes": [{ "code": "CRT"}, { "code": "CA"}, { "code": "SENT"}, { "code": "TRIAL"}, { "code": "BREACH"}, { "code": "19"}, { "code": "CRI"}, { "code": "BAIL"}, { "code": "PD"}, { "code": "COM"}, { "code": "EXP_BREACH"}, { "code": "22"}, { "code": "APPEAL"}, { "code": "CE"}, { "code": "REM"}, { "code": "NA"}, { "code": "NEWTON"}, { "code": "CT"}]}', dps_to_nomis_mapping_code='CRT' where appearance_type_uuid = '63e8fce0-033c-46ad-9edf-391b802d547a';
+update appearance_type set nomis_to_dps_mapping_codes = '{"codes": [{"code": "VL"}, {"code": "VLPD"}, {"code": "VLPR"}, {"code": "VLPS"}, {"code": "VLAP"}, {"code": "VLCR"}, {"code": "VLBL"}, {"code": "VLCH"}, {"code": "VLWT"}, {"code": "VLCV"}]}', dps_to_nomis_mapping_code='VL' where appearance_type_uuid = '1da09b6e-55cb-4838-a157-ee6944f2094c';
