@@ -8,7 +8,7 @@ data class BookingCreateCourtAppearance(
   val eventId: Long,
   val courtCode: String,
   val appearanceDate: LocalDate,
-  val appearanceTypeUuid: UUID,
+  val appearanceTypeUuid: UUID? = null,
   val legacyData: CourtAppearanceLegacyData,
   val charges: List<BookingCreateCharge>,
 )

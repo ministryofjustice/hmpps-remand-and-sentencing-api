@@ -53,6 +53,7 @@ class DataCreator {
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
       outcomeDispositionCode: String? = "I",
       outcomeConvictionFlag: Boolean? = false,
+      nomisAppearanceTypeCode: String? = "CRT",
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
       postedDate,
       nomisOutcomeCode,
@@ -61,6 +62,7 @@ class DataCreator {
       appearanceTime,
       outcomeDispositionCode,
       outcomeConvictionFlag,
+      nomisAppearanceTypeCode,
     )
 
     fun legacyCreateCourtAppearance(
