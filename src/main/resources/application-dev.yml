@@ -43,3 +43,9 @@ features:
       charges:
         to:
           sentence: enabled
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

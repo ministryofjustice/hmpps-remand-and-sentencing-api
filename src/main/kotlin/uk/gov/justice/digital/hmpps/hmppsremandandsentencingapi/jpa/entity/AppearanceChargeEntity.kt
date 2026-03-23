@@ -10,30 +10,25 @@ import java.time.ZonedDateTime
 
 @Entity
 @Table(name = "appearance_charge")
-class AppearanceChargeEntity {
-
+class AppearanceChargeEntity(
   @EmbeddedId
-  val id: AppearanceChargeId
+  val id: AppearanceChargeId,
 
   @ManyToOne
   @MapsId("appearanceId")
-  var appearance: CourtAppearanceEntity?
+  var appearance: CourtAppearanceEntity? = null,
 
   @ManyToOne
   @MapsId("chargeId")
-  var charge: ChargeEntity?
+  var charge: ChargeEntity? = null,
 
-  val createdAt: ZonedDateTime = ZonedDateTime.now()
-  val createdBy: String
-  val createdPrison: String?
+  val createdBy: String,
+  val createdPrison: String?,
+  val createdAt: ZonedDateTime = ZonedDateTime.now(),
+) {
 
-  constructor(courtAppearanceEntity: CourtAppearanceEntity, chargeEntity: ChargeEntity, createdBy: String, createdPrison: String?) {
-    this.appearance = courtAppearanceEntity
-    this.charge = chargeEntity
-    this.createdBy = createdBy
-    this.createdPrison = createdPrison
-    this.id = AppearanceChargeId(courtAppearanceEntity.id, chargeEntity.id)
-  }
+  constructor(courtAppearanceEntity: CourtAppearanceEntity, chargeEntity: ChargeEntity, createdBy: String, createdPrison: String?) :
+    this(AppearanceChargeId(courtAppearanceEntity.id, chargeEntity.id), courtAppearanceEntity, chargeEntity, createdBy, createdPrison)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
