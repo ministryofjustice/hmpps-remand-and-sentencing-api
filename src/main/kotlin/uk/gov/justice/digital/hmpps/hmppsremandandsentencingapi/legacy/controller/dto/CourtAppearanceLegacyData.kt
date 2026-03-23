@@ -13,13 +13,15 @@ data class CourtAppearanceLegacyData(
   val appearanceTime: LocalTime?,
   val outcomeDispositionCode: String?,
   val outcomeConvictionFlag: Boolean?,
+  val nomisAppearanceTypeCode: String?,
 ) {
   fun isSame(other: CourtAppearanceLegacyData?): Boolean = nomisOutcomeCode == other?.nomisOutcomeCode &&
     outcomeDescription == other?.outcomeDescription &&
     nextEventDateTime == other?.nextEventDateTime &&
     appearanceTime == other?.appearanceTime &&
     outcomeDispositionCode == other?.outcomeDispositionCode &&
-    outcomeConvictionFlag == other?.outcomeConvictionFlag
+    outcomeConvictionFlag == other?.outcomeConvictionFlag &&
+    nomisAppearanceTypeCode == other?.nomisAppearanceTypeCode
 
   fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
     LocalDate.now().format(DateTimeFormatter.ISO_DATE),
@@ -29,6 +31,7 @@ data class CourtAppearanceLegacyData(
     appearanceTime,
     outcomeDispositionCode,
     outcomeConvictionFlag,
+    nomisAppearanceTypeCode,
   )
   companion object {
     fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
@@ -37,6 +40,7 @@ data class CourtAppearanceLegacyData(
       null,
       null,
       appearanceTime,
+      null,
       null,
       null,
     )

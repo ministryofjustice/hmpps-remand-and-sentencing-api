@@ -8,6 +8,6 @@ data class LegacyCreateCourtAppearance(
   val courtCode: String,
   val appearanceDate: LocalDate,
   val legacyData: CourtAppearanceLegacyData,
-  val appearanceTypeUuid: UUID,
+  val appearanceTypeUuid: UUID?,
   val performedByUser: String?,
 )

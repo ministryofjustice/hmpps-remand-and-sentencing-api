@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
@@ -51,7 +50,7 @@ class LegacyCourtAppearanceService(
   private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
   private val serviceUserService: ServiceUserService,
   private val chargeRepository: ChargeRepository,
-  private val appearanceTypeRepository: AppearanceTypeRepository,
+  private val legacyAppearanceTypeService: LegacyAppearanceTypeService,
   private val nextCourtAppearanceRepository: NextCourtAppearanceRepository,
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val chargeHistoryRepository: ChargeHistoryRepository,
@@ -116,7 +115,7 @@ class LegacyCourtAppearanceService(
 
   private fun handleNextCourtAppearance(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance) {
     nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)?.let { existingNextCourtAppearance ->
-      val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(updateRequest.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${updateRequest.appearanceTypeUuid}")
+      val appearanceType = legacyAppearanceTypeService.getAppearanceType(updateRequest.legacyData.nomisAppearanceTypeCode, updateRequest.appearanceTypeUuid)
       val toUpdate = NextCourtAppearanceEntity.from(updateRequest, courtAppearance, appearanceType)
       existingNextCourtAppearance.updateFrom(toUpdate)
     } ?: handleMatchingNextCourtAppearance(courtAppearance, updateRequest)
@@ -139,7 +138,7 @@ class LegacyCourtAppearanceService(
 
   private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {
     courtAppearance.takeIf { it.statusId == CourtAppearanceEntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate) }?.let { matchedCourtAppearance ->
-      val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(legacyRequest.appearanceTypeUuid) ?: throw EntityNotFoundException("No appearance type at ${legacyRequest.appearanceTypeUuid}")
+      val appearanceType = legacyAppearanceTypeService.getAppearanceType(legacyRequest.legacyData.nomisAppearanceTypeCode, legacyRequest.appearanceTypeUuid)
       matchedCourtAppearance.nextCourtAppearance?.let { matchedNextCourtAppearance ->
         val toUpdate = NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceType)
         matchedNextCourtAppearance.updateFrom(toUpdate)
@@ -172,8 +171,9 @@ class LegacyCourtAppearanceService(
   fun get(lifetimeUuid: UUID): LegacyCourtAppearance {
     val courtAppearance = getUnlessDeleted(lifetimeUuid)
     val associatedNextCourtAppearance = nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)
-    val appearanceTypeUuid = associatedNextCourtAppearance?.appearanceType?.appearanceTypeUuid ?: DEFAULT_APPEARANCE_TYPE_UUD
-    return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid)
+    val appearanceTypeUuid = associatedNextCourtAppearance?.appearanceType?.appearanceTypeUuid ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_UUID
+    val nomisAppearanceTypeCode = courtAppearance.legacyData?.nomisAppearanceTypeCode ?: associatedNextCourtAppearance?.appearanceType?.dpsToNomisMappingCode ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_NOMIS_CODE
+    return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid, nomisAppearanceTypeCode)
   }
 
   @Retryable(maxAttempts = 3, retryFor = [OptimisticLockingFailureException::class])
@@ -296,8 +296,4 @@ class LegacyCourtAppearanceService(
     appearanceUuid,
     chargeUuid,
   )
-
-  companion object {
-    val DEFAULT_APPEARANCE_TYPE_UUD: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a") // Court appearance
-  }
 }

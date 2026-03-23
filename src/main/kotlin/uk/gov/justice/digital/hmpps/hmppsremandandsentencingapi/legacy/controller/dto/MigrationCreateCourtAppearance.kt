@@ -7,7 +7,7 @@ data class MigrationCreateCourtAppearance(
   val eventId: Long,
   val courtCode: String,
   val appearanceDate: LocalDate,
-  val appearanceTypeUuid: UUID,
+  val appearanceTypeUuid: UUID? = null,
   val legacyData: CourtAppearanceLegacyData,
   val charges: List<MigrationCreateCharge>,
 )

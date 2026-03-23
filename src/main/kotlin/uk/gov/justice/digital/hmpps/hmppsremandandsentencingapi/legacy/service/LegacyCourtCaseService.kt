@@ -35,6 +35,7 @@ class LegacyCourtCaseService(
   private val serviceUserService: ServiceUserService,
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+  private val legacyAppearanceTypeService: LegacyAppearanceTypeService,
 ) {
 
   @Transactional
@@ -64,7 +65,8 @@ class LegacyCourtCaseService(
   @Transactional(readOnly = true)
   fun getReconciliation(courtCaseUuid: String): ReconciliationCourtCase {
     val courtCase = getUnlessDeleted(courtCaseUuid)
-    return ReconciliationCourtCase.from(courtCase)
+    val defaultAppearanceType = legacyAppearanceTypeService.getDefaultAppearanceType()
+    return ReconciliationCourtCase.from(courtCase, defaultAppearanceType)
   }
 
   @Transactional
