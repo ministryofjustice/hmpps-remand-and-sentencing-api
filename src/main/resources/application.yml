@@ -103,3 +103,10 @@ recall:
 period:
   length:
     getByIdPath: /period-length/{periodUuid}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+    version: 5.32.1
