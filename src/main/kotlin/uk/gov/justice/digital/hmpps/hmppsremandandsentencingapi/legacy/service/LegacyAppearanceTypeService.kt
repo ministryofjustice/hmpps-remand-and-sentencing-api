@@ -16,9 +16,10 @@ class LegacyAppearanceTypeService(private val appearanceTypeRepository: Appearan
     getDefaultAppearanceType()
   }
 
-  private fun getDefaultAppearanceType(): AppearanceTypeEntity = appearanceTypeRepository.findByAppearanceTypeUuid(DEFAULT_APPEARANCE_TYPE_UUD)!!
+  fun getDefaultAppearanceType(): AppearanceTypeEntity = appearanceTypeRepository.findByAppearanceTypeUuid(DEFAULT_APPEARANCE_TYPE_UUID)!!
 
   companion object {
-    val DEFAULT_APPEARANCE_TYPE_UUD: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a") // Court appearance
+    val DEFAULT_APPEARANCE_TYPE_UUID: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a") // Court appearance
+    const val DEFAULT_APPEARANCE_TYPE_NOMIS_CODE: String = "CRT"
   }
 }
