@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceSubtypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
@@ -34,6 +35,7 @@ class CourtAppearanceServiceTests {
   private val appearanceChargeHistoryRepository = mockk<AppearanceChargeHistoryRepository>()
   private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
   private val documentService = mockk<UploadedDocumentService>()
+  private val courtAppearanceSubtypeRepository = mockk<CourtAppearanceSubtypeRepository>()
   private val courtAppearanceService = CourtAppearanceService(
     courtAppearanceRepository = courtAppearanceRepository,
     nextCourtAppearanceRepository = nextCourtAppearanceRepository,
@@ -47,6 +49,7 @@ class CourtAppearanceServiceTests {
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
     fixManyChargesToSentenceService = fixManyChargesToSentenceService,
     documentService = documentService,
+    courtAppearanceSubtypeRepository = courtAppearanceSubtypeRepository,
   )
 
   @Nested

@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceSubtypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
@@ -50,6 +51,7 @@ class CourtAppearanceService(
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val documentService: UploadedDocumentService,
+  private val courtAppearanceSubtypeRepository: CourtAppearanceSubtypeRepository,
 ) {
 
   @Transactional
@@ -121,8 +123,11 @@ class CourtAppearanceService(
       courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(futureCourtAppearance, ChangeSource.DPS))
       val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nextCourtAppearance.appearanceTypeUuid)
         ?: throw EntityNotFoundException("No appearance type found at ${nextCourtAppearance.appearanceTypeUuid}")
+      val courtAppearanceSubtype = nextCourtAppearance.courtAppearanceSubtypeUuid?.let { courtAppearanceSubtypeUuid ->
+        courtAppearanceSubtypeRepository.findByAppearanceSubtypeUuid(courtAppearanceSubtypeUuid) ?: throw EntityNotFoundException("No court appearance subtype found at $courtAppearanceSubtypeUuid")
+      }
       nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance, appearanceType),
+        NextCourtAppearanceEntity.from(nextCourtAppearance, futureCourtAppearance, appearanceType, courtAppearanceSubtype),
       )
     }
     val createdCourtAppearance = courtAppearanceRepository.save(
@@ -330,8 +335,11 @@ class CourtAppearanceService(
         val appearanceType =
           appearanceTypeRepository.findByAppearanceTypeUuid(courtAppearance.nextCourtAppearance.appearanceTypeUuid)
             ?: throw EntityNotFoundException("No appearance type found at ${courtAppearance.nextCourtAppearance.appearanceTypeUuid}")
+        val courtAppearanceSubtype = courtAppearance.nextCourtAppearance.courtAppearanceSubtypeUuid?.let { courtAppearanceSubtypeUuid ->
+          courtAppearanceSubtypeRepository.findByAppearanceSubtypeUuid(courtAppearanceSubtypeUuid) ?: throw EntityNotFoundException("No court appearance subtype found at $courtAppearanceSubtypeUuid")
+        }
         val nextCourtAppearance =
-          NextCourtAppearanceEntity.from(courtAppearance.nextCourtAppearance, futureCourtAppearance, appearanceType)
+          NextCourtAppearanceEntity.from(courtAppearance.nextCourtAppearance, futureCourtAppearance, appearanceType, courtAppearanceSubtype)
         if (!activeNextCourtAppearance.isSame(nextCourtAppearance)) {
           activeFutureSkeletonAppearance.updateFrom(futureCourtAppearance)
           courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(activeFutureSkeletonAppearance, ChangeSource.DPS))
@@ -375,8 +383,11 @@ class CourtAppearanceService(
       val appearanceType =
         appearanceTypeRepository.findByAppearanceTypeUuid(toCreateNextCourtAppearance.appearanceTypeUuid)
           ?: throw EntityNotFoundException("No appearance type found at ${courtAppearance.nextCourtAppearance.appearanceTypeUuid}")
+      val courtAppearanceSubtype = toCreateNextCourtAppearance.courtAppearanceSubtypeUuid?.let { courtAppearanceSubtypeUuid ->
+        courtAppearanceSubtypeRepository.findByAppearanceSubtypeUuid(courtAppearanceSubtypeUuid) ?: throw EntityNotFoundException("No court appearance subtype found at $courtAppearanceSubtypeUuid")
+      }
       val savedNextCourtAppearance = nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance, appearanceType),
+        NextCourtAppearanceEntity.from(toCreateNextCourtAppearance, futureCourtAppearance, appearanceType, courtAppearanceSubtype),
       )
       val eventsToEmit = activeRecord.appearanceCharges.filter { it.charge?.isInterim() == true }
         .flatMap {

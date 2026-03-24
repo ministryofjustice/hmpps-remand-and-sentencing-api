@@ -55,7 +55,8 @@ class DpsDataCreator {
       courtCode: String = "COURT1",
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       prisonId: String = "PRISON1",
-    ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid, prisonId)
+      courtAppearanceSubtypeUuid: UUID? = UUID.fromString("3f1c9e42-7c8a-4c1e-9a5d-2f6b8d1a9e73"),
+    ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid, prisonId, courtAppearanceSubtypeUuid)
 
     fun dpsCreateCourtAppearance(
       courtCaseUuid: String? = null,
