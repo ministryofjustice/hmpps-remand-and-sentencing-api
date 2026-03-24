@@ -33,6 +33,9 @@ class NextCourtAppearanceEntity(
   @OneToOne
   @JoinColumn(name = "appearance_type_id")
   var appearanceType: AppearanceTypeEntity,
+  @OneToOne
+  @JoinColumn(name = "court_appearance_subtype_id")
+  var courtAppearanceSubtype: CourtAppearanceSubtypeEntity?,
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "future_skeleton_appearance_id")
   var futureSkeletonAppearance: CourtAppearanceEntity,
@@ -41,16 +44,8 @@ class NextCourtAppearanceEntity(
     appearanceDate.isEqual(other.appearanceDate) &&
     ((appearanceTime == null && other.appearanceTime == null) || appearanceTime == other.appearanceTime) &&
     courtCode == other.courtCode &&
-    appearanceType == other.appearanceType
-
-  fun copyFrom(nomisAppearance: LegacyCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
-    id,
-    nomisAppearance.appearanceDate,
-    nomisAppearance.legacyData.appearanceTime,
-    nomisAppearance.courtCode,
-    appearanceTypeEntity,
-    futureAppearance,
-  )
+    appearanceType == other.appearanceType &&
+    courtAppearanceSubtype == other.courtAppearanceSubtype
 
   fun updateFrom(nextCourtAppearanceEntity: NextCourtAppearanceEntity) {
     this.appearanceDate = nextCourtAppearanceEntity.appearanceDate
@@ -58,21 +53,16 @@ class NextCourtAppearanceEntity(
     this.courtCode = nextCourtAppearanceEntity.courtCode
     this.appearanceType = nextCourtAppearanceEntity.appearanceType
     this.futureSkeletonAppearance = nextCourtAppearanceEntity.futureSkeletonAppearance
-  }
-
-  fun updateFrom(nomisAppearance: LegacyCreateCourtAppearance, appearanceTypeEntity: AppearanceTypeEntity) {
-    this.appearanceDate = nomisAppearance.appearanceDate
-    this.appearanceTime = nomisAppearance.legacyData.appearanceTime
-    this.courtCode = nomisAppearance.courtCode
-    this.appearanceType = appearanceTypeEntity
+    this.courtAppearanceSubtype = nextCourtAppearanceEntity.courtAppearanceSubtype
   }
 
   companion object {
-    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+    fun from(nextCourtAppearance: CreateNextCourtAppearance, futureSkeletonAppearance: CourtAppearanceEntity, appearanceTypeEntity: AppearanceTypeEntity, courtAppearanceSubtype: CourtAppearanceSubtypeEntity?): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
       appearanceDate = nextCourtAppearance.appearanceDate,
       appearanceTime = nextCourtAppearance.appearanceTime,
       courtCode = nextCourtAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
+      courtAppearanceSubtype = courtAppearanceSubtype,
       futureSkeletonAppearance = futureSkeletonAppearance,
     )
 
@@ -81,6 +71,7 @@ class NextCourtAppearanceEntity(
       appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime().takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisFutureAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
+      courtAppearanceSubtype = null,
       futureSkeletonAppearance = futureAppearance,
     )
 
@@ -89,6 +80,7 @@ class NextCourtAppearanceEntity(
       appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime().takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisFutureAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
+      courtAppearanceSubtype = null,
       futureSkeletonAppearance = futureAppearance,
     )
 
@@ -97,6 +89,7 @@ class NextCourtAppearanceEntity(
       appearanceTime = nomisAppearance.legacyData.nextEventDateTime.toLocalTime().takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisFutureAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
+      courtAppearanceSubtype = null,
       futureSkeletonAppearance = futureAppearance,
     )
 
@@ -105,6 +98,7 @@ class NextCourtAppearanceEntity(
       appearanceTime = nomisAppearance.legacyData.appearanceTime.takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
+      courtAppearanceSubtype = null,
       futureSkeletonAppearance = futureAppearance,
     )
 
@@ -113,6 +107,7 @@ class NextCourtAppearanceEntity(
       appearanceTime = null,
       courtCode = futureAppearance.courtCode,
       appearanceType = appearanceTypeEntity,
+      courtAppearanceSubtype = null,
       futureSkeletonAppearance = futureAppearance,
     )
   }
