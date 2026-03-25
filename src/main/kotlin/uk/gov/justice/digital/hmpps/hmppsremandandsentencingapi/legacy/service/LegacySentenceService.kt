@@ -446,14 +446,35 @@ class LegacySentenceService(
 
   @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  fun delete(sentenceUuid: UUID, performedByUser: String?): LegacySentenceDeletedResponse? = sentenceRepository.findBySentenceUuid(sentenceUuid)
-    .filter { it.statusId != SentenceEntityStatus.DELETED }
-    .map { sentence ->
-      delete(sentence, performedByUser ?: serviceUserService.getUsername())
-      LegacySentenceDeletedResponse.from(sentence)
-    }.firstOrNull()
+  fun delete(sentenceUuid: UUID, performedByUser: String?): RecordResponse<LegacySentenceDeletedResponse>? {
+    val eventMetaDataList = mutableSetOf<EventMetadata>()
+    val sentenceDeleteResponse = sentenceRepository.findBySentenceUuid(sentenceUuid)
+      .filter { it.statusId != SentenceEntityStatus.DELETED }
+      .map { sentence ->
+        val events = delete(sentence, performedByUser ?: serviceUserService.getUsername())
+        eventMetaDataList.addAll(events)
+        LegacySentenceDeletedResponse.from(sentence)
+      }
+      .firstOrNull() ?: return null
 
-  fun delete(sentence: SentenceEntity, performedByUser: String) {
+    eventMetaDataList.add(
+      EventMetadataCreator.sentenceEventMetadata(
+        prisonerId = sentenceDeleteResponse.prisonerId,
+        courtCaseId = sentenceDeleteResponse.courtCaseId,
+        chargeId = sentenceDeleteResponse.chargeLifetimeUuid.toString(),
+        sentenceId = sentenceDeleteResponse.lifetimeUuid.toString(),
+        courtAppearanceId = sentenceDeleteResponse.appearanceUuid.toString(),
+        eventType = EventType.SENTENCE_DELETED,
+      ),
+    )
+
+    return RecordResponse(
+      record = sentenceDeleteResponse,
+      eventsToEmit = eventMetaDataList,
+    )
+  }
+
+  fun delete(sentence: SentenceEntity, performedByUser: String): Set<EventMetadata> {
     sentence.delete(performedByUser)
     sentenceHistoryRepository.save(
       SentenceHistoryEntity.from(
@@ -462,16 +483,28 @@ class LegacySentenceService(
       ),
     )
     deletePeriodLengths(sentence, performedByUser)
-    deleteRecallSentence(sentence, performedByUser)
+    return deleteRecallSentence(sentence, performedByUser)
   }
 
-  private fun deleteRecallSentence(sentence: SentenceEntity, performedByUser: String) {
+  private fun deleteRecallSentence(sentence: SentenceEntity, performedByUser: String): Set<EventMetadata> {
+    val eventMetaDataList = mutableSetOf<EventMetadata>()
     sentence.recallSentences.forEach {
       val recall = it.recall
 
       if (recall.recallSentences.size == 1) {
         recall.delete(performedByUser)
         recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
+
+        eventMetaDataList.add(
+          EventMetadataCreator.recallEventMetadata(
+            prisonerId = recall.prisonerId,
+            recallId = recall.recallUuid.toString(),
+            sentenceIds = listOf(sentence.sentenceUuid.toString()),
+            previousSentenceIds = emptyList(),
+            previousRecallId = null,
+            eventType = EventType.RECALL_DELETED,
+          ),
+        )
       } else {
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
@@ -482,6 +515,7 @@ class LegacySentenceService(
       }
       recallSentenceRepository.delete(it)
     }
+    return eventMetaDataList
   }
 
   private fun deletePeriodLengths(sentence: SentenceEntity, performedByUser: String) {

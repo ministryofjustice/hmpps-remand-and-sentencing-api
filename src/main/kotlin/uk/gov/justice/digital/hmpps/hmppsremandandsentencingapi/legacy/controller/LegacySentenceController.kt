@@ -134,8 +134,8 @@ class LegacySentenceController(
     @RequestHeader("performedByUser", required = false)
     performedByUser: String?,
   ) {
-    legacySentenceService.delete(lifetimeUuid, performedByUser)?.also { legacySentence ->
-      eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), legacySentence.courtCaseId, legacySentence.appearanceUuid.toString(), EventSource.NOMIS)
+    legacySentenceService.delete(lifetimeUuid, performedByUser)?.let {
+      legacyEventService.emitEvents(it.eventsToEmit)
     }
   }
 

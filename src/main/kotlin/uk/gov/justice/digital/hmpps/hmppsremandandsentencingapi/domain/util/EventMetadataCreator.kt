@@ -49,7 +49,7 @@ class EventMetadataCreator {
       prisonerId: String,
       recallId: String,
       sentenceIds: List<String>,
-      previousSentenceIds: List<String>,
+      previousSentenceIds: List<String>, // The previous fields dont need to be set for NOMIS recalls
       previousRecallId: String?,
       eventType: EventType,
     ): EventMetadata = EventMetadata(prisonerId, null, null, null, null, recallId, eventType, sentenceIds = sentenceIds, previousRecallId = previousRecallId, previousSentenceIds = previousSentenceIds)
