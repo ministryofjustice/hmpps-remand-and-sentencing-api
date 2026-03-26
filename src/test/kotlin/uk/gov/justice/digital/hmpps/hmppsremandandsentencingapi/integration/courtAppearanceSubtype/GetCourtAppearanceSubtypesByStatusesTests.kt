@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceSubtypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceSubtypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyAppearanceTypeService
 import java.util.UUID
 
@@ -14,9 +13,6 @@ class GetCourtAppearanceSubtypesByStatusesTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var appearanceTypeRepository: AppearanceTypeRepository
-
-  @Autowired
-  private lateinit var courtAppearanceSubtypeRepository: CourtAppearanceSubtypeRepository
 
   @Test
   fun `return all active types`() {

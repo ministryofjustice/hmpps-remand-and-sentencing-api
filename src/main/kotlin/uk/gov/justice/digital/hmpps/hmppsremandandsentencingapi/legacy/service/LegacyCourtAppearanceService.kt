@@ -172,7 +172,7 @@ class LegacyCourtAppearanceService(
     val courtAppearance = getUnlessDeleted(lifetimeUuid)
     val associatedNextCourtAppearance = nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)
     val appearanceTypeUuid = associatedNextCourtAppearance?.appearanceType?.appearanceTypeUuid ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_UUID
-    val nomisAppearanceTypeCode = courtAppearance.legacyData?.nomisAppearanceTypeCode ?: associatedNextCourtAppearance?.appearanceType?.dpsToNomisMappingCode ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_NOMIS_CODE
+    val nomisAppearanceTypeCode = courtAppearance.legacyData?.nomisAppearanceTypeCode ?: associatedNextCourtAppearance?.courtAppearanceSubtype?.nomisCode ?: associatedNextCourtAppearance?.appearanceType?.dpsToNomisMappingCode ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_NOMIS_CODE
     return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid, nomisAppearanceTypeCode)
   }
 
