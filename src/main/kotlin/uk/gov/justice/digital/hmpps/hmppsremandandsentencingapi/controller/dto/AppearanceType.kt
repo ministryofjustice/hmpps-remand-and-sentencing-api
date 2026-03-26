@@ -7,12 +7,14 @@ data class AppearanceType(
   val appearanceTypeUuid: UUID,
   val description: String,
   val displayOrder: Int,
+  val hasSubtypes: Boolean,
 ) {
   companion object {
     fun from(appearanceTypeEntity: AppearanceTypeEntity): AppearanceType = AppearanceType(
       appearanceTypeEntity.appearanceTypeUuid,
       appearanceTypeEntity.description,
       appearanceTypeEntity.displayOrder,
+      appearanceTypeEntity.totalSubtypes > 0,
     )
   }
 }

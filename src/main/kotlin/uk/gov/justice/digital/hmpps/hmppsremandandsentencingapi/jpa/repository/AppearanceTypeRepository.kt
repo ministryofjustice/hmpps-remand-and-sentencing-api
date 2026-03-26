@@ -14,7 +14,7 @@ interface AppearanceTypeRepository : CrudRepository<AppearanceTypeEntity, Int> {
 
   @Query(
     """
-    select at.* 
+    select at.*, (select count(*) from court_appearance_subtype cas where cas.appearance_type_id= at.id) as totalSubtypes
     from appearance_type at, jsonb_array_elements(at.nomis_to_dps_mapping_codes->'codes') nomisCodesObj
     where nomisCodesObj->>'code' = :nomisCode
   """,
