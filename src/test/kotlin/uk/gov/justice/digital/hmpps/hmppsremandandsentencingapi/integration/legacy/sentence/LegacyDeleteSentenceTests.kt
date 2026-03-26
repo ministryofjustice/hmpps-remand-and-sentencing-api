@@ -57,6 +57,10 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recallsBeforeDelete[0].recallUuid)
     assertThat(historicalRecalls).hasSize(2)
+
+    val messages = getMessages(2)
+    assertThat(messages).extracting<String> { it.eventType }.contains("sentence.deleted", "recall.deleted")
+    assertThat(messages).allSatisfy { assertThat(it.additionalInformation.get("source").asText()).isEqualTo("NOMIS") }
   }
 
   @Test

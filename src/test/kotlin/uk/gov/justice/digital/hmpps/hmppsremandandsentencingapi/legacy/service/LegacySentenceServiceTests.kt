@@ -6,7 +6,9 @@ import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -148,12 +150,12 @@ class LegacySentenceServiceTests {
   }
 
   @Test
-  fun `delete saves recallHistory after deleting so status should be DELETED in history table`() {
+  fun `delete saves recallHistory after deleting so status should be DELETED in history table, also emits recall_deleted event`() {
     val sentenceUuid = UUID.randomUUID()
     val chargeUuid = UUID.randomUUID()
     val appearanceUuid = UUID.randomUUID()
 
-    val (existingSentence, _) = getSentenceAndRecall(
+    val (existingSentence, recall) = getSentenceAndRecall(
       sentenceUuid = sentenceUuid,
       chargeUuid = chargeUuid,
       appearanceUuid = appearanceUuid,
@@ -166,13 +168,23 @@ class LegacySentenceServiceTests {
 
     val recallHistorySlot = slot<RecallHistoryEntity>()
 
-    service.delete(existingSentence, "SYNC_USER")
+    val events = service.delete(existingSentence, "SYNC_USER")
 
     verify {
       recallHistoryRepository.save(capture(recallHistorySlot))
     }
 
     assertThat(recallHistorySlot.captured.status).isEqualTo(RecallEntityStatus.DELETED)
+    assertThat(events).containsExactly(
+      EventMetadataCreator.recallEventMetadata(
+        prisonerId = recall.prisonerId,
+        recallId = recall.recallUuid.toString(),
+        sentenceIds = listOf(sentenceUuid.toString()),
+        previousSentenceIds = emptyList(),
+        previousRecallId = null,
+        eventType = EventType.RECALL_DELETED,
+      ),
+    )
   }
 
   @Test
