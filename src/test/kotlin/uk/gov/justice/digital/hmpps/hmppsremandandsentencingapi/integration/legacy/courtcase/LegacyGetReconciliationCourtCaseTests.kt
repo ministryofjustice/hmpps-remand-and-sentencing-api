@@ -15,6 +15,7 @@ class LegacyGetReconciliationCourtCaseTests : IntegrationTestBase() {
     val (uuid, createdCase) = createCourtCase()
     val appearance = createdCase.appearances.first()
     val nextAppearance = appearance.nextCourtAppearance!!
+    val appearanceSubtype = courtAppearanceSubtypeRepository.findByAppearanceSubtypeUuid(nextAppearance.courtAppearanceSubtypeUuid!!)
     webTestClient
       .get()
       .uri("/legacy/court-case/$uuid/reconciliation")
@@ -37,6 +38,8 @@ class LegacyGetReconciliationCourtCaseTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.appearances[?(@.appearanceDate == '${nextAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')].appearanceTypeUuid")
       .isEqualTo(nextAppearance.appearanceTypeUuid.toString())
+      .jsonPath("$.appearances[?(@.appearanceDate == '${nextAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')].nomisAppearanceTypeCode")
+      .isEqualTo(appearanceSubtype!!.nomisCode)
   }
 
   @Test
