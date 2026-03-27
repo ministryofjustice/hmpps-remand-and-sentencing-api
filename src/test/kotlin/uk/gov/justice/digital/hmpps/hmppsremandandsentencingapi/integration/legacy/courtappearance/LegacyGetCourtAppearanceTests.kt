@@ -50,6 +50,27 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `get nomis appearance type code of subtype when it exists`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(purgeQueues = false)
+    val courtAppearance = createdCourtCase.appearances.first()
+    val courtAppearanceMessages = getMessages(7).filter { message -> message.eventType == "court-appearance.inserted" }
+    val futureAppearanceUuid = courtAppearanceMessages.map { message -> message.additionalInformation.get("courtAppearanceId").asText() }.first { it != courtAppearance.appearanceUuid.toString() }
+    val courtAppearanceSubType = courtAppearanceSubtypeRepository.findByAppearanceSubtypeUuid(courtAppearance.nextCourtAppearance!!.courtAppearanceSubtypeUuid!!)
+    webTestClient
+      .get()
+      .uri("/legacy/court-appearance/$futureAppearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.nomisAppearanceTypeCode")
+      .isEqualTo(courtAppearanceSubType!!.nomisCode)
+  }
+
+  @Test
   fun `no appearance exist for uuid results in not found`() {
     webTestClient
       .get()
