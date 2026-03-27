@@ -21,7 +21,7 @@ data class ReconciliationCourtAppearance(
   val charges: List<ReconciliationCharge>,
 ) {
   companion object {
-    fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceType: AppearanceTypeEntity): ReconciliationCourtAppearance = ReconciliationCourtAppearance(
+    fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceType: AppearanceTypeEntity, nomisAppearanceTypeCodeFallback: String): ReconciliationCourtAppearance = ReconciliationCourtAppearance(
       courtAppearanceEntity.appearanceUuid,
       courtAppearanceEntity.courtCode,
       courtAppearanceEntity.appearanceDate,
@@ -30,7 +30,7 @@ data class ReconciliationCourtAppearance(
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.nextCourtAppearance?.let { ReconciliationNextCourtAppearance.from(it) },
       appearanceType.appearanceTypeUuid,
-      courtAppearanceEntity.legacyData?.nomisAppearanceTypeCode ?: appearanceType.dpsToNomisMappingCode,
+      courtAppearanceEntity.legacyData?.nomisAppearanceTypeCode ?: nomisAppearanceTypeCodeFallback,
       courtAppearanceEntity.appearanceCharges.filter { it.charge != null && it.charge!!.statusId != ChargeEntityStatus.DELETED }
         .map { ReconciliationCharge.from(it.charge!!) },
 
