@@ -10,4 +10,6 @@ interface CourtAppearanceSubtypeRepository : JpaRepository<CourtAppearanceSubtyp
   fun findByAppearanceSubtypeUuid(appearanceTypeUuid: UUID): CourtAppearanceSubtypeEntity?
 
   fun findByStatusIn(statuses: List<ReferenceEntityStatus>): List<CourtAppearanceSubtypeEntity>
+
+  fun findByNomisCode(nomisCode: String): CourtAppearanceSubtypeEntity?
 }

@@ -136,9 +136,9 @@ class BookingService(
       val createdNextAppearance = createdAppearances[nextAppearanceId]!!
       val nomisAppearance = nomisAppearances[appearanceId]!!
       val nomisNextAppearance = nomisAppearances[nextAppearanceId]!!
-      val nextAppearanceType = legacyAppearanceTypeService.getAppearanceType(nomisNextAppearance.legacyData.nomisAppearanceTypeCode, nomisNextAppearance.appearanceTypeUuid)
+      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(nomisNextAppearance.legacyData.nomisAppearanceTypeCode, nomisNextAppearance.appearanceTypeUuid)
       createdAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nomisAppearance, nomisNextAppearance, createdNextAppearance, nextAppearanceType),
+        NextCourtAppearanceEntity.from(nomisAppearance, nomisNextAppearance, createdNextAppearance, appearanceTypeCourtAppearanceSubtype),
       )
     }
   }
@@ -147,9 +147,9 @@ class BookingService(
     if (latestCourtAppearance.nextCourtAppearance == null && createdAppearances.values.any { it.statusId == CourtAppearanceEntityStatus.FUTURE }) {
       val (nextFutureDatedEventId, nextFutureDatedAppearance) = createdAppearances.filter { (_, courtAppearanceEntity) -> courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE }.minBy { (_, courtAppearanceEntity) -> courtAppearanceEntity.appearanceDate }
       val nomisNextFutureDatedAppearance = bookingCreateCourtCase.appearances.first { it.eventId == nextFutureDatedEventId }
-      val nextAppearanceType = legacyAppearanceTypeService.getAppearanceType(nomisNextFutureDatedAppearance.legacyData.nomisAppearanceTypeCode, nomisNextFutureDatedAppearance.appearanceTypeUuid)
+      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(nomisNextFutureDatedAppearance.legacyData.nomisAppearanceTypeCode, nomisNextFutureDatedAppearance.appearanceTypeUuid)
       latestCourtAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nextFutureDatedAppearance, nextAppearanceType),
+        NextCourtAppearanceEntity.from(nextFutureDatedAppearance, appearanceTypeCourtAppearanceSubtype),
       )
     }
   }

@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appea
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCodes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.AppearanceTypeCourtAppearanceSubtype
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -26,7 +27,12 @@ class NextCourtAppearanceEntityTests {
     val legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = nextEventDateTimeAtMidnight)
     val nomisAppearance = DataCreator.migrationCreateCourtAppearance(legacyData = legacyData)
     val futureMigrationCourtAppearance = DataCreator.migrationCreateCourtAppearance()
-    val result = NextCourtAppearanceEntity.from(nomisAppearance, futureMigrationCourtAppearance, futureAppearance, appearanceTypeEntity)
+    val result = NextCourtAppearanceEntity.from(
+      nomisAppearance,
+      futureMigrationCourtAppearance,
+      futureAppearance,
+      AppearanceTypeCourtAppearanceSubtype(appearanceTypeEntity),
+    )
     Assertions.assertNull(result.appearanceTime)
   }
 
@@ -34,7 +40,7 @@ class NextCourtAppearanceEntityTests {
   fun `do not set time if midnight in sync`() {
     val legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = LocalTime.MIDNIGHT)
     val nomisAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = legacyData)
-    val result = NextCourtAppearanceEntity.from(nomisAppearance, futureAppearance, appearanceTypeEntity)
+    val result = NextCourtAppearanceEntity.from(nomisAppearance, futureAppearance, AppearanceTypeCourtAppearanceSubtype(appearanceTypeEntity))
     Assertions.assertNull(result.appearanceTime)
   }
 
