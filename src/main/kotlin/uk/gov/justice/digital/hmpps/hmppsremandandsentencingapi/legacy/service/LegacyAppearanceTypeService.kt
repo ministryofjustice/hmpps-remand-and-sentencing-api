@@ -3,17 +3,23 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceSubtypeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.AppearanceTypeCourtAppearanceSubtype
 import java.util.*
 
 @Service
-class LegacyAppearanceTypeService(private val appearanceTypeRepository: AppearanceTypeRepository) {
+class LegacyAppearanceTypeService(private val appearanceTypeRepository: AppearanceTypeRepository, private val courtAppearanceSubtypeRepository: CourtAppearanceSubtypeRepository) {
 
-  fun getAppearanceType(nomisAppearanceTypeCode: String?, appearanceTypeUuid: UUID?): AppearanceTypeEntity = if (nomisAppearanceTypeCode != null) {
-    appearanceTypeRepository.findByNomisCode(nomisAppearanceTypeCode) ?: getDefaultAppearanceType()
+  fun getAppearanceType(nomisAppearanceTypeCode: String?, appearanceTypeUuid: UUID?): AppearanceTypeCourtAppearanceSubtype = if (nomisAppearanceTypeCode != null) {
+    val subtype = courtAppearanceSubtypeRepository.findByNomisCode(nomisAppearanceTypeCode)
+    if (subtype != null) {
+      return AppearanceTypeCourtAppearanceSubtype(subtype.appearanceType, subtype)
+    }
+    AppearanceTypeCourtAppearanceSubtype(appearanceTypeRepository.findByNomisCode(nomisAppearanceTypeCode) ?: getDefaultAppearanceType())
   } else if (appearanceTypeUuid != null) {
-    appearanceTypeRepository.findByAppearanceTypeUuid(appearanceTypeUuid) ?: getDefaultAppearanceType()
+    AppearanceTypeCourtAppearanceSubtype(appearanceTypeRepository.findByAppearanceTypeUuid(appearanceTypeUuid) ?: getDefaultAppearanceType())
   } else {
-    getDefaultAppearanceType()
+    AppearanceTypeCourtAppearanceSubtype(getDefaultAppearanceType())
   }
 
   fun getDefaultAppearanceType(): AppearanceTypeEntity = appearanceTypeRepository.findByAppearanceTypeUuid(DEFAULT_APPEARANCE_TYPE_UUID)!!

@@ -115,8 +115,8 @@ class LegacyCourtAppearanceService(
 
   private fun handleNextCourtAppearance(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance) {
     nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)?.let { existingNextCourtAppearance ->
-      val appearanceType = legacyAppearanceTypeService.getAppearanceType(updateRequest.legacyData.nomisAppearanceTypeCode, updateRequest.appearanceTypeUuid)
-      val toUpdate = NextCourtAppearanceEntity.from(updateRequest, courtAppearance, appearanceType)
+      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(updateRequest.legacyData.nomisAppearanceTypeCode, updateRequest.appearanceTypeUuid)
+      val toUpdate = NextCourtAppearanceEntity.from(updateRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype)
       existingNextCourtAppearance.updateFrom(toUpdate)
     } ?: handleMatchingNextCourtAppearance(courtAppearance, updateRequest)
   }
@@ -138,11 +138,11 @@ class LegacyCourtAppearanceService(
 
   private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {
     courtAppearance.takeIf { it.statusId == CourtAppearanceEntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate) }?.let { matchedCourtAppearance ->
-      val appearanceType = legacyAppearanceTypeService.getAppearanceType(legacyRequest.legacyData.nomisAppearanceTypeCode, legacyRequest.appearanceTypeUuid)
+      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(legacyRequest.legacyData.nomisAppearanceTypeCode, legacyRequest.appearanceTypeUuid)
       matchedCourtAppearance.nextCourtAppearance?.let { matchedNextCourtAppearance ->
-        val toUpdate = NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceType)
+        val toUpdate = NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype)
         matchedNextCourtAppearance.updateFrom(toUpdate)
-      } ?: NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceType).let { toCreateNextCourtAppearance ->
+      } ?: NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype).let { toCreateNextCourtAppearance ->
         val savedNextCourtAppearance = nextCourtAppearanceRepository.save(toCreateNextCourtAppearance)
         courtAppearanceRepository.updateNextCourtAppearance(
           savedNextCourtAppearance,

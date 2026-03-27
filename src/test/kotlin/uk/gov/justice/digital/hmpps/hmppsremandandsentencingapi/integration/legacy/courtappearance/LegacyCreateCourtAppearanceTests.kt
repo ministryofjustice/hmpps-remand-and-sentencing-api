@@ -59,7 +59,9 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.lifetimeUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        Assertions.assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("court-appearance.inserted")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
@@ -68,7 +70,7 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `create future dated appearance with existing appearance`() {
     val (appearanceUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
-    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null, nomisAppearanceTypeCode = "PS"))
     webTestClient
       .post()
       .uri("/legacy/court-appearance")
@@ -80,9 +82,6 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isCreated
-      .expectBody()
-      .jsonPath("$.lifetimeUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
 
     webTestClient
       .get()
@@ -98,6 +97,8 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
       .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.courtAppearanceSubType.appearanceSubtypeUuid")
+      .isEqualTo("c2a9f5d4-1e6b-4a9c-b8f7-3d2e1c6a9b84") // subtype for NOMIS code PS
 
     val appearanceHistories = courtAppearanceHistoryRepository.findAll()
     val existingAppearanceHistories = appearanceHistories.filter { it.appearanceUuid == appearanceUuid }.sortedBy { it.updatedAt ?: it.createdAt }
