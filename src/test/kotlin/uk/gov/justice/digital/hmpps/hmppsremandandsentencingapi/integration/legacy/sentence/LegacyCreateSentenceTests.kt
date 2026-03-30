@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,7 +36,9 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.lifetimeUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
     val message = getMessages(1)[0]
     assertThat(message.eventType).isEqualTo("sentence.inserted")
     assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")

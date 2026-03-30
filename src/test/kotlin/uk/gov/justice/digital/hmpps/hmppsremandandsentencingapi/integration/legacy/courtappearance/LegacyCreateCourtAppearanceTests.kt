@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -36,7 +35,9 @@ class LegacyCreateCourtAppearanceTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.lifetimeUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        Assertions.assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
     val message = getMessages(1)[0]
     Assertions.assertThat(message.eventType).isEqualTo("court-appearance.inserted")
     Assertions.assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
