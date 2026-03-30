@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
@@ -35,7 +34,9 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.courtCaseUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        Assertions.assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
 
     val courtCaseLogs = courtCaseHistoryRepository.findAll().filter { it.prisonerId == courtCase.second.prisonerId }
     assertThat(courtCaseLogs).hasSize(1)
