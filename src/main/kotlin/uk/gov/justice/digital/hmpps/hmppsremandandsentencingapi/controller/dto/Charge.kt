@@ -13,6 +13,7 @@ data class Charge(
   val offenceEndDate: LocalDate?,
   val outcome: ChargeOutcome?,
   val terrorRelated: Boolean?,
+  val foreignPowerRelated: Boolean?,
   val sentence: Sentence?,
   val legacyData: ChargeLegacyData?,
   val mergedFromCase: MergedFromCase?,
@@ -26,6 +27,7 @@ data class Charge(
       chargeEntity.offenceEndDate,
       chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
       chargeEntity.terrorRelated,
+      chargeEntity.foreignPowerRelated,
       chargeEntity.getLiveSentence()?.let { Sentence.from(it) },
       chargeEntity.legacyData,
       chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.let {
