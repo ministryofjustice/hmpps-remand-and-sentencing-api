@@ -415,10 +415,29 @@ class RecallService(
   }
 
   private fun isRecallPossibleForSentence(sentence: SentenceEntity, recallType: RecallType): IsRecallPossible {
+    if (sentence.sentenceType == null) {
+      return isRecallPossibleUsingLegacySentenceCalcType(sentence.legacyData?.sentenceCalcType, recallType)
+    }
     if (sentence.sentenceType!!.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
       return isRecallPossibleForLegacyRecall(sentence, recallType)
     }
     return isRecallPossibleForClassification(sentence.sentenceType!!.classification, recallType)
+  }
+
+  private fun isRecallPossibleUsingLegacySentenceCalcType(
+    sentenceCalcType: String?,
+    recallType: RecallType,
+  ): IsRecallPossible {
+    if (sentenceCalcType == null) {
+      return IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    }
+
+    val classification = nomisSentenceCalcTypeToClassification(sentenceCalcType)
+    return if (classification == SentenceTypeClassification.UNKNOWN) {
+      IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    } else {
+      isRecallPossibleForClassification(classification, recallType)
+    }
   }
 
   private fun isRecallPossibleForClassification(
@@ -452,7 +471,7 @@ class RecallService(
     val sentenceCalcType = recallLegacyData.sentenceCalcType
 
     val classification =
-      LegacyRecallService.Companion.classificationToLegacySentenceTypeMap.mapNotNull { (classification, types) ->
+      LegacyRecallService.classificationToLegacySentenceTypeMap.mapNotNull { (classification, types) ->
         if (types.contains(sentenceCalcType)) {
           classification
         } else {
@@ -697,5 +716,17 @@ class RecallService(
       "HDR",
       "FTR_56ORA",
     )
+
+    private fun nomisSentenceCalcTypeToClassification(sentenceCalcType: String): SentenceTypeClassification = when (sentenceCalcType.trim()) {
+      "ADIMP", "ADIMP_ORA", "AR", "CR", "SEC250", "SEC250_ORA", "YOI", "YOI_ORA" ->
+        SentenceTypeClassification.STANDARD
+      "EDS18", "EDS21", "EDSU18", "EPP", "EXT", "LASPO_AR", "LASPO_DR" ->
+        SentenceTypeClassification.EXTENDED
+      "ALP", "ALP_CODE18", "ALP_CODE21", "ALP_LASPO", "DFL", "DLP", "HMPL", "IPP", "LIFE", "MLP", "SEC272", "SEC275", "SEC93", "SEC93_03", "SEC94" ->
+        SentenceTypeClassification.INDETERMINATE
+      "SEC236A", "SOPC18", "SOPC21" ->
+        SentenceTypeClassification.SOPC
+      else -> SentenceTypeClassification.UNKNOWN
+    }
   }
 }
