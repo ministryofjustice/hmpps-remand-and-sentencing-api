@@ -717,16 +717,13 @@ class RecallService(
       "FTR_56ORA",
     )
 
-    private fun nomisSentenceCalcTypeToClassification(sentenceCalcType: String): SentenceTypeClassification = when (sentenceCalcType.trim()) {
-      "ADIMP", "ADIMP_ORA", "AR", "CR", "SEC250", "SEC250_ORA", "YOI", "YOI_ORA" ->
-        SentenceTypeClassification.STANDARD
-      "EDS18", "EDS21", "EDSU18", "EPP", "EXT", "LASPO_AR", "LASPO_DR" ->
-        SentenceTypeClassification.EXTENDED
-      "ALP", "ALP_CODE18", "ALP_CODE21", "ALP_LASPO", "DFL", "DLP", "HMPL", "IPP", "LIFE", "MLP", "SEC272", "SEC275", "SEC93", "SEC93_03", "SEC94" ->
-        SentenceTypeClassification.INDETERMINATE
-      "SEC236A", "SOPC18", "SOPC21" ->
-        SentenceTypeClassification.SOPC
-      else -> SentenceTypeClassification.UNKNOWN
-    }
+    private fun nomisSentenceCalcTypeToClassification(type: String): SentenceTypeClassification =
+      when (type.trim()) {
+        "AR", "CR", "YOI" -> SentenceTypeClassification.STANDARD
+        "EXT", "PPEXT_SENT" -> SentenceTypeClassification.EXTENDED
+        "ALP", "ALP_CODE21", "DFL", "DLP", "HMPL", "LIFE", "MLP", "SEC93", "SEC94" -> SentenceTypeClassification.INDETERMINATE
+        "CIVIL", "CIVILLT", "DTO", "TISCS", "YRO", "IC", "NP", "ZMD", "DPP", "AGG-IND", "LIFE/IPP" -> SentenceTypeClassification.CIVIL
+        else -> SentenceTypeClassification.UNKNOWN
+      }
   }
 }
