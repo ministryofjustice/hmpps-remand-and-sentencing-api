@@ -114,7 +114,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     )
     val appearance = courtCaseCreated.appearances.first()
     val charge = appearance.charges.first()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_56ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
+    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_56", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
     webTestClient
       .post()
       .uri("/legacy/sentence")

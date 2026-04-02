@@ -695,7 +695,7 @@ class RecallService(
       "FTR_HDC",
       "FTR_HDC_ORA",
       "HDR",
-      "FTR_56ORA",
+      "FTR_56",
     )
   }
 }

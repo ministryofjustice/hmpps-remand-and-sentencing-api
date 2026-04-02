@@ -578,7 +578,7 @@ class LegacySentenceService(
       "FTR",
       "FTR_ORA",
       "14FTR_ORA",
-      "FTR_56ORA",
+      "FTR_56",
       "FTRSCH18",
       "FTRSCH18_ORA",
       "FTR_SCH15",

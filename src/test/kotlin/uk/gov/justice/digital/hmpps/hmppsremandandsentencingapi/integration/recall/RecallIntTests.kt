@@ -1332,8 +1332,8 @@ class RecallIntTests : IntegrationTestBase() {
       Arguments.of("HDR", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
       Arguments.of("HDR", FTR_28, IsRecallPossible.YES),
 
-      Arguments.of("FTR_56ORA", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
-      Arguments.of("FTR_56ORA", FTR_28, IsRecallPossible.YES),
+      Arguments.of("FTR_56", LR, IsRecallPossible.UNKNOWN_PRE_RECALL_MAPPING),
+      Arguments.of("FTR_56", FTR_28, IsRecallPossible.YES),
     )
   }
 }
