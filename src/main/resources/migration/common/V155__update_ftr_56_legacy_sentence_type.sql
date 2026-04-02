@@ -1,4 +1,4 @@
-update legacy_sentence_types set nomis_reference = 'FTR_56', sentencing_act = '2003' where nomis_reference = 'FTR_56ORA'
+update legacy_sentence_types set nomis_reference = 'FTR_56', sentencing_act = '2003' where nomis_reference = 'FTR_56ORA';
 
 -- Sets sentence.sentence_type_id to the 'Unknown recall sentence ID' for all FTR_56 legacy sentences
 UPDATE sentence s
