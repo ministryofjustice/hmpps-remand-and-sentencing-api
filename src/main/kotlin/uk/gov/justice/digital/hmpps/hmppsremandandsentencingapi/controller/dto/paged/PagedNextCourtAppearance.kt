@@ -10,6 +10,7 @@ data class PagedNextCourtAppearance(
   val appearanceTime: LocalTime?,
   val courtCode: String?,
   val appearanceTypeDescription: String,
+  val appearanceSubtypeDescription: String?,
   val futureSkeletonAppearanceUuid: UUID,
 ) {
   companion object {
@@ -18,6 +19,7 @@ data class PagedNextCourtAppearance(
       courtCaseRow.nextCourtAppearanceTime,
       courtCaseRow.nextCourtAppearanceCourtCode!!,
       courtCaseRow.nextCourtAppearanceTypeDescription!!,
+      courtCaseRow.nextCourtAppearanceSubtypeDescription,
       courtCaseRow.futureSkeletonAppearanceUuid!!,
     )
   }
