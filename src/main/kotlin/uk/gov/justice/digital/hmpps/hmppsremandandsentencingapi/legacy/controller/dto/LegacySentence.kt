@@ -76,7 +76,8 @@ data class LegacySentence(
             val earliestRecallLegacyData = earliestRecall.let { recall -> sentenceEntity.recallSentences.find { it.recall.id == recall.id }?.legacyData }!!
             return mapNewRecallOnNomisRecall(latestRecall, earliestRecallLegacyData)
           }
-        } else if (sentenceEntity.sentenceType == null && sentenceEntity.legacyData?.sentenceCalcType != null && sentenceEntity.legacyData?.sentenceCategory != null) {
+        } else if (sentenceEntity.sentenceType == null) {
+          // If sentenceEntity.sentenceType is null then we can infer that the following legacyData fields will be populated
           sentenceEntity.legacyData!!.sentenceCalcType!! to sentenceEntity.legacyData!!.sentenceCategory!!
         } else {
           latestRecall.recallType.toLegacySentenceType(sentenceEntity.sentenceType!!) to sentenceEntity.sentenceType!!.nomisCjaCode
