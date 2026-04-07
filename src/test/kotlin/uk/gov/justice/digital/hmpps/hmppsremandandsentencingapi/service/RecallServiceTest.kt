@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.Adjustmen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -382,6 +384,72 @@ class RecallServiceTest {
 
       assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.ACTIVE)
       assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.INACTIVE)
+    }
+  }
+
+  @Nested
+  inner class RecallPossibleWithNullSentenceTypeTests {
+    @Test
+    fun `sentence with null sentenceType falls back to legacy calc type and returns YES for STANDARD`() {
+      val sentence = SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = null,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(
+          sentenceCalcType = "AR", // STANDARD via mapping
+          sentenceCategory = "TEST",
+        ),
+      )
+
+      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.LR,
+        ),
+      )
+
+      assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
+    }
+
+    @Test
+    fun `sentence with null sentenceType and unknown calc type returns NOT POSSIBLE`() {
+      val sentence = SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = null,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(
+          sentenceCalcType = "UNKNOWN_TYPE",
+          sentenceCategory = "TEST",
+        ),
+      )
+
+      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.LR,
+        ),
+      )
+
+      assertThat(result.isRecallPossible)
+        .isEqualTo(IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE)
     }
   }
 

@@ -67,7 +67,6 @@ data class LegacySentence(
         (sentenceEntity.sentenceType?.nomisSentenceCalcType ?: sentenceEntity.legacyData!!.sentenceCalcType!!) to
           (sentenceEntity.sentenceType?.nomisCjaCode ?: sentenceEntity.legacyData!!.sentenceCategory!!)
       } else {
-        // TODO reverse mapping here
         if (LegacySentenceService.recallSentenceTypeBucketUuid == sentenceEntity.sentenceType?.sentenceTypeUuid) {
           val recallLegacyData = latestRecall.let { recall -> sentenceEntity.recallSentences.find { it.recall.id == recall.id }?.legacyData }
           if (recallLegacyData?.sentenceCalcType != null) {
@@ -77,9 +76,8 @@ data class LegacySentence(
             val earliestRecallLegacyData = earliestRecall.let { recall -> sentenceEntity.recallSentences.find { it.recall.id == recall.id }?.legacyData }!!
             return mapNewRecallOnNomisRecall(latestRecall, earliestRecallLegacyData)
           }
-        } else if (sentenceEntity.sentenceType == null) {
-
-          latestRecall.recallType.toLegacySentenceType(sentenceEntity.sentenceType!!) to sentenceEntity.sentenceType!!.nomisCjaCode
+        } else if (sentenceEntity.sentenceType == null && sentenceEntity.legacyData?.sentenceCalcType != null && sentenceEntity.legacyData?.sentenceCategory != null) {
+          sentenceEntity.legacyData!!.sentenceCalcType!! to sentenceEntity.legacyData!!.sentenceCategory!!
         } else {
           latestRecall.recallType.toLegacySentenceType(sentenceEntity.sentenceType!!) to sentenceEntity.sentenceType!!.nomisCjaCode
         }

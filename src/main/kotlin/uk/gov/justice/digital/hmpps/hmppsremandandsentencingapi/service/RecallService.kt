@@ -717,13 +717,12 @@ class RecallService(
       "FTR_56ORA",
     )
 
-    private fun nomisSentenceCalcTypeToClassification(type: String): SentenceTypeClassification =
-      when (type.trim()) {
-        "AR", "CR", "YOI" -> SentenceTypeClassification.STANDARD
-        "EXT", "PPEXT_SENT" -> SentenceTypeClassification.EXTENDED
-        "ALP", "ALP_CODE21", "DFL", "DLP", "HMPL", "LIFE", "MLP", "SEC93", "SEC94" -> SentenceTypeClassification.INDETERMINATE
-        "CIVIL", "CIVILLT", "DTO", "TISCS", "YRO", "IC", "NP", "ZMD", "DPP", "AGG-IND", "LIFE/IPP" -> SentenceTypeClassification.CIVIL
-        else -> SentenceTypeClassification.UNKNOWN
-      }
+    private fun nomisSentenceCalcTypeToClassification(type: String): SentenceTypeClassification = when (type.trim()) {
+      "AR", "CR", "YOI" -> SentenceTypeClassification.STANDARD
+      "EXT", "PPEXT_SENT" -> SentenceTypeClassification.EXTENDED
+      "ALP", "ALP_CODE21", "DFL", "DLP", "HMPL", "LIFE", "MLP", "SEC93", "SEC94" -> SentenceTypeClassification.INDETERMINATE
+      "CIVIL", "CIVILLT", "DTO", "TISCS", "YRO", "IC", "NP", "ZMD", "DPP", "AGG-IND", "LIFE/IPP" -> SentenceTypeClassification.CIVIL
+      else -> SentenceTypeClassification.UNKNOWN
+    }
   }
 }
