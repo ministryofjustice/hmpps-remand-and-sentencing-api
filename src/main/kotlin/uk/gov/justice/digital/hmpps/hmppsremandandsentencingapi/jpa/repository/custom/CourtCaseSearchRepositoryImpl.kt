@@ -57,6 +57,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         nlca.id as nextCourtAppearanceId,
         nlca.court_code as nextCourtAppearanceCourtCode,
         ncaat.description as nextCourtAppearanceTypeDescription,
+        ncacas.description as nextCourtAppearanceSubtypeDescription,
         nlca.appearance_date as nextCourtAppearanceDate,
         nlca.appearance_time as nextCourtAppearanceTime,
         lca.appearance_uuid as latestCourtAppearanceUuid,
@@ -139,6 +140,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join period_length apl on apl.appearance_id=lca.id
       left join next_court_appearance nlca on nlca.id = lca.next_court_appearance_id
       left join appearance_type ncaat on ncaat.id = nlca.appearance_type_id
+      left join court_appearance_subtype ncacas on ncacas.id = nlca.court_appearance_subtype_id
       left join appearance_charge ac on ac.appearance_id = lca.id
       left join charge c on ac.charge_id = c.id
       left join charge_outcome co on c.charge_outcome_id = co.id
