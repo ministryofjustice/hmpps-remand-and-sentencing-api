@@ -415,10 +415,29 @@ class RecallService(
   }
 
   private fun isRecallPossibleForSentence(sentence: SentenceEntity, recallType: RecallType): IsRecallPossible {
+    if (sentence.sentenceType == null) {
+      return isRecallPossibleUsingLegacySentenceCalcType(sentence.legacyData?.sentenceCalcType, recallType)
+    }
     if (sentence.sentenceType!!.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
       return isRecallPossibleForLegacyRecall(sentence, recallType)
     }
     return isRecallPossibleForClassification(sentence.sentenceType!!.classification, recallType)
+  }
+
+  private fun isRecallPossibleUsingLegacySentenceCalcType(
+    sentenceCalcType: String?,
+    recallType: RecallType,
+  ): IsRecallPossible {
+    if (sentenceCalcType == null) {
+      return IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    }
+
+    val classification = nomisSentenceCalcTypeToClassification(sentenceCalcType)
+    return if (classification == SentenceTypeClassification.UNKNOWN) {
+      IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    } else {
+      isRecallPossibleForClassification(classification, recallType)
+    }
   }
 
   private fun isRecallPossibleForClassification(
@@ -452,7 +471,7 @@ class RecallService(
     val sentenceCalcType = recallLegacyData.sentenceCalcType
 
     val classification =
-      LegacyRecallService.Companion.classificationToLegacySentenceTypeMap.mapNotNull { (classification, types) ->
+      LegacyRecallService.classificationToLegacySentenceTypeMap.mapNotNull { (classification, types) ->
         if (types.contains(sentenceCalcType)) {
           classification
         } else {
@@ -697,5 +716,13 @@ class RecallService(
       "HDR",
       "FTR_56ORA",
     )
+
+    private fun nomisSentenceCalcTypeToClassification(type: String): SentenceTypeClassification = when (type.trim()) {
+      "AR", "CR", "YOI" -> SentenceTypeClassification.STANDARD
+      "EXT", "PPEXT_SENT" -> SentenceTypeClassification.EXTENDED
+      "ALP", "ALP_CODE21", "DFL", "DLP", "HMPL", "LIFE", "MLP", "SEC93", "SEC94" -> SentenceTypeClassification.INDETERMINATE
+      "CIVIL", "CIVILLT", "DTO", "TISCS", "YRO", "IC", "NP", "ZMD", "DPP", "AGG-IND", "LIFE/IPP" -> SentenceTypeClassification.CIVIL
+      else -> SentenceTypeClassification.UNKNOWN
+    }
   }
 }
