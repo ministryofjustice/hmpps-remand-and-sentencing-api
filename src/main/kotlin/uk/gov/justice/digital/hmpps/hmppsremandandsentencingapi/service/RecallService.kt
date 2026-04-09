@@ -77,7 +77,7 @@ class RecallService(
     val recallHistory =
       recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.DPS))
     createRecall.sentenceIds?.let { sentenceIds ->
-      sentenceRepository.findBySentenceUuidIn(sentenceIds)
+      sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentenceIds)
         .forEach {
           val isPossibleForSentence = isRecallPossibleForSentence(it, createRecall.recallTypeCode)
           if (isPossibleForSentence != IsRecallPossible.YES) {
@@ -157,7 +157,7 @@ class RecallService(
       recallSentencesToDelete.forEach {
         deleteDpsRecallSentence(recallSentence = it, updatedPrison = recall.createdByPrison)
       }
-      sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
+      sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentencesToCreate)
         .forEach {
           val isPossibleForSentence = isRecallPossibleForSentence(it, recall.recallTypeCode)
           if (isPossibleForSentence != IsRecallPossible.YES) {
@@ -402,7 +402,7 @@ class RecallService(
 
   @Transactional(readOnly = true)
   fun isRecallPossible(request: IsRecallPossibleRequest): IsRecallPossibleResponse {
-    val sentences = sentenceRepository.findBySentenceUuidIn(request.sentenceIds)
+    val sentences = sentenceRepository.findBySentenceUuidInAndStatusIdNot(request.sentenceIds)
     val isPossibleForEachSentence = sentences.map { it to isRecallPossibleForSentence(it, request.recallType) }
     val isPossible = isPossibleForEachSentence.map { it.second }.minBy { it.priority }
     val notPossibleSentences =

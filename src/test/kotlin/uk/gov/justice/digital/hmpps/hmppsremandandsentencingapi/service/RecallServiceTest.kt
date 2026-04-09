@@ -212,7 +212,7 @@ class RecallServiceTest {
       every { recallTypeRepository.findOneByCode(any()) } returns
         RecallTypeEntity(0, RecallType.LR, "Standard")
       every { recallRepository.save(any()) } answers { firstArg() }
-      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
       val recallSentenceSaved = slot<RecallSentenceEntity>()
       val sentenceHistory = slot<SentenceHistoryEntity>()
       every { recallSentenceRepository.save(capture(recallSentenceSaved)) } answers { firstArg() }
@@ -340,7 +340,7 @@ class RecallServiceTest {
       every { recallHistoryRepository.save(any()) } returns mockk()
       every { recallSentenceHistoryRepository.save(any()) } returns mockk()
       every { recallTypeRepository.findOneByCode(any()) } returns RecallTypeEntity(0, RecallType.LR, "Standard")
-      every { sentenceRepository.findBySentenceUuidIn(match { it == listOf(newSentenceUuid) }) } returns listOf(newSentence)
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(match { it == listOf(newSentenceUuid) }, any()) } returns listOf(newSentence)
 
       val deletedRecallSentenceSlot = slot<RecallSentenceEntity>()
       every { recallSentenceRepository.delete(capture(deletedRecallSentenceSlot)) } returns Unit
@@ -408,7 +408,7 @@ class RecallServiceTest {
         ),
       )
 
-      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
 
       val result = service.isRecallPossible(
         IsRecallPossibleRequest(
@@ -439,7 +439,7 @@ class RecallServiceTest {
         ),
       )
 
-      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
 
       val result = service.isRecallPossible(
         IsRecallPossibleRequest(
