@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -44,6 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
@@ -278,6 +280,35 @@ class LegacySentenceServiceTests {
     every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
     every { recallSentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
     every { chargeHistoryRepository.save(any()) } returns mockk<ChargeHistoryEntity>(relaxed = true)
+  }
+
+  @Nested
+  inner class GetSentenceCalcTypeAndCategoryTests {
+    @Test
+    fun `null sentenceType with recall uses classification from legacy sentenceCalcType`() {
+      val (sentence, recall) = getSentenceAndRecall(
+        sentenceUuid = UUID.randomUUID(),
+        chargeUuid = UUID.randomUUID(),
+        appearanceUuid = UUID.randomUUID(),
+        recallType = RecallType.FTR_14,
+        existingRtc = LocalDate.of(2024, 1, 11),
+      )
+      sentence.sentenceType = null
+      sentence.legacyData = SentenceLegacyData(
+        sentenceCalcType = "AR",
+        sentenceCategory = "2020",
+        postedDate = "2026-02-10",
+        sentenceTypeDesc = null,
+        active = true,
+        nomisLineReference = null,
+        bookingId = null,
+      )
+
+      val result = LegacySentence.getSentenceCalcTypeAndCategory(sentence, recall)
+
+      assertThat(result.first).isEqualTo("14FTR_ORA")
+      assertThat(result.second).isEqualTo("2020")
+    }
   }
 
   private companion object {
