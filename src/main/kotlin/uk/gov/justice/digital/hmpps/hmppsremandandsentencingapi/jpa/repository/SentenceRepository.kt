@@ -53,6 +53,8 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   fun findBySentenceUuidIn(sentenceUuids: List<UUID>): List<SentenceEntity>
 
+  fun findBySentenceUuidInAndStatusIdNot(sentenceUuids: List<UUID>, statusId: SentenceEntityStatus = SentenceEntityStatus.DELETED): List<SentenceEntity>
+
   fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
 
   fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: SentenceEntityStatus): List<SentenceEntity>
