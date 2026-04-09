@@ -54,6 +54,7 @@ data class CourtCaseRow(
   var chargeOffenceStartDate: LocalDate?,
   var chargeOffenceEndDate: LocalDate?,
   var chargeTerrorRelated: Boolean?,
+  var chargeForeignPowerRelated: Boolean?,
   var chargeOutcomeUuid: UUID?,
   var chargeOutcomeName: String?,
   var chargeLegacyData: ChargeLegacyData?,
