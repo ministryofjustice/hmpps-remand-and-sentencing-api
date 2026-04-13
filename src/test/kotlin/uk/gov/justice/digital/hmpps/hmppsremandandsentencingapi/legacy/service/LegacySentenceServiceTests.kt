@@ -167,6 +167,7 @@ class LegacySentenceServiceTests {
 
     every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
     every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
+    every { recallSentenceRepository.countByRecallId(recall.id) } returns 1L
 
     val recallHistorySlot = slot<RecallHistoryEntity>()
 
@@ -276,6 +277,7 @@ class LegacySentenceServiceTests {
     every { periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid) } returns emptyList()
     every { serviceUserService.getUsername() } returns "SYNC_USER"
     every { sentenceRepository.save(any()) } answers { firstArg() }
+    every { recallSentenceRepository.countByRecallId(any()) } returns 1L
     every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
     every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
     every { recallSentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
