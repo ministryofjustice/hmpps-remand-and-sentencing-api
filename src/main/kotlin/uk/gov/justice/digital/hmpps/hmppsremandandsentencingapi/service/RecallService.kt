@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
@@ -77,7 +78,7 @@ class RecallService(
     val recallHistory =
       recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.DPS))
     createRecall.sentenceIds?.let { sentenceIds ->
-      sentenceRepository.findBySentenceUuidIn(sentenceIds)
+      sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentenceIds)
         .forEach {
           val isPossibleForSentence = isRecallPossibleForSentence(it, createRecall.recallTypeCode)
           if (isPossibleForSentence != IsRecallPossible.YES) {
@@ -157,7 +158,7 @@ class RecallService(
       recallSentencesToDelete.forEach {
         deleteDpsRecallSentence(recallSentence = it, updatedPrison = recall.createdByPrison)
       }
-      sentenceRepository.findBySentenceUuidIn(sentencesToCreate)
+      sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentencesToCreate)
         .forEach {
           val isPossibleForSentence = isRecallPossibleForSentence(it, recall.recallTypeCode)
           if (isPossibleForSentence != IsRecallPossible.YES) {
@@ -270,18 +271,18 @@ class RecallService(
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
 
-    val isLegacyRecall =
+    val hasOnlyLegacySentences = recallToDelete.recallSentences.isNotEmpty() &&
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
     val isOnlyRecall = recallToDelete.recallSentences.all { it.sentence.recallSentences.size == 1 }
 
     val eventsToEmit = mutableListOf<EventMetadata>()
     var previousRecall: RecallEntity?
-    val ualAdjustmentToDelete: AdjustmentDto? = if (!isLegacyRecall) {
+    val ualAdjustmentToDelete: AdjustmentDto? = if (recallToDelete.source == DPS) {
       adjustmentsApiClient.getRecallAdjustment(recallToDelete.prisonerId, recallUuid)
     } else {
       null
     }
-    if (isLegacyRecall && isOnlyRecall) {
+    if (hasOnlyLegacySentences && isOnlyRecall) {
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
       previousRecall = recallToDelete.recallSentences.map {
@@ -402,7 +403,7 @@ class RecallService(
 
   @Transactional(readOnly = true)
   fun isRecallPossible(request: IsRecallPossibleRequest): IsRecallPossibleResponse {
-    val sentences = sentenceRepository.findBySentenceUuidIn(request.sentenceIds)
+    val sentences = sentenceRepository.findBySentenceUuidInAndStatusIdNot(request.sentenceIds)
     val isPossibleForEachSentence = sentences.map { it to isRecallPossibleForSentence(it, request.recallType) }
     val isPossible = isPossibleForEachSentence.map { it.second }.minBy { it.priority }
     val notPossibleSentences =
@@ -717,7 +718,7 @@ class RecallService(
       "FTR_56ORA",
     )
 
-    private fun nomisSentenceCalcTypeToClassification(type: String): SentenceTypeClassification = when (type.trim()) {
+    fun nomisSentenceCalcTypeToClassification(type: String): SentenceTypeClassification = when (type.trim()) {
       "AR", "CR", "YOI" -> SentenceTypeClassification.STANDARD
       "EXT", "PPEXT_SENT" -> SentenceTypeClassification.EXTENDED
       "ALP", "ALP_CODE21", "DFL", "DLP", "HMPL", "LIFE", "MLP", "SEC93", "SEC94" -> SentenceTypeClassification.INDETERMINATE

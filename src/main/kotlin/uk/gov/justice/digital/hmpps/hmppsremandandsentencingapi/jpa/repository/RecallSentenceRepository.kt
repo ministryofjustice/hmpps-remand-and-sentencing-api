@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 
 interface RecallSentenceRepository : CrudRepository<RecallSentenceEntity, Int> {
   fun findByRecallId(recallId: Int): List<RecallSentenceEntity>?
+  fun countByRecallId(recallId: Int): Long
 
   @Modifying
   @Query(

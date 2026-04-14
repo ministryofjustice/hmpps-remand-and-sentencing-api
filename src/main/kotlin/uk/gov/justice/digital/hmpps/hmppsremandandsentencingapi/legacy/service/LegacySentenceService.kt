@@ -444,9 +444,10 @@ class LegacySentenceService(
   @Transactional(readOnly = true)
   fun get(sentenceUuid: UUID): LegacySentence = LegacySentence.from(getUnlessDeleted(sentenceUuid))
 
-  @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class, CannotAcquireLockException::class, LockAcquisitionException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
   fun delete(sentenceUuid: UUID, performedByUser: String?): RecordResponse<LegacySentenceDeletedResponse>? {
+    sentenceRepository.acquireSentenceTransactionLock(sentenceUuid)
     val eventMetaDataList = mutableSetOf<EventMetadata>()
     val sentenceDeleteResponse = sentenceRepository.findBySentenceUuid(sentenceUuid)
       .filter { it.statusId != SentenceEntityStatus.DELETED }
@@ -490,8 +491,10 @@ class LegacySentenceService(
     val eventMetaDataList = mutableSetOf<EventMetadata>()
     sentence.recallSentences.forEach {
       val recall = it.recall
+      recallRepository.acquireRecallTransactionLock(recall.id)
+      val recallSentenceCount = recallSentenceRepository.countByRecallId(recall.id)
 
-      if (recall.recallSentences.size == 1) {
+      if (recallSentenceCount == 1L) {
         recall.delete(performedByUser)
         recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
 
