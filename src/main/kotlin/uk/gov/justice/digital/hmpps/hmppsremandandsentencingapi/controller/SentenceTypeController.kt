@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -126,5 +127,27 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
   fun createSentenceType(@Valid @RequestBody createSentenceType: CreateSentenceType): SentenceTypeDetails = sentenceTypesService.createSentenceType(createSentenceType).let { createdSentenceTypeEntity ->
     migrateSentenceRecordsSentenceType.migrateSentenceRecordsSentenceType(createdSentenceTypeEntity)
     SentenceTypeDetails.from(createdSentenceTypeEntity)
+  }
+
+  @PutMapping("/{sentenceTypeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Update sentence type",
+    description = "This endpoint will update an existing sentence type and migrate any sentence data over that needs to be mapped to the newly updated sentence type",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "400", description = "Bad request", content = [Content(mediaType = "application/json", schema = Schema(implementation = FieldErrorErrorResponse::class))]),
+    ],
+  )
+  @ResponseStatus(HttpStatus.OK)
+  fun updateSentenceType(@PathVariable sentenceTypeUuid: UUID, @Valid @RequestBody updateSentenceType: CreateSentenceType): SentenceTypeDetails = sentenceTypesService.updateSentenceType(sentenceTypeUuid, updateSentenceType).let { (entity, migrateSentenceData) ->
+    if (migrateSentenceData) {
+      migrateSentenceRecordsSentenceType.migrateSentenceRecordsSentenceType(entity)
+    }
+    SentenceTypeDetails.from(entity)
   }
 }
