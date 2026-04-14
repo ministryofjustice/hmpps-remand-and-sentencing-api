@@ -13,7 +13,7 @@ import java.util.UUID
 class UpdateSentenceTypeTests : IntegrationTestBase() {
 
   @Test
-  fun `create sentence type`() {
+  fun `update sentence type`() {
     val updateSentenceType = DpsDataCreator.createSentenceType()
     webTestClient.put()
       .uri("/sentence-type/${UUID.randomUUID()}")
@@ -32,7 +32,7 @@ class UpdateSentenceTypeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `adding a sentence type with a blank description results in error`() {
+  fun `updating a sentence type with a blank description results in error`() {
     val updateSentenceType = DpsDataCreator.createSentenceType(description = "")
     webTestClient.put()
       .uri("/sentence-type/${UUID.randomUUID()}")
@@ -51,7 +51,7 @@ class UpdateSentenceTypeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `trying to create a sentence type with a NOMIS code that is already mapped results in error`() {
+  fun `trying to update a sentence type with a NOMIS code that is already mapped results in error`() {
     val updateSentenceType = DpsDataCreator.createSentenceType()
     webTestClient.put()
       .uri("/sentence-type/${UUID.randomUUID()}")
@@ -79,7 +79,7 @@ class UpdateSentenceTypeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `migrate legacy sentence records to the new supported sentence type`() {
+  fun `migrate legacy sentence records to the new updated supported sentence type`() {
     val (sentenceUuid, createdSentence) = createLegacySentence()
     val sentenceTypeUuid = UUID.randomUUID()
     val updateSentenceType = DpsDataCreator.createSentenceType(

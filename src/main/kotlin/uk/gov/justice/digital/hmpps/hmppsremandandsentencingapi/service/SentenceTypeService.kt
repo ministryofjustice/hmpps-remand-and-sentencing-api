@@ -71,7 +71,7 @@ class SentenceTypeService(
     }
     if (bindingResults.hasErrors()) {
       throw MethodArgumentNotValidException(
-        MethodParameter(this.javaClass.getDeclaredMethod("updateSentenceType", CreateSentenceType::class.java), 1),
+        MethodParameter(this.javaClass.getDeclaredMethod("updateSentenceType", UUID::class.java, CreateSentenceType::class.java), 1),
         bindingResults,
       )
     }
