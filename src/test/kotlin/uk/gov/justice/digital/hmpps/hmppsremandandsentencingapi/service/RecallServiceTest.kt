@@ -135,6 +135,42 @@ class RecallServiceTest {
   }
 
   @Test
+  fun `delete a dps recall with no sentences still deletes recall + adjustment is deleted for DPS recalls`() {
+    val recallUuid = UUID.randomUUID()
+    val recallWithNoSentences = RecallEntity(
+      recallUuid = recallUuid,
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      revocationDate = LocalDate.of(2024, 1, 1),
+      returnToCustodyDate = LocalDate.of(2024, 1, 11),
+      inPrisonOnRevocationDate = false,
+      recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
+      status = RecallEntityStatus.ACTIVE,
+      createdByUsername = "FOO",
+      source = EventSource.DPS,
+    )
+    every { recallRepository.findOneByRecallUuid(recallUuid) } returns recallWithNoSentences
+    every { recallRepository.save(any()) } returns recallWithNoSentences
+    every { recallHistoryRepository.save(any()) } returns mockk()
+    val adjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = DpsDataCreator.DEFAULT_PRISONER_ID,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      toDate = LocalDate.of(2024, 1, 1),
+      fromDate = LocalDate.of(2024, 1, 11),
+      days = 10,
+      recallId = recallUuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+    every { adjustmentsApiClient.getRecallAdjustment(DpsDataCreator.DEFAULT_PRISONER_ID, recallUuid) } returns adjustment
+
+    service.deleteRecall(recallUuid)
+
+    assertThat(recallWithNoSentences.status).isEqualTo(RecallEntityStatus.DELETED)
+    verify { adjustmentsApiClient.getRecallAdjustment(DpsDataCreator.DEFAULT_PRISONER_ID, recallUuid) }
+    verify { adjustmentsApiClient.deleteAdjustment(adjustment.id!!) }
+  }
+
+  @Test
   fun `delete a dps recall restores sentence status, writes history and deletes recall sentence`() {
     val recallUuid = UUID.randomUUID()
 
@@ -599,7 +635,7 @@ class RecallServiceTest {
       recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
       status = RecallEntityStatus.ACTIVE,
       createdByUsername = "FOO",
-      source = EventSource.DPS,
+      source = EventSource.NOMIS,
     ).apply {
       recallSentences = mutableSetOf(
         RecallSentenceEntity(
