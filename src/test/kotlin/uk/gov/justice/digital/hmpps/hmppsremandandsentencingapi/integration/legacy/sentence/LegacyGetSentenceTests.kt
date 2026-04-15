@@ -35,6 +35,13 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
   @Test
   fun `get legacy recall sentence by lifetime uuid`() {
     val (lifetimeUuid) = createLegacySentence(
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+        legacyData = DataCreator.courtAppearanceLegacyData(
+          outcomeConvictionFlag = true,
+          outcomeDispositionCode = "F",
+          nomisOutcomeCode = "1501",
+        ),
+      ),
       legacySentence = DataCreator.legacyCreateSentence(sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1)),
     )
 

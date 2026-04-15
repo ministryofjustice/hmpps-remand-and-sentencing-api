@@ -5,8 +5,11 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -16,6 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Recal
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.RecallHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
@@ -41,7 +45,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.LocalDate
 import java.util.UUID
@@ -105,11 +111,12 @@ class LegacySentenceServiceTests {
 
     val legacySentence = legacySentenceUpdate(chargeUuid, appearanceUuid, incomingRtc)
 
-    service.update(sentenceUuid, legacySentence)
+    val response = service.update(sentenceUuid, legacySentence)
 
     assertThat(recall.returnToCustodyDate).isEqualTo(existingRtc)
     verify(exactly = 0) { recallHistoryRepository.save(any()) }
     verify(exactly = 0) { recallSentenceHistoryRepository.save(any()) }
+    assertThat(response.flatMap { it.eventsToEmit }).isEmpty()
   }
 
   @Test
@@ -144,7 +151,94 @@ class LegacySentenceServiceTests {
     verify(exactly = 1) { recallSentenceHistoryRepository.save(any()) }
   }
 
-  private fun stubMocks(sentenceUuid: UUID, chargeUuid: UUID, existingSentence: SentenceEntity) {
+  @Test
+  fun `delete saves recallHistory after deleting so status should be DELETED in history table, also emits recall_deleted event`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+
+    val (existingSentence, recall) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.LR,
+      existingRtc = LocalDate.of(2024, 1, 11),
+    )
+
+    every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
+    every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
+    every { recallSentenceRepository.countByRecallId(recall.id) } returns 1L
+
+    val recallHistorySlot = slot<RecallHistoryEntity>()
+
+    val events = service.delete(existingSentence, "SYNC_USER")
+
+    verify {
+      recallHistoryRepository.save(capture(recallHistorySlot))
+    }
+
+    assertThat(recallHistorySlot.captured.status).isEqualTo(RecallEntityStatus.DELETED)
+    assertThat(events).containsExactly(
+      EventMetadataCreator.recallEventMetadata(
+        prisonerId = recall.prisonerId,
+        recallId = recall.recallUuid.toString(),
+        sentenceIds = listOf(sentenceUuid.toString()),
+        previousSentenceIds = emptyList(),
+        previousRecallId = null,
+        eventType = EventType.RECALL_DELETED,
+      ),
+    )
+  }
+
+  @Test
+  fun `update emits RECALL_INSERTED when it has to create a recall sentence`() {
+    val sentenceUuid = UUID.randomUUID()
+    val existingChargeUuid = UUID.randomUUID()
+    val newChargeUuid = UUID.randomUUID()
+    val existingAppearanceUuid = UUID.randomUUID()
+    val newAppearanceUuid = UUID.randomUUID()
+
+    val (existingSentence, _) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = existingChargeUuid,
+      appearanceUuid = existingAppearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = LocalDate.of(2024, 1, 11),
+    )
+
+    val unsentencedCharge = getUnsentencedCharge(newChargeUuid, newAppearanceUuid)
+
+    stubMocks(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = newChargeUuid,
+      existingSentence = existingSentence,
+      sentenceForCharge = null,
+      unsentencedCharge = unsentencedCharge,
+      unsentencedAppearanceUuid = newAppearanceUuid,
+      stubRecallBucketType = true,
+      stubRecallPersistence = true,
+    )
+
+    val response = service.update(
+      sentenceUuid,
+      legacyRecallSentenceUpdate(newChargeUuid, newAppearanceUuid, LocalDate.of(2024, 2, 1)),
+    )
+
+    assertThat(response.flatMap { it.eventsToEmit })
+      .extracting<String> { it.eventType.name }
+      .contains("RECALL_INSERTED")
+  }
+
+  private fun stubMocks(
+    sentenceUuid: UUID,
+    chargeUuid: UUID,
+    existingSentence: SentenceEntity,
+    sentenceForCharge: SentenceEntity? = existingSentence,
+    unsentencedCharge: ChargeEntity? = null,
+    unsentencedAppearanceUuid: UUID? = null,
+    stubRecallBucketType: Boolean = false,
+    stubRecallPersistence: Boolean = false,
+  ) {
     every { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid) } returns existingSentence
     every { sentenceRepository.findBySentenceUuidAndChargeChargeUuidNotInAndStatusIdNot(sentenceUuid, any()) } returns emptyList()
     every {
@@ -159,46 +253,67 @@ class LegacySentenceServiceTests {
         sentenceUuid,
         chargeUuid,
       )
-    } returns existingSentence
+    } returns sentenceForCharge
+
+    if (unsentencedCharge != null && unsentencedAppearanceUuid != null) {
+      every {
+        chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(
+          unsentencedAppearanceUuid,
+          chargeUuid,
+        )
+      } returns unsentencedCharge
+    }
+
+    if (stubRecallBucketType) {
+      every { sentenceTypeRepository.findBySentenceTypeUuid(LegacySentenceService.recallSentenceTypeBucketUuid) } returns recallBucketType()
+    }
+
+    if (stubRecallPersistence) {
+      every { recallTypeRepository.findOneByCode(RecallType.LR) } returns RecallTypeEntity(1, RecallType.LR, "LR")
+      every { recallRepository.save(any()) } answers { firstArg() }
+      every { recallSentenceRepository.save(any()) } answers { firstArg() }
+    }
 
     every { periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceUuid) } returns emptyList()
     every { serviceUserService.getUsername() } returns "SYNC_USER"
-
-    every { sentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
-    every { recallHistoryRepository.save(any()) } returns mockk(relaxed = true)
-    every { recallSentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
-  }
-
-  @Test
-  fun `delete saves recallHistory after deleting so status should be DELETED in history table`() {
-    val sentenceUuid = UUID.randomUUID()
-    val chargeUuid = UUID.randomUUID()
-    val appearanceUuid = UUID.randomUUID()
-
-    val (existingSentence, _) = getSentenceAndRecall(
-      sentenceUuid = sentenceUuid,
-      chargeUuid = chargeUuid,
-      appearanceUuid = appearanceUuid,
-      recallType = RecallType.LR,
-      existingRtc = LocalDate.of(2024, 1, 11),
-    )
-
+    every { sentenceRepository.save(any()) } answers { firstArg() }
+    every { recallSentenceRepository.countByRecallId(any()) } returns 1L
     every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
     every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
+    every { recallSentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
+    every { chargeHistoryRepository.save(any()) } returns mockk<ChargeHistoryEntity>(relaxed = true)
+  }
 
-    val recallHistorySlot = slot<RecallHistoryEntity>()
+  @Nested
+  inner class GetSentenceCalcTypeAndCategoryTests {
+    @Test
+    fun `null sentenceType with recall uses classification from legacy sentenceCalcType`() {
+      val (sentence, recall) = getSentenceAndRecall(
+        sentenceUuid = UUID.randomUUID(),
+        chargeUuid = UUID.randomUUID(),
+        appearanceUuid = UUID.randomUUID(),
+        recallType = RecallType.FTR_14,
+        existingRtc = LocalDate.of(2024, 1, 11),
+      )
+      sentence.sentenceType = null
+      sentence.legacyData = SentenceLegacyData(
+        sentenceCalcType = "AR",
+        sentenceCategory = "2020",
+        postedDate = "2026-02-10",
+        sentenceTypeDesc = null,
+        active = true,
+        nomisLineReference = null,
+        bookingId = null,
+      )
 
-    service.delete(existingSentence, "SYNC_USER")
+      val result = LegacySentence.getSentenceCalcTypeAndCategory(sentence, recall)
 
-    verify {
-      recallHistoryRepository.save(capture(recallHistorySlot))
+      assertThat(result.first).isEqualTo("14FTR_ORA")
+      assertThat(result.second).isEqualTo("2020")
     }
-
-    assertThat(recallHistorySlot.captured.status).isEqualTo(RecallEntityStatus.DELETED)
   }
 
   private companion object {
-
     fun legacySentenceUpdate(chargeUuid: UUID, appearanceUuid: UUID, rtc: LocalDate): LegacyCreateSentence = LegacyCreateSentence(
       chargeUuids = listOf(chargeUuid),
       appearanceUuid = appearanceUuid,
@@ -207,6 +322,93 @@ class LegacySentenceServiceTests {
       performedByUser = "SYNC_USER",
       returnToCustodyDate = rtc,
       legacyData = mockk(relaxed = true),
+    )
+
+    fun legacyRecallSentenceUpdate(chargeUuid: UUID, appearanceUuid: UUID, rtc: LocalDate): LegacyCreateSentence = LegacyCreateSentence(
+      chargeUuids = listOf(chargeUuid),
+      appearanceUuid = appearanceUuid,
+      consecutiveToLifetimeUuid = null,
+      active = true,
+      performedByUser = "SYNC_USER",
+      returnToCustodyDate = rtc,
+      legacyData = mockk<SentenceLegacyData>(relaxed = true).also {
+        every { it.sentenceCalcType } returns "FTR_ORA"
+        every { it.sentenceCategory } returns "2020"
+      },
+    )
+
+    fun getUnsentencedCharge(chargeUuid: UUID, appearanceUuid: UUID): ChargeEntity {
+      val courtCase = CourtCaseEntity(
+        caseUniqueIdentifier = "CASE456",
+        prisonerId = "A1234BC",
+        statusId = CourtCaseEntityStatus.ACTIVE,
+        createdBy = "SYNC_USER",
+      )
+
+      val courtAppearance = CourtAppearanceEntity(
+        id = 2,
+        appearanceUuid = appearanceUuid,
+        courtCase = courtCase,
+        courtCode = "COURT1",
+        appearanceDate = LocalDate.of(2024, 1, 2),
+        statusId = CourtAppearanceEntityStatus.ACTIVE,
+        createdBy = "SYNC_USER",
+        createdPrison = "MDI",
+        warrantType = "TEST",
+        appearanceOutcome = null,
+        courtCaseReference = null,
+        updatedAt = null,
+        updatedBy = null,
+        updatedPrison = null,
+        appearanceCharges = mutableSetOf(),
+        nextCourtAppearance = null,
+        overallConvictionDate = null,
+        legacyData = null,
+      )
+
+      return ChargeEntity(
+        chargeUuid = chargeUuid,
+        offenceCode = "TEST456",
+        statusId = ChargeEntityStatus.ACTIVE,
+        createdBy = "SYNC_USER",
+        offenceStartDate = null,
+        offenceEndDate = null,
+        chargeOutcome = null,
+        supersedingCharge = null,
+        terrorRelated = null,
+        foreignPowerRelated = null,
+        domesticViolenceRelated = null,
+        createdPrison = null,
+        legacyData = null,
+        appearanceCharges = mutableSetOf(),
+      ).apply {
+        appearanceCharges.add(
+          AppearanceChargeEntity(
+            courtAppearanceEntity = courtAppearance,
+            chargeEntity = this,
+            createdBy = "SYNC_USER",
+            createdPrison = "MDI",
+          ),
+        )
+      }
+    }
+
+    fun recallBucketType() = SentenceTypeEntity(
+      sentenceTypeUuid = LegacySentenceService.recallSentenceTypeBucketUuid,
+      description = "Recall bucket",
+      classification = SentenceTypeClassification.STANDARD,
+      nomisCjaCode = "LIFE",
+      nomisSentenceCalcType = "LIFE",
+      displayOrder = 1,
+      status = ReferenceEntityStatus.ACTIVE,
+      minAgeInclusive = null,
+      maxAgeExclusive = null,
+      minDateInclusive = null,
+      maxDateExclusive = null,
+      minOffenceDateInclusive = null,
+      maxOffenceDateExclusive = null,
+      hintText = null,
+      isRecallable = true,
     )
 
     fun getSentenceAndRecall(

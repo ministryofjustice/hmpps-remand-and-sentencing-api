@@ -10,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -33,6 +34,7 @@ import java.util.*
 class AppearanceOutcomeController(private val appearanceOutcomeService: AppearanceOutcomeService, private val migrateCourtAppearanceRecordOutcomes: MigrateCourtAppearanceRecordOutcomes) {
 
   @PostMapping
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Create appearance outcome",
     description = "This endpoint will create a new appearance outcome and migrate any appearance data over that needs to be mapped to the newly created appearance outcome",
@@ -52,6 +54,7 @@ class AppearanceOutcomeController(private val appearanceOutcomeService: Appearan
   }
 
   @PutMapping("/{appearanceOutcomeUuid}")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Update appearance outcome",
     description = "This endpoint will update an existing appearance outcome and migrate any appearance data over that needs to be mapped to the newly updated appearance outcome",

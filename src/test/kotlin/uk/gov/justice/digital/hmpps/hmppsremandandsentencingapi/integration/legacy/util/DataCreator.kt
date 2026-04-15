@@ -53,6 +53,7 @@ class DataCreator {
       appearanceTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.SECONDS),
       outcomeDispositionCode: String? = "I",
       outcomeConvictionFlag: Boolean? = false,
+      nomisAppearanceTypeCode: String? = "CRT",
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
       postedDate,
       nomisOutcomeCode,
@@ -61,6 +62,7 @@ class DataCreator {
       appearanceTime,
       outcomeDispositionCode,
       outcomeConvictionFlag,
+      nomisAppearanceTypeCode,
     )
 
     fun legacyCreateCourtAppearance(
@@ -105,9 +107,7 @@ class DataCreator {
       sentenceCalcType: String = "1",
       sentenceCategory: String = "1",
       sentenceTypeDescription: String = "Sentence Type Description",
-      postedDate: String = LocalDate.now().format(
-        DateTimeFormatter.ISO_DATE,
-      ),
+      postedDate: String = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
       active: Boolean? = null,
       nomisLineReference: String? = "4",
       bookingId: Long? = 1L,

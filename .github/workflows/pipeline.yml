@@ -46,7 +46,7 @@ jobs:
     steps:
       - id: app_version
         name: Application version creators
-        uses: ministryofjustice/hmpps-github-actions/.github/actions/build-test-and-deploy/create_app_version@v2 # WORKFLOW_VERSION
+        uses: ministryofjustice/hmpps-github-shared-actions/.github/actions/build-test-and-deploy/create_app_version@f52dbae537425d92f2216c4a2d9e0e44e603abb1 # WORKFLOW_VERSION
   gradle_verify:
     name: Run the tests
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2 # WORKFLOW_VERSION
@@ -81,14 +81,14 @@ jobs:
     name: Generate Database Schema Report
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           distribution: 'temurin'
           java-version: '25'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6
       - name: Start Required Services
         run: docker compose -f docker-compose-schemaspy.yml up -d
 
@@ -97,7 +97,7 @@ jobs:
         run: |
           export JAVA_OPTS="${{ inputs.java_options }}"
           ./gradlew initialiseDatabase
-      - uses: ministryofjustice/hmpps-github-actions/.github/actions/database_schema_report@v2 # WORKFLOW_VERSION
+      - uses: ministryofjustice/hmpps-github-shared-actions/.github/actions/database_schema_report@f52dbae537425d92f2216c4a2d9e0e44e603abb1 # WORKFLOW_VERSION
         with:
           schema: public
           user: ras-user
@@ -105,7 +105,7 @@ jobs:
           database_name: ras
       - name: Upload static files as artifact
         id: upload_database_report
-        uses: actions/upload-pages-artifact@v4 # or specific "vX.X.X" version tag for this action
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: /tmp/schemaspy
   deploy_database_report:
@@ -120,7 +120,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deploy_database_report
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
   deploy_dev:
     name: Deploy to the development environment
     needs:

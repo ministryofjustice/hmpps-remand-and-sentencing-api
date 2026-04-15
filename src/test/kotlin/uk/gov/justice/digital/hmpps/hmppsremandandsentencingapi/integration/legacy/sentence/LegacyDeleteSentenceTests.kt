@@ -7,7 +7,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
-import java.util.UUID
+import java.util.*
+import java.util.concurrent.CompletableFuture
 
 class LegacyDeleteSentenceTests : IntegrationTestBase() {
 
@@ -57,6 +58,10 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recallsBeforeDelete[0].recallUuid)
     assertThat(historicalRecalls).hasSize(2)
+
+    val messages = getMessages(2)
+    assertThat(messages).extracting<String> { it.eventType }.contains("sentence.deleted", "recall.deleted")
+    assertThat(messages).allSatisfy { assertThat(it.additionalInformation.get("source").asText()).isEqualTo("NOMIS") }
   }
 
   @Test
@@ -86,6 +91,54 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
     val message = getMessages(1)[0]
     assertThat(message.eventType).isEqualTo("sentence.deleted")
     assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+  }
+
+  @Test
+  fun `race condition deleting last two recall sentences at the same time`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    adjustmentsApi.stubAllowCreateAdjustments()
+    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
+    val createdRecall = createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(sentenceOne.sentenceUuid, sentenceTwo.sentenceUuid),
+      ),
+    )
+
+    assertThat(getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).map { it.recallUuid })
+      .contains(createdRecall.recallUuid)
+    purgeQueues()
+
+    val firstDelete = CompletableFuture.supplyAsync {
+      webTestClient
+        .delete()
+        .uri("/legacy/sentence/${sentenceOne.sentenceUuid}")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus()
+        .isNoContent
+    }
+    val secondDelete = CompletableFuture.supplyAsync {
+      webTestClient
+        .delete()
+        .uri("/legacy/sentence/${sentenceTwo.sentenceUuid}")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus()
+        .isNoContent
+    }
+    firstDelete.thenCombine(secondDelete) { a, b -> a to b }.join()
+
+    assertThat(getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)).isEmpty()
+
+    val messages = getMessages(3)
+    assertThat(messages.count { it.eventType == "sentence.deleted" }).isEqualTo(2)
+    assertThat(messages.count { it.eventType == "recall.deleted" }).isEqualTo(1)
   }
 
   @Test

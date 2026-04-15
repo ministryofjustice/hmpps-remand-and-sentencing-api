@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceDomainEventService
 import java.util.UUID
@@ -31,7 +32,11 @@ import java.util.UUID
 @RestController
 @RequestMapping("/legacy/sentence", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-sentence-controller", description = "CRUD operations for syncing sentence data from NOMIS Offender sentences into remand and sentencing api database.")
-class LegacySentenceController(private val legacySentenceService: LegacySentenceService, private val eventService: SentenceDomainEventService) {
+class LegacySentenceController(
+  private val legacySentenceService: LegacySentenceService,
+  private val eventService: SentenceDomainEventService,
+  private val legacyEventService: LegacyDomainEventService,
+) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -48,11 +53,9 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
-  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).let { responses ->
-    responses.forEach {
-      eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.chargeLifetimeUuid.toString(), it.courtCaseId, it.appearanceUuid.toString(), EventSource.NOMIS)
-    }
-    responses.first()
+  fun create(@RequestBody sentence: LegacyCreateSentence): LegacySentenceCreatedResponse = legacySentenceService.create(sentence).let {
+    legacyEventService.emitEvents(it.eventsToEmit)
+    it.record
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -70,9 +73,17 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
     legacySentenceService.update(lifetimeUuid, sentence).also {
-      it.forEach { (entityChangeStatus, legacySentenceCreatedResponse) ->
+      it.forEach { response ->
+        val (entityChangeStatus, legacySentenceCreatedResponse) = response.record
         if (entityChangeStatus == EntityChangeStatus.EDITED) {
-          eventService.update(legacySentenceCreatedResponse.prisonerId, legacySentenceCreatedResponse.lifetimeUuid.toString(), legacySentenceCreatedResponse.chargeLifetimeUuid.toString(), legacySentenceCreatedResponse.courtCaseId, legacySentenceCreatedResponse.appearanceUuid.toString(), EventSource.NOMIS)
+          eventService.update(
+            legacySentenceCreatedResponse.prisonerId,
+            legacySentenceCreatedResponse.lifetimeUuid.toString(),
+            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
+            legacySentenceCreatedResponse.courtCaseId,
+            legacySentenceCreatedResponse.appearanceUuid.toString(),
+            EventSource.NOMIS,
+          )
         } else if (entityChangeStatus == EntityChangeStatus.CREATED) {
           eventService.create(
             legacySentenceCreatedResponse.prisonerId,
@@ -83,6 +94,7 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
             EventSource.NOMIS,
           )
         }
+        legacyEventService.emitEvents(response.eventsToEmit)
       }
     }
     return ResponseEntity.noContent().build()
@@ -122,8 +134,8 @@ class LegacySentenceController(private val legacySentenceService: LegacySentence
     @RequestHeader("performedByUser", required = false)
     performedByUser: String?,
   ) {
-    legacySentenceService.delete(lifetimeUuid, performedByUser)?.also { legacySentence ->
-      eventService.delete(legacySentence.prisonerId, legacySentence.lifetimeUuid.toString(), legacySentence.chargeLifetimeUuid.toString(), legacySentence.courtCaseId, legacySentence.appearanceUuid.toString(), EventSource.NOMIS)
+    legacySentenceService.delete(lifetimeUuid, performedByUser)?.let {
+      legacyEventService.emitEvents(it.eventsToEmit)
     }
   }
 

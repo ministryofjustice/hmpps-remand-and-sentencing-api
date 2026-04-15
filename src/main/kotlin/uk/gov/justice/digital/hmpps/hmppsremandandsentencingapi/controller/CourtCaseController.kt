@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
 import java.util.UUID
@@ -42,7 +43,12 @@ import java.util.UUID
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-controller", description = "Court case")
-class CourtCaseController(private val courtCaseService: CourtCaseService, private val courtCaseReferenceService: CourtCaseReferenceService, private val dpsDomainEventService: DpsDomainEventService) {
+class CourtCaseController(
+  private val courtCaseService: CourtCaseService,
+  private val courtCaseReferenceService: CourtCaseReferenceService,
+  private val dpsDomainEventService: DpsDomainEventService,
+  private val recallService: RecallService,
+) {
 
   @PostMapping("/court-case")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
@@ -124,7 +130,8 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
     @RequestParam("pagedCourtCaseOrderBy", defaultValue = "STATUS_APPEARANCE_DATE_DESC") pagedCourtCaseOrderBy: PagedCourtCaseOrderBy,
     @RequestParam("appearanceDateFrom", defaultValue = "0001-01-01") appearanceDateFrom: LocalDate,
     @RequestParam("appearanceDateTo", defaultValue = "9999-12-31") appearanceDateTo: LocalDate,
-  ): SearchCourtCasesPage = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo).let { (pageCourtCase, eventsToEmit) ->
+    @RequestParam(value = "bookingId", defaultValue = "") bookingId: String,
+  ): SearchCourtCasesPage = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo, bookingId).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }
@@ -147,9 +154,8 @@ class CourtCaseController(private val courtCaseService: CourtCaseService, privat
   @ResponseStatus(HttpStatus.OK)
   fun getRecallableCourtCases(
     @PathVariable prisonerId: String,
-    @RequestParam(defaultValue = "date") sortBy: String,
-    @RequestParam(defaultValue = "desc") sortOrder: String,
-  ): RecallableCourtCasesResponse = courtCaseService.getRecallableCourtCases(prisonerId, sortBy, sortOrder).let { (recallCourtCases, eventsToEmit) ->
+    @RequestParam(defaultValue = "false") mergeDuplicateCourtCases: Boolean,
+  ): RecallableCourtCasesResponse = recallService.getRecallableCourtCases(prisonerId, mergeDuplicateCourtCases).let { (recallCourtCases, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     recallCourtCases
   }

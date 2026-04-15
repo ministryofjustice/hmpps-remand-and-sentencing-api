@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyRecallService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.SentenceUtils
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService.Companion.nomisSentenceCalcTypeToClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService.Companion.unknownPreRecallSentenceTypes
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -35,7 +36,7 @@ data class LegacySentence(
     fun from(sentenceEntity: SentenceEntity): LegacySentence {
       val activeAppearances = sentenceEntity.charge.appearanceCharges
         .map { it.appearance!! }
-        .filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
+        .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
 
       val courtCase = activeAppearances.maxBy { it.appearanceDate }.courtCase
       val sentenceStartDate = SentenceUtils.calculateSentenceStartDate(sentenceEntity)
@@ -76,6 +77,11 @@ data class LegacySentence(
             val earliestRecallLegacyData = earliestRecall.let { recall -> sentenceEntity.recallSentences.find { it.recall.id == recall.id }?.legacyData }!!
             return mapNewRecallOnNomisRecall(latestRecall, earliestRecallLegacyData)
           }
+        } else if (sentenceEntity.sentenceType == null) {
+          // If sentenceEntity.sentenceType is null then we can infer that the legacyData fields will be populated
+          val sentenceCalcType = sentenceEntity.legacyData!!.sentenceCalcType!!
+          val classification = nomisSentenceCalcTypeToClassification(sentenceCalcType)
+          latestRecall.recallType.toLegacySentenceType(sentenceCalcType, classification) to sentenceEntity.legacyData!!.sentenceCategory!!
         } else {
           latestRecall.recallType.toLegacySentenceType(sentenceEntity.sentenceType!!) to sentenceEntity.sentenceType!!.nomisCjaCode
         }

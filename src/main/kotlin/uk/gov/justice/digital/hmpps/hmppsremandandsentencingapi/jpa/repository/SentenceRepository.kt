@@ -53,6 +53,8 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   fun findBySentenceUuidIn(sentenceUuids: List<UUID>): List<SentenceEntity>
 
+  fun findBySentenceUuidInAndStatusIdNot(sentenceUuids: List<UUID>, statusId: SentenceEntityStatus = SentenceEntityStatus.DELETED): List<SentenceEntity>
+
   fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
 
   fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: SentenceEntityStatus): List<SentenceEntity>
@@ -334,4 +336,13 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   fun hasNonDeletedSentences(
     @Param("prisonerId") prisonerId: String,
   ): Boolean
+
+  @Modifying
+  @Query(
+    """
+    update sentence set sentence_type_id = :sentenceTypeId where legacy_data->>'sentenceCategory' = :nomisCjaCode and legacy_data->>'sentenceCalcType' = :nomisSentenceCalcType
+  """,
+    nativeQuery = true,
+  )
+  fun updateToSupportedSentenceType(@Param("sentenceTypeId") sentenceTypeId: Int, @Param("nomisCjaCode") nomisCjaCode: String, @Param("nomisSentenceCalcType") nomisSentenceCalcType: String)
 }

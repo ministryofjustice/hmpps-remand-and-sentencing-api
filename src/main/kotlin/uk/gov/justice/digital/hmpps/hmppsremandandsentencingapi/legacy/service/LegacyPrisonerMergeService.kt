@@ -37,7 +37,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -89,7 +88,7 @@ class LegacyPrisonerMergeService(
   private val chargeOutcomeRepository: ChargeOutcomeRepository,
   private val serviceUserService: ServiceUserService,
   private val nextCourtAppearanceRepository: NextCourtAppearanceRepository,
-  private val appearanceTypeRepository: AppearanceTypeRepository,
+  private val legacyAppearanceTypeService: LegacyAppearanceTypeService,
   private val sentenceTypeRepository: SentenceTypeRepository,
   private val sentenceRepository: SentenceRepository,
   private val periodLengthRepository: PeriodLengthRepository,
@@ -327,9 +326,9 @@ class LegacyPrisonerMergeService(
       val createdNextAppearance = createdAppearances[nextAppearanceId]!!
       val nomisAppearance = nomisAppearances[appearanceId]!!
       val nomisNextAppearance = nomisAppearances[nextAppearanceId]!!
-      val nextAppearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nomisNextAppearance.appearanceTypeUuid)!!
+      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(nomisNextAppearance.legacyData.nomisAppearanceTypeCode, nomisNextAppearance.appearanceTypeUuid)
       createdAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nomisAppearance, nomisNextAppearance, createdNextAppearance, nextAppearanceType),
+        NextCourtAppearanceEntity.from(nomisAppearance, nomisNextAppearance, createdNextAppearance, appearanceTypeCourtAppearanceSubtype),
       )
     }
   }
@@ -338,9 +337,9 @@ class LegacyPrisonerMergeService(
     if (latestCourtAppearance.nextCourtAppearance == null && createdAppearances.values.any { it.statusId == CourtAppearanceEntityStatus.FUTURE }) {
       val (nextFutureDatedEventId, nextFutureDatedAppearance) = createdAppearances.filter { (_, courtAppearanceEntity) -> courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE }.minBy { (_, courtAppearanceEntity) -> courtAppearanceEntity.appearanceDate }
       val nomisNextFutureDatedAppearance = mergeCreateCourtCase.appearances.first { it.eventId == nextFutureDatedEventId }
-      val nextAppearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(nomisNextFutureDatedAppearance.appearanceTypeUuid)!!
+      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(nomisNextFutureDatedAppearance.legacyData.nomisAppearanceTypeCode, nomisNextFutureDatedAppearance.appearanceTypeUuid)
       latestCourtAppearance.nextCourtAppearance = nextCourtAppearanceRepository.save(
-        NextCourtAppearanceEntity.from(nextFutureDatedAppearance, nextAppearanceType),
+        NextCourtAppearanceEntity.from(nextFutureDatedAppearance, appearanceTypeCourtAppearanceSubtype),
       )
     }
   }

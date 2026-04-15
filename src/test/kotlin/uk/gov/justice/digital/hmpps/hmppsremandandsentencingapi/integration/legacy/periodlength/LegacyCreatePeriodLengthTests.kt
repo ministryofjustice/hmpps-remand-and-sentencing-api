@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.periodlength
 
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -28,7 +27,9 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.periodLengthUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
     val message = getMessages(1)[0]
     assertThat(message.eventType).isEqualTo("sentence.period-length.inserted")
     val periodLengthsAfterCreate = periodLengthRepository.findAllBySentenceEntitySentenceUuidAndStatusIdNot(sentenceLifetimeUuid)

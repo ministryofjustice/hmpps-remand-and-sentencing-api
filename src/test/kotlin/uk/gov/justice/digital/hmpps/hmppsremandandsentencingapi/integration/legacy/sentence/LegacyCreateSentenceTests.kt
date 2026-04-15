@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
-import org.hamcrest.text.MatchesPattern
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,7 +36,9 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .isCreated
       .expectBody()
       .jsonPath("$.lifetimeUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
     val message = getMessages(1)[0]
     assertThat(message.eventType).isEqualTo("sentence.inserted")
     assertThat(message.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
@@ -55,6 +56,9 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     val appearance = courtCaseCreated.appearances.first()
     val charge = appearance.charges.first()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"), returnToCustodyDate = LocalDate.of(2024, 1, 1))
+
+    purgeQueues()
+
     webTestClient
       .post()
       .uri("/legacy/sentence")
@@ -87,6 +91,16 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
     assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
     assertThat(recalls[0].source).isEqualTo(EventSource.NOMIS)
+
+    val messages = getMessages(2)
+    assertThat(messages).extracting<String> { it.eventType }
+      .contains("sentence.inserted", "recall.inserted")
+
+    val sentenceInserted = messages.first { it.eventType == "sentence.inserted" }
+    assertThat(sentenceInserted.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
+
+    val recallInserted = messages.first { it.eventType == "recall.inserted" }
+    assertThat(recallInserted.additionalInformation.get("source").asText()).isEqualTo("NOMIS")
   }
 
   @Test

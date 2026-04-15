@@ -340,6 +340,7 @@ class ImmigrationDetentionService(
           legacyData = null,
           prisonId = immigrationDetention.createdByPrison,
           replacingChargeUuid = null,
+          createChargeOrder = null,
         ),
       ),
       overallConvictionDate = null,

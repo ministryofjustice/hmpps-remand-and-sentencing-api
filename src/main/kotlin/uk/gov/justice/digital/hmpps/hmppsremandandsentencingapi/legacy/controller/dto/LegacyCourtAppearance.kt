@@ -16,13 +16,14 @@ data class LegacyCourtAppearance(
   val appearanceTime: LocalTime,
   val charges: List<LegacyCharge>,
   val nextCourtAppearance: LegacyNextCourtAppearance?,
-  val appearanceTypeUuid: UUID,
+  val appearanceTypeUuid: UUID?,
+  val nomisAppearanceTypeCode: String,
 ) {
   companion object {
 
     val returnChargeStatuses: Set<ChargeEntityStatus> = setOf(ChargeEntityStatus.ACTIVE, ChargeEntityStatus.INACTIVE)
 
-    fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceTypeUuid: UUID): LegacyCourtAppearance = LegacyCourtAppearance(
+    fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceTypeUuid: UUID, nomisAppearanceTypeCode: String): LegacyCourtAppearance = LegacyCourtAppearance(
       courtAppearanceEntity.appearanceUuid,
       courtAppearanceEntity.courtCase.caseUniqueIdentifier,
       courtAppearanceEntity.courtCase.prisonerId,
@@ -33,6 +34,7 @@ data class LegacyCourtAppearance(
       courtAppearanceEntity.appearanceCharges.filter { returnChargeStatuses.contains(it.charge!!.statusId) }.map { appearanceCharge -> LegacyCharge.from(appearanceCharge.charge!!) },
       courtAppearanceEntity.nextCourtAppearance?.let { LegacyNextCourtAppearance.from(it) },
       appearanceTypeUuid,
+      nomisAppearanceTypeCode,
     )
   }
 }

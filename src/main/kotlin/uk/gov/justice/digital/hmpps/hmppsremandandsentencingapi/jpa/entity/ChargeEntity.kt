@@ -136,18 +136,14 @@ class ChargeEntity(
     mergedFromDate = mergedFromDate,
   )
 
-  fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity {
-    val charge = ChargeEntity(
-      0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate,
-      ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
-      createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
-      legacyData, appearanceCharges.toMutableSet(),
-      mergedFromCourtCase,
-      mergedFromDate = mergedFromDate,
-    )
-    charge.sentences = sentences.toMutableSet()
-    return charge
-  }
+  fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate,
+    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
+    createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
+    legacyData, appearanceCharges.toMutableSet(),
+    mergedFromCourtCase,
+    mergedFromDate = mergedFromDate,
+  )
 
   fun copyFrom(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, migrationCreateCharge.offenceCode, migrationCreateCharge.offenceStartDate, migrationCreateCharge.offenceEndDate,

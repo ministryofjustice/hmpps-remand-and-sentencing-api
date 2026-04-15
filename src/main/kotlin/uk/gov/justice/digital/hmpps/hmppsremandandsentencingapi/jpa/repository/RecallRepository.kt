@@ -15,6 +15,14 @@ interface RecallRepository : CrudRepository<RecallEntity, Int> {
 
   @Query(
     value = """
+    select pg_try_advisory_xact_lock(:recallId)
+  """,
+    nativeQuery = true,
+  )
+  fun acquireRecallTransactionLock(@Param("recallId") recallId: Int)
+
+  @Query(
+    value = """
     select distinct r.*
     from recall r
       join recall_sentence rs on rs.recall_id = r.id

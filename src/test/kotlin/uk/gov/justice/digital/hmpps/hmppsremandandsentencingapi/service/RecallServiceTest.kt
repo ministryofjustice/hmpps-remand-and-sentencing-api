@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.Adjustmen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -31,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallT
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallTypeRepository
@@ -42,7 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 
 class RecallServiceTest {
 
@@ -56,6 +59,8 @@ class RecallServiceTest {
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
   private val sentenceHistoryRepository: SentenceHistoryRepository = mockk(relaxed = true)
   private val serviceUserService: ServiceUserService = mockk(relaxed = true)
+  private val courtCaseRepository: CourtCaseRepository = mockk(relaxed = true)
+  private val fixManyChargesToSentenceService: FixManyChargesToSentenceService = mockk(relaxed = true)
 
   private val service = RecallService(
     recallRepository,
@@ -68,6 +73,8 @@ class RecallServiceTest {
     adjustmentsApiClient,
     sentenceHistoryRepository,
     serviceUserService,
+    courtCaseRepository,
+    fixManyChargesToSentenceService,
   )
 
   @Test
@@ -125,6 +132,42 @@ class RecallServiceTest {
 
     verify(exactly = 0) { adjustmentsApiClient.deleteAdjustment(any()) }
     verify(exactly = 0) { adjustmentsApiClient.getRecallAdjustment(any(), any()) }
+  }
+
+  @Test
+  fun `delete a dps recall with no sentences still deletes recall + adjustment is deleted for DPS recalls`() {
+    val recallUuid = UUID.randomUUID()
+    val recallWithNoSentences = RecallEntity(
+      recallUuid = recallUuid,
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      revocationDate = LocalDate.of(2024, 1, 1),
+      returnToCustodyDate = LocalDate.of(2024, 1, 11),
+      inPrisonOnRevocationDate = false,
+      recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
+      status = RecallEntityStatus.ACTIVE,
+      createdByUsername = "FOO",
+      source = EventSource.DPS,
+    )
+    every { recallRepository.findOneByRecallUuid(recallUuid) } returns recallWithNoSentences
+    every { recallRepository.save(any()) } returns recallWithNoSentences
+    every { recallHistoryRepository.save(any()) } returns mockk()
+    val adjustment = AdjustmentDto(
+      id = UUID.randomUUID().toString(),
+      person = DpsDataCreator.DEFAULT_PRISONER_ID,
+      adjustmentType = "UNLAWFULLY_AT_LARGE",
+      toDate = LocalDate.of(2024, 1, 1),
+      fromDate = LocalDate.of(2024, 1, 11),
+      days = 10,
+      recallId = recallUuid.toString(),
+      unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+    )
+    every { adjustmentsApiClient.getRecallAdjustment(DpsDataCreator.DEFAULT_PRISONER_ID, recallUuid) } returns adjustment
+
+    service.deleteRecall(recallUuid)
+
+    assertThat(recallWithNoSentences.status).isEqualTo(RecallEntityStatus.DELETED)
+    verify { adjustmentsApiClient.getRecallAdjustment(DpsDataCreator.DEFAULT_PRISONER_ID, recallUuid) }
+    verify { adjustmentsApiClient.deleteAdjustment(adjustment.id!!) }
   }
 
   @Test
@@ -205,7 +248,7 @@ class RecallServiceTest {
       every { recallTypeRepository.findOneByCode(any()) } returns
         RecallTypeEntity(0, RecallType.LR, "Standard")
       every { recallRepository.save(any()) } answers { firstArg() }
-      every { sentenceRepository.findBySentenceUuidIn(any()) } returns listOf(sentence)
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
       val recallSentenceSaved = slot<RecallSentenceEntity>()
       val sentenceHistory = slot<SentenceHistoryEntity>()
       every { recallSentenceRepository.save(capture(recallSentenceSaved)) } answers { firstArg() }
@@ -333,7 +376,7 @@ class RecallServiceTest {
       every { recallHistoryRepository.save(any()) } returns mockk()
       every { recallSentenceHistoryRepository.save(any()) } returns mockk()
       every { recallTypeRepository.findOneByCode(any()) } returns RecallTypeEntity(0, RecallType.LR, "Standard")
-      every { sentenceRepository.findBySentenceUuidIn(match { it == listOf(newSentenceUuid) }) } returns listOf(newSentence)
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(match { it == listOf(newSentenceUuid) }, any()) } returns listOf(newSentence)
 
       val deletedRecallSentenceSlot = slot<RecallSentenceEntity>()
       every { recallSentenceRepository.delete(capture(deletedRecallSentenceSlot)) } returns Unit
@@ -377,6 +420,72 @@ class RecallServiceTest {
 
       assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.ACTIVE)
       assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.INACTIVE)
+    }
+  }
+
+  @Nested
+  inner class RecallPossibleWithNullSentenceTypeTests {
+    @Test
+    fun `sentence with null sentenceType falls back to legacy calc type and returns YES for STANDARD`() {
+      val sentence = SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = null,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(
+          sentenceCalcType = "AR", // STANDARD via mapping
+          sentenceCategory = "TEST",
+        ),
+      )
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.LR,
+        ),
+      )
+
+      assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
+    }
+
+    @Test
+    fun `sentence with null sentenceType and unknown calc type returns NOT POSSIBLE`() {
+      val sentence = SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = null,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(
+          sentenceCalcType = "UNKNOWN_TYPE",
+          sentenceCategory = "TEST",
+        ),
+      )
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.LR,
+        ),
+      )
+
+      assertThat(result.isRecallPossible)
+        .isEqualTo(IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE)
     }
   }
 
@@ -526,7 +635,7 @@ class RecallServiceTest {
       recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
       status = RecallEntityStatus.ACTIVE,
       createdByUsername = "FOO",
-      source = EventSource.DPS,
+      source = EventSource.NOMIS,
     ).apply {
       recallSentences = mutableSetOf(
         RecallSentenceEntity(

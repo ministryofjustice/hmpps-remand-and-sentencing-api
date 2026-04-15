@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
@@ -572,6 +573,121 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update court appearance only adding a next court appearance results in an appearance updated event`() {
+    val appearance = dpsCreateCourtAppearance(
+      nextCourtAppearance = null,
+    )
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          appearance,
+        ),
+      ),
+    )
+    val createdAppearance = createdCourtCase.appearances.first()
+    val updateAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val messages = getMessages(2)
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-appearance.updated", "court-appearance.inserted")
+  }
+
+  @Test
+  fun `update court appearance only deleting a next court appearance results in an appearance updated event`() {
+    val appearance = dpsCreateCourtAppearance(
+      nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
+    )
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          appearance,
+        ),
+      ),
+    )
+    val createdAppearance = createdCourtCase.appearances.first()
+    val updateAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      nextCourtAppearance = null,
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val messages = getMessages(2)
+    assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-appearance.updated", "court-appearance.deleted")
+  }
+
+  @Test
+  fun `updating offence code in new appearance must keep charge as is in old appearance`() {
+    val charge = DpsDataCreator.dpsCreateCharge(
+      outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      sentence = null,
+    )
+    val appearance = dpsCreateCourtAppearance(
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      appearanceDate = LocalDate.now().minusDays(20),
+      charges = listOf(charge),
+      nextCourtAppearance = null,
+    )
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val updatedOffenceCodeCharge = charge.copy(appearanceUuid = appearance.appearanceUuid, offenceCode = "ADIFFERENTCODE")
+    val newAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      charges = listOf(updatedOffenceCodeCharge),
+      nextCourtAppearance = null,
+    )
+
+    webTestClient
+      .put()
+      .uri("/court-appearance/${newAppearance.appearanceUuid}")
+      .bodyValue(newAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances.[?(@.appearanceUuid == '${appearance.appearanceUuid}')].charges.[?(@.chargeUuid == '${charge.chargeUuid}')].outcome.outcomeUuid")
+      .isEqualTo(charge.outcomeUuid.toString())
+      .jsonPath("$.appearances.[?(@.appearanceUuid == '${newAppearance.appearanceUuid}')].charges.[?(@.chargeUuid == '${charge.chargeUuid}')].outcome.outcomeUuid")
+      .isEqualTo(ChargeService.replacedWithAnotherOutcomeUuid.toString())
+  }
+
+  @Test
   fun `must not update appearance when no court case exists`() {
     val updateCourtAppearance = dpsCreateCourtAppearance(courtCaseUuid = UUID.randomUUID().toString())
     webTestClient
@@ -638,6 +754,44 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
     val courtCaseAfter = getCourtCase(caseUuid)
     assertThat(courtCaseAfter.legacyData!!.caseReferences.map { it.offenderCaseReference }).containsExactly(newRef)
+  }
+
+  @Test
+  fun `cannot update an appearance that is deleted`() {
+    val courtCase = createCourtCase()
+    val appearance = courtCase.second.appearances.first()
+    val appearanceUuid = appearance.appearanceUuid
+
+    deleteCourtAppearance(appearanceUuid)
+
+    val updateAppearance = appearance.copy(
+      courtCaseUuid = courtCase.first,
+      charges = listOf(DpsDataCreator.dpsCreateCharge()),
+    )
+
+    webTestClient
+      .put()
+      .uri("/court-appearance/$appearanceUuid")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .is4xxClientError
+  }
+
+  private fun deleteCourtAppearance(appearanceUuid: UUID) {
+    webTestClient
+      .delete()
+      .uri("/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
   }
 
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient

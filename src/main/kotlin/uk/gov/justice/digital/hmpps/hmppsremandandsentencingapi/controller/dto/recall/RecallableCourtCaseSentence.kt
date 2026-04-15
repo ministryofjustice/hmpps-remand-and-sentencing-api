@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 data class RecallableCourtCaseSentence(
@@ -30,4 +31,5 @@ data class RecallableCourtCaseSentence(
   val sentenceTypeUuid: String,
   val sentenceDate: LocalDate?,
   val consecutiveToSentenceUuid: UUID? = null,
+  val createdAt: LocalDateTime,
 )

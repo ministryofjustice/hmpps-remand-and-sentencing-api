@@ -17,5 +17,6 @@ interface CourtCaseSearchRepository {
     courtCaseStatus: CourtCaseEntityStatus,
     appearanceDateFrom: LocalDate,
     appearanceDateTo: LocalDate,
+    bookingId: String,
   ): List<CourtCaseRow>
 }

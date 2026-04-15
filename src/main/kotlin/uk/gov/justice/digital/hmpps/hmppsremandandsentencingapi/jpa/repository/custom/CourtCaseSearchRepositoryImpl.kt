@@ -25,6 +25,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     courtCaseStatus: CourtCaseEntityStatus,
     appearanceDateFrom: LocalDate,
     appearanceDateTo: LocalDate,
+    bookingId: String,
   ): List<CourtCaseRow> = entityManager.createNativeQuery(searchQuery.replace("<order_by>", pagedCourtCaseOrderBy.orderBy), "courtCaseRowMapping")
     .setParameter("prisonerId", prisonerId)
     .setParameter("limit", limit)
@@ -33,6 +34,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     .setParameter("courtCaseStatus", courtCaseStatus.toString())
     .setParameter("appearanceDateFrom", appearanceDateFrom)
     .setParameter("appearanceDateTo", appearanceDateTo)
+    .setParameter("bookingId", bookingId)
     .resultList as List<CourtCaseRow>
 
   companion object {
@@ -55,6 +57,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         nlca.id as nextCourtAppearanceId,
         nlca.court_code as nextCourtAppearanceCourtCode,
         ncaat.description as nextCourtAppearanceTypeDescription,
+        ncacas.description as nextCourtAppearanceSubtypeDescription,
         nlca.appearance_date as nextCourtAppearanceDate,
         nlca.appearance_time as nextCourtAppearanceTime,
         lca.appearance_uuid as latestCourtAppearanceUuid,
@@ -72,9 +75,11 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         c.offence_start_date as chargeOffenceStartDate,
         c.offence_end_date as chargeOffenceEndDate,
         c.terror_related as chargeTerrorRelated,
+        c.foreign_power_related as chargeForeignPowerRelated,
         co.outcome_uuid as chargeOutcomeUuid,
         co.outcome_name as chargeOutcomeName,
         c.legacy_data as chargeLegacyData,
+        c.created_at as chargeCreatedAt,
         s.id as sentenceId,
         s.sentence_uuid as sentenceUuid,
         s.count_number as sentenceCountNumber,
@@ -127,6 +132,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
           and cc1.latest_court_appearance_id is not null
           and lca1.appearance_date >= :appearanceDateFrom
           and lca1.appearance_date <= :appearanceDateTo
+          and ((cc1.legacy_data->>'bookingId' is null or cc1.legacy_data->>'bookingId' = :bookingId) or :bookingId = '')
         group by cc1.id, lca1.appearance_date
         order by <order_by>
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id
@@ -135,6 +141,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join period_length apl on apl.appearance_id=lca.id
       left join next_court_appearance nlca on nlca.id = lca.next_court_appearance_id
       left join appearance_type ncaat on ncaat.id = nlca.appearance_type_id
+      left join court_appearance_subtype ncacas on ncacas.id = nlca.court_appearance_subtype_id
       left join appearance_charge ac on ac.appearance_id = lca.id
       left join charge c on ac.charge_id = c.id
       left join charge_outcome co on c.charge_outcome_id = co.id

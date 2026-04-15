@@ -5,17 +5,13 @@ import jakarta.persistence.Embeddable
 import java.io.Serializable
 
 @Embeddable
-class AppearanceChargeId : Serializable {
+class AppearanceChargeId(
   @Column(name = "appearance_id")
-  val appearanceId: Int
+  val appearanceId: Int,
 
   @Column(name = "charge_id")
-  val chargeId: Int
-
-  constructor(appearanceId: Int, chargeId: Int) {
-    this.appearanceId = appearanceId
-    this.chargeId = chargeId
-  }
+  val chargeId: Int,
+) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

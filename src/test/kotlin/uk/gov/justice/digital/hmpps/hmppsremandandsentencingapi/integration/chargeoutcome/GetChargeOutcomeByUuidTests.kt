@@ -27,7 +27,7 @@ class GetChargeOutcomeByUuidTests : IntegrationTestBase() {
       .jsonPath("$.outcomeType")
       .isEqualTo("REMAND")
       .jsonPath("$.displayOrder")
-      .isEqualTo(70)
+      .isEqualTo(570)
   }
 
   @Test

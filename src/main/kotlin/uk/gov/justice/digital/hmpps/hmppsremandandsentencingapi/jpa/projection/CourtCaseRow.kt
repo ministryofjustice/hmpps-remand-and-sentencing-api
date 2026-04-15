@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZonedDateTime
 import java.util.UUID
 
 data class CourtCaseRow(
@@ -35,6 +36,7 @@ data class CourtCaseRow(
   var nextCourtAppearanceId: Int?,
   var nextCourtAppearanceCourtCode: String?,
   var nextCourtAppearanceTypeDescription: String?,
+  var nextCourtAppearanceSubtypeDescription: String?,
   var nextCourtAppearanceDate: LocalDate?,
   var nextCourtAppearanceTime: LocalTime?,
   var latestCourtAppearanceUuid: UUID,
@@ -52,9 +54,11 @@ data class CourtCaseRow(
   var chargeOffenceStartDate: LocalDate?,
   var chargeOffenceEndDate: LocalDate?,
   var chargeTerrorRelated: Boolean?,
+  var chargeForeignPowerRelated: Boolean?,
   var chargeOutcomeUuid: UUID?,
   var chargeOutcomeName: String?,
   var chargeLegacyData: ChargeLegacyData?,
+  var chargeCreatedAt: ZonedDateTime?,
   var sentenceId: Int?,
   var sentenceUuid: UUID?,
   var sentenceCountNumber: String?,

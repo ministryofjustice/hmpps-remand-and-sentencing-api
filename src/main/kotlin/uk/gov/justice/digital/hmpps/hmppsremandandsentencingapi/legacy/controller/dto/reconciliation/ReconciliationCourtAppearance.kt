@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
@@ -15,11 +16,12 @@ data class ReconciliationCourtAppearance(
   val nomisOutcomeCode: String?,
   val legacyData: CourtAppearanceLegacyData?,
   val nextCourtAppearance: ReconciliationNextCourtAppearance?,
-  val appearanceTypeUuid: UUID,
+  val appearanceTypeUuid: UUID?,
+  val nomisAppearanceTypeCode: String,
   val charges: List<ReconciliationCharge>,
 ) {
   companion object {
-    fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceTypeUuid: UUID): ReconciliationCourtAppearance = ReconciliationCourtAppearance(
+    fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceType: AppearanceTypeEntity, nomisAppearanceTypeCodeFallback: String): ReconciliationCourtAppearance = ReconciliationCourtAppearance(
       courtAppearanceEntity.appearanceUuid,
       courtAppearanceEntity.courtCode,
       courtAppearanceEntity.appearanceDate,
@@ -27,7 +29,8 @@ data class ReconciliationCourtAppearance(
       courtAppearanceEntity.legacyData?.nomisOutcomeCode ?: courtAppearanceEntity.appearanceOutcome?.nomisCode,
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.nextCourtAppearance?.let { ReconciliationNextCourtAppearance.from(it) },
-      appearanceTypeUuid,
+      appearanceType.appearanceTypeUuid,
+      courtAppearanceEntity.legacyData?.nomisAppearanceTypeCode ?: nomisAppearanceTypeCodeFallback,
       courtAppearanceEntity.appearanceCharges.filter { it.charge != null && it.charge!!.statusId != ChargeEntityStatus.DELETED }
         .map { ReconciliationCharge.from(it.charge!!) },
 

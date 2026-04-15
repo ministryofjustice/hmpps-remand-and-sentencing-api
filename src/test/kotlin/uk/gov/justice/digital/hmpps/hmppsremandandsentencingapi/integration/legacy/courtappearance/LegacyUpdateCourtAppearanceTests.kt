@@ -79,7 +79,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `updating future appearance type results in associated next court appearances being updated`() {
     val (appearanceUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
-    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null, nomisAppearanceTypeCode = null))
     val response = webTestClient
       .post()
       .uri("/legacy/court-appearance")

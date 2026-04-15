@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
-import org.hamcrest.text.MatchesPattern
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import java.time.format.DateTimeFormatter
@@ -26,7 +26,9 @@ class GetLatestCourtAppearanceTests : IntegrationTestBase() {
       .jsonPath("$.outcome.outcomeUuid")
       .isEqualTo(createdCase.second.appearances.first().outcomeUuid.toString())
       .jsonPath("$.nextCourtAppearance.futureSkeletonAppearanceUuid")
-      .value(MatchesPattern.matchesPattern("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"))
+      .value<String> {
+        Assertions.assertThat(it).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
   }
 
   @Test
