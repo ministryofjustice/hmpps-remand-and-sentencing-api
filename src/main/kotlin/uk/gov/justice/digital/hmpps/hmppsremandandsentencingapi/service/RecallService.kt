@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
@@ -270,18 +271,18 @@ class RecallService(
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
 
-    val isLegacyRecall =
+    val hasOnlyLegacySentences = recallToDelete.recallSentences.isNotEmpty() &&
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
     val isOnlyRecall = recallToDelete.recallSentences.all { it.sentence.recallSentences.size == 1 }
 
     val eventsToEmit = mutableListOf<EventMetadata>()
     var previousRecall: RecallEntity?
-    val ualAdjustmentToDelete: AdjustmentDto? = if (!isLegacyRecall) {
+    val ualAdjustmentToDelete: AdjustmentDto? = if (recallToDelete.source == DPS) {
       adjustmentsApiClient.getRecallAdjustment(recallToDelete.prisonerId, recallUuid)
     } else {
       null
     }
-    if (isLegacyRecall && isOnlyRecall) {
+    if (hasOnlyLegacySentences && isOnlyRecall) {
       eventsToEmit.addAll(deleteLegacyRecallSentenceAndAssociatedRecall(recallToDelete))
     } else {
       previousRecall = recallToDelete.recallSentences.map {

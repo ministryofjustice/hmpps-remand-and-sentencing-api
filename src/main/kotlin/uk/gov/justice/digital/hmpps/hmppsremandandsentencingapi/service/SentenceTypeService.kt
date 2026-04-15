@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeIsValid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.AllSentenceTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
@@ -60,4 +62,28 @@ class SentenceTypeService(
 
     return sentenceTypeRepository.save(SentenceTypeEntity.from(createSentenceType))
   }
+
+  @Transactional
+  fun updateSentenceType(sentenceTypeUuid: UUID, updateSentenceType: CreateSentenceType): UpdatedSentenceType {
+    val bindingResults = BeanPropertyBindingResult(updateSentenceType, "updateSentenceType")
+    val sentenceTypeFromNomisId = sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(updateSentenceType.nomisCjaCode, updateSentenceType.nomisSentenceCalcType)
+    if (sentenceTypeFromNomisId != null && sentenceTypeFromNomisId.sentenceTypeUuid != sentenceTypeUuid) {
+      bindingResults.addError(FieldError("updateSentenceType", "nomisCjaCode", "CJA code and Sentence Calc Type combination is already mapped"))
+    }
+    if (bindingResults.hasErrors()) {
+      throw MethodArgumentNotValidException(
+        MethodParameter(this.javaClass.getDeclaredMethod("updateSentenceType", UUID::class.java, CreateSentenceType::class.java), 1),
+        bindingResults,
+      )
+    }
+    val (existingSentenceType, isNew) = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)
+      ?.let { it to false } ?: (
+      sentenceTypeRepository.save(SentenceTypeEntity.from(updateSentenceType.copy(sentenceTypeUuid = sentenceTypeUuid))) to true
+      )
+    val migrateSentenceData = isNew || existingSentenceType.nomisSentenceCalcType != updateSentenceType.nomisSentenceCalcType || existingSentenceType.nomisCjaCode != updateSentenceType.nomisCjaCode
+    existingSentenceType.updateFrom(sentenceTypeUuid, updateSentenceType)
+    return UpdatedSentenceType(existingSentenceType, migrateSentenceData)
+  }
+
+  fun findDetailsByUuid(sentenceTypeUuid: UUID): SentenceTypeDetails? = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)?.let { SentenceTypeDetails.from(it) }
 }
