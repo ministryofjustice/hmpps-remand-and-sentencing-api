@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeIsValid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.AllSentenceTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
@@ -83,4 +84,6 @@ class SentenceTypeService(
     existingSentenceType.updateFrom(sentenceTypeUuid, updateSentenceType)
     return UpdatedSentenceType(existingSentenceType, migrateSentenceData)
   }
+
+  fun findDetailsByUuid(sentenceTypeUuid: UUID): SentenceTypeDetails? = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)?.let { SentenceTypeDetails.from(it) }
 }
