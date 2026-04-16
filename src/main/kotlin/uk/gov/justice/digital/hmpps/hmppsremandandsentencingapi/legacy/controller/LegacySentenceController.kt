@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
@@ -72,30 +70,9 @@ class LegacySentenceController(
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody sentence: LegacyCreateSentence): ResponseEntity<Void> {
-    legacySentenceService.update(lifetimeUuid, sentence).also {
-      it.forEach { response ->
-        val (entityChangeStatus, legacySentenceCreatedResponse) = response.record
-        if (entityChangeStatus == EntityChangeStatus.EDITED) {
-          eventService.update(
-            legacySentenceCreatedResponse.prisonerId,
-            legacySentenceCreatedResponse.lifetimeUuid.toString(),
-            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
-            legacySentenceCreatedResponse.courtCaseId,
-            legacySentenceCreatedResponse.appearanceUuid.toString(),
-            EventSource.NOMIS,
-          )
-        } else if (entityChangeStatus == EntityChangeStatus.CREATED) {
-          eventService.create(
-            legacySentenceCreatedResponse.prisonerId,
-            legacySentenceCreatedResponse.lifetimeUuid.toString(),
-            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
-            legacySentenceCreatedResponse.courtCaseId,
-            legacySentenceCreatedResponse.appearanceUuid.toString(),
-            EventSource.NOMIS,
-          )
-        }
-        legacyEventService.emitEvents(response.eventsToEmit)
-      }
+    legacySentenceService.update(lifetimeUuid, sentence).let {
+      legacyEventService.emitEvents(it.eventsToEmit)
+      it.record
     }
     return ResponseEntity.noContent().build()
   }

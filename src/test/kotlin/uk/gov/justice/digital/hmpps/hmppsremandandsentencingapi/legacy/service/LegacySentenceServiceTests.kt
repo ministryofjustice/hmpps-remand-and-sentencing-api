@@ -116,7 +116,9 @@ class LegacySentenceServiceTests {
     assertThat(recall.returnToCustodyDate).isEqualTo(existingRtc)
     verify(exactly = 0) { recallHistoryRepository.save(any()) }
     verify(exactly = 0) { recallSentenceHistoryRepository.save(any()) }
-    assertThat(response.flatMap { it.eventsToEmit }).isEmpty()
+    assertThat(response.eventsToEmit)
+      .extracting<String> { it.eventType.name }
+      .containsExactly("SENTENCE_UPDATED")
   }
 
   @Test
@@ -144,11 +146,14 @@ class LegacySentenceServiceTests {
 
     val legacySentence = legacySentenceUpdate(chargeUuid, appearanceUuid, incomingRtc)
 
-    service.update(sentenceUuid, legacySentence)
+    val response = service.update(sentenceUuid, legacySentence)
 
     assertThat(recall.returnToCustodyDate).isEqualTo(incomingRtc)
     verify(exactly = 1) { recallHistoryRepository.save(any()) }
     verify(exactly = 1) { recallSentenceHistoryRepository.save(any()) }
+    assertThat(response.eventsToEmit)
+      .extracting<String> { it.eventType.name }
+      .containsExactly("SENTENCE_UPDATED")
   }
 
   @Test
@@ -224,9 +229,48 @@ class LegacySentenceServiceTests {
       legacyRecallSentenceUpdate(newChargeUuid, newAppearanceUuid, LocalDate.of(2024, 2, 1)),
     )
 
-    assertThat(response.flatMap { it.eventsToEmit })
+    assertThat(response.eventsToEmit)
       .extracting<String> { it.eventType.name }
-      .contains("RECALL_INSERTED")
+      .containsExactly("RECALL_INSERTED", "SENTENCE_UPDATED")
+  }
+
+  @Test
+  fun `update emits SENTENCE_INSERTED when existing sentence has not been set`() {
+    val sentenceUuid = UUID.randomUUID()
+    val existingChargeUuid = UUID.randomUUID()
+    val newChargeUuid = UUID.randomUUID()
+    val existingAppearanceUuid = UUID.randomUUID()
+    val newAppearanceUuid = UUID.randomUUID()
+
+    val (existingSentence, _) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = existingChargeUuid,
+      appearanceUuid = existingAppearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = LocalDate.of(2024, 1, 11),
+    )
+
+    val unsentencedCharge = getUnsentencedCharge(newChargeUuid, newAppearanceUuid)
+
+    stubMocks(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = newChargeUuid,
+      existingSentence = existingSentence,
+      sentenceForCharge = null,
+      unsentencedCharge = unsentencedCharge,
+      unsentencedAppearanceUuid = newAppearanceUuid,
+      stubRecallBucketType = true,
+      stubRecallPersistence = true,
+    )
+
+    val response = service.update(
+      sentenceUuid,
+      legacySentenceUpdate(newChargeUuid, newAppearanceUuid, LocalDate.of(2024, 2, 1)),
+    )
+
+    assertThat(response.eventsToEmit)
+      .extracting<String> { it.eventType.name }
+      .containsExactly("SENTENCE_INSERTED")
   }
 
   private fun stubMocks(
@@ -321,7 +365,7 @@ class LegacySentenceServiceTests {
       active = true,
       performedByUser = "SYNC_USER",
       returnToCustodyDate = rtc,
-      legacyData = mockk(relaxed = true),
+      legacyData = SentenceLegacyData(null, null, null, "", null, null, null),
     )
 
     fun legacyRecallSentenceUpdate(chargeUuid: UUID, appearanceUuid: UUID, rtc: LocalDate): LegacyCreateSentence = LegacyCreateSentence(
