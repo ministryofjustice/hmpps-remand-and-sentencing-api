@@ -240,7 +240,7 @@ class LegacySentenceService(
   fun update(
     sentenceUuid: UUID,
     createSentence: LegacyCreateSentence,
-  ): List<RecordResponse<Pair<EntityChangeStatus, LegacySentenceCreatedResponse>>> {
+  ): RecordResponse<LegacySentenceCreatedResponse> {
     RetrySynchronizationManager.getContext()?.let { retryContext ->
       if (retryContext.retryCount > 0) {
         log.info("sentence update retry with context: count = ${retryContext.retryCount}, lastException = ${retryContext.lastThrowable?.javaClass?.name}, exhausted=${retryContext.isExhaustedOnly}")
@@ -275,8 +275,9 @@ class LegacySentenceService(
         delete(it, getPerformedByUsername(sentence))
       }
 
-    return sentence.chargeUuids.map { chargeUuid ->
-      val eventMetaDataList = mutableSetOf<EventMetadata>()
+    val eventMetaDataList = mutableSetOf<EventMetadata>()
+
+    val responses = sentence.chargeUuids.map { chargeUuid ->
       var createRecallEvent: EventMetadata? = null
 
       val (existingSentence, entityStatus) =
@@ -354,17 +355,39 @@ class LegacySentenceService(
         eventMetaDataList.add(createRecallEvent)
       }
 
-      RecordResponse(
-        record = entityChangeStatus to LegacySentenceCreatedResponse(
-          courtAppearance.courtCase.prisonerId,
-          activeRecord.sentenceUuid,
-          activeRecord.charge.chargeUuid,
-          courtAppearance.appearanceUuid,
-          courtAppearance.courtCase.caseUniqueIdentifier,
-        ),
-        eventsToEmit = eventMetaDataList,
+      val legacySentenceCreatedResponse = LegacySentenceCreatedResponse(
+        courtAppearance.courtCase.prisonerId,
+        activeRecord.sentenceUuid,
+        activeRecord.charge.chargeUuid,
+        courtAppearance.appearanceUuid,
+        courtAppearance.courtCase.caseUniqueIdentifier,
       )
+
+      val eventType = when (entityChangeStatus) {
+        EntityChangeStatus.EDITED -> EventType.SENTENCE_UPDATED
+        EntityChangeStatus.CREATED -> EventType.SENTENCE_INSERTED
+        else -> null
+      }
+
+      if (eventType != null) {
+        eventMetaDataList.add(
+          EventMetadataCreator.sentenceEventMetadata(
+            legacySentenceCreatedResponse.prisonerId,
+            legacySentenceCreatedResponse.courtCaseId,
+            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
+            legacySentenceCreatedResponse.lifetimeUuid.toString(),
+            legacySentenceCreatedResponse.appearanceUuid.toString(),
+            eventType,
+          ),
+        )
+      }
+
+      legacySentenceCreatedResponse
     }
+    return RecordResponse(
+      record = responses.first(),
+      eventsToEmit = eventMetaDataList,
+    )
   }
 
   private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()
