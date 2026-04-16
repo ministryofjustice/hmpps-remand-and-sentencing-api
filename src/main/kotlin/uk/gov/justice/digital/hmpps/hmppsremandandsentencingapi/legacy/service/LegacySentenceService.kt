@@ -363,7 +363,13 @@ class LegacySentenceService(
         courtAppearance.courtCase.caseUniqueIdentifier,
       )
 
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
+      val eventType = when (entityChangeStatus) {
+        EntityChangeStatus.EDITED -> EventType.SENTENCE_UPDATED
+        EntityChangeStatus.CREATED -> EventType.SENTENCE_INSERTED
+        else -> null
+      }
+
+      if (eventType != null) {
         eventMetaDataList.add(
           EventMetadataCreator.sentenceEventMetadata(
             legacySentenceCreatedResponse.prisonerId,
@@ -371,21 +377,11 @@ class LegacySentenceService(
             legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
             legacySentenceCreatedResponse.lifetimeUuid.toString(),
             legacySentenceCreatedResponse.appearanceUuid.toString(),
-            EventType.SENTENCE_UPDATED,
-          ),
-        )
-      } else if (entityChangeStatus == EntityChangeStatus.CREATED) {
-        eventMetaDataList.add(
-          EventMetadataCreator.sentenceEventMetadata(
-            legacySentenceCreatedResponse.prisonerId,
-            legacySentenceCreatedResponse.courtCaseId,
-            legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
-            legacySentenceCreatedResponse.lifetimeUuid.toString(),
-            legacySentenceCreatedResponse.appearanceUuid.toString(),
-            EventType.SENTENCE_INSERTED,
+            eventType,
           ),
         )
       }
+
       legacySentenceCreatedResponse
     }
     return RecordResponse(
