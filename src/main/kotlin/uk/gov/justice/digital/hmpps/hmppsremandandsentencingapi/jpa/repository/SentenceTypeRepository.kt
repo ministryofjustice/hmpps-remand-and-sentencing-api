@@ -20,9 +20,10 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
     ste.classification !=:classification and
     ste.status IN :statuses and
     (ste.minOffenceDateInclusive <= :offenceDate or ste.minOffenceDateInclusive is null) and
-    (ste.maxOffenceDateExclusive > :offenceDate or ste.maxOffenceDateExclusive is null)""",
+    (ste.maxOffenceDateExclusive > :offenceDate or ste.maxOffenceDateExclusive is null) and 
+    (:sentenceTypeIds is null or ste.id in :sentenceTypeIds)""",
   )
-  fun searchSentenceTypes(age: Int, convictionDate: LocalDate, classification: SentenceTypeClassification, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): List<SentenceTypeEntity>
+  fun searchSentenceTypes(age: Int, convictionDate: LocalDate, classification: SentenceTypeClassification, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate, sentenceTypeIds: List<Int>?): List<SentenceTypeEntity>
 
   @Query(
     (
@@ -44,6 +45,8 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
   fun findBySentenceTypeUuid(sentenceTypeUuid: UUID): SentenceTypeEntity?
 
   fun findBySentenceTypeUuidIn(sentenceTypeUuids: List<UUID>): List<SentenceTypeEntity>
+
+  fun findByChargeOutcomesOutcomeUuid(chargeOutcomeUuid: UUID): List<SentenceTypeEntity>
 
   fun findByNomisCjaCodeAndNomisSentenceCalcType(nomisCjaCode: String, nomisSentenceCalcType: String): SentenceTypeEntity?
 
