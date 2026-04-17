@@ -601,11 +601,18 @@ class RecallService(
     val duplicateKeys = findDuplicateKeys(sentencesByDupKey)
     if (duplicateKeys.isEmpty()) return cases.sortedByDescending { it.appearanceDate }
 
-    val sentencesByKey = pickLatestSentencePerDuplicateKey(sentencesByDupKey)
-    val sentencesPerCase = sentencesByCaseUuid(sentencesByKey)
+    val primaryCaseUuid = pickPrimaryCaseUuid(cases)
+    val selectedSentenceRefs = selectSentenceRefsForMerge(
+      sentencesByDuplicateSentenceKey = sentencesByDupKey,
+      duplicateKeys = duplicateKeys,
+      primaryCaseUuid = primaryCaseUuid,
+    )
+    val sentencesPerCase = sentencesByCaseUuid(selectedSentenceRefs)
     val mergeGroups = groupCourtCasesToMergeByDuplicateKeys(cases, sentencesByDupKey, duplicateKeys)
 
-    val duplicateWinnerRefs = duplicateKeys.mapNotNull { sentencesByKey[it] }
+    val duplicateWinnerRefs = duplicateKeys.mapNotNull {
+      sentencesByDupKey[it]?.maxWithOrNull(compareBy<SentenceWithCaseUuid> { ref -> ref.sentence.createdAt }.thenBy { ref -> ref.caseUuid })
+    }
 
     val mergedCases = mergeGroups.mapNotNull { memberUuids ->
       val repUuid = chooseRepresentative(memberUuids, duplicateWinnerRefs)
@@ -662,17 +669,43 @@ class RecallService(
     .filter { (_, refs) -> refs.map { it.caseUuid }.distinct().size > 1 }
     .keys
 
-  private fun pickLatestSentencePerDuplicateKey(
-    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
-  ): Map<DuplicateSentenceKey, SentenceWithCaseUuid> = sentencesByDuplicateSentenceKey.mapValues { (_, refs) ->
-    refs.maxWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
-  }
-
   private fun sentencesByCaseUuid(
-    sentencesByKey: Map<DuplicateSentenceKey, SentenceWithCaseUuid>,
-  ): Map<String, List<RecallableCourtCaseSentence>> = sentencesByKey.values
+    selectedSentenceRefs: List<SentenceWithCaseUuid>,
+  ): Map<String, List<RecallableCourtCaseSentence>> = selectedSentenceRefs
     .groupBy { it.caseUuid }
     .mapValues { (_, refs) -> refs.map { it.sentence } }
+
+  private fun pickPrimaryCaseUuid(cases: List<RecallableCourtCase>): String = cases
+    .maxWith(
+      compareBy<RecallableCourtCase> { it.appearanceDate }
+        .thenBy { latestSentenceCreatedAt(it) }
+        .thenBy { it.courtCaseUuid },
+    )
+    .courtCaseUuid
+
+  private fun latestSentenceCreatedAt(case: RecallableCourtCase): LocalDateTime = case.sentences
+    .maxOfOrNull { it.createdAt }
+    ?: LocalDateTime.MIN
+
+  private fun selectSentenceRefsForMerge(
+    sentencesByDuplicateSentenceKey: Map<DuplicateSentenceKey, List<SentenceWithCaseUuid>>,
+    duplicateKeys: Set<DuplicateSentenceKey>,
+    primaryCaseUuid: String,
+  ): List<SentenceWithCaseUuid> = sentencesByDuplicateSentenceKey.flatMap { (key, refs) ->
+    if (key !in duplicateKeys) {
+      refs
+    } else {
+      val refsOnPrimaryCase = refs.filter { it.caseUuid == primaryCaseUuid }
+      val refsOnOtherCases = refs.filter { it.caseUuid != primaryCaseUuid }
+
+      if (refsOnPrimaryCase.size <= 1) {
+        listOf(refs.maxWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid }))
+      } else {
+        val winnerOnOtherCases = refsOnOtherCases.maxWithOrNull(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
+        refsOnPrimaryCase + listOfNotNull(winnerOnOtherCases)
+      }
+    }
+  }
 
   private fun groupCourtCasesToMergeByDuplicateKeys(
     cases: List<RecallableCourtCase>,
