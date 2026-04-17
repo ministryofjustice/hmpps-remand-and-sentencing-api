@@ -73,6 +73,90 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
     sentenceTypeRepository.delete(inactiveSentenceType)
   }
 
+  @Test
+  fun `providing charge outcome uuid only returns the sentence types linked to the charge outcome`() {
+    val convictionDate = LocalDate.of(2021, 1, 1)
+    val offenceDate = LocalDate.of(2015, 2, 2)
+    val sentenceTypeNotAssociatedToChargeOutcome = sentenceTypeRepository.save(
+      SentenceTypeEntity(
+        sentenceTypeUuid = UUID.randomUUID(),
+        description = "No charge outcome sentence type",
+        minAgeInclusive = 1,
+        maxAgeExclusive = 99,
+        minDateInclusive = convictionDate.minusDays(10),
+        maxDateExclusive = convictionDate.plusDays(10),
+        classification = SentenceTypeClassification.STANDARD,
+        hintText = null,
+        nomisCjaCode = "CJA",
+        nomisSentenceCalcType = "CalcType",
+        displayOrder = 1000,
+        status = ReferenceEntityStatus.ACTIVE,
+        minOffenceDateInclusive = offenceDate.minusDays(10),
+        maxOffenceDateExclusive = offenceDate.plusDays(10),
+        isRecallable = true,
+      ),
+    )
+
+    val result = webTestClient.get()
+      .uri(
+        "/sentence-type/search?age=18&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}&chargeOutcomeUuid=3a1d8f72-7b2e-4f5c-8d4a-6c9e1b7f2d03",
+      )
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceType>>())
+      .returnResult().responseBody!!
+
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("d64283fd-7e48-4ed8-a98c-d68e938a5661"))
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.doesNotContain(sentenceTypeNotAssociatedToChargeOutcome.sentenceTypeUuid)
+    sentenceTypeRepository.delete(sentenceTypeNotAssociatedToChargeOutcome)
+  }
+
+  @Test
+  fun `providing charge outcome uuid which has no linked sentence type returns the sentence types as usual`() {
+    val convictionDate = LocalDate.of(2021, 1, 1)
+    val offenceDate = LocalDate.of(2015, 2, 2)
+    val sentenceTypeNotAssociatedToChargeOutcome = sentenceTypeRepository.save(
+      SentenceTypeEntity(
+        sentenceTypeUuid = UUID.randomUUID(),
+        description = "No charge outcome sentence type",
+        minAgeInclusive = 1,
+        maxAgeExclusive = 99,
+        minDateInclusive = convictionDate.minusDays(10),
+        maxDateExclusive = convictionDate.plusDays(10),
+        classification = SentenceTypeClassification.STANDARD,
+        hintText = null,
+        nomisCjaCode = "CJA",
+        nomisSentenceCalcType = "CalcType",
+        displayOrder = 1000,
+        status = ReferenceEntityStatus.ACTIVE,
+        minOffenceDateInclusive = offenceDate.minusDays(10),
+        maxOffenceDateExclusive = offenceDate.plusDays(10),
+        isRecallable = true,
+      ),
+    )
+
+    val result = webTestClient.get()
+      .uri(
+        "/sentence-type/search?age=18&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}&chargeOutcomeUuid=f17328cf-ceaa-43c2-930a-26cf74480e18",
+      )
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceType>>())
+      .returnResult().responseBody!!
+
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("d64283fd-7e48-4ed8-a98c-d68e938a5661"), sentenceTypeNotAssociatedToChargeOutcome.sentenceTypeUuid)
+
+    sentenceTypeRepository.delete(sentenceTypeNotAssociatedToChargeOutcome)
+  }
+
   @ParameterizedTest(name = "Sentence type bucket test, age {0} on conviction date {1} and offence date {3}")
   @MethodSource("sentenceTypeParameters")
   fun `sentence type bucket tests`(age: Int, convictionDate: LocalDate, expectedDescriptions: List<String>, offenceDate: LocalDate) {

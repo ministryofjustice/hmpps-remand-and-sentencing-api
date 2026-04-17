@@ -24,13 +24,17 @@ class SentenceTypeService(
   private val sentenceTypeRepository: SentenceTypeRepository,
 ) {
 
-  fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): List<SentenceType> = sentenceTypeRepository.searchSentenceTypes(
-    age,
-    convictionDate,
-    SentenceTypeClassification.LEGACY_RECALL,
-    statuses,
-    offenceDate,
-  ).map { SentenceType.from(it) }
+  fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate, chargeOutcomeUuid: UUID?): List<SentenceType> {
+    val chargeOutcomeSentenceTypes = chargeOutcomeUuid?.let { sentenceTypeRepository.findByChargeOutcomesOutcomeUuid(it).map { sentenceType -> sentenceType.id } }?.takeIf { it.isNotEmpty() }
+    return sentenceTypeRepository.searchSentenceTypes(
+      age,
+      convictionDate,
+      SentenceTypeClassification.LEGACY_RECALL,
+      statuses,
+      offenceDate,
+      chargeOutcomeSentenceTypes,
+    ).map { SentenceType.from(it) }
+  }
 
   fun findByUuid(sentenceTypeUuid: UUID): SentenceType? = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)?.let { SentenceType.from(it) }
 
