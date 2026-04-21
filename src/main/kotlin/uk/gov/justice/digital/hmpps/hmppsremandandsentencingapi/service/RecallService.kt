@@ -696,13 +696,11 @@ class RecallService(
       refs
     } else {
       val refsOnPrimaryCase = refs.filter { it.caseUuid == primaryCaseUuid }
-      val refsOnOtherCases = refs.filter { it.caseUuid != primaryCaseUuid }
 
       if (refsOnPrimaryCase.size <= 1) {
         listOf(refs.maxWith(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid }))
       } else {
-        val winnerOnOtherCases = refsOnOtherCases.maxWithOrNull(compareBy<SentenceWithCaseUuid> { it.sentence.createdAt }.thenBy { it.caseUuid })
-        refsOnPrimaryCase + listOfNotNull(winnerOnOtherCases)
+        refsOnPrimaryCase
       }
     }
   }
