@@ -374,6 +374,7 @@ class RecallServiceMergeTest {
           uniqueDownstream.sentenceUuid,
         )
     }
+
     @Test
     fun `does not merge two same appearance date court cases when offences are unique`() {
       val sharedAppearanceDate = LocalDate.of(2025, 4, 1)
@@ -414,7 +415,6 @@ class RecallServiceMergeTest {
       assertThat(result.flatMap { it.sentences }.map { it.offenceCode })
         .containsExactlyInAnyOrder("OFF1", "OFF2")
     }
-
 
     @Test
     fun `keeps only duplicates from primary case when primary has multiple duplicates for a key`() {
