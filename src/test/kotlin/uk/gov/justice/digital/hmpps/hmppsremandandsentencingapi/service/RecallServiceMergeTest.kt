@@ -376,6 +376,114 @@ class RecallServiceMergeTest {
     }
 
     @Test
+    fun `does not merge two same appearance date court cases when offences are unique`() {
+      val sharedAppearanceDate = LocalDate.of(2025, 4, 1)
+
+      val cc1 = recallableCourtCase(
+        uuid = "CC1",
+        courtCode = "C1",
+        appearanceDate = sharedAppearanceDate,
+        sentences = listOf(
+          recallableSentence(
+            uuid = UUID.randomUUID(),
+            offenceCode = "OFF1",
+            offenceStartDate = LocalDate.of(2025, 3, 1),
+            sentenceDate = sharedAppearanceDate,
+            createdAt = LocalDateTime.of(2025, 4, 1, 10, 0),
+          ),
+        ),
+      )
+      val cc2 = recallableCourtCase(
+        uuid = "CC2",
+        courtCode = "C1",
+        appearanceDate = sharedAppearanceDate,
+        sentences = listOf(
+          recallableSentence(
+            uuid = UUID.randomUUID(),
+            offenceCode = "OFF2",
+            offenceStartDate = LocalDate.of(2025, 3, 1),
+            sentenceDate = sharedAppearanceDate,
+            createdAt = LocalDateTime.of(2025, 4, 1, 11, 0),
+          ),
+        ),
+      )
+
+      val result = service.mergeAndSortCourtCases(listOf(cc1, cc2))
+
+      assertThat(result).hasSize(2)
+      assertThat(result.map { it.courtCaseUuid }).containsExactly("CC1", "CC2")
+      assertThat(result.flatMap { it.sentences }.map { it.offenceCode })
+        .containsExactlyInAnyOrder("OFF1", "OFF2")
+    }
+
+    @Test
+    fun `keeps only duplicates from primary when duplicates exist on older cases`() {
+      val duplicateOffenceCode = "OFF-DUP-1"
+      val duplicateOffenceStartDate = LocalDate.of(2022, 1, 1)
+      val duplicateSentenceDate = LocalDate.of(2025, 1, 1)
+      val matchingPeriodLength = listOf(periodLength(years = 2))
+
+      val olderCaseDroppedDuplicate = recallableSentence(
+        uuid = UUID.fromString("11111111-1111-1111-1111-111111111111"),
+        offenceCode = duplicateOffenceCode,
+        offenceStartDate = duplicateOffenceStartDate,
+        sentenceDate = duplicateSentenceDate,
+        createdAt = LocalDateTime.of(2026, 4, 20, 17, 13, 10),
+      ).copy(periodLengths = matchingPeriodLength)
+      val olderCaseDroppedDuplicate2 = recallableSentence(
+        uuid = UUID.fromString("22222222-2222-2222-2222-222222222222"),
+        offenceCode = duplicateOffenceCode,
+        offenceStartDate = duplicateOffenceStartDate,
+        sentenceDate = duplicateSentenceDate,
+        createdAt = LocalDateTime.of(2026, 4, 20, 17, 13, 27),
+      ).copy(periodLengths = matchingPeriodLength)
+      val primaryCaseKeptDuplicate1 = recallableSentence(
+        uuid = UUID.fromString("33333333-3333-3333-3333-333333333333"),
+        offenceCode = duplicateOffenceCode,
+        offenceStartDate = duplicateOffenceStartDate,
+        sentenceDate = duplicateSentenceDate,
+        createdAt = LocalDateTime.of(2026, 4, 20, 17, 20, 10),
+      ).copy(periodLengths = matchingPeriodLength)
+      val primaryCaseKeptDuplicate2 = recallableSentence(
+        uuid = UUID.fromString("44444444-4444-4444-4444-444444444444"),
+        offenceCode = duplicateOffenceCode,
+        offenceStartDate = duplicateOffenceStartDate,
+        sentenceDate = duplicateSentenceDate,
+        createdAt = LocalDateTime.of(2026, 4, 20, 17, 20, 28),
+      ).copy(periodLengths = matchingPeriodLength)
+
+      val olderCase = recallableCourtCase(
+        uuid = "CASE-OLDER",
+        courtCode = "C1",
+        appearanceDate = LocalDate.of(2025, 1, 1),
+        sentences = listOf(olderCaseDroppedDuplicate, olderCaseDroppedDuplicate2),
+      )
+      val primaryCase = recallableCourtCase(
+        uuid = "CASE-PRIMARY",
+        courtCode = "C1",
+        appearanceDate = LocalDate.of(2025, 1, 1),
+        sentences = listOf(primaryCaseKeptDuplicate1, primaryCaseKeptDuplicate2),
+      )
+
+      val result = service.mergeAndSortCourtCases(listOf(olderCase, primaryCase))
+
+      assertThat(result).hasSize(1)
+      val mergedCase = result.single()
+      assertThat(mergedCase.courtCaseUuid).isEqualTo("CASE-PRIMARY")
+      assertThat(mergedCase.sentences).hasSize(2)
+      assertThat(mergedCase.sentences.map { it.sentenceUuid })
+        .containsExactlyInAnyOrder(
+          primaryCaseKeptDuplicate1.sentenceUuid,
+          primaryCaseKeptDuplicate2.sentenceUuid,
+        )
+      assertThat(mergedCase.sentences.map { it.sentenceUuid })
+        .doesNotContain(
+          olderCaseDroppedDuplicate.sentenceUuid,
+          olderCaseDroppedDuplicate2.sentenceUuid,
+        )
+    }
+
+    @Test
     fun `does not merge when duplicate sentence fields match but court code differs`() {
       val sentenceDate = LocalDate.of(2020, 2, 1)
       val startDate = LocalDate.of(2020, 1, 1)
