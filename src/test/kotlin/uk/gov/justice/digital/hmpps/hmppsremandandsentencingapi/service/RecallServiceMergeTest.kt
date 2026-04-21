@@ -417,7 +417,7 @@ class RecallServiceMergeTest {
     }
 
     @Test
-    fun `keeps only duplicates from primary case when primary has multiple duplicates for a key`() {
+    fun `keeps only duplicates from primary when duplicates exist on older cases`() {
       val duplicateOffenceCode = "OFF-DUP-1"
       val duplicateOffenceStartDate = LocalDate.of(2022, 1, 1)
       val duplicateSentenceDate = LocalDate.of(2025, 1, 1)
