@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
@@ -26,8 +27,7 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
   fun searchSentenceTypes(age: Int, convictionDate: LocalDate, classification: SentenceTypeClassification, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate, sentenceTypeIds: List<Int>?): List<SentenceTypeEntity>
 
   @Query(
-    (
-      """
+    """
   select ste from SentenceTypeEntity ste where 
     ste.sentenceTypeUuid = :sentenceTypeUuid and
     (ste.minAgeInclusive <=:age or ste.minAgeInclusive is null) and 
@@ -37,8 +37,7 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
     ste.status IN :statuses and
     (ste.minOffenceDateInclusive <= :offenceDate or ste.minOffenceDateInclusive is null) and
     (ste.maxOffenceDateExclusive > :offenceDate or ste.maxOffenceDateExclusive is null)
-  """
-      ),
+  """,
   )
   fun sentenceTypeStillValid(sentenceTypeUuid: UUID, age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate): SentenceTypeEntity?
 
@@ -51,4 +50,12 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
   fun findByNomisCjaCodeAndNomisSentenceCalcType(nomisCjaCode: String, nomisSentenceCalcType: String): SentenceTypeEntity?
 
   fun findByNomisCjaCodeInAndNomisSentenceCalcTypeIn(nomisCjaCodes: List<String>, nomisSentenceCalcTypes: List<String>): List<SentenceTypeEntity>
+
+  @Query(
+    """
+      select co from SentenceTypeEntity ste
+      join ste.chargeOutcomes co
+    """,
+  )
+  fun findChargeOutcomes(): List<ChargeOutcomeEntity>
 }

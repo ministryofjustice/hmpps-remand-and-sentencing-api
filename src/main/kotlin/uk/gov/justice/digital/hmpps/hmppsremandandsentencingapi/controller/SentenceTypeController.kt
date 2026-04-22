@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeIsValid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.AllSentenceTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeChargeOutcomes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.MigrateSentenceRecordsSentenceType
@@ -166,4 +167,17 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
   )
   @ResponseStatus(HttpStatus.OK)
   fun getSentenceTypeDetailsByUuid(@PathVariable sentenceTypeUuid: UUID): SentenceTypeDetails = sentenceTypesService.findDetailsByUuid(sentenceTypeUuid) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeUuid")
+
+  @GetMapping("/charge-outcome/all")
+  @Operation(
+    summary = "Get all charge outcomes associated to sentence types",
+    description = "This endpoint will retrieve all charge outcomes which have an association to at least one sentence type",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns sentence type details"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+    ],
+  )
+  fun getAllChargeOutcomes(): SentenceTypeChargeOutcomes = sentenceTypesService.getAllChargeOutcomes()
 }
