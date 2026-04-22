@@ -40,6 +40,33 @@ class ChargeOutcomeEntity(
     dispositionCode = createChargeOutcome.dispositionCode
     status = createChargeOutcome.status
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ChargeOutcomeEntity) return false
+
+    return id == other.id &&
+      displayOrder == other.displayOrder &&
+      outcomeName == other.outcomeName &&
+      outcomeUuid == other.outcomeUuid &&
+      nomisCode == other.nomisCode &&
+      outcomeType == other.outcomeType &&
+      dispositionCode == other.dispositionCode &&
+      status == other.status
+  }
+
+  override fun hashCode(): Int {
+    var result = id
+    result = 31 * result + displayOrder
+    result = 31 * result + outcomeName.hashCode()
+    result = 31 * result + outcomeUuid.hashCode()
+    result = 31 * result + nomisCode.hashCode()
+    result = 31 * result + outcomeType.hashCode()
+    result = 31 * result + dispositionCode.hashCode()
+    result = 31 * result + status.hashCode()
+    return result
+  }
+
   companion object {
     fun from(createChargeOutcome: CreateChargeOutcome): ChargeOutcomeEntity = ChargeOutcomeEntity(
       0,

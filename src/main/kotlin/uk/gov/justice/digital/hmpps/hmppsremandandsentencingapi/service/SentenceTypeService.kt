@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceTypeIsValid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.AllSentenceTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeChargeOutcomes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.UpdatedSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
@@ -90,4 +91,7 @@ class SentenceTypeService(
   }
 
   fun findDetailsByUuid(sentenceTypeUuid: UUID): SentenceTypeDetails? = sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeUuid)?.let { SentenceTypeDetails.from(it) }
+
+  @Transactional(readOnly = true)
+  fun getAllChargeOutcomes(): SentenceTypeChargeOutcomes = SentenceTypeChargeOutcomes.from(sentenceTypeRepository.findChargeOutcomes().toSet())
 }
