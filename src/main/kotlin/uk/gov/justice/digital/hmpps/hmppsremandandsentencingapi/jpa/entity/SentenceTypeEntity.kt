@@ -56,39 +56,39 @@ class SentenceTypeEntity(
 
   fun updateFrom(existingUuid: UUID, updateSentenceType: CreateSentenceType) {
     this.sentenceTypeUuid = updateSentenceType.sentenceTypeUuid ?: existingUuid
-    this.description = updateSentenceType.description
+    this.description = updateSentenceType.description!!
     this.minAgeInclusive = updateSentenceType.minAgeInclusive
     this.maxAgeExclusive = updateSentenceType.maxAgeExclusive
     this.minDateInclusive = updateSentenceType.minDateInclusive
     this.maxDateExclusive = updateSentenceType.maxDateExclusive
     this.minOffenceDateInclusive = updateSentenceType.minOffenceDateInclusive
     this.maxOffenceDateExclusive = updateSentenceType.maxOffenceDateExclusive
-    this.classification = updateSentenceType.classification
+    this.classification = updateSentenceType.classification!!
     this.hintText = updateSentenceType.hintText
-    this.nomisCjaCode = updateSentenceType.nomisCjaCode
-    this.nomisSentenceCalcType = updateSentenceType.nomisSentenceCalcType
-    this.displayOrder = updateSentenceType.displayOrder
-    this.status = updateSentenceType.status
-    this.isRecallable = updateSentenceType.isRecallable
+    this.nomisCjaCode = updateSentenceType.nomisCjaCode!!
+    this.nomisSentenceCalcType = updateSentenceType.nomisSentenceCalcType!!
+    this.displayOrder = updateSentenceType.displayOrder!!
+    this.status = updateSentenceType.status!!
+    this.isRecallable = updateSentenceType.isRecallable!!
   }
   companion object {
     fun from(createSentenceType: CreateSentenceType): SentenceTypeEntity = SentenceTypeEntity(
       0,
       createSentenceType.sentenceTypeUuid ?: UUID.randomUUID(),
-      createSentenceType.description,
+      createSentenceType.description!!,
       createSentenceType.minAgeInclusive,
       createSentenceType.maxAgeExclusive,
       createSentenceType.minDateInclusive,
       createSentenceType.maxDateExclusive,
       createSentenceType.minOffenceDateInclusive,
       createSentenceType.maxOffenceDateExclusive,
-      createSentenceType.classification,
+      createSentenceType.classification!!,
       createSentenceType.hintText,
-      createSentenceType.nomisCjaCode,
-      createSentenceType.nomisSentenceCalcType,
-      createSentenceType.displayOrder,
-      createSentenceType.status,
-      createSentenceType.isRecallable,
+      createSentenceType.nomisCjaCode!!,
+      createSentenceType.nomisSentenceCalcType!!,
+      createSentenceType.displayOrder!!,
+      createSentenceType.status!!,
+      createSentenceType.isRecallable!!,
     )
   }
 }
