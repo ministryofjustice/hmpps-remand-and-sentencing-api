@@ -54,7 +54,7 @@ class SentenceTypeService(
   @Transactional
   fun createSentenceType(createSentenceType: CreateSentenceType): SentenceTypeEntity {
     val bindingResults = BeanPropertyBindingResult(createSentenceType, "createSentenceType")
-    val sentenceTypeFromNomisId = sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(createSentenceType.nomisCjaCode, createSentenceType.nomisSentenceCalcType)
+    val sentenceTypeFromNomisId = sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(createSentenceType.nomisCjaCode!!, createSentenceType.nomisSentenceCalcType!!)
     if (sentenceTypeFromNomisId != null) {
       bindingResults.addError(FieldError("createSentenceType", "nomisCjaCode", "CJA code and Sentence Calc Type combination is already mapped"))
     }
@@ -71,7 +71,7 @@ class SentenceTypeService(
   @Transactional
   fun updateSentenceType(sentenceTypeUuid: UUID, updateSentenceType: CreateSentenceType): UpdatedSentenceType {
     val bindingResults = BeanPropertyBindingResult(updateSentenceType, "updateSentenceType")
-    val sentenceTypeFromNomisId = sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(updateSentenceType.nomisCjaCode, updateSentenceType.nomisSentenceCalcType)
+    val sentenceTypeFromNomisId = sentenceTypeRepository.findByNomisCjaCodeAndNomisSentenceCalcType(updateSentenceType.nomisCjaCode!!, updateSentenceType.nomisSentenceCalcType!!)
     if (sentenceTypeFromNomisId != null && sentenceTypeFromNomisId.sentenceTypeUuid != sentenceTypeUuid) {
       bindingResults.addError(FieldError("updateSentenceType", "nomisCjaCode", "CJA code and Sentence Calc Type combination is already mapped"))
     }

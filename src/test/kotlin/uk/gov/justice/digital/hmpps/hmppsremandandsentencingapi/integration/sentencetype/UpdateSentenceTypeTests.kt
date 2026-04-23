@@ -47,7 +47,7 @@ class UpdateSentenceTypeTests : IntegrationTestBase() {
       .jsonPath("$.fieldErrors[0].field")
       .isEqualTo("description")
       .jsonPath("$.fieldErrors[0].message")
-      .isEqualTo("Description must not be blank")
+      .isEqualTo("You must enter a description")
   }
 
   @Test

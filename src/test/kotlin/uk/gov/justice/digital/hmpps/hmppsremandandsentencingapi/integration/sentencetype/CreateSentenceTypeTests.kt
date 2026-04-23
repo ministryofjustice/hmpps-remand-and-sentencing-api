@@ -47,7 +47,26 @@ class CreateSentenceTypeTests : IntegrationTestBase() {
       .jsonPath("$.fieldErrors[0].field")
       .isEqualTo("description")
       .jsonPath("$.fieldErrors[0].message")
-      .isEqualTo("Description must not be blank")
+      .isEqualTo("You must enter a description")
+  }
+
+  @Test
+  fun `adding a sentence type with a null classification results in error`() {
+    val createSentenceType = DpsDataCreator.createSentenceType(classification = null)
+    webTestClient.post()
+      .uri("/sentence-type")
+      .bodyValue(createSentenceType)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.fieldErrors[0].field")
+      .isEqualTo("classification")
+      .jsonPath("$.fieldErrors[0].message")
+      .isEqualTo("You must select a Classification")
   }
 
   @Test
