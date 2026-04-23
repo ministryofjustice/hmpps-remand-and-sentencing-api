@@ -51,7 +51,7 @@ class SentenceTypeController(private val sentenceTypesService: SentenceTypeServi
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun searchSentenceTypes(@RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate, @RequestParam(name = "statuses", defaultValue = "ACTIVE", required = false) statuses: List<ReferenceEntityStatus>, @RequestParam("offenceDate") offenceDate: LocalDate, @RequestParam("chargeOutcomeUuid", required = false) chargeOutcomeUuid: UUID?): List<SentenceType> = sentenceTypesService.search(age, convictionDate, statuses, offenceDate, chargeOutcomeUuid)
+  fun searchSentenceTypes(@RequestParam("age") age: Int, @RequestParam("convictionDate") convictionDate: LocalDate, @RequestParam(name = "statuses", defaultValue = "ACTIVE", required = false) statuses: List<ReferenceEntityStatus>, @RequestParam("offenceDate") offenceDate: LocalDate, @RequestParam("chargeOutcomeUuid", required = false) chargeOutcomeUuid: UUID?): List<SentenceTypeDetails> = sentenceTypesService.search(age, convictionDate, statuses, offenceDate, chargeOutcomeUuid)
 
   @GetMapping("/{sentenceTypeUuid}")
   @Operation(

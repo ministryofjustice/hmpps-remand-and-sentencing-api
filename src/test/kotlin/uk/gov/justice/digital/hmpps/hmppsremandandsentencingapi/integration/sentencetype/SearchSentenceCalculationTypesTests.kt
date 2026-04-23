@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.typeReference
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
@@ -66,7 +66,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBody(typeReference<List<SentenceType>>())
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
       .returnResult().responseBody!!
 
     Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.containsOnly(inactiveSentenceType.sentenceTypeUuid)
@@ -107,7 +107,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBody(typeReference<List<SentenceType>>())
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
       .returnResult().responseBody!!
 
     Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("d64283fd-7e48-4ed8-a98c-d68e938a5661"))
@@ -149,7 +149,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBody(typeReference<List<SentenceType>>())
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
       .returnResult().responseBody!!
 
     Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("d64283fd-7e48-4ed8-a98c-d68e938a5661"), sentenceTypeNotAssociatedToChargeOutcome.sentenceTypeUuid)
@@ -170,7 +170,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBody(typeReference<List<SentenceType>>())
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
       .returnResult().responseBody!!
     val descriptions = result.map { it.description }
     Assertions.assertThat(descriptions).containsExactlyInAnyOrderElementsOf(expectedDescriptions)
