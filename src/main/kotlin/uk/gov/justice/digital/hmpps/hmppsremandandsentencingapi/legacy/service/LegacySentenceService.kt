@@ -445,6 +445,9 @@ class LegacySentenceService(
     val latestRecall = updatedSentence.latestRecall() ?: return
     if (latestRecall.returnToCustodyDate != sentence.returnToCustodyDate && latestRecall.recallType.code.isFixedTermRecall()) {
       latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
+      if (latestRecall.returnToCustodyDate != null) {
+        latestRecall.inPrisonOnRevocationDate = latestRecall.returnToCustodyDate == latestRecall.revocationDate
+      }
       val recallHistoryEntity =
         recallHistoryRepository.save(
           RecallHistoryEntity.from(
