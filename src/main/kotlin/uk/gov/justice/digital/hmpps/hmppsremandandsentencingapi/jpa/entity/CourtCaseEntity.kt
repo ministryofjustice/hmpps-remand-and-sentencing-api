@@ -21,6 +21,7 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -134,6 +135,9 @@ import java.util.UUID
         ColumnResult(name = "mergedToWarrantDate", type = LocalDate::class),
         ColumnResult(name = "futureSkeletonAppearanceUuid"),
         ColumnResult(name = "minCourtAppearanceWarrantType"),
+        ColumnResult(name = "courtAppearanceStatus", type = CourtAppearanceEntityStatus::class),
+        ColumnResult(name = "appearanceChargeStatus", type = ChargeEntityStatus::class),
+        ColumnResult(name = "appearanceSentenceStatus", type = SentenceEntityStatus::class),
       ),
     ),
   ],
