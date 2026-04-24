@@ -157,6 +157,64 @@ class LegacySentenceServiceTests {
   }
 
   @Test
+  fun `update clears in prison on revocation flag when latest recall is FTR and NOMIS updates RTC`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+
+    val existingRtc = LocalDate.of(2024, 1, 1)
+    val incomingRtc = LocalDate.of(2024, 2, 1)
+
+    val (existingSentence, recall) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = existingRtc,
+    )
+    recall.inPrisonOnRevocationDate = true
+
+    stubMocks(sentenceUuid, chargeUuid, existingSentence)
+
+    val legacySentence = legacySentenceUpdate(chargeUuid, appearanceUuid, incomingRtc)
+
+    service.update(sentenceUuid, legacySentence)
+
+    assertThat(recall.returnToCustodyDate).isEqualTo(incomingRtc)
+    assertThat(recall.inPrisonOnRevocationDate).isFalse()
+  }
+
+  @Test
+  fun `update sets in prison on revocation flag when latest recall is FTR and NOMIS RTC equals revocation date`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+
+    val revocationDate = LocalDate.of(2024, 1, 1)
+    val existingRtc = LocalDate.of(2024, 1, 11)
+    val incomingRtc = revocationDate
+
+    val (existingSentence, recall) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = existingRtc,
+    )
+    recall.inPrisonOnRevocationDate = false
+    recall.revocationDate = revocationDate
+
+    stubMocks(sentenceUuid, chargeUuid, existingSentence)
+
+    val legacySentence = legacySentenceUpdate(chargeUuid, appearanceUuid, incomingRtc)
+
+    service.update(sentenceUuid, legacySentence)
+
+    assertThat(recall.returnToCustodyDate).isEqualTo(incomingRtc)
+    assertThat(recall.inPrisonOnRevocationDate).isTrue()
+  }
+
+  @Test
   fun `delete saves recallHistory after deleting so status should be DELETED in history table, also emits recall_deleted event`() {
     val sentenceUuid = UUID.randomUUID()
     val chargeUuid = UUID.randomUUID()
