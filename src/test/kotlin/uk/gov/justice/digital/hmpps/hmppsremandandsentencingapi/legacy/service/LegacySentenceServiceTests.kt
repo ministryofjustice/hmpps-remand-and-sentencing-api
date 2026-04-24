@@ -215,6 +215,33 @@ class LegacySentenceServiceTests {
   }
 
   @Test
+  fun `update keeps in prison on revocation flag unchanged when latest recall is FTR and NOMIS sets RTC null`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+
+    val existingRtc = LocalDate.of(2024, 1, 11)
+
+    val (existingSentence, recall) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = existingRtc,
+    )
+    recall.inPrisonOnRevocationDate = true
+
+    stubMocks(sentenceUuid, chargeUuid, existingSentence)
+
+    val legacySentence = legacySentenceUpdate(chargeUuid, appearanceUuid, existingRtc).copy(returnToCustodyDate = null)
+
+    service.update(sentenceUuid, legacySentence)
+
+    assertThat(recall.returnToCustodyDate).isNull()
+    assertThat(recall.inPrisonOnRevocationDate).isTrue()
+  }
+
+  @Test
   fun `delete saves recallHistory after deleting so status should be DELETED in history table, also emits recall_deleted event`() {
     val sentenceUuid = UUID.randomUUID()
     val chargeUuid = UUID.randomUUID()
