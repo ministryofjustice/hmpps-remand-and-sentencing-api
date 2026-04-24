@@ -169,8 +169,12 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.content.[0].courtCaseUuid")
       .isEqualTo(recalledCourtCaseUuid)
+      .jsonPath("$.content.[0].canAppeal")
+      .isEqualTo(false)
       .jsonPath("$.content.[1].courtCaseUuid")
       .isEqualTo(courtCaseUuid)
+      .jsonPath("$.content.[1].canAppeal")
+      .isEqualTo(true)
   }
 
   @Test

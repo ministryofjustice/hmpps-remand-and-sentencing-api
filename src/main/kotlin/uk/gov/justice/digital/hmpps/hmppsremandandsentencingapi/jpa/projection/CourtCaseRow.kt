@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -100,4 +101,7 @@ data class CourtCaseRow(
   var mergedToWarrantDate: LocalDate?,
   var futureSkeletonAppearanceUuid: UUID?,
   var minCourtAppearanceWarrantType: String,
+  var courtAppearanceStatus: CourtAppearanceEntityStatus?,
+  var appearanceChargeStatus: ChargeEntityStatus?,
+  var appearanceSentenceStatus: SentenceEntityStatus?,
 )

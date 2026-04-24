@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import java.time.LocalDate
@@ -20,6 +22,7 @@ data class PagedCourtCase(
   val allAppearancesHaveRecall: Boolean,
   val mergedToCase: PagedMergedToCase?,
   val firstDayInCustodyWarrantType: String,
+  val canAppeal: Boolean,
 ) {
   companion object {
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
@@ -28,6 +31,13 @@ data class PagedCourtCase(
       val latestAppearanceCharges = courtCaseRows.filter { it.chargeId != null && it.chargeStatus != ChargeEntityStatus.DELETED }.groupBy { it.chargeId!! }
       val mergedFromCases = courtCaseRows.filter { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }.groupBy { it.mergedFromCaseId!! }
       val mergedToCase = courtCaseRows.firstOrNull { it.mergedToCaseId != null && it.mergedToAppearanceId != null }
+      val canAppeal = courtCaseRows.all { it.recallInAppearanceId == null } &&
+        courtCaseRows.any {
+          it.courtCaseStatus == CourtCaseEntityStatus.ACTIVE &&
+            it.courtAppearanceStatus == CourtAppearanceEntityStatus.ACTIVE &&
+            it.appearanceChargeStatus == ChargeEntityStatus.ACTIVE &&
+            it.appearanceSentenceStatus == SentenceEntityStatus.ACTIVE
+        }
       return PagedCourtCase(
         firstCourtCase.prisonerId,
         firstCourtCase.courtCaseUuid,
@@ -45,6 +55,7 @@ data class PagedCourtCase(
         courtCaseRows.filter { it.courtAppearanceId != null }.all { it.recallInAppearanceId != null },
         mergedToCase?.let { PagedMergedToCase.from(it) },
         firstCourtCase.minCourtAppearanceWarrantType,
+        canAppeal,
       )
     }
   }
