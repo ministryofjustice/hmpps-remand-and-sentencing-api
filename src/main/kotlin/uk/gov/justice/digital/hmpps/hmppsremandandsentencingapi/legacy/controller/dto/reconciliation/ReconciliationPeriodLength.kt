@@ -27,10 +27,10 @@ data class ReconciliationPeriodLength(
       }
       return ReconciliationPeriodLength(
         periodLengthEntity.periodLengthUuid,
-        periodLengthEntity.years,
-        periodLengthEntity.months,
-        periodLengthEntity.weeks,
-        periodLengthEntity.days,
+        if (isLifeSentence != true) periodLengthEntity.years else null,
+        if (isLifeSentence != true) periodLengthEntity.months else null,
+        if (isLifeSentence != true) periodLengthEntity.weeks else null,
+        if (isLifeSentence != true) periodLengthEntity.days else null,
         isLifeSentence,
         sentenceTermCode,
         periodLengthEntity.legacyData,
