@@ -108,6 +108,74 @@ class RecallServiceTest {
   }
 
   @Test
+  fun `getRecallableCourtCases skips case when only non-sentencing active appearances exist`() {
+    val courtCase = CourtCaseEntity(
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      caseUniqueIdentifier = "CASE-RECALL-APPEARANCE-SHAPE",
+      statusId = CourtCaseEntityStatus.ACTIVE,
+      createdBy = "test-user",
+    )
+
+    val activeNonSentencingOne = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = null,
+      appearanceDate = LocalDate.of(1992, 3, 20),
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "NON_SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+    val activeNonSentencingTwo = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = null,
+      appearanceDate = LocalDate.of(1992, 3, 20),
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "NON_SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+    val recallSentencingAppearance = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = null,
+      appearanceDate = LocalDate.of(2026, 3, 2),
+      statusId = CourtAppearanceEntityStatus.RECALL_APPEARANCE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+
+    courtCase.appearances = setOf(
+      activeNonSentencingOne,
+      activeNonSentencingTwo,
+      recallSentencingAppearance,
+    )
+    courtCase.latestCourtAppearance = activeNonSentencingOne
+
+    every {
+      courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    } returns listOf(courtCase)
+
+    val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(result.record.cases).isEmpty()
+  }
+
+  @Test
   fun `delete a dps recall checks for adjustment and handles none found`() {
     val recallUuid = testNonLegacyRecallEntity.recallUuid
     every { recallRepository.findOneByRecallUuid(recallUuid) } returns testNonLegacyRecallEntity
