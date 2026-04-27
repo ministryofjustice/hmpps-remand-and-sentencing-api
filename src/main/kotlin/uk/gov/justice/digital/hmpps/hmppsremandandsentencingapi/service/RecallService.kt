@@ -503,7 +503,7 @@ class RecallService(
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCasesWithAnAppearance)
 
     val recallableCourtCases = courtCasesWithAnAppearance
-      .map { courtCase ->
+      .mapNotNull { courtCase ->
         val latestAppearance = courtCase.latestCourtAppearance!!
 
         val activeAppearances = courtCase.appearances
@@ -513,7 +513,8 @@ class RecallService(
           .minOfOrNull { it.appearanceDate }
 
         val firstSentencingAppearance = activeAppearances
-          .first { appearance -> appearance.warrantType == "SENTENCING" }
+          .firstOrNull { appearance -> appearance.warrantType == "SENTENCING" }
+          ?: return@mapNotNull null
 
         val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
           appearance.appearanceCharges
