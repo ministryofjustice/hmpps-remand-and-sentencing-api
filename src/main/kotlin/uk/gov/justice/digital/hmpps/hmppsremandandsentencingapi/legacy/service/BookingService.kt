@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -96,6 +97,7 @@ class BookingService(
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
   private val recallHistoryRepository: RecallHistoryRepository,
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
+  private val featuresConfig: FeaturesConfig,
 ) {
 
   @Transactional
@@ -287,7 +289,7 @@ class BookingService(
 
   fun createAppearance(bookingCreateCourtAppearance: BookingCreateCourtAppearance, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: BookingDataTracking, referenceData: BookingReferenceData): CourtAppearanceEntity {
     val dpsAppearanceOutcome = bookingCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { referenceData.dpsAppearanceOutcomes[it] }
-    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(bookingCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.createdByUsername, courtCaseReference))
+    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(bookingCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.createdByUsername, courtCaseReference, featuresConfig.appeals.enabled))
     val charges = bookingCreateCourtAppearance.charges.map { charge ->
       createCharge(
         charge,

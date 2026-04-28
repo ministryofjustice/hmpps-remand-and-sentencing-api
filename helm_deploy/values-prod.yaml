@@ -14,6 +14,7 @@ generic-service:
     ADJUSTMENTS_API_URL: "https://adjustments-api.hmpps.service.justice.gov.uk"
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PROD
+    FEATURES_APPEALS_ENABLED: "false"
 
   resources:
     requests:
