@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -106,6 +107,7 @@ class LegacyPrisonerMergeService(
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val immigrationDetentionRepository: ImmigrationDetentionRepository,
   private val immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository,
+  private val featuresConfig: FeaturesConfig,
 ) {
 
   @Transactional
@@ -422,7 +424,7 @@ class LegacyPrisonerMergeService(
 
   fun createAppearance(mergeCreateCourtAppearance: MergeCreateCourtAppearance, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: PrisonerMergeDataTracking, referenceData: PrisonerMergeReferenceData): CourtAppearanceEntity {
     val dpsAppearanceOutcome = mergeCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { referenceData.dpsAppearanceOutcomes[it] }
-    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(mergeCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.username, courtCaseReference))
+    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(mergeCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.username, courtCaseReference, featuresConfig.appeals.enabled))
     val charges = mergeCreateCourtAppearance.charges.map { charge ->
       createCharge(
         charge,

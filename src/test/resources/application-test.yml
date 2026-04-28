@@ -67,3 +67,7 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+features:
+  appeals:
+    enabled: false
