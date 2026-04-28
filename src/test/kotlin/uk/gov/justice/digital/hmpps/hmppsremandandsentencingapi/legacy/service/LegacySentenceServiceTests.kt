@@ -153,7 +153,7 @@ class LegacySentenceServiceTests {
     verify(exactly = 1) { recallSentenceHistoryRepository.save(any()) }
     assertThat(response.eventsToEmit)
       .extracting<String> { it.eventType.name }
-      .containsExactly("SENTENCE_UPDATED")
+      .containsExactly("RECALL_UPDATED", "SENTENCE_UPDATED")
   }
 
   @Test
