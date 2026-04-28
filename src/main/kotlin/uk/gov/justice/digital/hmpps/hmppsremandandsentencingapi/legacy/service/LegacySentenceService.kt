@@ -327,7 +327,8 @@ class LegacySentenceService(
         consecutiveToSentence,
         isManyCharges,
       )
-      updateRtcDateIfFtrRecall(existingSentence, sentence)
+      val rtcRecallUpdatedEvent = updateRtcDateIfFtrRecall(existingSentence, sentence)
+      rtcRecallUpdatedEvent?.let { eventMetaDataList.add(it) }
       if (!existingSentence.isSame(updatedSentence)) {
         existingSentence.updateFrom(updatedSentence)
         sentenceHistoryRepository.save(
@@ -441,8 +442,8 @@ class LegacySentenceService(
     }
   }
 
-  private fun updateRtcDateIfFtrRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence) {
-    val latestRecall = updatedSentence.latestRecall() ?: return
+  private fun updateRtcDateIfFtrRecall(updatedSentence: SentenceEntity, sentence: LegacyCreateSentence): EventMetadata? {
+    val latestRecall = updatedSentence.latestRecall() ?: return null
     if (latestRecall.returnToCustodyDate != sentence.returnToCustodyDate && latestRecall.recallType.code.isFixedTermRecall()) {
       latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
       if (latestRecall.returnToCustodyDate != null) {
@@ -464,7 +465,17 @@ class LegacySentenceService(
           ),
         )
       }
+      val sentenceIds = latestRecall.recallSentences.map { it.sentence.sentenceUuid.toString() }
+      return EventMetadataCreator.recallEventMetadata(
+        prisonerId = latestRecall.prisonerId,
+        recallId = latestRecall.recallUuid.toString(),
+        sentenceIds = sentenceIds,
+        previousSentenceIds = sentenceIds,
+        previousRecallId = null,
+        eventType = EventType.RECALL_UPDATED,
+      )
     }
+    return null
   }
 
   @Transactional(readOnly = true)
