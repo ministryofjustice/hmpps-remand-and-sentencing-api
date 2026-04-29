@@ -86,4 +86,79 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
       .expectStatus()
       .isEqualTo(204)
   }
+
+  @Test
+  fun `get 400 when query not properly formed`() {
+    createCourtCase()
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("invalid-param", "null")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(400)
+  }
+
+  @Test
+  fun `get 401 when auth token missing or not valid`() {
+    createCourtCase()
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("invalid-param", "null")
+          .build()
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(401)
+  }
+
+  @Test
+  fun `get 403 when auth token role not SAR_DATA_ACCESS`() {
+    createCourtCase()
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("invalid-param", "null")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_LIMITED_ACCESS"))
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(403)
+  }
+
+  @Test
+  fun `get 500 when internal exception thrown`() {
+    createCourtCase()
+    whenever(prisonerDetailsService
+      .getPrisonerDetails("foo-bar", null, null)).thenThrow(RuntimeException::class.java)
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("prn", "foo-bar")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(500)
+  }
 }
