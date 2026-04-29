@@ -74,8 +74,8 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `create immigration detention record based on NOMIS court appearance`() {
-    val courtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
+  fun `create immigration detention ignores provided court appearance uuid`() {
+    val suppliedCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
     val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = IS91,
@@ -83,11 +83,11 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
       createdByUsername = "aUser",
       createdByPrison = "PRI",
       appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
-      courtAppearanceUuid = courtAppearanceUuid,
+      courtAppearanceUuid = suppliedCourtAppearanceUuid,
     )
 
     val immigrationDetentionResponse = createImmigrationDetention(immigrationDetention)
-    assertThat(immigrationDetentionResponse.courtAppearanceUuid!!).isEqualTo(courtAppearanceUuid)
+    assertThat(immigrationDetentionResponse.courtAppearanceUuid!!).isNotEqualTo(suppliedCourtAppearanceUuid)
 
     val actualImmigrationDetention =
       getImmigrationDetentionByUUID(immigrationDetentionResponse.immigrationDetentionUuid)
@@ -97,7 +97,7 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
       .isEqualTo(
         ImmigrationDetention(
           immigrationDetentionUuid = immigrationDetentionResponse.immigrationDetentionUuid,
-          courtAppearanceUuid = courtAppearanceUuid,
+          courtAppearanceUuid = immigrationDetentionResponse.courtAppearanceUuid!!,
           prisonerId = "B12345B",
           immigrationDetentionRecordType = IS91,
           recordDate = LocalDate.of(2021, 1, 1),
@@ -105,9 +105,9 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
         ),
       )
 
-    val messages = getMessages(2)
+    val messages = getMessages(3)
 
-    assertThat(messages).hasSize(2).extracting<String> { it.eventType }
-      .contains("court-appearance.updated", "charge.updated")
+    assertThat(messages).hasSize(3).extracting<String> { it.eventType }
+      .contains("court-appearance.inserted", "charge.inserted", "court-case.inserted")
   }
 }

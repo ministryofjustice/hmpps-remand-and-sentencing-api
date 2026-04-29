@@ -135,7 +135,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `filter out court appearances when there is a corresponding immigration detention record`() {
+  fun `provided court appearance uuid on create is ignored`() {
     val nomisCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
     val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
@@ -157,11 +157,20 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
         listOf(
           ImmigrationDetention(
             immigrationDetentionUuid = createResponse.immigrationDetentionUuid,
-            courtAppearanceUuid = nomisCourtAppearanceUuid,
+            courtAppearanceUuid = createResponse.courtAppearanceUuid!!,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = DEPORTATION_ORDER,
             recordDate = LocalDate.of(2021, 1, 1),
             createdAt = ZonedDateTime.now(),
+          ),
+          ImmigrationDetention(
+            immigrationDetentionUuid = UUID.randomUUID(),
+            courtAppearanceUuid = nomisCourtAppearanceUuid,
+            prisonerId = "B12345B",
+            immigrationDetentionRecordType = IS91,
+            recordDate = LocalDate.now(),
+            createdAt = ZonedDateTime.now(),
+            source = EventSource.NOMIS,
           ),
         ),
       )
