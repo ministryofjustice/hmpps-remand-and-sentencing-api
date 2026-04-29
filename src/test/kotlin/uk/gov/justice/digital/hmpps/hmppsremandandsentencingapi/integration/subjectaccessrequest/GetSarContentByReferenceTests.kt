@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.ExpectResponseData.emptyNotInNomisResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.ExpectResponseData.validNotInNomisResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.PrisonerTestData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
 
 @ActiveProfiles("sar", "test")
@@ -20,24 +22,7 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
     whenever(
       prisonerDetailsService
         .getPrisonerDetails("A6764DZ", null, null),
-    ).thenReturn(
-      Prisoner(
-        prisonerNumber = "A6764DZ",
-        prisonerName = "RALPH DOG",
-        immigrationDetentions = listOf(
-          ImmigrationDetention(
-            homeOfficeReferenceNumber = "124222111",
-            noLongerOfInterestReason = null,
-            noLongerOfInterestComment = null,
-          ),
-          ImmigrationDetention(
-            homeOfficeReferenceNumber = null,
-            noLongerOfInterestReason = "RIGHT_TO_REMAIN",
-            noLongerOfInterestComment = "",
-          ),
-        ),
-      ),
-    )
+    ).thenReturn(PrisonerTestData.prisoner())
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -53,30 +38,7 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .consumeWith(::println)
-      .json(
-        """
-        {
-          "attachments": [],
-          "content": {
-            "prisonerNumber": "A6764DZ",
-            "prisonerName": "RALPH DOG",
-            "immigrationDetentions": [
-              {
-                "homeOfficeReferenceNumber": "124222111",
-                "noLongerOfInterestReason": "No Data Held",
-                "noLongerOfInterestComment": "No Data Held"
-              },
-              {
-                "homeOfficeReferenceNumber": "No Data Held",
-                "noLongerOfInterestReason": "RIGHT_TO_REMAIN",
-                "noLongerOfInterestComment": ""
-              }
-            ]
-          }
-        }
-        """.trimIndent(),
-      )
+      .json(validNotInNomisResponse())
   }
 
   @Test
@@ -100,19 +62,7 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .consumeWith(::println)
-      .json(
-        """
-        {
-          "attachments": [],
-          "content": {
-            "prisonerNumber": "foo-bar",
-            "prisonerName": "No Data Held",
-            "immigrationDetentions": []
-          }
-        }
-        """.trimIndent(),
-      )
+      .json(emptyNotInNomisResponse())
   }
 
   @Test
