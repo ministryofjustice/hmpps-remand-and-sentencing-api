@@ -41,8 +41,7 @@ class ImmigrationDetentionService(
 
   @Transactional
   fun createImmigrationDetention(
-    immigrationDetention: CreateImmigrationDetention,
-    immigrationDetentionUuid: UUID? = null,
+    immigrationDetention: CreateImmigrationDetention
   ): RecordResponse<SaveImmigrationDetentionResponse> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val (createdCourtCase, events) = courtCaseService.createCourtCase(
@@ -55,16 +54,11 @@ class ImmigrationDetentionService(
     )
     eventsToEmit.addAll(events)
 
-    var courtAppearanceEntity: CourtAppearanceEntity? = null
-    courtAppearanceService.createCourtAppearance(
-      createCourtAppearanceFromImmigrationDetention(
-        immigrationDetention,
-        courtCaseUuid = createdCourtCase.caseUniqueIdentifier,
-      ),
-    )?.let { (courtAppearance, events) ->
-      eventsToEmit.addAll(events)
-      courtAppearanceEntity = courtAppearance
-    }
+    val courtAppearanceRecord = courtAppearanceService.createCourtAppearance(
+      courtAppearance = createCourtAppearanceFromImmigrationDetention(immigrationDetention,courtCaseUuid = createdCourtCase.caseUniqueIdentifier),
+      courtCaseEntity = createdCourtCase,
+    )
+    eventsToEmit.addAll(courtAppearanceRecord.eventsToEmit)
 
     val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseEntity(createdCourtCase)
     if (updatedCourtCaseReferences.hasUpdated) {
@@ -80,8 +74,7 @@ class ImmigrationDetentionService(
     val savedImmigrationDetention = immigrationDetentionRepository.save(
       ImmigrationDetentionEntity.fromDPS(
         create = immigrationDetention,
-        immigrationDetentionUuid = immigrationDetentionUuid,
-        courtAppearanceUuid = courtAppearanceEntity?.appearanceUuid,
+        courtAppearanceUuid = courtAppearanceRecord.record.appearanceUuid,
       ),
     )
 
