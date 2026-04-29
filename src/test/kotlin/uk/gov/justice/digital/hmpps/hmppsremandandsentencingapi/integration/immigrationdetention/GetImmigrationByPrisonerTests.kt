@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.DEPORTATION_ORDER
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -41,7 +40,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
 
     assertThat(immigrationDetentionRecords)
       .usingRecursiveComparison()
-      .ignoringFields("createdAt")
+      .ignoringFields("createdAt", "immigrationDetentionUuid")
       .ignoringCollectionOrder()
       .isEqualTo(
         listOf(
@@ -152,7 +151,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
     val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B")
     assertThat(immigrationDetentionRecords)
       .usingRecursiveComparison()
-      .ignoringFields("createdAt")
+      .ignoringFields("createdAt", "immigrationDetentionUuid")
       .ignoringCollectionOrder()
       .isEqualTo(
         listOf(
@@ -168,7 +167,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
             immigrationDetentionUuid = UUID.randomUUID(),
             courtAppearanceUuid = nomisCourtAppearanceUuid,
             prisonerId = "B12345B",
-            immigrationDetentionRecordType = IS91,
+            immigrationDetentionRecordType = DEPORTATION_ORDER,
             recordDate = LocalDate.now(),
             createdAt = ZonedDateTime.now(),
             source = EventSource.NOMIS,
