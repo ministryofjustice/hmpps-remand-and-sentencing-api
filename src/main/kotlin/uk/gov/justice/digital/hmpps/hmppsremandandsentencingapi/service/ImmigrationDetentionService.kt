@@ -41,7 +41,7 @@ class ImmigrationDetentionService(
 
   @Transactional
   fun createImmigrationDetention(
-    immigrationDetention: CreateImmigrationDetention
+    immigrationDetention: CreateImmigrationDetention,
   ): RecordResponse<SaveImmigrationDetentionResponse> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val (createdCourtCase, events) = courtCaseService.createCourtCase(
@@ -55,7 +55,7 @@ class ImmigrationDetentionService(
     eventsToEmit.addAll(events)
 
     val courtAppearanceRecord = courtAppearanceService.createCourtAppearance(
-      courtAppearance = createCourtAppearanceFromImmigrationDetention(immigrationDetention,courtCaseUuid = createdCourtCase.caseUniqueIdentifier),
+      courtAppearance = createCourtAppearanceFromImmigrationDetention(immigrationDetention, courtCaseUuid = createdCourtCase.caseUniqueIdentifier),
       courtCaseEntity = createdCourtCase,
     )
     eventsToEmit.addAll(courtAppearanceRecord.eventsToEmit)
