@@ -62,6 +62,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         nlca.appearance_time as nextCourtAppearanceTime,
         lca.appearance_uuid as latestCourtAppearanceUuid,
         lca.court_case_reference as latestCourtAppearanceCaseReference,
+        lca.criminal_appeal_office_reference as latestCourtAppearanceCriminalAppealOfficeReference,
         lca.court_code as latestCourtAppearanceCourtCode,
         lca.appearance_date as latestCourtAppearanceDate,
         lca.warrant_type as latestCourtAppearanceWarrantType,

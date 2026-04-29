@@ -229,6 +229,7 @@ class ImmigrationDetentionService(
       outcomeUuid = immigrationDetention.appearanceOutcomeUuid,
       courtCode = "IMM",
       courtCaseReference = null,
+      criminalAppealOfficeReference = null,
       warrantType = "IMMIGRATION",
       overallSentenceLength = null,
       nextCourtAppearance = null,
