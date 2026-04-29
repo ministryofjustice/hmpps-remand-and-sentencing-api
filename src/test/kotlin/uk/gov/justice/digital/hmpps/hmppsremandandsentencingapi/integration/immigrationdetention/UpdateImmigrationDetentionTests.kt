@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Immigra
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.util.*
 
 class UpdateImmigrationDetentionTests : IntegrationTestBase() {
 
@@ -27,8 +26,8 @@ class UpdateImmigrationDetentionTests : IntegrationTestBase() {
       appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
     )
 
-    val uuid = UUID.randomUUID()
-    val createResponse = updateImmigrationDetention(immigrationDetention, uuid)
+    val createResponse = createImmigrationDetention(immigrationDetention)
+    val uuid = createResponse.immigrationDetentionUuid
     val actualImmigrationDetention =
       getImmigrationDetentionByUUID(createResponse.immigrationDetentionUuid)
 
@@ -81,7 +80,17 @@ class UpdateImmigrationDetentionTests : IntegrationTestBase() {
 
   @Test
   fun `Update an Immigration Detention record to test other fields`() {
-    val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
+    val createImmigrationDetentionRequest = DpsDataCreator.dpsCreateImmigrationDetention(
+      prisonerId = "B12345B",
+      immigrationDetentionRecordType = DEPORTATION_ORDER,
+      recordDate = LocalDate.of(2021, 1, 1),
+      createdByUsername = "aUser",
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+    )
+    val createResponse = createImmigrationDetention(createImmigrationDetentionRequest)
+
+    val updateImmigrationDetentionRequest = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
       noLongerOfInterestReason = OTHER_REASON,
@@ -92,8 +101,11 @@ class UpdateImmigrationDetentionTests : IntegrationTestBase() {
       appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
     )
 
-    val uuid = UUID.randomUUID()
-    val immigrationDetentionResponse = updateImmigrationDetention(immigrationDetention, uuid)
+    val immigrationDetentionResponse =
+      updateImmigrationDetention(
+        updateImmigrationDetentionRequest,
+        createResponse.immigrationDetentionUuid,
+      )
     val actualImmigrationDetention =
       getImmigrationDetentionByUUID(immigrationDetentionResponse.immigrationDetentionUuid)
 

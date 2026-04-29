@@ -146,8 +146,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
       appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
       courtAppearanceUuid = nomisCourtAppearanceUuid,
     )
-    val uuid = UUID.randomUUID()
-    updateImmigrationDetention(immigrationDetention, uuid)
+    val createResponse = createImmigrationDetention(immigrationDetention)
 
     val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B")
     assertThat(immigrationDetentionRecords)
@@ -157,7 +156,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
       .isEqualTo(
         listOf(
           ImmigrationDetention(
-            immigrationDetentionUuid = uuid,
+            immigrationDetentionUuid = createResponse.immigrationDetentionUuid,
             courtAppearanceUuid = nomisCourtAppearanceUuid,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = DEPORTATION_ORDER,

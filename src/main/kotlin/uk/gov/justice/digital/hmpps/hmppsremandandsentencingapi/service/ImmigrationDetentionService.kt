@@ -105,33 +105,30 @@ class ImmigrationDetentionService(
   ): RecordResponse<SaveImmigrationDetentionResponse> {
     val immigrationDetentionToUpdate =
       immigrationDetentionRepository.findOneByImmigrationDetentionUuid(immigrationDetentionUuid)
+        ?: throw EntityNotFoundException("Immigration Detention not found $immigrationDetentionUuid")
 
-    return if (immigrationDetentionToUpdate == null) {
-      createImmigrationDetention(immigrationDetention, immigrationDetentionUuid)
-    } else {
-      immigrationDetentionHistoryRepository.save(
-        ImmigrationDetentionHistoryEntity.from(
-          immigrationDetentionToUpdate,
-        ),
-      )
-      immigrationDetentionToUpdate.apply {
-        homeOfficeReferenceNumber = immigrationDetention.homeOfficeReferenceNumber
-        recordDate = immigrationDetention.recordDate
-        noLongerOfInterestReason = immigrationDetention.noLongerOfInterestReason
-        noLongerOfInterestComment = immigrationDetention.noLongerOfInterestComment
-        immigrationDetentionRecordType = immigrationDetention.immigrationDetentionRecordType
-        updatedAt = ZonedDateTime.now()
-        updatedBy = immigrationDetention.createdByUsername
-        updatedPrison = immigrationDetention.createdByPrison
-      }
-      val savedImmigrationDetention = immigrationDetentionRepository.save(immigrationDetentionToUpdate)
-      val courtAppearance =
-        courtAppearanceRepository.findByAppearanceUuid(immigrationDetentionToUpdate.courtAppearanceUuid!!)!!
-
-      val (_, eventsToEmit) = updateCourtAppearanceFromImmigrationDetention(immigrationDetention, courtAppearance)
-
-      RecordResponse(SaveImmigrationDetentionResponse.from(savedImmigrationDetention), eventsToEmit)
+    immigrationDetentionHistoryRepository.save(
+      ImmigrationDetentionHistoryEntity.from(
+        immigrationDetentionToUpdate,
+      ),
+    )
+    immigrationDetentionToUpdate.apply {
+      homeOfficeReferenceNumber = immigrationDetention.homeOfficeReferenceNumber
+      recordDate = immigrationDetention.recordDate
+      noLongerOfInterestReason = immigrationDetention.noLongerOfInterestReason
+      noLongerOfInterestComment = immigrationDetention.noLongerOfInterestComment
+      immigrationDetentionRecordType = immigrationDetention.immigrationDetentionRecordType
+      updatedAt = ZonedDateTime.now()
+      updatedBy = immigrationDetention.createdByUsername
+      updatedPrison = immigrationDetention.createdByPrison
     }
+    val savedImmigrationDetention = immigrationDetentionRepository.save(immigrationDetentionToUpdate)
+    val courtAppearance =
+      courtAppearanceRepository.findByAppearanceUuid(immigrationDetentionToUpdate.courtAppearanceUuid!!)!!
+
+    val (_, eventsToEmit) = updateCourtAppearanceFromImmigrationDetention(immigrationDetention, courtAppearance)
+
+    return RecordResponse(SaveImmigrationDetentionResponse.from(savedImmigrationDetention), eventsToEmit)
   }
 
   private fun updateCourtAppearanceFromImmigrationDetention(immigrationDetention: CreateImmigrationDetention, courtAppearance: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
