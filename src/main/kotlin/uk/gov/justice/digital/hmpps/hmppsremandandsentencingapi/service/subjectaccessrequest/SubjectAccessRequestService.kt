@@ -16,15 +16,31 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
   havingValue = "true",
   matchIfMissing = false,
 )
-class SubjectAccessRequestService(@Value("\${hmpps.sar.mode.all-sar-data}") private val allSarData: Boolean) : HmppsPrisonSubjectAccessRequestService {
+class SubjectAccessRequestService(
+  @Value("\${hmpps.sar.mode.all-sar-data}") private val allSarData: Boolean,
+  private val allDataPrisonerDetailsService: PrisonerDetailsService<AllDataPrisoner>,
+  private val prisonerDetailsService: PrisonerDetailsService<Prisoner>,
+) : HmppsPrisonSubjectAccessRequestService {
 
   override fun getPrisonContentFor(
     prn: String,
     fromDate: LocalDate?,
     toDate: LocalDate?,
-  ): HmppsSubjectAccessRequestContent? = if (allSarData) {
-    HmppsSubjectAccessRequestContent(AllDataPrisoner(prisonerNumber = prn), listOf())
-  } else {
-    HmppsSubjectAccessRequestContent(Prisoner(prisonerNumber = prn), listOf())
+  ): HmppsSubjectAccessRequestContent? {
+    if (allSarData) {
+      val allDataPrisonerDetails = allDataPrisonerDetailsService.getPrisonerDetails(prn, fromDate, toDate)
+      return if (allDataPrisonerDetails != null) {
+        HmppsSubjectAccessRequestContent(AllDataPrisoner(prisonerNumber = prn), listOf())
+      } else {
+        null
+      }
+    }
+
+    val prisonerDetails = prisonerDetailsService.getPrisonerDetails(prn, fromDate, toDate)
+    return if (prisonerDetails != null) {
+      HmppsSubjectAccessRequestContent(Prisoner(prisonerNumber = prn), listOf())
+    } else {
+      null
+    }
   }
 }
