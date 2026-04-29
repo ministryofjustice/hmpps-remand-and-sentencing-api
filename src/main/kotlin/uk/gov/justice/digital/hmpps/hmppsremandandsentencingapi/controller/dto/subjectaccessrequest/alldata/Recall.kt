@@ -9,10 +9,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
 import java.time.LocalDate
 
-data class Recalls(
+data class Recall(
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
   val recallType: String?,
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
+  @param:JsonSerialize(using = LocalDateSerializer::class, nullsUsing = LocalDateNullSerializer::class)
   val revocationDate: LocalDate?,
   @param:JsonSerialize(using = LocalDateSerializer::class, nullsUsing = LocalDateNullSerializer::class)
   val returnToCustodyDate: LocalDate?,

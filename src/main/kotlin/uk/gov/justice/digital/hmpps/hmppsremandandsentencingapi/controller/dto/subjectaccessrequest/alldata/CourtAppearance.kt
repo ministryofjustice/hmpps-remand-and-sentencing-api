@@ -7,15 +7,16 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
 import java.time.LocalDate
 
-data class ImmigrationDetention(
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val immigrationDetentionRecordType: String?,
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val homeOfficeReferenceNumber: String?,
+data class CourtAppearance(
   @param:JsonSerialize(using = LocalDateSerializer::class, nullsUsing = LocalDateNullSerializer::class)
-  val recordDate: LocalDate?,
+  val appearanceDate: LocalDate?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val noLongerOfInterestReason: String?,
+  val appearanceOutcomeName: String?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val noLongerOfInterestComment: String?,
+  val warrantType: String?,
+  @param:JsonSerialize(using = LocalDateSerializer::class, nullsUsing = LocalDateNullSerializer::class)
+  val convictionDate: LocalDate?,
+  @param:JsonSerialize(using = LocalDateSerializer::class, nullsUsing = LocalDateNullSerializer::class)
+  val nextAppearanceDate: LocalDate?,
+  val charges: List<Charge>?,
 )

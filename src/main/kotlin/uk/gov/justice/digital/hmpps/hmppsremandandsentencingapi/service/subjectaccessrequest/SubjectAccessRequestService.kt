@@ -30,7 +30,7 @@ class SubjectAccessRequestService(
     if (allSarData) {
       val allDataPrisonerDetails = allDataPrisonerDetailsService.getPrisonerDetails(prn, fromDate, toDate)
       return if (allDataPrisonerDetails != null) {
-        HmppsSubjectAccessRequestContent(AllDataPrisoner(prisonerNumber = prn), listOf())
+        HmppsSubjectAccessRequestContent(allDataPrisonerDetails, listOf())
       } else {
         null
       }
@@ -38,7 +38,7 @@ class SubjectAccessRequestService(
 
     val prisonerDetails = prisonerDetailsService.getPrisonerDetails(prn, fromDate, toDate)
     return if (prisonerDetails != null) {
-      HmppsSubjectAccessRequestContent(Prisoner(prisonerNumber = prn), listOf())
+      HmppsSubjectAccessRequestContent(prisonerDetails, listOf())
     } else {
       null
     }

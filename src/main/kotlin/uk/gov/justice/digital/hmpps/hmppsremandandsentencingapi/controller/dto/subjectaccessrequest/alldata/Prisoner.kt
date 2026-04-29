@@ -2,8 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 import tools.jackson.databind.annotation.JsonSerialize
 import tools.jackson.databind.ser.jdk.StringSerializer
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
 
 data class Prisoner(

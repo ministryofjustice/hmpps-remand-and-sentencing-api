@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
@@ -15,12 +16,75 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
   lateinit var prisonerDetailsService: PrisonerDetailsService<Prisoner>
 
   @Test
-  fun `get empty immigrationDetentions by invalid prisoner id`() {
-    createCourtCase()
+  fun `get immigrationDetentions by valid prisoner id`() {
+    whenever(
+      prisonerDetailsService
+        .getPrisonerDetails("A6764DZ", null, null),
+    ).thenReturn(
+      Prisoner(
+        prisonerNumber = "A6764DZ",
+        prisonerName = "RALPH DOG",
+        immigrationDetentions = listOf(
+          ImmigrationDetention(
+            homeOfficeReferenceNumber = "124222111",
+            noLongerOfInterestReason = null,
+            noLongerOfInterestComment = null,
+          ),
+          ImmigrationDetention(
+            homeOfficeReferenceNumber = null,
+            noLongerOfInterestReason = "RIGHT_TO_REMAIN",
+            noLongerOfInterestComment = "",
+          ),
+        ),
+      ),
+    )
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("prn", "A6764DZ")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .consumeWith(::println)
+      .json(
+        """
+        {
+          "attachments": [],
+          "content": {
+            "prisonerNumber": "A6764DZ",
+            "prisonerName": "RALPH DOG",
+            "immigrationDetentions": [
+              {
+                "homeOfficeReferenceNumber": "124222111",
+                "noLongerOfInterestReason": "No Data Held",
+                "noLongerOfInterestComment": "No Data Held"
+              },
+              {
+                "homeOfficeReferenceNumber": "No Data Held",
+                "noLongerOfInterestReason": "RIGHT_TO_REMAIN",
+                "noLongerOfInterestComment": ""
+              }
+            ]
+          }
+        }
+        """.trimIndent(),
+      )
+  }
+
+  @Test
+  fun `get empty immigrationDetentions by valid prisoner id with no data yet associated`() {
     whenever(
       prisonerDetailsService
         .getPrisonerDetails("foo-bar", null, null),
-    ).thenReturn(Prisoner())
+    ).thenReturn(Prisoner(prisonerNumber = "foo-bar"))
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -53,7 +117,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @Test
   fun `get 209 by attempting use of crn`() {
-    createCourtCase()
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -72,7 +135,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @Test
   fun `get 204 when no data returned from service`() {
-    createCourtCase()
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -91,7 +153,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @Test
   fun `get 400 when query not properly formed`() {
-    createCourtCase()
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -110,7 +171,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @Test
   fun `get 401 when auth token missing or not valid`() {
-    createCourtCase()
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -126,7 +186,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @Test
   fun `get 403 when auth token role not SAR_DATA_ACCESS`() {
-    createCourtCase()
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -145,7 +204,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @Test
   fun `get 500 when internal exception thrown`() {
-    createCourtCase()
     whenever(
       prisonerDetailsService
         .getPrisonerDetails("foo-bar", null, null),
