@@ -60,6 +60,8 @@ class CourtAppearanceEntity(
   @Column
   var courtCaseReference: String?,
   @Column
+  var criminalAppealOfficeReference: String? = null,
+  @Column
   var appearanceDate: LocalDate,
   @Column
   @Enumerated(EnumType.STRING)
@@ -104,6 +106,7 @@ class CourtAppearanceEntity(
     this.courtCase == other.courtCase &&
     this.courtCode == other.courtCode &&
     this.courtCaseReference == other.courtCaseReference &&
+    this.criminalAppealOfficeReference == other.criminalAppealOfficeReference &&
     this.appearanceDate.isEqual(other.appearanceDate) &&
     this.statusId == other.statusId &&
     this.warrantType == other.warrantType &&
@@ -124,6 +127,7 @@ class CourtAppearanceEntity(
       courtCase,
       courtAppearance.courtCode,
       courtCaseReference,
+      criminalAppealOfficeReference,
       courtAppearance.appearanceDate,
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData.appearanceTime, courtAppearance.legacyData.nomisOutcomeCode),
       ZonedDateTime.now(),
@@ -157,6 +161,7 @@ class CourtAppearanceEntity(
       courtCase,
       courtAppearance.courtCode,
       courtAppearance.courtCaseReference,
+      courtAppearance.criminalAppealOfficeReference,
       courtAppearance.appearanceDate,
       getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, appearanceOutcome?.nomisCode ?: courtAppearance.legacyData?.nomisOutcomeCode),
       ZonedDateTime.now(),
@@ -192,6 +197,7 @@ class CourtAppearanceEntity(
     courtCase,
     nextCourtAppearance.courtCode,
     courtCaseReference,
+    criminalAppealOfficeReference,
     nextCourtAppearance.appearanceDate,
     CourtAppearanceEntityStatus.FUTURE,
     ZonedDateTime.now(),
@@ -211,6 +217,7 @@ class CourtAppearanceEntity(
     appearanceOutcome = courtAppearanceEntity.appearanceOutcome
     courtCode = courtAppearanceEntity.courtCode
     courtCaseReference = courtAppearanceEntity.courtCaseReference
+    criminalAppealOfficeReference = courtAppearanceEntity.criminalAppealOfficeReference
     appearanceDate = courtAppearanceEntity.appearanceDate
     statusId = courtAppearanceEntity.statusId
     updatedAt = courtAppearanceEntity.updatedAt
@@ -263,6 +270,7 @@ class CourtAppearanceEntity(
         courtCase = courtCase,
         courtCode = courtAppearance.courtCode,
         courtCaseReference = courtAppearance.courtCaseReference,
+        criminalAppealOfficeReference = courtAppearance.criminalAppealOfficeReference,
         appearanceDate = courtAppearance.appearanceDate,
         statusId = getStatus(courtAppearance.appearanceDate, courtAppearance.legacyData?.appearanceTime, appearanceOutcome?.nomisCode ?: courtAppearance.legacyData?.nomisOutcomeCode),
         createdPrison = courtAppearance.prisonId,

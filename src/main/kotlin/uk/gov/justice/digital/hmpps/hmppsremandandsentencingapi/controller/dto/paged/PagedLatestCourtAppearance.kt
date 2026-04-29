@@ -8,6 +8,7 @@ import java.util.UUID
 data class PagedLatestCourtAppearance(
   val appearanceUuid: UUID,
   val caseReference: String?,
+  val criminalAppealOfficeReference: String?,
   val courtCode: String,
   val warrantDate: LocalDate,
   val warrantType: String,
@@ -21,6 +22,7 @@ data class PagedLatestCourtAppearance(
     fun from(courtCaseRow: CourtCaseRow, latestAppearanceCharges: Map<Int, List<CourtCaseRow>>): PagedLatestCourtAppearance = PagedLatestCourtAppearance(
       courtCaseRow.latestCourtAppearanceUuid,
       courtCaseRow.latestCourtAppearanceCaseReference,
+      courtCaseRow.latestCourtAppearanceCriminalAppealOfficeReference,
       courtCaseRow.latestCourtAppearanceCourtCode,
       courtCaseRow.latestCourtAppearanceDate,
       courtCaseRow.latestCourtAppearanceWarrantType,
