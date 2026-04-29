@@ -17,8 +17,10 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
   @Test
   fun `get empty immigrationDetentions by invalid prisoner id`() {
     createCourtCase()
-    whenever(prisonerDetailsService
-      .getPrisonerDetails("foo-bar", null, null)).thenReturn(Prisoner())
+    whenever(
+      prisonerDetailsService
+        .getPrisonerDetails("foo-bar", null, null),
+    ).thenReturn(Prisoner())
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -144,8 +146,10 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
   @Test
   fun `get 500 when internal exception thrown`() {
     createCourtCase()
-    whenever(prisonerDetailsService
-      .getPrisonerDetails("foo-bar", null, null)).thenThrow(RuntimeException::class.java)
+    whenever(
+      prisonerDetailsService
+        .getPrisonerDetails("foo-bar", null, null),
+    ).thenThrow(RuntimeException::class.java)
     webTestClient
       .get()
       .uri { uriBuilder ->
