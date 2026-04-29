@@ -76,6 +76,7 @@ import java.util.UUID
         ColumnResult(name = "nextCourtAppearanceTime", type = LocalTime::class),
         ColumnResult(name = "latestCourtAppearanceUuid"),
         ColumnResult(name = "latestCourtAppearanceCaseReference"),
+        ColumnResult(name = "latestCourtAppearanceCriminalAppealOfficeReference"),
         ColumnResult(name = "latestCourtAppearanceCourtCode"),
         ColumnResult(name = "latestCourtAppearanceDate", type = LocalDate::class),
         ColumnResult(name = "latestCourtAppearanceWarrantType"),

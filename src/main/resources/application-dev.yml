@@ -38,11 +38,8 @@ ingress:
   url: localhost:8080
 
 features:
-  fix:
-    many:
-      charges:
-        to:
-          sentence: enabled
+  appeals:
+    enabled: false
 
 springdoc:
   api-docs:
