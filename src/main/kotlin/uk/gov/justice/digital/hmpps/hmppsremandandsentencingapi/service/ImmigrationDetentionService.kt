@@ -303,9 +303,9 @@ class ImmigrationDetentionService(
       courtCase.updatedBy = immigrationDetention.createdByUsername
       eventsToEmit.add(
         EventMetadataCreator.courtCaseEventMetadata(
-          courtCase.prisonerId,
-          courtCase.caseUniqueIdentifier,
-          EventType.COURT_CASE_UPDATED,
+          prisonerId = courtCase.prisonerId,
+          courtCaseId = courtCase.caseUniqueIdentifier,
+          eventType = EventType.COURT_CASE_UPDATED,
         ),
       )
     }
