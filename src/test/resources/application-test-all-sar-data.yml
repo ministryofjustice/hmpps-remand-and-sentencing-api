@@ -1,0 +1,4 @@
+hmpps:
+  sar:
+    mode:
+      all-sar-data: true
