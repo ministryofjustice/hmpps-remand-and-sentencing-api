@@ -31,22 +31,21 @@ object ExpectResponseData {
                       "offenceStartDate": "1997-01-01",
                       "offenceEndDate": "No Data Held",
                       "chargeOutcome": "Imprisonment",
-                      "sentences": [
-                        {
-                          "sentenceType": "ORA Breach Top Up Supervision",
-                          "sentenceServeType": "BOTUS",
-                          "periods": [
+                      "activeSentence": {
+                          "sentenceTypeDescription": "ORA Breach Top Up Supervision",
+                          "sentenceTypeClassification": "BOTUS",
+                          "periodLengths": [
                             {
                               "years": 0,
                               "months": 6,
                               "weeks": 0,
-                              "days": 0
+                              "days": 0,
+                              "periodOrder": "months"
                             }
                           ],
-                          "periodOrder": "CONCURRENT",
-                          "isRecallable": "No"
-                        }
-                      ]
+                          "sentenceServeType": "CONCURRENT"
+                      },
+                      "otherSentences" : []
                     }
                   ]
                 }

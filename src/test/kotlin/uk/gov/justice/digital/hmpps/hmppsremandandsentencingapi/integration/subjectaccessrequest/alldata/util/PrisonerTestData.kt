@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.ImmigrationDetention
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Period
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
 import java.time.LocalDate
@@ -33,6 +33,7 @@ object PrisonerTestData {
     createdAt = zoned("2026-02-03T10:02"),
     updatedAt = zoned("2026-02-03T10:02"),
     latestCourtAppearance = courtAppearance(),
+    otherCourtAppearances = listOf(),
   )
 
   fun courtAppearance() = CourtAppearance(
@@ -53,15 +54,15 @@ object PrisonerTestData {
     offenceStartDate = LocalDate.parse("1997-01-01"),
     offenceEndDate = null,
     chargeOutcome = "Imprisonment",
-    sentences = listOf(sentence()),
+    activeSentence = sentence(),
+    otherSentences = listOf(),
   )
 
   fun sentence() = Sentence(
-    sentenceType = "ORA Breach Top Up Supervision",
-    sentenceServeType = "BOTUS",
-    periods = listOf(Period(months = 6)),
-    periodOrder = "CONCURRENT",
-    isRecallable = false,
+    sentenceTypeDescription = "ORA Breach Top Up Supervision",
+    sentenceTypeClassification = "BOTUS",
+    periodLengths = listOf(PeriodLength(months = 6, periodOrder = "months")),
+    sentenceServeType = "CONCURRENT",
   )
 
   fun recalls() = listOf(

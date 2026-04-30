@@ -29,5 +29,6 @@ data class Charge(
   val offenceEndDate: LocalDate?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
   val chargeOutcome: String?,
-  val sentences: List<Sentence>?,
+  val activeSentence: Sentence?,
+  val otherSentences: List<Sentence>?,
 )
