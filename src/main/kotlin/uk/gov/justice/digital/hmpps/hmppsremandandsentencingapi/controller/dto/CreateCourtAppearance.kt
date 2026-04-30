@@ -15,6 +15,7 @@ data class CreateCourtAppearance(
   val outcomeUuid: UUID?,
   val courtCode: String,
   val courtCaseReference: String?,
+  val criminalAppealOfficeReference: String?,
   val appearanceDate: LocalDate,
   val warrantType: String,
   val overallSentenceLength: CreatePeriodLength?,

@@ -1,0 +1,1 @@
+alter table court_appearance add column criminal_appeal_office_reference varchar;

@@ -42,6 +42,7 @@ data class CourtCaseRow(
   var nextCourtAppearanceTime: LocalTime?,
   var latestCourtAppearanceUuid: UUID,
   var latestCourtAppearanceCaseReference: String?,
+  var latestCourtAppearanceCriminalAppealOfficeReference: String?,
   var latestCourtAppearanceCourtCode: String,
   var latestCourtAppearanceDate: LocalDate,
   var latestCourtAppearanceWarrantType: String,
