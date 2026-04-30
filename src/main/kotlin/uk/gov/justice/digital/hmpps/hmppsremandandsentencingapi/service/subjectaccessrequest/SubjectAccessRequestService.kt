@@ -3,11 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subject
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Prisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.AllDataPrisoner
 import uk.gov.justice.hmpps.kotlin.sar.HmppsPrisonSubjectAccessRequestService
 import uk.gov.justice.hmpps.kotlin.sar.HmppsSubjectAccessRequestContent
 import java.time.LocalDate
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Prisoner as Prisoner
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner as AllDataPrisoner
 
 @Service
 @ConditionalOnProperty(
@@ -29,18 +29,10 @@ class SubjectAccessRequestService(
   ): HmppsSubjectAccessRequestContent? {
     if (allSarData) {
       val allDataPrisonerDetails = allDataPrisonerDetailsService.getPrisonerDetails(prn, fromDate, toDate)
-      return if (allDataPrisonerDetails != null) {
-        HmppsSubjectAccessRequestContent(allDataPrisonerDetails, listOf())
-      } else {
-        null
-      }
+      return allDataPrisonerDetails?.let { HmppsSubjectAccessRequestContent(it, listOf()) }
     }
 
     val prisonerDetails = prisonerDetailsService.getPrisonerDetails(prn, fromDate, toDate)
-    return if (prisonerDetails != null) {
-      HmppsSubjectAccessRequestContent(prisonerDetails, listOf())
-    } else {
-      null
-    }
+    return prisonerDetails?.let { HmppsSubjectAccessRequestContent(it, listOf()) }
   }
 }

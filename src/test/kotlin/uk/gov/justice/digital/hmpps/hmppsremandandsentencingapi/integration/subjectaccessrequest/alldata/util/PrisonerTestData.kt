@@ -1,11 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.alldata.util
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.AllDataPrisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Period
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
 import java.time.LocalDate
@@ -19,7 +19,7 @@ object PrisonerTestData {
     courtCases: List<CourtCase> = listOf(courtCase()),
     recalls: List<Recall> = recalls(),
     immigrationDetentions: List<ImmigrationDetention> = immigrationDetentions(),
-  ) = Prisoner(
+  ) = AllDataPrisoner(
     prisonerNumber = prisonerNumber,
     prisonerName = prisonerName,
     courtCases = courtCases,
@@ -32,7 +32,7 @@ object PrisonerTestData {
     caseStatus = "ACTIVE",
     createdAt = zoned("2026-02-03T10:02"),
     updatedAt = zoned("2026-02-03T10:02"),
-    courtAppearance = courtAppearance(),
+    latestCourtAppearance = courtAppearance(),
   )
 
   fun courtAppearance() = CourtAppearance(
@@ -45,13 +45,13 @@ object PrisonerTestData {
   )
 
   fun charge() = Charge(
-    offenseCode = "RF96124",
-    offenseDescription = "A person procuring or persuading, or attempting to procure or persuade a reserve force naval rating or marine, liable",
+    offenceCode = "RF96124",
+    offenceDescription = "A person procuring or persuading, or attempting to procure or persuade a reserve force naval rating or marine, liable",
     terrorRelated = null,
     foreignPowerRelated = null,
     domesticViolenceRelated = false,
-    offenseStartDate = LocalDate.parse("1997-01-01"),
-    offenseEndDate = null,
+    offenceStartDate = LocalDate.parse("1997-01-01"),
+    offenceEndDate = null,
     chargeOutcome = "Imprisonment",
     sentences = listOf(sentence()),
   )

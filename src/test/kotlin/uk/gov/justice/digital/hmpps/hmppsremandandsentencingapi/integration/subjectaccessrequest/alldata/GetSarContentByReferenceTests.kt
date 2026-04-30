@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.AllDataPrisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.alldata.util.ExpectResponseData.emptyFullDataResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.alldata.util.ExpectResponseData.validFullDataResponse
@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjecta
 class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @MockitoBean
-  lateinit var allDataPrisonerDetailsService: PrisonerDetailsService<Prisoner>
+  lateinit var allDataPrisonerDetailsService: PrisonerDetailsService<AllDataPrisoner>
 
   @Test
   fun `get immigrationDetentions by valid prisoner id`() {
@@ -49,7 +49,7 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
     whenever(
       allDataPrisonerDetailsService
         .getPrisonerDetails("foo-bar", null, null),
-    ).thenReturn(Prisoner(prisonerNumber = "foo-bar"))
+    ).thenReturn(AllDataPrisoner(prisonerNumber = "foo-bar"))
     webTestClient
       .get()
       .uri { uriBuilder ->

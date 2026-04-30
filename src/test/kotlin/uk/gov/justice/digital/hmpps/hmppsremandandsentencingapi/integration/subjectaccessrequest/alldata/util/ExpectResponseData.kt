@@ -15,7 +15,7 @@ object ExpectResponseData {
                 "caseStatus": "ACTIVE",
                 "createdAt": "2026-02-03 10:02",
                 "updatedAt": "2026-02-03 10:02",
-                "courtAppearance": {
+                "latestCourtAppearance": {
                   "appearanceDate": "2026-02-03",
                   "appearanceOutcomeName": "Imprisonment",
                   "warrantType": "SENTENCING",
@@ -23,13 +23,13 @@ object ExpectResponseData {
                   "nextAppearanceDate": "No Data Held",
                   "charges": [
                     {
-                      "offenseCode": "RF96124",
-                      "offenseDescription": "A person procuring or persuading, or attempting to procure or persuade a reserve force naval rating or marine, liable",
+                      "offenceCode": "RF96124",
+                      "offenceDescription": "A person procuring or persuading, or attempting to procure or persuade a reserve force naval rating or marine, liable",
                       "terrorRelated": "No",
                       "foreignPowerRelated": "No",
                       "domesticViolenceRelated": "No",
-                      "offenseStartDate": "1997-01-01",
-                      "offenseEndDate": "No Data Held",
+                      "offenceStartDate": "1997-01-01",
+                      "offenceEndDate": "No Data Held",
                       "chargeOutcome": "Imprisonment",
                       "sentences": [
                         {
