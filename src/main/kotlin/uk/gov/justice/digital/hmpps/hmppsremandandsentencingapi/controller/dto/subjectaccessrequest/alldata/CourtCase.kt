@@ -19,5 +19,5 @@ data class CourtCase(
   @param:JsonSerialize(nullsUsing = ZonedDateTimeNullSerializer::class)
   val updatedAt: ZonedDateTime?,
   val latestCourtAppearance: CourtAppearance?,
-  val otherCourtAppearances: List<CourtAppearance>?,
+  val appearances: List<CourtAppearance>?,
 )

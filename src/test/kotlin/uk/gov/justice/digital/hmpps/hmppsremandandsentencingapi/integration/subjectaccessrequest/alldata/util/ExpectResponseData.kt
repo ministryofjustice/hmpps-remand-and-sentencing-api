@@ -15,6 +15,7 @@ object ExpectResponseData {
                 "caseStatus": "ACTIVE",
                 "createdAt": "2026-02-03 10:02",
                 "updatedAt": "2026-02-03 10:02",
+                "appearances": [],
                 "latestCourtAppearance": {
                   "appearanceDate": "2026-02-03",
                   "appearanceOutcomeName": "Imprisonment",
@@ -31,7 +32,7 @@ object ExpectResponseData {
                       "offenceStartDate": "1997-01-01",
                       "offenceEndDate": "No Data Held",
                       "chargeOutcome": "Imprisonment",
-                      "activeSentence": {
+                      "liveSentence": {
                           "sentenceTypeDescription": "ORA Breach Top Up Supervision",
                           "sentenceTypeClassification": "BOTUS",
                           "periodLengths": [
@@ -44,8 +45,7 @@ object ExpectResponseData {
                             }
                           ],
                           "sentenceServeType": "CONCURRENT"
-                      },
-                      "otherSentences" : []
+                      }
                     }
                   ]
                 }
