@@ -1,0 +1,1 @@
+update charge_outcome set disposition_code='FINAL' where outcome_uuid = '019daf9e-0d4d-7afb-b2ac-2af9d378f223'
