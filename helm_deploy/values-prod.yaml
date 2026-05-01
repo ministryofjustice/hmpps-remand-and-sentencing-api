@@ -15,6 +15,7 @@ generic-service:
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PROD
     FEATURES_APPEALS_ENABLED: "false"
+    FEATURES_MARK_IMMIGRATION_CASES_INACTIVE_ENABLED: "false"
 
   resources:
     requests:
