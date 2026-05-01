@@ -32,10 +32,10 @@ class DeleteImmigrationTests : IntegrationTestBase() {
     val id1Response = createImmigrationDetention(id1)
     val id2Response = createImmigrationDetention(id2)
 
-    var messages = getMessages(6)
+    var messages = getMessages(7)
 
-    assertThat(messages).hasSize(6).extracting<String> { it.eventType }
-      .contains("court-case.inserted", "court-case.inserted", "court-appearance.inserted", "charge.inserted", "court-appearance.inserted", "charge.inserted")
+    assertThat(messages).hasSize(7).extracting<String> { it.eventType }
+      .contains("court-case.inserted", "court-case.inserted", "court-appearance.inserted", "charge.inserted", "court-appearance.inserted", "charge.inserted", "court-case.updated")
 
     purgeQueues()
 
