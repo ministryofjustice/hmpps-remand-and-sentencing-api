@@ -33,7 +33,7 @@ object PrisonerTestData {
     createdAt = zoned("2026-02-03T10:02"),
     updatedAt = zoned("2026-02-03T10:02"),
     latestCourtAppearance = courtAppearance(),
-    otherCourtAppearances = listOf(),
+    appearances = listOf(),
   )
 
   fun courtAppearance() = CourtAppearance(
@@ -54,8 +54,7 @@ object PrisonerTestData {
     offenceStartDate = LocalDate.parse("1997-01-01"),
     offenceEndDate = null,
     chargeOutcome = "Imprisonment",
-    activeSentence = sentence(),
-    otherSentences = listOf(),
+    liveSentence = sentence(),
   )
 
   fun sentence() = Sentence(
