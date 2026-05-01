@@ -55,7 +55,7 @@ data class LegacySentence(
         sentenceEntity.statusId == SentenceEntityStatus.ACTIVE,
         sentenceTypeAndCategory.first,
         sentenceTypeAndCategory.second,
-        sentenceEntity.consecutiveTo?.sentenceUuid,
+        sentenceEntity.consecutiveTo?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.sentenceUuid,
         sentenceEntity.countNumber,
         sentenceEntity.fineAmount,
         sentenceStartDate,
