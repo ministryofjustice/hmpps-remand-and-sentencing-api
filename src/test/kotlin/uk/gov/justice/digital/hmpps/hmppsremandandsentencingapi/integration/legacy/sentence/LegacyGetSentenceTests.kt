@@ -66,6 +66,25 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `do not return consecutive to when sentence is deleted`() {
+    val (consecutiveToUuid) = createLegacySentence()
+    val (sentenceUuid) = createLegacySentence(legacySentence = DataCreator.legacyCreateSentence(consecutiveToLifetimeUuid = consecutiveToUuid))
+    deleteLegacySentence(consecutiveToUuid)
+    webTestClient
+      .get()
+      .uri("/legacy/sentence/$sentenceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.consecutiveToLifetimeUuid")
+      .doesNotExist()
+  }
+
+  @Test
   fun `no charge exist for uuid results in not found`() {
     webTestClient
       .get()

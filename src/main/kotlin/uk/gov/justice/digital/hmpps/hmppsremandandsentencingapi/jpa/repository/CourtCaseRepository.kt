@@ -82,6 +82,8 @@ interface CourtCaseRepository :
 
   fun findAllByPrisonerId(prisonerId: String): List<CourtCaseEntity>
 
+  fun findAllByPrisonerIdAndStatusId(prisonerId: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE): List<CourtCaseEntity>
+
   fun findAllByPrisonerIdAndStatusIdNot(prisonerId: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): List<CourtCaseEntity>
 
   fun findAllByPrisonerIdInAndStatusIdNot(prisonerIds: List<String>, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): List<CourtCaseEntity>
