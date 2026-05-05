@@ -2,8 +2,21 @@ hmpps:
   sar:
     enabled: true
     mode:
-      all-sar-data: false
+      all-sar-data:
+        enabled: true
     additionalAccessRole: ROLE_VIEW_PRISONER_DATA # Temporary to run smoke tests
     template:
       path: /templates/template_remand-and-sentencing-api.mustache
       enabled: false
+
+
+# Below Config is temporary override to enable SQL logging for SAR smoke testing, to be removed once the tests are complete
+spring:
+  jpa:
+    show-sql: true
+logging:
+  level:
+    org:
+      springframework:
+        transaction:
+          interceptor: TRACE

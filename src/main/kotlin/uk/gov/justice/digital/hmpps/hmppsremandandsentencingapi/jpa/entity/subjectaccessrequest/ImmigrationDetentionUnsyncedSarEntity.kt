@@ -7,13 +7,15 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import java.time.LocalDate
 
+@ConditionalOnSarEnabled
 @Entity
 @Immutable
 @Table(name = "immigration_detention")
-class ImmigrationDetentionSarEntity(
+class ImmigrationDetentionUnsyncedSarEntity(
 
   @Id
   @Column
