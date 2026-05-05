@@ -3,10 +3,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Prisoner
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.AllDataPrisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.CourtCaseSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.UnsyncedPrisonerDetailsService
 
 @Configuration
 @ConditionalOnProperty(
@@ -18,16 +18,15 @@ import java.time.LocalDate
 class SubjectAccessRequestConfiguration {
 
   @Bean
-  fun allDataPrisonerDetailsService(): PrisonerDetailsService<AllDataPrisoner> = object : PrisonerDetailsService<AllDataPrisoner> {
-    override fun getPrisonerDetails(prisonerNumber: String, from: LocalDate?, to: LocalDate?): AllDataPrisoner? {
-      TODO("Not yet implemented")
-    }
-  }
+  fun prisonerDetailsService(
+    immigrationDetentionSarRepository: ImmigrationDetentionSarRepository,
+    courtCaseSarRepository: CourtCaseSarRepository,
+  ): PrisonerDetailsService {
+    //TODO
+    // if (allSarData) {
+    // return AllPrisonerDetailsService(immigrationDetentionSarRepository)
+    // }
 
-  @Bean
-  fun prisonerDetailsService(): PrisonerDetailsService<Prisoner> = object : PrisonerDetailsService<Prisoner> {
-    override fun getPrisonerDetails(prisonerNumber: String, from: LocalDate?, to: LocalDate?): Prisoner? {
-      TODO("Not yet implemented")
-    }
+    return UnsyncedPrisonerDetailsService(immigrationDetentionSarRepository, courtCaseSarRepository)
   }
 }

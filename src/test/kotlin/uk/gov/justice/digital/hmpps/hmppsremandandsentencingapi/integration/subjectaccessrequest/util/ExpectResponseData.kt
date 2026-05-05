@@ -8,7 +8,6 @@ object ExpectResponseData {
           "attachments": [],
           "content": {
             "prisonerNumber": "A6764DZ",
-            "prisonerName": "RALPH DOG",
             "immigrationDetentions": [
               {
                 "homeOfficeReferenceNumber": "124222111",
@@ -31,7 +30,6 @@ object ExpectResponseData {
           "attachments": [],
           "content": {
             "prisonerNumber": "foo-bar",
-            "prisonerName": "No Data Held",
             "immigrationDetentions": []
           }
         }

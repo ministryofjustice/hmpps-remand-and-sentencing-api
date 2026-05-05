@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.AllDataPrisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.alldata.util.ExpectResponseData.emptyFullDataResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.alldata.util.ExpectResponseData.validFullDataResponse
@@ -17,12 +17,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjecta
 class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @MockitoBean
-  lateinit var allDataPrisonerDetailsService: PrisonerDetailsService<AllDataPrisoner>
+  lateinit var prisonerDetailsService: PrisonerDetailsService
 
   @Test
   fun `get immigrationDetentions by valid prisoner id`() {
     whenever(
-      allDataPrisonerDetailsService
+      prisonerDetailsService
         .getPrisonerDetails("A6764DZ", null, null),
     ).thenReturn(PrisonerTestData.prisoner())
 
@@ -47,9 +47,9 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
   @Test
   fun `get empty court cases, recalls & immigrationDetentions by valid prisoner id with no data yet associated`() {
     whenever(
-      allDataPrisonerDetailsService
+      prisonerDetailsService
         .getPrisonerDetails("foo-bar", null, null),
-    ).thenReturn(AllDataPrisoner(prisonerNumber = "foo-bar"))
+    ).thenReturn(Prisoner(prisonerNumber = "foo-bar"))
     webTestClient
       .get()
       .uri { uriBuilder ->
@@ -158,7 +158,7 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
   @Test
   fun `get 500 when internal exception thrown`() {
     whenever(
-      allDataPrisonerDetailsService
+      prisonerDetailsService
         .getPrisonerDetails("foo-bar", null, null),
     ).thenThrow(RuntimeException::class.java)
     webTestClient

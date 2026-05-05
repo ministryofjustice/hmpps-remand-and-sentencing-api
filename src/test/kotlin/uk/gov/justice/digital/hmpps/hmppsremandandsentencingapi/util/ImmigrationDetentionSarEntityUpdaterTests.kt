@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Immigra
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
 import java.time.LocalDate
 
-class ImmigrationDetentionEntityUpdaterTests {
+class ImmigrationDetentionSarEntityUpdaterTests {
 
   @Test
   fun `existing IS91 to deportation order keeps home office reference number`() {

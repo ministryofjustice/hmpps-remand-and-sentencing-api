@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjecta
 class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @MockitoBean
-  lateinit var prisonerDetailsService: PrisonerDetailsService<Prisoner>
+  lateinit var prisonerDetailsService: PrisonerDetailsService
 
   @Test
   fun `get immigrationDetentions by valid prisoner id`() {
