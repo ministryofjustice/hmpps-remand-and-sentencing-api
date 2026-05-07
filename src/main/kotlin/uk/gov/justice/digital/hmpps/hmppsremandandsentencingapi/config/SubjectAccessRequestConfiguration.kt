@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtRegisterService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.AllPrisonerDetailsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.UnsyncedPrisonerDetailsService
@@ -27,7 +29,15 @@ class SubjectAccessRequestConfiguration {
     courtCaseSarRepository: CourtCaseSarRepository,
     recallSarRepository: RecallSarRepository,
     immigrationDetentionSarRepository: ImmigrationDetentionSarRepository,
-  ): PrisonerDetailsService = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository, immigrationDetentionSarRepository)
+    personService: PersonService,
+    courtRegisterService: CourtRegisterService,
+  ): PrisonerDetailsService = AllPrisonerDetailsService(
+    courtCaseSarRepository,
+    recallSarRepository,
+    immigrationDetentionSarRepository,
+    personService,
+    courtRegisterService,
+  )
 
   @ConditionalOnProperty(
     prefix = "hmpps.sar.mode.all-sar-data",

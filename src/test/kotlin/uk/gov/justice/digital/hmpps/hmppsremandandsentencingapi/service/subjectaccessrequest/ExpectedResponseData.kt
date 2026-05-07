@@ -22,7 +22,7 @@ object ExpectedResponseData {
   )
 
   fun expectedBaseCourtCaseDetails() = CourtCase(
-    courtName = "",
+    courtName = "Wandsworth Crown Court",
     caseStatus = "ACTIVE",
     createdAt = ZonedDateTime.parse("2026-05-07T10:00:00+00:00[Europe/London]"),
     updatedAt = ZonedDateTime.parse("2026-05-07T10:00:00+00:00[Europe/London]"),

@@ -19,6 +19,7 @@ import java.time.Duration
 @Configuration
 class WebClientConfiguration(
   @param:Value("\${prison.api.url}") private val prisonApiUri: String,
+  @param:Value("\${court-register.api.url:}") private val courtRegisterApiUri: String,
   @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
   @param:Value("\${adjustments.api.url}") private val adjustmentsApiUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
@@ -29,6 +30,12 @@ class WebClientConfiguration(
   @Bean
   fun prisonApiWebClient(webclientBuilder: WebClient.Builder): WebClient = webclientBuilder
     .baseUrl(prisonApiUri)
+    .filter(addAuthHeaderFilterFunction())
+    .build()
+
+  @Bean
+  fun courtRegisterApiWebClient(webclientBuilder: WebClient.Builder): WebClient = webclientBuilder
+    .baseUrl(courtRegisterApiUri)
     .filter(addAuthHeaderFilterFunction())
     .build()
 

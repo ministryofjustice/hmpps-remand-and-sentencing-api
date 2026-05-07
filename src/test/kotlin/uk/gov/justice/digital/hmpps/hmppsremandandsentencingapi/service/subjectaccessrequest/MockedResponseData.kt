@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.AppearanceChargeSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.AppearanceChargeSarId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.AppearanceOutcomeSarEntity
@@ -43,6 +45,14 @@ object MockedResponseData {
   fun constructBaseRecallSarEntity(prn: String): RecallSarEntity = recallSarEntity(prn, recallTypeSarEntity())
 
   fun constructImmigrationDetentionSarEntity(prn: String): ImmigrationDetentionSarEntity = immigrationDetentionSarEntity(prn)
+
+  fun constructPrisonerDetails(prn: String) = PersonDetails(prn, "John", "Smith", "WNCHCC", "1-2-3", LocalDate.of(1980, 1, 1), "PNC12345", "ACTIVE")
+
+  fun constructCourtRegister(prn: String): CourtRegister = CourtRegister(
+    "WNCHCC",
+    "Wandsworth Crown Court",
+    "SW18 3HR",
+  )
 
   fun courtAppearanceSarEntity(
     courtCaseSarEntity: CourtCaseSarEntity,

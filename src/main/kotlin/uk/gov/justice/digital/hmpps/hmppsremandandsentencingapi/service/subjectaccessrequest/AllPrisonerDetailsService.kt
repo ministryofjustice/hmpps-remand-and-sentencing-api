@@ -18,12 +18,16 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subje
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtRegisterService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
 import java.time.LocalDate
 
 class AllPrisonerDetailsService(
   private val courtCaseSarRepository: CourtCaseSarRepository,
   private val recallSarRepository: RecallSarRepository,
   private val immigrationDetentionSarRepository: ImmigrationDetentionSarRepository,
+  private val personService: PersonService,
+  private val courtRegisterService: CourtRegisterService,
 ) : PrisonerDetailsService {
   override fun getPrisonerDetails(
     prisonerNumber: String,
@@ -33,8 +37,8 @@ class AllPrisonerDetailsService(
     val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber))
     val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber))
     val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber))
-    // todo lookup prisoner name via api
-    val prisonerName = null
+    val personDetails = personService.getPersonDetailsByPrisonerIdCached(prisonerNumber)
+    val prisonerName = personDetails?.let { "${personDetails.firstName} ${personDetails.lastName}" }
 
     return Prisoner(prisonerNumber, prisonerName, courtCases, recalls, immigrationDetentions)
   }
@@ -97,9 +101,12 @@ class AllPrisonerDetailsService(
     latestCourtAppearance: CourtAppearance,
     courtAppearances: List<CourtAppearance>,
   ): CourtCase {
-    // todo lookup court name via api
+    val courtRegister = courtCaseEntity.latestCourtAppearance?.courtCode?.let {
+      courtRegisterService.getCourtRegisterByCourtCodeCached(it)
+    }
+
     return CourtCase(
-      "",
+      courtRegister?.courtName,
       courtCaseEntity.statusId,
       courtCaseEntity.createdAt,
       courtCaseEntity.updatedAt,
