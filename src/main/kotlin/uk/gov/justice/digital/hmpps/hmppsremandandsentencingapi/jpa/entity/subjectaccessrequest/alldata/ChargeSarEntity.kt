@@ -8,6 +8,8 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.annotations.Subselect
+import org.hibernate.annotations.Synchronize
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
@@ -16,6 +18,8 @@ import java.time.LocalDate
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
+@Subselect("select * from charge")
+@Synchronize("charge")
 @Table(name = "charge")
 class ChargeSarEntity(
   @Id

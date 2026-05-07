@@ -9,12 +9,16 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
+import org.hibernate.annotations.Subselect
+import org.hibernate.annotations.Synchronize
 import org.hibernate.proxy.HibernateProxy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
+@Subselect("select * from sentence")
+@Synchronize("sentence")
 @Table(name = "sentence")
 class SentenceSarEntity(
   @Id

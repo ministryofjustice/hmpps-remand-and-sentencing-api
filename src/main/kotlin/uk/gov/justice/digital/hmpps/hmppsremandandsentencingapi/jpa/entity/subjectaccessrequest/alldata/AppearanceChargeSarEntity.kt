@@ -7,12 +7,16 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.MapsId
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
+import org.hibernate.annotations.Subselect
+import org.hibernate.annotations.Synchronize
 import org.hibernate.proxy.HibernateProxy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
+@Subselect("select * from appearance_charge")
+@Synchronize("appearance_charge")
 @Table(name = "appearance_charge")
 class AppearanceChargeSarEntity(
   @EmbeddedId

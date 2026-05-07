@@ -9,12 +9,16 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
+import org.hibernate.annotations.Subselect
+import org.hibernate.annotations.Synchronize
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 import java.time.LocalDate
 
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
+@Subselect("select * from recall")
+@Synchronize("recall")
 @Table(name = "recall")
 class RecallSarEntity(
   @Id

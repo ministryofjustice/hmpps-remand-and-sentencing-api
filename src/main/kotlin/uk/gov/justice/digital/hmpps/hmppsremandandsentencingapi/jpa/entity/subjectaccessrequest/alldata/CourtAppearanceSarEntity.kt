@@ -10,6 +10,8 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
+import org.hibernate.annotations.Subselect
+import org.hibernate.annotations.Synchronize
 import org.hibernate.proxy.HibernateProxy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 import java.time.LocalDate
@@ -17,6 +19,8 @@ import java.time.LocalDate
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
+@Subselect("select * from court_appearance")
+@Synchronize("court_appearance")
 @Table(name = "court_appearance")
 class CourtAppearanceSarEntity(
   @Id
