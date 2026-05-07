@@ -27,7 +27,7 @@ class CourtCaseSarEntity(
   var appearances: MutableSet<CourtAppearanceSarEntity> = mutableSetOf(),
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "latest_court_appearance_id", referencedColumnName = "id", nullable = true)
-  var latestCourtAppearance: CourtAppearanceSarEntity,
+  var latestCourtAppearance: CourtAppearanceSarEntity?,
   var caseUniqueIdentifier: String,
   var statusId: String,
   var createdAt: ZonedDateTime,

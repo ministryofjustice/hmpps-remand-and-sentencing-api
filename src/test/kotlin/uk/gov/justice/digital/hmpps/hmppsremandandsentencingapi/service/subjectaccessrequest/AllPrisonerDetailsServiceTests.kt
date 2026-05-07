@@ -1,11 +1,29 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest
 
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
 
 class AllPrisonerDetailsServiceTests {
 
+  private val courtCaseSarRepository = mockk<CourtCaseSarRepository>()
+
   @Test
-  fun `should return all Court Case Prisoner Details`(): Unit = throw NotImplementedError()
+  fun `should return all Court Case Prisoner Details`() {
+    every { courtCaseSarRepository.findByPrisonerId("44959") } returns listOf(
+      MockedResponseData.constructBaseCourtCaseSarEntity("44959"),
+    )
+    every { courtCaseSarRepository.existsByPrisonerId("44959") } returns true
+    val service = AllPrisonerDetailsService(courtCaseSarRepository)
+
+    // Act
+    val prisoner = service.getPrisonerDetails("44959") as Prisoner
+
+    assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
+  }
 
   @Test
   fun `should return all Court Case Prisoner Details from date`(): Unit = throw NotImplementedError()

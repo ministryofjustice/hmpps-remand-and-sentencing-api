@@ -36,7 +36,7 @@ class CourtAppearanceSarEntity(
   var appearanceCharges: MutableSet<AppearanceChargeSarEntity> = mutableSetOf(),
   @ManyToOne
   @JoinColumn(name = "court_case_id")
-  var courtCase: CourtCaseSarEntity,
+  var courtCase: CourtCaseSarEntity?,
   @ManyToOne
   @JoinColumn(name = "appearance_outcome_id")
   var appearanceOutcome: AppearanceOutcomeSarEntity?,

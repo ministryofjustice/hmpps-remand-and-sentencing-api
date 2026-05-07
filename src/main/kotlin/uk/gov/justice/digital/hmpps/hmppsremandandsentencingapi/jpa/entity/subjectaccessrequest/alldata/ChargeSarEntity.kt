@@ -10,7 +10,7 @@ import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import java.time.LocalDate
 
 @ConditionalOnSarEnabled
@@ -32,6 +32,8 @@ class ChargeSarEntity(
   var foreignPowerRelated: Boolean?,
   var domesticViolenceRelated: Boolean?,
   @JdbcTypeCode(SqlTypes.JSON)
-  var legacyData: ChargeLegacyData? = null,
+  var legacyData: ChargeLegacyDataSar? = null,
   var statusId: String,
-)
+) {
+  fun getLiveSentence(): SentenceSarEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED.toString() }
+}

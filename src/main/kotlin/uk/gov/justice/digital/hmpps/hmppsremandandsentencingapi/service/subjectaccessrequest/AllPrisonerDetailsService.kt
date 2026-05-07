@@ -1,6 +1,16 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.SarContent
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Charge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.ChargeSarEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.CourtAppearanceSarEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.CourtCaseSarEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.SentenceSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
 import java.time.LocalDate
 
@@ -11,8 +21,110 @@ class AllPrisonerDetailsService(
     prisonerNumber: String,
     from: LocalDate?,
     to: LocalDate?,
-  ): SarContent? {
-    val foo = courtCaseSarRepository.findByPrisonerId(prisonerNumber)
-    return null
+  ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
+    val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber))
+    // todo lookup prisoner name via api
+    val prisonerName = null
+
+    return Prisoner(prisonerNumber, prisonerName, courtCases, null, null)
+  }
+
+  private fun mapCourtCases(courtCaseEntities: List<CourtCaseSarEntity>): List<CourtCase> {
+    val courtCases = mutableListOf<CourtCase>()
+    courtCaseEntities.forEach { courtCaseEntity ->
+
+      val chargeSarEntities = courtCaseEntity.latestCourtAppearance?.appearanceCharges
+        ?.map { appearanceCharge -> appearanceCharge.charge }?.toList()
+
+      val charges: List<Charge> = mapCharges(chargeSarEntities)
+      val courtAppearance: CourtAppearance = mapCourtAppearance(charges, courtCaseEntity.latestCourtAppearance)
+      val courtAppearances: List<CourtAppearance> = courtCaseEntity.appearances.map { courtAppearance -> mapCourtAppearance(charges, courtAppearance) }
+      val courtCase: CourtCase = mapCourtCase(courtCaseEntity, courtAppearance, courtAppearances)
+
+      courtCases.add(courtCase)
+    }
+
+    return courtCases
+  }
+
+  private fun mapCourtCase(
+    courtCaseEntity: CourtCaseSarEntity,
+    latestCourtAppearance: CourtAppearance,
+    courtAppearances: List<CourtAppearance>,
+  ): CourtCase {
+    // todo lookup court name via api
+    return CourtCase(
+      "",
+      courtCaseEntity.statusId,
+      courtCaseEntity.createdAt,
+      courtCaseEntity.updatedAt,
+      latestCourtAppearance,
+      courtAppearances,
+    )
+  }
+
+  private fun mapCourtAppearance(
+    charges: List<Charge>,
+    latestCourtAppearance: CourtAppearanceSarEntity?,
+  ): CourtAppearance {
+    val appearanceDate = latestCourtAppearance?.appearanceDate
+    val appearanceOutcomeName = latestCourtAppearance?.appearanceOutcome?.outcomeName
+    val warrantyType = latestCourtAppearance?.warrantType
+    val convictionDate = latestCourtAppearance?.overallConvictionDate
+    val nextCourtAppearanceDate = latestCourtAppearance?.nextCourtAppearance?.appearanceDate
+
+    return CourtAppearance(
+      appearanceDate,
+      appearanceOutcomeName,
+      warrantyType,
+      convictionDate,
+      nextCourtAppearanceDate,
+      charges,
+    )
+  }
+
+  private fun mapCharges(chargeSarEntities: List<ChargeSarEntity?>?): List<Charge> {
+    val charges = mutableListOf<Charge>()
+    chargeSarEntities?.forEach { chargeSarEntity ->
+      val offenceDesc = chargeSarEntity?.legacyData?.offenceDescription
+      charges.add(
+        Charge(
+          chargeSarEntity?.offenceCode,
+          offenceDesc,
+          chargeSarEntity?.terrorRelated,
+          chargeSarEntity?.foreignPowerRelated,
+          chargeSarEntity?.domesticViolenceRelated,
+          chargeSarEntity?.offenceStartDate,
+          chargeSarEntity?.offenceEndDate,
+          chargeSarEntity?.chargeOutcome?.outcomeName,
+          mapSentence(chargeSarEntity?.getLiveSentence()),
+        ),
+      )
+    }
+    return charges
+  }
+
+  private fun mapSentence(sentenceSar: SentenceSarEntity?): Sentence {
+    if (sentenceSar == null) {
+      return Sentence()
+    }
+
+    val periodLengths = mutableListOf<PeriodLength>()
+    val sentenceTypeDescription = sentenceSar.sentenceType?.description
+    val sentenceTypeClassification = sentenceSar.sentenceType?.classification
+    sentenceSar.periodLengths.forEach { periodLength ->
+      periodLengths.add(
+        PeriodLength(
+          periodLength.years ?: 0,
+          periodLength.months ?: 0,
+          periodLength.weeks ?: 0,
+          periodLength.days ?: 0,
+          periodLength.periodOrder,
+        ),
+      )
+    }
+    val sentenceServeType = sentenceSar.sentenceServeType
+
+    return Sentence(sentenceTypeDescription, sentenceTypeClassification, periodLengths, sentenceServeType)
   }
 }
