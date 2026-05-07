@@ -17,7 +17,7 @@ class UnsyncedPrisonerDetailsService(
     from: LocalDate?,
     to: LocalDate?,
   ): SarContent? = courtCaseUnsyncedSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
-    val immigrationDetentionsEntities = immigrationDetentionUnsyncedSarRepository.findImmigrationDetentionSarEntitiesByPrisonerId(prisonerNumber)
+    val immigrationDetentionsEntities = immigrationDetentionUnsyncedSarRepository.findByPrisonerId(prisonerNumber)
     val immigrationDetentions = mapImmigrationDetentionsNotInNomis(immigrationDetentionsEntities, from, to)
     Prisoner(prisonerNumber, immigrationDetentions)
   }

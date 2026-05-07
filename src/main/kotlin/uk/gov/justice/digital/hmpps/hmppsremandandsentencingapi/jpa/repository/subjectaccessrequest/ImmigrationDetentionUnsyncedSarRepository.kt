@@ -7,5 +7,5 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subje
 @ConditionalOnSarEnabled
 interface ImmigrationDetentionUnsyncedSarRepository : CrudRepository<ImmigrationDetentionUnsyncedSarEntity, String> {
 
-  fun findImmigrationDetentionSarEntitiesByPrisonerId(prisonerId: String): List<ImmigrationDetentionUnsyncedSarEntity>
+  fun findByPrisonerId(prisonerId: String): List<ImmigrationDetentionUnsyncedSarEntity>
 }

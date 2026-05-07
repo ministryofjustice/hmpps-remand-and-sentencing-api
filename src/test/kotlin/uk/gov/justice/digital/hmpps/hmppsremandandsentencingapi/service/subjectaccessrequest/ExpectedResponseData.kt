@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subject
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
@@ -101,5 +102,13 @@ object ExpectedResponseData {
     returnToCustodyDate = LocalDate.of(2026, 7, 2),
     inPrisonOnRevocationDate = false,
     recallSentenceStatus = "ACTIVE",
+  )
+
+  fun expectedBaseImmigrationDetentionDetails() = ImmigrationDetention(
+    immigrationDetentionRecordType = "NO_LONGER_OF_INTEREST",
+    homeOfficeReferenceNumber = "124222111",
+    recordDate = LocalDate.of(2026, 6, 1),
+    noLongerOfInterestReason = "RIGHT_TO_REMAIN",
+    noLongerOfInterestComment = "Civilian awarded indefinite leave",
   )
 }

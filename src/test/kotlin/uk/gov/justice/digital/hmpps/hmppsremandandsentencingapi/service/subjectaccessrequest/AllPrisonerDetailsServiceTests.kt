@@ -6,20 +6,28 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
 
 class AllPrisonerDetailsServiceTests {
 
   private val courtCaseSarRepository = mockk<CourtCaseSarRepository>()
   private val recallSarRepository = mockk<RecallSarRepository>()
+  private val immigrationDetentionSarRepository = mockk<ImmigrationDetentionSarRepository>()
 
   @Test
   fun `should return all Court Case Prisoner Details`() {
     every { courtCaseSarRepository.findByPrisonerId("44959") } returns listOf(
       MockedResponseData.constructBaseCourtCaseSarEntity("44959"),
     )
+    every { recallSarRepository.findByPrisonerId("44959") } returns listOf(
+      MockedResponseData.constructBaseRecallSarEntity("44959"),
+    )
+    every { immigrationDetentionSarRepository.findByPrisonerId("44959") } returns listOf(
+      MockedResponseData.constructImmigrationDetentionSarEntity("44959"),
+    )
     every { courtCaseSarRepository.existsByPrisonerId("44959") } returns true
-    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository)
+    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository, immigrationDetentionSarRepository)
 
     // Act
     val prisoner = service.getPrisonerDetails("44959") as Prisoner
@@ -45,8 +53,11 @@ class AllPrisonerDetailsServiceTests {
     every { recallSarRepository.findByPrisonerId("5534") } returns listOf(
       MockedResponseData.constructBaseRecallSarEntity("5534"),
     )
+    every { immigrationDetentionSarRepository.findByPrisonerId("5534") } returns listOf(
+      MockedResponseData.constructImmigrationDetentionSarEntity("5534"),
+    )
     every { courtCaseSarRepository.existsByPrisonerId("5534") } returns true
-    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository)
+    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository, immigrationDetentionSarRepository)
 
     // Act
     val prisoner = service.getPrisonerDetails("5534") as Prisoner
@@ -65,7 +76,25 @@ class AllPrisonerDetailsServiceTests {
   fun `should return all Recall Prisoner Details from date to date`(): Unit = throw NotImplementedError()
 
   @Test
-  fun `should return all Immigration Detention Prisoner Details`(): Unit = throw NotImplementedError()
+  fun `should return all Immigration Detention Prisoner Details`() {
+    every { courtCaseSarRepository.findByPrisonerId("5534") } returns listOf(
+      MockedResponseData.constructBaseCourtCaseSarEntity("5534"),
+    )
+    every { recallSarRepository.findByPrisonerId("5534") } returns listOf(
+      MockedResponseData.constructBaseRecallSarEntity("5534"),
+    )
+    every { immigrationDetentionSarRepository.findByPrisonerId("5534") } returns listOf(
+      MockedResponseData.constructImmigrationDetentionSarEntity("5534"),
+    )
+    every { courtCaseSarRepository.existsByPrisonerId("5534") } returns true
+    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository, immigrationDetentionSarRepository)
+
+    // Act
+    val prisoner = service.getPrisonerDetails("5534") as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails())
+  }
 
   @Test
   fun `should return all Immigration Detention Prisoner Details from date`(): Unit = throw NotImplementedError()
@@ -83,7 +112,9 @@ class AllPrisonerDetailsServiceTests {
   fun `should find prisoner id in at least one court case`() {
     every { courtCaseSarRepository.findByPrisonerId("44959") } returns listOf()
     every { courtCaseSarRepository.existsByPrisonerId("44959") } returns true
-    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository)
+    every { recallSarRepository.findByPrisonerId("44959") } returns listOf()
+    every { immigrationDetentionSarRepository.findByPrisonerId("44959") } returns listOf()
+    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository, immigrationDetentionSarRepository)
 
     // Act
     val prisoner = service.getPrisonerDetails("44959") as Prisoner
@@ -94,7 +125,7 @@ class AllPrisonerDetailsServiceTests {
   @Test
   fun `should find no prisoner id with a court case`() {
     every { courtCaseSarRepository.existsByPrisonerId("44959") } returns false
-    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository)
+    val service = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository, immigrationDetentionSarRepository)
 
     // Act
     val prisoner = service.getPrisonerDetails("44959") as Prisoner?

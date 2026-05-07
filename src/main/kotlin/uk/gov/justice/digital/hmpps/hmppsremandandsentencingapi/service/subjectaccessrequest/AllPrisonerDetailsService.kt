@@ -12,15 +12,18 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.ChargeSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.CourtAppearanceSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.CourtCaseSarEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.ImmigrationDetentionSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.RecallSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.SentenceSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
 import java.time.LocalDate
 
 class AllPrisonerDetailsService(
   private val courtCaseSarRepository: CourtCaseSarRepository,
   private val recallSarRepository: RecallSarRepository,
+  private val immigrationDetentionSarRepository: ImmigrationDetentionSarRepository,
 ) : PrisonerDetailsService {
   override fun getPrisonerDetails(
     prisonerNumber: String,
@@ -29,24 +32,41 @@ class AllPrisonerDetailsService(
   ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
     val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber))
     val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber))
-    val immigrationDetentions = listOf<ImmigrationDetention>()
+    val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber))
     // todo lookup prisoner name via api
     val prisonerName = null
 
     return Prisoner(prisonerNumber, prisonerName, courtCases, recalls, immigrationDetentions)
   }
 
+  private fun mapImmigrationDetentions(immigrationDetentionSarEntities: List<ImmigrationDetentionSarEntity>): List<ImmigrationDetention> {
+    val immigrationDetentions = mutableListOf<ImmigrationDetention>()
+
+    immigrationDetentionSarEntities.forEach { immigrationDetentionSarEntity ->
+      immigrationDetentions.add(
+        ImmigrationDetention(
+          immigrationDetentionSarEntity.immigrationDetentionRecordType,
+          immigrationDetentionSarEntity.homeOfficeReferenceNumber,
+          immigrationDetentionSarEntity.recordDate,
+          immigrationDetentionSarEntity.noLongerOfInterestReason,
+          immigrationDetentionSarEntity.noLongerOfInterestComment,
+        ),
+      )
+    }
+    return immigrationDetentions
+  }
+
   private fun mapRecalls(recallSarEntities: List<RecallSarEntity>): List<Recall> {
     val recalls = mutableListOf<Recall>()
 
-    recallSarEntities.forEach { recall ->
+    recallSarEntities.forEach { recallSarEntity ->
       recalls.add(
         Recall(
-          recall.recallType.code,
-          recall.revocationDate,
-          recall.returnToCustodyDate,
-          recall.inPrisonOnRevocationDate,
-          recall.status,
+          recallSarEntity.recallType.code,
+          recallSarEntity.revocationDate,
+          recallSarEntity.returnToCustodyDate,
+          recallSarEntity.inPrisonOnRevocationDate,
+          recallSarEntity.status,
         ),
       )
     }
