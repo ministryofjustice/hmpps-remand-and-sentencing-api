@@ -40,6 +40,8 @@ object MockedResponseData {
     return courtCaseSar
   }
 
+  fun constructBaseRecallSarEntity(prn: String): RecallSarEntity = recallSarEntity(prn, recallTypeSarEntity())
+
   fun courtAppearanceSarEntity(
     courtCaseSarEntity: CourtCaseSarEntity,
     appearanceOutcome: AppearanceOutcomeSarEntity,

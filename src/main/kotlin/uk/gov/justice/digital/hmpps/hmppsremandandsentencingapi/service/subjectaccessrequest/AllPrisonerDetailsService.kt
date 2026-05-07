@@ -4,18 +4,23 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.ChargeSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.CourtAppearanceSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.CourtCaseSarEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.RecallSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata.SentenceSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
 import java.time.LocalDate
 
 class AllPrisonerDetailsService(
   private val courtCaseSarRepository: CourtCaseSarRepository,
+  private val recallSarRepository: RecallSarRepository,
 ) : PrisonerDetailsService {
   override fun getPrisonerDetails(
     prisonerNumber: String,
@@ -23,10 +28,30 @@ class AllPrisonerDetailsService(
     to: LocalDate?,
   ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
     val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber))
+    val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber))
+    val immigrationDetentions = listOf<ImmigrationDetention>()
     // todo lookup prisoner name via api
     val prisonerName = null
 
-    return Prisoner(prisonerNumber, prisonerName, courtCases, null, null)
+    return Prisoner(prisonerNumber, prisonerName, courtCases, recalls, immigrationDetentions)
+  }
+
+  private fun mapRecalls(recallSarEntities: List<RecallSarEntity>): List<Recall> {
+    val recalls = mutableListOf<Recall>()
+
+    recallSarEntities.forEach { recall ->
+      recalls.add(
+        Recall(
+          recall.recallType.code,
+          recall.revocationDate,
+          recall.returnToCustodyDate,
+          recall.inPrisonOnRevocationDate,
+          recall.status,
+        ),
+      )
+    }
+
+    return recalls
   }
 
   private fun mapCourtCases(courtCaseEntities: List<CourtCaseSarEntity>): List<CourtCase> {

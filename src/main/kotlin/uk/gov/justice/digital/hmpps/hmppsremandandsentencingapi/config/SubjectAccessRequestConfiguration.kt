@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.CourtCaseUnsyncedSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionUnsyncedSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.CourtCaseSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.AllPrisonerDetailsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.UnsyncedPrisonerDetailsService
@@ -23,7 +24,8 @@ class SubjectAccessRequestConfiguration {
   @Bean
   fun allPrisonerDetailsService(
     courtCaseSarRepository: CourtCaseSarRepository,
-  ): PrisonerDetailsService = AllPrisonerDetailsService(courtCaseSarRepository)
+    recallSarRepository: RecallSarRepository,
+  ): PrisonerDetailsService = AllPrisonerDetailsService(courtCaseSarRepository, recallSarRepository)
 
   @ConditionalOnProperty(
     prefix = "hmpps.sar.mode.all-sar-data",

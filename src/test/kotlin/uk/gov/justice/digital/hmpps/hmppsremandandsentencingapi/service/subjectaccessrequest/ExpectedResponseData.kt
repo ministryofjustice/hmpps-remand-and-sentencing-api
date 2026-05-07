@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -15,7 +16,7 @@ object ExpectedResponseData {
     prisonerNumber = prn,
     prisonerName = null,
     courtCases = listOf(expectedBaseCourtCaseDetails()),
-    recalls = null,
+    recalls = listOf(expectedBaseRecallDetails()),
     immigrationDetentions = null,
   )
 
@@ -92,5 +93,13 @@ object ExpectedResponseData {
         ),
       ),
     ),
+  )
+
+  fun expectedBaseRecallDetails() = Recall(
+    recallType = "LR",
+    revocationDate = LocalDate.of(2026, 6, 1),
+    returnToCustodyDate = LocalDate.of(2026, 7, 2),
+    inPrisonOnRevocationDate = false,
+    recallSentenceStatus = "ACTIVE",
   )
 }
