@@ -34,6 +34,8 @@ class FixManyChargesToSentenceService(
     fixSentences(courtCaseToSentences(courtCase))
   }.toMutableSet()
 
+  fun fixCourtCaseSentences(courtCase: CourtCaseEntity): MutableSet<EventMetadata> = fixSentences(courtCaseToSentences(courtCase))
+
   fun fixCourtCaseSentences(courtCases: List<CourtCaseEntity>): MutableSet<EventMetadata> = courtCases.flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase))
   }.toMutableSet()
