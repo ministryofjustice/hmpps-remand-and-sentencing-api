@@ -17,7 +17,7 @@ object ExpectedResponseData {
     prisonerNumber = prn,
     prisonerName = null,
     courtCases = listOf(expectedBaseCourtCaseDetails()),
-    recalls = listOf(expectedBaseRecallDetails()),
+    recalls = listOf(expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2))),
     immigrationDetentions = null,
   )
 
@@ -131,10 +131,10 @@ object ExpectedResponseData {
     ),
   )
 
-  fun expectedBaseRecallDetails() = Recall(
+  fun expectedBaseRecallDetails(revocationDate: LocalDate, returnToCustodyDate: LocalDate) = Recall(
     recallType = "LR",
-    revocationDate = LocalDate.of(2026, 6, 1),
-    returnToCustodyDate = LocalDate.of(2026, 7, 2),
+    revocationDate = revocationDate, // LocalDate.of(2026, 6, 1)
+    returnToCustodyDate = returnToCustodyDate, // LocalDate.of(2026, 7, 2),
     inPrisonOnRevocationDate = false,
     recallSentenceStatus = "ACTIVE",
   )

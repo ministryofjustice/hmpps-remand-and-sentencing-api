@@ -35,7 +35,7 @@ class AllPrisonerDetailsService(
     to: LocalDate?,
   ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
     val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber), from, to)
-    val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber))
+    val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber), from, to)
     val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber))
     val personDetails = personService.getPersonDetailsByPrisonerIdCached(prisonerNumber)
     val prisonerName = personDetails?.let { "${personDetails.firstName} ${personDetails.lastName}" }
@@ -60,10 +60,10 @@ class AllPrisonerDetailsService(
     return immigrationDetentions
   }
 
-  private fun mapRecalls(recallSarEntities: List<RecallSarEntity>): List<Recall> {
+  private fun mapRecalls(recallSarEntities: List<RecallSarEntity>, from: LocalDate?, to: LocalDate?): List<Recall> {
     val recalls = mutableListOf<Recall>()
 
-    recallSarEntities.forEach { recallSarEntity ->
+    recallSarEntities.filter { p -> filterByDate(from, to, p.revocationDate) }.forEach { recallSarEntity ->
       recalls.add(
         Recall(
           recallSarEntity.recallType.code,

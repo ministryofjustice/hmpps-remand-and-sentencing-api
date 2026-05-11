@@ -155,7 +155,6 @@ class AllPrisonerDetailsServiceTests {
     assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
   }
 
-  @Disabled
   @Test
   fun `should return all Recall Prisoner Details`() {
     arrange("5534")
@@ -163,21 +162,53 @@ class AllPrisonerDetailsServiceTests {
     // Act
     val prisoner = sut.getPrisonerDetails("5534") as Prisoner
 
-    assertThat(prisoner.recalls?.count()).isEqualTo(1)
-    assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails())
+    assertThat(prisoner.recalls?.count()).isEqualTo(2)
+    assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
   }
 
-  @Disabled
   @Test
-  fun `should return all Recall Prisoner Details from date`(): Unit = throw NotImplementedError()
+  fun `should return all Recall Prisoner Details FROM date`() {
+    arrange("5534")
 
-  @Disabled
-  @Test
-  fun `should return all Recall Prisoner Details to date`(): Unit = throw NotImplementedError()
+    // Act
+    val prisoner = sut.getPrisonerDetails("5534", LocalDate.of(2026, 8, 1)) as Prisoner
 
-  @Disabled
+    assertThat(prisoner.recalls?.count()).isEqualTo(1)
+    assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 8, 5), LocalDate.of(2026, 9, 1)))
+  }
+
   @Test
-  fun `should return all Recall Prisoner Details from date to date`(): Unit = throw NotImplementedError()
+  fun `should return all Recall Prisoner Details TO date`() {
+    arrange("5534")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5534", to = LocalDate.of(2026, 8, 1)) as Prisoner
+
+    assertThat(prisoner.recalls?.count()).isEqualTo(1)
+    assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
+  }
+
+  @Test
+  fun `should return all Recall Prisoner Details FROM date TO date`() {
+    arrange("5534")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5534", from = LocalDate.of(2026, 5, 1), to = LocalDate.of(2026, 12, 31)) as Prisoner
+
+    assertThat(prisoner.recalls?.count()).isEqualTo(2)
+    assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
+  }
+
+  @Test
+  fun `should return single Recall Prisoner Details FROM date TO date`() {
+    arrange("5534")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5534", from = LocalDate.of(2026, 5, 1), to = LocalDate.of(2026, 8, 1)) as Prisoner
+
+    assertThat(prisoner.recalls?.count()).isEqualTo(1)
+    assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
+  }
 
   @Test
   fun `should return all Immigration Detention Prisoner Details`() {
@@ -235,7 +266,16 @@ class AllPrisonerDetailsServiceTests {
       MockedResponseData.constructBaseCourtCaseSarEntity(prn),
     )
     every { recallSarRepository.findByPrisonerId(prn) } returns listOf(
-      MockedResponseData.constructBaseRecallSarEntity(prn),
+      MockedResponseData.constructBaseRecallSarEntity(
+        prn,
+        LocalDate.of(2026, 6, 1),
+        LocalDate.of(2026, 7, 2),
+      ),
+      MockedResponseData.constructBaseRecallSarEntity(
+        prn,
+        LocalDate.of(2026, 8, 5),
+        LocalDate.of(2026, 9, 1),
+      ),
     )
     every { immigrationDetentionSarRepository.findByPrisonerId(prn) } returns listOf(
       MockedResponseData.constructImmigrationDetentionSarEntity(prn),

@@ -36,13 +36,18 @@ object MockedResponseData {
     val sentenceSar = sentencesSarEntity(chargeSar, sentenceTypeSarEntity())
     setPeriodLengthEntity(sentenceSar)
 
-    val recallSar = recallSarEntity(prn, recallTypeSarEntity())
+    val recallSar = recallSarEntity(
+      prn,
+      recallTypeSarEntity(),
+      LocalDate.of(2026, 6, 1),
+      LocalDate.of(2026, 7, 2),
+    )
     recallSentencesSarEntity(sentenceSar, recallSar)
 
     return courtCaseSar
   }
 
-  fun constructBaseRecallSarEntity(prn: String): RecallSarEntity = recallSarEntity(prn, recallTypeSarEntity())
+  fun constructBaseRecallSarEntity(prn: String, from: LocalDate?, to: LocalDate?): RecallSarEntity = recallSarEntity(prn, recallTypeSarEntity(), from, to)
 
   fun constructImmigrationDetentionSarEntity(prn: String): ImmigrationDetentionSarEntity = immigrationDetentionSarEntity(prn)
 
@@ -192,11 +197,13 @@ object MockedResponseData {
   fun recallSarEntity(
     prn: String,
     recallTypeSarEntity: RecallTypeSarEntity,
+    from: LocalDate?,
+    to: LocalDate?,
   ) = RecallSarEntity(
     234,
     prn,
-    LocalDate.of(2026, 6, 1),
-    LocalDate.of(2026, 7, 2),
+    from,
+    to,
     false,
     "ACTIVE",
     mutableSetOf(),
