@@ -47,9 +47,9 @@ object MockedResponseData {
     return courtCaseSar
   }
 
-  fun constructBaseRecallSarEntity(prn: String, from: LocalDate?, to: LocalDate?): RecallSarEntity = recallSarEntity(prn, recallTypeSarEntity(), from, to)
+  fun constructBaseRecallSarEntity(prn: String, revocationDate: LocalDate?, returnToCustodyDate: LocalDate?): RecallSarEntity = recallSarEntity(prn, recallTypeSarEntity(), revocationDate, returnToCustodyDate)
 
-  fun constructImmigrationDetentionSarEntity(prn: String): ImmigrationDetentionSarEntity = immigrationDetentionSarEntity(prn)
+  fun constructImmigrationDetentionSarEntity(prn: String, recordDate: LocalDate): ImmigrationDetentionSarEntity = immigrationDetentionSarEntity(prn, recordDate)
 
   fun constructPrisonerDetails(prn: String) = PersonDetails(prn, "John", "Smith", "WNCHCC", "1-2-3", LocalDate.of(1980, 1, 1), "PNC12345", "ACTIVE")
 
@@ -197,13 +197,13 @@ object MockedResponseData {
   fun recallSarEntity(
     prn: String,
     recallTypeSarEntity: RecallTypeSarEntity,
-    from: LocalDate?,
-    to: LocalDate?,
+    revocationDate: LocalDate?,
+    returnToCustodyDate: LocalDate?,
   ) = RecallSarEntity(
     234,
     prn,
-    from,
-    to,
+    revocationDate,
+    returnToCustodyDate,
     false,
     "ACTIVE",
     mutableSetOf(),
@@ -212,12 +212,12 @@ object MockedResponseData {
 
   fun recallTypeSarEntity() = RecallTypeSarEntity(3, "LR")
 
-  fun immigrationDetentionSarEntity(prn: String) = ImmigrationDetentionSarEntity(
+  fun immigrationDetentionSarEntity(prn: String, recordDate: LocalDate) = ImmigrationDetentionSarEntity(
     34,
     "NO_LONGER_OF_INTEREST",
     prn,
     "124222111",
-    LocalDate.of(2026, 6, 1),
+    recordDate,
     "RIGHT_TO_REMAIN",
     "Civilian awarded indefinite leave",
   )

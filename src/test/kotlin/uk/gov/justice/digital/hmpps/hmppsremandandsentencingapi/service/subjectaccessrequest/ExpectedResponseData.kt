@@ -139,10 +139,10 @@ object ExpectedResponseData {
     recallSentenceStatus = "ACTIVE",
   )
 
-  fun expectedBaseImmigrationDetentionDetails() = ImmigrationDetention(
+  fun expectedBaseImmigrationDetentionDetails(recordDate: LocalDate) = ImmigrationDetention(
     immigrationDetentionRecordType = "NO_LONGER_OF_INTEREST",
     homeOfficeReferenceNumber = "124222111",
-    recordDate = LocalDate.of(2026, 6, 1),
+    recordDate = recordDate,
     noLongerOfInterestReason = "RIGHT_TO_REMAIN",
     noLongerOfInterestComment = "Civilian awarded indefinite leave",
   )

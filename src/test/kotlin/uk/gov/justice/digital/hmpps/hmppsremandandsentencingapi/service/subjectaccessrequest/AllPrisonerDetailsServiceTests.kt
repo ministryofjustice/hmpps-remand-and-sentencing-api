@@ -5,7 +5,6 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
@@ -217,25 +216,88 @@ class AllPrisonerDetailsServiceTests {
     // Act
     val prisoner = sut.getPrisonerDetails("5574") as Prisoner
 
-    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
-    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails())
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(2)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
   }
 
-  @Disabled
   @Test
-  fun `should return all Immigration Detention Prisoner Details from date`(): Unit = throw NotImplementedError()
+  fun `should return all Immigration Detention Prisoner Details FROM date`() {
+    arrange("5574")
 
-  @Disabled
-  @Test
-  fun `should return all Immigration Detention Prisoner Details to date`(): Unit = throw NotImplementedError()
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 1, 1)) as Prisoner
 
-  @Disabled
-  @Test
-  fun `should return all Immigration Detention Prisoner Details from date to date`(): Unit = throw NotImplementedError()
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(2)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
+  }
 
-  @Disabled
   @Test
-  fun `should return empty when Immigration Detention, Recall, Court Case Prisoner Details not found`(): Unit = throw NotImplementedError()
+  fun `should return single Immigration Detention Prisoner Details FROM date`() {
+    arrange("5574")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 5)) as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 8, 5)))
+  }
+
+  @Test
+  fun `should return all Immigration Detention Prisoner Details TO date`() {
+    arrange("5574")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574", to = LocalDate.of(2026, 6, 5)) as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
+  }
+
+  @Test
+  fun `should return single Immigration Detention Prisoner Details FROM date TO date`() {
+    arrange("5574")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 5, 31), to = LocalDate.of(2026, 6, 5)) as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
+  }
+
+  @Test
+  fun `should return no Immigration Detention Prisoner Details FROM date TO date`() {
+    arrange("5574")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 2), to = LocalDate.of(2026, 6, 5)) as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(0)
+  }
+
+  @Test
+  fun `should return all Immigration Detention Prisoner Details FROM date TO date`() {
+    arrange("5574")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 1), to = LocalDate.of(2026, 8, 5)) as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(2)
+    assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
+  }
+
+  @Test
+  fun `should return empty when Immigration Detention, Recall, Court Case Prisoner Details not found`() {
+    arrangeEmpty("5574")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("5574") as Prisoner
+
+    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(0)
+    assertThat(prisoner.recalls?.count()).isEqualTo(0)
+    assertThat(prisoner.courtCases?.count()).isEqualTo(0)
+    assertThat(prisoner.prisonerName).isEqualTo("John Smith")
+    assertThat(prisoner.prisonerNumber).isEqualTo("5574")
+  }
 
   @Test
   fun `should find prisoner id in at least one court case`() {
@@ -278,11 +340,28 @@ class AllPrisonerDetailsServiceTests {
       ),
     )
     every { immigrationDetentionSarRepository.findByPrisonerId(prn) } returns listOf(
-      MockedResponseData.constructImmigrationDetentionSarEntity(prn),
+      MockedResponseData.constructImmigrationDetentionSarEntity(
+        prn,
+        LocalDate.of(2026, 6, 1),
+      ),
+      MockedResponseData.constructImmigrationDetentionSarEntity(
+        prn,
+        LocalDate.of(2026, 8, 5),
+      ),
     )
     every { courtRegisterService.getCourtRegisterByCourtCodeCached(any()) } returns MockedResponseData.constructCourtRegister(
       prn,
     )
+    every { personService.getPersonDetailsByPrisonerIdCached(prn) } returns MockedResponseData.constructPrisonerDetails(
+      prn,
+    )
+    every { courtCaseSarRepository.existsByPrisonerId(prn) } returns true
+  }
+
+  private fun arrangeEmpty(prn: String) {
+    every { courtCaseSarRepository.findByPrisonerId(prn) } returns listOf()
+    every { recallSarRepository.findByPrisonerId(prn) } returns listOf()
+    every { immigrationDetentionSarRepository.findByPrisonerId(prn) } returns listOf()
     every { personService.getPersonDetailsByPrisonerIdCached(prn) } returns MockedResponseData.constructPrisonerDetails(
       prn,
     )

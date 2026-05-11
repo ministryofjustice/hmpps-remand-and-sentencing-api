@@ -36,17 +36,17 @@ class AllPrisonerDetailsService(
   ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
     val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber), from, to)
     val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber), from, to)
-    val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber))
+    val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber), from, to)
     val personDetails = personService.getPersonDetailsByPrisonerIdCached(prisonerNumber)
     val prisonerName = personDetails?.let { "${personDetails.firstName} ${personDetails.lastName}" }
 
     return Prisoner(prisonerNumber, prisonerName, courtCases, recalls, immigrationDetentions)
   }
 
-  private fun mapImmigrationDetentions(immigrationDetentionSarEntities: List<ImmigrationDetentionSarEntity>): List<ImmigrationDetention> {
+  private fun mapImmigrationDetentions(immigrationDetentionSarEntities: List<ImmigrationDetentionSarEntity>, from: LocalDate?, to: LocalDate?): List<ImmigrationDetention> {
     val immigrationDetentions = mutableListOf<ImmigrationDetention>()
 
-    immigrationDetentionSarEntities.forEach { immigrationDetentionSarEntity ->
+    immigrationDetentionSarEntities.filter { p -> filterByDate(from, to, p.recordDate) }.forEach { immigrationDetentionSarEntity ->
       immigrationDetentions.add(
         ImmigrationDetention(
           immigrationDetentionSarEntity.immigrationDetentionRecordType,
