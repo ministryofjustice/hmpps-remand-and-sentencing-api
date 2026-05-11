@@ -27,7 +27,9 @@ import java.time.ZonedDateTime
    ,status_id
    ,created_at
    ,updated_at
-  from court_case""",
+  from court_case
+  where status_id not in ('DELETED', 'DUPLICATE')
+  """,
 )
 @Synchronize("court_case")
 class CourtCaseSarEntity(

@@ -28,7 +28,9 @@ import java.time.LocalDate
   ,court_case_id
   ,appearance_outcome_id
   ,next_court_appearance_id
-  from court_appearance""",
+  from court_appearance
+  where status_id not in ('DELETED', 'DUPLICATE', 'FUTURE')
+  """,
 )
 @Synchronize("court_appearance")
 class CourtAppearanceSarEntity(

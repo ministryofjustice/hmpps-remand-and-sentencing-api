@@ -20,7 +20,9 @@ import java.time.LocalDate
   ,home_office_reference_number 
   ,no_longer_of_interest_reason 
   ,no_longer_of_interest_comment 
-  from immigration_detention""",
+  from immigration_detention
+  where status_id != 'DELETED'
+  """,
 )
 @Synchronize("immigration_detention")
 class ImmigrationDetentionUnsyncedSarEntity(

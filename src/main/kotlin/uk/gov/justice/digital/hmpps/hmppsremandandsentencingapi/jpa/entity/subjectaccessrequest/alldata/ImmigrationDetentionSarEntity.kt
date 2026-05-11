@@ -21,7 +21,9 @@ import java.time.LocalDate
    ,record_date
    ,no_longer_of_interest_reason
    ,no_longer_of_interest_comment
-  from immigration_detention""",
+  from immigration_detention
+  where status_id != 'DELETED'
+  """,
 )
 @Synchronize("immigration_detention")
 class ImmigrationDetentionSarEntity(

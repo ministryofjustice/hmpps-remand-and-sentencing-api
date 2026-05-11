@@ -11,7 +11,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Entity
 @Immutable
-@Subselect("select id, prisoner_id from court_case")
+@Subselect(
+  """
+  select id, prisoner_id 
+  from court_case 
+  where status_id not in ('DELETED', 'DUPLICATE')""",
+)
 @Synchronize("court_case")
 class CourtCaseUnsyncedSarEntity(
   @Id

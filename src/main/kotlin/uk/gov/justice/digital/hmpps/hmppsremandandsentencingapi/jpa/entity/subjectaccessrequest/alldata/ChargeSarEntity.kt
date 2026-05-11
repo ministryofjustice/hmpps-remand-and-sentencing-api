@@ -29,7 +29,8 @@ import java.time.LocalDate
   ,domestic_violence_related
   ,legacy_data
   ,status_id
-  from charge""",
+  from charge
+  where status_id not in ('DELETED', 'DUPLICATE', 'FUTURE')""",
 )
 @Synchronize("charge")
 class ChargeSarEntity(

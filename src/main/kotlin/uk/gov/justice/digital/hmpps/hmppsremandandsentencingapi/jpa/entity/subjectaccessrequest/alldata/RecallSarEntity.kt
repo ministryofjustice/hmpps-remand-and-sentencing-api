@@ -25,7 +25,9 @@ import java.time.LocalDate
    ,in_prison_on_revocation_date
    ,status
    ,recall_type_id
-  from recall""",
+  from recall
+  where status not in ('DELETED', 'DUPLICATE', 'FUTURE')
+  """,
 )
 @Synchronize("recall")
 class RecallSarEntity(
