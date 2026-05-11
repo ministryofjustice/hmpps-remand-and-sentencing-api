@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
@@ -16,11 +17,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ImmigrationDetentionEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus.INACTIVE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus.ACTIVE
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.ZonedDateTime
@@ -34,9 +41,12 @@ class ImmigrationDetentionService(
   private val courtAppearanceService: CourtAppearanceService,
   private val chargeOutcomeService: ChargeOutcomeService,
   private val appearanceOutcomeService: AppearanceOutcomeService,
+  private val courtCaseRepository: CourtCaseRepository,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val courtCaseReferenceService: CourtCaseReferenceService,
   private val serviceUserService: ServiceUserService,
+  private val featuresConfig: FeaturesConfig,
 ) {
 
   @Transactional
@@ -60,6 +70,9 @@ class ImmigrationDetentionService(
           legacyData = null,
         ),
       )
+      if (immigrationDetention.immigrationDetentionRecordType == NO_LONGER_OF_INTEREST) {
+        createdCourtCase.statusId = INACTIVE
+      }
       eventsToEmit.addAll(events)
 
       courtAppearanceService.createCourtAppearance(
@@ -91,6 +104,10 @@ class ImmigrationDetentionService(
         courtAppearanceEntity?.appearanceUuid,
       ),
     )
+    if (featuresConfig.markImmigrationCasesInactive.enabled) {
+      val courtCaseUpdatedEvents = deactivateImmigrationCourtCases(immigrationDetention)
+      eventsToEmit.addAll(courtCaseUpdatedEvents)
+    }
 
     return RecordResponse(
       SaveImmigrationDetentionResponse.from(savedImmigrationDetention),
@@ -107,6 +124,7 @@ class ImmigrationDetentionService(
       immigrationDetentionRepository.findOneByImmigrationDetentionUuid(immigrationDetentionUuid)
 
     return if (immigrationDetentionToUpdate == null) {
+      // This create-via-update flow is only applicable when we update an existing NOMIS immigration appearance via DPS
       createImmigrationDetention(immigrationDetention, immigrationDetentionUuid)
     } else {
       immigrationDetentionHistoryRepository.save(
@@ -277,5 +295,29 @@ class ImmigrationDetentionService(
 
   fun findByAppearanceUuidAndMap(appearanceUuid: UUID): ImmigrationDetention? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let {
     ImmigrationDetention.fromCourtAppearance(it, it.courtCase.prisonerId)
+  }
+
+  private fun deactivateImmigrationCourtCases(immigrationDetention: CreateImmigrationDetention): Set<EventMetadata> {
+    if (immigrationDetention.immigrationDetentionRecordType != NO_LONGER_OF_INTEREST) return emptySet()
+
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    val activeImmigrationCases = courtCaseRepository.findAllByPrisonerIdAndStatusId(immigrationDetention.prisonerId)
+      .filter { courtCase ->
+        courtCase.appearances.all { it.statusId == CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE }
+      }
+    activeImmigrationCases.forEach { courtCase ->
+      courtCase.statusId = INACTIVE
+      courtCase.updatedAt = ZonedDateTime.now()
+      courtCase.updatedBy = immigrationDetention.createdByUsername
+      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.DPS))
+      eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(
+          prisonerId = courtCase.prisonerId,
+          courtCaseId = courtCase.caseUniqueIdentifier,
+          eventType = EventType.COURT_CASE_UPDATED,
+        ),
+      )
+    }
+    return eventsToEmit
   }
 }

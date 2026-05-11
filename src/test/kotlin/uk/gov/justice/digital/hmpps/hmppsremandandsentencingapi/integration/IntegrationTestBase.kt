@@ -571,6 +571,17 @@ abstract class IntegrationTestBase {
     .expectBody(ImmigrationDetention::class.java)
     .returnResult().responseBody!!
 
+  protected fun deleteLegacySentence(uuid: UUID) = webTestClient
+    .delete()
+    .uri("/legacy/sentence/$uuid")
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isNoContent
+
   fun purgeQueues() {
     val totalAttempts = 5
     var currentAttempt = 0
