@@ -5,7 +5,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.Subselect
@@ -18,9 +17,21 @@ import java.time.LocalDate
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from charge")
+@Subselect(
+  """
+  select id
+  ,charge_outcome_id
+  ,offence_code
+  ,offence_start_date
+  ,offence_end_date
+  ,terror_related
+  ,foreign_power_related
+  ,domestic_violence_related
+  ,legacy_data
+  ,status_id
+  from charge""",
+)
 @Synchronize("charge")
-@Table(name = "charge")
 class ChargeSarEntity(
   @Id
   var id: Int,

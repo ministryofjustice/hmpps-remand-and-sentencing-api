@@ -5,7 +5,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.MapsId
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -15,9 +14,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from appearance_charge")
+@Subselect(
+  """
+  select appearance_id
+  ,charge_id
+  from appearance_charge""",
+)
 @Synchronize("appearance_charge")
-@Table(name = "appearance_charge")
 class AppearanceChargeSarEntity(
   @EmbeddedId
   var id: AppearanceChargeSarId,

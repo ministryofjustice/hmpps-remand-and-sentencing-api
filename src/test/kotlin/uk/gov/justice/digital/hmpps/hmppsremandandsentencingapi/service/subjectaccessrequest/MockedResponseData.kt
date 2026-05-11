@@ -59,22 +59,31 @@ object MockedResponseData {
     appearanceOutcome: AppearanceOutcomeSarEntity,
     nextCourtAppearance: NextCourtAppearanceSarEntity,
   ): CourtAppearanceSarEntity {
-    val courtAppearance = CourtAppearanceSarEntity(
-      5,
-      LocalDate.of(2026, 2, 3),
-      "SENTENCING",
-      "WNCHCC",
-      LocalDate.of(2026, 5, 5),
-      mutableSetOf(courtCaseSarEntity),
-      mutableSetOf(),
-      courtCaseSarEntity,
-      appearanceOutcome,
-      nextCourtAppearance,
-    )
-    courtCaseSarEntity.appearances = mutableSetOf(courtAppearance)
-    courtCaseSarEntity.latestCourtAppearance = courtAppearance
-    return courtAppearance
+    val firstCourtAppearance = courtAppearance(5, courtCaseSarEntity, appearanceOutcome, nextCourtAppearance, LocalDate.of(2026, 2, 3))
+    val secondCourtAppearance = courtAppearance(12, courtCaseSarEntity, appearanceOutcome, null, LocalDate.of(2026, 3, 1))
+    courtCaseSarEntity.appearances = mutableSetOf(firstCourtAppearance, secondCourtAppearance)
+    courtCaseSarEntity.latestCourtAppearance = secondCourtAppearance
+    return secondCourtAppearance
   }
+
+  private fun courtAppearance(
+    id: Int,
+    courtCaseSarEntity: CourtCaseSarEntity,
+    appearanceOutcome: AppearanceOutcomeSarEntity,
+    nextCourtAppearance: NextCourtAppearanceSarEntity?,
+    appearanceDate: LocalDate,
+  ): CourtAppearanceSarEntity = CourtAppearanceSarEntity(
+    id,
+    appearanceDate,
+    "SENTENCING",
+    "WNCHCC",
+    appearanceDate.plusDays(5),
+    mutableSetOf(courtCaseSarEntity),
+    mutableSetOf(),
+    courtCaseSarEntity,
+    appearanceOutcome,
+    nextCourtAppearance,
+  )
 
   fun courtCaseSarEntity(prn: String) = CourtCaseSarEntity(
     34,

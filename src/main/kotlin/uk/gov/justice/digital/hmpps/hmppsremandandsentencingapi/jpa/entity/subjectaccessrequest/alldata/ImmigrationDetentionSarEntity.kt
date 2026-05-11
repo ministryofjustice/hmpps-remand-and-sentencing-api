@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subj
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -13,9 +12,18 @@ import java.time.LocalDate
 @ConditionalOnSarEnabled
 @Entity
 @Immutable
-@Subselect("select * from immigration_detention")
+@Subselect(
+  """
+  select id
+   ,immigration_detention_record_type
+   ,prisoner_id
+   ,home_office_reference_number
+   ,record_date
+   ,no_longer_of_interest_reason
+   ,no_longer_of_interest_comment
+  from immigration_detention""",
+)
 @Synchronize("immigration_detention")
-@Table(name = "immigration_detention")
 class ImmigrationDetentionSarEntity(
 
   @Id

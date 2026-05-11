@@ -5,7 +5,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -15,9 +14,18 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from period_length")
+@Subselect(
+  """
+  select id
+   ,sentence_id
+   ,years
+   ,months
+   ,weeks
+   ,days
+   ,period_order
+  from period_length""",
+)
 @Synchronize("period_length")
-@Table(name = "period_length")
 class PeriodLengthSarEntity(
   @Id
   @Column

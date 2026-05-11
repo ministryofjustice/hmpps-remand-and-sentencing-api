@@ -7,7 +7,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -17,9 +16,18 @@ import java.time.LocalDate
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from recall")
+@Subselect(
+  """
+  select id
+   ,prisoner_id
+   ,revocation_date
+   ,return_to_custody_date
+   ,in_prison_on_revocation_date
+   ,status
+   ,recall_type_id
+  from recall""",
+)
 @Synchronize("recall")
-@Table(name = "recall")
 class RecallSarEntity(
   @Id
   @Column

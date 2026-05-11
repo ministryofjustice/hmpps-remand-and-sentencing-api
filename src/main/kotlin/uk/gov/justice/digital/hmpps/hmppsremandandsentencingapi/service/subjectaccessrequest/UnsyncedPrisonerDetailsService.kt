@@ -41,10 +41,4 @@ class UnsyncedPrisonerDetailsService(
     }
     return immigrationDetentions
   }
-
-  private fun filterByDate(from: LocalDate?, to: LocalDate?, toCompare: LocalDate?): Boolean {
-    if (from == null && to == null) return true
-    if (toCompare == null) return false
-    return (from == null || toCompare >= from) && (to == null || toCompare <= to)
-  }
 }

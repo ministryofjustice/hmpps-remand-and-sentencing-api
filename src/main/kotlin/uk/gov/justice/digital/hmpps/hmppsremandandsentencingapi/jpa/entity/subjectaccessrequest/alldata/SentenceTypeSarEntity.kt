@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subj
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -12,15 +11,24 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from sentence_type")
+@Subselect(
+  """
+  select id
+   ,classification
+   ,description
+   ,is_recallable
+   from sentence_type
+  """,
+)
 @Synchronize("sentence_type")
-@Table(name = "sentence_type")
 class SentenceTypeSarEntity(
   @Id
   @Column
   var id: Int,
+  @Column
   var classification: String,
+  @Column
   var description: String,
-  @Column(name = "is_recallable")
+  @Column
   var isRecallable: Boolean,
 )

@@ -7,7 +7,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -17,9 +16,16 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from sentence")
+@Subselect(
+  """
+  select id
+   ,charge_id
+   ,sentence_type_id
+   ,sentence_serve_type
+   ,status_id
+  from sentence""",
+)
 @Synchronize("sentence")
-@Table(name = "sentence")
 class SentenceSarEntity(
   @Id
   @Column

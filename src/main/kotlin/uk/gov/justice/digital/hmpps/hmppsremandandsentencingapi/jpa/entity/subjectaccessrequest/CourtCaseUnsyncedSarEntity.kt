@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subj
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -12,9 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Entity
 @Immutable
-@Subselect("select * from court_case")
+@Subselect("select id, prisoner_id from court_case")
 @Synchronize("court_case")
-@Table(name = "court_case")
 class CourtCaseUnsyncedSarEntity(
   @Id
   @Column

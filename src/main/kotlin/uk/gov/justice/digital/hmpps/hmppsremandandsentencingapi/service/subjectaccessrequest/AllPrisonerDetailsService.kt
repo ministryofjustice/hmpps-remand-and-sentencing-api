@@ -34,7 +34,7 @@ class AllPrisonerDetailsService(
     from: LocalDate?,
     to: LocalDate?,
   ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
-    val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber))
+    val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber), from, to)
     val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber))
     val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber))
     val personDetails = personService.getPersonDetailsByPrisonerIdCached(prisonerNumber)
@@ -78,7 +78,7 @@ class AllPrisonerDetailsService(
     return recalls
   }
 
-  private fun mapCourtCases(courtCaseEntities: List<CourtCaseSarEntity>): List<CourtCase> {
+  private fun mapCourtCases(courtCaseEntities: List<CourtCaseSarEntity>, from: LocalDate?, to: LocalDate?): List<CourtCase> {
     val courtCases = mutableListOf<CourtCase>()
     courtCaseEntities.forEach { courtCaseEntity ->
 
@@ -86,8 +86,8 @@ class AllPrisonerDetailsService(
         ?.map { appearanceCharge -> appearanceCharge.charge }?.toList()
 
       val charges: List<Charge> = mapCharges(chargeSarEntities)
-      val courtAppearance: CourtAppearance = mapCourtAppearance(charges, courtCaseEntity.latestCourtAppearance)
-      val courtAppearances: List<CourtAppearance> = courtCaseEntity.appearances.map { courtAppearance -> mapCourtAppearance(charges, courtAppearance) }
+      val courtAppearance: CourtAppearance? = mapCourtAppearance(charges, courtCaseEntity.latestCourtAppearance, from, to)
+      val courtAppearances: List<CourtAppearance> = courtCaseEntity.appearances.mapNotNull { appearanceEntity -> mapCourtAppearance(charges, appearanceEntity, from, to) }
       val courtCase: CourtCase = mapCourtCase(courtCaseEntity, courtAppearance, courtAppearances)
 
       courtCases.add(courtCase)
@@ -98,7 +98,7 @@ class AllPrisonerDetailsService(
 
   private fun mapCourtCase(
     courtCaseEntity: CourtCaseSarEntity,
-    latestCourtAppearance: CourtAppearance,
+    latestCourtAppearance: CourtAppearance?,
     courtAppearances: List<CourtAppearance>,
   ): CourtCase {
     val courtRegister = courtCaseEntity.latestCourtAppearance?.courtCode?.let {
@@ -118,7 +118,9 @@ class AllPrisonerDetailsService(
   private fun mapCourtAppearance(
     charges: List<Charge>,
     latestCourtAppearance: CourtAppearanceSarEntity?,
-  ): CourtAppearance {
+    from: LocalDate?,
+    to: LocalDate?,
+  ): CourtAppearance? = filterByDate(from, to, latestCourtAppearance?.appearanceDate).takeIf { it }?.let {
     val appearanceDate = latestCourtAppearance?.appearanceDate
     val appearanceOutcomeName = latestCourtAppearance?.appearanceOutcome?.outcomeName
     val warrantyType = latestCourtAppearance?.warrantType

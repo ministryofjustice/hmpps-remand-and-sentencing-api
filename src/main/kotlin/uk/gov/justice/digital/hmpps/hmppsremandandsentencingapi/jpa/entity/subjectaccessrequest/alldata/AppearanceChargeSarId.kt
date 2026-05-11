@@ -12,9 +12,9 @@ import java.util.Objects
 @Immutable
 @Embeddable
 class AppearanceChargeSarId(
-  @Column(name = "appearance_id")
+  @Column
   var appearanceId: Int,
-  @Column(name = "charge_id")
+  @Column
   var chargeId: Int,
 ) : Serializable {
 

@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.alldata.RecallSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtRegisterService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
+import java.time.LocalDate
 
 @ExtendWith(MockKExtension::class)
 class AllPrisonerDetailsServiceTests {
@@ -47,17 +48,112 @@ class AllPrisonerDetailsServiceTests {
     assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
   }
 
-  @Disabled
   @Test
-  fun `should return all Court Case Prisoner Details from date`(): Unit = throw NotImplementedError()
+  fun `should return all Court Case Prisoner Details based on FROM date`() {
+    arrange("44959")
 
-  @Disabled
-  @Test
-  fun `should return all Court Case Prisoner Details to date`(): Unit = throw NotImplementedError()
+    // Act
+    val prisoner = sut.getPrisonerDetails("44959", LocalDate.of(2026, 1, 4)) as Prisoner
 
-  @Disabled
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
+  }
+
   @Test
-  fun `should return all Court Case Prisoner Details from date to date`(): Unit = throw NotImplementedError()
+  fun `should return single Court Case Prisoner Details based on FROM date`() {
+    arrange("44959")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("44959", LocalDate.of(2026, 2, 28)) as Prisoner
+
+    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
+      appearances = listOf(ExpectedResponseData.expectedCourtAppearances()[1]),
+    )
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+  }
+
+  @Test
+  fun `should return no Court Case Appearances When Prisoner Details based on FROM date in future`() {
+    arrange("4492234")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("4492234", LocalDate.of(2026, 7, 28)) as Prisoner
+
+    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
+      latestCourtAppearance = null,
+      appearances = listOf(),
+    )
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+  }
+
+  @Test
+  fun `should return single Court Appearance Court Case Prisoner Details up until TO date`() {
+    arrange("22959")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("22959", to = LocalDate.of(2026, 2, 28)) as Prisoner
+
+    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
+      latestCourtAppearance = null,
+      appearances = listOf(ExpectedResponseData.expectedCourtAppearances()[0]),
+    )
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+  }
+
+  @Test
+  fun `should return all Court Case Prisoner Details up until TO date`() {
+    arrange("22959")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("22959", to = LocalDate.of(2026, 3, 28)) as Prisoner
+
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
+  }
+
+  @Test
+  fun `should return all Court Case Prisoner Details FROM date TO date`() {
+    arrange("22959")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 28)) as Prisoner
+
+    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
+      latestCourtAppearance = ExpectedResponseData.expectedCourtAppearances()[1],
+      appearances = listOf(ExpectedResponseData.expectedCourtAppearances()[1]),
+    )
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+  }
+
+  @Test
+  fun `should return single Court Appearance Court Case Prisoner Details FROM until TO date`() {
+    arrange("22959")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 28)) as Prisoner
+
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
+  }
+
+  @Test
+  fun `should return no Court Case Appearances When Prisoner Details based on TO until FROM date in future`() {
+    arrange("22959")
+
+    // Act
+    val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)) as Prisoner
+    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
+      latestCourtAppearance = null,
+      appearances = listOf(),
+    )
+
+    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
+    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+  }
 
   @Disabled
   @Test

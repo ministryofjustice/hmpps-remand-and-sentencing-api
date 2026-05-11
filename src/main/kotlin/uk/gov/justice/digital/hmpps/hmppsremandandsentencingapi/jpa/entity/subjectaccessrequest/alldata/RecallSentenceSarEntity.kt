@@ -5,7 +5,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.Table
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -15,9 +14,15 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @ConditionalOnSarEnabled
 @Immutable
 @Entity
-@Subselect("select * from recall_sentence")
+@Subselect(
+  """
+  select id
+   ,sentence_id
+   ,recall_id
+   ,pre_recall_sentence_status
+  from recall_sentence""",
+)
 @Synchronize("recall_sentence")
-@Table(name = "recall_sentence")
 class RecallSentenceSarEntity(
   @Id
   @Column

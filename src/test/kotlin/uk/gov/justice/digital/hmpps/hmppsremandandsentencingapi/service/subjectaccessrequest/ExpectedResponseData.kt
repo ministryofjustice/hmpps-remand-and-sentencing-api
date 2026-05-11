@@ -27,10 +27,47 @@ object ExpectedResponseData {
     createdAt = ZonedDateTime.parse("2026-05-07T10:00:00+00:00[Europe/London]"),
     updatedAt = ZonedDateTime.parse("2026-05-07T10:00:00+00:00[Europe/London]"),
     latestCourtAppearance = CourtAppearance(
+      appearanceDate = LocalDate.of(2026, 3, 1),
+      appearanceOutcomeName = "Imprisonment",
+      warrantType = "SENTENCING",
+      convictionDate = LocalDate.of(2026, 3, 6),
+      nextAppearanceDate = null,
+      charges = listOf(
+        Charge(
+          offenceCode = "RF96124",
+          offenceDescription = "Littering",
+          terrorRelated = false,
+          foreignPowerRelated = false,
+          domesticViolenceRelated = false,
+          offenceStartDate = LocalDate.of(2026, 1, 1),
+          offenceEndDate = LocalDate.of(2026, 1, 2),
+          chargeOutcome = "Street Cleaning Order",
+          liveSentence = Sentence(
+            sentenceTypeDescription = "Detention and Training Order",
+            sentenceTypeClassification = "DTO",
+            periodLengths = listOf(
+              PeriodLength(
+                years = 0,
+                months = 0,
+                weeks = 3,
+                days = 0,
+                periodOrder = "years,months,weeks,days",
+              ),
+            ),
+            sentenceServeType = "CONCURRENT",
+          ),
+        ),
+      ),
+    ),
+    appearances = expectedCourtAppearances(),
+  )
+
+  fun expectedCourtAppearances() = listOf(
+    CourtAppearance(
       appearanceDate = LocalDate.of(2026, 2, 3),
       appearanceOutcomeName = "Imprisonment",
       warrantType = "SENTENCING",
-      convictionDate = LocalDate.of(2026, 5, 5),
+      convictionDate = LocalDate.of(2026, 2, 8),
       nextAppearanceDate = LocalDate.of(2026, 2, 3),
       charges = listOf(
         Charge(
@@ -59,37 +96,35 @@ object ExpectedResponseData {
         ),
       ),
     ),
-    appearances = listOf(
-      CourtAppearance(
-        appearanceDate = LocalDate.of(2026, 2, 3),
-        appearanceOutcomeName = "Imprisonment",
-        warrantType = "SENTENCING",
-        convictionDate = LocalDate.of(2026, 5, 5),
-        nextAppearanceDate = LocalDate.of(2026, 2, 3),
-        charges = listOf(
-          Charge(
-            offenceCode = "RF96124",
-            offenceDescription = "Littering",
-            terrorRelated = false,
-            foreignPowerRelated = false,
-            domesticViolenceRelated = false,
-            offenceStartDate = LocalDate.of(2026, 1, 1),
-            offenceEndDate = LocalDate.of(2026, 1, 2),
-            chargeOutcome = "Street Cleaning Order",
-            liveSentence = Sentence(
-              sentenceTypeDescription = "Detention and Training Order",
-              sentenceTypeClassification = "DTO",
-              periodLengths = listOf(
-                PeriodLength(
-                  years = 0,
-                  months = 0,
-                  weeks = 3,
-                  days = 0,
-                  periodOrder = "years,months,weeks,days",
-                ),
+    CourtAppearance(
+      appearanceDate = LocalDate.of(2026, 3, 1),
+      appearanceOutcomeName = "Imprisonment",
+      warrantType = "SENTENCING",
+      convictionDate = LocalDate.of(2026, 3, 6),
+      nextAppearanceDate = null,
+      charges = listOf(
+        Charge(
+          offenceCode = "RF96124",
+          offenceDescription = "Littering",
+          terrorRelated = false,
+          foreignPowerRelated = false,
+          domesticViolenceRelated = false,
+          offenceStartDate = LocalDate.of(2026, 1, 1),
+          offenceEndDate = LocalDate.of(2026, 1, 2),
+          chargeOutcome = "Street Cleaning Order",
+          liveSentence = Sentence(
+            sentenceTypeDescription = "Detention and Training Order",
+            sentenceTypeClassification = "DTO",
+            periodLengths = listOf(
+              PeriodLength(
+                years = 0,
+                months = 0,
+                weeks = 3,
+                days = 0,
+                periodOrder = "years,months,weeks,days",
               ),
-              sentenceServeType = "CONCURRENT",
             ),
+            sentenceServeType = "CONCURRENT",
           ),
         ),
       ),
