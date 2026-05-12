@@ -46,6 +46,10 @@ prison:
   api:
     url: http://localhost:8332
 
+court-register:
+  api:
+    url: http://localhost:8333
+
 document:
   management:
     api:

@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Hmp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.repository.AppearanceChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
@@ -86,7 +87,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Sql("classpath:test_data/reset-database.sql")
-@ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class, AdjustmentsApiExtension::class)
+@ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class, AdjustmentsApiExtension::class, CourtRegisterApiExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient

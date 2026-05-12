@@ -11,7 +11,6 @@ object PrisonerTestData {
     immigrationDetentions: List<ImmigrationDetention> = immigrationDetentions(),
   ) = Prisoner(
     prisonerNumber = prisonerNumber,
-    prisonerName = prisonerName,
     immigrationDetentions = immigrationDetentions,
   )
 
