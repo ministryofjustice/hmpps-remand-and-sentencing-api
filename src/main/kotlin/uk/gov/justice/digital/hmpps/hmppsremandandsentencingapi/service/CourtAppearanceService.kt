@@ -208,6 +208,7 @@ class CourtAppearanceService(
     documentService.update(
       courtAppearance.documents?.map { it.documentUUID } ?: emptyList(),
       createdCourtAppearance,
+      courtCaseEntity.prisonerId,
     )
 
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance, ChangeSource.DPS))
@@ -301,6 +302,7 @@ class CourtAppearanceService(
     documentService.update(
       courtAppearance.documents?.map { it.documentUUID } ?: emptyList(),
       activeRecord,
+      courtCaseEntity.prisonerId,
     )
 
     if (appearanceChangeStatus != EntityChangeStatus.NO_CHANGE ||

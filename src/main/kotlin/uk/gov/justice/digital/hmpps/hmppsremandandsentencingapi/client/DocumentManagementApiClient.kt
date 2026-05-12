@@ -16,4 +16,25 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
       .toBodilessEntity()
       .block()
   }
+
+  fun updateDocumentMetadata(
+    prisonerId: String,
+    documentId: String,
+    uploadStatus: String,
+  ) {
+    webClient
+      .put()
+      .uri("/documents/{documentId}/metadata", documentId)
+      .header("Service-Name", "Remand and Sentencing")
+      .bodyValue(
+        mapOf(
+          "prisonerId" to prisonerId,
+          "source" to "RemandSentencingUser",
+          "status" to uploadStatus,
+        ),
+      )
+      .retrieve()
+      .toBodilessEntity()
+      .block()
+  }
 }

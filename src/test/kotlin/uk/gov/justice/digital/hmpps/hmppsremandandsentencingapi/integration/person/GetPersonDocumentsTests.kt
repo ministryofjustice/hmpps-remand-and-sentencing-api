@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.per
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class GetPersonDocumentsTests : IntegrationTestBase() {
@@ -9,6 +10,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   @Test
   fun `provide no query parameters returns all documents`() {
     val (document) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(document.documentUUID.toString())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(document))
     val(_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     webTestClient
@@ -26,9 +28,11 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   @Test
   fun `match on case reference returns the document`() {
     val (document) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(document.documentUUID.toString())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(document))
     val(courtCaseUuid, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val (otherDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(otherDocument.documentUUID.toString())
     val otherAppearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(otherDocument), courtCaseReference = "OTHERREF")
     val(otherCourtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(otherAppearance)))
     webTestClient
@@ -60,7 +64,8 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       documentName = "hearing_notes_B.pdf",
       documentType = "REMAND_WARRANT",
     )
-    uploadDocument(listOf(docA, docB))
+    val documents = uploadDocument(listOf(docA, docB))
+    documents.forEach { documentManagementApi.stubUpdateDocumentMetadata(it.documentUUID.toString()) }
 
     val appearanceA = DpsDataCreator.dpsCreateCourtAppearance(
       documents = listOf(docA),
@@ -96,7 +101,9 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   @Test
   fun `match on warrant type document type combination`() {
     val document = DpsDataCreator.dpsCreateUploadedDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(document.documentUUID.toString())
     val otherDocument = DpsDataCreator.dpsCreateUploadedDocument(documentType = "OTHER_DOC_TYPE")
+    documentManagementApi.stubUpdateDocumentMetadata(otherDocument.documentUUID.toString())
     uploadDocument(listOf(document, otherDocument))
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(document, otherDocument))
     val(courtCaseUuid, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
@@ -124,7 +131,8 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
     // two docs in two different courts
     val shfDoc = DpsDataCreator.dpsCreateUploadedDocument()
     val manDoc = DpsDataCreator.dpsCreateUploadedDocument()
-    uploadDocument(listOf(shfDoc, manDoc))
+    val docs = uploadDocument(listOf(shfDoc, manDoc))
+    docs.forEach { documentManagementApi.stubUpdateDocumentMetadata(it.documentUUID.toString()) }
 
     val shfAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       documents = listOf(shfDoc),
@@ -167,7 +175,8 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   fun `OR semantics - returns documents that match keyword OR warrantTypeDocumentType OR courtCodes`() {
     val docA = DpsDataCreator.dpsCreateUploadedDocument(documentName = "warrant_bundle_A.pdf")
     val docB = DpsDataCreator.dpsCreateUploadedDocument(documentName = "hearing_notes_B.pdf")
-    uploadDocument(listOf(docA, docB))
+    val docs = uploadDocument(listOf(docA, docB))
+    docs.forEach { documentManagementApi.stubUpdateDocumentMetadata(it.documentUUID.toString()) }
 
     val appearanceA = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(docA), courtCode = "SHF", courtCaseReference = "CASE-A")
     val appearanceB = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(docB), courtCode = "MAN", courtCaseReference = "CASE-B")

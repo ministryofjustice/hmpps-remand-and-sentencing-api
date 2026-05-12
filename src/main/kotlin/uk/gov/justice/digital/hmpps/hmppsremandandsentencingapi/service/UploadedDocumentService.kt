@@ -37,12 +37,13 @@ class UploadedDocumentService(
   fun update(
     documentUUIDs: List<UUID>,
     appearance: CourtAppearanceEntity,
+    prisonerId: String,
   ) {
     val documentsToUnlink = uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
       appearance.appearanceUuid,
       documentUUIDs,
     )
-    unlinkDocuments(documentsToUnlink)
+    unlinkDocuments(documentsToUnlink, prisonerId)
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
@@ -52,6 +53,11 @@ class UploadedDocumentService(
         document.updatedAt = ZonedDateTime.now()
 
         uploadedDocumentRepository.save(document)
+        documentManagementApiClient.updateDocumentMetadata(
+          prisonerId = prisonerId,
+          documentId = documentId.toString(),
+          uploadStatus = "Active",
+        )
       }
     }
   }
@@ -66,8 +72,13 @@ class UploadedDocumentService(
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
-  private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>) {
+  private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>, prisonerId: String) {
     uploadedDocuments.forEach { document ->
+      documentManagementApiClient.updateDocumentMetadata(
+        prisonerId = prisonerId,
+        documentId = document.documentUuid.toString(),
+        uploadStatus = "Deleted",
+      )
       document.unlink(serviceUserService.getUsername())
       uploadedDocumentRepository.save(document)
     }

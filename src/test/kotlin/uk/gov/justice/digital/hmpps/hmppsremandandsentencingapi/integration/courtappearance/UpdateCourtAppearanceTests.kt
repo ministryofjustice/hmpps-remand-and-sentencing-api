@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
@@ -14,6 +15,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -27,12 +30,15 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `update appearance in existing court case`() {
     val (oldDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(oldDocument.documentUUID.toString())
 
     val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
+    val createdCourtCase = getCourtCase(courtCase.first)
 
     val (newDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(newDocument.documentUUID.toString())
 
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore =
@@ -85,9 +91,33 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(oldDoc).isNotNull
     assertThat(oldDoc!!.appearance).isNull()
 
+    documentManagementApi.verify(
+      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${oldDocument.documentUUID}/metadata"))
+        .withRequestBody(
+          WireMock.equalToJson(
+            documentMetadataRequest(
+              createdCourtCase.prisonerId,
+              "Deleted",
+            ),
+          ),
+        ),
+    )
+
     val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
+
+    documentManagementApi.verify(
+      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${newDocument.documentUUID}/metadata"))
+        .withRequestBody(
+          WireMock.equalToJson(
+            documentMetadataRequest(
+              createdCourtCase.prisonerId,
+              "Active",
+            ),
+          ),
+        ),
+    )
   }
 
   @Test
