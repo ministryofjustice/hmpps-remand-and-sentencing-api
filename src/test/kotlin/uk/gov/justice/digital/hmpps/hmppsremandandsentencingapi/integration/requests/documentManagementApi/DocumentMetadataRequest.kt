@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi
 
-fun documentMetadataRequest(prisonerId: String, status: String) = """
+fun documentMetadataRequest(prisonerId: String) = """
   {
      "prisonerId": "$prisonerId",
-     "status":"COMPLETE"
+     "state":"COMPLETE"
   }
 """.trimIndent()
