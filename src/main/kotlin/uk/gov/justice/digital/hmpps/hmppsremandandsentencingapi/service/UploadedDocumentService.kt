@@ -72,7 +72,7 @@ class UploadedDocumentService(
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
-  private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>, prisonerId: String) {
+  fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>, prisonerId: String) {
     uploadedDocuments.forEach { document ->
       documentManagementApiClient.updateDocumentMetadata(
         prisonerId = prisonerId,

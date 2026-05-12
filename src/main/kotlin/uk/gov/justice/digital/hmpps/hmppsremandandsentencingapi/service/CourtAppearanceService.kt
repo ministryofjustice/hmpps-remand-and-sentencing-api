@@ -651,11 +651,7 @@ class CourtAppearanceService(
     val courtCaseEntity = courtAppearanceEntity.courtCase
 
     val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()
-    courtAppearanceEntity.documents.forEach { document ->
-      document.unlink(
-        username = serviceUserService.getUsername(),
-      )
-    }
+    documentService.unlinkDocuments(courtAppearanceEntity.documents.toList(), courtCaseEntity.prisonerId)
 
     courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.takeUnless { it.statusId == CourtAppearanceEntityStatus.ACTIVE }?.let { futureAppearance ->
       eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
