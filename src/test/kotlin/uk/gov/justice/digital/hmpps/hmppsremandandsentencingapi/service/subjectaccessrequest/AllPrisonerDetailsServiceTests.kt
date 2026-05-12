@@ -73,18 +73,13 @@ class AllPrisonerDetailsServiceTests {
   }
 
   @Test
-  fun `should return no Court Case Appearances When Prisoner Details based on FROM date in future`() {
+  fun `should return no Court Cases When Prisoner Details based on FROM date in future`() {
     arrange("4492234")
 
     // Act
     val prisoner = sut.getPrisonerDetails("4492234", LocalDate.of(2026, 7, 28)) as Prisoner
 
-    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
-      latestCourtAppearance = null,
-      appearances = listOf(),
-    )
-    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
-    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+    assertThat(prisoner.courtCases?.count()).isEqualTo(0)
   }
 
   @Test
@@ -140,18 +135,13 @@ class AllPrisonerDetailsServiceTests {
   }
 
   @Test
-  fun `should return no Court Case Appearances When Prisoner Details based on TO until FROM date in future`() {
+  fun `should return no Court Cases When Prisoner Details based on TO until FROM date in future`() {
     arrange("22959")
 
     // Act
     val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)) as Prisoner
-    val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
-      latestCourtAppearance = null,
-      appearances = listOf(),
-    )
 
-    assertThat(prisoner.courtCases?.count()).isEqualTo(1)
-    assertThat(prisoner.courtCases?.first()).isEqualTo(expected)
+    assertThat(prisoner.courtCases?.count()).isEqualTo(0)
   }
 
   @Test

@@ -80,16 +80,21 @@ class AllPrisonerDetailsService(
 
   private fun mapCourtCases(courtCaseEntities: List<CourtCaseSarEntity>, from: LocalDate?, to: LocalDate?): List<CourtCase> {
     val courtCases = mutableListOf<CourtCase>()
-    courtCaseEntities.forEach { courtCaseEntity ->
-
+    for (courtCaseEntity in courtCaseEntities) {
       val chargeSarEntities = courtCaseEntity.latestCourtAppearance?.appearanceCharges
         ?.map { appearanceCharge -> appearanceCharge.charge }?.toList()
 
       val charges: List<Charge> = mapCharges(chargeSarEntities)
       val courtAppearance: CourtAppearance? = mapCourtAppearance(charges, courtCaseEntity.latestCourtAppearance, from, to)
       val courtAppearances: List<CourtAppearance> = courtCaseEntity.appearances.mapNotNull { appearanceEntity -> mapCourtAppearance(charges, appearanceEntity, from, to) }
-      val courtCase: CourtCase = mapCourtCase(courtCaseEntity, courtAppearance, courtAppearances)
 
+      // Abort trying to map a court case having no associated courtAppearances
+      // and missing lastest court appearance
+      if (courtAppearance == null && courtAppearances.isEmpty()) {
+        continue
+      }
+
+      val courtCase: CourtCase = mapCourtCase(courtCaseEntity, courtAppearance, courtAppearances)
       courtCases.add(courtCase)
     }
 
