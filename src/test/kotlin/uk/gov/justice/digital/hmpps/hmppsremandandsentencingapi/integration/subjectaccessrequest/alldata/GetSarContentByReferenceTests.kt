@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjecta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 
-@ActiveProfiles("sar", "test", "test-all-sar-data")
+@ActiveProfiles("test", "test-sar", "test-all-sar-data")
 @DisplayName("GetSarContentByReferenceTests (All Data)")
 class GetSarContentByReferenceTests : IntegrationTestBase() {
 
