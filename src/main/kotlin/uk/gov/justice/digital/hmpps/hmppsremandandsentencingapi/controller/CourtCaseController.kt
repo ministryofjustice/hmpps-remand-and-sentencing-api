@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LatestOffenceDate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencedCharges
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
@@ -269,4 +270,15 @@ class CourtCaseController(
     @PathVariable courtCaseUuid: String,
     @RequestParam appearanceUuidToExclude: UUID,
   ): CourtCaseValidationDate = courtCaseService.getValidationDates(courtCaseUuid, appearanceUuidToExclude)
+
+  @GetMapping("/court-case/{courtCaseUuid}/sentenced-charges")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Retrieve all sentenced charges",
+    description = "This endpoint returns all active sentenced charges",
+  )
+  fun getSentencedCharges(@PathVariable courtCaseUuid: String): SentencedCharges = courtCaseService.getSentencedCharges(courtCaseUuid)?.let { (sentencedCharges, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    sentencedCharges
+  } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
 }

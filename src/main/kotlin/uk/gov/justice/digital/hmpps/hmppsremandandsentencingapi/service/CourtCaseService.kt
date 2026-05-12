@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCaseCountNumbers
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencedCharges
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
@@ -191,6 +192,12 @@ class CourtCaseService(
     courtCaseUuid: String,
     appearanceUuidToExclude: UUID,
   ): CourtCaseValidationDate = courtCaseRepository.findValidationDates(courtCaseUuid, appearanceUuidToExclude)
+
+  @Transactional
+  fun getSentencedCharges(courtCaseUuid: String): RecordResponse<SentencedCharges>? = courtCaseRepository.findSentencedCourtCase(courtCaseUuid)?.let { courtCaseEntity ->
+    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity)
+    RecordResponse(SentencedCharges.from(courtCaseEntity.appearances.flatMap { it.appearanceCharges }.map { it.charge!! }), eventsToEmit)
+  }
 
   @Transactional(readOnly = true)
   fun getCourtCaseCount(prisonerId: String, bookingId: String): PersonCourtCaseCount = courtCaseRepository.countCourtCasesForBooking(prisonerId, bookingId)
