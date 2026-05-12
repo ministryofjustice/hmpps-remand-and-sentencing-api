@@ -740,7 +740,7 @@ class RecallServiceMergeTest {
       val postedDate = "2020-02-06T12:48:05.692411"
 
       every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(courtCaseWithSentence(createdAt, postedDate))
-      every { fixManyChargesToSentenceService.fixCourtCaseSentences(any()) } returns mutableSetOf()
+      every { fixManyChargesToSentenceService.fixCourtCaseSentences(any<List<CourtCaseEntity>>()) } returns mutableSetOf()
 
       val result = service.getRecallableCourtCases("A1234BC")
 
@@ -753,7 +753,7 @@ class RecallServiceMergeTest {
       val postedDate = "2020-02-06T12:48:05.692411"
 
       every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(courtCaseWithSentence(createdAt, postedDate))
-      every { fixManyChargesToSentenceService.fixCourtCaseSentences(any()) } returns mutableSetOf()
+      every { fixManyChargesToSentenceService.fixCourtCaseSentences(any<List<CourtCaseEntity>>()) } returns mutableSetOf()
 
       val result = service.getRecallableCourtCases("A1234BC")
 
@@ -765,7 +765,7 @@ class RecallServiceMergeTest {
       val createdAt = ZonedDateTime.parse("2020-02-05T10:00:00Z")
 
       every { courtCaseRepository.findSentencedCourtCasesByPrisonerId("A1234BC") } returns listOf(courtCaseWithSentence(createdAt, null))
-      every { fixManyChargesToSentenceService.fixCourtCaseSentences(any()) } returns mutableSetOf()
+      every { fixManyChargesToSentenceService.fixCourtCaseSentences(any<List<CourtCaseEntity>>()) } returns mutableSetOf()
 
       val result = service.getRecallableCourtCases("A1234BC")
 

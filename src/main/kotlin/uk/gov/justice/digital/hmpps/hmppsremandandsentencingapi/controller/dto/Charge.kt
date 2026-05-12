@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -20,7 +21,7 @@ data class Charge(
   val createdAt: ZonedDateTime,
 ) {
   companion object {
-    fun from(chargeEntity: ChargeEntity): Charge = Charge(
+    fun from(chargeEntity: ChargeEntity, getSentenceFunction: java.util.function.Function<ChargeEntity, SentenceEntity?> = { it.getLiveSentence() }): Charge = Charge(
       chargeEntity.chargeUuid,
       chargeEntity.offenceCode,
       chargeEntity.offenceStartDate,
@@ -28,7 +29,7 @@ data class Charge(
       chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
       chargeEntity.terrorRelated,
       chargeEntity.foreignPowerRelated,
-      chargeEntity.getLiveSentence()?.let { Sentence.from(it) },
+      getSentenceFunction.apply(chargeEntity)?.let { Sentence.from(it) },
       chargeEntity.legacyData,
       chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.let {
         MergedFromCase.from(
