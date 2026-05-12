@@ -125,12 +125,12 @@ class AllPrisonerDetailsService(
     latestCourtAppearance: CourtAppearanceSarEntity?,
     from: LocalDate?,
     to: LocalDate?,
-  ): CourtAppearance? = filterByDate(from, to, latestCourtAppearance?.appearanceDate).takeIf { it }?.let {
-    val appearanceDate = latestCourtAppearance?.appearanceDate
-    val appearanceOutcomeName = latestCourtAppearance?.appearanceOutcome?.outcomeName
-    val warrantyType = latestCourtAppearance?.warrantType
-    val convictionDate = latestCourtAppearance?.overallConvictionDate
-    val nextCourtAppearanceDate = latestCourtAppearance?.nextCourtAppearance?.appearanceDate
+  ): CourtAppearance? = latestCourtAppearance?.takeIf { filterByDate(from, to, it.appearanceDate) }?.let {
+    val appearanceDate = latestCourtAppearance.appearanceDate
+    val appearanceOutcomeName = latestCourtAppearance.appearanceOutcome?.outcomeName
+    val warrantyType = latestCourtAppearance.warrantType
+    val convictionDate = latestCourtAppearance.overallConvictionDate
+    val nextCourtAppearanceDate = latestCourtAppearance.nextCourtAppearance?.appearanceDate
 
     return CourtAppearance(
       appearanceDate,

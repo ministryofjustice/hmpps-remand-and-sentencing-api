@@ -83,7 +83,6 @@ object MockedResponseData {
     "SENTENCING",
     "WNCHCC",
     appearanceDate.plusDays(5),
-    mutableSetOf(courtCaseSarEntity),
     mutableSetOf(),
     courtCaseSarEntity,
     appearanceOutcome,

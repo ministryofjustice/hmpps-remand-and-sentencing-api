@@ -34,10 +34,14 @@ class WebClientConfiguration(
     .build()
 
   @Bean
-  fun courtRegisterApiWebClient(webclientBuilder: WebClient.Builder): WebClient = webclientBuilder
-    .baseUrl(courtRegisterApiUri)
-    .filter(addAuthHeaderFilterFunction())
-    .build()
+  fun courtRegisterApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "court-register-api",
+    courtRegisterApiUri,
+  )
 
   private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authenticationToken: Jwt = SecurityContextHolder.getContext()

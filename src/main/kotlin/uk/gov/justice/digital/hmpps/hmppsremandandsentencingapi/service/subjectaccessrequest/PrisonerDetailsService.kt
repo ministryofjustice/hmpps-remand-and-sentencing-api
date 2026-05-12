@@ -10,6 +10,8 @@ interface PrisonerDetailsService {
   fun filterByDate(from: LocalDate?, to: LocalDate?, toCompare: LocalDate?): Boolean {
     if (from == null && to == null) return true
     if (toCompare == null) return false
-    return (from == null || toCompare >= from) && (to == null || toCompare <= to)
+    val fromOrEqual = from == null || toCompare.isAfter(from) || toCompare.isEqual(from)
+    val toOrEqual = to == null || toCompare.isBefore(to) || toCompare.isEqual(to)
+    return fromOrEqual && toOrEqual
   }
 }

@@ -45,8 +45,6 @@ class CourtAppearanceSarEntity(
   var courtCode: String,
   @Column
   var overallConvictionDate: LocalDate?,
-  @OneToMany(mappedBy = "latestCourtAppearance", cascade = [CascadeType.ALL], orphanRemoval = true)
-  var courtCases: MutableSet<CourtCaseSarEntity> = mutableSetOf(),
   @OneToMany(mappedBy = "appearance", cascade = [CascadeType.ALL], orphanRemoval = true)
   var appearanceCharges: MutableSet<AppearanceChargeSarEntity> = mutableSetOf(),
   @Suppress("JpaDataSourceORMInspection")
