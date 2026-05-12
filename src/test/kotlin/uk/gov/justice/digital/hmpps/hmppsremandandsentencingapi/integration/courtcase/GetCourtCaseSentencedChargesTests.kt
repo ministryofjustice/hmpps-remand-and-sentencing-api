@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
@@ -31,5 +32,31 @@ class GetCourtCaseSentencedChargesTests : IntegrationTestBase() {
       .isEqualTo(sentencedCharge.outcomeUuid.toString())
       .jsonPath("$.charges[?(@.chargeUuid == '${remandedCharge.chargeUuid}')]")
       .doesNotExist()
+  }
+
+  @Test
+  fun `no token results in unauthorized`() {
+    val (courtCaseUuid) = createCourtCase()
+    webTestClient.get()
+      .uri("/court-case/$courtCaseUuid/sentenced-charges")
+      .headers {
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `token with incorrect role is forbidden`() {
+    val (courtCaseUuid) = createCourtCase()
+    webTestClient.get()
+      .uri("/court-case/$courtCaseUuid/sentenced-charges")
+      .headers {
+        it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
+      }
+      .exchange()
+      .expectStatus()
+      .isForbidden
   }
 }
