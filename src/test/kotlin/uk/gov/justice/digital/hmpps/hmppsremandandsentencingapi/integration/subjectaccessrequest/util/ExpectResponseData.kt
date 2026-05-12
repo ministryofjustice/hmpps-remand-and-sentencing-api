@@ -7,7 +7,7 @@ object ExpectResponseData {
        {
           "attachments": [],
           "content": {
-            "prisonerNumber": "A6764DZ",
+            "prisonerNumber": "PRI123",
             "immigrationDetentions": [
               {
                 "homeOfficeReferenceNumber": "124222111",
@@ -29,7 +29,7 @@ object ExpectResponseData {
          {
           "attachments": [],
           "content": {
-            "prisonerNumber": "foo-bar",
+            "prisonerNumber": "PRI123",
             "immigrationDetentions": []
           }
         }
