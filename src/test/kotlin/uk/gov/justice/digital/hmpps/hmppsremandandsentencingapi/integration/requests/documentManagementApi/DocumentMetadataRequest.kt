@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.req
 fun documentMetadataRequest(prisonerId: String, status: String) = """
   {
      "prisonerId": "$prisonerId",
-     "source":"RemandSentencingUser",
-     "status":"$status"
+     "status":"COMPLETE"
   }
 """.trimIndent()
