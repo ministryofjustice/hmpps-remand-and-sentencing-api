@@ -137,7 +137,6 @@ class GetSarContentByReferenceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .consumeWith(::println)
       .json(emptyFullDataResponse())
   }
 
