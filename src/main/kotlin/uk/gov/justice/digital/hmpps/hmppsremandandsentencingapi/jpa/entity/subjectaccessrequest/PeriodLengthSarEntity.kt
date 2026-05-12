@@ -1,12 +1,10 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
-import jakarta.persistence.OneToOne
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -19,32 +17,28 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @Subselect(
   """
   select id
-   ,charge_id
-   ,sentence_type_id
-   ,sentence_serve_type
-   ,status_id
-  from sentence""",
+   ,sentence_id
+   ,years
+   ,months
+   ,weeks
+   ,days
+   ,period_order
+  from period_length""",
 )
-@Synchronize("sentence")
-class SentenceSarEntity(
+@Synchronize("period_length")
+class PeriodLengthSarEntity(
   @Id
   @Column
   var id: Int,
+  @Suppress("JpaDataSourceORMInspection")
   @ManyToOne
-  @JoinColumn(name = "charge_id")
-  var charge: ChargeSarEntity,
-  @OneToOne
-  @JoinColumn(name = "sentence_type_id")
-  var sentenceType: SentenceTypeSarEntity?,
-  @Column
-  var sentenceServeType: String,
-  @Column
-  var statusId: String,
-  @OneToMany
   @JoinColumn(name = "sentence_id")
-  var periodLengths: MutableSet<PeriodLengthSarEntity> = mutableSetOf(),
-  @OneToMany(mappedBy = "sentence")
-  var recallSentences: MutableSet<RecallSentenceSarEntity> = mutableSetOf(),
+  var sentenceEntity: SentenceSarEntity?,
+  var years: Int?,
+  var months: Int?,
+  var weeks: Int?,
+  var days: Int?,
+  var periodOrder: String,
 ) {
   final override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -54,7 +48,7 @@ class SentenceSarEntity(
     val thisEffectiveClass =
       if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
     if (thisEffectiveClass != oEffectiveClass) return false
-    other as SentenceSarEntity
+    other as PeriodLengthSarEntity
 
     return id == other.id
   }

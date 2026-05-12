@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -14,13 +14,21 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @Subselect(
   """
   select id
-   ,code
-  from recall_type""",
+   ,classification
+   ,description
+   ,is_recallable
+   from sentence_type
+  """,
 )
-@Synchronize("recall_type")
-class RecallTypeSarEntity(
+@Synchronize("sentence_type")
+class SentenceTypeSarEntity(
   @Id
   @Column
   var id: Int,
-  var code: String,
+  @Column
+  var classification: String,
+  @Column
+  var description: String,
+  @Column
+  var isRecallable: Boolean,
 )

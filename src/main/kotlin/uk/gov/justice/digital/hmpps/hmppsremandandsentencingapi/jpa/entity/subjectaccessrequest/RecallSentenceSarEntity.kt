@@ -1,10 +1,10 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
-import jakarta.persistence.EmbeddedId
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import jakarta.persistence.MapsId
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -16,20 +16,26 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @Entity
 @Subselect(
   """
-  select appearance_id
-  ,charge_id
-  from appearance_charge""",
+  select id
+   ,sentence_id
+   ,recall_id
+   ,pre_recall_sentence_status
+  from recall_sentence""",
 )
-@Synchronize("appearance_charge")
-class AppearanceChargeSarEntity(
-  @EmbeddedId
-  var id: AppearanceChargeSarId,
-  @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("appearanceId")
-  var appearance: CourtAppearanceSarEntity? = null,
-  @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("chargeId")
-  var charge: ChargeSarEntity? = null,
+@Synchronize("recall_sentence")
+class RecallSentenceSarEntity(
+  @Id
+  @Column
+  var id: Int,
+  @Suppress("JpaDataSourceORMInspection")
+  @ManyToOne
+  @JoinColumn(name = "sentence_id")
+  var sentence: SentenceSarEntity,
+  @Suppress("JpaDataSourceORMInspection")
+  @ManyToOne
+  @JoinColumn(name = "recall_id")
+  var recall: RecallSarEntity,
+  var preRecallSentenceStatus: String?,
 ) {
   final override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -39,10 +45,10 @@ class AppearanceChargeSarEntity(
     val thisEffectiveClass =
       if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
     if (thisEffectiveClass != oEffectiveClass) return false
-    other as AppearanceChargeSarEntity
+    other as RecallSentenceSarEntity
 
     return id == other.id
   }
 
-  final override fun hashCode(): Int = id.hashCode()
+  final override fun hashCode(): Int = if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
 }

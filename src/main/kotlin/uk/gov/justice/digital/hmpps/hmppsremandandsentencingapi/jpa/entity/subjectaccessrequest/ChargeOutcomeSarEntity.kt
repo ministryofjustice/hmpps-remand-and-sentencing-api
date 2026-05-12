@@ -7,32 +7,24 @@ import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
-import java.time.LocalDate
 
 @ConditionalOnSarEnabled
-@Entity
 @Immutable
+@Entity
 @Subselect(
   """
   select id
-  ,prisoner_id
-  ,record_date
-  ,home_office_reference_number 
-  ,no_longer_of_interest_reason 
-  ,no_longer_of_interest_comment 
-  from immigration_detention
-  where status_id != 'DELETED'
-  """,
+  ,outcome_type
+  ,outcome_name
+  from charge_outcome""",
 )
-@Synchronize("immigration_detention")
-class ImmigrationDetentionUnsyncedSarEntity(
-
+@Synchronize("charge_outcome")
+class ChargeOutcomeSarEntity(
   @Id
   @Column
   var id: Int = 0,
-  var prisonerId: String,
-  var recordDate: LocalDate,
-  var homeOfficeReferenceNumber: String?,
-  var noLongerOfInterestReason: String?,
-  var noLongerOfInterestComment: String?,
+  @Column
+  var outcomeType: String,
+  @Column
+  var outcomeName: String,
 )

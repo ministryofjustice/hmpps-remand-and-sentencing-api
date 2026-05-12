@@ -3,14 +3,14 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subject
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.SarContent
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.ImmigrationDetentionUnsyncedSarEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.CourtCaseUnsyncedSarRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionUnsyncedSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.ImmigrationDetentionSarEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.CourtCaseSarRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionSarRepository
 import java.time.LocalDate
 
 class UnsyncedPrisonerDetailsService(
-  private val immigrationDetentionUnsyncedSarRepository: ImmigrationDetentionUnsyncedSarRepository,
-  private val courtCaseUnsyncedSarRepository: CourtCaseUnsyncedSarRepository,
+  private val immigrationDetentionUnsyncedSarRepository: ImmigrationDetentionSarRepository,
+  private val courtCaseUnsyncedSarRepository: CourtCaseSarRepository,
 ) : PrisonerDetailsService {
   override fun getPrisonerDetails(
     prisonerNumber: String,
@@ -23,18 +23,17 @@ class UnsyncedPrisonerDetailsService(
   }
 
   private fun mapImmigrationDetentionsNotInNomis(
-    immigrationDetentionSarList: List<ImmigrationDetentionUnsyncedSarEntity>,
+    immigrationDetentionSarList: List<ImmigrationDetentionSarEntity>,
     from: LocalDate?,
     to: LocalDate?,
   ): MutableList<ImmigrationDetention> {
     val immigrationDetentions: MutableList<ImmigrationDetention> = ArrayList()
 
-    for (ids in immigrationDetentionSarList.stream().filter { p: ImmigrationDetentionUnsyncedSarEntity -> filterByDate(from, to, p.recordDate) }.toList()) {
-      // for (ids in immigrationDetentionSarList.stream().toList()) {
+    for (ids in immigrationDetentionSarList.stream().filter { p: ImmigrationDetentionSarEntity -> filterByDate(from, to, p.recordDate) }.toList()) {
       immigrationDetentions.add(
         ImmigrationDetention(
           ids.homeOfficeReferenceNumber,
-          ids.noLongerOfInterestReason.toString(),
+          ids.noLongerOfInterestReason,
           ids.noLongerOfInterestComment,
         ),
       )

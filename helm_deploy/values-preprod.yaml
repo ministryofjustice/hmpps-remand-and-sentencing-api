@@ -12,6 +12,7 @@ generic-service:
     PRISON_API_URL: https://prison-api-preprod.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: https://document-api-preprod.hmpps.service.justice.gov.uk
     ADJUSTMENTS_API_URL: "https://adjustments-api-preprod.hmpps.service.justice.gov.uk"
+    COURT-REGISTER_API_URL: https://court-register-api-preprod.hmpps.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PREPROD
     FEATURES_APPEALS_ENABLED: "false"

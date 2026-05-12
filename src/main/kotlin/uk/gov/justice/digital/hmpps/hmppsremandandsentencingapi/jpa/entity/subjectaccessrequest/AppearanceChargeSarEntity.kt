@@ -1,10 +1,10 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
-import jakarta.persistence.Column
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
+import jakarta.persistence.FetchType
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.MapsId
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -16,28 +16,20 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 @Entity
 @Subselect(
   """
-  select id
-   ,sentence_id
-   ,years
-   ,months
-   ,weeks
-   ,days
-   ,period_order
-  from period_length""",
+  select appearance_id
+  ,charge_id
+  from appearance_charge""",
 )
-@Synchronize("period_length")
-class PeriodLengthSarEntity(
-  @Id
-  @Column
-  var id: Int,
-  @ManyToOne
-  @JoinColumn(name = "sentence_id")
-  var sentenceEntity: SentenceSarEntity?,
-  var years: Int?,
-  var months: Int?,
-  var weeks: Int?,
-  var days: Int?,
-  var periodOrder: String,
+@Synchronize("appearance_charge")
+class AppearanceChargeSarEntity(
+  @EmbeddedId
+  var id: AppearanceChargeSarId,
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("appearanceId")
+  var appearance: CourtAppearanceSarEntity? = null,
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("chargeId")
+  var charge: ChargeSarEntity? = null,
 ) {
   final override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -47,10 +39,10 @@ class PeriodLengthSarEntity(
     val thisEffectiveClass =
       if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
     if (thisEffectiveClass != oEffectiveClass) return false
-    other as PeriodLengthSarEntity
+    other as AppearanceChargeSarEntity
 
     return id == other.id
   }
 
-  final override fun hashCode(): Int = if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
+  final override fun hashCode(): Int = id.hashCode()
 }

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -36,6 +36,7 @@ import java.time.LocalDate
 class ChargeSarEntity(
   @Id
   var id: Int,
+  @Suppress("JpaDataSourceORMInspection")
   @ManyToOne
   @JoinColumn(name = "charge_outcome_id")
   var chargeOutcome: ChargeOutcomeSarEntity?,

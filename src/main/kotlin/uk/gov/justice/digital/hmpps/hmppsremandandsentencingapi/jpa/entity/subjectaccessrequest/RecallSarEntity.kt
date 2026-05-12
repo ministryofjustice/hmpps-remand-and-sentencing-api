@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -42,6 +42,7 @@ class RecallSarEntity(
   var status: String,
   @OneToMany(mappedBy = "recall")
   var recallSentences: MutableSet<RecallSentenceSarEntity> = mutableSetOf(),
+  @Suppress("JpaDataSourceORMInspection")
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "recall_type_id")
   var recallType: RecallTypeSarEntity,

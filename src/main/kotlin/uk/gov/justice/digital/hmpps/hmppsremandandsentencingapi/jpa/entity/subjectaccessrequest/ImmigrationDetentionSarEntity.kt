@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -15,12 +15,12 @@ import java.time.LocalDate
 @Subselect(
   """
   select id
-   ,immigration_detention_record_type
    ,prisoner_id
-   ,home_office_reference_number
    ,record_date
+   ,home_office_reference_number 
    ,no_longer_of_interest_reason
    ,no_longer_of_interest_comment
+   ,immigration_detention_record_type  
   from immigration_detention
   where status_id != 'DELETED'
   """,
@@ -31,10 +31,10 @@ class ImmigrationDetentionSarEntity(
   @Id
   @Column
   var id: Int,
-  var immigrationDetentionRecordType: String?,
   var prisonerId: String,
-  var homeOfficeReferenceNumber: String?,
   var recordDate: LocalDate,
+  var homeOfficeReferenceNumber: String?,
   var noLongerOfInterestReason: String?,
   var noLongerOfInterestComment: String?,
+  var immigrationDetentionRecordType: String? = null,
 )
