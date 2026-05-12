@@ -58,6 +58,8 @@ interface CourtCaseRepository :
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 
+  fun findByCaseUniqueIdentifierAndStatusIdNot(caseUniqueIdentifier: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): CourtCaseEntity?
+
   @Query(
     """
     select cc from CourtCaseEntity cc
@@ -283,4 +285,32 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun countCourtCasesForBooking(@Param("prisonerId") prisonerId: String, @Param("bookingId") bookingId: String, @Param("statusId") excludedStatusId: String = CourtCaseEntityStatus.DELETED.toString()): PersonCourtCaseCount
+
+  @Query(
+    """
+    select cc, ca, ac, c, s, pl from CourtCaseEntity cc
+    join cc.appearances ca
+    join ca.appearanceCharges ac
+    join ac.charge c
+    join c.sentences s
+    left join s.periodLengths pl
+    left join s.recallSentences rs
+    where cc.statusId = :courtCaseStatus and 
+    ca.statusId = :courtAppearanceStatus and 
+    c.statusId = :chargeStatus and 
+    s.statusId in :sentenceStatus and
+    cc.caseUniqueIdentifier = :courtCaseUuid and
+    rs is null
+  """,
+  )
+  fun findSentencedCourtCase(
+    @Param("courtCaseUuid") courtCaseUuid: String,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+    @Param("sentenceStatus") sentenceStatuses: List<SentenceEntityStatus> = listOf(
+      SentenceEntityStatus.ACTIVE,
+      SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
+    ),
+  ): CourtCaseEntity?
 }
