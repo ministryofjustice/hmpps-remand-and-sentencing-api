@@ -154,7 +154,7 @@ class UploadedDocumentService(
     try {
       action()
     } catch (e: Exception) {
-      log.error(
+      log.warn(
         "External call failed: action={}, documentId={}, prisonerId={}, message={}",
         actionName,
         documentId,
