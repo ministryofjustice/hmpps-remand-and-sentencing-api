@@ -127,8 +127,8 @@
     {
       "courtName": "No Data Held",
       "caseStatus": "ACTIVE",
-      "createdAt": "${json-unit.any-string}",
-      "updatedAt": "${json-unit.any-string}",
+      "createdAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
+      "updatedAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
       "latestCourtAppearance": null,
       "appearances": [
         {
