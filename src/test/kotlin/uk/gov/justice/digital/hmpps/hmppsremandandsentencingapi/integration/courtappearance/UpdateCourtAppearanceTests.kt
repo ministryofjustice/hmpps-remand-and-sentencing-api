@@ -121,6 +121,99 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `still update appearance in existing court case even if dm api fails`() {
+    val (oldDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(oldDocument.documentUUID.toString())
+
+    val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val createdAppearance = courtCase.second.appearances.first()
+    val createdCourtCase = getCourtCase(courtCase.first)
+
+    val (newDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(newDocument.documentUUID.toString())
+
+    val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
+    val appearanceChargeHistoryBefore =
+      appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
+    val updateCourtAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCase.first,
+      appearanceUUID = createdAppearance.appearanceUuid,
+      courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE",
+      documents = listOf(newDocument),
+    )
+
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearanceUuid")
+      .value<String> { appearanceUuid ->
+        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
+    val messages = getMessages(8)
+    assertThat(messages).hasSize(8).extracting<String> { it.eventType }.contains("court-appearance.updated")
+    assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
+    assertThat(messages).extracting<String> { it.eventType }.contains("sentence.period-length.inserted")
+
+    val historyRecords =
+      courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == updateCourtAppearance.appearanceUuid }
+    assertThat(historyRecords).extracting<String> { it.courtCaseReference!! }
+      .containsExactlyInAnyOrder(createdAppearance.courtCaseReference, updateCourtAppearance.courtCaseReference)
+    assertThat(historyRecords).extracting<EventSource> { it.source }.containsOnly(DPS)
+
+    val appearanceChargeHistoryAfter =
+      appearanceChargeHistoryRepository.findAll().toList().filter { it.appearanceId == appearanceId }
+    val beforeIds = appearanceChargeHistoryBefore.map { it.id }.toSet()
+    val newEntries = appearanceChargeHistoryAfter.filter { it.id !in beforeIds }
+    assertEquals(2, newEntries.size)
+    assertThat(newEntries).extracting<String> { it.removedBy }.containsExactlyInAnyOrder(null, "SOME_USER")
+    assertThat(newEntries).extracting<String> { it.createdBy }.containsExactly("SOME_USER", "SOME_USER")
+    assertThat(newEntries).extracting<String> { it.createdPrison }.containsExactlyInAnyOrder("PRISON1", "PRISON1")
+    assertThat(newEntries).extracting<String> { it.removedPrison }.containsExactlyInAnyOrder(null, "PRISON1")
+
+    val oldDoc = uploadedDocumentRepository.findByDocumentUuid(oldDocument.documentUUID)
+    assertThat(oldDoc).isNotNull
+    assertThat(oldDoc!!.appearance).isNull()
+
+    documentManagementApi.verify(
+      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${oldDocument.documentUUID}/metadata"))
+        .withRequestBody(
+          WireMock.equalToJson(
+            documentMetadataRequest(
+              createdCourtCase.prisonerId,
+              "Deleted",
+            ),
+          ),
+        ),
+    )
+
+    val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
+    assertThat(newDoc).isNotNull
+    assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
+
+    documentManagementApi.verify(
+      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${newDocument.documentUUID}/metadata"))
+        .withRequestBody(
+          WireMock.equalToJson(
+            documentMetadataRequest(
+              createdCourtCase.prisonerId,
+              "Active",
+            ),
+          ),
+        ),
+    )
+  }
+
+  @Test
   fun `copy over interim charges to future appearance`() {
     val remandCharge = DpsDataCreator.dpsCreateCharge(
       outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),

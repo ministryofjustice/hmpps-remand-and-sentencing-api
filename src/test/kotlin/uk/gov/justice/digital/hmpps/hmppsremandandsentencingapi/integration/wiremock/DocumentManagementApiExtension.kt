@@ -53,4 +53,12 @@ class DocumentManagementApiMockServer : WireMockServer(WireMockConfiguration.opt
           .withStatus(200),
       ),
   )
+
+  fun stubUpdateDocumentMetadataToFail(documentId: String): StubMapping = stubFor(
+    put("/documents/$documentId/metadata")
+      .willReturn(
+        aResponse()
+          .withStatus(500),
+      ),
+  )
 }

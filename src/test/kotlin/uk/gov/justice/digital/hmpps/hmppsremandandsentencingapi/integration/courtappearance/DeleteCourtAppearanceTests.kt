@@ -113,6 +113,41 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `deleting a court appearance should finish even if updating document fails`() {
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val createdAppearance = courtCase.second.appearances.first()
+
+    webTestClient.delete()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+      .expectBody()
+
+    documentManagementApi.verify(
+      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
+        .withRequestBody(
+          WireMock.equalToJson(
+            documentMetadataRequest(
+              courtCase.second.prisonerId,
+              "Deleted",
+            ),
+          ),
+        ),
+    )
+
+    val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
+    assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
+  }
+
+  @Test
   fun `must delete inactive sentences`() {
     val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)

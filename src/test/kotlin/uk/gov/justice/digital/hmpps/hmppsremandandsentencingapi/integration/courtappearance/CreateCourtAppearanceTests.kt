@@ -67,6 +67,53 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `still create appearance in existing court case and link document even if dm api fails`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+
+    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, documents = listOf(uploadedDocument))
+    webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(createCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .expectBody()
+      .jsonPath("$.appearanceUuid")
+      .value<String> { appearanceUuid ->
+        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
+
+    val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == createCourtAppearance.appearanceUuid }
+    Assertions.assertThat(historyRecords).hasSize(1)
+    val historyRecord = historyRecords[0]
+    Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
+    assertThat(historyRecord.source).isEqualTo(DPS)
+
+    val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
+    assertThat(linkedDocument).isNotNull
+    assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
+    documentManagementApi.verify(
+      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
+        .withRequestBody(
+          WireMock.equalToJson(
+            documentMetadataRequest(
+              createdCourtCase.prisonerId,
+              "Active",
+            ),
+          ),
+        ),
+    )
+  }
+
+  @Test
   fun `copy over interim charges to future appearance`() {
     val remandCharge = DpsDataCreator.dpsCreateCharge(
       outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
