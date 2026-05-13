@@ -11,6 +11,6 @@ hmpps:
     tests:
       expected-api-response:
         path: /sar/sar-api-response.json
-      expected-render-result:
-        path: /sar/sar-generated-report.html
       attachments-expected: false
+      expected-jpa-entity-schema:
+        path: /sar/entity-schema-snapshot.json

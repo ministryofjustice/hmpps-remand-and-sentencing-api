@@ -1,0 +1,163 @@
+{
+  "prisonerNumber": "PRI123",
+  "prisonerName": "Cormac Meza",
+  "courtCases": [
+    {
+      "courtName": "Crown Court #1",
+      "caseStatus": "ACTIVE",
+      "createdAt": "${json-unit.any-string}",
+      "updatedAt": "${json-unit.any-string}",
+      "latestCourtAppearance": {
+        "appearanceDate": "2026-05-13",
+        "appearanceOutcomeName": "Imprisonment",
+        "warrantType": "SENTENCING",
+        "convictionDate": "2026-05-06",
+        "nextAppearanceDate": "2026-05-15",
+        "charges": [
+          {
+            "offenceCode": "OFF123",
+            "offenceDescription": "No Data Held",
+            "terrorRelated": "Yes",
+            "foreignPowerRelated": "No",
+            "domesticViolenceRelated": "No",
+            "offenceStartDate": "2026-05-13",
+            "offenceEndDate": "No Data Held",
+            "chargeOutcome": "Imprisonment",
+            "liveSentence": {
+              "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+              "sentenceTypeClassification": "STANDARD",
+              "periodLengths": [
+                {
+                  "years": 1,
+                  "months": 0,
+                  "weeks": 0,
+                  "days": 0,
+                  "periodOrder": "years"
+                }
+              ],
+              "sentenceServeType": "FORTHWITH"
+            }
+          },
+          {
+            "offenceCode": "OFF123",
+            "offenceDescription": "No Data Held",
+            "terrorRelated": "Yes",
+            "foreignPowerRelated": "No",
+            "domesticViolenceRelated": "No",
+            "offenceStartDate": "2026-05-13",
+            "offenceEndDate": "No Data Held",
+            "chargeOutcome": "Imprisonment",
+            "liveSentence": {
+              "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+              "sentenceTypeClassification": "STANDARD",
+              "periodLengths": [
+                {
+                  "years": 1,
+                  "months": 0,
+                  "weeks": 0,
+                  "days": 0,
+                  "periodOrder": "years"
+                }
+              ],
+              "sentenceServeType": "FORTHWITH"
+            }
+          }
+        ]
+      },
+      "appearances": [
+        {
+          "appearanceDate": "2026-05-13",
+          "appearanceOutcomeName": "Imprisonment",
+          "warrantType": "SENTENCING",
+          "convictionDate": "2026-05-06",
+          "nextAppearanceDate": "2026-05-15",
+          "charges": [
+            {
+              "offenceCode": "OFF123",
+              "offenceDescription": "No Data Held",
+              "terrorRelated": "Yes",
+              "foreignPowerRelated": "No",
+              "domesticViolenceRelated": "No",
+              "offenceStartDate": "2026-05-13",
+              "offenceEndDate": "No Data Held",
+              "chargeOutcome": "Imprisonment",
+              "liveSentence": {
+                "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+                "sentenceTypeClassification": "STANDARD",
+                "periodLengths": [
+                  {
+                    "years": 1,
+                    "months": 0,
+                    "weeks": 0,
+                    "days": 0,
+                    "periodOrder": "years"
+                  }
+                ],
+                "sentenceServeType": "FORTHWITH"
+              }
+            },
+            {
+              "offenceCode": "OFF123",
+              "offenceDescription": "No Data Held",
+              "terrorRelated": "Yes",
+              "foreignPowerRelated": "No",
+              "domesticViolenceRelated": "No",
+              "offenceStartDate": "2026-05-13",
+              "offenceEndDate": "No Data Held",
+              "chargeOutcome": "Imprisonment",
+              "liveSentence": {
+                "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+                "sentenceTypeClassification": "STANDARD",
+                "periodLengths": [
+                  {
+                    "years": 1,
+                    "months": 0,
+                    "weeks": 0,
+                    "days": 0,
+                    "periodOrder": "years"
+                  }
+                ],
+                "sentenceServeType": "FORTHWITH"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "courtName": "No Data Held",
+      "caseStatus": "ACTIVE",
+      "createdAt": "${json-unit.any-string}",
+      "updatedAt": "${json-unit.any-string}",
+      "latestCourtAppearance": null,
+      "appearances": [
+        {
+          "appearanceDate": "2021-01-01",
+          "appearanceOutcomeName": "Immigration Detainee",
+          "warrantType": "IMMIGRATION",
+          "convictionDate": "No Data Held",
+          "nextAppearanceDate": "No Data Held",
+          "charges": []
+        }
+      ]
+    }
+  ],
+  "recalls": [
+    {
+      "recallType": "FTR_14",
+      "revocationDate": "2024-01-02",
+      "returnToCustodyDate": "2024-02-03",
+      "inPrisonOnRevocationDate": "No",
+      "recallSentenceStatus": "ACTIVE"
+    }
+  ],
+  "immigrationDetentions": [
+    {
+      "immigrationDetentionRecordType": "IS91",
+      "homeOfficeReferenceNumber": "No Data Held",
+      "recordDate": "2021-01-01",
+      "noLongerOfInterestReason": "No Data Held",
+      "noLongerOfInterestComment": "No Data Held"
+    }
+  ]
+}

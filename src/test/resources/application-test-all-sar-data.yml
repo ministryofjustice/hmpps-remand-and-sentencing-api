@@ -8,6 +8,4 @@ hmpps:
     tests:
       expected-api-response:
         path: /sar/alldata/sar-api-response.json
-      expected-render-result:
-        path: /sar/alldata/sar-generated-report.html
       attachments-expected: false
