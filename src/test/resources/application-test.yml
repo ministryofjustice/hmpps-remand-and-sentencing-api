@@ -75,5 +75,3 @@ springdoc:
 features:
   appeals:
     enabled: false
-  mark-immigration-cases-inactive:
-    enabled: true
