@@ -6,10 +6,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 
 data class Sentence(
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val sentenceTypeDescription: String?,
+  val sentenceTypeDescription: String? = null,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val sentenceTypeClassification: String?,
-  val periodLengths: List<PeriodLength>?,
+  val sentenceTypeClassification: String? = null,
+  val periodLengths: List<PeriodLength>? = listOf(),
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val sentenceServeType: String?,
+  val sentenceServeType: String? = null,
 )

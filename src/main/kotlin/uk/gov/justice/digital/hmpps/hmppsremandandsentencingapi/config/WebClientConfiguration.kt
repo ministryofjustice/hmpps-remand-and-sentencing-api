@@ -19,6 +19,7 @@ import java.time.Duration
 @Configuration
 class WebClientConfiguration(
   @param:Value("\${prison.api.url}") private val prisonApiUri: String,
+  @param:Value("\${court-register.api.url:}") private val courtRegisterApiUri: String,
   @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
   @param:Value("\${adjustments.api.url}") private val adjustmentsApiUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
@@ -31,6 +32,16 @@ class WebClientConfiguration(
     .baseUrl(prisonApiUri)
     .filter(addAuthHeaderFilterFunction())
     .build()
+
+  @Bean
+  fun courtRegisterApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "court-register-api",
+    courtRegisterApiUri,
+  )
 
   private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
     val authenticationToken: Jwt = SecurityContextHolder.getContext()

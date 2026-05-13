@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
@@ -46,7 +45,6 @@ class ImmigrationDetentionService(
   private val courtAppearanceRepository: CourtAppearanceRepository,
   private val courtCaseReferenceService: CourtCaseReferenceService,
   private val serviceUserService: ServiceUserService,
-  private val featuresConfig: FeaturesConfig,
 ) {
 
   @Transactional
@@ -104,10 +102,8 @@ class ImmigrationDetentionService(
         courtAppearanceEntity?.appearanceUuid,
       ),
     )
-    if (featuresConfig.markImmigrationCasesInactive.enabled) {
-      val courtCaseUpdatedEvents = deactivateImmigrationCourtCases(immigrationDetention)
-      eventsToEmit.addAll(courtCaseUpdatedEvents)
-    }
+    val courtCaseUpdatedEvents = deactivateImmigrationCourtCases(immigrationDetention)
+    eventsToEmit.addAll(courtCaseUpdatedEvents)
 
     return RecordResponse(
       SaveImmigrationDetentionResponse.from(savedImmigrationDetention),
