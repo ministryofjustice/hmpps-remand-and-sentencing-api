@@ -11,4 +11,3 @@ data class FeaturesConfig @ConstructorBinding constructor(
 data class AppealsConfig(
   val enabled: Boolean,
 )
-

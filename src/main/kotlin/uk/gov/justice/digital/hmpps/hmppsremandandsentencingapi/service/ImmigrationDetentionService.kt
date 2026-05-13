@@ -102,8 +102,8 @@ class ImmigrationDetentionService(
         courtAppearanceEntity?.appearanceUuid,
       ),
     )
-      val courtCaseUpdatedEvents = deactivateImmigrationCourtCases(immigrationDetention)
-      eventsToEmit.addAll(courtCaseUpdatedEvents)
+    val courtCaseUpdatedEvents = deactivateImmigrationCourtCases(immigrationDetention)
+    eventsToEmit.addAll(courtCaseUpdatedEvents)
 
     return RecordResponse(
       SaveImmigrationDetentionResponse.from(savedImmigrationDetention),
