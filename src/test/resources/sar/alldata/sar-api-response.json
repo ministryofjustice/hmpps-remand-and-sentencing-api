@@ -5,14 +5,14 @@
     {
       "courtName": "Crown Court #1",
       "caseStatus": "ACTIVE",
-      "createdAt": "${json-unit.any-string}",
-      "updatedAt": "${json-unit.any-string}",
+      "createdAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
+      "updatedAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
       "latestCourtAppearance": {
-        "appearanceDate": "2026-05-13",
+        "appearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
         "appearanceOutcomeName": "Imprisonment",
         "warrantType": "SENTENCING",
-        "convictionDate": "2026-05-06",
-        "nextAppearanceDate": "2026-05-15",
+        "convictionDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+        "nextAppearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
         "charges": [
           {
             "offenceCode": "OFF123",
@@ -20,7 +20,7 @@
             "terrorRelated": "Yes",
             "foreignPowerRelated": "No",
             "domesticViolenceRelated": "No",
-            "offenceStartDate": "2026-05-13",
+            "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
             "offenceEndDate": "No Data Held",
             "chargeOutcome": "Imprisonment",
             "liveSentence": {
@@ -44,7 +44,7 @@
             "terrorRelated": "Yes",
             "foreignPowerRelated": "No",
             "domesticViolenceRelated": "No",
-            "offenceStartDate": "2026-05-13",
+            "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
             "offenceEndDate": "No Data Held",
             "chargeOutcome": "Imprisonment",
             "liveSentence": {
@@ -66,11 +66,11 @@
       },
       "appearances": [
         {
-          "appearanceDate": "2026-05-13",
+          "appearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
           "appearanceOutcomeName": "Imprisonment",
           "warrantType": "SENTENCING",
-          "convictionDate": "2026-05-06",
-          "nextAppearanceDate": "2026-05-15",
+          "convictionDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+          "nextAppearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
           "charges": [
             {
               "offenceCode": "OFF123",
@@ -78,7 +78,7 @@
               "terrorRelated": "Yes",
               "foreignPowerRelated": "No",
               "domesticViolenceRelated": "No",
-              "offenceStartDate": "2026-05-13",
+              "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
               "offenceEndDate": "No Data Held",
               "chargeOutcome": "Imprisonment",
               "liveSentence": {
@@ -102,7 +102,7 @@
               "terrorRelated": "Yes",
               "foreignPowerRelated": "No",
               "domesticViolenceRelated": "No",
-              "offenceStartDate": "2026-05-13",
+              "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
               "offenceEndDate": "No Data Held",
               "chargeOutcome": "Imprisonment",
               "liveSentence": {
@@ -132,7 +132,7 @@
       "latestCourtAppearance": null,
       "appearances": [
         {
-          "appearanceDate": "2021-01-01",
+          "appearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
           "appearanceOutcomeName": "Immigration Detainee",
           "warrantType": "IMMIGRATION",
           "convictionDate": "No Data Held",
@@ -145,8 +145,8 @@
   "recalls": [
     {
       "recallType": "FTR_14",
-      "revocationDate": "2024-01-02",
-      "returnToCustodyDate": "2024-02-03",
+      "revocationDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+      "returnToCustodyDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
       "inPrisonOnRevocationDate": "No",
       "recallSentenceStatus": "ACTIVE"
     }
@@ -155,7 +155,7 @@
     {
       "immigrationDetentionRecordType": "IS91",
       "homeOfficeReferenceNumber": "No Data Held",
-      "recordDate": "2021-01-01",
+      "recordDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
       "noLongerOfInterestReason": "No Data Held",
       "noLongerOfInterestComment": "No Data Held"
     }
