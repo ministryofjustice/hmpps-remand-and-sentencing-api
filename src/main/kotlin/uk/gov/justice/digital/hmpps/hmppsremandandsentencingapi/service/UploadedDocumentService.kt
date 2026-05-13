@@ -41,19 +41,16 @@ class UploadedDocumentService(
     appearance: CourtAppearanceEntity,
     prisonerId: String,
   ) {
+    val linkedDocumentIds = mutableListOf<UUID>()
     val documentsToUnlink =
       uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
         appearance.appearanceUuid,
         documentUUIDs,
       )
-
     unlinkDocuments(documentsToUnlink, prisonerId)
-
-    val linkedDocumentIds = mutableListOf<UUID>()
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
-
       if (document != null) {
         document.appearance = appearance
         document.updatedBy = serviceUserService.getUsername()
@@ -83,13 +80,11 @@ class UploadedDocumentService(
     uploadedDocuments: List<UploadedDocumentEntity>,
     prisonerId: String,
   ) {
-    // ✅ Step 1: DB updates FIRST
     uploadedDocuments.forEach { document ->
       document.unlink(serviceUserService.getUsername())
       uploadedDocumentRepository.save(document)
     }
 
-    // ✅ Step 2: External calls (safe)
     uploadedDocuments.forEach { document ->
       safelyExecuteApiCall(
         actionName = "updateMetadataDeleted",
