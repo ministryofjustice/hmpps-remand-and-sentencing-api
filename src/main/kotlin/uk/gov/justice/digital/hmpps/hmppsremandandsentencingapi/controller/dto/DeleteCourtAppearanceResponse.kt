@@ -7,5 +7,5 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 data class DeleteCourtAppearanceResponse(
   val records: RecordResponse<CourtAppearanceEntity>,
   val courtCaseUuid: String,
-  val documentUpdates: List<DocumentMetadataUpdate>
+  val documentUpdates: List<DocumentMetadataUpdate>,
 )

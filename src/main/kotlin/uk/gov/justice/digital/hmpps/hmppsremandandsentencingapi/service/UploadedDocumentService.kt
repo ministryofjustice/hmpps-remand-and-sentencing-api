@@ -24,7 +24,6 @@ class UploadedDocumentService(
   private val serviceUserService: ServiceUserService,
   private val documentManagementApiClient: DocumentManagementApiClient,
 ) {
-
   @Transactional
   fun create(createUploadedDocument: CreateUploadedDocument) {
     val courtAppearance = createUploadedDocument.appearanceUUID?.let {
@@ -51,7 +50,7 @@ class UploadedDocumentService(
         documentUUIDs,
       )
     unlinkDocuments(documentsToUnlink)
-    documentsToUnlink.forEach { document -> documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, document.documentUuid, DocumentMetadataStatus.DELETED))  }
+    documentsToUnlink.forEach { document -> documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, document.documentUuid, DocumentMetadataStatus.DELETED)) }
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
@@ -86,19 +85,9 @@ class UploadedDocumentService(
     val cutoff = ZonedDateTime.now().minusDays(10)
     val documentsToBeDeleted =
       uploadedDocumentRepository.findDocumentUuidsWithoutAppearanceAndOlderThan10Days(cutoff)
-
-    documentsToBeDeleted.forEach { document ->
-      safelyExecuteApiCall(
-        actionName = "deleteDocument",
-        documentId = document.documentUuid,
-        prisonerId = "system",
-      ) {
-        documentManagementApiClient.deleteDocument(
-          documentId = document.documentUuid.toString(),
-        )
-      }
+    documentsToBeDeleted.forEach {
+      documentManagementApiClient.deleteDocument(it.documentUuid.toString())
     }
-
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
@@ -121,28 +110,8 @@ class UploadedDocumentService(
     return PrisonerDocuments.from(filtered)
   }
 
-  private fun safelyExecuteApiCall(
-    actionName: String,
-    documentId: UUID?,
-    prisonerId: String,
-    action: () -> Unit,
-  ) {
-    try {
-      action()
-    } catch (e: Exception) {
-      log.warn(
-        "External call failed: action={}, documentId={}, prisonerId={}, message={}",
-        actionName,
-        documentId,
-        prisonerId,
-        e.message,
-        e,
-      )
-    }
-  }
-
   fun processDocumentMetadataUpdates(
-    updates: List<DocumentMetadataUpdate>
+    updates: List<DocumentMetadataUpdate>,
   ) {
     updates.forEach { update ->
       try {
@@ -152,7 +121,7 @@ class UploadedDocumentService(
           uploadStatus = update.status,
         )
       } catch (e: Exception) {
-        log.error(
+        log.warn(
           "Failed to update metadata for document {} with status {}",
           update.documentId,
           update.status,

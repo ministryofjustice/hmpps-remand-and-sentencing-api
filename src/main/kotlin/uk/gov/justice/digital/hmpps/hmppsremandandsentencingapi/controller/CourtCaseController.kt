@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
 import java.util.UUID
@@ -49,6 +50,7 @@ class CourtCaseController(
   private val courtCaseReferenceService: CourtCaseReferenceService,
   private val dpsDomainEventService: DpsDomainEventService,
   private val recallService: RecallService,
+  private val uploadedDocumentService: UploadedDocumentService,
 ) {
 
   @PostMapping("/court-case")
@@ -66,7 +68,7 @@ class CourtCaseController(
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
-    val (courtCase, eventsToEmit) = courtCaseService.createCourtCase(createCourtCase)
+    val (courtCase, eventsToEmit, documentUpdates) = courtCaseService.createCourtCase(createCourtCase)
     val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     if (updatedCourtCaseReferences?.hasUpdated == true) {
       eventsToEmit.add(
@@ -78,6 +80,7 @@ class CourtCaseController(
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
+    uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
     return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
   }
 
@@ -96,7 +99,7 @@ class CourtCaseController(
   )
   @ResponseStatus(HttpStatus.OK)
   fun putCourtCase(@RequestBody createCourtCase: CreateCourtCase, @PathVariable courtCaseUuid: String): CreateCourtCaseResponse {
-    val (courtCase, eventsToEmit) = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid)
+    val (courtCase, eventsToEmit, documentUpdates) = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid)
     val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
     if (updatedCourtCaseReferences?.hasUpdated == true) {
       eventsToEmit.add(
@@ -108,6 +111,7 @@ class CourtCaseController(
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
+    uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
   }
 

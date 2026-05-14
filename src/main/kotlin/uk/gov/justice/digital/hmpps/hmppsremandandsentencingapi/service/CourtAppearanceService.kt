@@ -63,7 +63,7 @@ class CourtAppearanceService(
       ?.let { courtCaseEntity ->
         val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity)
         courtCaseEntity.latestCourtAppearance =
-          CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance.recordResponse.record)
+          CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance.record)
         return courtAppearance
       }
   }
@@ -72,7 +72,7 @@ class CourtAppearanceService(
   fun createCourtAppearanceByAppearanceUuid(
     createCourtAppearance: CreateCourtAppearance,
     appearanceUuid: UUID,
-  ): RecordResponse<CourtAppearanceEntity>? {
+  ): RecordResponseWithDocumentUpdates<CourtAppearanceEntity>? {
     return courtCaseRepository.findByCaseUniqueIdentifier(createCourtAppearance.courtCaseUuid!!)
       ?.let { courtCaseEntity ->
         val existingCourtAppearance = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)
@@ -85,9 +85,9 @@ class CourtAppearanceService(
             createCourtAppearance,
             courtCaseEntity,
             existingCourtAppearance,
-          ).recordResponse
+          )
         } else {
-          createCourtAppearanceEntity(createCourtAppearance, courtCaseEntity).recordResponse
+          createCourtAppearanceEntity(createCourtAppearance, courtCaseEntity)
         }
         courtCaseEntity.latestCourtAppearance =
           CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + savedAppearance.record)
@@ -215,7 +215,7 @@ class CourtAppearanceService(
     )
 
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance, ChangeSource.DPS))
-    return RecordResponseWithDocumentUpdates(RecordResponse(createdCourtAppearance, eventsToEmit), documentUpdates)
+    return RecordResponseWithDocumentUpdates(createdCourtAppearance, eventsToEmit, documentUpdates)
   }
 
   private fun updateCourtAppearanceEntity(
@@ -316,7 +316,7 @@ class CourtAppearanceService(
     ) {
       courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(existingCourtAppearanceEntity, ChangeSource.DPS))
     }
-    return RecordResponseWithDocumentUpdates(RecordResponse(activeRecord, eventsToEmit), documentUpdates)
+    return RecordResponseWithDocumentUpdates(activeRecord, eventsToEmit, documentUpdates)
   }
 
   private fun updateNextCourtAppearance(
@@ -678,7 +678,7 @@ class CourtAppearanceService(
             ) as MutableSet<EventMetadata>,
         ),
         courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
-        documentUpdates = documentUpdates
+        documentUpdates = documentUpdates,
       )
     }
     courtCaseEntity.latestCourtAppearance =
@@ -698,7 +698,7 @@ class CourtAppearanceService(
           ) as MutableSet<EventMetadata>,
       ),
       courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
-      documentUpdates = documentUpdates
+      documentUpdates = documentUpdates,
     )
   }
 }

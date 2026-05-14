@@ -45,7 +45,7 @@ class CourtCaseService(
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
     }
-    val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    val (savedCourtCase, eventsToEmit, documentUpdates) = saveCourtCaseAppearances(courtCase, createCourtCase)
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(
         savedCourtCase.prisonerId,
@@ -53,16 +53,17 @@ class CourtCaseService(
         eventType,
       ),
     )
-    return RecordResponse(
+    return RecordResponseWithDocumentUpdates(
       savedCourtCase,
       eventsToEmit,
+      documentUpdates,
     )
   }
 
   @Transactional
-  fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
+  fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponseWithDocumentUpdates<CourtCaseEntity> {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername()))
-    val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    val (savedCourtCase, eventsToEmit, documentUpdates) = saveCourtCaseAppearances(courtCase, createCourtCase)
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(
         savedCourtCase.prisonerId,
@@ -70,26 +71,27 @@ class CourtCaseService(
         EventType.COURT_CASE_INSERTED,
       ),
     )
-    return RecordResponse(
+    return RecordResponseWithDocumentUpdates(
       savedCourtCase,
       eventsToEmit,
+      documentUpdates,
     )
   }
 
   private fun saveCourtCaseAppearances(
     courtCase: CourtCaseEntity,
     createCourtCase: CreateCourtCase,
-  ): RecordResponse<CourtCaseEntity> {
+  ): RecordResponseWithDocumentUpdates<CourtCaseEntity> {
     val toDeleteAppearances =
       courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
     val eventsToEmit =
       toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableSet()
-    val appearanceRecordsWithDocumentUpdates =
+    val appearanceRecords =
       createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
     val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
-    return RecordResponse(courtCaseRepository.save(courtCase), eventsToEmit)
+    return RecordResponseWithDocumentUpdates(courtCaseRepository.save(courtCase), eventsToEmit, appearanceRecords.flatMap { it.documentUpdates })
   }
 
   @Transactional
