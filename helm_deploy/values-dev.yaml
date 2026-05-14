@@ -20,6 +20,7 @@ generic-service:
     FEATURES_APPEALS_ENABLED: "true"
     HMPPS_SAR_ENABLED: "true"
     HMPPS_SAR_MODE_ALL-SAR-DATA_ENABLED: "false"
+    HMPPS_SAR_ADDITIONALACCESSROLE: ROLE_VIEW_PRISONER_DATA
     HMPPS_SAR_TEMPLATE_PATH: /templates/template_remand-and-sentencing-api.mustache
     HMPPS_SAR_TEMPLATE_ENABLED: "true"
 
