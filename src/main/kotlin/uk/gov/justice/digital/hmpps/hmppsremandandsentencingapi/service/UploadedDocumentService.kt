@@ -74,12 +74,10 @@ class UploadedDocumentService(
   @Transactional
   fun deleteDocumentsWithoutAppearanceId() {
     val cutoff = ZonedDateTime.now().minusDays(10)
-    val documentsToBeDeleted =
-      uploadedDocumentRepository.findDocumentUuidsWithoutAppearanceAndOlderThan10Days(cutoff)
-    documentsToBeDeleted.forEach {
-      documentManagementApiClient.deleteDocument(it.documentUuid.toString())
+    val documentsToBeDeleted = uploadedDocumentRepository.findDocumentUuidsWithoutAppearanceAndOlderThan10Days(cutoff)
+    for (document in documentsToBeDeleted) {
+      documentManagementApiClient.deleteDocument(documentId = document.documentUuid.toString())
     }
-    uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
   fun unlinkDocuments(
