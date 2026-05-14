@@ -4,17 +4,6 @@ on:
   schedule:
     - cron: "3 7 * * MON-FRI" # Every weekday at 07:03 UTC
 jobs:
-  initialise-project:
-    name: Initialise project to generate .snyk file
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_verify.yml@v2 # WORKFLOW_VERSION
-    with:
-      gradle-command: './gradlew properties'
-      upload-build-artifacts: false
-      upload-test-artifacts: false
-      java-version: "25"
-    permissions:
-      contents: read
-      actions: read
   security-snyk-check:
     permissions:
       contents: read
@@ -22,7 +11,6 @@ jobs:
       security-events: write
     name: Project security Snyk dependency check
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/security_snyk_scan.yml@v2
-    needs: initialise-project
     with:
       channel_id: ${{ vars.SECURITY_ALERTS_SLACK_CHANNEL_ID || 'NO_SLACK' }}
       subproject: ''
