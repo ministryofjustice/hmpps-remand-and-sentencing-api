@@ -78,6 +78,7 @@ class UploadedDocumentService(
     for (document in documentsToBeDeleted) {
       documentManagementApiClient.deleteDocument(documentId = document.documentUuid.toString())
     }
+    uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
   fun unlinkDocuments(
