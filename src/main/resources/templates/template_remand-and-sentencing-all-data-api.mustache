@@ -1,0 +1,112 @@
+<style>.indented-section { margin-left: 20px; } h2 {text-decoration: underline}</style>
+<h1 class="title">RaS-Recalls-Immigration-Detention</h1>
+{{#.}}
+    <h2>Offender Details</h2>
+    <table class="summary-list">
+        <tr><td>Prisoner Name</td><td>{{ optionalValue prisonerName }}</td></tr>
+        <tr><td>Prisoner Number</td><td>{{ prisonerNumber }}</td></tr>
+    </table>
+
+    <h2>Court Cases</h2>
+    {{#courtCases}}
+        <div class="case-section">
+            <h3>Court Case</h3>
+            <table class="summary-list">
+                <tr><td>Court Name</td><td>{{ optionalValue courtName }}</td></tr>
+                <tr><td>Case Status</td><td>{{ optionalValue caseStatus }}</td></tr>
+                <tr><td>Created At</td><td>{{ optionalValue createdAt }}</td></tr>
+                <tr><td>Last Updated</td><td>{{ optionalValue updatedAt }}</td></tr>
+            </table>
+
+            {{#latestCourtAppearance}}
+                <h3>Latest Court Appearance</h3>
+                {{> courtAppearance }}
+            {{/latestCourtAppearance}}
+
+            <h3>All Court Appearances</h3>
+            {{#appearances}}
+                {{> courtAppearance }}
+            {{/appearances}}
+            {{^appearances}}
+                <p>No Appearances Recorded for this Case</p>
+            {{/appearances}}
+        </div>
+        <br/>
+    {{/courtCases}}
+    {{^courtCases}}
+        <p>No Court Case Data Held</p>
+    {{/courtCases}}
+
+    <h2>Recalls</h2>
+    {{#recalls}}
+        <table class="data-table">
+            <tr><td>Details</td></tr>
+            <tr><td>Type</td><td>{{ optionalValue recallType }}</td></tr>
+            <tr><td>Revocation Date</td><td>{{ optionalValue (formatDate revocationDate) }}</td></tr>
+            <tr><td>Return to Custody Date</td><td>{{ optionalValue (formatDate returnToCustodyDate) }}</td></tr>
+            <tr><td>In Prison on Date of Revocation</td><td>{{ optionalValue inPrisonOnRevocationDate }}</td></tr>
+            <tr><td>Sentence Status</td><td>{{ optionalValue recallSentenceStatus }}</td></tr>
+        </table>
+    {{/recalls}}
+    {{^recalls}}
+        <p>No Recall Data Held</p>
+    {{/recalls}}
+
+    <h2>Immigration Detentions</h2>
+    {{#immigrationDetentions}}
+        <table class="data-table">
+            <tr><td>Details</td></tr>
+            <tr><td>Record Type</td><td>{{ optionalValue immigrationDetentionRecordType }}</td></tr>
+            <tr><td>Home Office Ref</td><td>{{ optionalValue homeOfficeReferenceNumber }}</td></tr>
+            <tr><td>Date</td><td>{{ optionalValue (formatDate recordDate) }}</td></tr>
+            <tr><td>No Longer of Interest Reason</td><td>{{ optionalValue noLongerOfInterestReason }}</td></tr>
+            <tr><td>No Longer of Interest Comment</td><td>{{ optionalValue noLongerOfInterestComment }}</td></tr>
+        </table>
+    {{/immigrationDetentions}}
+    {{^immigrationDetentions}}
+        <p>No Immigration Detention Data Held</p>
+    {{/immigrationDetentions}}
+
+{{/.}}
+{{^.}}
+    <p>No Data Held</p>
+{{/.}}
+
+
+{{#*inline "courtAppearance"}}
+    <div class="indented-section">
+    <h4>Court Appearance</h4>
+    <table class="data-table">
+        <tr><td>Details</td></tr>
+        <tr><td>Appearance Date</td><td>{{ optionalValue (formatDate appearanceDate) }}</td></tr>
+        <tr><td>Appearance Outcome</td><td>{{ optionalValue appearanceOutcomeName }}</td></tr>
+        <tr><td>Warrant Type</td><td>{{ optionalValue warrantType }}</td></tr>
+        <tr><td>Conviction Date</td><td>{{ optionalValue (formatDate convictionDate) }}</td></tr>
+        <tr><td>Next Appearance</td><td>{{ optionalValue (formatDate nextAppearanceDate) }}</td></tr>
+    </table>
+
+    <h4>Charges & Sentences</h4>
+    {{#charges}}
+        <table class="data-table">
+            <tr><td>Charge Details</td></tr>
+            <tr><td>Offence Code</td><td>{{ optionalValue offenceCode }} - {{ optionalValue offenceDescription }}</td></tr>
+            <tr><td>Offence Description</td><td>{{ optionalValue offenceDescription }}</td></tr>
+            <tr><td>Offence Dates</td><td>{{ optionalValue (formatDate offenceStartDate) }} to {{ optionalValue (formatDate offenceEndDate) }}</td></tr>
+            <tr><td>Charge Outcome</td><td>{{ optionalValue chargeOutcome }}</td></tr>
+            <tr><td>Aggregating Factors</td><td>Terror Related: {{ optionalValue terrorRelated }} <br/>Foreign Power: {{ optionalValue foreignPowerRelated }} <br/>Domestic Violence: {{ optionalValue domesticViolenceRelated }}</td></tr>
+        </table>
+        {{#liveSentence}}
+            <table class="data-table">
+                <tr><td>Live Sentence Details</td></tr>
+                <tr><td>Type Description</td><td>{{ optionalValue sentenceTypeDescription }}</td></tr>
+                <tr><td>Type Classification</td><td>{{ optionalValue sentenceTypeClassification }}</td></tr>
+                <tr><td>Serve Type</td><td>{{ optionalValue sentenceServeType }}</td></tr>
+                <tr><td>Period Lengths</td><td>{{#periodLengths}}{{years}} year(s), {{months}} month(s), {{weeks}} week(s), {{days}} day(s) {{/periodLengths}}<br/></td></tr>
+            </table>
+        {{/liveSentence}}
+    {{/charges}}
+    {{^charges}}
+        <p>No Charges Held</p>
+    {{/charges}}
+    </div>
+{{/inline}}

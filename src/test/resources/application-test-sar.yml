@@ -7,4 +7,10 @@ hmpps:
     additionalAccessRole: ROLE_VIEW_PRISONER_DATA
     template:
       path: /templates/template_remand-and-sentencing-api.mustache
-      enabled: false
+      enabled: true
+    tests:
+      expected-api-response:
+        path: /sar/sar-api-response.json
+      attachments-expected: false
+      expected-jpa-entity-schema:
+        path: /sar/entity-schema-snapshot.json
