@@ -40,8 +40,6 @@ ingress:
 features:
   appeals:
     enabled: false
-  mark-immigration-cases-inactive:
-    enabled: true
 
 springdoc:
   api-docs:

@@ -16,7 +16,6 @@ generic-service:
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PREPROD
     FEATURES_APPEALS_ENABLED: "false"
-    FEATURES_MARK_IMMIGRATION_CASES_INACTIVE_ENABLED: "true"
 
   allowlist:
     penetration-test-ip-1: 54.37.241.156/30
