@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponseWithDocumentUpdates
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -36,7 +37,7 @@ class CourtCaseService(
 ) {
 
   @Transactional
-  fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
+  fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponseWithDocumentUpdates<CourtCaseEntity> {
     var eventType = EventType.COURT_CASE_UPDATED
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(
       CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername(), caseUniqueIdentifier),
@@ -83,7 +84,7 @@ class CourtCaseService(
       courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
     val eventsToEmit =
       toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableSet()
-    val appearanceRecords =
+    val appearanceRecordsWithDocumentUpdates =
       createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
     val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })

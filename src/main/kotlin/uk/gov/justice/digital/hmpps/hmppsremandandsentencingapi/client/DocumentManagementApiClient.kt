@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataStatus
 
 @Component
 class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") private val webClient: WebClient) {
@@ -20,7 +21,7 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
   fun updateDocumentMetadata(
     prisonerId: String,
     documentId: String,
-    uploadStatus: String,
+    uploadStatus: DocumentMetadataStatus,
   ) {
     webClient
       .put()
