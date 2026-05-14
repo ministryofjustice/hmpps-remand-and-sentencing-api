@@ -1,0 +1,163 @@
+{
+  "prisonerNumber": "PRI123",
+  "prisonerName": "Cormac Meza",
+  "courtCases": [
+    {
+      "courtName": "Crown Court #1",
+      "caseStatus": "ACTIVE",
+      "createdAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
+      "updatedAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
+      "latestCourtAppearance": {
+        "appearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+        "appearanceOutcomeName": "Imprisonment",
+        "warrantType": "SENTENCING",
+        "convictionDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+        "nextAppearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+        "charges": [
+          {
+            "offenceCode": "OFF123",
+            "offenceDescription": "No Data Held",
+            "terrorRelated": "Yes",
+            "foreignPowerRelated": "No",
+            "domesticViolenceRelated": "No",
+            "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+            "offenceEndDate": "No Data Held",
+            "chargeOutcome": "Imprisonment",
+            "liveSentence": {
+              "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+              "sentenceTypeClassification": "STANDARD",
+              "periodLengths": [
+                {
+                  "years": 1,
+                  "months": 0,
+                  "weeks": 0,
+                  "days": 0,
+                  "periodOrder": "years"
+                }
+              ],
+              "sentenceServeType": "FORTHWITH"
+            }
+          },
+          {
+            "offenceCode": "OFF123",
+            "offenceDescription": "No Data Held",
+            "terrorRelated": "Yes",
+            "foreignPowerRelated": "No",
+            "domesticViolenceRelated": "No",
+            "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+            "offenceEndDate": "No Data Held",
+            "chargeOutcome": "Imprisonment",
+            "liveSentence": {
+              "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+              "sentenceTypeClassification": "STANDARD",
+              "periodLengths": [
+                {
+                  "years": 1,
+                  "months": 0,
+                  "weeks": 0,
+                  "days": 0,
+                  "periodOrder": "years"
+                }
+              ],
+              "sentenceServeType": "FORTHWITH"
+            }
+          }
+        ]
+      },
+      "appearances": [
+        {
+          "appearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+          "appearanceOutcomeName": "Imprisonment",
+          "warrantType": "SENTENCING",
+          "convictionDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+          "nextAppearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+          "charges": [
+            {
+              "offenceCode": "OFF123",
+              "offenceDescription": "No Data Held",
+              "terrorRelated": "Yes",
+              "foreignPowerRelated": "No",
+              "domesticViolenceRelated": "No",
+              "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+              "offenceEndDate": "No Data Held",
+              "chargeOutcome": "Imprisonment",
+              "liveSentence": {
+                "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+                "sentenceTypeClassification": "STANDARD",
+                "periodLengths": [
+                  {
+                    "years": 1,
+                    "months": 0,
+                    "weeks": 0,
+                    "days": 0,
+                    "periodOrder": "years"
+                  }
+                ],
+                "sentenceServeType": "FORTHWITH"
+              }
+            },
+            {
+              "offenceCode": "OFF123",
+              "offenceDescription": "No Data Held",
+              "terrorRelated": "Yes",
+              "foreignPowerRelated": "No",
+              "domesticViolenceRelated": "No",
+              "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+              "offenceEndDate": "No Data Held",
+              "chargeOutcome": "Imprisonment",
+              "liveSentence": {
+                "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
+                "sentenceTypeClassification": "STANDARD",
+                "periodLengths": [
+                  {
+                    "years": 1,
+                    "months": 0,
+                    "weeks": 0,
+                    "days": 0,
+                    "periodOrder": "years"
+                  }
+                ],
+                "sentenceServeType": "FORTHWITH"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "courtName": "No Data Held",
+      "caseStatus": "ACTIVE",
+      "createdAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
+      "updatedAt": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}.*$",
+      "latestCourtAppearance": null,
+      "appearances": [
+        {
+          "appearanceDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+          "appearanceOutcomeName": "Immigration Detainee",
+          "warrantType": "IMMIGRATION",
+          "convictionDate": "No Data Held",
+          "nextAppearanceDate": "No Data Held",
+          "charges": []
+        }
+      ]
+    }
+  ],
+  "recalls": [
+    {
+      "recallType": "FTR_14",
+      "revocationDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+      "returnToCustodyDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+      "inPrisonOnRevocationDate": "No",
+      "recallSentenceStatus": "ACTIVE"
+    }
+  ],
+  "immigrationDetentions": [
+    {
+      "immigrationDetentionRecordType": "IS91",
+      "homeOfficeReferenceNumber": "No Data Held",
+      "recordDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
+      "noLongerOfInterestReason": "No Data Held",
+      "noLongerOfInterestComment": "No Data Held"
+    }
+  ]
+}

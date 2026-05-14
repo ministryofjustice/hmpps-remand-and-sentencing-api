@@ -1,0 +1,15 @@
+{
+  "prisonerNumber": "PRI123",
+  "immigrationDetentions": [
+    {
+      "homeOfficeReferenceNumber": "3240593452",
+      "noLongerOfInterestReason": "RIGHT_TO_REMAIN",
+      "noLongerOfInterestComment": "Currently has the right to Remain"
+    },
+    {
+      "homeOfficeReferenceNumber": "5340593452",
+      "noLongerOfInterestReason": "BRITISH_CITIZEN",
+      "noLongerOfInterestComment": "Recently made a British Citizen"
+    }
+  ]
+}
