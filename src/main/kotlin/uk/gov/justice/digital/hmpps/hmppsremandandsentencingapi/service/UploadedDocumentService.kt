@@ -71,15 +71,6 @@ class UploadedDocumentService(
     return documentMetadataUpdates
   }
 
-  fun unlinkDocuments(
-    uploadedDocuments: List<UploadedDocumentEntity>,
-  ) {
-    uploadedDocuments.forEach { document ->
-      document.unlink(serviceUserService.getUsername())
-      uploadedDocumentRepository.save(document)
-    }
-  }
-
   @Transactional
   fun deleteDocumentsWithoutAppearanceId() {
     val cutoff = ZonedDateTime.now().minusDays(10)
@@ -89,6 +80,15 @@ class UploadedDocumentService(
       documentManagementApiClient.deleteDocument(it.documentUuid.toString())
     }
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
+  }
+
+  fun unlinkDocuments(
+    uploadedDocuments: List<UploadedDocumentEntity>,
+  ) {
+    uploadedDocuments.forEach { document ->
+      document.unlink(serviceUserService.getUsername())
+      uploadedDocumentRepository.save(document)
+    }
   }
 
   @Transactional(readOnly = true)
