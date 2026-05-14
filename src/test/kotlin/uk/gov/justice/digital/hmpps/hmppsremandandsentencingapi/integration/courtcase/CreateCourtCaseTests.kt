@@ -47,7 +47,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
     documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
 
     val createCourtCase = DpsDataCreator.dpsCreateCourtCase(
-      appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument)))
+      appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))),
     )
 
     webTestClient
@@ -86,7 +86,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
     documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
 
     val createCourtCase = DpsDataCreator.dpsCreateCourtCase(
-      appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument)))
+      appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))),
     )
 
     webTestClient

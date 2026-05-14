@@ -48,13 +48,13 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `update court case and link document`() {
     val courtCase = createCourtCase()
-    
+
     val (uploadedDocument) = uploadDocument()
     documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
 
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(uploadedDocument))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
-    
+
     webTestClient
       .put()
       .uri("/court-case/${courtCase.first}")
@@ -83,13 +83,13 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `update court case and link document finishes even if document management api fails`() {
     val courtCase = createCourtCase()
-    
+
     val (uploadedDocument) = uploadDocument()
     documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
 
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(uploadedDocument))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
-    
+
     webTestClient
       .put()
       .uri("/court-case/${courtCase.first}")
