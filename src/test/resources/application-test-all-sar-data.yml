@@ -1,4 +1,5 @@
 hmpps:
   sar:
     mode:
-      all-sar-data: true
+      all-sar-data:
+        enabled: true

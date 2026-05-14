@@ -11,11 +11,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subj
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.PrisonerTestData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
 
-@ActiveProfiles("sar", "test")
+@ActiveProfiles("test", "test-sar")
 class GetSarContentByReferenceTests : IntegrationTestBase() {
 
   @MockitoBean
-  lateinit var prisonerDetailsService: PrisonerDetailsService<Prisoner>
+  lateinit var prisonerDetailsService: PrisonerDetailsService
 
   @Test
   fun `get immigrationDetentions by valid prisoner id`() {
