@@ -15,6 +15,14 @@ import uk.gov.justice.digital.hmpps.subjectaccessrequest.SarJpaEntitiesTest
  *
  * This test will likely need to be updated regularly as the Entity Model changes,
  * but is purposefully designed to help identify whether this change should be included in the SAR model.
+ *
+ * To regenerate the entity-schema-snapshot.json at any time run below and copy the output of
+ * src/test/resources/entity-schema.json.log to src/test/resources/sar/entity-schema-snapshot.json.
+ *
+ *  ```bash
+ * SAR_GENERATE_ACTUAL=true ./gradlew test \
+ *  --tests "uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.SarEntityComparisonIntegrationTests"
+ *  ```
  */
 @Import(SarIntegrationTestHelperConfig::class)
 @TestPropertySource(
