@@ -33,7 +33,7 @@ class AllPrisonerDetailsServiceTests {
   @MockK
   private lateinit var courtRegisterService: CourtRegisterService
 
-  @InjectMockKs(overrideValues = true) // 3. Use @InjectMockKs for the service
+  @InjectMockKs(overrideValues = true)
   private lateinit var sut: AllPrisonerDetailsService
 
   @Test

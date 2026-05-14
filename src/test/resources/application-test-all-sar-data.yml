@@ -3,3 +3,9 @@ hmpps:
     mode:
       all-sar-data:
         enabled: true
+    template:
+      path: /templates/template_remand-and-sentencing-all-data-api.mustache
+    tests:
+      expected-api-response:
+        path: /sar/alldata/sar-api-response.json
+      attachments-expected: false
