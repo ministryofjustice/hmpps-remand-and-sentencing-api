@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class CreateCourtCaseTests : IntegrationTestBase() {
@@ -36,6 +37,64 @@ class CreateCourtCaseTests : IntegrationTestBase() {
 
     val courtCaseLogs = courtCaseHistoryRepository.findAll().filter { it.prisonerId == createCourtCase.prisonerId }
     assertThat(courtCaseLogs).hasSize(1)
+  }
+
+  @Test
+  fun `Successfully create court case and link document`() {
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+
+    val createCourtCase = DpsDataCreator.dpsCreateCourtCase(
+      appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))),
+    )
+
+    webTestClient
+      .post()
+      .uri("/court-case")
+      .bodyValue(createCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .expectBody()
+      .jsonPath("$.courtCaseUuid")
+      .value<String> { courtCaseUuid ->
+        Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
+
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createCourtCase.prisonerId, "Active")
+  }
+
+  @Test
+  fun `Create court case and link document finishes even if document management api fails`() {
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+
+    val createCourtCase = DpsDataCreator.dpsCreateCourtCase(
+      appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))),
+    )
+
+    webTestClient
+      .post()
+      .uri("/court-case")
+      .bodyValue(createCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .expectBody()
+      .jsonPath("$.courtCaseUuid")
+      .value<String> { courtCaseUuid ->
+        Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
+
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createCourtCase.prisonerId, "Active")
   }
 
   @Test

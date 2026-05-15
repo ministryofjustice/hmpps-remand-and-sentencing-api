@@ -3,9 +3,12 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.github.tomakehurst.wiremock.client.WireMock
 import com.microsoft.applicationinsights.TelemetryClient
 import kotlinx.coroutines.runBlocking
 import org.awaitility.core.ConditionTimeoutException
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.untilAsserted
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
@@ -40,9 +43,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.repository.AppearanceChargeRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
@@ -758,6 +763,22 @@ abstract class IntegrationTestBase {
       .expectStatus()
       .isCreated
     return documents
+  }
+
+  protected fun verifyDocumentMetadataUpdated(documentUUID: UUID, prisonerId: String, status: String) {
+    await untilAsserted {
+      documentManagementApi.verify(
+        WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/$documentUUID/metadata"))
+          .withRequestBody(
+            WireMock.equalToJson(
+              documentMetadataRequest(
+                prisonerId,
+                status,
+              ),
+            ),
+          ),
+      )
+    }
   }
 
   protected fun migrateCases(courtCases: MigrationCreateCourtCases) = webTestClient

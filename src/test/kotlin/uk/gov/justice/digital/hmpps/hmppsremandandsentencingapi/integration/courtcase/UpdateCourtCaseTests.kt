@@ -7,6 +7,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
@@ -40,6 +41,56 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
 
     val courtCaseLogs = courtCaseHistoryRepository.findAll().filter { it.prisonerId == courtCase.second.prisonerId }
     assertThat(courtCaseLogs).hasSize(1)
+  }
+
+  @Test
+  fun `update court case and link document`() {
+    val courtCase = createCourtCase()
+
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(uploadedDocument))
+    val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
+
+    webTestClient
+      .put()
+      .uri("/court-case/${courtCase.first}")
+      .bodyValue(editedCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, courtCase.second.prisonerId, "Active")
+  }
+
+  @Test
+  fun `update court case and link document finishes even if document management api fails`() {
+    val courtCase = createCourtCase()
+
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(uploadedDocument))
+    val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
+
+    webTestClient
+      .put()
+      .uri("/court-case/${courtCase.first}")
+      .bodyValue(editedCourtCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, courtCase.second.prisonerId, "Active")
   }
 
   @Test

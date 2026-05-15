@@ -1,12 +1,17 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.untilAsserted
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
@@ -73,6 +78,79 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     val deletedCourtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCase.first)
     assertEquals(CourtCaseEntityStatus.ACTIVE, deletedCourtCase?.statusId)
+  }
+
+  @Test
+  fun `deleting a court appearance updates document metadata to Deleted`() {
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val createdAppearance = courtCase.second.appearances.first()
+
+    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+
+    webTestClient.delete()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+      .expectBody()
+
+    await untilAsserted {
+      documentManagementApi.verify(
+        WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
+          .withRequestBody(
+            WireMock.equalToJson(
+              documentMetadataRequest(
+                courtCase.second.prisonerId,
+                "Deleted",
+              ),
+            ),
+          ),
+      )
+    }
+  }
+
+  @Test
+  fun `deleting a court appearance should finish even if updating document fails`() {
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val createdAppearance = courtCase.second.appearances.first()
+
+    webTestClient.delete()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+      .expectBody()
+
+    await untilAsserted {
+      documentManagementApi.verify(
+        WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
+          .withRequestBody(
+            WireMock.equalToJson(
+              documentMetadataRequest(
+                courtCase.second.prisonerId,
+                "Deleted",
+              ),
+            ),
+          ),
+      )
+    }
+
+    val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
+    assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
   }
 
   @Test

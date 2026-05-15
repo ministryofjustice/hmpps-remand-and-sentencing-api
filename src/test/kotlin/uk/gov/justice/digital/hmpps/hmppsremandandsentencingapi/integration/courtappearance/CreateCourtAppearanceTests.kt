@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
@@ -18,11 +19,12 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `create appearance in existing court case and link document`() {
-    val courtCase = createCourtCase()
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
 
     val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
 
-    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, documents = listOf(uploadedDocument))
+    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, documents = listOf(uploadedDocument))
     webTestClient
       .post()
       .uri("/court-appearance")
@@ -49,6 +51,44 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createdCourtCase.prisonerId, "Active")
+  }
+
+  @Test
+  fun `still create appearance in existing court case and link document even if dm api fails`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+
+    val (uploadedDocument) = uploadDocument()
+    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+
+    val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, documents = listOf(uploadedDocument))
+    webTestClient
+      .post()
+      .uri("/court-appearance")
+      .bodyValue(createCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .expectBody()
+      .jsonPath("$.appearanceUuid")
+      .value<String> { appearanceUuid ->
+        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
+      }
+
+    val historyRecords = courtAppearanceHistoryRepository.findAll().filter { it.appearanceUuid == createCourtAppearance.appearanceUuid }
+    Assertions.assertThat(historyRecords).hasSize(1)
+    val historyRecord = historyRecords[0]
+    Assertions.assertThat(historyRecord.nextCourtAppearanceId).isNotNull
+    assertThat(historyRecord.source).isEqualTo(DPS)
+
+    val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
+    assertThat(linkedDocument).isNotNull
+    assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createdCourtCase.prisonerId, "Active")
   }
 
   @Test

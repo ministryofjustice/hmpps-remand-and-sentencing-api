@@ -1,12 +1,16 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateUploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -37,12 +41,17 @@ class UploadedDocumentService(
   fun update(
     documentUUIDs: List<UUID>,
     appearance: CourtAppearanceEntity,
-  ) {
-    val documentsToUnlink = uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
-      appearance.appearanceUuid,
-      documentUUIDs,
-    )
+    prisonerId: String,
+  ): MutableList<DocumentMetadataUpdate> {
+    val documentMetadataUpdates = mutableListOf<DocumentMetadataUpdate>()
+    val linkedDocumentIds = mutableListOf<UUID>()
+    val documentsToUnlink =
+      uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
+        appearance.appearanceUuid,
+        documentUUIDs,
+      )
     unlinkDocuments(documentsToUnlink)
+    documentsToUnlink.forEach { document -> documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, document.documentUuid, DocumentMetadataStatus.DELETED)) }
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
@@ -52,8 +61,15 @@ class UploadedDocumentService(
         document.updatedAt = ZonedDateTime.now()
 
         uploadedDocumentRepository.save(document)
+        linkedDocumentIds.add(documentId)
       }
     }
+
+    linkedDocumentIds.forEach {
+      documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, it, DocumentMetadataStatus.ACTIVE))
+    }
+
+    return documentMetadataUpdates
   }
 
   @Transactional
@@ -66,7 +82,9 @@ class UploadedDocumentService(
     uploadedDocumentRepository.deleteAll(documentsToBeDeleted)
   }
 
-  private fun unlinkDocuments(uploadedDocuments: List<UploadedDocumentEntity>) {
+  fun unlinkDocuments(
+    uploadedDocuments: List<UploadedDocumentEntity>,
+  ) {
     uploadedDocuments.forEach { document ->
       document.unlink(serviceUserService.getUsername())
       uploadedDocumentRepository.save(document)
@@ -87,5 +105,31 @@ class UploadedDocumentService(
       .groupBy { it.appearance!!.courtCase }
 
     return PrisonerDocuments.from(filtered)
+  }
+
+  @Async
+  fun processDocumentMetadataUpdates(
+    updates: List<DocumentMetadataUpdate>,
+  ) {
+    updates.forEach { update ->
+      try {
+        documentManagementApiClient.updateDocumentMetadata(
+          prisonerId = update.prisonerId,
+          documentId = update.documentId.toString(),
+          uploadStatus = update.status,
+        )
+      } catch (e: Exception) {
+        log.warn(
+          "Failed to update metadata for document {} with status {}",
+          update.documentId,
+          update.status,
+          e,
+        )
+      }
+    }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(UploadedDocumentService::class.java)
   }
 }

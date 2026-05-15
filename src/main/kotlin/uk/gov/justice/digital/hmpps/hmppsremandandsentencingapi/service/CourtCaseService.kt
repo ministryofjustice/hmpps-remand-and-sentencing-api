@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponseWithDocumentUpdates
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -36,7 +37,7 @@ class CourtCaseService(
 ) {
 
   @Transactional
-  fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponse<CourtCaseEntity> {
+  fun putCourtCase(createCourtCase: CreateCourtCase, caseUniqueIdentifier: String): RecordResponseWithDocumentUpdates<CourtCaseEntity> {
     var eventType = EventType.COURT_CASE_UPDATED
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) ?: courtCaseRepository.save(
       CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername(), caseUniqueIdentifier),
@@ -44,7 +45,7 @@ class CourtCaseService(
     if (createCourtCase.prisonerId != courtCase.prisonerId) {
       throw ImmutableCourtCaseException("Cannot change prisoner id in a court case")
     }
-    val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    val (savedCourtCase, eventsToEmit, documentUpdates) = saveCourtCaseAppearances(courtCase, createCourtCase)
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(
         savedCourtCase.prisonerId,
@@ -52,16 +53,17 @@ class CourtCaseService(
         eventType,
       ),
     )
-    return RecordResponse(
+    return RecordResponseWithDocumentUpdates(
       savedCourtCase,
       eventsToEmit,
+      documentUpdates,
     )
   }
 
   @Transactional
-  fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponse<CourtCaseEntity> {
+  fun createCourtCase(createCourtCase: CreateCourtCase): RecordResponseWithDocumentUpdates<CourtCaseEntity> {
     val courtCase = courtCaseRepository.save(CourtCaseEntity.from(createCourtCase, serviceUserService.getUsername()))
-    val (savedCourtCase, eventsToEmit) = saveCourtCaseAppearances(courtCase, createCourtCase)
+    val (savedCourtCase, eventsToEmit, documentUpdates) = saveCourtCaseAppearances(courtCase, createCourtCase)
     eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(
         savedCourtCase.prisonerId,
@@ -69,16 +71,17 @@ class CourtCaseService(
         EventType.COURT_CASE_INSERTED,
       ),
     )
-    return RecordResponse(
+    return RecordResponseWithDocumentUpdates(
       savedCourtCase,
       eventsToEmit,
+      documentUpdates,
     )
   }
 
   private fun saveCourtCaseAppearances(
     courtCase: CourtCaseEntity,
     createCourtCase: CreateCourtCase,
-  ): RecordResponse<CourtCaseEntity> {
+  ): RecordResponseWithDocumentUpdates<CourtCaseEntity> {
     val toDeleteAppearances =
       courtCase.appearances.filter { existingCourtAppearance -> createCourtCase.appearances.none { it.appearanceUuid == existingCourtAppearance.appearanceUuid } }
     val eventsToEmit =
@@ -88,7 +91,7 @@ class CourtCaseService(
     val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
-    return RecordResponse(courtCaseRepository.save(courtCase), eventsToEmit)
+    return RecordResponseWithDocumentUpdates(courtCaseRepository.save(courtCase), eventsToEmit, appearanceRecords.flatMap { it.documentUpdates })
   }
 
   @Transactional
