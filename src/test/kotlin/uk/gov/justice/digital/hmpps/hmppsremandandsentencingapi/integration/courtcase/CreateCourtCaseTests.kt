@@ -1,12 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
-import com.github.tomakehurst.wiremock.client.WireMock
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
@@ -67,17 +65,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
         Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
       }
 
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              createCourtCase.prisonerId,
-              "Active",
-            ),
-          ),
-        ),
-    )
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createCourtCase.prisonerId, "Active")
   }
 
   @Test
@@ -106,17 +94,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
         Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
       }
 
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              createCourtCase.prisonerId,
-              "Active",
-            ),
-          ),
-        ),
-    )
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createCourtCase.prisonerId, "Active")
   }
 
   @Test

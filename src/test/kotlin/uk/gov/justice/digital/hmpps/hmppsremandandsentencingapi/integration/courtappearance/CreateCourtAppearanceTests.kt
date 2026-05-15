@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
-import com.github.tomakehurst.wiremock.client.WireMock
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -11,7 +10,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -53,17 +51,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              createdCourtCase.prisonerId,
-              "Active",
-            ),
-          ),
-        ),
-    )
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createdCourtCase.prisonerId, "Active")
   }
 
   @Test
@@ -100,17 +88,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              createdCourtCase.prisonerId,
-              "Active",
-            ),
-          ),
-        ),
-    )
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createdCourtCase.prisonerId, "Active")
   }
 
   @Test

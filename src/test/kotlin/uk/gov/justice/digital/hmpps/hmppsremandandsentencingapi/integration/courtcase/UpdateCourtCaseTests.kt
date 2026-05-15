@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
-import com.github.tomakehurst.wiremock.client.WireMock
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -8,7 +7,6 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -67,17 +65,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              courtCase.second.prisonerId,
-              "Active",
-            ),
-          ),
-        ),
-    )
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, courtCase.second.prisonerId, "Active")
   }
 
   @Test
@@ -102,17 +90,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              courtCase.second.prisonerId,
-              "Active",
-            ),
-          ),
-        ),
-    )
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, courtCase.second.prisonerId, "Active")
   }
 
   @Test

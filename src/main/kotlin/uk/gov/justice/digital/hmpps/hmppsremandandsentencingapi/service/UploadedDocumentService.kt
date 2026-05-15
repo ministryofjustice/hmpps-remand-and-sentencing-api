@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
@@ -106,6 +107,7 @@ class UploadedDocumentService(
     return PrisonerDocuments.from(filtered)
   }
 
+  @Async
   fun processDocumentMetadataUpdates(
     updates: List<DocumentMetadataUpdate>,
   ) {

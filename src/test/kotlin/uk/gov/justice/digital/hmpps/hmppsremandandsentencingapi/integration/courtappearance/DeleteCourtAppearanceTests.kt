@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import com.github.tomakehurst.wiremock.client.WireMock
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.untilAsserted
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -99,17 +101,19 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .isNoContent
       .expectBody()
 
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              courtCase.second.prisonerId,
-              "Deleted",
+    await untilAsserted {
+      documentManagementApi.verify(
+        WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
+          .withRequestBody(
+            WireMock.equalToJson(
+              documentMetadataRequest(
+                courtCase.second.prisonerId,
+                "Deleted",
+              ),
             ),
           ),
-        ),
-    )
+      )
+    }
   }
 
   @Test
@@ -131,17 +135,19 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .isNoContent
       .expectBody()
 
-    documentManagementApi.verify(
-      WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
-        .withRequestBody(
-          WireMock.equalToJson(
-            documentMetadataRequest(
-              courtCase.second.prisonerId,
-              "Deleted",
+    await untilAsserted {
+      documentManagementApi.verify(
+        WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/${uploadedDocument.documentUUID}/metadata"))
+          .withRequestBody(
+            WireMock.equalToJson(
+              documentMetadataRequest(
+                courtCase.second.prisonerId,
+                "Deleted",
+              ),
             ),
           ),
-        ),
-    )
+      )
+    }
 
     val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
     assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
