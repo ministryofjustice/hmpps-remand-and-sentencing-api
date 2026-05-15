@@ -44,7 +44,6 @@ class UploadedDocumentService(
     prisonerId: String,
   ): MutableList<DocumentMetadataUpdate> {
     val documentMetadataUpdates = mutableListOf<DocumentMetadataUpdate>()
-    val linkedDocumentIds = mutableListOf<UUID>()
     val documentsToUnlink =
       uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
         appearance.appearanceUuid,
@@ -52,6 +51,8 @@ class UploadedDocumentService(
       )
     unlinkDocuments(documentsToUnlink)
     documentsToUnlink.forEach { document -> documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, document.documentUuid, DocumentMetadataStatus.DELETED)) }
+
+    val linkedDocumentIds = documentUUIDs - documentsToUnlink.map { it.documentUuid }.toSet()
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
@@ -61,7 +62,6 @@ class UploadedDocumentService(
         document.updatedAt = ZonedDateTime.now()
 
         uploadedDocumentRepository.save(document)
-        linkedDocumentIds.add(documentId)
       }
     }
 
