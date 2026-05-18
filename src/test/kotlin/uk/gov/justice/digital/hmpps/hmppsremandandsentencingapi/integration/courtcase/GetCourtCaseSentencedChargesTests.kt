@@ -13,7 +13,8 @@ class GetCourtCaseSentencedChargesTests : IntegrationTestBase() {
     val remandedCharge = DpsDataCreator.dpsCreateCharge(sentence = null, outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"))
     val remandedCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(remandedCharge), outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"))
     val sentencedCharge = DpsDataCreator.dpsCreateCharge()
-    val sentencedCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(sentencedCharge))
+    val secondSentencedCharge = DpsDataCreator.dpsCreateCharge()
+    val sentencedCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(sentencedCharge, secondSentencedCharge))
     val remandedCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(remandedCourtAppearance, sentencedCourtAppearance))
     val (courtCaseUuid) = createCourtCase(remandedCourtCase)
     webTestClient
