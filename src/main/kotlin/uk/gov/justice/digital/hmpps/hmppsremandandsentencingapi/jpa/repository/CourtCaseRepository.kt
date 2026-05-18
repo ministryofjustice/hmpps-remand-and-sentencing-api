@@ -288,7 +288,7 @@ interface CourtCaseRepository :
 
   @Query(
     """
-    select cc, ca, ac, c, s, pl from CourtCaseEntity cc
+    select cc from CourtCaseEntity cc
     join cc.appearances ca
     join ca.appearanceCharges ac
     join ac.charge c
@@ -301,6 +301,7 @@ interface CourtCaseRepository :
     s.statusId in :sentenceStatus and
     cc.caseUniqueIdentifier = :courtCaseUuid and
     rs is null
+    order by cc.caseUniqueIdentifier desc limit 1
   """,
   )
   fun findSentencedCourtCase(
