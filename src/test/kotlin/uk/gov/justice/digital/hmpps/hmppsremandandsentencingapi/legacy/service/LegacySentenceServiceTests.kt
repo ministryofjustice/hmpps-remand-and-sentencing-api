@@ -7,6 +7,7 @@ import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -70,6 +71,7 @@ class LegacySentenceServiceTests {
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository = mockk(relaxed = true)
   private val recallHistoryRepository: RecallHistoryRepository = mockk(relaxed = true)
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository = mockk(relaxed = true)
+  private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
 
   private val service = LegacySentenceService(
     sentenceRepository = sentenceRepository,
@@ -88,6 +90,7 @@ class LegacySentenceServiceTests {
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
     recallHistoryRepository = recallHistoryRepository,
     recallSentenceHistoryRepository = recallSentenceHistoryRepository,
+    adjustmentsApiClient = adjustmentsApiClient,
   )
 
   @Test
@@ -154,6 +157,39 @@ class LegacySentenceServiceTests {
     assertThat(response.eventsToEmit)
       .extracting<String> { it.eventType.name }
       .containsExactly("RECALL_UPDATED", "SENTENCE_UPDATED")
+    verify(exactly = 0) { adjustmentsApiClient.unlinkRecallAdjustments(any()) }
+  }
+
+  @Test
+  fun `update unlinks recall UAL when latest recall is DPS FTR and NOMIS updates RTC`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+    val recallUuid = UUID.randomUUID()
+
+    val existingRtc = LocalDate.of(2024, 1, 11)
+    val incomingRtc = LocalDate.of(2024, 2, 1)
+
+    val (existingSentence, recall) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = existingRtc,
+      recallUuid = recallUuid,
+      recallSource = EventSource.DPS,
+    )
+
+    stubMocks(sentenceUuid, chargeUuid, existingSentence)
+
+    every { sentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
+    every { recallHistoryRepository.save(any()) } returns mockk(relaxed = true)
+    every { recallSentenceHistoryRepository.save(any()) } returns mockk(relaxed = true)
+
+    service.update(sentenceUuid, legacySentenceUpdate(chargeUuid, appearanceUuid, incomingRtc))
+
+    assertThat(recall.returnToCustodyDate).isEqualTo(incomingRtc)
+    verify(exactly = 1) { adjustmentsApiClient.unlinkRecallAdjustments(recallUuid) }
   }
 
   @Test
@@ -546,9 +582,11 @@ class LegacySentenceServiceTests {
       appearanceUuid: UUID,
       recallType: RecallType,
       existingRtc: LocalDate,
+      recallUuid: UUID = UUID.randomUUID(),
+      recallSource: EventSource = EventSource.NOMIS,
     ): Pair<SentenceEntity, RecallEntity> {
       val recall = RecallEntity(
-        recallUuid = UUID.randomUUID(),
+        recallUuid = recallUuid,
         prisonerId = "A1234BC",
         revocationDate = LocalDate.of(2024, 1, 1),
         returnToCustodyDate = existingRtc,
@@ -556,7 +594,7 @@ class LegacySentenceServiceTests {
         recallType = RecallTypeEntity(0, recallType, recallType.name),
         status = RecallEntityStatus.ACTIVE,
         createdByUsername = "SYNC_USER",
-        source = EventSource.NOMIS,
+        source = recallSource,
       )
 
       val sentenceType = SentenceTypeEntity(

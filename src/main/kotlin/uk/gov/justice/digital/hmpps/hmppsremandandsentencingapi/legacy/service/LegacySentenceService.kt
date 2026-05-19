@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -75,6 +77,7 @@ class LegacySentenceService(
   appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val recallHistoryRepository: RecallHistoryRepository,
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
+  private val adjustmentsApiClient: AdjustmentsApiClient,
 ) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
 
   @Transactional
@@ -448,6 +451,9 @@ class LegacySentenceService(
       latestRecall.returnToCustodyDate = sentence.returnToCustodyDate
       if (latestRecall.returnToCustodyDate != null) {
         latestRecall.inPrisonOnRevocationDate = latestRecall.returnToCustodyDate == latestRecall.revocationDate
+      }
+      if (latestRecall.source == DPS) {
+        adjustmentsApiClient.unlinkRecallAdjustments(latestRecall.recallUuid)
       }
       val recallHistoryEntity =
         recallHistoryRepository.save(
