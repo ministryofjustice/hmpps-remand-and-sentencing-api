@@ -20,7 +20,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.27.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.28.0")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
@@ -34,7 +34,7 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.postgresql:postgresql:42.7.11")
 
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.4.1")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.4.2")
   testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:2.2.0")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
