@@ -62,4 +62,13 @@ class AdjustmentsApiClient(@Qualifier("adjustmentsApiWebClient") private val web
       .toBodilessEntity()
       .block()
   }
+
+  fun unlinkRecallAdjustments(recallUuid: UUID) {
+    webClient
+      .post()
+      .uri("/adjustments/recall/$recallUuid/unlink")
+      .retrieve()
+      .toBodilessEntity()
+      .block()
+  }
 }
