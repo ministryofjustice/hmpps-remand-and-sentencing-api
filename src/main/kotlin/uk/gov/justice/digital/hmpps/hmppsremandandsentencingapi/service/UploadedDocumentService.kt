@@ -52,8 +52,6 @@ class UploadedDocumentService(
     unlinkDocuments(documentsToUnlink)
     documentsToUnlink.forEach { document -> documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, document.documentUuid, DocumentMetadataStatus.DELETED)) }
 
-    val linkedDocumentIds = documentUUIDs - documentsToUnlink.map { it.documentUuid }.toSet()
-
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
       if (document != null) {
