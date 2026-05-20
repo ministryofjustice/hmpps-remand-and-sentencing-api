@@ -90,10 +90,12 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     left join period_length pl on s.id = pl.sentence_id
     where s.sentence_uuid in :sentenceUuids
     and st.sentence_type_uuid = :sentenceTypeUuid
+    and s.status_id != :sentenceStatus
+    and pl.status_id != :periodLengthStatus
     """,
     nativeQuery = true,
   )
-  fun findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids: List<UUID>, sentenceTypeUuid: UUID): List<MissingSentenceInformationDetails>
+  fun findBySentenceUuidInAndSentenceTypeUuid(sentenceUuids: List<UUID>, sentenceTypeUuid: UUID, sentenceStatus: String = SentenceEntityStatus.DELETED.toString(), periodLengthStatus: String = PeriodLengthEntityStatus.DELETED.toString()): List<MissingSentenceInformationDetails>
 
   @Query(
     value = """
