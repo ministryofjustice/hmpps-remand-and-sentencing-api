@@ -29,7 +29,7 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
   )
   fun findByNextEventDateTime(courtCaseId: Int, nextEventDate: LocalDate): CourtAppearanceEntity?
 
-  fun findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(courtCaseEntity: CourtCaseEntity, status: CourtAppearanceEntityStatus): CourtAppearanceEntity?
+  fun findFirstByCourtCaseAndStatusIdInAndIdNotOrderByAppearanceDateDesc(courtCaseEntity: CourtCaseEntity, statuses: List<CourtAppearanceEntityStatus>, id: Int): CourtAppearanceEntity?
 
   fun findByCourtCaseCaseUniqueIdentifierAndStatusId(courtCaseUuid: String, status: CourtAppearanceEntityStatus): CourtAppearanceEntity
 

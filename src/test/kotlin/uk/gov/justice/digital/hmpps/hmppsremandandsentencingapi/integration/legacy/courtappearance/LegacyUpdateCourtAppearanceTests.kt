@@ -7,8 +7,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 
 class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
@@ -120,6 +122,55 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(editedFutureCourtAppearance.appearanceTypeUuid.toString())
 
     Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
+  }
+
+  @Test
+  fun `update existing appearance while creating new future appearance links to existing appearance`() {
+    val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().plusDays(1), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)))
+    val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData())
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = editedExistingFuture.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    val updateExistingCall = CompletableFuture.supplyAsync {
+      webTestClient
+        .put()
+        .uri("/legacy/court-appearance/$appearanceUuid")
+        .bodyValue(editedExistingFuture)
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus()
+        .isNoContent
+    }
+    val createFutureAppearanceCall = CompletableFuture.supplyAsync {
+      webTestClient
+        .post()
+        .uri("/legacy/court-appearance")
+        .bodyValue(futureCourtAppearance)
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus()
+        .isCreated
+    }
+
+    updateExistingCall.thenCombine(createFutureAppearanceCall) { a, b -> a to b }.join()
+    webTestClient
+      .get()
+      .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceDate")
+      .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
+      .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
   }
 
   @Test
