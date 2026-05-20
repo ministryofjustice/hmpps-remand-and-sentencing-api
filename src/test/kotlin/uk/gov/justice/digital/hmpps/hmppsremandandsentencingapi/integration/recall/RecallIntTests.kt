@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
@@ -466,6 +467,42 @@ class RecallIntTests : IntegrationTestBase() {
           ),
         ),
       )
+  }
+
+  @Test
+  fun `Get recalls returns bookingId from court case legacy data`() {
+    val bookingId = 1233536L
+    val appearanceDate = LocalDate.now().minusDays(30)
+    val charge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDate),
+    )
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(charge),
+      courtCaseReference = "CC1",
+      appearanceDate = appearanceDate,
+    )
+    val (_, courtCase) = createCourtCase(
+      CreateCourtCase(
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        prisonId = "PRISON1",
+        appearances = listOf(appearance),
+        legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId),
+      ),
+    )
+    val sentenceUuid = courtCase.appearances.first().charges.first().sentence!!.sentenceUuid
+
+    val recallUuid = createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(sentenceUuid),
+      ),
+    ).recallUuid
+
+    val recall = getRecallByUUID(recallUuid)
+    assertThat(recall.courtCases).hasSize(1)
+    assertThat(recall.courtCases.first().bookingId).isEqualTo(bookingId)
+
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    assertThat(recalls.first { it.recallUuid == recallUuid }.courtCases.first().bookingId).isEqualTo(bookingId)
   }
 
   @Test
