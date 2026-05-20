@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sen
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.MissingSentenceAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -95,5 +96,44 @@ class GetSentencesWithUnknownRecallSentenceTypeTests : IntegrationTestBase() {
       .returnResult().responseBody
 
     assertThat(response).isEmpty()
+  }
+
+  @Test
+  fun `return only live data`() {
+    val unknownRecallSentenceTypeId = UUID.fromString("f9a1551e-86b1-425b-96f7-23465a0f05fc")
+    val sentence = DpsDataCreator.dpsCreateSentence(sentenceTypeId = unknownRecallSentenceTypeId)
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val courtAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(charge))
+    val courtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(courtAppearance))
+    createCourtCase(courtCase)
+    val periodLength = sentence.periodLengths.first()
+    val sentenceUuids = listOf(sentence.sentenceUuid).joinToString(",")
+    webTestClient
+      .delete()
+      .uri("/legacy/period-length/${periodLength.periodLengthUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/sentence/unknown-recall-type")
+          .queryParam("sentenceUuids", sentenceUuids)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.[?(@.appearanceUuid == '${courtAppearance.appearanceUuid}')].sentences.[?(@.sentenceUuid == '${sentence.sentenceUuid}')].periodLengths[?(@.periodLengthUuid == '${periodLength.periodLengthUuid}')]")
+      .doesNotExist()
   }
 }
