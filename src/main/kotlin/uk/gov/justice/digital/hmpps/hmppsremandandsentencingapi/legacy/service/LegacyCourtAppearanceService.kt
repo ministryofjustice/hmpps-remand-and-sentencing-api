@@ -139,7 +139,7 @@ class LegacyCourtAppearanceService(
   }
 
   private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {
-    courtAppearance.takeIf { it.statusId == CourtAppearanceEntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate) }?.let { matchedCourtAppearance ->
+    courtAppearance.takeIf { it.statusId == CourtAppearanceEntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate, courtAppearance.id) }?.let { matchedCourtAppearance ->
       val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(legacyRequest.legacyData.nomisAppearanceTypeCode, legacyRequest.appearanceTypeUuid)
       matchedCourtAppearance.nextCourtAppearance?.let { matchedNextCourtAppearance ->
         val toUpdate = NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype)
@@ -164,9 +164,10 @@ class LegacyCourtAppearanceService(
 
   private fun getPerformedByUsername(courtAppearance: LegacyCreateCourtAppearance): String = courtAppearance.performedByUser ?: serviceUserService.getUsername()
 
-  private fun getMatchedNextCourtAppearanceOrLatest(courtCase: CourtCaseEntity, appearanceDate: LocalDate): CourtAppearanceEntity? = courtAppearanceRepository.findByNextEventDateTime(courtCase.id, appearanceDate) ?: courtAppearanceRepository.findFirstByCourtCaseAndStatusIdOrderByAppearanceDateDesc(
+  private fun getMatchedNextCourtAppearanceOrLatest(courtCase: CourtCaseEntity, appearanceDate: LocalDate, courtAppearanceId: Int): CourtAppearanceEntity? = courtAppearanceRepository.findByNextEventDateTime(courtCase.id, appearanceDate) ?: courtAppearanceRepository.findFirstByCourtCaseAndStatusIdInAndIdNotOrderByAppearanceDateDesc(
     courtCase,
-    CourtAppearanceEntityStatus.ACTIVE,
+    listOf(CourtAppearanceEntityStatus.ACTIVE, CourtAppearanceEntityStatus.FUTURE),
+    courtAppearanceId,
   )
 
   @Transactional
