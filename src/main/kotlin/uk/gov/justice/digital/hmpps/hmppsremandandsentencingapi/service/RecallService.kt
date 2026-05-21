@@ -388,17 +388,38 @@ class RecallService(
   }
 
   @Transactional(readOnly = true)
-  fun searchRecallsByPrisonerId(prisonerId: String, bookingId: String = ""): PrisonerRecallsResponse {
+  fun searchRecallsByPrisonerId(
+    prisonerId: String,
+    bookingId: String = "",
+    periodOfCustodyBookingId: String = "",
+  ): PrisonerRecallsResponse {
     val allRecalls = findRecallsByPrisonerId(prisonerId)
     val filteredRecalls = if (bookingId.isEmpty()) {
       allRecalls
     } else {
       allRecalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, bookingId) }
     }
+    val sortedRecalls = when {
+      bookingId.isNotEmpty() -> sortRecallsByCreatedAtDesc(filteredRecalls)
+      periodOfCustodyBookingId.isNotEmpty() -> sortRecallsWithCurrentPeriodFirst(filteredRecalls, periodOfCustodyBookingId)
+      else -> sortRecallsByCreatedAtDesc(filteredRecalls)
+    }
     return PrisonerRecallsResponse(
-      recalls = filteredRecalls,
+      recalls = sortedRecalls,
       prisonerRecallTotal = allRecalls.size.toLong(),
     )
+  }
+
+  private fun sortRecallsByCreatedAtDesc(recalls: List<Recall>): List<Recall> = recalls.sortedByDescending { it.createdAt }
+
+  private fun sortRecallsWithCurrentPeriodFirst(recalls: List<Recall>, periodOfCustodyBookingId: String): List<Recall> {
+    val currentPeriodRecalls = sortRecallsByCreatedAtDesc(
+      recalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, periodOfCustodyBookingId) },
+    )
+    val previousPeriodRecalls = sortRecallsByCreatedAtDesc(
+      recalls.filter { recall -> !isRecallInCurrentPeriodOfCustody(recall, periodOfCustodyBookingId) },
+    )
+    return currentPeriodRecalls + previousPeriodRecalls
   }
 
   private fun isRecallInCurrentPeriodOfCustody(recall: Recall, bookingId: String): Boolean {

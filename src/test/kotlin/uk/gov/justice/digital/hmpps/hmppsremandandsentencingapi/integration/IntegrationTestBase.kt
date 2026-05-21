@@ -424,12 +424,19 @@ abstract class IntegrationTestBase {
     return response.periodLengthUuid to toCreatePeriodLength
   }
 
-  protected fun getPrisonerRecallsResponse(prisonerId: String, bookingId: String? = null): PrisonerRecallsResponse = webTestClient
+  protected fun getPrisonerRecallsResponse(
+    prisonerId: String,
+    bookingId: String? = null,
+    periodOfCustodyBookingId: String? = null,
+  ): PrisonerRecallsResponse = webTestClient
     .get()
     .uri {
       val builder = it.path("/recall/person/$prisonerId/search")
       if (bookingId != null) {
         builder.queryParam("bookingId", bookingId)
+      }
+      if (periodOfCustodyBookingId != null) {
+        builder.queryParam("periodOfCustodyBookingId", periodOfCustodyBookingId)
       }
       builder.build()
     }
