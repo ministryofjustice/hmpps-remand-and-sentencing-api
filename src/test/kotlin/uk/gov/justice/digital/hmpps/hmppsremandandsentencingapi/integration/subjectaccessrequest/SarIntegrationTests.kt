@@ -23,10 +23,17 @@ import uk.gov.justice.digital.hmpps.subjectaccessrequest.SarReportTest
 import java.time.LocalDate
 
 /**
- * To check sar-generated-report.pdf, execute below and check the build/test-generated folder
+ * To generate sar-generated-report.html.log, execute below and check the src/test/resources folder
+ * this will also generate build/test-generated/sar-generated-report.pdf
  * ```bash
  * SAR_GENERATE_ACTUAL=true ./gradlew test \
  *  --tests "uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.SarIntegrationTests.SAR report should render as expected"
+ * ```
+ * To generate sar-api-response.json.log, execute below and check the src/test/resources folder
+ * and compare with the src/test/resources/sar/sar-api-response.json
+ * ```bash
+ * SAR_GENERATE_ACTUAL=true ./gradlew test \
+ *  --tests "uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.SarIntegrationTests.SAR API should return expected data"
  * ```
  */
 @Import(SarIntegrationTestHelperConfig::class)

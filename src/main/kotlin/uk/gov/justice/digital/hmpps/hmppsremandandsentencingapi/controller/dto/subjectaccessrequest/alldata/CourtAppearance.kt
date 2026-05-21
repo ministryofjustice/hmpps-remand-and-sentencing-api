@@ -21,5 +21,7 @@ data class CourtAppearance(
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
   val nextAppearanceDate: LocalDate?,
+  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
+  val criminalAppealOffenceReference: String?,
   val charges: List<Charge>?,
 )

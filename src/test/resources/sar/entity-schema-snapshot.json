@@ -181,6 +181,7 @@
     "appearanceOutcome": "AppearanceOutcomeSarEntity",
     "courtCase": "CourtCaseSarEntity",
     "courtCode": "String",
+    "criminalAppealOfficeReference": "String",
     "id": "int",
     "nextCourtAppearance": "NextCourtAppearanceSarEntity",
     "overallConvictionDate": "LocalDate",
