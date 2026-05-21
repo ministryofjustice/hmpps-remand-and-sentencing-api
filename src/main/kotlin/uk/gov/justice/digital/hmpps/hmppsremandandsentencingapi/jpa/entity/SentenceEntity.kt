@@ -242,7 +242,7 @@ class SentenceEntity(
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       countNumber = sentence.chargeNumber,
-      statusId = SentenceEntityStatus.ACTIVE,
+      statusId = this.statusId,
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
