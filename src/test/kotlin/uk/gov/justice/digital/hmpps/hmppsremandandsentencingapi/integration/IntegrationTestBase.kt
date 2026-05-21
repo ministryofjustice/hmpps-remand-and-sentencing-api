@@ -432,7 +432,7 @@ abstract class IntegrationTestBase {
   protected fun getPrisonerRecallsResponse(
     prisonerId: String,
     bookingId: String? = null,
-    periodOfCustodyBookingId: String? = null,
+    includeAllPeriods: Boolean? = null,
   ): PrisonerRecallsResponse = webTestClient
     .get()
     .uri {
@@ -440,8 +440,8 @@ abstract class IntegrationTestBase {
       if (bookingId != null) {
         builder.queryParam("bookingId", bookingId)
       }
-      if (periodOfCustodyBookingId != null) {
-        builder.queryParam("periodOfCustodyBookingId", periodOfCustodyBookingId)
+      if (includeAllPeriods != null) {
+        builder.queryParam("includeAllPeriods", includeAllPeriods)
       }
       builder.build()
     }

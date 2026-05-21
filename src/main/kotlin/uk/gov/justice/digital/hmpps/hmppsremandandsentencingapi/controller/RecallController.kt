@@ -88,7 +88,7 @@ class RecallController(private val recallService: RecallService, private val dps
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Search recalls for a person by period of custody",
-    description = "Returns recalls for a person, optionally filtered by bookingId (current period of custody). Empty bookingId returns all recalls. Use periodOfCustodyBookingId when returning all recalls to sort current period of custody before previous periods.",
+    description = "Returns recalls for a person, optionally filtered by bookingId (current period of custody from prisoner search). When includeAllPeriods is false, only recalls linked to that booking (or with no court cases) are returned. When includeAllPeriods is true, all recalls are returned with current period of custody sorted before previous periods.",
   )
   @ApiResponses(
     value = [
@@ -100,8 +100,8 @@ class RecallController(private val recallService: RecallService, private val dps
   fun searchRecallsByPrisonerId(
     @PathVariable prisonerId: String,
     @RequestParam("bookingId", defaultValue = "") bookingId: String,
-    @RequestParam("periodOfCustodyBookingId", defaultValue = "") periodOfCustodyBookingId: String,
-  ): PrisonerRecallsResponse = recallService.searchRecallsByPrisonerId(prisonerId, bookingId, periodOfCustodyBookingId)
+    @RequestParam("includeAllPeriods", defaultValue = "false") includeAllPeriods: Boolean,
+  ): PrisonerRecallsResponse = recallService.searchRecallsByPrisonerId(prisonerId, bookingId, includeAllPeriods)
 
   @PutMapping("/{recallUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")

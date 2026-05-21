@@ -537,8 +537,8 @@ class RecallIntTests : IntegrationTestBase() {
 
     val allRecalls = getPrisonerRecallsResponse(
       DpsDataCreator.DEFAULT_PRISONER_ID,
-      bookingId = "",
-      periodOfCustodyBookingId = activeBookingId.toString(),
+      bookingId = activeBookingId.toString(),
+      includeAllPeriods = true,
     )
     assertThat(allRecalls.prisonerRecallTotal).isGreaterThanOrEqualTo(2)
     assertThat(allRecalls.recalls.map { it.recallUuid }).contains(currentPeriodRecallUuid, previousPeriodRecallUuid)
