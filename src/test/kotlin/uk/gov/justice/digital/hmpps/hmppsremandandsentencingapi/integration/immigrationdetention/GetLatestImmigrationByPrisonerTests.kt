@@ -74,7 +74,7 @@ class GetLatestImmigrationByPrisonerTests : IntegrationTestBase() {
 
     sleep(1000)
 
-    val courtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
+    val (courtAppearanceUuid, legacyCourtAppearance) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
 
     val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B")
 
@@ -89,7 +89,7 @@ class GetLatestImmigrationByPrisonerTests : IntegrationTestBase() {
             courtAppearanceUuid = courtAppearanceUuid,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = IS91,
-            recordDate = LocalDate.now(),
+            recordDate = legacyCourtAppearance.appearanceDate,
             createdAt = ZonedDateTime.now(),
             source = EventSource.NOMIS,
           ),

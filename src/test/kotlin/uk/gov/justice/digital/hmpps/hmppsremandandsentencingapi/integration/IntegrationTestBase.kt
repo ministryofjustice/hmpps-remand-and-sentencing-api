@@ -265,10 +265,15 @@ abstract class IntegrationTestBase {
   protected fun createLegacyCourtAppearance(
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
+    existingCourtCaseUuid: String? = null,
   ): Pair<UUID, LegacyCreateCourtAppearance> {
-    val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
-    refreshCaseReferences(UUID.fromString(courtCase.first), mutableListOf("NOMIS123"))
-    val toCreateAppearance = legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
+    val toCreateAppearance = if (existingCourtCaseUuid != null) {
+      legacyCreateCourtAppearance.copy(courtCaseUuid = existingCourtCaseUuid)
+    } else {
+      val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
+      refreshCaseReferences(UUID.fromString(courtCase.first), mutableListOf("NOMIS123"))
+      legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
+    }
     val response = webTestClient
       .post()
       .uri("/legacy/court-appearance")
@@ -812,12 +817,12 @@ abstract class IntegrationTestBase {
     .returnResult(MigrationCreateCourtCasesResponse::class.java)
     .responseBody.blockFirst()!!
 
-  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true): UUID {
+  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true): Pair<UUID, LegacyCreateCourtAppearance> {
     val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase)
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
     val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1"))
     val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    return createdChargeResponse.appearanceLifetimeUuid
+    return createdChargeResponse.appearanceLifetimeUuid to legacyCreateCourtAppearance
   }
 
   protected fun refreshCaseReferences(courtCaseUuid: UUID, caseReferences: MutableList<String>) {
