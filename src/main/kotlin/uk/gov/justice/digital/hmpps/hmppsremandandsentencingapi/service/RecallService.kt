@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.CourtCaseMergedGroups
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentenceKey
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentencePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.PrisonerRecallsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
@@ -377,11 +378,29 @@ class RecallService(
   }
 
   @Transactional(readOnly = true)
-  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {
+  fun findRecallsByPrisonerId(prisonerId: String, bookingId: String = ""): PrisonerRecallsResponse {
     val recallAdjustments = adjustmentsApiClient.getAdjustments(prisonerId).filter { it.recallId != null }
-    return recallRepository.findByPrisonerIdAndStatus(prisonerId).map { recall ->
+    val allRecalls = recallRepository.findByPrisonerIdAndStatus(prisonerId).map { recall ->
       val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
       Recall.from(recall, recallSentences, recallAdjustments.find { it.recallId == recall.recallUuid.toString() })
+    }
+    val filteredRecalls = if (bookingId.isEmpty()) {
+      allRecalls
+    } else {
+      allRecalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, bookingId) }
+    }
+    return PrisonerRecallsResponse(
+      recalls = filteredRecalls,
+      prisonerRecallTotal = allRecalls.size.toLong(),
+    )
+  }
+
+  private fun isRecallInCurrentPeriodOfCustody(recall: Recall, bookingId: String): Boolean {
+    if (recall.courtCases.isEmpty()) {
+      return true
+    }
+    return recall.courtCases.any { courtCase ->
+      courtCase.bookingId == null || courtCase.bookingId.toString() == bookingId
     }
   }
 

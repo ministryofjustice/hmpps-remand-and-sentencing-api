@@ -506,6 +506,46 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `Get recalls filters by bookingId query param`() {
+    val activeBookingId = 1233536L
+    val otherBookingId = 9999999L
+    val appearanceDate = LocalDate.now().minusDays(30)
+
+    fun createRecallForBooking(bookingId: Long): UUID {
+      val charge = DpsDataCreator.dpsCreateCharge(
+        sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDate),
+      )
+      val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+        charges = listOf(charge),
+        courtCaseReference = "CC-$bookingId",
+        appearanceDate = appearanceDate,
+      )
+      val (_, courtCase) = createCourtCase(
+        CreateCourtCase(
+          prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+          prisonId = "PRISON1",
+          appearances = listOf(appearance),
+          legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId),
+        ),
+      )
+      val sentenceUuid = courtCase.appearances.first().charges.first().sentence!!.sentenceUuid
+      return createRecall(DpsDataCreator.dpsCreateRecall(sentenceIds = listOf(sentenceUuid))).recallUuid
+    }
+
+    val currentPeriodRecallUuid = createRecallForBooking(activeBookingId)
+    val previousPeriodRecallUuid = createRecallForBooking(otherBookingId)
+
+    val allRecalls = getPrisonerRecallsResponse(DpsDataCreator.DEFAULT_PRISONER_ID)
+    assertThat(allRecalls.prisonerRecallTotal).isGreaterThanOrEqualTo(2)
+    assertThat(allRecalls.recalls.map { it.recallUuid }).contains(currentPeriodRecallUuid, previousPeriodRecallUuid)
+
+    val filteredRecalls = getPrisonerRecallsResponse(DpsDataCreator.DEFAULT_PRISONER_ID, activeBookingId.toString())
+    assertThat(filteredRecalls.prisonerRecallTotal).isGreaterThanOrEqualTo(2)
+    assertThat(filteredRecalls.recalls.map { it.recallUuid }).contains(currentPeriodRecallUuid)
+    assertThat(filteredRecalls.recalls.map { it.recallUuid }).doesNotContain(previousPeriodRecallUuid)
+  }
+
+  @Test
   fun `Get recalls builds correct court case and sentence groups for NOMIS recall`() {
     // Create a legacy sentence so that the legacy recall is also created.
     val appearanceDate = LocalDate.now().minusDays(30)
