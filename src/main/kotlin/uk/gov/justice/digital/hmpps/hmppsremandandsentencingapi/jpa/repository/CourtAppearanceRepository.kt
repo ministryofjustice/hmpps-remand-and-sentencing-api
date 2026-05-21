@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
-import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -21,13 +21,13 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
     SELECT ca.* from
     court_appearance ca
     join court_case cc on cc.id=ca.court_case_id
-    where cc.id= :courtCaseId and (ca.legacy_data->>'nextEventDateTime')::date = :nextEventDate
+    where cc.id= :courtCaseId and (ca.legacy_data->>'nextEventDateTime')::timestamp = :nextEventDateTime
     order by ca.appearance_date desc
     limit 1
   """,
     nativeQuery = true,
   )
-  fun findByNextEventDateTime(courtCaseId: Int, nextEventDate: LocalDate): CourtAppearanceEntity?
+  fun findByNextEventDateTime(courtCaseId: Int, nextEventDateTime: LocalDateTime): CourtAppearanceEntity?
 
   fun findFirstByCourtCaseAndStatusIdInAndIdNotOrderByAppearanceDateDesc(courtCaseEntity: CourtCaseEntity, statuses: List<CourtAppearanceEntityStatus>, id: Int): CourtAppearanceEntity?
 
