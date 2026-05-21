@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
@@ -126,9 +127,10 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update existing appearance while creating new future appearance links to existing appearance`() {
-    val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().plusDays(1), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)))
-    val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData())
-    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = editedExistingFuture.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    val (_, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
+    val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = existingAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = existingAppearance.legacyData.nextEventDateTime.toLocalTime(), nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)), existingCourtCaseUuid = existingAppearance.courtCaseUuid)
+    val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = LocalTime.of(11, 0), nextEventDateTime = existingAppearance.legacyData.nextEventDateTime.plusHours(4)))
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = existingAppearance.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = editedExistingFuture.legacyData.nextEventDateTime.toLocalTime(), nextEventDateTime = null))
     val updateExistingCall = CompletableFuture.supplyAsync {
       webTestClient
         .put()
@@ -156,7 +158,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
         .isCreated
     }
 
-    updateExistingCall.thenCombine(createFutureAppearanceCall) { a, b -> a to b }.join()
+    createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
     webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")

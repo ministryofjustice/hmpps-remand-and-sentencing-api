@@ -7,7 +7,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
-import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -15,7 +14,7 @@ class GetImmigrationByCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `get immigration by court appearance`() {
-    val courtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
+    val (courtAppearanceUuid, legacyCourtAppearance) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
 
     val response = webTestClient
       .get()
@@ -39,7 +38,7 @@ class GetImmigrationByCourtAppearanceTests : IntegrationTestBase() {
           courtAppearanceUuid = courtAppearanceUuid,
           prisonerId = "B12345B",
           immigrationDetentionRecordType = IS91,
-          recordDate = LocalDate.now(),
+          recordDate = legacyCourtAppearance.appearanceDate,
           createdAt = ZonedDateTime.now(),
           source = EventSource.NOMIS,
         ),
