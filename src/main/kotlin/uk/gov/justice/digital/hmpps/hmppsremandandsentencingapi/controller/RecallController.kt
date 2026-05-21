@@ -81,10 +81,26 @@ class RecallController(private val recallService: RecallService, private val dps
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getRecallsByPrisonerId(
+  @Deprecated("Use GET /recall/person/{prisonerId}/search")
+  fun getRecallsByPrisonerId(@PathVariable prisonerId: String): List<Recall> = recallService.findRecallsByPrisonerId(prisonerId)
+
+  @GetMapping("/person/{prisonerId}/search")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Search recalls for a person by period of custody",
+    description = "Returns recalls for a person, optionally filtered by bookingId (current period of custody). Empty bookingId returns all recalls with prisonerRecallTotal.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns recalls for person with total count"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun searchRecallsByPrisonerId(
     @PathVariable prisonerId: String,
     @RequestParam("bookingId", defaultValue = "") bookingId: String,
-  ): PrisonerRecallsResponse = recallService.findRecallsByPrisonerId(prisonerId, bookingId)
+  ): PrisonerRecallsResponse = recallService.searchRecallsByPrisonerId(prisonerId, bookingId)
 
   @PutMapping("/{recallUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")

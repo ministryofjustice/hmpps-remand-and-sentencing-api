@@ -427,7 +427,7 @@ abstract class IntegrationTestBase {
   protected fun getPrisonerRecallsResponse(prisonerId: String, bookingId: String? = null): PrisonerRecallsResponse = webTestClient
     .get()
     .uri {
-      val builder = it.path("/recall/person/$prisonerId")
+      val builder = it.path("/recall/person/$prisonerId/search")
       if (bookingId != null) {
         builder.queryParam("bookingId", bookingId)
       }
@@ -442,7 +442,8 @@ abstract class IntegrationTestBase {
     .expectBody(PrisonerRecallsResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> = getPrisonerRecallsResponse(prisonerId, bookingId).recalls
+  protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> =
+    getPrisonerRecallsResponse(prisonerId, bookingId).recalls
 
   protected fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
     .get()
