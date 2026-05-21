@@ -29,3 +29,20 @@ docker compose up remand-and-sentencing-db localstack -d
 
 will just start a docker instance of HMPPS Auth. The application should then be started with a `dev` active profile
 in Intellij.
+
+### SAR
+
+Changes to the Entity Model will likely cause the Subject Access Request (SAR) tests to fail due to 
+SAR tests comparing the Entity Model Schema to a previously generated version 
+of the Entity Model Schema. The same goes for changes to it's API response data.
+
+#### Entity Model Schema
+
+To regenerate the latest view of the Entity Model Schema for comparison see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarEntityComparisonIntegrationTests.kt)
+
+#### SAR API Response
+
+Likewise, to regenerate the latest version of the api / html for review see
+
+- Unsynced Data Version [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarIntegrationTests.kt)
+- Full Data Version [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/alldata/SarIntegrationTests.kt)

@@ -24,6 +24,7 @@ import java.time.LocalDate
   ,appearance_date
   ,warrant_type
   ,court_code
+  ,criminal_appeal_office_reference
   ,overall_conviction_date
   ,court_case_id
   ,appearance_outcome_id
@@ -43,6 +44,8 @@ class CourtAppearanceSarEntity(
   var warrantType: String,
   @Column
   var courtCode: String,
+  @Column
+  var criminalAppealOfficeReference: String?,
   @Column
   var overallConvictionDate: LocalDate?,
   @OneToMany(mappedBy = "appearance", cascade = [CascadeType.ALL], orphanRemoval = true)
