@@ -66,8 +66,8 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
 
   @Test
   fun `Get all immigration detention records for a prisoner with NOMIS records`() {
-    val nomisCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
-    val inactiveCourtCaseCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", false)
+    val (nomisCourtAppearanceUuid, legacyCourtAppearance) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
+    val (inactiveCourtCaseCourtAppearanceUuid, inactiveCourtAppearance) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", false)
     val id1 = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,
@@ -117,7 +117,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
             courtAppearanceUuid = nomisCourtAppearanceUuid,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = DEPORTATION_ORDER,
-            recordDate = LocalDate.now(),
+            recordDate = legacyCourtAppearance.appearanceDate,
             createdAt = ZonedDateTime.now(),
             source = EventSource.NOMIS,
           ),
@@ -126,7 +126,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
             courtAppearanceUuid = inactiveCourtCaseCourtAppearanceUuid,
             prisonerId = "B12345B",
             immigrationDetentionRecordType = DEPORTATION_ORDER,
-            recordDate = LocalDate.now(),
+            recordDate = inactiveCourtAppearance.appearanceDate,
             createdAt = ZonedDateTime.now(),
             source = EventSource.NOMIS,
           ),
@@ -136,7 +136,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
 
   @Test
   fun `filter out court appearances when there is a corresponding immigration detention record`() {
-    val nomisCourtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
+    val (nomisCourtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502")
     val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,

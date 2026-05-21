@@ -76,7 +76,7 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
 
   @Test
   fun `create immigration detention record based on NOMIS court appearance`() {
-    val courtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
+    val (courtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
     val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = IS91,
@@ -114,7 +114,7 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
 
   @Test
   fun `create no-longer-of-interest outcome deactivates linked immigration court case`() {
-    val courtAppearanceUuid = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
+    val (courtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
     val noLongerOfInterest = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
