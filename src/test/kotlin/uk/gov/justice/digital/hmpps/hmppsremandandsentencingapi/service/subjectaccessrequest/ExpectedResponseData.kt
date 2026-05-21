@@ -32,6 +32,7 @@ object ExpectedResponseData {
       warrantType = "SENTENCING",
       convictionDate = LocalDate.of(2026, 3, 6),
       nextAppearanceDate = null,
+      criminalAppealOffenceReference = "202605384 B1",
       charges = listOf(
         Charge(
           offenceCode = "RF96124",
@@ -69,6 +70,7 @@ object ExpectedResponseData {
       warrantType = "SENTENCING",
       convictionDate = LocalDate.of(2026, 2, 8),
       nextAppearanceDate = LocalDate.of(2026, 2, 3),
+      criminalAppealOffenceReference = "202605384 B1",
       charges = listOf(
         Charge(
           offenceCode = "RF96124",
@@ -102,6 +104,7 @@ object ExpectedResponseData {
       warrantType = "SENTENCING",
       convictionDate = LocalDate.of(2026, 3, 6),
       nextAppearanceDate = null,
+      criminalAppealOffenceReference = "202605384 B1",
       charges = listOf(
         Charge(
           offenceCode = "RF96124",

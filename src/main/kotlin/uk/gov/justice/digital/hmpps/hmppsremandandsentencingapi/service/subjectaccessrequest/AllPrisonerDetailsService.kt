@@ -131,6 +131,7 @@ class AllPrisonerDetailsService(
     val warrantyType = latestCourtAppearance.warrantType
     val convictionDate = latestCourtAppearance.overallConvictionDate
     val nextCourtAppearanceDate = latestCourtAppearance.nextCourtAppearance?.appearanceDate
+    val criminalAppealOfficeReference = latestCourtAppearance.criminalAppealOfficeReference
 
     return CourtAppearance(
       appearanceDate,
@@ -138,6 +139,7 @@ class AllPrisonerDetailsService(
       warrantyType,
       convictionDate,
       nextCourtAppearanceDate,
+      criminalAppealOfficeReference,
       charges,
     )
   }
