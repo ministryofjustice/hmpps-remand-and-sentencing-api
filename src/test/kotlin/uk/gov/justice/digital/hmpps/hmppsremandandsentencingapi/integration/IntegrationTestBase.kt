@@ -264,10 +264,15 @@ abstract class IntegrationTestBase {
   protected fun createLegacyCourtAppearance(
     legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(),
     legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(),
+    existingCourtCaseUuid: String? = null,
   ): Pair<UUID, LegacyCreateCourtAppearance> {
-    val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
-    refreshCaseReferences(UUID.fromString(courtCase.first), mutableListOf("NOMIS123"))
-    val toCreateAppearance = legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
+    val toCreateAppearance = if (existingCourtCaseUuid != null) {
+      legacyCreateCourtAppearance.copy(courtCaseUuid = existingCourtCaseUuid)
+    } else {
+      val courtCase = createLegacyCourtCase(legacyCreateCourtCase)
+      refreshCaseReferences(UUID.fromString(courtCase.first), mutableListOf("NOMIS123"))
+      legacyCreateCourtAppearance.copy(courtCaseUuid = courtCase.first)
+    }
     val response = webTestClient
       .post()
       .uri("/legacy/court-appearance")
