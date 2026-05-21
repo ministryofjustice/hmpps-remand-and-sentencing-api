@@ -454,8 +454,7 @@ abstract class IntegrationTestBase {
     .expectBody(PrisonerRecallsResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> =
-    getPrisonerRecallsResponse(prisonerId, bookingId).recalls
+  protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> = getPrisonerRecallsResponse(prisonerId, bookingId).recalls
 
   protected fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
     .get()
