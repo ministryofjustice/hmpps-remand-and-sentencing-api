@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
@@ -898,6 +899,41 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .is4xxClientError
+  }
+
+  @Test
+  fun `updating an inactive sentence does not change its status to active`() {
+    val sentence = DpsDataCreator.dpsCreateSentence()
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    val createdSentence = sentenceRepository.findBySentenceUuid(sentence.sentenceUuid)[0]
+    createdSentence.statusId = SentenceEntityStatus.INACTIVE
+    sentenceRepository.save(createdSentence)
+
+    val createdAppearance = createdCourtCase.appearances.first()
+    val updatedSentence = createdAppearance.charges.first().sentence!!.copy(convictionDate = LocalDate.now().minusDays(5))
+    val updatedCharge = createdAppearance.charges.first().copy(sentence = updatedSentence)
+    val updateAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(updatedCharge),
+    )
+    webTestClient
+      .put()
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val latestSentence = sentenceRepository.findBySentenceUuid(createdSentence.sentenceUuid)[0]
+    assertThat(latestSentence).isNotNull
+    assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
   }
 
   private fun deleteCourtAppearance(appearanceUuid: UUID) {
