@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.nio.charset.Charset
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -161,7 +162,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
     createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
     log.info("existingAppearanceUuid: $existingAppearanceUuid existingFutureAppearanceUuid: $appearanceUuid")
-    webTestClient
+    val responseBody = webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
       .headers {
@@ -171,11 +172,12 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .consumeWith(System.out::println)
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceDate")
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
       .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+      .returnResult().responseBody
+    log.info("responseBody: ${responseBody!!.toString(Charset.defaultCharset())}")
   }
 
   @Test
