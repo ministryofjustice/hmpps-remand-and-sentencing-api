@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.D
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.PrisonerRecallsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.RecallService
@@ -79,7 +81,27 @@ class RecallController(private val recallService: RecallService, private val dps
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
+  @Deprecated("Use GET /recall/person/{prisonerId}/search")
   fun getRecallsByPrisonerId(@PathVariable prisonerId: String): List<Recall> = recallService.findRecallsByPrisonerId(prisonerId)
+
+  @GetMapping("/person/{prisonerId}/search")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @Operation(
+    summary = "Search recalls for a person by period of custody",
+    description = "Filter by bookingId (current period of custody) unless includeAllPeriods is true, when all recalls are returned with the current period listed first.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns recalls for person with total count"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun searchRecallsByPrisonerId(
+    @PathVariable prisonerId: String,
+    @RequestParam("bookingId", defaultValue = "") bookingId: String,
+    @RequestParam("includeAllPeriods", defaultValue = "false") includeAllPeriods: Boolean,
+  ): PrisonerRecallsResponse = recallService.searchRecallsByPrisonerId(prisonerId, bookingId, includeAllPeriods)
 
   @PutMapping("/{recallUuid}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")

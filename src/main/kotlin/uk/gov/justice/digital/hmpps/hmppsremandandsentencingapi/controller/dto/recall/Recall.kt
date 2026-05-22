@@ -93,6 +93,7 @@ data class Recall(
         courtCaseUuid = firstSentencingAppearance?.courtCase?.caseUniqueIdentifier,
         courtCode = firstSentencingAppearance?.courtCode,
         sentencingAppearanceDate = firstSentencingAppearance?.appearanceDate,
+        bookingId = firstSentencingAppearance?.courtCase?.legacyData?.bookingId,
       )
     }
   }

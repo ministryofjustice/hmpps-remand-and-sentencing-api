@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.CourtCaseMergedGroups
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentenceKey
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.DuplicateSentencePeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.PrisonerRecallsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
@@ -376,6 +377,7 @@ class RecallService(
     return Recall.from(recall, recallSentences, adjustment)
   }
 
+  // TODO: make private once controller switches to use searchRecallsByPrisonerId
   @Transactional(readOnly = true)
   fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {
     val recallAdjustments = adjustmentsApiClient.getAdjustments(prisonerId).filter { it.recallId != null }
@@ -383,6 +385,44 @@ class RecallService(
       val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
       Recall.from(recall, recallSentences, recallAdjustments.find { it.recallId == recall.recallUuid.toString() })
     }
+  }
+
+  @Transactional(readOnly = true)
+  fun searchRecallsByPrisonerId(
+    prisonerId: String,
+    bookingId: String = "",
+    includeAllPeriods: Boolean = false,
+  ): PrisonerRecallsResponse {
+    val allRecalls = findRecallsByPrisonerId(prisonerId)
+    val filteredRecalls = if (includeAllPeriods || bookingId.isEmpty()) {
+      allRecalls
+    } else {
+      allRecalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, bookingId) }
+    }
+    val sortedRecalls = when {
+      includeAllPeriods && bookingId.isNotEmpty() -> sortRecallsWithCurrentPeriodFirst(filteredRecalls, bookingId)
+      else -> sortRecallsByCreatedAtDesc(filteredRecalls)
+    }
+    return PrisonerRecallsResponse(
+      recalls = sortedRecalls,
+      prisonerRecallTotal = allRecalls.size.toLong(),
+    )
+  }
+
+  private fun sortRecallsByCreatedAtDesc(recalls: List<Recall>): List<Recall> = recalls.sortedByDescending { it.createdAt }
+
+  private fun sortRecallsWithCurrentPeriodFirst(recalls: List<Recall>, bookingId: String): List<Recall> {
+    val currentPeriodRecalls = sortRecallsByCreatedAtDesc(
+      recalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, bookingId) },
+    )
+    val previousPeriodRecalls = sortRecallsByCreatedAtDesc(
+      recalls.filter { recall -> !isRecallInCurrentPeriodOfCustody(recall, bookingId) },
+    )
+    return currentPeriodRecalls + previousPeriodRecalls
+  }
+
+  private fun isRecallInCurrentPeriodOfCustody(recall: Recall, bookingId: String): Boolean = recall.courtCases.any { courtCase ->
+    courtCase.bookingId == null || courtCase.bookingId.toString() == bookingId
   }
 
   private fun createUalDtoForRecall(

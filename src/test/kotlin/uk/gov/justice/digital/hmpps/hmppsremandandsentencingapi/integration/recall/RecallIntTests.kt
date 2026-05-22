@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
@@ -466,6 +467,92 @@ class RecallIntTests : IntegrationTestBase() {
           ),
         ),
       )
+  }
+
+  @Test
+  fun `Get recalls returns bookingId from court case legacy data`() {
+    val bookingId = CUSTODY_FILTER_ACTIVE_BOOKING_ID
+    val appearanceDate = LocalDate.now().minusDays(30)
+    val charge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDate),
+    )
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(charge),
+      courtCaseReference = "CC-CUSTODY-BOOKING",
+      appearanceDate = appearanceDate,
+    )
+    val (_, courtCase) = createCourtCase(
+      CreateCourtCase(
+        prisonerId = CUSTODY_FILTER_PRISONER_ID,
+        prisonId = "PRISON1",
+        appearances = listOf(appearance),
+        legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId),
+      ),
+    )
+    val sentenceUuid = courtCase.appearances.first().charges.first().sentence!!.sentenceUuid
+
+    val recallUuid = createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        prisonerId = CUSTODY_FILTER_PRISONER_ID,
+        sentenceIds = listOf(sentenceUuid),
+      ),
+    ).recallUuid
+
+    val recall = getRecallByUUID(recallUuid)
+    assertThat(recall.courtCases).hasSize(1)
+    assertThat(recall.courtCases.first().bookingId).isEqualTo(bookingId)
+
+    val recalls = getRecallsByPrisonerId(CUSTODY_FILTER_PRISONER_ID)
+    assertThat(recalls).hasSize(1)
+    assertThat(recalls.first().courtCases.first().bookingId).isEqualTo(bookingId)
+  }
+
+  @Test
+  fun `Get recalls filters by bookingId query param`() {
+    val activeBookingId = CUSTODY_FILTER_ACTIVE_BOOKING_ID
+    val otherBookingId = CUSTODY_FILTER_OTHER_BOOKING_ID
+    val appearanceDate = LocalDate.now().minusDays(30)
+
+    fun createRecallForBooking(bookingId: Long): UUID {
+      val charge = DpsDataCreator.dpsCreateCharge(
+        sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDate),
+      )
+      val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+        charges = listOf(charge),
+        courtCaseReference = "CC-CUSTODY-$bookingId",
+        appearanceDate = appearanceDate,
+      )
+      val (_, courtCase) = createCourtCase(
+        CreateCourtCase(
+          prisonerId = CUSTODY_FILTER_PRISONER_ID,
+          prisonId = "PRISON1",
+          appearances = listOf(appearance),
+          legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId),
+        ),
+      )
+      val sentenceUuid = courtCase.appearances.first().charges.first().sentence!!.sentenceUuid
+      return createRecall(
+        DpsDataCreator.dpsCreateRecall(
+          prisonerId = CUSTODY_FILTER_PRISONER_ID,
+          sentenceIds = listOf(sentenceUuid),
+        ),
+      ).recallUuid
+    }
+
+    val currentPeriodRecallUuid = createRecallForBooking(activeBookingId)
+    val previousPeriodRecallUuid = createRecallForBooking(otherBookingId)
+
+    val allRecalls = getPrisonerRecallsResponse(
+      CUSTODY_FILTER_PRISONER_ID,
+      bookingId = activeBookingId.toString(),
+      includeAllPeriods = true,
+    )
+    assertThat(allRecalls.prisonerRecallTotal).isEqualTo(2)
+    assertThat(allRecalls.recalls.map { it.recallUuid }).containsExactly(currentPeriodRecallUuid, previousPeriodRecallUuid)
+
+    val filteredRecalls = getPrisonerRecallsResponse(CUSTODY_FILTER_PRISONER_ID, activeBookingId.toString())
+    assertThat(filteredRecalls.prisonerRecallTotal).isEqualTo(2)
+    assertThat(filteredRecalls.recalls.map { it.recallUuid }).containsExactly(currentPeriodRecallUuid)
   }
 
   @Test
@@ -1240,6 +1327,10 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   companion object {
+    private const val CUSTODY_FILTER_PRISONER_ID = "A1234RC"
+    private const val CUSTODY_FILTER_ACTIVE_BOOKING_ID = 87654321L
+    private const val CUSTODY_FILTER_OTHER_BOOKING_ID = 87654322L
+
     @JvmStatic
     fun dpsSentenceAndClassificationCombinationParameters(): Stream<Arguments> = Stream.of(
       Arguments.of(SentenceTypeClassification.STANDARD, LR, IsRecallPossible.YES),

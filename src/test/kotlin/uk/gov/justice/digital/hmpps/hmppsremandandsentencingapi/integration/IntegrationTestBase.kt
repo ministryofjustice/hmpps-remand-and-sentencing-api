@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.PrisonerRecallsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -428,17 +429,32 @@ abstract class IntegrationTestBase {
     return response.periodLengthUuid to toCreatePeriodLength
   }
 
-  protected fun getRecallsByPrisonerId(prisonerId: String): List<Recall> = webTestClient
+  protected fun getPrisonerRecallsResponse(
+    prisonerId: String,
+    bookingId: String? = null,
+    includeAllPeriods: Boolean? = null,
+  ): PrisonerRecallsResponse = webTestClient
     .get()
-    .uri("/recall/person/$prisonerId")
+    .uri {
+      val builder = it.path("/recall/person/$prisonerId/search")
+      if (bookingId != null) {
+        builder.queryParam("bookingId", bookingId)
+      }
+      if (includeAllPeriods != null) {
+        builder.queryParam("includeAllPeriods", includeAllPeriods)
+      }
+      builder.build()
+    }
     .headers {
       it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
     }
     .exchange()
     .expectStatus()
     .isOk
-    .expectBodyList(Recall::class.java)
+    .expectBody(PrisonerRecallsResponse::class.java)
     .returnResult().responseBody!!
+
+  protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> = getPrisonerRecallsResponse(prisonerId, bookingId).recalls
 
   protected fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
     .get()
