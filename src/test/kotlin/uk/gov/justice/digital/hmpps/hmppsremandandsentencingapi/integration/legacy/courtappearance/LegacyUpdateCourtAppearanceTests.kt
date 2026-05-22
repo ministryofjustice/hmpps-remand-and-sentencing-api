@@ -3,11 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
-import java.nio.charset.Charset
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -161,7 +161,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
     createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
     println("existingAppearanceUuid: $existingAppearanceUuid existingFutureAppearanceUuid: $appearanceUuid")
-    val responseBody = webTestClient
+    val courtCase = webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
       .headers {
@@ -170,13 +170,12 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBody()
-      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceDate")
-      .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
-      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
-      .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+      .expectBody(CourtCase::class.java)
       .returnResult().responseBody!!
-    println(responseBody.toString(Charset.defaultCharset()))
+    println(objectMapper.writeValueAsString(courtCase))
+    val courtAppearance = courtCase.appearances.first { it.appearanceUuid == appearanceUuid }
+    Assertions.assertThat(courtAppearance.nextCourtAppearance?.appearanceDate).isEqualTo(futureCourtAppearance.appearanceDate)
+    Assertions.assertThat(courtAppearance.nextCourtAppearance?.appearanceTime).isEqualTo(futureCourtAppearance.legacyData.appearanceTime)
   }
 
   @Test
