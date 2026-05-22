@@ -128,7 +128,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update existing appearance while creating new future appearance links to existing appearance`() {
-    val (existingAppearanceUuid, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
+    val (existingAppearanceUuid, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
     val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = existingAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = existingAppearance.legacyData.nextEventDateTime.toLocalTime(), nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)), existingCourtCaseUuid = existingAppearance.courtCaseUuid)
     val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = LocalTime.of(11, 0), nextEventDateTime = existingAppearance.legacyData.nextEventDateTime.plusHours(4)))
     val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = existingAppearance.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = editedExistingFuture.legacyData.nextEventDateTime.toLocalTime(), nextEventDateTime = null))
@@ -160,7 +160,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
     }
 
     createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
-    println("existingAppearanceUuid: $existingAppearanceUuid existingFutureAppearanceUuid: $appearanceUuid")
+    println("firstAppearanceUuid: $existingAppearanceUuid secondAppearanceUuid: $appearanceUuid")
     val courtCase = webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
