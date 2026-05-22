@@ -88,7 +88,7 @@ class RecallController(private val recallService: RecallService, private val dps
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Search recalls for a person by period of custody",
-    description = "Returns recalls for a person, optionally filtered by bookingId (current period of custody from prisoner search). When includeAllPeriods is false, only recalls linked to that booking (or with no court cases) are returned. When includeAllPeriods is true, all recalls are returned with current period of custody sorted before previous periods.",
+    description = "Filter by bookingId (current period of custody) unless includeAllPeriods is true, when all recalls are returned with the current period listed first.",
   )
   @ApiResponses(
     value = [
