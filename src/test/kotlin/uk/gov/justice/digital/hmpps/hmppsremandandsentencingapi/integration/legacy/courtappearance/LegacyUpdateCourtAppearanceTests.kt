@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -127,7 +128,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update existing appearance while creating new future appearance links to existing appearance`() {
-    val (_, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
+    val (existingAppearanceUuid, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
     val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = existingAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = existingAppearance.legacyData.nextEventDateTime.toLocalTime(), nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)), existingCourtCaseUuid = existingAppearance.courtCaseUuid)
     val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = LocalTime.of(11, 0), nextEventDateTime = existingAppearance.legacyData.nextEventDateTime.plusHours(4)))
     val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = existingAppearance.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = editedExistingFuture.legacyData.nextEventDateTime.toLocalTime(), nextEventDateTime = null))
@@ -159,6 +160,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
     }
 
     createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
+    log.info("existingAppearanceUuid: $existingAppearanceUuid existingFutureAppearanceUuid: $appearanceUuid")
     webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
@@ -169,7 +171,8 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceDate")
+      .consumeWith(System.out::println)
+      .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceDateg")
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
       .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
@@ -282,5 +285,9 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
