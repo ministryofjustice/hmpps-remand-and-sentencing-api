@@ -160,7 +160,6 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
     }
 
     createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
-    println("firstAppearanceUuid: $existingAppearanceUuid secondAppearanceUuid: $appearanceUuid")
     val courtCase = webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
@@ -172,7 +171,6 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .isOk
       .expectBody(CourtCase::class.java)
       .returnResult().responseBody!!
-    println(objectMapper.writeValueAsString(courtCase))
     val courtAppearance = courtCase.appearances.first { it.appearanceUuid == appearanceUuid }
     Assertions.assertThat(courtAppearance.nextCourtAppearance?.appearanceDate).isEqualTo(futureCourtAppearance.appearanceDate)
     Assertions.assertThat(courtAppearance.nextCourtAppearance?.appearanceTime).isEqualTo(futureCourtAppearance.legacyData.appearanceTime)
