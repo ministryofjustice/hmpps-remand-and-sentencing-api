@@ -421,10 +421,9 @@ class RecallService(
     return currentPeriodRecalls + previousPeriodRecalls
   }
 
-  private fun isRecallInCurrentPeriodOfCustody(recall: Recall, bookingId: String): Boolean =
-    recall.courtCases.any { courtCase ->
-      courtCase.bookingId == null || courtCase.bookingId.toString() == bookingId
-    }
+  private fun isRecallInCurrentPeriodOfCustody(recall: Recall, bookingId: String): Boolean = recall.courtCases.any { courtCase ->
+    courtCase.bookingId == null || courtCase.bookingId.toString() == bookingId
+  }
 
   private fun createUalDtoForRecall(
     prisonerId: String,
