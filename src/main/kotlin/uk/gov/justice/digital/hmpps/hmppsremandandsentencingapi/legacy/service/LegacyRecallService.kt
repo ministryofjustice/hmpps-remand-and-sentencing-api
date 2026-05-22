@@ -29,6 +29,8 @@ class LegacyRecallService(
         "LR_EDS18",
         "LR_EDS21",
         "LR_EDSU18",
+        "LR_LASPO_AR",
+        "LR_LASPO_DR",
       ),
       SentenceTypeClassification.INDETERMINATE to listOf(
         "LR_LIFE",
