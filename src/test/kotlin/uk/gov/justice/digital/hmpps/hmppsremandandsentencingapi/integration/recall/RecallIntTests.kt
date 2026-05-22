@@ -471,19 +471,19 @@ class RecallIntTests : IntegrationTestBase() {
 
   @Test
   fun `Get recalls returns bookingId from court case legacy data`() {
-    val bookingId = 1233536L
+    val bookingId = CUSTODY_FILTER_ACTIVE_BOOKING_ID
     val appearanceDate = LocalDate.now().minusDays(30)
     val charge = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDate),
     )
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(charge),
-      courtCaseReference = "CC1",
+      courtCaseReference = "CC-CUSTODY-BOOKING",
       appearanceDate = appearanceDate,
     )
     val (_, courtCase) = createCourtCase(
       CreateCourtCase(
-        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        prisonerId = CUSTODY_FILTER_PRISONER_ID,
         prisonId = "PRISON1",
         appearances = listOf(appearance),
         legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId),
@@ -493,6 +493,7 @@ class RecallIntTests : IntegrationTestBase() {
 
     val recallUuid = createRecall(
       DpsDataCreator.dpsCreateRecall(
+        prisonerId = CUSTODY_FILTER_PRISONER_ID,
         sentenceIds = listOf(sentenceUuid),
       ),
     ).recallUuid
@@ -501,14 +502,15 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(recall.courtCases).hasSize(1)
     assertThat(recall.courtCases.first().bookingId).isEqualTo(bookingId)
 
-    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
-    assertThat(recalls.first { it.recallUuid == recallUuid }.courtCases.first().bookingId).isEqualTo(bookingId)
+    val recalls = getRecallsByPrisonerId(CUSTODY_FILTER_PRISONER_ID)
+    assertThat(recalls).hasSize(1)
+    assertThat(recalls.first().courtCases.first().bookingId).isEqualTo(bookingId)
   }
 
   @Test
   fun `Get recalls filters by bookingId query param`() {
-    val activeBookingId = 1233536L
-    val otherBookingId = 9999999L
+    val activeBookingId = CUSTODY_FILTER_ACTIVE_BOOKING_ID
+    val otherBookingId = CUSTODY_FILTER_OTHER_BOOKING_ID
     val appearanceDate = LocalDate.now().minusDays(30)
 
     fun createRecallForBooking(bookingId: Long): UUID {
@@ -517,38 +519,40 @@ class RecallIntTests : IntegrationTestBase() {
       )
       val appearance = DpsDataCreator.dpsCreateCourtAppearance(
         charges = listOf(charge),
-        courtCaseReference = "CC-$bookingId",
+        courtCaseReference = "CC-CUSTODY-$bookingId",
         appearanceDate = appearanceDate,
       )
       val (_, courtCase) = createCourtCase(
         CreateCourtCase(
-          prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+          prisonerId = CUSTODY_FILTER_PRISONER_ID,
           prisonId = "PRISON1",
           appearances = listOf(appearance),
           legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId),
         ),
       )
       val sentenceUuid = courtCase.appearances.first().charges.first().sentence!!.sentenceUuid
-      return createRecall(DpsDataCreator.dpsCreateRecall(sentenceIds = listOf(sentenceUuid))).recallUuid
+      return createRecall(
+        DpsDataCreator.dpsCreateRecall(
+          prisonerId = CUSTODY_FILTER_PRISONER_ID,
+          sentenceIds = listOf(sentenceUuid),
+        ),
+      ).recallUuid
     }
 
     val currentPeriodRecallUuid = createRecallForBooking(activeBookingId)
     val previousPeriodRecallUuid = createRecallForBooking(otherBookingId)
 
     val allRecalls = getPrisonerRecallsResponse(
-      DpsDataCreator.DEFAULT_PRISONER_ID,
+      CUSTODY_FILTER_PRISONER_ID,
       bookingId = activeBookingId.toString(),
       includeAllPeriods = true,
     )
-    assertThat(allRecalls.prisonerRecallTotal).isGreaterThanOrEqualTo(2)
-    assertThat(allRecalls.recalls.map { it.recallUuid }).contains(currentPeriodRecallUuid, previousPeriodRecallUuid)
-    val recallOrder = allRecalls.recalls.map { it.recallUuid }
-    assertThat(recallOrder.indexOf(currentPeriodRecallUuid)).isLessThan(recallOrder.indexOf(previousPeriodRecallUuid))
+    assertThat(allRecalls.prisonerRecallTotal).isEqualTo(2)
+    assertThat(allRecalls.recalls.map { it.recallUuid }).containsExactly(currentPeriodRecallUuid, previousPeriodRecallUuid)
 
-    val filteredRecalls = getPrisonerRecallsResponse(DpsDataCreator.DEFAULT_PRISONER_ID, activeBookingId.toString())
-    assertThat(filteredRecalls.prisonerRecallTotal).isGreaterThanOrEqualTo(2)
-    assertThat(filteredRecalls.recalls.map { it.recallUuid }).contains(currentPeriodRecallUuid)
-    assertThat(filteredRecalls.recalls.map { it.recallUuid }).doesNotContain(previousPeriodRecallUuid)
+    val filteredRecalls = getPrisonerRecallsResponse(CUSTODY_FILTER_PRISONER_ID, activeBookingId.toString())
+    assertThat(filteredRecalls.prisonerRecallTotal).isEqualTo(2)
+    assertThat(filteredRecalls.recalls.map { it.recallUuid }).containsExactly(currentPeriodRecallUuid)
   }
 
   @Test
@@ -1323,6 +1327,10 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   companion object {
+    private const val CUSTODY_FILTER_PRISONER_ID = "A1234RC"
+    private const val CUSTODY_FILTER_ACTIVE_BOOKING_ID = 87654321L
+    private const val CUSTODY_FILTER_OTHER_BOOKING_ID = 87654322L
+
     @JvmStatic
     fun dpsSentenceAndClassificationCombinationParameters(): Stream<Arguments> = Stream.of(
       Arguments.of(SentenceTypeClassification.STANDARD, LR, IsRecallPossible.YES),
