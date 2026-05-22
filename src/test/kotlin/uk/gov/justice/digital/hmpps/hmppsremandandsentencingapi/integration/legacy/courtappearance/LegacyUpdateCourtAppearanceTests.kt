@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.nio.charset.Charset
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -127,7 +128,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `update existing appearance while creating new future appearance links to existing appearance`() {
-    val (_, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
+    val (existingAppearanceUuid, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
     val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = existingAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = existingAppearance.legacyData.nextEventDateTime.toLocalTime(), nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)), existingCourtCaseUuid = existingAppearance.courtCaseUuid)
     val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = LocalTime.of(11, 0), nextEventDateTime = existingAppearance.legacyData.nextEventDateTime.plusHours(4)))
     val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = existingAppearance.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = editedExistingFuture.legacyData.nextEventDateTime.toLocalTime(), nextEventDateTime = null))
@@ -159,7 +160,8 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
     }
 
     createFutureAppearanceCall.thenCombine(updateExistingCall) { a, b -> a to b }.join()
-    webTestClient
+    println("existingAppearanceUuid: $existingAppearanceUuid existingFutureAppearanceUuid: $appearanceUuid")
+    val responseBody = webTestClient
       .get()
       .uri("/court-case/${existingFutureAppearance.courtCaseUuid}")
       .headers {
@@ -173,6 +175,8 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(futureCourtAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceTime")
       .isEqualTo(futureCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
+      .returnResult().responseBody!!
+    println(responseBody.toString(Charset.defaultCharset()))
   }
 
   @Test
