@@ -476,6 +476,41 @@ class LegacySentenceServiceTests {
       assertThat(result.first).isEqualTo("14FTR_ORA")
       assertThat(result.second).isEqualTo("2020")
     }
+
+    @Test
+    fun `DUPLICATE recall with recall sentence legacy data returns sentenceCalcType and category from recall`() {
+      val (sentence, recall) = getSentenceAndRecall(
+        sentenceUuid = UUID.randomUUID(),
+        chargeUuid = UUID.randomUUID(),
+        appearanceUuid = UUID.randomUUID(),
+        recallType = RecallType.LR,
+        existingRtc = LocalDate.of(2024, 1, 11),
+      )
+      recall.status = RecallEntityStatus.DUPLICATE
+      sentence.sentenceType = recallBucketType()
+      sentence.legacyData = SentenceLegacyData(
+        sentenceCalcType = null,
+        sentenceCategory = null,
+        sentenceTypeDesc = null,
+        postedDate = "2024-01-01T00:00:00",
+        active = true,
+        nomisLineReference = null,
+        bookingId = null,
+      )
+      val recallSentence = sentence.recallSentences.single()
+      recallSentence.legacyData = RecallSentenceLegacyData(
+        sentenceCalcType = "HDR_ORA",
+        sentenceCategory = "2003",
+        sentenceTypeDesc = null,
+        postedDate = "2024-01-01T00:00:00",
+        active = true,
+      )
+
+      val result = LegacySentence.getSentenceCalcTypeAndCategory(sentence, sentence.latestRecall())
+
+      assertThat(result.first).isEqualTo("HDR_ORA")
+      assertThat(result.second).isEqualTo("2003")
+    }
   }
 
   private companion object {
