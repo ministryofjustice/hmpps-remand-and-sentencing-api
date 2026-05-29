@@ -1,8 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.sentence
 
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.returnResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.BookingDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
@@ -63,6 +67,58 @@ class LegacyGetSentenceTests : IntegrationTestBase() {
       .isEqualTo("2020")
       .jsonPath("$.returnToCustodyDate")
       .isEqualTo("2024-01-01")
+  }
+
+  @Test
+  fun `get legacy sentence returns sentenceCalcType from DUPLICATE recall created via booking sync`() {
+    val recalledSentence = BookingDataCreator.bookingCreateSentence(
+      legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "HDR_ORA", sentenceCategory = "2003"),
+      returnToCustodyDate = LocalDate.of(2024, 1, 1),
+    )
+    val appearance = BookingDataCreator.bookingCreateCourtAppearance(
+      legacyData = DataCreator.courtAppearanceLegacyData(
+        outcomeConvictionFlag = true,
+        outcomeDispositionCode = "F",
+        nomisOutcomeCode = "1501",
+      ),
+      charges = listOf(BookingDataCreator.bookingCreateCharge(sentence = recalledSentence)),
+    )
+    val bookingCourtCases = BookingDataCreator.bookingCreateCourtCases(
+      courtCases = listOf(BookingDataCreator.bookingCreateCourtCase(appearances = listOf(appearance))),
+    )
+
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/booking")
+      .bodyValue(bookingCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult<BookingCreateCourtCasesResponse>()
+      .responseBody.blockFirst()!!
+
+    val sentenceUuid = response.sentences.first().sentenceUuid
+
+    webTestClient
+      .get()
+      .uri("/legacy/sentence/$sentenceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.lifetimeUuid")
+      .isEqualTo(sentenceUuid.toString())
+      .jsonPath("$.sentenceCalcType")
+      .isEqualTo("HDR_ORA")
+      .jsonPath("$.sentenceCategory")
+      .isEqualTo("2003")
   }
 
   @Test
