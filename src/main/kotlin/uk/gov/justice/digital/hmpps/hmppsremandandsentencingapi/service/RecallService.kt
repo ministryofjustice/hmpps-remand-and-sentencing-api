@@ -377,9 +377,7 @@ class RecallService(
     return Recall.from(recall, recallSentences, adjustment)
   }
 
-  // TODO: make private once controller switches to use searchRecallsByPrisonerId
-  @Transactional(readOnly = true)
-  fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {
+  private fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {
     val recallAdjustments = adjustmentsApiClient.getAdjustments(prisonerId).filter { it.recallId != null }
     return recallRepository.findByPrisonerIdAndStatus(prisonerId).map { recall ->
       val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
