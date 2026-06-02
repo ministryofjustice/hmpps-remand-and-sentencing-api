@@ -6,4 +6,5 @@ spring:
     web-application-type: servlet
 
 multiple-charges-single-sentence-fix-queue:
+  limit: 5
   chunk-delay-ms: 1
