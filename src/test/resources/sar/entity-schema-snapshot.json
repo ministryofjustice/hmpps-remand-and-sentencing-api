@@ -301,6 +301,10 @@
     "sentenceType": "SentenceTypeEntity",
     "sentencingAct": "int"
   },
+  "MultipleChargesSingleSentenceFixQueueEntity": {
+    "caseUniqueIdentifier": "String",
+    "id": "long"
+  },
   "NextCourtAppearanceEntity": {
     "appearanceDate": "LocalDate",
     "appearanceTime": "LocalTime",

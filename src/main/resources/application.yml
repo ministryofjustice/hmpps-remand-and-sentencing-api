@@ -5,6 +5,11 @@ info.app:
 spring:
   application:
     name: hmpps-remand-and-sentencing-api
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
   codec:
     max-in-memory-size: 10MB
 

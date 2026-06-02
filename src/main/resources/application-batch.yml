@@ -1,0 +1,9 @@
+spring:
+  batch:
+    job:
+      enabled: true
+  main:
+    web-application-type: none
+
+multiple-charges-single-sentence-fix-queue:
+  limit: 500

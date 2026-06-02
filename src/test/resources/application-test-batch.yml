@@ -1,0 +1,6 @@
+spring:
+  batch:
+    job:
+      enabled: false
+  main:
+    web-application-type: servlet

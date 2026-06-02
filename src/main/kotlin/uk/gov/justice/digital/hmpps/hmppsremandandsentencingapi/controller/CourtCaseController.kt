@@ -165,6 +165,10 @@ class CourtCaseController(
     recallCourtCases
   }
 
+  /**
+   * NOTE: This GET endpoint triggers an intended side effect
+   * by invoking fixManyChargesToSentenceService#fixCourtCaseSentences
+   */
   @GetMapping("\${court.case.getByIdPath}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
