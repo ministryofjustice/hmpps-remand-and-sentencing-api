@@ -4,3 +4,6 @@ spring:
       enabled: false
   main:
     web-application-type: servlet
+
+multiple-charges-single-sentence-fix-queue:
+  chunk-delay-ms: 1

@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.batch
 
 import org.springframework.data.repository.CrudRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.batch.MultipleChargesSingleSentenceFixQueueEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.batch.ManyChargesToSentenceFixQueueEntity
 
-interface MultipleChargesSingleSentenceFixQueueRepository : CrudRepository<MultipleChargesSingleSentenceFixQueueEntity, Long>
+interface MultipleChargesSingleSentenceFixQueueRepository : CrudRepository<ManyChargesToSentenceFixQueueEntity, Long>

@@ -301,7 +301,7 @@
     "sentenceType": "SentenceTypeEntity",
     "sentencingAct": "int"
   },
-  "MultipleChargesSingleSentenceFixQueueEntity": {
+  "ManyChargesToSentenceFixQueueEntity": {
     "caseUniqueIdentifier": "String",
     "id": "long"
   },

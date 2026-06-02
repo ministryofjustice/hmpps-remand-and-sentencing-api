@@ -1,0 +1,14 @@
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
+
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Service
+import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
+
+@Service
+class WebServiceUserService : ServiceUserService {
+
+  override fun getCurrentAuthentication(): AuthAwareAuthenticationToken = SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
+    ?: throw IllegalStateException("User is not authenticated")
+
+  override fun getUsername(): String = getCurrentAuthentication().principal
+}
