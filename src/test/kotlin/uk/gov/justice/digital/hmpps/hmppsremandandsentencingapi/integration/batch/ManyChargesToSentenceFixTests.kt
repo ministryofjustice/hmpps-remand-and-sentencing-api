@@ -4,10 +4,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doCallRealMethod
+import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.whenever
 import org.springframework.batch.core.BatchStatus
 import org.springframework.batch.core.job.Job
 import org.springframework.batch.core.job.parameters.JobParametersBuilder
 import org.springframework.batch.core.launch.JobInstanceAlreadyCompleteException
+import org.springframework.batch.infrastructure.item.ItemProcessor
 import org.springframework.batch.test.JobOperatorTestUtils
 import org.springframework.batch.test.context.SpringBatchTest
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,9 +20,11 @@ import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.returnResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.batch.ManyChargesToSentenceFixQueueEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 
@@ -34,6 +41,9 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
 
   @Autowired
   lateinit var manyChargesToSentenceFixTests: Job
+
+  @MockitoSpyBean
+  lateinit var courtCasesToRepairProcessor: ItemProcessor<ManyChargesToSentenceFixQueueEntity, ManyChargesToSentenceFixQueueEntity>
 
   @AfterEach
   fun cleanup() {
@@ -125,13 +135,30 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
       .hasMessage("A job instance already exists and is complete for identifying parameters={JobParameter{name='run.date', value=2026-01-02, type=class java.lang.String, identifying=true}}.  If you want to run this job again, change the parameters.")
   }
 
-  private fun runJob(runDate: String) {
+  @Test
+  fun `should be able to run the same job after initial job fails test`() {
+    arrange(4, 30)
+
+    doThrow(RuntimeException())
+      .whenever(courtCasesToRepairProcessor)
+      .process(any())
+    runJob("2026-01-02", BatchStatus.FAILED)
+
+    // Remove the exception being thrown on the next job run
+    doCallRealMethod()
+      .whenever(courtCasesToRepairProcessor)
+      .process(any())
+
+    runJob("2026-01-02", BatchStatus.COMPLETED)
+  }
+
+  private fun runJob(runDate: String, batchStatus: BatchStatus = BatchStatus.COMPLETED) {
     var params = JobParametersBuilder()
       .addString("run.date", runDate)
       .toJobParameters()
     jobOperatorTestUtils.setJob(manyChargesToSentenceFixTests)
     var result = jobOperatorTestUtils.startJob(params)
-    assertThat(result.status).isEqualTo(BatchStatus.COMPLETED)
+    assertThat(result.status).isEqualTo(batchStatus)
   }
 
   private fun getDuplicateSentenceCount(): Long? = jdbcTemplate.queryForObject<Long>(
@@ -141,10 +168,6 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
                   GROUP BY sentence_uuid
                   HAVING COUNT(*) > 1) duplicates
     """.trimIndent(),
-  )
-
-  private fun getDistinctSentenceCount(): Long? = jdbcTemplate.queryForObject<Long>(
-    "SELECT COUNT(DISTINCT sentence_uuid) FROM sentence",
   )
 
   private fun arrange(totalChargesToSentence: Long = 50, totalCourtCases: Long = 1) {

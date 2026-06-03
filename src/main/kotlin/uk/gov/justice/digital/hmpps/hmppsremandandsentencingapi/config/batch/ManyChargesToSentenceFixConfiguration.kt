@@ -45,9 +45,6 @@ class ManyChargesToSentenceFixConfiguration {
     @Value("\${multiple-charges-single-sentence-fix-queue.limit:500}") limit: Int,
   ): Tasklet = Tasklet { contribution: StepContribution?, chunkContext: ChunkContext? ->
 
-    val auth = UsernamePasswordAuthenticationToken("BATCH_JOB", null, emptyList())
-    SecurityContextHolder.getContext().authentication = auth
-
     // delete old records from a prior successful job execution
     em.createNativeQuery("TRUNCATE TABLE many_charges_to_sentence_fix_queue").executeUpdate()
 
@@ -61,6 +58,7 @@ class ManyChargesToSentenceFixConfiguration {
                           JOIN appearance_charge ac ON ac.appearance_id = lcap.id
                           JOIN charge c ON c.id = ac.charge_id
                           JOIN sentence s ON s.charge_id = c.id
+                          -- WHERE lcap.court_case_id = cc.id
                           WHERE lcap.id = cc.latest_court_appearance_id
                           AND s.status_id = 'MANY_CHARGES_DATA_FIX'
                      )
@@ -93,9 +91,7 @@ class ManyChargesToSentenceFixConfiguration {
   fun courtCasesToRepairProcessor(
     @Value("\${multiple-charges-single-sentence-fix-queue.chunk-delay-ms:500}") delay: Long,
   ): ItemProcessor<ManyChargesToSentenceFixQueueEntity, ManyChargesToSentenceFixQueueEntity> {
-    Thread.sleep(delay)
-
-    return ItemProcessor { item: ManyChargesToSentenceFixQueueEntity -> item }
+    return PassThroughProcessor(delay)
   }
 
   @Bean
@@ -129,6 +125,14 @@ class ManyChargesToSentenceFixConfiguration {
     .transactionManager(transactionManager)
     .build()
 
+  /**
+   * Primary Job container
+   * Step 1. Identify Court Cases in need of Repair
+   * Step 2. Process Court Cases in need of Repair
+   * (with a chunk size of 1 to ensure we only process one court case
+   * at a time to avoid potential performance issues and to make it easier
+   * to identify any issues with specific court cases)
+   */
   @Bean
   fun manyChargesToSentenceFixJob(
     jobRepository: JobRepository,
