@@ -12,5 +12,5 @@ class ManyChargesToSentenceFixQueueEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   var id: Long = 0,
-  val caseUniqueIdentifier: String,
+  var caseUniqueIdentifier: String,
 )

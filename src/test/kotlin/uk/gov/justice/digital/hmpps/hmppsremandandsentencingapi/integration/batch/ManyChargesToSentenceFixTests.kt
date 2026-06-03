@@ -68,6 +68,9 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
     assertThat(totalCorrectedSentences).isEqualTo(5)
     val totalRemainingSentencesToFix = getDuplicateSentenceCount()
     assertThat(totalRemainingSentencesToFix).isEqualTo(25)
+
+    val totalMessage = getMessages(expectedNumberOfMessages = 35).count { p -> p.eventType == "sentence.fix-single-charge.inserted" }
+    assertThat(totalMessage).isEqualTo(15) // total charges - 1 * court cases fixed
   }
 
   @Test
@@ -83,6 +86,9 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
     assertThat(totalCorrectedSentences).isEqualTo(10)
     val totalRemainingSentencesToFix = getDuplicateSentenceCount()
     assertThat(totalRemainingSentencesToFix).isEqualTo(20)
+
+    val totalMessage = getMessages(expectedNumberOfMessages = 70).count { p -> p.eventType == "sentence.fix-single-charge.inserted" }
+    assertThat(totalMessage).isEqualTo(30) // total charges - 1 * court cases fixed
   }
 
   @Test
@@ -102,6 +108,9 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
     assertThat(totalCorrectedSentences).isEqualTo(30)
     val totalRemainingSentencesToFix = getDuplicateSentenceCount()
     assertThat(totalRemainingSentencesToFix).isEqualTo(0)
+
+    val totalMessage = getMessages(expectedNumberOfMessages = 210).count { p -> p.eventType == "sentence.fix-single-charge.inserted" }
+    assertThat(totalMessage).isEqualTo(90) // total charges - 1 * court cases fixed
   }
 
   @Test
@@ -122,6 +131,9 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
     assertThat(totalCorrectedSentences).isEqualTo(30)
     val totalRemainingSentencesToFix = getDuplicateSentenceCount()
     assertThat(totalRemainingSentencesToFix).isEqualTo(0)
+
+    val totalMessage = getMessages(expectedNumberOfMessages = 210).count { p -> p.eventType == "sentence.fix-single-charge.inserted" }
+    assertThat(totalMessage).isEqualTo(90) // total charges - 1 * court cases fixed
   }
 
   @Test
@@ -150,6 +162,9 @@ class ManyChargesToSentenceFixTests : IntegrationTestBase() {
       .process(any())
 
     runJob("2026-01-02", BatchStatus.COMPLETED)
+
+    val totalMessage = getMessages(expectedNumberOfMessages = 35).count { p -> p.eventType == "sentence.fix-single-charge.inserted" }
+    assertThat(totalMessage).isEqualTo(15) // total charges - 1 * court cases fixed
   }
 
   private fun runJob(runDate: String, batchStatus: BatchStatus = BatchStatus.COMPLETED) {
