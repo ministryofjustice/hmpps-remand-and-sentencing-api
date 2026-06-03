@@ -45,7 +45,7 @@ class MigrationDeleteCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content[0].appearanceCount").isEqualTo(1)
       .jsonPath("$.content[0].latestCourtAppearance.caseReference").isEqualTo("NOMIS123")
       .jsonPath("$.content[0].latestCourtAppearance.courtCode").isEqualTo("COURT1")
-      .jsonPath("$.content[0].latestCourtAppearance.warrantDate").isEqualTo(LocalDate.now().minusDays(1).toString())
+      .jsonPath("$.content[0].latestCourtAppearance.warrantDate").isEqualTo(LocalDate.now().toString())
       .jsonPath("$.content[0].latestCourtAppearance.warrantType").isEqualTo("SENTENCING")
       .jsonPath("$.content[0].latestCourtAppearance.outcome").isEqualTo("Outcome Description")
       .jsonPath("$.content[0].latestCourtAppearance.charges[0].offenceCode").isEqualTo("OFF1")

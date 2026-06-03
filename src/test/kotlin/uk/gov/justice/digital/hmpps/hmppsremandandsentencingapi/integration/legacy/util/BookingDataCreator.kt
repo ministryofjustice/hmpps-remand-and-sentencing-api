@@ -44,7 +44,7 @@ class BookingDataCreator {
     fun bookingCreateCourtAppearance(
       eventId: Long = 1,
       courtCode: String = "COURT1",
-      appearanceDate: LocalDate = LocalDate.now().minusDays(1),
+      appearanceDate: LocalDate = LocalDate.now(),
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
       charges: List<BookingCreateCharge> = listOf(bookingCreateCharge()),
