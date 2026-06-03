@@ -4,4 +4,4 @@ spring:
       enabled: true
 
 multiple-charges-single-sentence-fix-queue:
-  limit: 5
+  limit: 500
