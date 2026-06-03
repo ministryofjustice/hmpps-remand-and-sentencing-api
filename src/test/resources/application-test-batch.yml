@@ -2,8 +2,6 @@ spring:
   batch:
     job:
       enabled: false
-  main:
-    web-application-type: servlet # Required to work with the integration test suite
 
 multiple-charges-single-sentence-fix-queue:
   limit: 5

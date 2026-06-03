@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.batch
 class PassThroughProcessor(private val delay: Long) : ItemProcessor<ManyChargesToSentenceFixQueueEntity, ManyChargesToSentenceFixQueueEntity> {
   override fun process(item: ManyChargesToSentenceFixQueueEntity): ManyChargesToSentenceFixQueueEntity {
     Thread.sleep(delay)
-    log.info("Processing Case Identifier {}", item.caseUniqueIdentifier)
+    log.debug("Processing Case Identifier {}", item.caseUniqueIdentifier)
     return item
   }
 

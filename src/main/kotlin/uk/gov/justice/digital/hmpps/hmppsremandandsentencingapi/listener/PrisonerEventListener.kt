@@ -5,11 +5,13 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.awspring.cloud.sqs.annotation.SqsListener
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.listener.dto.HMPPSDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.listener.dto.SQSMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PrisonerEventService
 
+@Profile("!batch")
 @Service
 class PrisonerEventListener(
   private val objectMapper: ObjectMapper,

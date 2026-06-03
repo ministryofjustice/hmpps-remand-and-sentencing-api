@@ -1,8 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.batch
 
 import jakarta.persistence.EntityManagerFactory
+import org.springframework.batch.core.BatchStatus
 import org.springframework.batch.core.job.Job
+import org.springframework.batch.core.job.JobExecution
 import org.springframework.batch.core.job.builder.JobBuilder
+import org.springframework.batch.core.listener.JobExecutionListener
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.Step
 import org.springframework.batch.core.step.builder.StepBuilder
@@ -14,6 +17,7 @@ import org.springframework.batch.infrastructure.item.database.JpaPagingItemReade
 import org.springframework.batch.infrastructure.item.database.builder.JpaPagingItemReaderBuilder
 import org.springframework.batch.infrastructure.repeat.RepeatStatus
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -23,7 +27,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.batch.MultipleChargesSingleSentenceFixQueueRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.FixManyChargesToSentenceService
-import java.util.*
 
 @Configuration
 @Profile("batch")
@@ -32,6 +35,7 @@ class ManyChargesToSentenceFixConfiguration {
   /**
    * Primary Job:
    *   Step 1 [identifyCourtCasesToRepairStep]   — find affected court cases and stage them in a queue table
+   *
    *   Step 2 [processCourtCasesToRepairRecordsStep] — process each staged case one at a time
    */
   @Bean
@@ -39,10 +43,16 @@ class ManyChargesToSentenceFixConfiguration {
     jobRepository: JobRepository,
     identifyCourtCasesToRepairStep: Step,
     processCourtCasesToRepairRecordsStep: Step,
-  ): Job? = JobBuilder("manyChargesToSentenceFixJob", jobRepository)
-    .start(identifyCourtCasesToRepairStep)
-    .next(processCourtCasesToRepairRecordsStep)
-    .build()
+    listeners: List<JobExecutionListener>,
+  ): Job? {
+    val builder = JobBuilder("manyChargesToSentenceFixJob", jobRepository)
+      .start(identifyCourtCasesToRepairStep)
+      .next(processCourtCasesToRepairRecordsStep)
+
+    listeners.forEach { builder.listener(it) }
+
+    return builder.build()
+  }
 
   // ---------------------------------------------------------------------------
   // Step 1: Identify court cases to repair
@@ -118,6 +128,15 @@ class ManyChargesToSentenceFixConfiguration {
         val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it))
         dpsDomainEventService.emitEvents(eventsToEmit)
       }
+    }
+  }
+
+  @Profile("!test")
+  @Bean
+  fun jobCompletionNotificationListener(context: ApplicationContext): JobExecutionListener = object : JobExecutionListener {
+    override fun afterJob(jobExecution: JobExecution) {
+      val exitCode = if (jobExecution.status == BatchStatus.COMPLETED) 0 else 1
+      kotlin.system.exitProcess(org.springframework.boot.SpringApplication.exit(context, { exitCode }))
     }
   }
 }

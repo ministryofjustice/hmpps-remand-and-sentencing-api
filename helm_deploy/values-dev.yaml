@@ -30,6 +30,18 @@ generic-service:
     limits:
       memory: 4G
 
+  cronJobs:
+    many-charges-single-sentence-fix:
+      schedule: "30 2 * * *" # 2:30am every day
+      timeZone: Etc/UTC
+      suspend: true
+      command: [ "/bin/sh", "-c" ]
+      args:
+        - java -jar /app/app.jar run.date=$(date +%Y-%m-%d)
+      env:
+        SPRING_PROFILES_ACTIVE: "batch"
+        SPRING_BATCH_JOB_NAME: "manyChargesToSentenceFixJob"
+
   scheduledDowntime:
     enabled: true
   # Switches off the allow list in the DEV env only.
