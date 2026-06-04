@@ -12,19 +12,17 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.BulkFixManyChargesToSentenceService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 
 @RestController
 @RequestMapping("/court-case-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "court-case-admin-controller", description = "Court case")
 class CourtCaseAdminController(
   private val bulkFixManyChargesToSentenceService: BulkFixManyChargesToSentenceService,
-  private val dpsDomainEventService: DpsDomainEventService,
   @Value("\${multiple-charges-single-sentence-fix-queue.limit:500}") private val limit: Int,
 ) {
 
   @PostMapping("/cleanup-many-charges-to-sentence")
-  @ResponseStatus(HttpStatus.OK)
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @Operation(
     summary = "Fixes the single sentence to many charges issue",
     description = """
@@ -35,11 +33,10 @@ class CourtCaseAdminController(
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "Cleanup completed"),
+      ApiResponse(responseCode = "202", description = "Cleanup tiggered"),
     ],
   )
   fun cleanupManyChargesToSentence() {
-    val events = bulkFixManyChargesToSentenceService.fixCourtCaseSentences(limit)
-    dpsDomainEventService.emitEvents(events)
+    bulkFixManyChargesToSentenceService.fixCourtCaseSentences(limit)
   }
 }

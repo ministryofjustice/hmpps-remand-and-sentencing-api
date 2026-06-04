@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import io.mockk.Runs
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -21,6 +23,9 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @MockK
   private lateinit var fixManyChargesToSentenceService: FixManyChargesToSentenceService
+
+  @MockK
+  private lateinit var dpsDomainEventService: DpsDomainEventService
 
   @MockK
   private lateinit var courtCaseEntity1: CourtCaseEntity
@@ -54,10 +59,11 @@ class BulkFixManyChargesToSentenceServiceTests {
     every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity2, "BATCH_JOB") } returns events(3)
     every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity3, "BATCH_JOB") } returns events(66)
     every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity4, "BATCH_JOB") } returns events(1)
+    every { dpsDomainEventService.emitEvents(any()) } just Runs
 
-    val events = sut.fixCourtCaseSentences(4)
+    sut.fixCourtCaseSentences(4)
 
-    assertThat(events).size().isEqualTo(40)
+    verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(40) }) }
     verify(exactly = 4) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
   }
 
@@ -69,20 +75,22 @@ class BulkFixManyChargesToSentenceServiceTests {
 
     every { courtCaseSarRepository.findSentencedCourtCase("70D8677F-3E37-487D-ADA7-EEFE3182438B") } returns courtCaseEntity1
     every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity1, "BATCH_JOB") } returns events(5)
+    every { dpsDomainEventService.emitEvents(any()) } just Runs
 
-    val events = sut.fixCourtCaseSentences(1)
+    sut.fixCourtCaseSentences(1)
 
-    assertThat(events).size().isEqualTo(10)
+    verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(10) }) }
     verify(exactly = 1) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
   }
 
   @Test
   fun `should do nothing when query returns and empty list`() {
     every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(1) } returns listOf()
+    every { dpsDomainEventService.emitEvents(any()) } just Runs
 
-    val events = sut.fixCourtCaseSentences(1)
+    sut.fixCourtCaseSentences(1)
 
-    assertThat(events).size().isEqualTo(0)
+    verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(0) }) }
     verify(exactly = 0) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
   }
 

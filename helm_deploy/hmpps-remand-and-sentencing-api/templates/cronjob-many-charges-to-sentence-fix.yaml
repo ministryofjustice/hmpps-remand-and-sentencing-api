@@ -25,7 +25,7 @@ spec:
               imagePullPolicy: IfNotPresent
               command: [ "/bin/sh", "-c" ]
               args:
-                - curl -XPOST --connect-timeout 5 --max-time 60 http://{{ include "generic-service.fullname" . }}/court-case-admin/cleanup-many-charges-to-sentence
+                - curl -XPOST --connect-timeout 5 --max-time 10 http://{{ include "generic-service.fullname" . }}/court-case-admin/cleanup-many-charges-to-sentence
               securityContext:
                 {{- toYaml .Values.manyChargesToSentenceFixCronjob.securityContext | nindent 16 }}
   {{- end }}

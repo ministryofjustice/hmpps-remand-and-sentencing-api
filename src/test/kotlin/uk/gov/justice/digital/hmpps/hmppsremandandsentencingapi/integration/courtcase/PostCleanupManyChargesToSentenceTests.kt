@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -11,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import java.time.Duration.ofSeconds
 
 class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
 
@@ -31,7 +33,13 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
       .uri("/court-case-admin/cleanup-many-charges-to-sentence")
       .headers { it.contentType = MediaType.APPLICATION_JSON }
       .exchange()
-      .expectStatus().isOk
+      .expectStatus()
+      .isAccepted
+
+    await().atMost(ofSeconds(10)).until {
+      val count = initialDuplicateSentences?.minus(getDuplicateSentenceCount() ?: 0)
+      count == 30L
+    }
 
     val totalCorrectedSentences = initialDuplicateSentences?.minus(getDuplicateSentenceCount() ?: 0)
     assertThat(totalCorrectedSentences).isEqualTo(30)
@@ -56,7 +64,11 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
       .uri("/court-case-admin/cleanup-many-charges-to-sentence")
       .headers { it.contentType = MediaType.APPLICATION_JSON }
       .exchange()
-      .expectStatus().isOk
+      .expectStatus().isAccepted
+
+    await().atMost(ofSeconds(10)).until {
+      getDuplicateSentenceCount() == 0L
+    }
 
     val totalCorrectedSentences = initialDuplicateSentences?.minus(getDuplicateSentenceCount() ?: 0)
     assertThat(totalCorrectedSentences).isEqualTo(0)
@@ -78,7 +90,7 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
       .uri("/court-case-admin/cleanup-many-charges-to-sentence")
       .headers { it.contentType = MediaType.APPLICATION_JSON }
       .exchange()
-      .expectStatus().isOk
+      .expectStatus().isAccepted
 
     val overallTotalSentenceCount = getSentenceCount()
     assertThat(overallTotalSentenceCount).isEqualTo(0)
