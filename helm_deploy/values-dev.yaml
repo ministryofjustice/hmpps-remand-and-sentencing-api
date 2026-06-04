@@ -49,5 +49,5 @@ documentCleanCronjob:
   schedule: "0 7 * * 1-5"
 
 manyChargesToSentenceFixCronjob:
-  enabled: true
+  enabled: false
   schedule: "30 6 * * 1-5"
