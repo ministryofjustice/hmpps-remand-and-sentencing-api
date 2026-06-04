@@ -97,7 +97,7 @@ documentCleanCronjob:
 
 manyChargesToSentenceFixCronjob:
   enabled: false
-  schedule: "30 2 * * *" # 2:30am every day
+  schedule: "30 2 * * *" # 2:30am daily
   timeZone: Etc/UTC
   securityContext:
     capabilities:
