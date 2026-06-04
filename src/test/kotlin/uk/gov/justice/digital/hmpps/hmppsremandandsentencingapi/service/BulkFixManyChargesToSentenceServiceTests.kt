@@ -40,58 +40,48 @@ class BulkFixManyChargesToSentenceServiceTests {
   private lateinit var courtCaseEntity4: CourtCaseEntity
 
   @InjectMockKs(overrideValues = true)
-  private lateinit var sut: BulkFixManyChargesToSentenceService
+  private lateinit var bulkFixManyChargesToSentenceService: BulkFixManyChargesToSentenceService
 
   @Test
   fun `should call fixCourtCaseSentences multiple times returning the sum of all generated events`() {
-    every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(4) } returns listOf(
-      "70D8677F-3E37-487D-ADA7-EEFE3182438B",
-      "B9C71F09-A5C0-4355-B961-BFC229EE7104",
-      "28DA01FA-EEC5-4541-890C-F0A0FDD11772",
-      "001AE716-4F8E-4C04-B855-2DCCCF5EFA24",
-    )
-
-    every { courtCaseSarRepository.findSentencedCourtCase("70D8677F-3E37-487D-ADA7-EEFE3182438B") } returns courtCaseEntity1
-    every { courtCaseSarRepository.findSentencedCourtCase("B9C71F09-A5C0-4355-B961-BFC229EE7104") } returns courtCaseEntity2
-    every { courtCaseSarRepository.findSentencedCourtCase("28DA01FA-EEC5-4541-890C-F0A0FDD11772") } returns courtCaseEntity3
-    every { courtCaseSarRepository.findSentencedCourtCase("001AE716-4F8E-4C04-B855-2DCCCF5EFA24") } returns courtCaseEntity4
-    every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity1, "BATCH_JOB") } returns events(5)
-    every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity2, "BATCH_JOB") } returns events(3)
-    every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity3, "BATCH_JOB") } returns events(66)
-    every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity4, "BATCH_JOB") } returns events(1)
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByUpdatedAtDesc(4) } returns setOf(1, 2, 3, 4)
+    every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(1, 2, 3, 4), "BATCH_JOB") } returns events(40)
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
-    sut.fixCourtCaseSentences(4)
+    // Act
+    bulkFixManyChargesToSentenceService.fixCourtCaseSentences(4)
 
-    verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(40) }) }
-    verify(exactly = 4) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
+    verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(10) }) }
+    verify(exactly = 1) { fixManyChargesToSentenceService.fixCourtCasesById(any(), "BATCH_JOB") }
   }
 
   @Test
   fun `should call fixCourtCaseSentences once returning the generated events for that fix`() {
-    every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(1) } returns listOf(
-      "70D8677F-3E37-487D-ADA7-EEFE3182438B",
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByUpdatedAtDesc(1) } returns setOf(
+      1,
     )
 
-    every { courtCaseSarRepository.findSentencedCourtCase("70D8677F-3E37-487D-ADA7-EEFE3182438B") } returns courtCaseEntity1
-    every { fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity1, "BATCH_JOB") } returns events(5)
+    every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(1), "BATCH_JOB") } returns events(5)
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
-    sut.fixCourtCaseSentences(1)
+    // Act
+    bulkFixManyChargesToSentenceService.fixCourtCaseSentences(1)
 
     verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(10) }) }
-    verify(exactly = 1) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
+    verify(exactly = 1) { fixManyChargesToSentenceService.fixCourtCasesById(any(), "BATCH_JOB") }
   }
 
   @Test
   fun `should do nothing when query returns and empty list`() {
-    every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(1) } returns listOf()
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByUpdatedAtDesc(1) } returns setOf()
+    every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(), "BATCH_JOB") } returns mutableSetOf()
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
-    sut.fixCourtCaseSentences(1)
+    // Act
+    bulkFixManyChargesToSentenceService.fixCourtCaseSentences(1)
 
     verify(exactly = 1) { dpsDomainEventService.emitEvents(withArg { assertThat(it).size().isEqualTo(0) }) }
-    verify(exactly = 0) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
+    verify(exactly = 1) { fixManyChargesToSentenceService.fixCourtCasesById(any(), "BATCH_JOB") }
   }
 
   fun events(prisonerId: Int): MutableSet<EventMetadata> = mutableSetOf(

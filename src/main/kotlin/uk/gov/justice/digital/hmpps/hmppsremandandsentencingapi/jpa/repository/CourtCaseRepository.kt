@@ -316,7 +316,7 @@ interface CourtCaseRepository :
   ): CourtCaseEntity?
 
   @Query(
-    value = """SELECT cc.case_unique_identifier      
+    value = """SELECT cc.id      
                FROM court_case cc      
                WHERE EXISTS (SELECT 1 
                              FROM court_appearance cap 
@@ -330,5 +330,5 @@ interface CourtCaseRepository :
            """,
     nativeQuery = true,
   )
-  fun findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(@Param("limit") limit: Int): List<String>
+  fun findIdWithManyChargesDataFixByUpdatedAtDesc(@Param("limit") limit: Int): Set<Int>
 }

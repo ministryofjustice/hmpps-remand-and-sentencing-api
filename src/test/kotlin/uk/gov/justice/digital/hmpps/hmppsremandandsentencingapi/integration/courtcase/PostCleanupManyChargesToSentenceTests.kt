@@ -115,28 +115,28 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
   )
 
   private fun arrange(totalChargesToSentence: Long = 50, totalCourtCases: Long = 1) {
-    (1L..totalCourtCases).forEach { s ->
-      val sentence = DataCreator.migrationCreateSentence()
+    val courtCasesList = (1L..totalCourtCases).map { id ->
+      val sentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(offenderBookingId = id))
       val charges = mutableListOf<MigrationCreateCharge>()
-      (1L..totalChargesToSentence).forEach { i ->
-        charges.add(DataCreator.migrationCreateCharge(chargeNOMISId = i, sentence = sentence))
+      (1L..totalChargesToSentence).forEach {
+        charges.add(DataCreator.migrationCreateCharge(chargeNOMISId = it, sentence = sentence))
       }
       val appearance = DataCreator.migrationCreateCourtAppearance(charges = charges)
-      val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
-      val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
-      webTestClient
-        .post()
-        .uri("/legacy/court-case/migration")
-        .bodyValue(courtCases)
-        .headers {
-          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
-          it.contentType = MediaType.APPLICATION_JSON
-        }
-        .exchange()
-        .expectStatus()
-        .isCreated
-        .returnResult<MigrationCreateCourtCasesResponse>()
-        .responseBody.blockFirst()!!
+      DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
     }
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = courtCasesList)
+    webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(courtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult<MigrationCreateCourtCasesResponse>()
+      .responseBody.blockFirst()!!
   }
 }

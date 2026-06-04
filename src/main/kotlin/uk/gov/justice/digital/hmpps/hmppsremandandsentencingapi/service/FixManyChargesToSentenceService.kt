@@ -34,7 +34,7 @@ class FixManyChargesToSentenceService(
     fixSentences(courtCaseToSentences(courtCase))
   }.toMutableSet()
 
-  fun fixCourtCaseSentences(courtCase: CourtCaseEntity, username: String? = null): MutableSet<EventMetadata> = fixSentences(courtCaseToSentences(courtCase), username)
+  fun fixCourtCaseSentences(courtCase: CourtCaseEntity): MutableSet<EventMetadata> = fixSentences(courtCaseToSentences(courtCase))
 
   fun fixCourtCaseSentences(courtCases: List<CourtCaseEntity>): MutableSet<EventMetadata> = courtCases.flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase))
@@ -51,8 +51,8 @@ class FixManyChargesToSentenceService(
     }
   }
 
-  fun fixCourtCasesById(courtCaseIds: Set<Int>): MutableSet<EventMetadata> = courtCaseRepository.findAllById(courtCaseIds).flatMap { courtCase ->
-    fixSentences(courtCaseToSentences(courtCase))
+  fun fixCourtCasesById(courtCaseIds: Set<Int>, username: String? = null): MutableSet<EventMetadata> = courtCaseRepository.findAllById(courtCaseIds).flatMap { courtCase ->
+    fixSentences(courtCaseToSentences(courtCase), username)
   }.toMutableSet()
 
   fun fixSentencesBySentenceUuids(sentenceUuids: List<RecordEventMetadata<UUID>>): MutableSet<EventMetadata> = fixSentences(sentenceRepository.findBySentenceUuidIn(sentenceUuids.map { it.record }).map { sentenceEntity -> sentenceUuids.first { it.record == sentenceEntity.sentenceUuid }.toNewRecord(sentenceEntity) })
