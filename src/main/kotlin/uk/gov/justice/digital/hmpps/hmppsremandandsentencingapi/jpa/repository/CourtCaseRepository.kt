@@ -314,4 +314,21 @@ interface CourtCaseRepository :
       SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
     ),
   ): CourtCaseEntity?
+
+  @Query(
+    value = """SELECT cc.case_unique_identifier      
+               FROM court_case cc      
+               WHERE EXISTS (SELECT 1 
+                             FROM court_appearance cap 
+                             JOIN appearance_charge ac ON ac.appearance_id = cap.id
+                             JOIN charge c ON c.id = ac.charge_id
+                             JOIN sentence s ON s.charge_id = c.id
+                             WHERE cap.court_case_id = cc.id 
+                             AND s.status_id = 'MANY_CHARGES_DATA_FIX')      
+               ORDER BY cc.updated_at DESC      
+               LIMIT :limit    
+           """,
+    nativeQuery = true,
+  )
+  fun findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(@Param("limit") limit: Int): List<String>
 }

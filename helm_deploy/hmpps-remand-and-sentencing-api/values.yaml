@@ -80,7 +80,20 @@ generic-data-analytics-extractor:
 
 documentCleanCronjob:
   enabled: true
-  schedule: "0 2 * * *"
+  schedule: "0 2 * * *" # 2:00am every day
+  timeZone: Etc/UTC
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+
+manyChargesToSentenceFixCronjob:
+  enabled: true
+  schedule: "30 2 * * *" # 2:30am every day
   timeZone: Etc/UTC
   securityContext:
     capabilities:
