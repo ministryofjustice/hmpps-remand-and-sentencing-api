@@ -10,7 +10,13 @@ class ResourceServerConfiguration {
   @Bean
   fun resourceServerCustomizer() = ResourceServerConfigurationCustomizer {
     unauthorizedRequestPaths {
-      addPaths = setOf("/document-admin/cleanup", "/legacy/sentence-type/**", "/queue-admin/retry-all-dlqs", "/event-admin/republish")
+      addPaths = setOf(
+        "/document-admin/cleanup",
+        "/legacy/sentence-type/**",
+        "/queue-admin/retry-all-dlqs",
+        "/event-admin/republish",
+        "/court-case-admin/cleanup-many-charges-to-sentence",
+      )
     }
   }
 }

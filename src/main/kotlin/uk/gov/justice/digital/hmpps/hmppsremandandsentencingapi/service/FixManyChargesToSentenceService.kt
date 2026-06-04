@@ -51,41 +51,47 @@ class FixManyChargesToSentenceService(
     }
   }
 
-  fun fixCourtCasesById(courtCaseIds: Set<Int>): MutableSet<EventMetadata> = courtCaseRepository.findAllById(courtCaseIds).flatMap { courtCase ->
-    fixSentences(courtCaseToSentences(courtCase))
+  fun fixCourtCasesById(courtCaseIds: Set<Int>, username: String? = null): MutableSet<EventMetadata> = courtCaseRepository.findAllById(courtCaseIds).flatMap { courtCase ->
+    fixSentences(courtCaseToSentences(courtCase), username)
   }.toMutableSet()
 
   fun fixSentencesBySentenceUuids(sentenceUuids: List<RecordEventMetadata<UUID>>): MutableSet<EventMetadata> = fixSentences(sentenceRepository.findBySentenceUuidIn(sentenceUuids.map { it.record }).map { sentenceEntity -> sentenceUuids.first { it.record == sentenceEntity.sentenceUuid }.toNewRecord(sentenceEntity) })
 
-  fun fixSentences(sentences: List<RecordEventMetadata<SentenceEntity>>): MutableSet<EventMetadata> {
+  fun fixSentences(sentences: List<RecordEventMetadata<SentenceEntity>>, username: String? = null): MutableSet<EventMetadata> {
     val toFixSentences = sentences
       .filter { it.record.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
       .groupByTo(mutableMapOf()) { it.record.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
     toFixSentences.forEach { (originalSentenceUuid, sentenceRecords) ->
       val firstSentenceRecordEventMetadata = sentenceRecords.removeFirst()
-      val firstSentenceEventToEmit = fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED, originalSentenceUuid)
+      val firstSentenceEventToEmit = fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED, originalSentenceUuid, username)
       eventsToEmit.add(firstSentenceEventToEmit)
-      fixPeriodLengths(firstSentenceRecordEventMetadata)
+      fixPeriodLengths(firstSentenceRecordEventMetadata, username)
 
       sentenceRecords.forEach { sentenceRecordEventMetadata ->
-        val sentenceEventToEmit = fixSentence(sentenceRecordEventMetadata, EventType.SENTENCE_FIX_SINGLE_CHARGE_INSERTED, originalSentenceUuid) {
+        val sentenceEventToEmit = fixSentence(sentenceRecordEventMetadata, EventType.SENTENCE_FIX_SINGLE_CHARGE_INSERTED, originalSentenceUuid, username) {
           it.sentenceUuid = UUID.randomUUID()
           it.legacyData?.nomisLineReference = null
         }
         eventsToEmit.add(sentenceEventToEmit)
-        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata) { it.periodLengthUuid = UUID.randomUUID() }
+        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata, username) { it.periodLengthUuid = UUID.randomUUID() }
         eventsToEmit.addAll(periodLengthEventsToEmit)
       }
     }
     return eventsToEmit
   }
 
-  private fun fixSentence(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, sentenceEventType: EventType, originalSentenceUuid: UUID, sentenceModifyFunction: (SentenceEntity) -> Unit = {}): EventMetadata {
+  private fun fixSentence(
+    sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>,
+    sentenceEventType: EventType,
+    originalSentenceUuid: UUID,
+    username: String? = null,
+    sentenceModifyFunction: (SentenceEntity) -> Unit = {},
+  ): EventMetadata {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) SentenceEntityStatus.INACTIVE else SentenceEntityStatus.ACTIVE
     sentenceRecord.updatedAt = ZonedDateTime.now()
-    sentenceRecord.updatedBy = serviceUserService.getUsername()
+    sentenceRecord.updatedBy = username ?: serviceUserService.getUsername()
     sentenceModifyFunction(sentenceRecord)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord, ChangeSource.DPS))
     return EventMetadataCreator.fixSentenceEventMetadata(
@@ -99,7 +105,11 @@ class FixManyChargesToSentenceService(
     )
   }
 
-  private fun fixPeriodLengths(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>, periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}): MutableSet<EventMetadata> {
+  private fun fixPeriodLengths(
+    sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>,
+    username: String? = null,
+    periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {},
+  ): MutableSet<EventMetadata> {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     val periodLengthEventsToEmit = mutableSetOf<EventMetadata>()
     val periodLengths = sentenceRecordEventMetadata.record.periodLengths
@@ -107,7 +117,7 @@ class FixManyChargesToSentenceService(
       .forEach { periodLength ->
         periodLength.statusId = PeriodLengthEntityStatus.ACTIVE
         periodLength.updatedAt = ZonedDateTime.now()
-        periodLength.updatedBy = serviceUserService.getUsername()
+        periodLength.updatedBy = username ?: serviceUserService.getUsername()
         periodLengthModifyFunction(periodLength)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength, ChangeSource.DPS))
         periodLengthEventsToEmit.add(

@@ -1,0 +1,31 @@
+  {{- if .Values.manyChargesToSentenceFixCronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "generic-service.fullname" . | trunc 27 }}-many-charges-fix
+  labels:
+    {{- include "generic-service.labels" . | nindent 4 }}
+
+spec:
+  schedule: "{{ .Values.manyChargesToSentenceFixCronjob.schedule }}"
+  timeZone: "{{ .Values.manyChargesToSentenceFixCronjob.timeZone }}"
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 5
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0 # Ensure the job controller does not retry if the pod fails
+      template:
+        spec:
+          restartPolicy: Never # Ensure the kubelet does not restart the container on failure
+          containers:
+            - name: many-charges-fix-job
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools:latest
+              imagePullPolicy: IfNotPresent
+              command: [ "/bin/sh", "-c" ]
+              args:
+                - curl -XPOST --connect-timeout 5 --max-time 10 http://{{ include "generic-service.fullname" . }}/court-case-admin/cleanup-many-charges-to-sentence
+              securityContext:
+                {{- toYaml .Values.manyChargesToSentenceFixCronjob.securityContext | nindent 16 }}
+  {{- end }}
