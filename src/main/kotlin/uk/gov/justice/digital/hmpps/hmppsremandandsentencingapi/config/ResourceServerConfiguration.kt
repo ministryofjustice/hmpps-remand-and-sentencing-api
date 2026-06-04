@@ -15,7 +15,7 @@ class ResourceServerConfiguration {
         "/legacy/sentence-type/**",
         "/queue-admin/retry-all-dlqs",
         "/event-admin/republish",
-        "/court-case-admin/cleanup-many-charges-to-sentence"
+        "/court-case-admin/cleanup-many-charges-to-sentence",
       )
     }
   }

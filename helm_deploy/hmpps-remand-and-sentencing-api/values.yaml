@@ -28,6 +28,10 @@ generic-service:
           deny all;
           return 401;
         }
+        location /court-case-admin/cleanup-many-charges-to-sentence {
+          deny all;
+          return 401;
+        }
   # Environment variables to load into the deployment
   env:
     JAVA_OPTS: "-Xmx512m"

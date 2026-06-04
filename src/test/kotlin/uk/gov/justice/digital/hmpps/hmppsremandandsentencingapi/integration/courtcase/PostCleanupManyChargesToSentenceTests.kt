@@ -20,8 +20,8 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
   @Test
   fun `should cleanup many charges of a single sentence`() {
     arrange(totalChargesToSentence = 4, totalCourtCases = 30)
-    val initialOverallSentenceCount = getSentenceCount();
-    val initialDuplicateSentences = getDuplicateSentenceCount();
+    val initialOverallSentenceCount = getSentenceCount()
+    val initialDuplicateSentences = getDuplicateSentenceCount()
     assertThat(initialDuplicateSentences).isEqualTo(30)
     assertThat(initialOverallSentenceCount).isEqualTo(120) // 30 * 4
 
@@ -35,7 +35,7 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
 
     val totalCorrectedSentences = initialDuplicateSentences?.minus(getDuplicateSentenceCount() ?: 0)
     assertThat(totalCorrectedSentences).isEqualTo(30)
-    val overallTotalSentenceCount = getSentenceCount();
+    val overallTotalSentenceCount = getSentenceCount()
     assertThat(overallTotalSentenceCount).isEqualTo(120)
 
     val totalMessage = getMessages(expectedNumberOfMessages = 210).count { p -> p.eventType == "sentence.fix-single-charge.inserted" }
@@ -45,8 +45,8 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
   @Test
   fun `should not affect single charges to a single sentence`() {
     arrange(totalChargesToSentence = 1, totalCourtCases = 30)
-    val initialOverallSentenceCount = getSentenceCount();
-    val initialDuplicateSentences = getDuplicateSentenceCount();
+    val initialOverallSentenceCount = getSentenceCount()
+    val initialDuplicateSentences = getDuplicateSentenceCount()
     assertThat(initialDuplicateSentences).isEqualTo(0)
     assertThat(initialOverallSentenceCount).isEqualTo(30) // 30 * 1
 
@@ -69,7 +69,7 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
 
   @Test
   fun `should run without any sentences in the db`() {
-    val initialOverallSentenceCount = getSentenceCount();
+    val initialOverallSentenceCount = getSentenceCount()
     assertThat(initialOverallSentenceCount).isEqualTo(0)
 
     // Act
@@ -127,5 +127,4 @@ class PostCleanupManyChargesToSentenceTests : IntegrationTestBase() {
         .responseBody.blockFirst()!!
     }
   }
-
 }

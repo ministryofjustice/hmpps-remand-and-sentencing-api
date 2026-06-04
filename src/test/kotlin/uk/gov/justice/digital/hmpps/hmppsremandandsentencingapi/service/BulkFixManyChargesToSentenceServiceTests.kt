@@ -4,18 +4,14 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.RecallSarRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.MockedResponseData
 
 @ExtendWith(MockKExtension::class)
 class BulkFixManyChargesToSentenceServiceTests {
@@ -25,7 +21,7 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @MockK
   private lateinit var fixManyChargesToSentenceService: FixManyChargesToSentenceService
-  
+
   @MockK
   private lateinit var courtCaseEntity1: CourtCaseEntity
 
@@ -43,12 +39,11 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should call fixCourtCaseSentences multiple times returning the sum of all generated events`() {
-
     every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(4) } returns listOf(
       "70D8677F-3E37-487D-ADA7-EEFE3182438B",
       "B9C71F09-A5C0-4355-B961-BFC229EE7104",
       "28DA01FA-EEC5-4541-890C-F0A0FDD11772",
-      "001AE716-4F8E-4C04-B855-2DCCCF5EFA24"
+      "001AE716-4F8E-4C04-B855-2DCCCF5EFA24",
     )
 
     every { courtCaseSarRepository.findSentencedCourtCase("70D8677F-3E37-487D-ADA7-EEFE3182438B") } returns courtCaseEntity1
@@ -68,7 +63,6 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should call fixCourtCaseSentences once returning the generated events for that fix`() {
-
     every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(1) } returns listOf(
       "70D8677F-3E37-487D-ADA7-EEFE3182438B",
     )
@@ -84,7 +78,6 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should do nothing when query returns and empty list`() {
-
     every { courtCaseSarRepository.findCaseUniqueIdentifierWithManyChargesDataFixByUpdatedAtDesc(1) } returns listOf()
 
     val events = sut.fixCourtCaseSentences(1)
@@ -93,20 +86,16 @@ class BulkFixManyChargesToSentenceServiceTests {
     verify(exactly = 0) { fixManyChargesToSentenceService.fixCourtCaseSentences(any(), "BATCH_JOB") }
   }
 
-
-  fun events(prisonerId: Int): MutableSet<EventMetadata> {
-    return mutableSetOf(
-      EventMetadata(prisonerId = "A1234AA$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "B2345BB$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "C3456CC$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "D4567DD$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "E5678EE$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "F6789FF$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "G7890GG$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "H8901HH$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "I9012II$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
-      EventMetadata(prisonerId = "J0123JJ$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED)
-    )
-  }
-
+  fun events(prisonerId: Int): MutableSet<EventMetadata> = mutableSetOf(
+    EventMetadata(prisonerId = "A1234AA$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "B2345BB$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "C3456CC$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "D4567DD$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "E5678EE$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "F6789FF$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "G7890GG$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "H8901HH$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "I9012II$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+    EventMetadata(prisonerId = "J0123JJ$prisonerId", null, null, null, null, null, eventType = EventType.SENTENCE_UPDATED),
+  )
 }

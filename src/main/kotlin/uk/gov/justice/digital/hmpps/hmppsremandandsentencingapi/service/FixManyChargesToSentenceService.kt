@@ -81,11 +81,13 @@ class FixManyChargesToSentenceService(
     return eventsToEmit
   }
 
-  private fun fixSentence(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>,
-                          sentenceEventType: EventType,
-                          originalSentenceUuid: UUID,
-                          username: String? = null,
-                          sentenceModifyFunction: (SentenceEntity) -> Unit = {}): EventMetadata {
+  private fun fixSentence(
+    sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>,
+    sentenceEventType: EventType,
+    originalSentenceUuid: UUID,
+    username: String? = null,
+    sentenceModifyFunction: (SentenceEntity) -> Unit = {},
+  ): EventMetadata {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) SentenceEntityStatus.INACTIVE else SentenceEntityStatus.ACTIVE
     sentenceRecord.updatedAt = ZonedDateTime.now()
@@ -103,9 +105,11 @@ class FixManyChargesToSentenceService(
     )
   }
 
-  private fun fixPeriodLengths(sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>,
-                               username: String? = null,
-                               periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {}): MutableSet<EventMetadata> {
+  private fun fixPeriodLengths(
+    sentenceRecordEventMetadata: RecordEventMetadata<SentenceEntity>,
+    username: String? = null,
+    periodLengthModifyFunction: (PeriodLengthEntity) -> Unit = {},
+  ): MutableSet<EventMetadata> {
     val (sentenceRecord, eventMetadata) = sentenceRecordEventMetadata
     val periodLengthEventsToEmit = mutableSetOf<EventMetadata>()
     val periodLengths = sentenceRecordEventMetadata.record.periodLengths
