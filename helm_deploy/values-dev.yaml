@@ -33,8 +33,15 @@ generic-service:
   cronJobs:
     many-charges-single-sentence-fix:
       schedule: "30 2 * * *" # 2:30am every day
+      concurrencyPolicy: Forbid
       timeZone: Etc/UTC
       suspend: true
+      parallelism: 1 # Should be a k8s default but being explicit here
+      completions: 1 # Should be a k8s default but being explicit here
+      backoffLimit: 2  # Retry twice if the job fails before marking it as failed
+      failedJobsHistoryLimit: 5
+      startingDeadlineSeconds: 600
+      successfulJobsHistoryLimit: 5
       command: [ "/bin/sh", "-c" ]
       args:
         - java -jar /app/app.jar run.date=$(date +%Y-%m-%d)
