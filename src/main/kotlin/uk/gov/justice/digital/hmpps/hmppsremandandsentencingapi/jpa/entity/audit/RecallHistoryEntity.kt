@@ -35,6 +35,7 @@ class RecallHistoryEntity(
   @ManyToOne
   @JoinColumn(name = "recall_type_id")
   val recallType: RecallTypeEntity,
+  val calculationRequestId: Int? = null,
 
   // Audit and status columns
   @Enumerated(EnumType.STRING)
@@ -62,6 +63,7 @@ class RecallHistoryEntity(
       returnToCustodyDate = original.returnToCustodyDate,
       inPrisonOnRevocationDate = original.inPrisonOnRevocationDate,
       recallType = original.recallType,
+      calculationRequestId = original.calculationRequestId,
       status = original.status,
       createdAt = original.createdAt,
       createdByUsername = original.createdByUsername,
