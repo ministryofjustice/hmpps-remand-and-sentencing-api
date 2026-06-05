@@ -28,6 +28,10 @@ generic-service:
           deny all;
           return 401;
         }
+        location /court-case-admin/cleanup-many-charges-to-sentence {
+          deny all;
+          return 401;
+        }
   # Environment variables to load into the deployment
   env:
     JAVA_OPTS: "-Xmx512m"
@@ -80,7 +84,20 @@ generic-data-analytics-extractor:
 
 documentCleanCronjob:
   enabled: true
-  schedule: "0 2 * * *"
+  schedule: "0 2 * * *" # 2:00am daily
+  timeZone: Etc/UTC
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+
+manyChargesToSentenceFixCronjob:
+  enabled: false
+  schedule: "30 2 * * *" # 2:30am daily
   timeZone: Etc/UTC
   securityContext:
     capabilities:

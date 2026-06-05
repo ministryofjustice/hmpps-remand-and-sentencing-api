@@ -385,6 +385,7 @@
     "updatedPrison": "String"
   },
   "RecallHistoryEntity": {
+    "calculationRequestId": "Integer",
     "changeSource": "ChangeSource",
     "createdAt": "ZonedDateTime",
     "createdByUsername": "String",
