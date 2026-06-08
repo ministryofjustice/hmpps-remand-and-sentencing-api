@@ -15,7 +15,7 @@ generic-service:
     COURT-REGISTER_API_URL: https://court-register-api-preprod.hmpps.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PREPROD
-    FEATURES_APPEALS_ENABLED: "false"
+    FEATURES_APPEALS_ENABLED: "true"
 
   allowlist:
     penetration-test-ip-1: 54.37.241.156/30
