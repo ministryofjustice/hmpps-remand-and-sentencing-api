@@ -393,6 +393,9 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateOne,
                   lineNumber = null,
                   countNumber = "1",
+                  isTerrorRelated = true,
+                  isDomesticViolenceRelated = null,
+                  isForeignPowerRelated = null,
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -416,6 +419,9 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateOne,
                   lineNumber = null,
                   countNumber = "1",
+                  isTerrorRelated = true,
+                  isDomesticViolenceRelated = null,
+                  isForeignPowerRelated = null,
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -447,6 +453,9 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateTwo,
                   lineNumber = null,
                   countNumber = "1",
+                  isTerrorRelated = true,
+                  isDomesticViolenceRelated = null,
+                  isForeignPowerRelated = null,
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
