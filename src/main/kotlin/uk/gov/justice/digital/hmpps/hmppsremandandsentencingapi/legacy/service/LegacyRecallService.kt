@@ -39,6 +39,7 @@ class LegacyRecallService(
         "LR_ALP_CDE18",
         "LR_ALP_CDE21",
         "LR_DLP",
+        "LR_IPP",
       ),
       SentenceTypeClassification.SOPC to listOf(
         "LR_SOPC18",
