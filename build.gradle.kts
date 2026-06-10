@@ -24,7 +24,8 @@ configurations.configureEach {
         "spring-jdbc",
         "spring-tx",
         "spring-orm",
-        "spring-messaging" -> useVersion("7.0.8")
+        "spring-messaging",
+        -> useVersion("7.0.8")
       }
     }
   }
