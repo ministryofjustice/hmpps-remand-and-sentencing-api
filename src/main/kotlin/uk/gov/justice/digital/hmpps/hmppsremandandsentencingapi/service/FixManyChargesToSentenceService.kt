@@ -1,6 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import org.hibernate.exception.LockAcquisitionException
+import org.springframework.dao.CannotAcquireLockException
+import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -51,6 +58,8 @@ class FixManyChargesToSentenceService(
     }
   }
 
+  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class, CannotAcquireLockException::class, LockAcquisitionException::class], backoff = Backoff(delay = 500))
+  @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
   fun fixCourtCasesById(courtCaseIds: Set<Int>, username: String? = null): MutableSet<EventMetadata> = courtCaseRepository.findAllById(courtCaseIds).flatMap { courtCase ->
     fixSentences(courtCaseToSentences(courtCase), username)
   }.toMutableSet()
@@ -62,6 +71,10 @@ class FixManyChargesToSentenceService(
       .filter { it.record.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
       .groupByTo(mutableMapOf()) { it.record.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
+    sentences.minByOrNull { it.record.id }?.let { minIdSentence ->
+      sentenceRepository.acquireSentenceTransactionLock(minIdSentence.record.sentenceUuid)
+    }
+
     toFixSentences.forEach { (originalSentenceUuid, sentenceRecords) ->
       val firstSentenceRecordEventMetadata = sentenceRecords.removeFirst()
       val firstSentenceEventToEmit = fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED, originalSentenceUuid, username)
