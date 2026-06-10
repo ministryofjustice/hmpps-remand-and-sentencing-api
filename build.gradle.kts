@@ -8,6 +8,28 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
+configurations.configureEach {
+  resolutionStrategy.eachDependency {
+    if (requested.group == "org.springframework") {
+      when (requested.name) {
+        "spring-core",
+        "spring-expression",
+        "spring-beans",
+        "spring-context",
+        "spring-context-support",
+        "spring-aop",
+        "spring-web",
+        "spring-webflux",
+        "spring-webmvc",
+        "spring-jdbc",
+        "spring-tx",
+        "spring-orm",
+        "spring-messaging" -> useVersion("7.0.8")
+      }
+    }
+  }
+}
+
 dependencies {
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:2.5.0")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
