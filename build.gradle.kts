@@ -1,34 +1,11 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.3.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.4.0"
   kotlin("plugin.spring") version "2.4.0"
   kotlin("plugin.jpa") version "2.4.0"
 }
 
 configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
-}
-
-configurations.configureEach {
-  resolutionStrategy.eachDependency {
-    if (requested.group == "org.springframework") {
-      when (requested.name) {
-        "spring-core",
-        "spring-expression",
-        "spring-beans",
-        "spring-context",
-        "spring-context-support",
-        "spring-aop",
-        "spring-web",
-        "spring-webflux",
-        "spring-webmvc",
-        "spring-jdbc",
-        "spring-tx",
-        "spring-orm",
-        "spring-messaging",
-        -> useVersion("7.0.8")
-      }
-    }
-  }
 }
 
 dependencies {
