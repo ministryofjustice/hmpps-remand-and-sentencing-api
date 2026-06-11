@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtcase
 
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -8,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
 import java.util.stream.LongStream
 
 class PagedSearchCourtCaseTests : IntegrationTestBase() {
@@ -264,6 +266,51 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.content.[?(@.courtCaseUuid == '$courtCaseUuidInOtherBooking')]")
       .doesNotExist()
+  }
+
+  @Test
+  fun `many charges to a single sentence executes once on multiple calls`() {
+    val sentence = DataCreator.migrationCreateSentence()
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+    migrateCases(courtCases)
+    val firstCall = CompletableFuture.supplyAsync {
+      webTestClient
+        .get()
+        .uri {
+          it.path("/court-case/paged/search")
+            .queryParam("prisonerId", courtCases.prisonerId)
+            .build()
+        }
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        }
+        .exchange()
+        .expectStatus()
+        .isOk
+    }
+    val secondCall = CompletableFuture.supplyAsync {
+      webTestClient
+        .get()
+        .uri {
+          it.path("/court-case/paged/search")
+            .queryParam("prisonerId", courtCases.prisonerId)
+            .build()
+        }
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        }
+        .exchange()
+        .expectStatus()
+        .isOk
+    }
+    firstCall.thenCombine(secondCall) { a, b -> a to b }.join()
+    val messages = getMessages(3)
+    Assertions.assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder("sentence.fix-single-charge.inserted", "sentence.updated", "sentence.period-length.inserted")
+    Assertions.assertThat(messages).extracting<String> { it.personReference.identifiers.first().value }.containsOnly(courtCases.prisonerId)
   }
 
   @Test
