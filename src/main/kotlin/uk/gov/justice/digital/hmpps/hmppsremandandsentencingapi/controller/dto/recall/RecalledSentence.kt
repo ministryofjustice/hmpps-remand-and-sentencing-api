@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactors
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import java.time.LocalDate
 import java.util.UUID
