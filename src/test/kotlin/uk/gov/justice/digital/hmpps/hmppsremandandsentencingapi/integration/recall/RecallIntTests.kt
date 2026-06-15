@@ -623,6 +623,7 @@ class RecallIntTests : IntegrationTestBase() {
                   periodLengths = emptyList(),
                   sentenceServeType = "CONCURRENT",
                   sentenceTypeDescription = "Unknown pre-recall sentence",
+                  aggravatingFactors = AggravatingFactors(),
                 ),
               ),
             ),
