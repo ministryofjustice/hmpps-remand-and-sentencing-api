@@ -16,7 +16,5 @@ data class RecalledSentence(
   val sentenceServeType: String,
   val sentenceTypeDescription: String?,
   val consecutiveToSentenceUuid: UUID? = null,
-  val isDomesticViolenceRelated: Boolean? = null,
-  val isTerrorRelated: Boolean? = null,
-  val isForeignPowerRelated: Boolean? = null,
+  val aggravatingFactors: AggravatingFactors? = null,
 )

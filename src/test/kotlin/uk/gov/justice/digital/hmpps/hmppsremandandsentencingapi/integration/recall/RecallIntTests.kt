@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.AggravatingFactors
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallCourtCaseDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallUALAdjustment
@@ -393,9 +394,7 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateOne,
                   lineNumber = null,
                   countNumber = "1",
-                  isTerrorRelated = true,
-                  isDomesticViolenceRelated = null,
-                  isForeignPowerRelated = null,
+                  aggravatingFactors = AggravatingFactors(isTerrorRelated = true),
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -419,9 +418,7 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateOne,
                   lineNumber = null,
                   countNumber = "1",
-                  isTerrorRelated = true,
-                  isDomesticViolenceRelated = null,
-                  isForeignPowerRelated = null,
+                  aggravatingFactors = AggravatingFactors(isTerrorRelated = true),
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -453,9 +450,7 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateTwo,
                   lineNumber = null,
                   countNumber = "1",
-                  isTerrorRelated = true,
-                  isDomesticViolenceRelated = null,
-                  isForeignPowerRelated = null,
+                  aggravatingFactors = AggravatingFactors(isTerrorRelated = true),
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
