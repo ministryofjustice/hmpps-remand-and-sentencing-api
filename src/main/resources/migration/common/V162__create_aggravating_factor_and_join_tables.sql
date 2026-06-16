@@ -4,8 +4,8 @@ CREATE TABLE aggravating_factor (
                                     code VARCHAR(100) NOT NULL UNIQUE,
                                     title VARCHAR(255) NOT NULL,
                                     description TEXT NULL,
-                                    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
-                                    display_order int NOT NULL DEFAULT 0;
+                                    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+                                    display_order int NOT NULL DEFAULT 0
 );
 
 -- Create join table
