@@ -24,4 +24,7 @@ class AggravatingFactorEntity(
 
   @Column(nullable = true)
   val description: String? = null,
+
+  @Column(nullable = false)
+  val status: Boolean = true,
 )

@@ -33,8 +33,8 @@ VALUES
     ('RE', 'Religiously Aggravated Offence', 'Religiously Aggravated Offence'),
     ('SEXO', 'Aggravated due to sexual orientation', 'Aggravated due to sexual orientation'),
     ('SEXOV', 'Aggravated due to sexual orientation of victim', 'Aggravated due to sexual orientation of victim'),
-    ('TGG', 'Aggravated due to transgender', 'Aggravated due to transgender'),
-    ('TGV', 'Aggravated due to transgender of victim', 'Aggravated due to transgender of victim'),
+    ('TGG', 'Aggravated due to transgender identity', 'Aggravated due to transgender identity'),
+    ('TGV', 'Aggravated due to transgender identity of victim', 'Aggravated due to transgender identity of victim'),
     ('EWA', 'Emergency Worker Offence Aggravation', 'Emergency Worker Offence Aggravation'),
-    ('DISG', 'Disability in general', 'Disability in general'),
+    ('DISG', 'Disability', 'Disability in general'),
     ('DISV', 'Disability of victim', 'Disability of victim');
