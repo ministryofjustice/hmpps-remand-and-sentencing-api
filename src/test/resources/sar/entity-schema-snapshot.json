@@ -1,4 +1,12 @@
 {
+  "AggravatingFactorEntity": {
+    "code": "String",
+    "title": "String",
+    "description": "String",
+    "id": "int",
+    "status": "AggravatingFactorStatus",
+    "displayOrder": "int"
+  },
   "AppearanceChargeEntity": {
     "appearance": "CourtAppearanceEntity",
     "charge": "ChargeEntity",
@@ -50,6 +58,11 @@
     "nomisToDpsMappingCodes": "AppearanceTypeCodes",
     "status": "ReferenceEntityStatus",
     "totalSubtypes": "int"
+  },
+  "ChargeAggravatingFactorEntity": {
+    "aggravatingFactor": "AggravatingFactorEntity",
+    "charge": "ChargeEntity",
+    "id": "ChargeAggravatingFactorId"
   },
   "ChargeEntity": {
     "appearanceCharges": "Set",
