@@ -4,7 +4,8 @@
     "title": "String",
     "description": "String",
     "id": "int",
-    "status": "AggravatingFactorStatus"
+    "status": "AggravatingFactorStatus",
+    "displayOrder": "int"
   },
   "AppearanceChargeEntity": {
     "appearance": "CourtAppearanceEntity",

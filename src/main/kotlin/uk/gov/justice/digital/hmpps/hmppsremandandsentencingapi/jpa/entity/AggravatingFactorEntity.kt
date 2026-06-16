@@ -27,4 +27,8 @@ class AggravatingFactorEntity(
   val description: String? = null,
 
   @Column(nullable = false)
-   val status: AggravatingFactorStatus = AggravatingFactorStatus.ACTIVE,)
+   val status: AggravatingFactorStatus = AggravatingFactorStatus.ACTIVE,
+
+  @Column(nullable = false)
+  val displayOrder: Int,
+  )
