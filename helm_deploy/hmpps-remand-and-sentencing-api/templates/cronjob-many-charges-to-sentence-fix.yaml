@@ -15,17 +15,16 @@ spec:
   successfulJobsHistoryLimit: 5
   jobTemplate:
     spec:
-      backoffLimit: 0 # Ensure the job controller does not retry if the pod fails
       template:
         spec:
-          restartPolicy: Never # Ensure the kubelet does not restart the container on failure
+          restartPolicy: OnFailure
           containers:
             - name: many-charges-fix-job
-              image: ghcr.io/ministryofjustice/hmpps-devops-tools:latest
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools:main
               imagePullPolicy: IfNotPresent
               command: [ "/bin/sh", "-c" ]
               args:
-                - curl -XPOST --connect-timeout 5 --max-time 10 http://{{ include "generic-service.fullname" . }}/court-case-admin/cleanup-many-charges-to-sentence
+                - curl -XPOST --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 40 http://{{ include "generic-service.fullname" . }}/court-case-admin/cleanup-many-charges-to-sentence
               securityContext:
                 {{- toYaml .Values.manyChargesToSentenceFixCronjob.securityContext | nindent 16 }}
   {{- end }}

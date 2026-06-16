@@ -38,4 +38,4 @@ COPY --from=builder --chown=appuser:appgroup /builder/extracted/application/ ./
 
 USER 2000
 
-ENTRYPOINT ["java", "-XX:+AlwaysActAsServerClassMachine", "-javaagent:agent.jar", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:+AlwaysActAsServerClassMachine", "-javaagent:agent.jar", "-jar", "app.jar"]
