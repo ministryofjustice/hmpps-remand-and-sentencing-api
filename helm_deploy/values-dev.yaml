@@ -23,6 +23,7 @@ generic-service:
     HMPPS_SAR_ADDITIONALACCESSROLE: ROLE_VIEW_PRISONER_DATA
     HMPPS_SAR_TEMPLATE_PATH: /templates/template_remand-and-sentencing-api.mustache
     HMPPS_SAR_TEMPLATE_ENABLED: "true"
+    MULTIPLE-CHARGES-SINGLE-SENTENCE-FIX-QUEUE_LIMIT: 10
 
   resources:
     requests:
