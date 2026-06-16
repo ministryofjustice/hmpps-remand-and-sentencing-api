@@ -17,10 +17,10 @@ class AggravatingFactorEntity (
   val id: Int = 0,
 
   @Column(nullable = false)
-  val key: String,
+  val code: String,
 
   @Column(nullable = false)
-  val code: String,
+  val title: String,
 
   @Column(nullable = true)
   val description: String? = null,
