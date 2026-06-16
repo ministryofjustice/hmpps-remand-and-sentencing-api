@@ -3,7 +3,8 @@ CREATE TABLE aggravating_factor (
                                     id SERIAL PRIMARY KEY,
                                     code VARCHAR(100) NOT NULL UNIQUE,
                                     title VARCHAR(255) NOT NULL,
-                                    description TEXT NULL
+                                    description TEXT NULL,
+                                    status BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- Create join table
