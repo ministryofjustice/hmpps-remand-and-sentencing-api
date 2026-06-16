@@ -26,17 +26,17 @@ CREATE TABLE charge_aggravating_factor (
 );
 
 -- Seed default aggravating factors
-INSERT INTO aggravating_factor (code, title, description)
+INSERT INTO aggravating_factor (code, title, description, status, display_order)
 VALUES
-    ('OAFPC', 'Offence aggravated by foreign power condition being met', 'Offence aggravated by foreign power condition being met', 10),
-    ('OATC', 'Offence Aggravated by Terrorist Connection', 'Offence Aggravated by Terrorist Connection', 20),
-    ('RA', 'Racially Aggravated Offence', 'Racially Aggravated Offence', 30),
-    ('RARE', 'Racially and Religiously Aggravated Offence', 'Racially and Religiously Aggravated Offence', 40),
-    ('RE', 'Religiously Aggravated Offence', 'Religiously Aggravated Offence', 50),
-    ('SEXO', 'Aggravated due to sexual orientation', 'Aggravated due to sexual orientation', 60),
-    ('SEXOV', 'Aggravated due to sexual orientation of victim', 'Aggravated due to sexual orientation of victim', 70),
-    ('TGG', 'Aggravated due to transgender identity', 'Aggravated due to transgender identity', 80),
-    ('TGV', 'Aggravated due to transgender identity of victim', 'Aggravated due to transgender identity of victim', 90),
-    ('EWA', 'Emergency Worker Offence Aggravation', 'Emergency Worker Offence Aggravation', 100),
-    ('DISG', 'Disability', 'Disability in general', 110),
-    ('DISV', 'Disability of victim', 'Disability of victim', 120);
+    ('OAFPC', 'Offence aggravated by foreign power condition being met', 'Offence aggravated by foreign power condition being met', 'ACTIVE', 10),
+    ('OATC', 'Offence Aggravated by Terrorist Connection', 'Offence Aggravated by Terrorist Connection', 'ACTIVE', 20),
+    ('RA', 'Racially Aggravated Offence', 'Racially Aggravated Offence', 'ACTIVE', 30),
+    ('RARE', 'Racially and Religiously Aggravated Offence', 'Racially and Religiously Aggravated Offence', 'ACTIVE', 40),
+    ('RE', 'Religiously Aggravated Offence', 'Religiously Aggravated Offence', 'ACTIVE', 50),
+    ('SEXO', 'Aggravated due to sexual orientation', 'Aggravated due to sexual orientation', 'ACTIVE', 60),
+    ('SEXOV', 'Aggravated due to sexual orientation of victim', 'Aggravated due to sexual orientation of victim', 'ACTIVE', 70),
+    ('TGG', 'Aggravated due to transgender identity', 'Aggravated due to transgender identity', 'ACTIVE', 80),
+    ('TGV', 'Aggravated due to transgender identity of victim', 'Aggravated due to transgender identity of victim', 'ACTIVE', 90),
+    ('EWA', 'Emergency Worker Offence Aggravation', 'Emergency Worker Offence Aggravation', 'ACTIVE', 100),
+    ('DISG', 'Disability', 'Disability in general', 'ACTIVE', 110),
+    ('DISV', 'Disability of victim', 'Disability of victim', 'ACTIVE', 120);
