@@ -2,5 +2,5 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum
 
 enum class AggravatingFactorStatus {
   ACTIVE,
-  INACTIVE
+  INACTIVE,
 }
