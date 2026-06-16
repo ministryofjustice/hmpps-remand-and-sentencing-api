@@ -12,7 +12,7 @@ data class ChargeAggravatingFactorId(
 
   @Column(name = "aggravating_factor_id")
   val aggravatingFactorId: Int = 0,
-) : Serializable{
+) : Serializable {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

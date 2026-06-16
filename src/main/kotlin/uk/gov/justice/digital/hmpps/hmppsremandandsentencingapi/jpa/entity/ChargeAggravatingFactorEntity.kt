@@ -25,11 +25,11 @@ class ChargeAggravatingFactorEntity(
   @MapsId("aggravatingFactorId")
   @JoinColumn(name = "aggravating_factor_id", nullable = false)
   val aggravatingFactor: AggravatingFactorEntity,
-){
+) {
   constructor(charge: ChargeEntity, aggravatingFactor: AggravatingFactorEntity) : this(
     id = ChargeAggravatingFactorId(charge.id, aggravatingFactor.id),
     charge = charge,
-    aggravatingFactor = aggravatingFactor
+    aggravatingFactor = aggravatingFactor,
   )
 
   override fun equals(other: Any?): Boolean {
