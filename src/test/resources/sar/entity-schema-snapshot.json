@@ -4,7 +4,7 @@
     "title": "String",
     "description": "String",
     "id": "int",
-    "status": "boolean"
+    "status": "AggravatingFactorStatus"
   },
   "AppearanceChargeEntity": {
     "appearance": "CourtAppearanceEntity",

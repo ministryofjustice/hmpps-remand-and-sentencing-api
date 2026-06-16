@@ -4,7 +4,7 @@ CREATE TABLE aggravating_factor (
                                     code VARCHAR(100) NOT NULL UNIQUE,
                                     title VARCHAR(255) NOT NULL,
                                     description TEXT NULL,
-                                    status BOOLEAN NOT NULL DEFAULT TRUE
+                                    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
 );
 
 -- Create join table

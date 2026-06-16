@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.DynamicUpdate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
 
 @DynamicUpdate
 @Entity
@@ -26,5 +27,4 @@ class AggravatingFactorEntity(
   val description: String? = null,
 
   @Column(nullable = false)
-  val status: Boolean = true,
-)
+   val status: AggravatingFactorStatus = AggravatingFactorStatus.ACTIVE,)
