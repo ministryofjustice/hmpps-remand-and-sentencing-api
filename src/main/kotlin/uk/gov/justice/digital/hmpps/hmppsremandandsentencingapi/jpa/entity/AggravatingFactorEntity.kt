@@ -11,7 +11,7 @@ import org.hibernate.annotations.DynamicUpdate
 @DynamicUpdate
 @Entity
 @Table(name = "aggravating_factor")
-class AggravatingFactorEntity (
+class AggravatingFactorEntity(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Int = 0,
@@ -24,4 +24,4 @@ class AggravatingFactorEntity (
 
   @Column(nullable = true)
   val description: String? = null,
-  )
+)
