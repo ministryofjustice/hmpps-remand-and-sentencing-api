@@ -212,6 +212,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.appearanceUuid.toString(),
             appearanceCharge.charge!!.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
+            existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       }
@@ -287,6 +288,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.appearanceUuid.toString(),
             existingCharge.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
+            existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       }

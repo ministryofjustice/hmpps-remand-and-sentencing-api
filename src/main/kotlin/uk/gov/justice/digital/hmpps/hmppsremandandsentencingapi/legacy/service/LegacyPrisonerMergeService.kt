@@ -431,7 +431,7 @@ class LegacyPrisonerMergeService(
         tracking,
         referenceData,
         mergeCreateCourtAppearance.eventId,
-        MergeHierarchyData(tracking.retainedPrisonerNumber, createdCourtCase.caseUniqueIdentifier, createdAppearance.appearanceUuid.toString()),
+        MergeHierarchyData(tracking.retainedPrisonerNumber, createdCourtCase.caseUniqueIdentifier, createdAppearance.appearanceUuid.toString(), createdAppearance.statusId == CourtAppearanceEntityStatus.FUTURE),
       )
     }
     charges.forEach { charge ->
@@ -477,6 +477,7 @@ class LegacyPrisonerMergeService(
         mergeHierarchyData.courtAppearanceId,
         createdCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
+        mergeHierarchyData.isFutureCourtAppearance,
       ),
     )
     return createdCharge
@@ -628,6 +629,7 @@ class LegacyPrisonerMergeService(
     var prisonerId: String,
     var courtCaseId: String,
     var courtAppearanceId: String,
+    var isFutureCourtAppearance: Boolean,
     var chargeId: String? = null,
   )
 }

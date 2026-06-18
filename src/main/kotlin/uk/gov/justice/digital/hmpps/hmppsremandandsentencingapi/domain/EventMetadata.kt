@@ -13,4 +13,5 @@ data class EventMetadata(
   val previousRecallId: String? = null,
   val previousSentenceIds: List<String>? = null,
   val originalSentenceId: String? = null,
+  val isOnFutureAppearance: Boolean? = null,
 )

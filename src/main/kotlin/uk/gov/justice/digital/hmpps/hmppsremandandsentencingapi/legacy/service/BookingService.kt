@@ -342,6 +342,7 @@ class BookingService(
         bookingHierarchyData.courtAppearanceId,
         createdCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
+        false,
       ),
     )
     return createdCharge

@@ -27,14 +27,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtCaseService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 
 @RestController
 @RequestMapping("/legacy/court-case", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-case-controller", description = "CRUD operations for syncing court case data from NOMIS into remand and sentencing api database.")
-class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService, private val chargeEventService: ChargeDomainEventService, private val courtCaseReferenceService: CourtCaseReferenceService) {
+class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService, private val courtCaseReferenceService: CourtCaseReferenceService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -149,22 +149,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun unlinkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String, @RequestBody(required = false) unlinkCase: LegacyUnlinkCase?) = legacyCourtCaseService.unlinkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid, unlinkCase)
     .also { unlinkEventsToEmit ->
-      unlinkEventsToEmit.courtCaseEventMetadata?.let { courtCaseEventMetaData ->
-        eventService.update(
-          courtCaseEventMetaData.courtCaseId!!,
-          courtCaseEventMetaData.prisonerId,
-          EventSource.NOMIS,
-        )
-      }
-      unlinkEventsToEmit.chargesEventMetadata.forEach { chargeEventMetaData ->
-        chargeEventService.update(
-          chargeEventMetaData.prisonerId,
-          chargeEventMetaData.chargeId!!,
-          chargeEventMetaData.courtAppearanceId!!,
-          chargeEventMetaData.courtCaseId!!,
-          EventSource.NOMIS,
-        )
-      }
+      legacyDomainEventService.emitEvents(unlinkEventsToEmit)
     }
 
   @GetMapping("/{courtCaseUuid}/reconciliation")
