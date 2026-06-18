@@ -110,7 +110,7 @@ class ChargeEntity(
     ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
-    chargeAggravatingFactors.toMutableSet(),
+    mutableSetOf(),
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
   )
@@ -120,7 +120,7 @@ class ChargeEntity(
     ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
     appearanceCharges.toMutableSet(),
-    chargeAggravatingFactors.toMutableSet(),
+    mutableSetOf(),
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
   )
@@ -147,7 +147,7 @@ class ChargeEntity(
     ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
     createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
     legacyData, appearanceCharges.toMutableSet(),
-    chargeAggravatingFactors.toMutableSet(),
+    mutableSetOf(),
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
   )
@@ -179,7 +179,7 @@ class ChargeEntity(
       ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
       createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison,
       legacyData, appearanceCharges.toMutableSet(),
-      chargeAggravatingFactors.toMutableSet(),
+      mutableSetOf(),
       mergedFromCourtCase,
       mergedFromDate = mergedFromDate,
     )
@@ -193,7 +193,7 @@ class ChargeEntity(
       0, UUID.randomUUID(), offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, chargeOutcome, replacedCharge,
       terrorRelated, foreignPowerRelated, domesticViolenceRelated,
       currentDate, createdBy, createdPrison, currentDate, null, null, legacyData, appearanceCharges.toMutableSet(),
-      chargeAggravatingFactors.toMutableSet(), mergedFromCourtCase, mergedFromDate,
+      mutableSetOf(), mergedFromCourtCase, mergedFromDate,
     )
     charge.sentences = sentences.toMutableSet()
     return charge
