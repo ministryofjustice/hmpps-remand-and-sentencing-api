@@ -46,6 +46,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
+            eventMetaData.isOnFutureAppearance!!,
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
             eventMetaData.prisonerId,
@@ -53,12 +54,14 @@ class DpsDomainEventService(
             eventMetaData.courtAppearanceId!!,
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
+            eventMetaData.isOnFutureAppearance!!,
           )
           EventType.CHARGE_DELETED -> chargeDomainEventService.delete(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
+            eventMetaData.isOnFutureAppearance!!,
           )
           EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
             eventMetaData.prisonerId,

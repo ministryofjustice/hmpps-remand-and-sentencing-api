@@ -24,7 +24,8 @@ class EventMetadataCreator {
       courtAppearanceId: String?,
       chargeId: String,
       eventType: EventType,
-    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, null, null, eventType)
+      isOnFutureAppearance: Boolean,
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, null, null, eventType, isOnFutureAppearance = isOnFutureAppearance)
 
     fun sentenceEventMetadata(
       prisonerId: String,

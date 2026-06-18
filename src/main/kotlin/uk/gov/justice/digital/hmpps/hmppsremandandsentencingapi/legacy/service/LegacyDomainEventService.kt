@@ -52,6 +52,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.NOMIS,
+            eventMetaData.isOnFutureAppearance!!,
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
             eventMetaData.prisonerId,
@@ -59,12 +60,14 @@ class LegacyDomainEventService(
             eventMetaData.courtAppearanceId!!,
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
+            eventMetaData.isOnFutureAppearance!!,
           )
           EventType.CHARGE_DELETED -> chargeDomainEventService.delete(
             eventMetaData.prisonerId,
             eventMetaData.chargeId!!,
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
+            eventMetaData.isOnFutureAppearance!!,
           )
           EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
             eventMetaData.prisonerId,

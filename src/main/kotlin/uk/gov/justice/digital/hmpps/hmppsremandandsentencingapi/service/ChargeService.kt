@@ -66,6 +66,7 @@ class ChargeService(
         courtAppearanceUuid.toString(),
         savedCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
+        false,
       ),
     )
     charge.sentence?.let { createSentence ->
@@ -211,6 +212,7 @@ class ChargeService(
             courtAppearance.appearanceUuid.toString(),
             record.chargeUuid.toString(),
             EventType.CHARGE_UPDATED,
+            courtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       } else if (chargeChangeStatus == EntityChangeStatus.CREATED) {
@@ -221,6 +223,7 @@ class ChargeService(
             courtAppearance.appearanceUuid.toString(),
             record.chargeUuid.toString(),
             EventType.CHARGE_INSERTED,
+            courtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       }
@@ -282,6 +285,7 @@ class ChargeService(
         courtAppearance.appearanceUuid.toString(),
         savedCharge.chargeUuid.toString(),
         EventType.CHARGE_UPDATED,
+        true,
       ),
     )
     return RecordResponse(savedCharge, eventsToEmit)
@@ -327,6 +331,7 @@ class ChargeService(
           null,
           charge.chargeUuid.toString(),
           EventType.CHARGE_DELETED,
+          false,
         ),
       )
       chargeHistoryRepository.save(ChargeHistoryEntity.from(charge, ChangeSource.DPS))
