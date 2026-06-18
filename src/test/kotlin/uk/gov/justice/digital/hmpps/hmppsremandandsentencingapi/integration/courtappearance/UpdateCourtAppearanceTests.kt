@@ -1060,6 +1060,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
 
+    assertThat(updateCharge.terrorRelated ?: false).isFalse()
+    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
