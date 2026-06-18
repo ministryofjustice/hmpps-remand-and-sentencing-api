@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextC
 interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEntity, Int> {
   fun findFirstByFutureSkeletonAppearance(futureSkeletonAppearance: CourtAppearanceEntity): NextCourtAppearanceEntity?
 
+  fun findByFutureSkeletonAppearanceIdIn(ids: Set<Int>): List<NextCourtAppearanceEntity>
+
   @Modifying
   @Query(
     """

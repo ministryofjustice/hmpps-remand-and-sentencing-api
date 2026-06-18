@@ -27,7 +27,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.3.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
   // Database dependencies
@@ -42,7 +42,7 @@ dependencies {
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("io.mockk:mockk:1.14.11")
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.43") {
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.44") {
     exclude(group = "io.swagger.core.v3")
   }
 }

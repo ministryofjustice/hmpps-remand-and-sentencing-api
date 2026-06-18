@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.U
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.PrisonerRecallsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.BookingDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.repository.AppearanceChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
@@ -80,6 +81,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCases
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.numberOfMessagesCurrentlyOnQueue
@@ -849,6 +852,23 @@ abstract class IntegrationTestBase {
     .exchange()
     .expectStatus()
     .isNoContent
+
+  protected fun createBookingCourtCase(bookingCourtCases: BookingCreateCourtCases = BookingDataCreator.bookingCreateCourtCases()): Pair<BookingCreateCourtCases, BookingCreateCourtCasesResponse> {
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/booking")
+      .bodyValue(bookingCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(BookingCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    return bookingCourtCases to response
+  }
 
   protected fun uuid(i: Long) = UUID(0L, i)
 
