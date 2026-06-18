@@ -1,14 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import java.util.*
 
-interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
+interface ChargeRepository : JpaRepository<ChargeEntity, Int> {
 
   fun findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid: UUID, status: ChargeEntityStatus = ChargeEntityStatus.DELETED): ChargeEntity?
 

@@ -37,6 +37,7 @@ class ChargeService(
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val courtAppearanceRepository: CourtAppearanceRepository,
+  private val aggravatingFactorsService: AggravatingFactorsService,
 ) {
 
   private fun createChargeEntity(
@@ -58,6 +59,7 @@ class ChargeService(
         chargeToSupersede,
       ),
     )
+    aggravatingFactorsService.replaceAggravatingFactors(savedCharge)
     chargeHistoryRepository.save(ChargeHistoryEntity.from(savedCharge, ChangeSource.DPS))
     val eventsToEmit = mutableSetOf(
       EventMetadataCreator.chargeEventMetadata(
@@ -122,6 +124,7 @@ class ChargeService(
           val replacedWithAnotherRecord = existingCharge.copyFrom(replacedWithAnotherOutcome, serviceUserService.getUsername())
           replacedWithAnotherRecord.appearanceCharges.removeAll { it.appearance == null }
           activeRecord = chargeRepository.save(replacedWithAnotherRecord)
+          aggravatingFactorsService.replaceAggravatingFactors(activeRecord)
           chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord, ChangeSource.DPS))
         } else {
           existingCharge.updateFrom(replacedWithAnotherOutcome, serviceUserService.getUsername(), charge.prisonId)
@@ -139,6 +142,7 @@ class ChargeService(
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
 
         val newChargeRecord = chargeRepository.save(compareCharge.copyFromReplacedCharge(activeRecord))
+        aggravatingFactorsService.replaceAggravatingFactors(newChargeRecord)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord, ChangeSource.DPS))
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
@@ -169,10 +173,12 @@ class ChargeService(
           }
         compareCharge.appearanceCharges.removeAll { it.appearance == null }
         activeRecord = chargeRepository.save(compareCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(activeRecord)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
       } else {
         existingCharge.updateFrom(compareCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(existingCharge)
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
       }
@@ -274,6 +280,7 @@ class ChargeService(
   ): RecordResponse<ChargeEntity> {
     val futureCharge = existingCharge.toFutureCharge()
     val savedCharge = chargeRepository.save(futureCharge)
+    aggravatingFactorsService.replaceAggravatingFactors(savedCharge)
     chargeHistoryRepository.save(ChargeHistoryEntity.from(savedCharge, ChangeSource.DPS))
     val eventsToEmit = mutableSetOf(
       EventMetadataCreator.chargeEventMetadata(

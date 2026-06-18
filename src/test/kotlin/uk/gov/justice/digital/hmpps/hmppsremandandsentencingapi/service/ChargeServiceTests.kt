@@ -29,6 +29,7 @@ class ChargeServiceTests {
   private val chargeHistoryRepository = mockk<ChargeHistoryRepository>(relaxed = true)
   private val appearanceChargeHistoryRepository = mockk<AppearanceChargeHistoryRepository>(relaxed = true)
   private val courtAppearanceRepository = mockk<CourtAppearanceRepository>(relaxed = true)
+  private val aggravatingFactorsService = mockk<AggravatingFactorsService>(relaxed = true)
 
   private val chargeService = ChargeService(
     chargeRepository = chargeRepository,
@@ -38,6 +39,7 @@ class ChargeServiceTests {
     chargeHistoryRepository = chargeHistoryRepository,
     appearanceChargeHistoryRepository = appearanceChargeHistoryRepository,
     courtAppearanceRepository = courtAppearanceRepository,
+    aggravatingFactorsService = aggravatingFactorsService,
   )
 
   @Test
