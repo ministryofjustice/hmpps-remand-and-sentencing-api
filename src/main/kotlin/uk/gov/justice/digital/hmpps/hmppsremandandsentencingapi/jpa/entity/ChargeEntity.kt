@@ -129,7 +129,7 @@ class ChargeEntity(
     0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated,
     foreignPowerRelated, domesticViolenceRelated, createdAt, this.createdBy, createdPrison,
     ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, legacyData, mutableSetOf(),
-    chargeAggravatingFactors.toMutableSet(), mergedFromCase, linkChargeToCase.linkedDate,
+    mutableSetOf(), mergedFromCase, linkChargeToCase.linkedDate,
   )
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
