@@ -5,7 +5,6 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AggravatingFactorEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeAggravatingFactorEntity
@@ -13,35 +12,15 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AggravatingFactorRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import java.time.ZonedDateTime
 import java.util.UUID
 
 class AggravatingFactorsServiceTest {
 
   private val aggravatingFactorRepository = mockk<AggravatingFactorRepository>(relaxed = true)
-  private val chargeRepository = mockk<ChargeRepository>(relaxed = true)
-
-  private val service = AggravatingFactorsService(
+  private val aggravatingFactorsService = AggravatingFactorsService(
     aggravatingFactorRepository = aggravatingFactorRepository,
-    chargeRepository = chargeRepository,
   )
-
-  @BeforeEach
-  fun setUp() {
-    every { chargeRepository.saveAndFlush(any()) } answers { firstArg() }
-  }
-
-  @Test
-  fun `clears existing aggravating factors and flushes before adding new ones`() {
-    val charge = createCharge(terrorRelated = true)
-    val terrorFactor = createAggravatingFactorEntity(1, "OATC")
-    every { aggravatingFactorRepository.findByCodeIn(listOf("OATC")) } returns listOf(terrorFactor)
-
-    service.replaceAggravatingFactors(charge)
-
-    verify { chargeRepository.saveAndFlush(charge) }
-  }
 
   @Test
   fun `adds OATC aggravating factor when terrorRelated is true`() {
@@ -49,7 +28,7 @@ class AggravatingFactorsServiceTest {
     val terrorFactor = createAggravatingFactorEntity(1, "OATC")
     every { aggravatingFactorRepository.findByCodeIn(listOf("OATC")) } returns listOf(terrorFactor)
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
     assertThat(charge.chargeAggravatingFactors).hasSize(1)
     assertThat(charge.chargeAggravatingFactors.first().aggravatingFactor.code).isEqualTo("OATC")
@@ -61,7 +40,7 @@ class AggravatingFactorsServiceTest {
     val foreignPowerFactor = createAggravatingFactorEntity(2, "OAFPC")
     every { aggravatingFactorRepository.findByCodeIn(listOf("OAFPC")) } returns listOf(foreignPowerFactor)
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
     assertThat(charge.chargeAggravatingFactors).hasSize(1)
     assertThat(charge.chargeAggravatingFactors.first().aggravatingFactor.code).isEqualTo("OAFPC")
@@ -75,7 +54,7 @@ class AggravatingFactorsServiceTest {
     val codesSlot = slot<List<String>>()
     every { aggravatingFactorRepository.findByCodeIn(capture(codesSlot)) } returns listOf(terrorFactor, foreignPowerFactor)
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
     assertThat(codesSlot.captured).containsExactlyInAnyOrder("OATC", "OAFPC")
     assertThat(charge.chargeAggravatingFactors).hasSize(2)
@@ -88,7 +67,7 @@ class AggravatingFactorsServiceTest {
     val charge = createCharge(terrorRelated = false, foreignPowerRelated = false)
     every { aggravatingFactorRepository.findByCodeIn(emptyList()) } returns emptyList()
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
     assertThat(charge.chargeAggravatingFactors).isEmpty()
   }
@@ -98,7 +77,7 @@ class AggravatingFactorsServiceTest {
     val charge = createCharge(terrorRelated = null, foreignPowerRelated = null)
     every { aggravatingFactorRepository.findByCodeIn(emptyList()) } returns emptyList()
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
     assertThat(charge.chargeAggravatingFactors).isEmpty()
   }
@@ -113,7 +92,7 @@ class AggravatingFactorsServiceTest {
 
     every { aggravatingFactorRepository.findByCodeIn(listOf("OATC")) } returns listOf(terrorFactor)
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
     assertThat(charge.chargeAggravatingFactors).hasSize(1)
     assertThat(charge.chargeAggravatingFactors.first().aggravatingFactor.code).isEqualTo("OATC")
@@ -125,9 +104,8 @@ class AggravatingFactorsServiceTest {
     val terrorFactor = createAggravatingFactorEntity(1, "OATC")
     charge.chargeAggravatingFactors.add(ChargeAggravatingFactorEntity(charge, terrorFactor))
 
-    service.replaceAggravatingFactors(charge)
+    aggravatingFactorsService.replaceAggravatingFactors(charge)
 
-    verify(exactly = 0) { chargeRepository.saveAndFlush(any()) }
     verify(exactly = 0) { aggravatingFactorRepository.findByCodeIn(any()) }
     assertThat(charge.chargeAggravatingFactors).hasSize(1)
   }

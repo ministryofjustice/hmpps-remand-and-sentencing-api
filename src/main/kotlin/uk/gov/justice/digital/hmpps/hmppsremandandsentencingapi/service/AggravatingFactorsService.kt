@@ -4,12 +4,10 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeAggravatingFactorEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AggravatingFactorRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 
 @Service
 class AggravatingFactorsService(
   private val aggravatingFactorRepository: AggravatingFactorRepository,
-  private val chargeRepository: ChargeRepository,
 ) {
 
   /**
@@ -25,19 +23,22 @@ class AggravatingFactorsService(
     val codes = listOfNotNull(
       AggravatingFactorCode.TERROR_CONNECTION.code.takeIf { charge.terrorRelated == true },
       AggravatingFactorCode.FOREIGN_POWER.code.takeIf { charge.foreignPowerRelated == true },
-    )
+    ).toSet()
+
+    charge.chargeAggravatingFactors.removeIf { existing ->
+      existing.aggravatingFactor.code !in codes
+    }
 
     val existingCodes = charge.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet()
-    if (existingCodes == codes.toSet()) {
+    val codesToAdd = codes - existingCodes
+
+    if (codesToAdd.isEmpty()) {
       return
     }
 
-    charge.chargeAggravatingFactors.clear()
-    chargeRepository.saveAndFlush(charge)
-
-    val existingAggravatingFactors = aggravatingFactorRepository.findByCodeIn(codes)
-    for (existingAggravatingFactor in existingAggravatingFactors) {
-      charge.chargeAggravatingFactors.add(ChargeAggravatingFactorEntity(charge, existingAggravatingFactor))
+    val missingAggravatingFactors = aggravatingFactorRepository.findByCodeIn(codesToAdd.toList())
+    for (missingAggravatingFactor in missingAggravatingFactors) {
+      charge.chargeAggravatingFactors.add(ChargeAggravatingFactorEntity(charge, missingAggravatingFactor))
     }
   }
 
