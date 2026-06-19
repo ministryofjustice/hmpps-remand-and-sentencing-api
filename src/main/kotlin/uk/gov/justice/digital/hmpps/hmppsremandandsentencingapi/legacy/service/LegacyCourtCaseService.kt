@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
@@ -24,7 +25,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUnlinkCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.UnlinkEventsToEmit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -104,10 +104,9 @@ class LegacyCourtCaseService(
   }
 
   @Transactional
-  fun unlinkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String, unlinkCase: LegacyUnlinkCase?): UnlinkEventsToEmit {
+  fun unlinkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String, unlinkCase: LegacyUnlinkCase?): MutableSet<EventMetadata> {
     val sourceCourtCase = getUnlessDeleted(sourceCourtCaseUuid)
-    var courtCaseEventMetadata: EventMetadata? = null
-    var chargeEventsToEmit: List<EventMetadata>
+    val eventsToEmit = mutableSetOf<EventMetadata>()
     val performedByUsername = unlinkCase?.performedByUser ?: serviceUserService.getUsername()
     if (sourceCourtCase.statusId != CourtCaseEntityStatus.ACTIVE || sourceCourtCase.mergedToCase != null) {
       sourceCourtCase.statusId = CourtCaseEntityStatus.ACTIVE
@@ -115,10 +114,12 @@ class LegacyCourtCaseService(
       sourceCourtCase.mergedToDate = null
       sourceCourtCase.updatedAt = ZonedDateTime.now()
       sourceCourtCase.updatedBy = performedByUsername
-      courtCaseEventMetadata = EventMetadataCreator.courtCaseEventMetadata(
-        sourceCourtCase.prisonerId,
-        sourceCourtCase.caseUniqueIdentifier,
-        EventType.COURT_CASE_UPDATED,
+      eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(
+          sourceCourtCase.prisonerId,
+          sourceCourtCase.caseUniqueIdentifier,
+          EventType.COURT_CASE_UPDATED,
+        ),
       )
       courtCaseHistoryRepository.save(
         CourtCaseHistoryEntity.from(
@@ -127,31 +128,34 @@ class LegacyCourtCaseService(
         ),
       )
     }
-    chargeEventsToEmit = sourceCourtCase.appearances.filter { it.appearanceCharges.any { appearanceCharge -> appearanceCharge.charge!!.statusId == ChargeEntityStatus.MERGED } }
-      .flatMap { appearance ->
-        appearance.appearanceCharges.filter { appearanceCharge -> appearanceCharge.charge!!.statusId == ChargeEntityStatus.MERGED }
-          .map { appearanceCharge ->
-            val charge = appearanceCharge.charge!!
-            charge.statusId = ChargeEntityStatus.ACTIVE
-            charge.updatedAt = ZonedDateTime.now()
-            charge.updatedBy = performedByUsername
-            chargeHistoryRepository.save(
-              ChargeHistoryEntity.from(
-                charge,
-                ChangeSource.NOMIS,
-              ),
-            )
-            EventMetadataCreator.chargeEventMetadata(
-              sourceCourtCase.prisonerId,
-              sourceCourtCase.caseUniqueIdentifier,
-              appearance.appearanceUuid.toString(),
-              charge.chargeUuid.toString(),
-              EventType.CHARGE_UPDATED,
-            )
-          }
-      }
+    eventsToEmit.addAll(
+      sourceCourtCase.appearances.filter { it.appearanceCharges.any { appearanceCharge -> appearanceCharge.charge!!.statusId == ChargeEntityStatus.MERGED } }
+        .flatMap { appearance ->
+          appearance.appearanceCharges.filter { appearanceCharge -> appearanceCharge.charge!!.statusId == ChargeEntityStatus.MERGED }
+            .map { appearanceCharge ->
+              val charge = appearanceCharge.charge!!
+              charge.statusId = ChargeEntityStatus.ACTIVE
+              charge.updatedAt = ZonedDateTime.now()
+              charge.updatedBy = performedByUsername
+              chargeHistoryRepository.save(
+                ChargeHistoryEntity.from(
+                  charge,
+                  ChangeSource.NOMIS,
+                ),
+              )
+              EventMetadataCreator.chargeEventMetadata(
+                sourceCourtCase.prisonerId,
+                sourceCourtCase.caseUniqueIdentifier,
+                appearance.appearanceUuid.toString(),
+                charge.chargeUuid.toString(),
+                EventType.CHARGE_UPDATED,
+                appearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+              )
+            }
+        },
+    )
 
-    return UnlinkEventsToEmit(courtCaseEventMetadata, chargeEventsToEmit)
+    return eventsToEmit
   }
 
   @Transactional

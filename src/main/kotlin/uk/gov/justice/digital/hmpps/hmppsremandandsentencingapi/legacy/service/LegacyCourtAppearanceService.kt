@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.CourtAppearanceUtils
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionEntityUpdater
 import java.time.LocalDateTime
@@ -176,8 +177,9 @@ class LegacyCourtAppearanceService(
     val courtAppearance = getUnlessDeleted(lifetimeUuid)
     val associatedNextCourtAppearance = nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)
     val appearanceTypeUuid = associatedNextCourtAppearance?.appearanceType?.appearanceTypeUuid ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_UUID
-    val nomisAppearanceTypeCode = courtAppearance.legacyData?.nomisAppearanceTypeCode ?: associatedNextCourtAppearance?.courtAppearanceSubtype?.nomisCode ?: associatedNextCourtAppearance?.appearanceType?.dpsToNomisMappingCode ?: LegacyAppearanceTypeService.DEFAULT_APPEARANCE_TYPE_NOMIS_CODE
-    return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid, nomisAppearanceTypeCode)
+    val nomisAppearanceTypeCode = CourtAppearanceUtils.getNOMISAppearanceTypeCode(courtAppearance, associatedNextCourtAppearance)
+    val startTime = CourtAppearanceUtils.getStartTime(courtAppearance, associatedNextCourtAppearance)
+    return LegacyCourtAppearance.from(courtAppearance, appearanceTypeUuid, nomisAppearanceTypeCode, startTime)
   }
 
   @Retryable(maxAttempts = 3, retryFor = [OptimisticLockingFailureException::class])
@@ -210,6 +212,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.appearanceUuid.toString(),
             appearanceCharge.charge!!.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
+            existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       }
@@ -285,6 +288,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.appearanceUuid.toString(),
             existingCharge.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
+            existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       }

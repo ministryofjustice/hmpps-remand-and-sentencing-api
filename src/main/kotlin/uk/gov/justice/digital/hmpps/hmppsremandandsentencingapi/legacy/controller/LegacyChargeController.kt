@@ -18,21 +18,19 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyChargeCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeDomainEventService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/legacy/charge", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-charge-controller", description = "CRUD operations for syncing charge data from NOMIS Offender charges into remand and sentencing api database.")
-class LegacyChargeController(private val legacyChargeService: LegacyChargeService, private val eventService: ChargeDomainEventService) {
+class LegacyChargeController(private val legacyChargeService: LegacyChargeService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -48,8 +46,9 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
-  fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse = legacyChargeService.create(charge).also {
-    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, charge.appearanceLifetimeUuid.toString(), EventSource.NOMIS)
+  fun create(@RequestBody charge: LegacyCreateCharge): LegacyChargeCreatedResponse = legacyChargeService.create(charge).let {
+    legacyDomainEventService.emitEvents(it.eventsToEmit)
+    it.record
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -84,10 +83,8 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_CHARGE_RW')")
   fun updateInAppearance(@PathVariable lifetimeUuid: UUID, @PathVariable appearanceLifetimeUuid: UUID, @RequestBody charge: LegacyUpdateCharge): ResponseEntity<Void> {
-    legacyChargeService.updateInAppearance(lifetimeUuid, appearanceLifetimeUuid, charge).also { (entityChangeStatus, legacyChargeCreatedResponse) ->
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyChargeCreatedResponse.prisonerId, legacyChargeCreatedResponse.lifetimeUuid.toString(), appearanceLifetimeUuid.toString(), legacyChargeCreatedResponse.courtCaseUuid, EventSource.NOMIS)
-      }
+    legacyChargeService.updateInAppearance(lifetimeUuid, appearanceLifetimeUuid, charge).also { (_, eventsToEmit) ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
     return ResponseEntity.noContent().build()
   }
@@ -126,8 +123,8 @@ class LegacyChargeController(private val legacyChargeService: LegacyChargeServic
     @RequestHeader("performedByUser", required = false)
     performedByUser: String?,
   ) {
-    legacyChargeService.delete(chargeUuid, performedByUser)?.also { legacyCharge ->
-      eventService.delete(legacyCharge.prisonerId, legacyCharge.lifetimeUuid.toString(), legacyCharge.courtCaseUuid, EventSource.NOMIS)
+    legacyChargeService.delete(chargeUuid, performedByUser)?.also { eventsToEmit ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
   }
 }
