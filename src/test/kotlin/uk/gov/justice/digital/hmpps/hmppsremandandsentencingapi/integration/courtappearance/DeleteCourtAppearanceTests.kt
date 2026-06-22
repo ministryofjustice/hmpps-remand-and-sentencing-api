@@ -1,35 +1,30 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
 import com.github.tomakehurst.wiremock.client.WireMock
-import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.untilAsserted
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
-import java.time.LocalDate
 
 class DeleteCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `delete court appearance should change court appearance status to be deleted and court case as well if no more court appearance is ACTIVE`() {
     // Given a court appearance exists
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+    val appearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
       charges = listOf(
-        DpsDataCreator.dpsCreateCharge(),
-        DpsDataCreator.dpsCreateCharge(),
+        DpsDataCreator.dpsCreateNonSentencedCharge(),
+        DpsDataCreator.dpsCreateNonSentencedCharge(),
       ),
     )
-    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateNonSentencedCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
 
     // When the court appearance is deleted
@@ -55,9 +50,9 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `court case status should still be active if any court appearance is active`() {
     // Given a court appearance exists
-    val appearance1 = DpsDataCreator.dpsCreateCourtAppearance()
-    val appearance2 = DpsDataCreator.dpsCreateCourtAppearance()
-    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance1, appearance2)))
+    val appearance1 = DpsDataCreator.dpsCreateNonSentencedCourtAppearance()
+    val appearance2 = DpsDataCreator.dpsCreateNonSentencedCourtAppearance()
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateNonSentencedCourtCase(appearances = listOf(appearance1, appearance2)))
     val createdAppearance = courtCase.second.appearances.first()
 
     // When the court appearance is deleted
@@ -84,8 +79,8 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   fun `deleting a court appearance updates document metadata to Deleted`() {
     val (uploadedDocument) = uploadDocument()
     documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))
-    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val appearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(documents = listOf(uploadedDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateNonSentencedCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
 
     documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
@@ -120,8 +115,8 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   fun `deleting a court appearance should finish even if updating document fails`() {
     val (uploadedDocument) = uploadDocument()
     documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))
-    val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val appearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(documents = listOf(uploadedDocument))
+    val courtCase = createCourtCase(DpsDataCreator.dpsCreateNonSentencedCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
 
     webTestClient.delete()
@@ -154,78 +149,17 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `must delete inactive sentences`() {
-    val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
-    val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)
-    val response = webTestClient
-      .post()
-      .uri("/legacy/sentence")
-      .bodyValue(legacySentence)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
-      .responseBody.blockFirst()!!
-
+  fun `deleting an appearance with a sentenced charge is not supported`() {
+    val (_, createdCourtCase) = createCourtCase()
+    val createdAppearance = createdCourtCase.appearances.first()
     webTestClient.delete()
-      .uri("/court-appearance/${response.appearanceUuid}")
+      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON
       }
       .exchange()
       .expectStatus()
-      .isNoContent
-      .expectBody()
-
-    val deletedSentence = sentenceRepository.findBySentenceUuid(response.lifetimeUuid)[0]
-    assertEquals(SentenceEntityStatus.DELETED, deletedSentence.statusId)
-  }
-
-  @Test
-  fun `deletes recalls for legacy recall sentences`() {
-    val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
-    val legacySentence = DataCreator.legacyCreateSentence(
-      chargeUuids = listOf(chargeLifetimeUuid),
-      appearanceUuid = toCreateCharge.appearanceLifetimeUuid,
-      sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"),
-      returnToCustodyDate = LocalDate.of(2023, 1, 1),
-    )
-    val response = webTestClient
-      .post()
-      .uri("/legacy/sentence")
-      .bodyValue(legacySentence)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
-      .responseBody.blockFirst()!!
-
-    adjustmentsApi.stubGetAdjustmentsDefaultToNone()
-    val recalls = getRecallsByPrisonerId(response.prisonerId)
-    assertThat(recalls).hasSize(1)
-
-    webTestClient.delete()
-      .uri("/court-appearance/${response.appearanceUuid}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-      .expectBody()
-
-    assertThat(getRecallsByPrisonerId(response.prisonerId)).isEmpty()
-
-    val recall = recalls.first()
-    val historicalRecalls = recallHistoryRepository.findByRecallUuid(recall.recallUuid)
-    assertThat(historicalRecalls).hasSize(2)
+      .isEqualTo(HttpStatus.CONFLICT)
   }
 }

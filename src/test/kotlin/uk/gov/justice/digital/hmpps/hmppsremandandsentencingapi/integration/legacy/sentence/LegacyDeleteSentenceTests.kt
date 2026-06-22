@@ -98,6 +98,7 @@ class LegacyDeleteSentenceTests : IntegrationTestBase() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     adjustmentsApi.stubAllowCreateAdjustments()
     adjustmentsApi.stubGetAdjustmentsDefaultToNone()
+    adjustmentsApi.stubAllowUnlinkRecallAdjustments()
     val createdRecall = createRecall(
       DpsDataCreator.dpsCreateRecall(
         sentenceIds = listOf(sentenceOne.sentenceUuid, sentenceTwo.sentenceUuid),
