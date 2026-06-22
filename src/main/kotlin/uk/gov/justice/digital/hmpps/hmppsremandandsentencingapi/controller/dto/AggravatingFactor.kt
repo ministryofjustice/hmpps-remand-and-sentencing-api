@@ -2,18 +2,18 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AggravatingFactorEntity
 
-class AggravatingFactor (
-  val title: String,
-  val status: String,
+data class AggravatingFactor(
   val code: String,
-  val order: Int,
-){
+  val title: String,
+  val description: String?,
+  val displayOrder: Int,
+) {
   companion object {
     fun from(aggravatingFactorEntity: AggravatingFactorEntity): AggravatingFactor = AggravatingFactor(
-      title = aggravatingFactorEntity.title,
-      status = aggravatingFactorEntity.status.name,
-      code = aggravatingFactorEntity.code,
-      order = aggravatingFactorEntity.displayOrder
+      aggravatingFactorEntity.code,
+      aggravatingFactorEntity.title,
+      aggravatingFactorEntity.description,
+      aggravatingFactorEntity.displayOrder,
     )
   }
 }
