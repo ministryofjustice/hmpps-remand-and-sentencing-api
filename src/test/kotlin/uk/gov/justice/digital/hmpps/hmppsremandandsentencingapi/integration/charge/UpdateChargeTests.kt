@@ -131,16 +131,4 @@ class UpdateChargeTests : IntegrationTestBase() {
       .expectStatus()
       .isEqualTo(HttpStatus.CONFLICT)
   }
-
-  private fun deleteCourtAppearance(appearanceUuid: UUID) {
-    webTestClient
-      .delete()
-      .uri("/court-appearance/$appearanceUuid")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-  }
 }

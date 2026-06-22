@@ -100,7 +100,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
   @DeleteMapping("/court-appearance/{appearanceUuid}")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RW')")
   @Operation(
     summary = "Delete Court appearance",
     description = "This endpoint will delete a court appearance in a given court case",

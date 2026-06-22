@@ -441,16 +441,4 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(sentences[1].consecutiveToSentenceUuid).isEqualTo(sentences[0].sentenceUuid)
     assertThat(sentences[0].consecutiveToSentenceUuid).isNull()
   }
-
-  private fun deleteCourtAppearance(appearanceUuid: UUID) {
-    webTestClient
-      .delete()
-      .uri("/court-appearance/$appearanceUuid")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-  }
 }
