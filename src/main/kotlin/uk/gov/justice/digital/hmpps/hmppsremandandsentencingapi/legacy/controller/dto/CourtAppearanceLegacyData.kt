@@ -14,6 +14,7 @@ data class CourtAppearanceLegacyData(
   val outcomeDispositionCode: String?,
   val outcomeConvictionFlag: Boolean?,
   val nomisAppearanceTypeCode: String?,
+  val comments: String?,
 ) {
   fun isSame(other: CourtAppearanceLegacyData?): Boolean = nomisOutcomeCode == other?.nomisOutcomeCode &&
     outcomeDescription == other?.outcomeDescription &&
@@ -32,6 +33,7 @@ data class CourtAppearanceLegacyData(
     outcomeDispositionCode,
     outcomeConvictionFlag,
     nomisAppearanceTypeCode,
+    comments,
   )
   companion object {
     fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
@@ -40,6 +42,7 @@ data class CourtAppearanceLegacyData(
       null,
       null,
       appearanceTime,
+      null,
       null,
       null,
       null,
