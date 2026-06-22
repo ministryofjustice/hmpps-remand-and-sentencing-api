@@ -188,6 +188,7 @@ class LegacyChargeService(
       val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
       chargeRecord = createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge, appearance, updatedCharge, performedByUsername) { charge ->
         charge.updateFrom(updatedCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(charge)
       }
       eventsToEmit.add(
         EventMetadataCreator.chargeEventMetadata(
@@ -309,6 +310,7 @@ class LegacyChargeService(
         )
       } else {
         existingCharge.updateFrom(updatedCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(existingCharge)
       }
       chargeHistoryRepository.save(
         ChargeHistoryEntity.from(

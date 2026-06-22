@@ -1,11 +1,15 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.migration
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import java.time.LocalDate
@@ -14,6 +18,10 @@ import java.util.UUID
 import java.util.regex.Pattern
 
 class MigrationCreateCourtCaseTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `create all entities and return ids against NOMIS ids`() {
@@ -292,5 +300,33 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `should ensure migrate a charge calls replaceAggravatingFactors and creates no stale aggravating factor entries`() {
+    val charge = DataCreator.migrationCreateCharge()
+    val courtCase = DataCreator.migrationCreateCourtCase(
+      appearances = listOf(DataCreator.migrationCreateCourtAppearance(charges = listOf(charge))),
+    )
+    val response = migrateCases(DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase)))
+    val chargeUuid = response.charges.first().chargeUuid
+
+    assertThat(aggravatingFactors.countAggravatingFactor(chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(chargeUuid, "OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should ensure migrate same charge across multiple appearances creates correct aggravating factor entries for each charge record`() {
+    val sharedChargeId = 42L
+    val charge = DataCreator.migrationCreateCharge(chargeNOMISId = sharedChargeId)
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 1, charges = listOf(charge))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 2, charges = listOf(charge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))
+
+    val response = migrateCases(DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase)))
+    val chargeUuid = response.charges.first { it.chargeNOMISId == sharedChargeId }.chargeUuid
+
+    assertThat(aggravatingFactors.countAggravatingFactor(chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(chargeUuid, "OAFPC")).isEqualTo(0)
   }
 }

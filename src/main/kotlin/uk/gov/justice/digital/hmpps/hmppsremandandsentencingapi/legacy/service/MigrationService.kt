@@ -67,6 +67,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationSentenceId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.NomisPeriodLengthId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 
 @Service
@@ -96,6 +97,7 @@ class MigrationService(
   private val recallHistoryRepository: RecallHistoryRepository,
   private val uploadedDocumentRepository: UploadedDocumentRepository,
   private val featuresConfig: FeaturesConfig,
+  private val aggravatingFactorsService: AggravatingFactorsService,
 ) {
 
   @Transactional
@@ -313,6 +315,7 @@ class MigrationService(
       ChargeEntity.from(migrationCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
+    aggravatingFactorsService.replaceAggravatingFactors(createdCharge)
 
     migrationCreateCharge.sentence?.let { migrationSentence -> createdCharge.sentences.add(createSentence(migrationSentence, createdCharge, tracking, referenceData)) }
     existingChangeRecords.add(eventId to createdCharge)
