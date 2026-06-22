@@ -54,6 +54,7 @@ class DataCreator {
       outcomeDispositionCode: String? = "I",
       outcomeConvictionFlag: Boolean? = false,
       nomisAppearanceTypeCode: String? = "CRT",
+      comments: String? = "Comments",
     ): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
       postedDate,
       nomisOutcomeCode,
@@ -63,6 +64,7 @@ class DataCreator {
       outcomeDispositionCode,
       outcomeConvictionFlag,
       nomisAppearanceTypeCode,
+      comments,
     )
 
     fun legacyCreateCourtAppearance(

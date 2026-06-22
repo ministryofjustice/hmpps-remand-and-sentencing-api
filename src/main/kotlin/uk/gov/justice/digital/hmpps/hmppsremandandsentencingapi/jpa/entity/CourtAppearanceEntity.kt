@@ -19,6 +19,7 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
@@ -254,6 +255,12 @@ class CourtAppearanceEntity(
     var result = id
     result = 31 * result + appearanceUuid.hashCode()
     return result
+  }
+
+  fun deleteStatus(): DeleteCourtAppearanceStatus = if (statusId != CourtAppearanceEntityStatus.DELETED && appearanceCharges.map { it.charge!! }.none { it.hasSentence() }) {
+    DeleteCourtAppearanceStatus.SUPPORTED
+  } else {
+    DeleteCourtAppearanceStatus.NOT_SUPPORTED
   }
 
   companion object {

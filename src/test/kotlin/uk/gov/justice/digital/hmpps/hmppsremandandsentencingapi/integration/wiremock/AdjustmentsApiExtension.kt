@@ -114,6 +114,11 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
       ),
   )
 
+  fun stubAllowUnlinkRecallAdjustments(): StubMapping = stubFor(
+    post(urlPathMatching("/adjustments/recall/.+/unlink"))
+      .willReturn(aResponse().withStatus(200)),
+  )
+
   fun verifyAdjustmentCreated(adjustment: AdjustmentDto) {
     verify(
       postRequestedFor(urlPathEqualTo("/adjustments")).withRequestBody(
