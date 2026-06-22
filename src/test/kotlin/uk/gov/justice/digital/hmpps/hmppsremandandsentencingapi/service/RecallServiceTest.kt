@@ -557,6 +557,122 @@ class RecallServiceTest {
     }
   }
 
+  @Nested
+  inner class Ftr56On1991SentenceCategoryTests {
+    @Test
+    fun `FTR_56 on legacy sentence with 1991 category is not possible`() {
+      val sentence = legacySentence(sentenceCalcType = "YOI", sentenceCategory = "1991")
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.FTR_56,
+        ),
+      )
+
+      assertThat(result.isRecallPossible)
+        .isEqualTo(IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE)
+      assertThat(result.sentenceIds).containsExactly(sentence.sentenceUuid)
+    }
+
+    @Test
+    fun `FTR_56 on legacy sentence with 2020 category is possible`() {
+      val sentence = legacySentence(sentenceCalcType = "YOI", sentenceCategory = "2020")
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.FTR_56,
+        ),
+      )
+
+      assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
+    }
+
+    @Test
+    fun `FTR_56 on DPS sentence with 1991 category is not possible`() {
+      val sentenceType = SentenceTypeEntity(
+        sentenceTypeUuid = UUID.randomUUID(),
+        description = "Young Offender Institution",
+        classification = SentenceTypeClassification.STANDARD,
+        nomisCjaCode = "1991",
+        nomisSentenceCalcType = "YOI",
+        displayOrder = 1,
+        status = ReferenceEntityStatus.ACTIVE,
+        minAgeInclusive = null,
+        maxAgeExclusive = null,
+        minDateInclusive = null,
+        maxDateExclusive = null,
+        minOffenceDateInclusive = null,
+        maxOffenceDateExclusive = null,
+        hintText = null,
+        isRecallable = true,
+      )
+      val sentence = SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = sentenceType,
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+        legacyData = null,
+      )
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.FTR_56,
+        ),
+      )
+
+      assertThat(result.isRecallPossible)
+        .isEqualTo(IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE)
+    }
+
+    @Test
+    fun `LR on legacy sentence with 1991 category remains possible`() {
+      val sentence = legacySentence(sentenceCalcType = "YOI", sentenceCategory = "1991")
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.LR,
+        ),
+      )
+
+      assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
+    }
+
+    private fun legacySentence(sentenceCalcType: String, sentenceCategory: String) = SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = SentenceEntityStatus.ACTIVE,
+      createdBy = "FOO",
+      sentenceServeType = "CONCURRENT",
+      consecutiveTo = null,
+      sentenceType = null,
+      supersedingSentence = null,
+      charge = testCharge,
+      convictionDate = null,
+      fineAmount = null,
+      legacyData = baseSentenceLegacyData.copy(
+        sentenceCalcType = sentenceCalcType,
+        sentenceCategory = sentenceCategory,
+      ),
+    )
+  }
+
   companion object {
     private val testCourtCase = CourtCaseEntity(
       caseUniqueIdentifier = "CASE123",
