@@ -26,7 +26,9 @@ class AggravatingFactorsService(
     ).toSet()
 
     charge.chargeAggravatingFactors.removeIf { existing ->
-      existing.aggravatingFactor.code !in codes
+      val aggravatingFactorNotSetAsChargeFlag = existing.aggravatingFactor.code !in codes
+      val aggravatingFactorReferencingPreviousCharge = existing.charge != charge
+      aggravatingFactorNotSetAsChargeFlag || aggravatingFactorReferencingPreviousCharge
     }
 
     val existingCodes = charge.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet()

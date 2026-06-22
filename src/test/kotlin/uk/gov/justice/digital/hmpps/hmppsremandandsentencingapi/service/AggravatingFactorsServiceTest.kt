@@ -23,7 +23,7 @@ class AggravatingFactorsServiceTest {
   )
 
   @Test
-  fun `adds OATC aggravating factor when terrorRelated is true`() {
+  fun `should add OATC aggravating factor when terrorRelated is true`() {
     val charge = createCharge(terrorRelated = true)
     val terrorFactor = createAggravatingFactorEntity(1, "OATC")
     every { aggravatingFactorRepository.findByCodeIn(listOf("OATC")) } returns listOf(terrorFactor)
@@ -35,7 +35,7 @@ class AggravatingFactorsServiceTest {
   }
 
   @Test
-  fun `adds OAFPC aggravating factor when foreignPowerRelated is true`() {
+  fun `should add OAFPC aggravating factor when foreignPowerRelated is true`() {
     val charge = createCharge(foreignPowerRelated = true)
     val foreignPowerFactor = createAggravatingFactorEntity(2, "OAFPC")
     every { aggravatingFactorRepository.findByCodeIn(listOf("OAFPC")) } returns listOf(foreignPowerFactor)
@@ -47,7 +47,7 @@ class AggravatingFactorsServiceTest {
   }
 
   @Test
-  fun `adds both OATC and OAFPC when both flags are true`() {
+  fun `should add both OATC and OAFPC when both flags are true`() {
     val charge = createCharge(terrorRelated = true, foreignPowerRelated = true)
     val terrorFactor = createAggravatingFactorEntity(1, "OATC")
     val foreignPowerFactor = createAggravatingFactorEntity(2, "OAFPC")
@@ -63,7 +63,7 @@ class AggravatingFactorsServiceTest {
   }
 
   @Test
-  fun `does not add any factors when both flags are false`() {
+  fun `should not add any factors when both flags are false`() {
     val charge = createCharge(terrorRelated = false, foreignPowerRelated = false)
     every { aggravatingFactorRepository.findByCodeIn(emptyList()) } returns emptyList()
 
@@ -73,7 +73,7 @@ class AggravatingFactorsServiceTest {
   }
 
   @Test
-  fun `does not add any factors when both flags are null`() {
+  fun `should not add any factors when both flags are null`() {
     val charge = createCharge(terrorRelated = null, foreignPowerRelated = null)
     every { aggravatingFactorRepository.findByCodeIn(emptyList()) } returns emptyList()
 
@@ -83,7 +83,7 @@ class AggravatingFactorsServiceTest {
   }
 
   @Test
-  fun `replaces previously set aggravating factors when flags change`() {
+  fun `should replace previously set aggravating factors when flags change`() {
     val charge = createCharge(terrorRelated = true, foreignPowerRelated = false)
     val terrorFactor = createAggravatingFactorEntity(1, "OATC")
     val existingFactor = createAggravatingFactorEntity(2, "OAFPC")
@@ -99,7 +99,7 @@ class AggravatingFactorsServiceTest {
   }
 
   @Test
-  fun `does not clear or flush when aggravating factors are unchanged`() {
+  fun `should not clear when aggravating factors are unchanged`() {
     val charge = createCharge(terrorRelated = true)
     val terrorFactor = createAggravatingFactorEntity(1, "OATC")
     charge.chargeAggravatingFactors.add(ChargeAggravatingFactorEntity(charge, terrorFactor))
@@ -108,6 +108,22 @@ class AggravatingFactorsServiceTest {
 
     verify(exactly = 0) { aggravatingFactorRepository.findByCodeIn(any()) }
     assertThat(charge.chargeAggravatingFactors).hasSize(1)
+  }
+
+  @Test
+  fun `should remove aggravating factors referencing a previous charge`() {
+    val previousCharge = createCharge(terrorRelated = true)
+    val currentCharge = createCharge(terrorRelated = true)
+    val terrorFactor = createAggravatingFactorEntity(1, "OATC")
+    val staleEntry = ChargeAggravatingFactorEntity(previousCharge, terrorFactor)
+    currentCharge.chargeAggravatingFactors.add(staleEntry)
+    every { aggravatingFactorRepository.findByCodeIn(listOf("OATC")) } returns listOf(terrorFactor)
+
+    aggravatingFactorsService.replaceAggravatingFactors(currentCharge)
+
+    assertThat(currentCharge.chargeAggravatingFactors).hasSize(1)
+    assertThat(currentCharge.chargeAggravatingFactors.first().charge).isEqualTo(currentCharge)
+    assertThat(currentCharge.chargeAggravatingFactors.first().aggravatingFactor.code).isEqualTo("OATC")
   }
 
   private fun createCharge(
