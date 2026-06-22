@@ -286,7 +286,7 @@ class LegacySentenceServiceTests {
     val chargeUuid = UUID.randomUUID()
     val appearanceUuid = UUID.randomUUID()
 
-    val (existingSentence, recall) = getSentenceAndRecall(
+    val (existingSentence, nomisSourcedRecall) = getSentenceAndRecall(
       sentenceUuid = sentenceUuid,
       chargeUuid = chargeUuid,
       appearanceUuid = appearanceUuid,
@@ -296,7 +296,7 @@ class LegacySentenceServiceTests {
 
     every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
     every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
-    every { recallSentenceRepository.countByRecallId(recall.id) } returns 1L
+    every { recallSentenceRepository.countByRecallId(nomisSourcedRecall.id) } returns 1L
 
     val recallHistorySlot = slot<RecallHistoryEntity>()
 
@@ -309,14 +309,41 @@ class LegacySentenceServiceTests {
     assertThat(recallHistorySlot.captured.status).isEqualTo(RecallEntityStatus.DELETED)
     assertThat(events).containsExactly(
       EventMetadataCreator.recallEventMetadata(
-        prisonerId = recall.prisonerId,
-        recallId = recall.recallUuid.toString(),
+        prisonerId = nomisSourcedRecall.prisonerId,
+        recallId = nomisSourcedRecall.recallUuid.toString(),
         sentenceIds = listOf(sentenceUuid.toString()),
         previousSentenceIds = emptyList(),
         previousRecallId = null,
         eventType = EventType.RECALL_DELETED,
       ),
     )
+    verify(exactly = 0) { adjustmentsApiClient.unlinkRecallAdjustments(any()) }
+  }
+
+  @Test
+  fun `delete unlinks recall UAL when latest recall from DPS source and deleted via NOMIS`() {
+    val sentenceUuid = UUID.randomUUID()
+    val chargeUuid = UUID.randomUUID()
+    val appearanceUuid = UUID.randomUUID()
+    val recallUuid = UUID.randomUUID()
+
+    val (existingSentence, _) = getSentenceAndRecall(
+      sentenceUuid = sentenceUuid,
+      chargeUuid = chargeUuid,
+      appearanceUuid = appearanceUuid,
+      recallType = RecallType.FTR_14,
+      existingRtc = LocalDate.of(2024, 1, 11),
+      recallUuid = recallUuid,
+      recallSource = EventSource.DPS,
+    )
+
+    every { sentenceHistoryRepository.save(any()) } returns mockk<SentenceHistoryEntity>(relaxed = true)
+    every { recallHistoryRepository.save(any()) } returns mockk<RecallHistoryEntity>(relaxed = true)
+    every { recallSentenceRepository.countByRecallId(any()) } returns 1L
+
+    service.delete(existingSentence, "SYNC_USER")
+
+    verify(exactly = 1) { adjustmentsApiClient.unlinkRecallAdjustments(recallUuid) }
   }
 
   @Test

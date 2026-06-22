@@ -542,6 +542,9 @@ class LegacySentenceService(
       if (recallSentenceCount == 1L) {
         recall.delete(performedByUser)
         recallHistoryRepository.save(RecallHistoryEntity.from(recall, ChangeSource.NOMIS))
+        if (recall.source == DPS) {
+          adjustmentsApiClient.unlinkRecallAdjustments(recall.recallUuid)
+        }
 
         eventMetaDataList.add(
           EventMetadataCreator.recallEventMetadata(
