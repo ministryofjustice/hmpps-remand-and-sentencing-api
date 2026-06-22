@@ -30,7 +30,7 @@ data class Charge(
       chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
       chargeEntity.terrorRelated,
       chargeEntity.foreignPowerRelated,
-      chargeEntity.chargeAggravatingFactors.map { p -> AggravatingFactor.from(p.aggravatingFactor) },
+      chargeEntity.chargeAggravatingFactors.map { AggravatingFactor.from(it.aggravatingFactor) },
       getSentenceFunction.apply(chargeEntity)?.let { Sentence.from(it) },
       chargeEntity.legacyData,
       chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.let {
