@@ -879,7 +879,7 @@ abstract class IntegrationTestBase {
       }
       .exchange()
       .expectStatus()
-      .isNoContent
+      .isOk
   }
 
   protected fun uuid(i: Long) = UUID(0L, i)
