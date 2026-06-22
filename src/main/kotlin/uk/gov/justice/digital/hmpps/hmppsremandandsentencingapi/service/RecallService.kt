@@ -780,11 +780,9 @@ class RecallService(
     ?.caseUuid
     ?: memberUuids.first()
 
-  private fun sentenceHasCjaCategory1991(sentence: SentenceEntity): Boolean =
-    sentenceCjaCategory(sentence) == CJA_CODE_1991
+  private fun sentenceHasCjaCategory1991(sentence: SentenceEntity): Boolean = sentenceCjaCategory(sentence) == CJA_CODE_1991
 
-  private fun sentenceCjaCategory(sentence: SentenceEntity): String? =
-    sentence.sentenceType?.nomisCjaCode ?: sentence.legacyData?.sentenceCategory
+  private fun sentenceCjaCategory(sentence: SentenceEntity): String? = sentence.sentenceType?.nomisCjaCode ?: sentence.legacyData?.sentenceCategory
 
   companion object {
     private const val CJA_CODE_1991 = "1991"
