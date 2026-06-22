@@ -105,16 +105,6 @@ class ChargeEntity(
     ZonedDateTime.now(), updatedBy, updatedPrison, legacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null), mutableSetOf(), mutableSetOf(), null, null,
   )
 
-  fun copyFrom(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, charge.offenceCode, charge.offenceStartDate, charge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
-    createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
-    appearanceCharges.toMutableSet(),
-    chargeAggravatingFactors.toMutableSet(),
-    mergedFromCourtCase,
-    mergedFromDate = mergedFromDate,
-  )
-
   fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
     0, chargeUuid, charge.offenceCode ?: offenceCode, charge.offenceStartDate, charge.offenceEndDate,
     ChargeEntityStatus.ACTIVE, chargeOutcome, this, terrorRelated, foreignPowerRelated, domesticViolenceRelated,
