@@ -76,7 +76,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateSentenceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergePerson
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeSentenceId
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
 import java.util.*
@@ -109,7 +108,6 @@ class LegacyPrisonerMergeService(
   private val immigrationDetentionRepository: ImmigrationDetentionRepository,
   private val immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository,
   private val featuresConfig: FeaturesConfig,
-  private val aggravatingFactorsService: AggravatingFactorsService,
 ) {
 
   @Transactional
@@ -468,7 +466,6 @@ class LegacyPrisonerMergeService(
       ChargeEntity.from(mergeCreateCharge, dpsChargeOutcome, tracking.username)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
-    aggravatingFactorsService.replaceAggravatingFactors(createdCharge)
     mergeHierarchyData.chargeId = createdCharge.chargeUuid.toString()
     mergeCreateCharge.sentence?.let { mergeSentence -> createdCharge.sentences.add(createSentence(mergeSentence, createdCharge, tracking, referenceData, mergeHierarchyData)) }
     existingChangeRecords.add(eventId to createdCharge)

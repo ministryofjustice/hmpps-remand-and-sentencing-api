@@ -70,7 +70,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateSentenceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingSentenceId
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 
 @Service
@@ -99,7 +98,6 @@ class BookingService(
   private val recallHistoryRepository: RecallHistoryRepository,
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val featuresConfig: FeaturesConfig,
-  private val aggravatingFactorsService: AggravatingFactorsService,
 ) {
 
   @Transactional
@@ -333,7 +331,6 @@ class BookingService(
       ChargeEntity.from(bookingCreateCharge, dpsChargeOutcome, tracking.createdByUsername)
     }
     val createdCharge = chargeRepository.save(toCreateCharge)
-    aggravatingFactorsService.replaceAggravatingFactors(createdCharge)
     bookingHierarchyData.chargeId = createdCharge.chargeUuid.toString()
     bookingCreateCharge.sentence?.let { bookingSentence -> createdCharge.sentences.add(createSentence(bookingSentence, createdCharge, tracking, referenceData, bookingHierarchyData)) }
     existingChangeRecords.add(eventId to createdCharge)

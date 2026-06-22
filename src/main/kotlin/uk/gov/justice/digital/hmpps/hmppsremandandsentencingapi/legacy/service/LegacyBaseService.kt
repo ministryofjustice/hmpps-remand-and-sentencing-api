@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 
 abstract class LegacyBaseService(
@@ -17,7 +16,6 @@ abstract class LegacyBaseService(
   protected val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   protected val chargeHistoryRepository: ChargeHistoryRepository,
   protected val serviceUserService: ServiceUserService,
-  protected val aggravatingFactorsService: AggravatingFactorsService,
 ) {
 
   fun createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge: ChargeEntity, appearance: CourtAppearanceEntity, updatedCharge: ChargeEntity, performedByUsername: String, chargeModifyFunction: (ChargeEntity) -> Unit = {}): ChargeEntity {
@@ -42,7 +40,6 @@ abstract class LegacyBaseService(
         }
 
       chargeRecord = chargeRepository.save(updatedCharge)
-      aggravatingFactorsService.replaceAggravatingFactors(chargeRecord)
       val appearanceCharge = AppearanceChargeEntity(
         appearance,
         chargeRecord,
