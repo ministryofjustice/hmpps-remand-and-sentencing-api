@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteCourtAppearanceResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponseWithDocumentUpdates
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.AppearanceDeletedException
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.CannotDeleteCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -651,6 +653,10 @@ class CourtAppearanceService(
   fun delete(courtAppearanceUUID: UUID): DeleteCourtAppearanceResponse {
     val courtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearanceUUID)
       ?: throw EntityNotFoundException("No court appearance found at $courtAppearanceUUID")
+
+    if (courtAppearanceEntity.deleteStatus() == DeleteCourtAppearanceStatus.NOT_SUPPORTED) {
+      throw CannotDeleteCourtAppearanceException("Deleteing court appearance at $courtAppearanceUUID is not supported")
+    }
     val courtCaseEntity = courtAppearanceEntity.courtCase
 
     val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()
