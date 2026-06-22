@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
@@ -23,6 +24,7 @@ data class CourtAppearance(
   val legacyData: CourtAppearanceLegacyData?,
   val documents: List<UploadedDocument> = emptyList(),
   val source: EventSource,
+  val deleteStatus: DeleteCourtAppearanceStatus,
 ) {
   companion object {
 
@@ -43,6 +45,7 @@ data class CourtAppearance(
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.documents.map { UploadedDocument.from(it) },
       courtAppearanceEntity.source,
+      courtAppearanceEntity.deleteStatus(),
     )
   }
 }
