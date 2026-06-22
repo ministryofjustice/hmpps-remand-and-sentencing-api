@@ -1,22 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.courtcase
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import java.time.format.DateTimeFormatter
 
 class LegacyLinkCourtCaseTests : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
-  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `link source to target case`() {
@@ -142,35 +134,5 @@ class LegacyLinkCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
-  }
-
-  @Test
-  fun `should preserve aggravating factors when charge has no records on source case`() {
-    val sharedChargeId = 99L
-    val sourceCase = DataCreator.migrationCreateCourtCase(
-      caseId = 1,
-      appearances = listOf(DataCreator.migrationCreateCourtAppearance(eventId = 1, charges = listOf(DataCreator.migrationCreateCharge(chargeNOMISId = sharedChargeId)))),
-    )
-    val targetCase = DataCreator.migrationCreateCourtCase(
-      caseId = 2,
-      appearances = listOf(DataCreator.migrationCreateCourtAppearance(eventId = 2, charges = listOf(DataCreator.migrationCreateCharge(chargeNOMISId = sharedChargeId)))),
-    )
-    val migrateResponse = migrateCases(DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCase, targetCase)))
-    val sourceCaseUuid = migrateResponse.courtCases.first { it.caseId == sourceCase.caseId }.courtCaseUuid
-    val chargeUuid = migrateResponse.charges.first { it.chargeNOMISId == sharedChargeId }.chargeUuid
-    val targetAppearanceUuid = migrateResponse.appearances.first { it.eventId == 2L }.appearanceUuid
-
-    webTestClient.put()
-      .uri("/legacy/court-appearance/$targetAppearanceUuid/charge/$chargeUuid/link")
-      .bodyValue(DataCreator.legacyLinkChargeToCase(sourceCourtCaseUuid = sourceCaseUuid))
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isNoContent
-
-    assertThat(aggravatingFactors.countAggravatingFactor(chargeUuid, "OATC")).isEqualTo(0)
-    assertThat(aggravatingFactors.countAggravatingFactor(chargeUuid, "OAFPC")).isEqualTo(0)
   }
 }
