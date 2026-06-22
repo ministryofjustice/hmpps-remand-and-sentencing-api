@@ -492,5 +492,4 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
-
 }

@@ -214,5 +214,4 @@ class UpdateChargeTests : IntegrationTestBase() {
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
-
 }
