@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.Aggravat
 @RequestMapping("/aggravating-factors")
 @Tag(
   name = "Aggravating Factors",
-  description = "Aggravating factors are used to determine the seriousness of an offence and the appropriate sentence. They are used in conjunction with mitigating factors to determine the overall seriousness of an offence."
+  description = "Aggravating factors are used to determine the seriousness of an offence and the appropriate sentence. They are used in conjunction with mitigating factors to determine the overall seriousness of an offence.",
 )
 class AggravatingFactorController(private val aggravatingFactorService: AggravatingFactorService) {
 
