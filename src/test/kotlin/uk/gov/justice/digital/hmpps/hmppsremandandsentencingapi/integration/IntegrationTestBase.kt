@@ -870,6 +870,18 @@ abstract class IntegrationTestBase {
     return bookingCourtCases to response
   }
 
+  protected fun deleteCourtAppearance(appearanceUuid: UUID) {
+    webTestClient
+      .delete()
+      .uri("/legacy/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+  }
+
   protected fun uuid(i: Long) = UUID(0L, i)
 
   companion object {

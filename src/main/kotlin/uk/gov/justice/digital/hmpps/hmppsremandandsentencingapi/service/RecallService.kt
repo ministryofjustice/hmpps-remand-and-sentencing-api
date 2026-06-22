@@ -454,6 +454,9 @@ class RecallService(
   }
 
   private fun isRecallPossibleForSentence(sentence: SentenceEntity, recallType: RecallType): IsRecallPossible {
+    if (recallType == RecallType.FTR_56 && sentenceHasCjaCategory1991(sentence)) {
+      return IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE
+    }
     if (sentence.sentenceType == null) {
       return isRecallPossibleUsingLegacySentenceCalcType(sentence.legacyData?.sentenceCalcType, recallType)
     }
@@ -777,7 +780,13 @@ class RecallService(
     ?.caseUuid
     ?: memberUuids.first()
 
+  private fun sentenceHasCjaCategory1991(sentence: SentenceEntity): Boolean = sentenceCjaCategory(sentence) == CJA_CODE_1991
+
+  private fun sentenceCjaCategory(sentence: SentenceEntity): String? = sentence.sentenceType?.nomisCjaCode ?: sentence.legacyData?.sentenceCategory
+
   companion object {
+    private const val CJA_CODE_1991 = "1991"
+
     val unknownPreRecallSentenceTypes = listOf(
       "CUR",
       "CUR_ORA",

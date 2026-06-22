@@ -274,16 +274,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       ),
     )
 
-    webTestClient.delete()
-      .uri("/court-appearance/${appearanceToBeDeleted.appearanceUuid}")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-      .expectBody()
+    deleteCourtAppearance(appearanceToBeDeleted.appearanceUuid)
 
     webTestClient
       .get()
