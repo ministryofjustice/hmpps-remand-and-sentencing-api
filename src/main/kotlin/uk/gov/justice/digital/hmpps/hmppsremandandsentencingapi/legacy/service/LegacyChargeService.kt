@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkChargeToCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -46,7 +47,8 @@ class LegacyChargeService(
   appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val legacySentenceService: LegacySentenceService,
   private val courtCaseRepository: CourtCaseRepository,
-) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
+  aggravatingFactorsService: AggravatingFactorsService,
+) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService, aggravatingFactorsService) {
 
   @Transactional
   fun create(charge: LegacyCreateCharge): RecordResponse<LegacyChargeCreatedResponse> {
@@ -56,6 +58,7 @@ class LegacyChargeService(
 
     val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
     val createdCharge = chargeRepository.save(ChargeEntity.from(charge, dpsOutcome, performedByUsername))
+    aggravatingFactorsService.replaceAggravatingFactors(createdCharge)
     chargeHistoryRepository.save(
       ChargeHistoryEntity.from(
         createdCharge,
@@ -97,6 +100,7 @@ class LegacyChargeService(
   @Transactional
   fun updateInAllAppearances(chargeUuid: UUID, charge: LegacyUpdateWholeCharge) {
     val existingChargeRecords = chargeRepository.findByChargeUuidAndStatusIdNot(chargeUuid, ChargeEntityStatus.DELETED)
+
     if (existingChargeRecords.isEmpty()) {
       throw EntityNotFoundException("No charge found at $chargeUuid")
     }
@@ -105,6 +109,7 @@ class LegacyChargeService(
       val updatedCharge = existingCharge.copyFrom(charge, performedByUsername)
       if (!existingCharge.isSame(updatedCharge, existingCharge.getLiveSentence() != null)) {
         existingCharge.updateFrom(updatedCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(existingCharge)
         chargeHistoryRepository.save(
           ChargeHistoryEntity.from(
             existingCharge,
@@ -130,6 +135,7 @@ class LegacyChargeService(
     if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == chargeUuid }) {
       val existingCharge = getUnlessDeleted(chargeUuid)
       val chargeEntity = chargeRepository.save(getUpdatedChargeEntity(existingCharge, chargeUuid, existingCourtAppearance, charge))
+      aggravatingFactorsService.replaceAggravatingFactors(chargeEntity)
 
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
@@ -182,6 +188,7 @@ class LegacyChargeService(
       val performedByUsername = charge.performedByUser ?: serviceUserService.getUsername()
       chargeRecord = createChargeRecordIfOverManyAppearancesOrUpdate(existingCharge, appearance, updatedCharge, performedByUsername) { charge ->
         charge.updateFrom(updatedCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(charge)
       }
       eventsToEmit.add(
         EventMetadataCreator.chargeEventMetadata(
@@ -286,6 +293,7 @@ class LegacyChargeService(
           )
         }
         chargeRecord = chargeRepository.save(updatedCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(chargeRecord)
         val appearanceCharge = AppearanceChargeEntity(
           appearance,
           chargeRecord,
@@ -302,6 +310,7 @@ class LegacyChargeService(
         )
       } else {
         existingCharge.updateFrom(updatedCharge)
+        aggravatingFactorsService.replaceAggravatingFactors(existingCharge)
       }
       chargeHistoryRepository.save(
         ChargeHistoryEntity.from(
