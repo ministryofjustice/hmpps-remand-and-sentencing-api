@@ -11,9 +11,9 @@ class GetAggravatingFactorsTests : IntegrationTestBase() {
   fun `get aggravating factors returns all factors ordered by display order`() {
     val response = webTestClient
       .get()
-      .uri("/aggravating-factors")
+      .uri("/aggravating-factors/status?statuses=ACTIVE")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken()
       }
       .exchange()
       .expectStatus()
@@ -35,9 +35,9 @@ class GetAggravatingFactorsTests : IntegrationTestBase() {
   fun `get aggravating factors includes expected known factors`() {
     webTestClient
       .get()
-      .uri("/aggravating-factors")
+      .uri("/aggravating-factors/status?statuses=ACTIVE")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken()
       }
       .exchange()
       .expectStatus()
@@ -53,22 +53,9 @@ class GetAggravatingFactorsTests : IntegrationTestBase() {
   fun `no token results in unauthorized`() {
     webTestClient
       .get()
-      .uri("/aggravating-factors")
+      .uri("/aggravating-factors/status?statuses=ACTIVE")
       .exchange()
       .expectStatus()
       .isUnauthorized
-  }
-
-  @Test
-  fun `token with incorrect role is forbidden`() {
-    webTestClient
-      .get()
-      .uri("/aggravating-factors")
-      .headers {
-        it.authToken(roles = listOf("ROLE_OTHER_FUNCTION"))
-      }
-      .exchange()
-      .expectStatus()
-      .isForbidden
   }
 }
