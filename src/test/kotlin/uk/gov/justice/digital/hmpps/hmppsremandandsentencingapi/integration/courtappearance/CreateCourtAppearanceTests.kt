@@ -3,8 +3,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
@@ -13,9 +15,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.util.UUID
 
 class CreateCourtAppearanceTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `create appearance in existing court case and link document`() {
@@ -440,5 +447,49 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(sentences[2].consecutiveToSentenceUuid).isEqualTo(sentences[1].sentenceUuid)
     assertThat(sentences[1].consecutiveToSentenceUuid).isEqualTo(sentences[0].sentenceUuid)
     assertThat(sentences[0].consecutiveToSentenceUuid).isNull()
+  }
+
+  @Test
+  fun `should create a charge with terrorRelated true adds OATC (Terror Related) aggravating factor`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
+
+    assertThat(createCharge.terrorRelated ?: false).isTrue()
+    assertThat(createCharge.foreignPowerRelated ?: false).isFalse()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should create a charge with foreignPowerRelated true adds OAFPC aggravating factor`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = true)
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
+
+    assertThat(createCharge.terrorRelated ?: false).isFalse()
+    assertThat(createCharge.foreignPowerRelated ?: false).isTrue()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `should create a charge with both terrorRelated and foreignPowerRelated true adds both aggravating factors`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true)
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
+
+    assertThat(createCharge.terrorRelated ?: false).isTrue()
+    assertThat(createCharge.foreignPowerRelated ?: false).isTrue()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `should create a charge with neither flag set adds no aggravating factors`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
+
+    assertThat(createCharge.terrorRelated ?: false).isFalse()
+    assertThat(createCharge.foreignPowerRelated ?: false).isFalse()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
 }

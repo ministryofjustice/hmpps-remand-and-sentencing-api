@@ -6,7 +6,9 @@ import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
@@ -25,6 +27,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class UpdateCourtAppearanceTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `update appearance in existing court case`() {
@@ -934,6 +940,216 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val latestSentence = sentenceRepository.findBySentenceUuid(createdSentence.sentenceUuid)[0]
     assertThat(latestSentence).isNotNull
     assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+  }
+
+  @Test
+  fun `should create a charge to remove terrorRelated removes OATC aggravating factor`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(
+      terrorRelated = null,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = createAppearance.appearanceUuid,
+    )
+
+    // Act
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(updateCharge.terrorRelated ?: false).isFalse()
+    assertThat(updateCharge.foreignPowerRelated ?: false).isFalse()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should create a charge to add foreignPowerRelated adds OAFPC aggravating factor`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(
+      foreignPowerRelated = true,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = createAppearance.appearanceUuid,
+    )
+
+    // Act
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(updateCharge.terrorRelated ?: false).isFalse()
+    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `should update a charge to swap terrorRelated for foreignPowerRelated replaces aggravating factors correctly`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(
+      terrorRelated = null,
+      foreignPowerRelated = true,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = createAppearance.appearanceUuid,
+    )
+
+    // Act
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(updateCharge.terrorRelated ?: false).isFalse()
+    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `should update a charge that exists in two appearances replaces aggravating factors`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null, sentence = null)
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge))),
+      ),
+    )
+    val createdAppearance = createdCourtCase.appearances.first()
+    createCourtAppearance(
+      dpsCreateCourtAppearance(
+        courtCaseUuid = courtCaseUuid,
+        charges = listOf(createCharge.copy(outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"))),
+      ),
+    )
+    val updateCharge = createCharge.copy(
+      terrorRelated = null,
+      foreignPowerRelated = true,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = createdAppearance.appearanceUuid,
+    )
+
+    // Act
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(updateCharge.terrorRelated ?: false).isFalse()
+    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `should update a charge with a changed offence code in two appearances replaces aggravating factors`() {
+    val charge = DpsDataCreator.dpsCreateCharge(
+      outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      sentence = null,
+    )
+    val appearance = dpsCreateCourtAppearance(
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      appearanceDate = LocalDate.now().minusDays(20),
+      charges = listOf(charge),
+      nextCourtAppearance = null,
+    )
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val updatedOffenceCodeCharge = charge.copy(appearanceUuid = appearance.appearanceUuid, offenceCode = "ADIFFERENTCODE")
+    val newAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      charges = listOf(updatedOffenceCodeCharge),
+      nextCourtAppearance = null,
+    )
+
+    // Act
+    webTestClient
+      .put()
+      .uri("/court-appearance/${newAppearance.appearanceUuid}")
+      .bodyValue(newAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should not modify aggravating factors when legacy af flags are unchanged`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge), nextCourtAppearance = null)
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val firstUpdate = createAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(
+        createCharge.copy(
+          offenceStartDate = createCharge.offenceStartDate.minusDays(1),
+          appearanceUuid = createAppearance.appearanceUuid,
+        ),
+      ),
+      nextCourtAppearance = null,
+    )
+    webTestClient.put()
+      .uri("/court-appearance/${createAppearance.appearanceUuid}")
+      .bodyValue(firstUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+    val secondUpdate = firstUpdate.copy(
+      charges = listOf(
+        createCharge.copy(
+          offenceStartDate = createCharge.offenceStartDate.minusDays(2),
+          appearanceUuid = createAppearance.appearanceUuid,
+        ),
+      ),
+    )
+
+    // Act
+    webTestClient.put()
+      .uri("/court-appearance/${createAppearance.appearanceUuid}")
+      .bodyValue(secondUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
 
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient

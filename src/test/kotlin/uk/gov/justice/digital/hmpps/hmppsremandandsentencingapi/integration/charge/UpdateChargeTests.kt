@@ -2,15 +2,22 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cha
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
 import java.util.UUID
 
 class UpdateChargeTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `update charge in existing appearance`() {
@@ -130,5 +137,81 @@ class UpdateChargeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isEqualTo(HttpStatus.CONFLICT)
+  }
+
+  @Test
+  fun `should update charge when set terrorRelated adds OATC aggravating factor`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+
+    val updateCharge = createCharge.copy(
+      terrorRelated = true,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = createAppearance.appearanceUuid,
+    )
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should update charge when clear terrorRelated removes OATC aggravating factor`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+
+    val updateCharge = createCharge.copy(
+      terrorRelated = null,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = createAppearance.appearanceUuid,
+    )
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should update charge when linked to multiple appearances preserves aggravating factors on new charge record`() {
+    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val firstAppearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    val secondAppearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+
+    val updateCharge = charge.copy(
+      terrorRelated = true,
+      foreignPowerRelated = true,
+      offenceStartDate = LocalDate.now().minusDays(1),
+      appearanceUuid = secondAppearance.appearanceUuid,
+    )
+    webTestClient.put()
+      .uri("/charge/${charge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
 }

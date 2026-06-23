@@ -5,4 +5,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Aggra
 
 interface AggravatingFactorRepository : CrudRepository<AggravatingFactorEntity, Int> {
   fun getAllByOrderByDisplayOrder(): List<AggravatingFactorEntity>
+
+  fun findByCodeIn(code: List<String>): List<AggravatingFactorEntity>
 }
