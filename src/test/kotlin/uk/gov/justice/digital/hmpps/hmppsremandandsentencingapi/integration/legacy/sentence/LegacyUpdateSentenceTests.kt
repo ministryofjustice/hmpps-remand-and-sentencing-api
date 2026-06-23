@@ -71,6 +71,26 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update sentence type legacy cannot change type`() {
+    val (lifetimeUuid, createdSentence) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = sentenceLegacyData(
+          sentenceCalcType = "CR",
+          sentenceCategory = "1991",
+          nomisLineReference = "67",
+        ),
+        returnToCustodyDate = LocalDate.of(2023, 1, 1),
+      ),
+    )
+    val toUpdate = createdSentence.copy(
+      legacyData = sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020", nomisLineReference = "67"),
+    )
+    putLegacySentence(lifetimeUuid, toUpdate)
+    val sentences = sentenceRepository.findBySentenceUuid(lifetimeUuid)
+    assertThat(sentences).hasSize(1).extracting<String> { it.legacyData!!.sentenceCalcType }.containsExactlyInAnyOrder(createdSentence.legacyData.sentenceCalcType)
+  }
+
+  @Test
   fun `must not update sentence when no sentence exists`() {
     val toUpdate = DataCreator.legacyCreateSentence()
     webTestClient
