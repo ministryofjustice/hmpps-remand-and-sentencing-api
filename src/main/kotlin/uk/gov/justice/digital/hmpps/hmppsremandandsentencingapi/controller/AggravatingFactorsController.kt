@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 
 @RestController
 @RequestMapping("/aggravating-factors")
@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.Aggravat
   name = "Aggravating Factors",
   description = "Aggravating factors are used to determine the seriousness of an offence and the appropriate sentence. They are used in conjunction with mitigating factors to determine the overall seriousness of an offence.",
 )
-class AggravatingFactorController(private val aggravatingFactorService: AggravatingFactorService) {
+class AggravatingFactorsController(private val aggravatingFactorsService: AggravatingFactorsService) {
 
   @GetMapping("")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
@@ -32,5 +32,5 @@ class AggravatingFactorController(private val aggravatingFactorService: Aggravat
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getAllAggravatingFactors(): List<AggravatingFactor> = aggravatingFactorService.getAggravatingFactors()
+  fun getAllAggravatingFactors(): List<AggravatingFactor> = aggravatingFactorsService.getAggravatingFactors()
 }

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeAggravatingFactorEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AggravatingFactorRepository
@@ -9,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.A
 class AggravatingFactorsService(
   private val aggravatingFactorRepository: AggravatingFactorRepository,
 ) {
+  fun getAggravatingFactors() = aggravatingFactorRepository.getAllByOrderByDisplayOrder().map { AggravatingFactor.from(it) }
 
   /**
    * Sets aggravating factors driven by the boolean
