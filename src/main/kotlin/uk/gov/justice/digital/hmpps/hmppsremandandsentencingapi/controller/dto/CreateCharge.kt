@@ -24,4 +24,7 @@ data class CreateCharge(
   val prisonId: String,
   val replacingChargeUuid: UUID?,
   val createChargeOrder: Int?,
+  @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonSetter(nulls = Nulls.SKIP)
+  val aggravatingFactors: List<AggravatingFactor> = emptyList(),
 )
