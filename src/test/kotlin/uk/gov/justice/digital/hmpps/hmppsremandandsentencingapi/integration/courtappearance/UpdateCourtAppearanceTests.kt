@@ -1152,18 +1152,6 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
 
-  private fun deleteCourtAppearance(appearanceUuid: UUID) {
-    webTestClient
-      .delete()
-      .uri("/court-appearance/$appearanceUuid")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-  }
-
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")

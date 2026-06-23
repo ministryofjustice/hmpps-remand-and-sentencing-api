@@ -25,3 +25,4 @@ DELETE FROM appearance_outcome where nomis_code in ('1', '56', '99');
 
 DELETE FROM sentence_type where nomis_cja_code = '1' and nomis_sentence_calc_type = '1';
 DELETE FROM sentence_type where nomis_cja_code = '56' and nomis_sentence_calc_type = '2020';
+DELETE FROM sentence_type where nomis_cja_code = 'CJA' and nomis_sentence_calc_type = 'CalcType';

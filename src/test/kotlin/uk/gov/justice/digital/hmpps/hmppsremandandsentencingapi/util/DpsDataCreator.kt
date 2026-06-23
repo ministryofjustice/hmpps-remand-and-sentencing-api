@@ -92,6 +92,58 @@ class DpsDataCreator {
       documents,
     )
 
+    fun dpsCreateNonSentencedCourtCase(
+      prisonerId: String = DEFAULT_PRISONER_ID,
+      appearances: List<CreateCourtAppearance> = listOf(dpsCreateNonSentencedCourtAppearance()),
+      prisonId: String = "PRISON1",
+    ): CreateCourtCase = dpsCreateCourtCase(prisonerId, appearances, prisonId)
+
+    fun dpsCreateNonSentencedCourtAppearance(
+      courtCaseUuid: String? = null,
+      appearanceUUID: UUID = UUID.randomUUID(),
+      outcomeUuid: UUID = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      courtCode: String = "COURT1",
+      courtCaseReference: String? = "GH123456789",
+      criminalAppealOfficeReference: String? = null,
+      appearanceDate: LocalDate = LocalDate.now(),
+      warrantType: String = "NON_SENTENCING",
+      nextCourtAppearance: CreateNextCourtAppearance? = dpsCreateNextCourtAppearance(),
+      charges: List<CreateCharge> = listOf(dpsCreateNonSentencedCharge()),
+      legacyData: CourtAppearanceLegacyData? = null,
+      prisonId: String = "PRISON1",
+      documents: List<UploadedDocument> = listOf(dpsCreateUploadedDocument()),
+    ): CreateCourtAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid,
+      appearanceUUID,
+      outcomeUuid,
+      courtCode,
+      courtCaseReference,
+      criminalAppealOfficeReference,
+      appearanceDate,
+      warrantType,
+      null,
+      nextCourtAppearance,
+      charges,
+      null,
+      legacyData,
+      prisonId,
+      documents,
+    )
+
+    fun dpsCreateNonSentencedCharge(
+      appearanceUuid: UUID? = null,
+      chargeUuid: UUID = UUID.randomUUID(),
+      offenceCode: String = "OFF123",
+      offenceStartDate: LocalDate = LocalDate.now(),
+      offenceEndDate: LocalDate? = null,
+      outcomeUuid: UUID? = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+      legacyData: ChargeLegacyData? = null,
+      prisonId: String = "PRISON1",
+      replacedChargeUuid: UUID? = null,
+      createChargeOrder: Int? = null,
+    ): CreateCharge = dpsCreateCharge(
+      appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, null, null, null, null, legacyData, prisonId, replacedChargeUuid, createChargeOrder,
+    )
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
       chargeUuid: UUID = UUID.randomUUID(),

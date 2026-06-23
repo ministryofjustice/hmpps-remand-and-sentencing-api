@@ -14,6 +14,7 @@ data class CourtAppearanceSchedule(
   val reason: AppearanceScheduleReason,
   val start: LocalDateTime,
   val isDuplicate: Boolean,
+  val comments: String?,
 ) {
   companion object {
     fun from(courtAppearanceEntity: CourtAppearanceEntity, nextCourtAppearance: NextCourtAppearanceEntity?): CourtAppearanceSchedule = CourtAppearanceSchedule(
@@ -23,6 +24,7 @@ data class CourtAppearanceSchedule(
       AppearanceScheduleReason(CourtAppearanceUtils.getNOMISAppearanceTypeCode(courtAppearanceEntity, nextCourtAppearance)),
       courtAppearanceEntity.appearanceDate.atTime(CourtAppearanceUtils.getStartTime(courtAppearanceEntity, nextCourtAppearance)),
       courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.DUPLICATE,
+      courtAppearanceEntity.legacyData?.comments,
     )
   }
 }

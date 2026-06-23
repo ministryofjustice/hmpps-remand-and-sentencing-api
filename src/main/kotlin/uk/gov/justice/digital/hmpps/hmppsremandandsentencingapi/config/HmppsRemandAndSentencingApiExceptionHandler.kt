@@ -17,6 +17,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.AppearanceDeletedException
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.CannotDeleteCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtAppearanceException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
@@ -206,6 +207,20 @@ class HmppsRemandAndSentencingApiExceptionHandler {
         ErrorResponse(
           status = CONFLICT,
           userMessage = e.message ?: "This court appearance has been deleted and cannot be modified",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(CannotDeleteCourtAppearanceException::class)
+  fun handleCannotDeleteCourtAppearanceException(e: CannotDeleteCourtAppearanceException): ResponseEntity<ErrorResponse> {
+    log.error("cannot delete court appearance exception", e)
+    return ResponseEntity
+      .status(CONFLICT)
+      .body(
+        ErrorResponse(
+          status = CONFLICT,
+          userMessage = e.message,
           developerMessage = e.message,
         ),
       )
