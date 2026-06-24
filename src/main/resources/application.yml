@@ -59,6 +59,12 @@ spring:
             client-id: ${hmpps.auth.client.id}
             client-secret: ${hmpps.auth.client.secret}
             authorization-grant-type: client_credentials
+          court-data-ingestion-api:
+            provider: hmpps-auth
+            client-id: ${hmpps.auth.client.id}
+            client-secret: ${hmpps.auth.client.secret}
+            authorization-grant-type: client_credentials
+
 
 server:
   port: 8080

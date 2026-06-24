@@ -22,6 +22,7 @@ class WebClientConfiguration(
   @param:Value("\${court-register.api.url:}") private val courtRegisterApiUri: String,
   @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
   @param:Value("\${adjustments.api.url}") private val adjustmentsApiUri: String,
+  @param:Value("\${court-data-ingestion.api.url}") private val courtDataIngestionApiUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
@@ -82,6 +83,16 @@ class WebClientConfiguration(
     authorizedClientManager,
     "adjustments-api",
     adjustmentsApiUri,
+  )
+
+  @Bean
+  fun courtDataIngestionApiWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "court-data-ingestion-api",
+    courtDataIngestionApiUri,
   )
 
   // HMPPS Auth health ping is required if your service calls HMPPS Auth to get a token to call other services
