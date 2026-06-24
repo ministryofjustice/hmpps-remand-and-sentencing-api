@@ -16,6 +16,7 @@ class ResourceServerConfiguration {
         "/queue-admin/retry-all-dlqs",
         "/event-admin/republish",
         "/court-case-admin/cleanup-many-charges-to-sentence",
+        "/next-court-appearance-admin/link-latest-court-appearances",
       )
     }
   }
