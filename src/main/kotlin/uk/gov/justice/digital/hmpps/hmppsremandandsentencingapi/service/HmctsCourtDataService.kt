@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import java.util.UUID
 
@@ -38,6 +39,7 @@ class HmctsCourtDataService(
         )
       },
       source = EventSource.DPS,
+      deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
     )
   }
 
