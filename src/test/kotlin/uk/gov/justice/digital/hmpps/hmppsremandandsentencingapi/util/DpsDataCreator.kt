@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
@@ -159,6 +160,7 @@ class DpsDataCreator {
       prisonId: String = "PRISON1",
       replacedChargeUuid: UUID? = null,
       createChargeOrder: Int? = null,
+      aggravatingFactors: List<AggravatingFactor> = emptyList(),
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
@@ -174,6 +176,7 @@ class DpsDataCreator {
       prisonId,
       replacedChargeUuid,
       createChargeOrder,
+      aggravatingFactors,
     )
 
     fun dpsCreateSentence(
