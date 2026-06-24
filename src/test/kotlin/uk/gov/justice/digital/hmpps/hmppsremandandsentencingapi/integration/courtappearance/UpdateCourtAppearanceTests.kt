@@ -1110,8 +1110,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
     val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
     val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
-    val updatedOffenceCodeCharge = charge.copy(appearanceUuid = appearance.appearanceUuid, offenceCode = "ADIFFERENTCODE", aggravatingFactors = listOf(
-      AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120)))
+    val updatedOffenceCodeCharge = charge.copy(
+      appearanceUuid = appearance.appearanceUuid,
+      offenceCode = "ADIFFERENTCODE",
+      aggravatingFactors = listOf(
+        AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
+      ),
+    )
     val newAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCaseUuid,
       outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),

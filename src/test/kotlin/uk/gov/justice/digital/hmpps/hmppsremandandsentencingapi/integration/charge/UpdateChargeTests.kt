@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
@@ -192,8 +191,13 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should update charge when when multiple aggravating factors are added which are neither terror related nor foreign power related`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null, aggravatingFactors = listOf(
-      AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),))
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      terrorRelated = null,
+      foreignPowerRelated = null,
+      aggravatingFactors = listOf(
+        AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
+      ),
+    )
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
 
