@@ -15,6 +15,7 @@ data class Charge(
   val outcome: ChargeOutcome?,
   val terrorRelated: Boolean?,
   val foreignPowerRelated: Boolean?,
+  val aggravatingFactors: List<AggravatingFactor>,
   val sentence: Sentence?,
   val legacyData: ChargeLegacyData?,
   val mergedFromCase: MergedFromCase?,
@@ -29,6 +30,7 @@ data class Charge(
       chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
       chargeEntity.terrorRelated,
       chargeEntity.foreignPowerRelated,
+      chargeEntity.chargeAggravatingFactors.map { AggravatingFactor.from(it.aggravatingFactor) },
       getSentenceFunction.apply(chargeEntity)?.let { Sentence.from(it) },
       chargeEntity.legacyData,
       chargeEntity.mergedFromCourtCase?.latestCourtAppearance?.let {

@@ -37,6 +37,8 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
 
   fun findAllByCourtCasePrisonerIdAndStatusId(prisonerId: String, status: CourtAppearanceEntityStatus): List<CourtAppearanceEntity>
 
+  fun findAllByCourtCasePrisonerIdAndStatusIdNot(prisonerId: String, status: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED): List<CourtAppearanceEntity>
+
   fun findAllByAppearanceUuidInAndStatusIdNot(appearanceUuids: List<UUID>, status: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED): List<CourtAppearanceEntity>
 
   @Modifying

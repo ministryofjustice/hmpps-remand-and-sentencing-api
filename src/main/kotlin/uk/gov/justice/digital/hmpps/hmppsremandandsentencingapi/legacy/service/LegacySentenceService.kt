@@ -324,6 +324,18 @@ class LegacySentenceService(
             )
       val activeRecord = existingSentence
       var entityChangeStatus = entityStatus
+
+      // This update func does not set sentenceType - so keep existing legacy calc data if sentenceType was previously null
+      if (dpsSentenceType != null && existingSentence.sentenceType == null) {
+        val existingCalcType = existingSentence.legacyData?.sentenceCalcType
+        val existingCategory = existingSentence.legacyData?.sentenceCategory
+        if (existingCalcType != null && existingCategory != null) {
+          sentence.legacyData = sentence.legacyData.copy(
+            sentenceCalcType = existingCalcType,
+            sentenceCategory = existingCategory,
+          )
+        }
+      }
       val updatedSentence = existingSentence.copyFrom(
         sentence,
         getPerformedByUsername(sentence),

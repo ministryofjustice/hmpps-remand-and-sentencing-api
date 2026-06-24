@@ -66,6 +66,7 @@
   },
   "ChargeEntity": {
     "appearanceCharges": "Set",
+    "chargeAggravatingFactors": "Set",
     "chargeOutcome": "ChargeOutcomeEntity",
     "chargeUuid": "UUID",
     "createdAt": "ZonedDateTime",

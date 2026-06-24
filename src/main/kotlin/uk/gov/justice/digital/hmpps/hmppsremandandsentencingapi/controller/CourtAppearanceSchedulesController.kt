@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.CourtAppearanceSchedulesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceScheduleStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.SearchCourtAppearanceSchedulesRequest
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.SearchCourtAppearanceSchedulesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceSchedulesService
 import java.util.UUID
 
@@ -37,7 +37,7 @@ class CourtAppearanceSchedulesController(private val courtAppearanceSchedulesSer
     ],
   )
   @ResponseStatus(HttpStatus.OK)
-  fun searchCourtAppearanceSchedules(@RequestBody searchCourtAppearanceSchedulesRequest: SearchCourtAppearanceSchedulesRequest): SearchCourtAppearanceSchedulesResponse = courtAppearanceSchedulesService.search(searchCourtAppearanceSchedulesRequest)
+  fun searchCourtAppearanceSchedules(@RequestBody searchCourtAppearanceSchedulesRequest: SearchCourtAppearanceSchedulesRequest): CourtAppearanceSchedulesResponse = courtAppearanceSchedulesService.search(searchCourtAppearanceSchedulesRequest)
 
   @GetMapping("/court-appearance-schedule/{appearanceUuid}/delete-status")
   @PreAuthorize("hasAnyRole('ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RW', 'ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RO')")
@@ -55,4 +55,19 @@ class CourtAppearanceSchedulesController(private val courtAppearanceSchedulesSer
   )
   @ResponseStatus(HttpStatus.OK)
   fun deleteCourtAppearanceScheduleStatus(@PathVariable("appearanceUuid") appearanceUuid: UUID): DeleteCourtAppearanceScheduleStatus = courtAppearanceSchedulesService.deleteStatus(appearanceUuid) ?: throw EntityNotFoundException("No court appearance schedule found at $appearanceUuid")
+
+  @GetMapping("/person/{prisonerId}/court-appearance-schedules")
+  @PreAuthorize("hasAnyRole('ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RW', 'ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RO')")
+  @Operation(
+    summary = "Get court appearance schedules by prisoner id",
+    description = "This endpoint will get court appearance in the schedules format for prisoner id",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court appearance schedules"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun getCourtAppearanceSchedulesByPrisonerId(@PathVariable prisonerId: String): CourtAppearanceSchedulesResponse = courtAppearanceSchedulesService.getByPrisonerId(prisonerId)
 }
