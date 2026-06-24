@@ -4,10 +4,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -17,6 +20,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCrea
 import java.time.LocalDate
 
 class LegacyCreateSentenceTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `create sentence in existing court case`() {
@@ -379,5 +386,32 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `should preserve aggravating factors on new charge record when creating sentence on charge in multiple appearances`() {
+    val dpsCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true, sentence = null)
+    val firstAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+
+    val legacySentence = DataCreator.legacyCreateSentence(
+      chargeUuids = listOf(dpsCharge.chargeUuid),
+      appearanceUuid = secondAppearance.appearanceUuid,
+    )
+    webTestClient
+      .post()
+      .uri("/legacy/sentence")
+      .bodyValue(legacySentence)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
 }

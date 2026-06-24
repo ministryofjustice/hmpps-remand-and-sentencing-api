@@ -1,14 +1,23 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.courtappearance
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class LegacyLinkChargesToCaseTests : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
+  private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
 
   @Test
   fun `links charge to source case`() {
@@ -159,5 +168,43 @@ class LegacyLinkChargesToCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `should preserve aggravating factors when linking a charge to a source case`() {
+    val dpsCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true, sentence = null)
+    val sourceAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    val (sourceCourtCaseUuid, _) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sourceAppearance)))
+
+    val targetAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf())
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(targetAppearance)))
+
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${targetAppearance.appearanceUuid}/charge/${dpsCharge.chargeUuid}")
+      .bodyValue(DataCreator.legacyUpdateCharge())
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    val linkChargeToCase = DataCreator.legacyLinkChargeToCase(sourceCourtCaseUuid)
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${targetAppearance.appearanceUuid}/charge/${dpsCharge.chargeUuid}/link")
+      .bodyValue(linkChargeToCase)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
 }
