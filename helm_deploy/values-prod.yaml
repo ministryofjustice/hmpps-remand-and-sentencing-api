@@ -15,6 +15,7 @@ generic-service:
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PROD
     FEATURES_APPEALS_ENABLED: "false"
+    COURT-DATA-INGESTION_API_URL: "https://court-data-ingestion-api.hmpps.service.justice.gov.uk"
 
   resources:
     requests:

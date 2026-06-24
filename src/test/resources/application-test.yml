@@ -59,6 +59,10 @@ adjustments:
   api:
     url: http://localhost:8552
 
+court-data-ingestion:
+  api:
+    url: http://localhost:8553
+
 ingress:
   url: localhost:8080
 
