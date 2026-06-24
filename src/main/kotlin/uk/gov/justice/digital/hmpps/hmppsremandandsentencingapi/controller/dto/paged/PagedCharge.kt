@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
@@ -14,6 +15,7 @@ data class PagedCharge(
   val offenceEndDate: LocalDate?,
   val terrorRelated: Boolean?,
   val foreignPowerRelated: Boolean?,
+  val aggravatingFactor: List<AggravatingFactor>?,
   val outcome: PagedChargeOutcome?,
   val legacyData: ChargeLegacyData?,
   val sentence: PagedSentence?,
@@ -31,6 +33,7 @@ data class PagedCharge(
         charge.chargeOffenceEndDate,
         charge.chargeTerrorRelated,
         charge.chargeForeignPowerRelated,
+        charge.chargeAggravatingFactors,
         charge.chargeOutcomeUuid?.let { PagedChargeOutcome(it, charge.chargeOutcomeName!!) },
         charge.chargeLegacyData,
         sentenceRows?.let { PagedSentence.from(it) },

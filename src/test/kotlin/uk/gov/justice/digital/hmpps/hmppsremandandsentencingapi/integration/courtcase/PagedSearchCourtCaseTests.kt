@@ -3,10 +3,12 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
@@ -364,5 +366,32 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.totalElements")
       .isEqualTo(0)
+  }
+
+  @Test
+  fun `return court cases along with aggravating factors`() {
+    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null, aggravatingFactors = listOf(
+      AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120)))
+    val createdCourtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(charge)))))
+
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", createdCourtCase.second.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].courtCaseUuid")
+      .isEqualTo(createdCourtCase.first)
+      .jsonPath("$.content.[*].prisonerId")
+      .isEqualTo(createdCourtCase.second.prisonerId)
+      .jsonPath("$.content.[*].appearances.[*].charges.[*].aggravatingFactors.[0].code")
+      .isEqualTo("DISV")
   }
 }

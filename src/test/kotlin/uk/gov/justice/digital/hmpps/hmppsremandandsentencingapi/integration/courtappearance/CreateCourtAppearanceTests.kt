@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
@@ -491,5 +492,17 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(createCharge.foreignPowerRelated ?: false).isFalse()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should update charge when when multiple aggravating factors are added which are neither terror related nor foreign power related`() {
+    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null, aggravatingFactors = listOf(
+      AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120)))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(charge)))))
+
+    assertThat(charge.terrorRelated ?: false).isFalse()
+    assertThat(charge.foreignPowerRelated ?: false).isFalse()
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("DISV")).isEqualTo(1)
   }
 }
