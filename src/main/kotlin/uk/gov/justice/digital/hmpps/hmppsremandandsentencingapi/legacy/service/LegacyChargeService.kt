@@ -31,10 +31,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkChargeToCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
 import java.util.UUID
-import kotlin.toString
 
 @Service
 class LegacyChargeService(
@@ -46,7 +46,8 @@ class LegacyChargeService(
   appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val legacySentenceService: LegacySentenceService,
   private val courtCaseRepository: CourtCaseRepository,
-) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
+  aggravatingFactorsService: AggravatingFactorsService,
+) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService, aggravatingFactorsService) {
 
   @Transactional
   fun create(charge: LegacyCreateCharge): RecordResponse<LegacyChargeCreatedResponse> {
@@ -130,6 +131,7 @@ class LegacyChargeService(
     if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == chargeUuid }) {
       val existingCharge = getUnlessDeleted(chargeUuid)
       val chargeEntity = chargeRepository.save(getUpdatedChargeEntity(existingCharge, chargeUuid, existingCourtAppearance, charge))
+      aggravatingFactorsService.replaceAggravatingFactors(chargeEntity, chargeEntity.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet())
 
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
