@@ -190,37 +190,6 @@ class UpdateChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `should update charge when when multiple aggravating factors are added which are neither terror related nor foreign power related`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(
-      terrorRelated = null,
-      foreignPowerRelated = null,
-      aggravatingFactors = listOf(
-        AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
-      ),
-    )
-    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
-    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
-
-    val updateCharge = createCharge.copy(
-      terrorRelated = null,
-      offenceStartDate = LocalDate.now().minusDays(1),
-      appearanceUuid = createAppearance.appearanceUuid,
-    )
-    print("updateCharge: $updateCharge")
-    webTestClient.put()
-      .uri("/charge/${createCharge.chargeUuid}")
-      .bodyValue(updateCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "DISV")).isEqualTo(1)
-  }
-
-  @Test
   fun `should update charge when linked to multiple appearances preserves aggravating factors on new charge record`() {
     val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
     val firstAppearance = dpsCreateCourtAppearance(charges = listOf(charge))

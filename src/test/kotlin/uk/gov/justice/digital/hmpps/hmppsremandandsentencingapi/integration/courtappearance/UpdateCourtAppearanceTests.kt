@@ -1106,7 +1106,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `should update charge when when multiple aggravating factors are added which are neither terror related nor foreign power related`() {
+  fun `should update charge when when an aggravating factors is added which is neither terror related nor foreign power related`() {
     val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
     val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
     val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
