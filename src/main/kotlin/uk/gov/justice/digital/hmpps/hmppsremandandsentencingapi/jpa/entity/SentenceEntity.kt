@@ -229,7 +229,7 @@ class SentenceEntity(
     sentenceServeType == other?.sentenceServeType &&
     sentenceType == other.sentenceType &&
     createdPrison == other.createdPrison &&
-    ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.isSame(other.consecutiveTo) == true) &&
+    ((consecutiveTo == null && other.consecutiveTo == null) || consecutiveTo?.sentenceUuid == other.consecutiveTo?.sentenceUuid) &&
     convictionDate == other.convictionDate &&
     ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
     statusId == other.statusId &&
