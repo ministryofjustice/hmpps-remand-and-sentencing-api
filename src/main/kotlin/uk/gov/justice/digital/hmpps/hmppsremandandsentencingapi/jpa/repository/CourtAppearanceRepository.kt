@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.linklatestappearance.LatestCourtAppearanceDataRow
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.util.*
@@ -89,4 +90,20 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
     nativeQuery = true,
   )
   fun updateToSupportedAppearanceOutcome(@Param("appearanceOutcomeId") appearanceOutcomeId: Int, @Param("warrantType") warrantType: String, @Param("nomisCode") nomisCode: String)
+
+  @Query(
+    """
+    select cc.id as court_case_id, ca.id as latest_appearance_id, fca.id as future_appearance_id, nca.id as next_court_appearance_id, to_remove_next_court_appearance.id as incorrect_appearance_id
+    from court_case cc
+    join court_appearance ca on cc.latest_court_appearance_id = ca.id
+    join court_appearance fca on fca.court_case_id = cc.id and to_date(ca.legacy_data->>'nextEventDateTime', 'YYYY-MM-DD') = fca.appearance_date
+    left join next_court_appearance nca on nca.future_skeleton_appearance_id = fca.id
+    left join court_appearance to_remove_next_court_appearance on to_remove_next_court_appearance.next_court_appearance_id = nca.id
+    where ca.next_court_appearance_id is null and ca.warrant_type = 'NON_SENTENCING' and ca.legacy_data->>'nextEventDateTime' is not null and fca.status_id = 'FUTURE'
+  """,
+    nativeQuery = true,
+  )
+  fun getLatestCourtAppearancesWithoutNextCourtAppearance(): List<LatestCourtAppearanceDataRow>
+
+  fun findFirstByIdInOrderByCreatedAtAsc(ids: List<Int>): CourtAppearanceEntity
 }

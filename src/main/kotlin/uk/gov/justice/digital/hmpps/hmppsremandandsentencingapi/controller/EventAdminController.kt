@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomai
 @RestController
 @RequestMapping("/event-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "event-admin-controller", description = "Event Admin tasks")
-class AdminController(private val dpsDomainEventService: DpsDomainEventService) {
+class EventAdminController(private val dpsDomainEventService: DpsDomainEventService) {
 
   @PostMapping("/republish")
   @ResponseStatus(HttpStatus.NO_CONTENT)

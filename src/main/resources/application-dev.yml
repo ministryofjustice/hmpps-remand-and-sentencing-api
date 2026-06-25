@@ -6,7 +6,7 @@ spring:
 
 hmpps:
   auth:
-    url: http://localhost:9090/auth
+    url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
   sar:
     enabled: true
     mode:
@@ -46,6 +46,10 @@ document:
 adjustments:
   api:
     url: http://localhost:8552
+
+court-data-ingestion:
+  api:
+    url: http://localhost:8553
 
 ingress:
   url: localhost:8080

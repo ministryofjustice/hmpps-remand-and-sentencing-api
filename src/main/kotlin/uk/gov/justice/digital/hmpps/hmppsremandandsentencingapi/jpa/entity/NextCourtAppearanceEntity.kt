@@ -105,7 +105,7 @@ class NextCourtAppearanceEntity(
 
     fun from(futureAppearance: CourtAppearanceEntity, appearanceTypeCourtAppearanceSubtype: AppearanceTypeCourtAppearanceSubtype): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
       appearanceDate = futureAppearance.appearanceDate,
-      appearanceTime = null,
+      appearanceTime = futureAppearance.legacyData?.appearanceTime,
       courtCode = futureAppearance.courtCode,
       appearanceType = appearanceTypeCourtAppearanceSubtype.appearanceType,
       courtAppearanceSubtype = appearanceTypeCourtAppearanceSubtype.courtAppearanceSubtype,
