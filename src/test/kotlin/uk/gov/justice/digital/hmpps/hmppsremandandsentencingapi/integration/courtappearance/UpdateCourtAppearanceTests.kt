@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
@@ -1102,6 +1103,41 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(0)
+  }
+
+  @Test
+  fun `should update charge when when an aggravating factors is added which is neither terror related nor foreign power related`() {
+    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val updatedOffenceCodeCharge = charge.copy(
+      appearanceUuid = appearance.appearanceUuid,
+      offenceCode = "ADIFFERENTCODE",
+      aggravatingFactors = listOf(
+        AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
+      ),
+    )
+    val newAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+      charges = listOf(updatedOffenceCodeCharge),
+      nextCourtAppearance = null,
+    )
+
+    // Act
+    webTestClient
+      .put()
+      .uri("/court-appearance/${newAppearance.appearanceUuid}")
+      .bodyValue(newAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("DISV")).isEqualTo(1)
   }
 
   @Test
