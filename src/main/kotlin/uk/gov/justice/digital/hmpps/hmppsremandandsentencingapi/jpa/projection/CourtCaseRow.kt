@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -58,7 +57,10 @@ data class CourtCaseRow(
   var chargeOffenceEndDate: LocalDate?,
   var chargeTerrorRelated: Boolean?,
   var chargeForeignPowerRelated: Boolean?,
-  var chargeAggravatingFactors: List<AggravatingFactor>?,
+  var chargeAggravatingFactorCode: String?,
+  var chargeAggravatingFactorTitle: String?,
+  var chargeAggravatingFactorDescription: String?,
+  var chargeAggravatingFactorDisplayOrder: Int?,
   var chargeOutcomeUuid: UUID?,
   var chargeOutcomeName: String?,
   var chargeLegacyData: ChargeLegacyData?,

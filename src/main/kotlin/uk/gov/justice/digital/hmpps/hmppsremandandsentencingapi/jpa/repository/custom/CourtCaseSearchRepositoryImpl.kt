@@ -77,7 +77,10 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         c.offence_end_date as chargeOffenceEndDate,
         c.terror_related as chargeTerrorRelated,
         c.foreign_power_related as chargeForeignPowerRelated,
-        caf_agg.aggravating_factors as chargeAggravatingFactors,
+        af.code as chargeAggravatingFactorCode,
+        af.title as chargeAggravatingFactorTitle,
+        af.description as chargeAggravatingFactorDescription,
+        af.display_order as chargeAggravatingFactorDisplayOrder,
         co.outcome_uuid as chargeOutcomeUuid,
         co.outcome_name as chargeOutcomeName,
         c.legacy_data as chargeLegacyData,
@@ -165,14 +168,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join court_case mtcc on mtcc.id = cc.merged_to_case_id
       left join court_appearance lmtca on mtcc.latest_court_appearance_id = lmtca.id
       left join court_appearance fca on fca.id = nlca.future_skeleton_appearance_id
-      left join (
-        select
-          caf.charge_id,
-          json_agg(af order by af.display_order) as aggravating_factors
-        from charge_aggravating_factor caf
-        join aggravating_factor af on af.id = caf.aggravating_factor_id
-        group by caf.charge_id
-      ) caf_agg on caf_agg.charge_id = c.id
+      left join charge_aggravating_factor caf on caf.charge_id = c.id
+      left join aggravating_factor af on af.id = caf.aggravating_factor_id
       join court_appearance minca on minca.court_case_id = cc.id and minca.appearance_date = appearanceData.first_day_in_custody
     """.trimIndent()
   }

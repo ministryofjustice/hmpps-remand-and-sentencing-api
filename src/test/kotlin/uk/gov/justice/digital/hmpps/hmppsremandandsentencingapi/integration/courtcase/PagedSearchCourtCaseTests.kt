@@ -370,8 +370,13 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `return court cases along with aggravating factors`() {
-    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null, aggravatingFactors = listOf(
-      AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120)))
+    val charge = DpsDataCreator.dpsCreateCharge(
+      terrorRelated = null,
+      foreignPowerRelated = null,
+      aggravatingFactors = listOf(
+        AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
+      ),
+    )
     val createdCourtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(charge)))))
 
     webTestClient.get()
@@ -391,7 +396,7 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(createdCourtCase.first)
       .jsonPath("$.content.[*].prisonerId")
       .isEqualTo(createdCourtCase.second.prisonerId)
-      .jsonPath("$.content.[*].appearances.[*].charges.[*].aggravatingFactors.[0].code")
+      .jsonPath("$.content.[*].latestCourtAppearance.charges.[*].aggravatingFactors.[0].code")
       .isEqualTo("DISV")
   }
 }
