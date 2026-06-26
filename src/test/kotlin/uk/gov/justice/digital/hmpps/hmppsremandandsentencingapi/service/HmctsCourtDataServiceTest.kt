@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers
@@ -10,13 +9,11 @@ import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.mock
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import java.time.LocalDateTime
@@ -82,49 +79,6 @@ class HmctsCourtDataServiceTest {
     assertEquals("sentencing-warrant.pdf", result.documents.first().fileName)
 
     verify(courtDataIngestionApi).getCourtHearing(hearingId)
-  }
-
-  @Test
-  fun `should resolve remand warrant outcome`() {
-    val hearingId = UUID.randomUUID()
-    val documentId = UUID.randomUUID()
-
-    val outcomeUuid =
-      UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8")
-
-    val hearing = HmctsCourHearing(
-      hearingId = hearingId,
-      courtId = UUID.randomUUID(),
-      hearingDate = LocalDateTime.now(),
-      caseReferences = emptyList(),
-      documents = listOf(
-        HmctsCourHearingDocument(
-          documentId = documentId,
-          documentType = "REMAND_WARRANT",
-        ),
-      ),
-      courtName = "Court",
-      hearingType = "Hearing",
-    )
-
-    val outcome = mock<CourtAppearanceOutcome>()
-
-    `when`(courtDataIngestionApi.getCourtHearing(hearingId))
-      .thenReturn(hearing)
-
-    `when`(documentManagementApi.getDocumentsByIds(listOf(documentId.toString())))
-      .thenReturn(emptyList())
-
-    `when`(appearanceOutcomeService.findByUuid(outcomeUuid))
-      .thenReturn(outcome)
-
-    val result = service.getCourtAppearanceFromHmctsHearingId(hearingId)
-
-    assertNotNull(result.outcome)
-    assertEquals(outcome, result.outcome)
-    assertEquals("NON_SENTENCING", result.warrantType)
-
-    verify(appearanceOutcomeService).findByUuid(outcomeUuid)
   }
 
   @Test

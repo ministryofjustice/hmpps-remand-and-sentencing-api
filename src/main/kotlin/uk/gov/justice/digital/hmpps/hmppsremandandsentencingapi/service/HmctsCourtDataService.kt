@@ -14,17 +14,15 @@ import java.util.UUID
 class HmctsCourtDataService(
   val courtDataIngestionApi: CourtDataIngestionApiClient,
   val documentService: DocumentManagementApiClient,
-  val appearanceOutcomeService: AppearanceOutcomeService,
 ) {
 
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID): CourtAppearance {
     val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId)
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
-    val outcome = getOutcomeUuidFromDocumentTypes(hearing)?.let { appearanceOutcomeService.findByUuid(it) }
 
     return CourtAppearance(
       appearanceUuid = courtHearingId,
-      outcome = outcome,
+      outcome = null,
       courtCode = hearing.courtId.toString(), // TODO CDIA-169
       courtCaseReference = hearing.caseReferences.firstOrNull(),
       criminalAppealOfficeReference = null,
@@ -46,13 +44,6 @@ class HmctsCourtDataService(
       source = EventSource.DPS,
       deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
     )
-  }
-
-  private fun getOutcomeUuidFromDocumentTypes(hearing: HmctsCourHearing): UUID? {
-    if (hearing.documents.any { it.documentType == "REMAND_WARRANT" }) {
-      return UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8")
-    }
-    return null
   }
 
   private fun mapDocumentType(documentType: String): String = if (documentType === "PRISON_COURT_REGISTER") {

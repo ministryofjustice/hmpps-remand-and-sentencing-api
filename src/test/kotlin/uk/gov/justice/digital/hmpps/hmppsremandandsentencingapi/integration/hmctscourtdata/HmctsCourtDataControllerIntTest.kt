@@ -7,14 +7,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -64,18 +62,7 @@ class HmctsCourtDataControllerIntTest : IntegrationTestBase() {
     Assertions.assertThat(response).isEqualTo(
       CourtAppearance(
         appearanceUuid = response.appearanceUuid, // Random UUID
-        outcome = CourtAppearanceOutcome(
-          outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
-          outcomeName = "Remand in custody",
-          nomisCode = "4531",
-          outcomeType = "REMAND",
-          displayOrder = 70,
-          relatedChargeOutcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
-          isSubList = false,
-          dispositionCode = "INTERIM",
-          status = ReferenceEntityStatus.ACTIVE,
-          warrantType = "NON_SENTENCING",
-        ),
+        outcome = null,
         courtCode = hmctsCourtHearing.courtId.toString(),
         courtCaseReference = "ABC123",
         criminalAppealOfficeReference = null,
