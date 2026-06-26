@@ -16,6 +16,4 @@ data class HmctsCourHearing(
 data class HmctsCourHearingDocument(
   val documentType: String,
   val documentId: UUID,
-  val ingestionAt: LocalDateTime,
-  val filename: String?,
 )
