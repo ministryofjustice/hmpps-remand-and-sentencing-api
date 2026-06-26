@@ -1,5 +1,5 @@
 <style>.indented-section { margin-left: 20px; } h2 {text-decoration: underline}</style>
-<h1 class="title">RaS-Recalls-Immigration-Detention</h1>
+<h1 class="title">Court Cases - Remand and Sentencing - Recalls - Immigration Detention</h1>
 {{#.}}
     <h2>Offender Details</h2>
     <table class="summary-list">
@@ -18,9 +18,12 @@
                 <tr><td>Last Updated</td><td>{{ optionalValue updatedAt }}</td></tr>
             </table>
 
+            <h3>Latest Court Appearance</h3>
             {{#latestCourtAppearance}}
-                <h3>Latest Court Appearance</h3>
                 {{> courtAppearance }}
+            {{/latestCourtAppearance}}
+            {{^latestCourtAppearance}}
+                <p>No Latest Appearance Recorded for this Case</p>
             {{/latestCourtAppearance}}
 
             <h3>All Court Appearances</h3>
