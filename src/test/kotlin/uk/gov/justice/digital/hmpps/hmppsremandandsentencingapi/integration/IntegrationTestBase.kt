@@ -684,9 +684,12 @@ abstract class IntegrationTestBase {
     numberOfMessagesCurrentlyOnQueue(prisonerListenerQueueSqsDlqClient, prisonerListenerQueue.dlqUrl!!, 0)
   }
 
-  fun createCourtCaseTwoSentences(prisonerId: String = DEFAULT_PRISONER_ID, courtCaseReference: String? = "GH123456789"): Pair<CreateSentence, CreateSentence> {
-    val firstCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
-    val secondCharge = DpsDataCreator.dpsCreateCharge(sentence = DpsDataCreator.dpsCreateSentence())
+  fun createCourtCaseTwoSentences(
+    prisonerId: String = DEFAULT_PRISONER_ID,
+    courtCaseReference: String? = "GH123456789",
+  ): Pair<CreateSentence, CreateSentence> {
+    val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", sentence = DpsDataCreator.dpsCreateSentence(), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Veterinary surgeon fail to notify incorrect certification"))
+    val secondCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "EC10001", sentence = DpsDataCreator.dpsCreateSentence(), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Fail to comply /contravene provision in schedule 3 of Eggs and Chicks (Wales) Regulations 2010"))
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge), courtCaseReference = courtCaseReference)
     val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = prisonerId, appearances = listOf(appearance)))
     val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
@@ -822,7 +825,7 @@ abstract class IntegrationTestBase {
   fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true): Pair<UUID, LegacyCreateCourtAppearance> {
     val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase)
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
-    val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1"))
+    val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData())
     val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
     return createdChargeResponse.appearanceLifetimeUuid to legacyCreateCourtAppearance
   }

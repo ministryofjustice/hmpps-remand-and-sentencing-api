@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonSe
 import java.time.LocalDate
 
 @ExtendWith(MockKExtension::class)
-class AllPrisonerDetailsServiceTests {
+class PrisonerDetailsServiceTests {
 
   @MockK
   private lateinit var courtCaseSarRepository: CourtCaseSarRepository
@@ -34,14 +34,14 @@ class AllPrisonerDetailsServiceTests {
   private lateinit var courtRegisterService: CourtRegisterService
 
   @InjectMockKs(overrideValues = true)
-  private lateinit var sut: AllPrisonerDetailsService
+  private lateinit var prisonerDetailsService: PrisonerDetailsService
 
   @Test
   fun `should return all Court Case Prisoner Details`() {
     arrange("44959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("44959") as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("44959") as Prisoner
 
     assertThat(prisoner.courtCases?.count()).isEqualTo(1)
     assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
@@ -52,7 +52,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("44959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("44959", LocalDate.of(2026, 1, 4)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("44959", LocalDate.of(2026, 1, 4)) as Prisoner
 
     assertThat(prisoner.courtCases?.count()).isEqualTo(1)
     assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
@@ -63,7 +63,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("44959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("44959", LocalDate.of(2026, 2, 28)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("44959", LocalDate.of(2026, 2, 28)) as Prisoner
 
     val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
       appearances = listOf(ExpectedResponseData.expectedCourtAppearances()[1]),
@@ -77,7 +77,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("4492234")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("4492234", LocalDate.of(2026, 7, 28)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("4492234", LocalDate.of(2026, 7, 28)) as Prisoner
 
     assertThat(prisoner.courtCases?.count()).isEqualTo(0)
   }
@@ -87,7 +87,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("22959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("22959", to = LocalDate.of(2026, 2, 28)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", to = LocalDate.of(2026, 2, 28)) as Prisoner
 
     val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
       latestCourtAppearance = null,
@@ -102,7 +102,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("22959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("22959", to = LocalDate.of(2026, 3, 28)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", to = LocalDate.of(2026, 3, 28)) as Prisoner
 
     assertThat(prisoner.courtCases?.count()).isEqualTo(1)
     assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
@@ -113,7 +113,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("22959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 28)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 28)) as Prisoner
 
     val expected = ExpectedResponseData.expectedBaseCourtCaseDetails().copy(
       latestCourtAppearance = ExpectedResponseData.expectedCourtAppearances()[1],
@@ -128,7 +128,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("22959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 28)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 28)) as Prisoner
 
     assertThat(prisoner.courtCases?.count()).isEqualTo(1)
     assertThat(prisoner.courtCases?.first()).isEqualTo(ExpectedResponseData.expectedBaseCourtCaseDetails())
@@ -139,7 +139,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("22959")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("22959", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)) as Prisoner
 
     assertThat(prisoner.courtCases?.count()).isEqualTo(0)
   }
@@ -149,7 +149,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5534")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5534") as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5534") as Prisoner
 
     assertThat(prisoner.recalls?.count()).isEqualTo(2)
     assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
@@ -160,7 +160,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5534")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5534", LocalDate.of(2026, 8, 1)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5534", LocalDate.of(2026, 8, 1)) as Prisoner
 
     assertThat(prisoner.recalls?.count()).isEqualTo(1)
     assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 8, 5), LocalDate.of(2026, 9, 1)))
@@ -171,7 +171,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5534")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5534", to = LocalDate.of(2026, 8, 1)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5534", to = LocalDate.of(2026, 8, 1)) as Prisoner
 
     assertThat(prisoner.recalls?.count()).isEqualTo(1)
     assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
@@ -182,7 +182,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5534")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5534", from = LocalDate.of(2026, 5, 1), to = LocalDate.of(2026, 12, 31)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5534", from = LocalDate.of(2026, 5, 1), to = LocalDate.of(2026, 12, 31)) as Prisoner
 
     assertThat(prisoner.recalls?.count()).isEqualTo(2)
     assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
@@ -193,7 +193,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5534")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5534", from = LocalDate.of(2026, 5, 1), to = LocalDate.of(2026, 8, 1)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5534", from = LocalDate.of(2026, 5, 1), to = LocalDate.of(2026, 8, 1)) as Prisoner
 
     assertThat(prisoner.recalls?.count()).isEqualTo(1)
     assertThat(prisoner.recalls?.first()).isEqualTo(ExpectedResponseData.expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2)))
@@ -204,7 +204,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574") as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574") as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(2)
     assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
@@ -215,7 +215,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 1, 1)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 1, 1)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(2)
     assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
@@ -226,7 +226,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 5)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 5)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
     assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 8, 5)))
@@ -237,7 +237,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574", to = LocalDate.of(2026, 6, 5)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", to = LocalDate.of(2026, 6, 5)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
     assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
@@ -248,7 +248,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 5, 31), to = LocalDate.of(2026, 6, 5)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 5, 31), to = LocalDate.of(2026, 6, 5)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(1)
     assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
@@ -259,7 +259,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 2), to = LocalDate.of(2026, 6, 5)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 2), to = LocalDate.of(2026, 6, 5)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(0)
   }
@@ -269,7 +269,7 @@ class AllPrisonerDetailsServiceTests {
     arrange("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 1), to = LocalDate.of(2026, 8, 5)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 1), to = LocalDate.of(2026, 8, 5)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(2)
     assertThat(prisoner.immigrationDetentions?.first()).isEqualTo(ExpectedResponseData.expectedBaseImmigrationDetentionDetails(LocalDate.of(2026, 6, 1)))
@@ -280,7 +280,7 @@ class AllPrisonerDetailsServiceTests {
     arrangeEmpty("5574")
 
     // Act
-    val prisoner = sut.getPrisonerDetails("5574") as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574") as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(0)
     assertThat(prisoner.recalls?.count()).isEqualTo(0)
@@ -298,7 +298,7 @@ class AllPrisonerDetailsServiceTests {
     every { personService.getPersonDetailsByPrisonerIdCached("44959") } returns null
 
     // Act
-    val prisoner = sut.getPrisonerDetails("44959") as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("44959") as Prisoner
 
     assertThat(prisoner).isEqualTo(Prisoner("44959", null, listOf(), listOf(), listOf()))
   }
@@ -308,7 +308,7 @@ class AllPrisonerDetailsServiceTests {
     every { courtCaseSarRepository.existsByPrisonerId("44959") } returns false
 
     // Act
-    val prisoner = sut.getPrisonerDetails("44959") as Prisoner?
+    val prisoner = prisonerDetailsService.getPrisonerDetails("44959") as Prisoner?
 
     assertThat(prisoner).isEqualTo(null)
   }

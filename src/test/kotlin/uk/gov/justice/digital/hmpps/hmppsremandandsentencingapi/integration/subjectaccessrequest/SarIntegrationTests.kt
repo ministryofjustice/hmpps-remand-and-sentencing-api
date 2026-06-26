@@ -11,9 +11,11 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.ExpectResponseData.emptyNotInNomisResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.ExpectResponseData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.subjectaccessrequest.SarApiDataTest
@@ -38,7 +40,7 @@ import java.time.LocalDate
  */
 @Import(SarIntegrationTestHelperConfig::class)
 @ActiveProfiles("test", "test-sar")
-@DisplayName("SarIntegrationTests (Unsynced Data)")
+@DisplayName("SarIntegrationTests")
 class SarIntegrationTests :
   IntegrationTestBase(),
   SarApiDataTest,
@@ -55,7 +57,7 @@ class SarIntegrationTests :
   @EnabledIfEnvironmentVariable(named = "SAR_GENERATE_ACTUAL", matches = "true")
   override fun `SAR report should render as expected`() {
     arrange()
-    super<SarReportTest>.`SAR report should render as expected`()
+    super.`SAR report should render as expected`()
   }
 
   /**
@@ -65,18 +67,21 @@ class SarIntegrationTests :
   @Test
   override fun `SAR API should return expected data`() {
     arrange()
-    super<SarApiDataTest>.`SAR API should return expected data`()
+    super.`SAR API should return expected data`()
   }
 
   @Test
-  fun `SAR API should get empty immigrationDetentions by valid prisoner id with no data yet associated`() {
+  fun `SAR API should get empty court cases, recalls & immigrationDetentions by valid prisoner id with no data yet associated`() {
+    val stub = PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DpsDataCreator.DEFAULT_PRISONER_ID)
     createCourtCaseTwoSentences()
     webTestClient
       .get()
       .uri { uriBuilder ->
         uriBuilder
           .path("/subject-access-request")
-          .queryParam("prn", "PRI123")
+          .queryParam("prn", DpsDataCreator.DEFAULT_PRISONER_ID)
+          .queryParam("fromDate", "2010-01-01")
+          .queryParam("toDate", "2010-01-01")
           .build()
       }
       .headers {
@@ -86,7 +91,8 @@ class SarIntegrationTests :
       .expectStatus()
       .isOk
       .expectBody()
-      .json(emptyNotInNomisResponse())
+      .json(ExpectResponseData.emptyFullDataResponse())
+    PrisonApiExtension.prisonApi.removeStub(stub)
   }
 
   @Test
@@ -184,7 +190,7 @@ class SarIntegrationTests :
     private lateinit var prisonerDetailsService: PrisonerDetailsService
 
     @Test
-    fun `SAR API should get 500 when internal exception thrown`() {
+    fun `get 500 when internal exception thrown`() {
       whenever(
         prisonerDetailsService
           .getPrisonerDetails("foo-bar", null, null),
@@ -212,32 +218,26 @@ class SarIntegrationTests :
   override fun getWebTestClientInstance(): WebTestClient = webTestClient
 
   private fun arrange() {
-    createCourtCaseTwoSentences()
+    // Data setup
+    val (sentenceOne, _) = createCourtCaseTwoSentences()
+    PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DpsDataCreator.DEFAULT_PRISONER_ID)
+    CourtRegisterApiExtension.courtRegisterApi.stubGetCourtRegister("COURT1")
+    AdjustmentsApiExtension.adjustmentsApi.stubAllowCreateAdjustments()
+    createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(
+          sentenceOne.sentenceUuid,
+        ),
+      ),
+    )
     createImmigrationDetention(
       DpsDataCreator.dpsCreateImmigrationDetention(
         prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
-        immigrationDetentionRecordType = IS91,
+        immigrationDetentionRecordType = ImmigrationDetentionRecordType.IS91,
         recordDate = LocalDate.of(2021, 1, 1),
         createdByUsername = "aUser",
         createdByPrison = "PRI",
         appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
-        noLongerOfInterestReason = ImmigrationDetentionNoLongerOfInterestType.RIGHT_TO_REMAIN,
-        noLongerOfInterestComment = "Currently has the right to Remain",
-        homeOfficeReferenceNumber = "3240593452",
-      ),
-    )
-
-    createImmigrationDetention(
-      DpsDataCreator.dpsCreateImmigrationDetention(
-        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
-        immigrationDetentionRecordType = IS91,
-        recordDate = LocalDate.of(2025, 2, 2),
-        createdByUsername = "aUser",
-        createdByPrison = "PRI",
-        appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
-        noLongerOfInterestReason = ImmigrationDetentionNoLongerOfInterestType.BRITISH_CITIZEN,
-        noLongerOfInterestComment = "Recently made a British Citizen",
-        homeOfficeReferenceNumber = "5340593452",
       ),
     )
   }
