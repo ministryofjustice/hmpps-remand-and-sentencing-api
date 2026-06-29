@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.c
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.SearchCourtAppearanceSchedulesRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
@@ -63,6 +65,14 @@ class CourtAppearanceSchedulesService(private val courtAppearanceRepository: Cou
       nextCourtAppearanceService.handleNextCourtAppearance(existingCourtAppearance, updateCourtAppearanceSchedule.reasonCode, performedByUser, updateCourtAppearanceSchedule.start) {
         NextCourtAppearanceEntity.from(updateCourtAppearanceSchedule, existingCourtAppearance, it)
       }
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          existingCourtAppearance.courtCase.prisonerId,
+          existingCourtAppearance.courtCase.caseUniqueIdentifier,
+          existingCourtAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_UPDATED,
+        ),
+      )
     }
     eventsToEmit
   }
