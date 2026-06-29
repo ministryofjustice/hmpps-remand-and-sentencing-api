@@ -607,7 +607,19 @@ class RecallService(
               sentenceServeType = sentence.sentenceServeType,
               sentenceLegacyData = sentence.legacyData,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
-              isRecallable = sentence.sentenceType?.isRecallable ?: true,
+              aggravatingFactors = sentence.charge.chargeAggravatingFactors
+                .filter { it.status == AggravatingFactorStatus.ACTIVE }
+                .map {
+                  AggravatingFactor(
+                    code = it.aggravatingFactor.code,
+                    title = it.aggravatingFactor.title,
+                    description = it.aggravatingFactor.description,
+                  )
+                },
+              isRecallable = sentence.charge.chargeAggravatingFactors
+                .filter { it.status == AggravatingFactorStatus.ACTIVE }
+                .none { it.aggravatingFactor.code == "EXCLUDE_FROM_RECALL" }
+                ?: (sentence.sentenceType?.isRecallable ?: true),
               sentenceDate = sentenceAppearance.appearanceDate,
               consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
               createdAt = sentence.legacyData?.postedDate

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactors
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
@@ -33,5 +32,5 @@ data class RecallableCourtCaseSentence(
   val sentenceDate: LocalDate?,
   val consecutiveToSentenceUuid: UUID? = null,
   val createdAt: LocalDateTime,
-  val aggravatingFactors: AggravatingFactors? = null,
+  val aggravatingFactors: List<AggravatingFactor> = emptyList(),
 )
