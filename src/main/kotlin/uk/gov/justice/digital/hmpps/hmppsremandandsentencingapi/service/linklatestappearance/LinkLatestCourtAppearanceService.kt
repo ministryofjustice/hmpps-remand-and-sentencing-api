@@ -34,7 +34,7 @@ class LinkLatestCourtAppearanceService(private val courtAppearanceRepository: Co
     log.debug("Creating missing next court appearance for court case ${key.courtCaseId} and court appearance ${key.latestAppearanceId}")
     val futureAppearance = courtAppearanceRepository.findFirstByIdInOrderByCreatedAtAsc(rows.map { it.futureAppearanceId })
     val latestCourtAppearance = courtAppearanceRepository.findByIdOrNull(key.latestAppearanceId)!!
-    val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(futureAppearance.legacyData?.nomisAppearanceTypeCode, null)
+    val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(futureAppearance.legacyData?.nomisAppearanceTypeCode)
     val nextCourtAppearance = nextCourtAppearanceRepository.save(NextCourtAppearanceEntity.from(futureAppearance, appearanceTypeCourtAppearanceSubtype))
     latestCourtAppearance.nextCourtAppearance = nextCourtAppearance
     latestCourtAppearance.updatedBy = UPDATED_BY

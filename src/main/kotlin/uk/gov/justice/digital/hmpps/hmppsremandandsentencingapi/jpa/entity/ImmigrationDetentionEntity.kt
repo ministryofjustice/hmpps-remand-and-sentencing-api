@@ -10,6 +10,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.DynamicUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionEntityStatus
@@ -71,6 +72,25 @@ class ImmigrationDetentionEntity(
     courtAppearance.courtCase.prisonerId,
     ImmigrationDetentionRecordTypeOutcomeMapper.appearanceOutcomeToRecordType(courtAppearance.appearanceOutcome),
     updateRequest.appearanceDate,
+    homeOfficeReferenceNumber,
+    noLongerOfInterestReason,
+    noLongerOfInterestComment,
+    courtAppearance.appearanceUuid,
+    ACTIVE,
+    ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+    performedByUser,
+  )
+
+  fun copyFrom(
+    courtAppearance: CourtAppearanceEntity,
+    updateRequest: UpdateCourtAppearanceSchedule,
+    performedByUser: String,
+  ): ImmigrationDetentionEntity = ImmigrationDetentionEntity(
+    0,
+    immigrationDetentionUuid,
+    courtAppearance.courtCase.prisonerId,
+    ImmigrationDetentionRecordTypeOutcomeMapper.appearanceOutcomeToRecordType(courtAppearance.appearanceOutcome),
+    updateRequest.start.toLocalDate(),
     homeOfficeReferenceNumber,
     noLongerOfInterestReason,
     noLongerOfInterestComment,
