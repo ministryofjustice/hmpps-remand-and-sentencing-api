@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
@@ -608,17 +609,10 @@ class RecallService(
               sentenceLegacyData = sentence.legacyData,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               aggravatingFactors = sentence.charge.chargeAggravatingFactors
-                .filter { it.status == AggravatingFactorStatus.ACTIVE }
-                .map {
-                  AggravatingFactor(
-                    code = it.aggravatingFactor.code,
-                    title = it.aggravatingFactor.title,
-                    description = it.aggravatingFactor.description,
-                  )
-                },
+                .map { AggravatingFactor.from(it.aggravatingFactor) },
               isRecallable = sentence.charge.chargeAggravatingFactors
-                .filter { it.status == AggravatingFactorStatus.ACTIVE }
-                .none { it.aggravatingFactor.code == "EXCLUDE_FROM_RECALL" }
+                .map { it.aggravatingFactor.code }
+                .none { it == "EXCLUDE_FROM_RECALL" }
                 ?: (sentence.sentenceType?.isRecallable ?: true),
               sentenceDate = sentenceAppearance.appearanceDate,
               consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
