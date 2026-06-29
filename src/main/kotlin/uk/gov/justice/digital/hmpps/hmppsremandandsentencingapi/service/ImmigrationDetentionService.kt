@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionEntityUpdater
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -315,5 +316,20 @@ class ImmigrationDetentionService(
       )
     }
     return eventsToEmit
+  }
+
+  fun handleImmigrationDetention(courtAppearance: CourtAppearanceEntity, performedByUser: String, immigrationDetentionUpdateFunction: (ImmigrationDetentionEntity) -> ImmigrationDetentionEntity) {
+    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(courtAppearance.appearanceUuid).forEach { immigrationDetentionEntity ->
+      if (courtAppearance.appearanceOutcome?.outcomeType == "IMMIGRATION") {
+        val updatedImmigrationDetentionRecord = immigrationDetentionUpdateFunction(immigrationDetentionEntity)
+        if (!immigrationDetentionEntity.isSame(updatedImmigrationDetentionRecord)) {
+          ImmigrationDetentionEntityUpdater.update(immigrationDetentionEntity, updatedImmigrationDetentionRecord)
+          immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
+        }
+      } else {
+        immigrationDetentionEntity.delete(performedByUser)
+        immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
+      }
+    }
   }
 }

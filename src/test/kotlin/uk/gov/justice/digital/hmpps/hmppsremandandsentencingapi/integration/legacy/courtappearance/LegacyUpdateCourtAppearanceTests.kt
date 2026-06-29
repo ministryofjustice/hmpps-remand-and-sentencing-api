@@ -83,7 +83,7 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `updating future appearance type results in associated next court appearances being updated`() {
     val (appearanceUuid, legacyCourtAppearance) = createLegacyCourtAppearance()
-    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null, nomisAppearanceTypeCode = null))
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
     val response = webTestClient
       .post()
       .uri("/legacy/court-appearance")
@@ -96,8 +96,8 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isCreated.returnResult(LegacyCourtAppearanceCreatedResponse::class.java)
       .responseBody.blockFirst()!!
-
-    val editedFutureCourtAppearance = futureCourtAppearance.copy(appearanceTypeUuid = UUID.fromString("1da09b6e-55cb-4838-a157-ee6944f2094c"))
+    val videoLinkType = appearanceTypeRepository.findByAppearanceTypeUuid(UUID.fromString("1da09b6e-55cb-4838-a157-ee6944f2094c"))!!
+    val editedFutureCourtAppearance = futureCourtAppearance.copy(legacyData = futureCourtAppearance.legacyData.copy(nomisAppearanceTypeCode = videoLinkType.dpsToNomisMappingCode))
     webTestClient
       .put()
       .uri("/legacy/court-appearance/${response.lifetimeUuid}")
@@ -121,14 +121,14 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.appearances[?(@.appearanceUuid == '$appearanceUuid')].nextCourtAppearance.appearanceType.appearanceTypeUuid")
-      .isEqualTo(editedFutureCourtAppearance.appearanceTypeUuid.toString())
+      .isEqualTo(videoLinkType.appearanceTypeUuid.toString())
 
     Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
   }
 
   @Test
   fun `update existing appearance while creating new future appearance links to existing appearance`() {
-    val (existingAppearanceUuid, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
+    val (_, existingAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = LocalDate.now().plusDays(10).atTime(9, 0))))
     val (appearanceUuid, existingFutureAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = existingAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = existingAppearance.legacyData.nextEventDateTime.toLocalTime(), nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)), existingCourtCaseUuid = existingAppearance.courtCaseUuid)
     val editedExistingFuture = existingFutureAppearance.copy(appearanceDate = LocalDate.now().minusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = LocalTime.of(11, 0), nextEventDateTime = existingAppearance.legacyData.nextEventDateTime.plusHours(4)))
     val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = existingAppearance.courtCaseUuid, appearanceDate = editedExistingFuture.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(appearanceTime = editedExistingFuture.legacyData.nextEventDateTime.toLocalTime(), nextEventDateTime = null))

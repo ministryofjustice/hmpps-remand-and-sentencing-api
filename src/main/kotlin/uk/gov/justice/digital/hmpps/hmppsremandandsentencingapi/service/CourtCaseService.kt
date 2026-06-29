@@ -20,12 +20,16 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
@@ -34,6 +38,7 @@ class CourtCaseService(
   private val courtAppearanceService: CourtAppearanceService,
   private val serviceUserService: ServiceUserService,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
+  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
 
   @Transactional
@@ -92,6 +97,17 @@ class CourtCaseService(
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
     return RecordResponseWithDocumentUpdates(courtCaseRepository.save(courtCase), eventsToEmit, appearanceRecords.flatMap { it.documentUpdates })
+  }
+
+  fun handleUpdatingLatestCourtAppearanceInCourtCase(courtCase: CourtCaseEntity, courtAppearance: CourtAppearanceEntity, performedByUser: String) {
+    val existingLatestCourtAppearance = courtCase.latestCourtAppearance
+    val newLatestCourAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCase.appearances + courtAppearance)
+    if (existingLatestCourtAppearance?.id != newLatestCourAppearance?.id) {
+      courtCase.latestCourtAppearance = newLatestCourAppearance
+      courtCase.updatedAt = ZonedDateTime.now()
+      courtCase.updatedBy = performedByUser
+      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.NOMIS))
+    }
   }
 
   @Transactional
@@ -165,14 +181,6 @@ class CourtCaseService(
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(it)
     RecordResponse(CourtCases.from(it), eventsToEmit)
   }
-
-  @Transactional(readOnly = true)
-  fun getLatestImmigrationDetentionCourtCase(prisonerId: String): CourtCaseEntity? = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId)
-    .filter { it.appearances.any { appearanceEntity -> appearanceEntity.courtCode == "IMM" } }
-    .sortedByDescending { courtCase ->
-      courtCase.appearances.filter { appearanceEntity -> appearanceEntity.courtCode == "IMM" }
-        .maxOfOrNull { it.appearanceDate }
-    }.firstOrNull()
 
   @Transactional(readOnly = true)
   fun getAllCountNumbers(courtCaseUuid: String): CourtCaseCountNumbers = CourtCaseCountNumbers.from(courtCaseRepository.findSentenceCountNumbers(courtCaseUuid))

@@ -1,19 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.appearancetype
 
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.appearancetype.AppearanceTypeCodes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import java.util.UUID
 
 class GetAllAppearanceTypesByStatusesTests : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var appearanceTypeRepository: AppearanceTypeRepository
 
   @Test
   fun `return all active types`() {

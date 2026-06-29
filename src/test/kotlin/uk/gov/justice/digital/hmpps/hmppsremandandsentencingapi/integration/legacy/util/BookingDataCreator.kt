@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingSentenceId
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.util.UUID
 
 class BookingDataCreator {
   companion object Factory {
@@ -45,10 +44,9 @@ class BookingDataCreator {
       eventId: Long = 1,
       courtCode: String = "COURT1",
       appearanceDate: LocalDate = LocalDate.now().minusDays(1),
-      appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
       charges: List<BookingCreateCharge> = listOf(bookingCreateCharge()),
-    ): BookingCreateCourtAppearance = BookingCreateCourtAppearance(eventId, courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
+    ): BookingCreateCourtAppearance = BookingCreateCourtAppearance(eventId, courtCode, appearanceDate, legacyData, charges)
 
     fun bookingCreateCharge(
       chargeNOMISId: Long = 5453,
