@@ -104,13 +104,15 @@ class CourtAppearanceEntity(
   @JoinColumn(name = "appearance_id")
   var periodLengths: MutableSet<PeriodLengthEntity> = mutableSetOf()
 
-  fun isSame(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
+  fun isSame(other: CourtAppearanceEntity): Boolean = isSameOtherThanStatusId(other) &&
+    this.statusId == other.statusId
+
+  fun isSameOtherThanStatusId(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
     this.courtCase == other.courtCase &&
     this.courtCode == other.courtCode &&
     this.courtCaseReference == other.courtCaseReference &&
     this.criminalAppealOfficeReference == other.criminalAppealOfficeReference &&
     this.appearanceDate.isEqual(other.appearanceDate) &&
-    this.statusId == other.statusId &&
     this.warrantType == other.warrantType &&
     this.overallConvictionDate == other.overallConvictionDate &&
     ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&

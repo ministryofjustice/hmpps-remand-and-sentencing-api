@@ -23,7 +23,8 @@ data class CourtAppearanceLegacyData(
     appearanceTime == other?.appearanceTime &&
     outcomeDispositionCode == other?.outcomeDispositionCode &&
     outcomeConvictionFlag == other?.outcomeConvictionFlag &&
-    nomisAppearanceTypeCode == other?.nomisAppearanceTypeCode
+    nomisAppearanceTypeCode == other?.nomisAppearanceTypeCode &&
+    comments == other?.comments
 
   fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
     LocalDate.now().format(DateTimeFormatter.ISO_DATE),
