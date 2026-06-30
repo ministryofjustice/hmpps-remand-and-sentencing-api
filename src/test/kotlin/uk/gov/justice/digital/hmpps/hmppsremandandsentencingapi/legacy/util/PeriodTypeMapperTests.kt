@@ -49,6 +49,7 @@ class PeriodTypeMapperTests {
       Arguments.of(false, "IMP", "DTO", PeriodLengthType.TERM_LENGTH),
       Arguments.of(false, "IMP", "DTO_ORA", PeriodLengthType.TERM_LENGTH),
       Arguments.of(false, "IMP", "A/FINE", PeriodLengthType.TERM_LENGTH),
+      Arguments.of(false, "SEC104", "DTO", PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS),
     )
 
     @JvmStatic
@@ -64,6 +65,7 @@ class PeriodTypeMapperTests {
       Arguments.of(PeriodLengthType.TERM_LENGTH, SentenceTypeClassification.BOTUS, false, "IMP", null, null),
       Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105"), null),
       Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "SUP", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SUP"), null),
+      Arguments.of(PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, SentenceTypeClassification.DTO, false, "SEC104", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC104"), null),
     )
   }
 }
