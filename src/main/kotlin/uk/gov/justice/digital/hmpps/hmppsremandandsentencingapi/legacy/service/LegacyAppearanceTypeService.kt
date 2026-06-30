@@ -10,14 +10,12 @@ import java.util.*
 @Service
 class LegacyAppearanceTypeService(private val appearanceTypeRepository: AppearanceTypeRepository, private val courtAppearanceSubtypeRepository: CourtAppearanceSubtypeRepository) {
 
-  fun getAppearanceType(nomisAppearanceTypeCode: String?, appearanceTypeUuid: UUID?): AppearanceTypeCourtAppearanceSubtype = if (nomisAppearanceTypeCode != null) {
+  fun getAppearanceType(nomisAppearanceTypeCode: String?): AppearanceTypeCourtAppearanceSubtype = if (nomisAppearanceTypeCode != null) {
     val subtype = courtAppearanceSubtypeRepository.findByNomisCode(nomisAppearanceTypeCode)
     if (subtype != null) {
       return AppearanceTypeCourtAppearanceSubtype(subtype.appearanceType, subtype)
     }
     AppearanceTypeCourtAppearanceSubtype(appearanceTypeRepository.findByNomisCode(nomisAppearanceTypeCode) ?: getDefaultAppearanceType())
-  } else if (appearanceTypeUuid != null) {
-    AppearanceTypeCourtAppearanceSubtype(appearanceTypeRepository.findByAppearanceTypeUuid(appearanceTypeUuid) ?: getDefaultAppearanceType())
   } else {
     AppearanceTypeCourtAppearanceSubtype(getDefaultAppearanceType())
   }
