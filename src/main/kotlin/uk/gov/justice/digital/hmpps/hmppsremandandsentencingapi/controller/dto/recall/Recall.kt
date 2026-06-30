@@ -77,14 +77,15 @@ data class Recall(
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
                 consecutiveToSentenceUuid = it.sentence.consecutiveTo?.sentenceUuid,
                 aggravatingFactors = it.sentence.charge.chargeAggravatingFactors
-                .filter { af -> af.status == AggravatingFactorStatus.ACTIVE }
-                .map { af ->
-                  AggravatingFactor(
-                    code = af.aggravatingFactor.code,
-                    title = af.aggravatingFactor.title,
-                    description = af.aggravatingFactor.description,
-                  )
-                },
+                  .filter { af -> af.aggravatingFactor.status == AggravatingFactorStatus.ACTIVE }
+                  .map { af ->
+                    AggravatingFactor(
+                      code = af.aggravatingFactor.code,
+                      title = af.aggravatingFactor.title,
+                      description = af.aggravatingFactor.description,
+                      displayOrder = af.aggravatingFactor.displayOrder,
+                    )
+                  },
               )
             }.sortedBy { it.offenceStartDate },
           )
