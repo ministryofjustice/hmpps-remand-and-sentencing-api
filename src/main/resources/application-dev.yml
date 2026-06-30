@@ -9,9 +9,6 @@ hmpps:
     url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
   sar:
     enabled: true
-    mode:
-      all-sar-data:
-        enabled: false
     additionalAccessRole: ROLE_VIEW_PRISONER_DATA # Supports local testing
     template:
       path: /templates/template_remand-and-sentencing-api.mustache

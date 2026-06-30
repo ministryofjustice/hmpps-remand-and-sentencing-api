@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.appearanceoutcome.CreateAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
@@ -26,7 +27,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class DpsDataCreator {
@@ -318,6 +321,22 @@ class DpsDataCreator {
       displayOrder,
       status,
       isRecallable,
+    )
+
+    fun updateCourtAppearanceSchedule(
+      courtCode: String = "COURT2",
+      reasonCode: String = "PS",
+      start: LocalDateTime = LocalDateTime.now().plusDays(3).withHour(11).withMinute(30).truncatedTo(
+        ChronoUnit.MINUTES,
+      ),
+      comments: String? = "Some comments",
+      prisonCode: String = "PRISON",
+    ): UpdateCourtAppearanceSchedule = UpdateCourtAppearanceSchedule(
+      courtCode,
+      reasonCode,
+      start,
+      comments,
+      prisonCode,
     )
   }
 }

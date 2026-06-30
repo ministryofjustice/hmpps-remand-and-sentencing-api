@@ -5,21 +5,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
 object ExpectedResponseData {
-
-  fun expectedBasePrisonerDetails(prn: String): Prisoner = Prisoner(
-    prisonerNumber = prn,
-    prisonerName = null,
-    courtCases = listOf(expectedBaseCourtCaseDetails()),
-    recalls = listOf(expectedBaseRecallDetails(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 7, 2))),
-    immigrationDetentions = null,
-  )
 
   fun expectedBaseCourtCaseDetails() = CourtCase(
     courtName = "Wandsworth Crown Court",

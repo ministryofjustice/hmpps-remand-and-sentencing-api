@@ -71,10 +71,9 @@ class DataCreator {
       courtCaseUuid: String = UUID.randomUUID().toString(),
       courtCode: String = "COURT1",
       appearanceDate: LocalDate = LocalDate.now().minusDays(1),
-      appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
       performedByUser: String = "USER1",
-    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, appearanceTypeUuid, performedByUser)
+    ): LegacyCreateCourtAppearance = LegacyCreateCourtAppearance(courtCaseUuid, courtCode, appearanceDate, legacyData, performedByUser)
 
     fun chargeLegacyData(
       postedDate: String = LocalDate.now().format(
@@ -191,10 +190,9 @@ class DataCreator {
       eventId: Long = 1,
       courtCode: String = "COURT1",
       appearanceDate: LocalDate = LocalDate.now().minusDays(1),
-      appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
       charges: List<MigrationCreateCharge> = listOf(migrationCreateCharge()),
-    ): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(eventId, courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
+    ): MigrationCreateCourtAppearance = MigrationCreateCourtAppearance(eventId, courtCode, appearanceDate, legacyData, charges)
 
     fun migrationCreateCharge(
       chargeNOMISId: Long = 5453,
