@@ -33,5 +33,4 @@ data class RecallableCourtCaseSentence(
   val sentenceDate: LocalDate?,
   val consecutiveToSentenceUuid: UUID? = null,
   val createdAt: LocalDateTime,
-  val aggravatingFactors: AggravatingFactors? = null,
 )

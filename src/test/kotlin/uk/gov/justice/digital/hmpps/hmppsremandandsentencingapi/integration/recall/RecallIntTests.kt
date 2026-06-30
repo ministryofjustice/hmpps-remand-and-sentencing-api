@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactors
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
@@ -394,7 +393,6 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateOne,
                   lineNumber = null,
                   countNumber = "1",
-                  aggravatingFactors = AggravatingFactors(isTerrorRelated = true),
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -418,7 +416,6 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateOne,
                   lineNumber = null,
                   countNumber = "1",
-                  aggravatingFactors = AggravatingFactors(isTerrorRelated = true),
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -450,7 +447,6 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceDate = appearanceDateTwo,
                   lineNumber = null,
                   countNumber = "1",
-                  aggravatingFactors = AggravatingFactors(isTerrorRelated = true),
                   periodLengths = listOf(
                     PeriodLength(
                       years = 1,
@@ -623,7 +619,6 @@ class RecallIntTests : IntegrationTestBase() {
                   periodLengths = emptyList(),
                   sentenceServeType = "CONCURRENT",
                   sentenceTypeDescription = "Unknown pre-recall sentence",
-                  aggravatingFactors = AggravatingFactors(),
                 ),
               ),
             ),
