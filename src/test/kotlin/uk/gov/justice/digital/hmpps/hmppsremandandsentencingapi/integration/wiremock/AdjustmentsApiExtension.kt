@@ -1,9 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.delete
@@ -23,6 +19,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.TestUtil
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import java.util.*
 
@@ -52,9 +49,6 @@ class AdjustmentsApiExtension :
 class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().port(WIREMOCK_PORT).notifier(ConsoleNotifier(false))) {
   companion object {
     private const val WIREMOCK_PORT = 8552
-    private val OBJECT_MAPPER: ObjectMapper = jacksonObjectMapper()
-      .registerModule(JavaTimeModule())
-      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
   }
 
   fun stubGetRecallAdjustments(
@@ -68,7 +62,7 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
       .willReturn(
         aResponse()
           .withHeader("Content-Type", "application/json")
-          .withBody(OBJECT_MAPPER.writeValueAsString(adjustments))
+          .withBody(TestUtil.objectMapper().writeValueAsString(adjustments))
           .withStatus(200),
       ),
   )
@@ -82,7 +76,7 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
       .willReturn(
         aResponse()
           .withHeader("Content-Type", "application/json")
-          .withBody(OBJECT_MAPPER.writeValueAsString(adjustments))
+          .withBody(TestUtil.objectMapper().writeValueAsString(adjustments))
           .withStatus(200),
       ),
   )
@@ -110,7 +104,7 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
     post("/adjustments")
       .willReturn(
         aResponse().withStatus(201)
-          .withBody(OBJECT_MAPPER.writeValueAsString(StubAdjustmentCreatedResponse(listOf(UUID.randomUUID())))),
+          .withBody(TestUtil.objectMapper().writeValueAsString(StubAdjustmentCreatedResponse(listOf(UUID.randomUUID())))),
       ),
   )
 
@@ -123,7 +117,7 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
     verify(
       postRequestedFor(urlPathEqualTo("/adjustments")).withRequestBody(
         equalTo(
-          OBJECT_MAPPER.writeValueAsString(listOf(adjustment)),
+          TestUtil.objectMapper().writeValueAsString(listOf(adjustment)),
         ),
       ),
     )
@@ -138,7 +132,7 @@ class AdjustmentsApiMockServer : WireMockServer(WireMockConfiguration.options().
     verify(
       putRequestedFor(urlPathEqualTo("/adjustments/$adjustmentId")).withRequestBody(
         equalTo(
-          OBJECT_MAPPER.writeValueAsString(updatedAdjustment),
+          TestUtil.objectMapper().writeValueAsString(updatedAdjustment),
         ),
       ),
     )

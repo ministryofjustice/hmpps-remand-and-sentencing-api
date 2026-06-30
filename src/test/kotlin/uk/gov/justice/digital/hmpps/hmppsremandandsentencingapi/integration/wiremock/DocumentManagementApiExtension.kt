@@ -3,14 +3,19 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wir
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.delete
+import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import com.github.tomakehurst.wiremock.http.HttpHeader
+import com.github.tomakehurst.wiremock.http.HttpHeaders
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.TestUtil
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
 
 class DocumentManagementApiExtension :
   BeforeAllCallback,
@@ -59,6 +64,16 @@ class DocumentManagementApiMockServer : WireMockServer(WireMockConfiguration.opt
       .willReturn(
         aResponse()
           .withStatus(500),
+      ),
+  )
+
+  fun stubGetDocumentsFromIds(documents: List<DocumentManagementApiDocument>): StubMapping = stubFor(
+    post("/documents")
+      .willReturn(
+        aResponse()
+          .withHeaders(HttpHeaders(HttpHeader("Content-Type", "application/json")))
+          .withStatus(200)
+          .withBody(TestUtil.objectMapper().writeValueAsString(documents)),
       ),
   )
 }
