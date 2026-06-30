@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactors
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
@@ -75,11 +75,8 @@ data class Recall(
                 sentenceServeType = it.sentence.sentenceServeType,
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
                 consecutiveToSentenceUuid = it.sentence.consecutiveTo?.sentenceUuid,
-                aggravatingFactors = AggravatingFactors(
-                  isDomesticViolenceRelated = it.sentence.charge.domesticViolenceRelated,
-                  isForeignPowerRelated = it.sentence.charge.foreignPowerRelated,
-                  isTerrorRelated = it.sentence.charge.terrorRelated,
-                ),
+                aggravatingFactors = it.sentence.charge.chargeAggravatingFactors
+                  .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
               )
             }.sortedBy { it.offenceStartDate },
           )
