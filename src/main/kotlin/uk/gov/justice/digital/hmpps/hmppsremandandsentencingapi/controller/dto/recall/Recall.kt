@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.P
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
@@ -77,15 +76,7 @@ data class Recall(
                 sentenceTypeDescription = it.sentence.sentenceType?.description,
                 consecutiveToSentenceUuid = it.sentence.consecutiveTo?.sentenceUuid,
                 aggravatingFactors = it.sentence.charge.chargeAggravatingFactors
-                  .filter { af -> af.aggravatingFactor.status == AggravatingFactorStatus.ACTIVE }
-                  .map { af ->
-                    AggravatingFactor(
-                      code = af.aggravatingFactor.code,
-                      title = af.aggravatingFactor.title,
-                      description = af.aggravatingFactor.description,
-                      displayOrder = af.aggravatingFactor.displayOrder,
-                    )
-                  },
+                  .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
               )
             }.sortedBy { it.offenceStartDate },
           )

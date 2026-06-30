@@ -609,15 +609,8 @@ class RecallService(
               sentenceLegacyData = sentence.legacyData,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
               aggravatingFactors = sentence.charge.chargeAggravatingFactors
-                .map { AggravatingFactor.from(it.aggravatingFactor) },
-              isRecallable =
-              if (sentence.charge.chargeAggravatingFactors.isEmpty()) {
-                sentence.sentenceType?.isRecallable ?: true
-              } else {
-                sentence.charge.chargeAggravatingFactors
-                  .map { it.aggravatingFactor.code }
-                  .none { it == "EXCLUDE_FROM_RECALL" }
-              },
+                .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
+              isRecallable = sentence.sentenceType?.isRecallable ?: true,
               sentenceDate = sentenceAppearance.appearanceDate,
               consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
               createdAt = sentence.legacyData?.postedDate
