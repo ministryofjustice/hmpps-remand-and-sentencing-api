@@ -6,6 +6,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
@@ -124,6 +125,41 @@ class LegacyUpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(videoLinkType.appearanceTypeUuid.toString())
 
     Assertions.assertThat(nextCourtAppearanceRepository.count()).isEqualTo(1)
+  }
+
+  @Test
+  fun `update future dated appearance the day after appearance date with no change keeps court appearance future`() {
+    val (_, legacyCourtAppearance) = createLegacyCourtAppearance()
+    val futureCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = legacyCourtAppearance.courtCaseUuid, appearanceDate = legacyCourtAppearance.legacyData.nextEventDateTime!!.toLocalDate(), legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = null))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-appearance")
+      .bodyValue(futureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated.returnResult(LegacyCourtAppearanceCreatedResponse::class.java)
+      .responseBody.blockFirst()!!
+    var futureCourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(response.lifetimeUuid)!!
+    futureCourtAppearanceEntity.appearanceDate = LocalDate.now().minusDays(1)
+    courtAppearanceRepository.save(futureCourtAppearanceEntity)
+    val editedFutureCourtAppearance = futureCourtAppearance.copy(appearanceDate = futureCourtAppearanceEntity.appearanceDate)
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${response.lifetimeUuid}")
+      .bodyValue(editedFutureCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    futureCourtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(response.lifetimeUuid)!!
+    Assertions.assertThat(futureCourtAppearanceEntity.statusId).isEqualTo(CourtAppearanceEntityStatus.FUTURE)
   }
 
   @Test

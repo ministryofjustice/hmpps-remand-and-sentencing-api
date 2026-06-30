@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCas
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ImmigrationDetentionService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.NextCourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import java.time.LocalDate
 import java.util.*
 
 @Service
@@ -87,7 +88,7 @@ class LegacyCourtAppearanceService(
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val performedByUser = getPerformedByUsername(courtAppearance)
     val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, performedByUser, featuresConfig.appeals.enabled)
-    if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
+    if (!existingCourtAppearance.isSame(updatedCourtAppearance) && !isOvernightRun(existingCourtAppearance, updatedCourtAppearance)) {
       existingCourtAppearance.updateFrom(updatedCourtAppearance)
       courtAppearanceHistoryRepository.save(
         CourtAppearanceHistoryEntity.from(
@@ -106,6 +107,11 @@ class LegacyCourtAppearanceService(
     }
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
   }
+
+  fun isOvernightRun(existingCourtAppearance: CourtAppearanceEntity, updatedCourtAppearance: CourtAppearanceEntity): Boolean = existingCourtAppearance.appearanceDate.isEqual(LocalDate.now().minusDays(1)) &&
+    existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE &&
+    updatedCourtAppearance.statusId == CourtAppearanceEntityStatus.ACTIVE &&
+    existingCourtAppearance.isSameOtherThanStatusId(updatedCourtAppearance)
 
   private fun getPerformedByUsername(courtAppearance: LegacyCreateCourtAppearance): String = courtAppearance.performedByUser ?: serviceUserService.getUsername()
 
