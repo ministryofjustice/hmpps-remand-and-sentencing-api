@@ -143,6 +143,7 @@ import java.util.UUID
         ColumnResult(name = "courtAppearanceStatus", type = CourtAppearanceEntityStatus::class),
         ColumnResult(name = "appearanceChargeStatus", type = ChargeEntityStatus::class),
         ColumnResult(name = "appearanceSentenceStatus", type = SentenceEntityStatus::class),
+        ColumnResult(name = "appearanceSentenceTypeClassification", type = SentenceTypeClassification::class),
       ),
     ),
   ],
