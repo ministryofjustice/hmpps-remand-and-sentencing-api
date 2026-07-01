@@ -1,12 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Charge
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtAppearance
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.CourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.ImmigrationDetention
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.PeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Recall
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata.Sentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Charge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.CourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.CourtCase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.ImmigrationDetention
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.PeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Recall
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Sentence
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -28,8 +28,7 @@ object ExpectedResponseData {
         Charge(
           offenceCode = "RF96124",
           offenceDescription = "Littering",
-          terrorRelated = false,
-          foreignPowerRelated = false,
+          aggravatingFactors = listOf(),
           domesticViolenceRelated = false,
           offenceStartDate = LocalDate.of(2026, 1, 1),
           offenceEndDate = LocalDate.of(2026, 1, 2),
@@ -66,8 +65,7 @@ object ExpectedResponseData {
         Charge(
           offenceCode = "RF96124",
           offenceDescription = "Littering",
-          terrorRelated = false,
-          foreignPowerRelated = false,
+          aggravatingFactors = listOf(),
           domesticViolenceRelated = false,
           offenceStartDate = LocalDate.of(2026, 1, 1),
           offenceEndDate = LocalDate.of(2026, 1, 2),
@@ -100,8 +98,7 @@ object ExpectedResponseData {
         Charge(
           offenceCode = "RF96124",
           offenceDescription = "Littering",
-          terrorRelated = false,
-          foreignPowerRelated = false,
+          aggravatingFactors = listOf(),
           domesticViolenceRelated = false,
           offenceStartDate = LocalDate.of(2026, 1, 1),
           offenceEndDate = LocalDate.of(2026, 1, 2),

@@ -1,27 +1,29 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import tools.jackson.databind.annotation.JsonSerialize
 import tools.jackson.databind.ser.jdk.StringSerializer
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.BooleanNullSerializer
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.BooleanSerializer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.LocalDateNullSerializer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
 import java.time.LocalDate
 
-data class CourtAppearance(
+data class Charge(
+  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
+  val offenceCode: String?,
+  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
+  val offenceDescription: String?,
+  @param:JsonSerialize(using = BooleanSerializer::class, nullsUsing = BooleanNullSerializer::class)
+  val domesticViolenceRelated: Boolean?,
+  val aggravatingFactors: List<String>? = listOf(),
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
-  val appearanceDate: LocalDate?,
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val appearanceOutcomeName: String?,
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val warrantType: String?,
+  val offenceStartDate: LocalDate?,
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
-  val convictionDate: LocalDate?,
-  @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-  @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
-  val nextAppearanceDate: LocalDate?,
+  val offenceEndDate: LocalDate?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val criminalAppealOffenceReference: String?,
-  val charges: List<Charge>?,
+  val chargeOutcome: String?,
+  val liveSentence: Sentence?,
 )

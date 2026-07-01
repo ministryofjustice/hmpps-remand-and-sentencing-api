@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import tools.jackson.databind.annotation.JsonSerialize
@@ -7,16 +7,21 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
 import java.time.LocalDate
 
-data class ImmigrationDetention(
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val immigrationDetentionRecordType: String?,
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val homeOfficeReferenceNumber: String?,
+data class CourtAppearance(
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
-  val recordDate: LocalDate?,
+  val appearanceDate: LocalDate?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val noLongerOfInterestReason: String?,
+  val appearanceOutcomeName: String?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val noLongerOfInterestComment: String?,
+  val warrantType: String?,
+  @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+  @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
+  val convictionDate: LocalDate?,
+  @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+  @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
+  val nextAppearanceDate: LocalDate?,
+  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
+  val criminalAppealOffenceReference: String?,
+  val charges: List<Charge>?,
 )

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
-import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -48,7 +47,7 @@ class CourtAppearanceSarEntity(
   var criminalAppealOfficeReference: String?,
   @Column
   var overallConvictionDate: LocalDate?,
-  @OneToMany(mappedBy = "appearance", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "appearance")
   var appearanceCharges: MutableSet<AppearanceChargeSarEntity> = mutableSetOf(),
   @Suppress("JpaDataSourceORMInspection")
   @ManyToOne

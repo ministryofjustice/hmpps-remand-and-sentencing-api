@@ -1,11 +1,19 @@
 {
   "AggravatingFactorEntity": {
     "code": "String",
-    "title": "String",
     "description": "String",
+    "displayOrder": "int",
     "id": "int",
     "status": "AggravatingFactorStatus",
-    "displayOrder": "int"
+    "title": "String"
+  },
+  "AggravatingFactorSarEntity": {
+    "code": "String",
+    "description": "String",
+    "displayOrder": "int",
+    "id": "int",
+    "status": "String",
+    "title": "String"
   },
   "AppearanceChargeEntity": {
     "appearance": "CourtAppearanceEntity",
@@ -63,6 +71,11 @@
     "aggravatingFactor": "AggravatingFactorEntity",
     "charge": "ChargeEntity",
     "id": "ChargeAggravatingFactorId"
+  },
+  "ChargeAggravatingFactorSarEntity": {
+    "aggravatingFactor": "AggravatingFactorSarEntity",
+    "charge": "ChargeSarEntity",
+    "id": "ChargeAggravatingFactorSarId"
   },
   "ChargeEntity": {
     "appearanceCharges": "Set",
@@ -129,17 +142,16 @@
     "outcomeType": "String"
   },
   "ChargeSarEntity": {
+    "chargeAggravatingFactors": "Set",
     "chargeOutcome": "ChargeOutcomeSarEntity",
     "domesticViolenceRelated": "Boolean",
-    "foreignPowerRelated": "Boolean",
     "id": "int",
     "legacyData": "ChargeLegacyDataSar",
     "offenceCode": "String",
     "offenceEndDate": "LocalDate",
     "offenceStartDate": "LocalDate",
     "sentences": "Set",
-    "statusId": "String",
-    "terrorRelated": "Boolean"
+    "statusId": "String"
   },
   "CourtAppearanceEntity": {
     "appearanceCharges": "Set",
