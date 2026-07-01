@@ -42,7 +42,5 @@ To regenerate the latest view of the Entity Model Schema for comparison see [Sar
 
 #### SAR API Response
 
-Likewise, to regenerate the latest version of the api / html for review see
+Likewise, to regenerate the latest version of the api / html for review see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarIntegrationTests.kt)
 
-- Unsynced Data Version [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarIntegrationTests.kt)
-- Full Data Version [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/alldata/SarIntegrationTests.kt)

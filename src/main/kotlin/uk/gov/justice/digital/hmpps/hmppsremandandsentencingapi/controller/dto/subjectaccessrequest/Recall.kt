@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import tools.jackson.databind.annotation.JsonSerialize
@@ -9,25 +9,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
 import java.time.LocalDate
 
-data class Charge(
+data class Recall(
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val offenceCode: String?,
-  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val offenceDescription: String?,
-  @param:JsonSerialize(using = BooleanSerializer::class, nullsUsing = BooleanNullSerializer::class)
-  val terrorRelated: Boolean?,
-  @param:JsonSerialize(using = BooleanSerializer::class, nullsUsing = BooleanNullSerializer::class)
-  val foreignPowerRelated: Boolean?,
-  @param:JsonSerialize(using = BooleanSerializer::class, nullsUsing = BooleanNullSerializer::class)
-  val domesticViolenceRelated: Boolean?,
-
+  val recallType: String?,
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
-  val offenceStartDate: LocalDate?,
+  val revocationDate: LocalDate?,
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)
-  val offenceEndDate: LocalDate?,
+  val returnToCustodyDate: LocalDate?,
+  @param:JsonSerialize(using = BooleanSerializer::class, nullsUsing = BooleanNullSerializer::class)
+  val inPrisonOnRevocationDate: Boolean?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
-  val chargeOutcome: String?,
-  val liveSentence: Sentence?,
+  val recallSentenceStatus: String?,
 )

@@ -24,8 +24,6 @@ import java.time.LocalDate
   ,offence_code
   ,offence_start_date
   ,offence_end_date
-  ,terror_related
-  ,foreign_power_related
   ,domestic_violence_related
   ,legacy_data
   ,status_id
@@ -42,11 +40,11 @@ class ChargeSarEntity(
   var chargeOutcome: ChargeOutcomeSarEntity?,
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceSarEntity> = mutableSetOf(),
+  @OneToMany(mappedBy = "charge")
+  var chargeAggravatingFactors: MutableSet<ChargeAggravatingFactorSarEntity> = mutableSetOf(),
   var offenceCode: String,
   var offenceStartDate: LocalDate?,
   var offenceEndDate: LocalDate?,
-  var terrorRelated: Boolean?,
-  var foreignPowerRelated: Boolean?,
   var domesticViolenceRelated: Boolean?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: ChargeLegacyDataSar? = null,
