@@ -98,13 +98,9 @@
             <tr><td>Offence Dates</td><td>{{ optionalValue (formatDate offenceStartDate) }} to {{ optionalValue (formatDate offenceEndDate) }}</td></tr>
             <tr><td>Charge Outcome</td><td>{{ optionalValue chargeOutcome }}</td></tr>
             <tr><td>Domestic Violence Related</td><td>{{ optionalValue domesticViolenceRelated }}</td></tr>
-            <tr><td>Aggravating Factors</td>
-                {{#aggravatingFactors}}
-                    <td>{{.}}<br/></td>
-                {{/aggravatingFactors}}
-                {{^aggravatingFactors}}
-                    <td>No Aggravating Factors</td>
-                {{/aggravatingFactors}}
+            <tr>
+                <td>Aggravating Factors</td>
+                <td>{{#aggravatingFactors}}{{.}}<br/>{{/aggravatingFactors}}{{^aggravatingFactors}}No Aggravating Factors Held{{/aggravatingFactors}}</td>
             </tr>
         </table>
         {{#liveSentence}}
