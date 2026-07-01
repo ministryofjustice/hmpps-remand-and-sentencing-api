@@ -48,4 +48,16 @@ class CourtDataIngestionApiMockServer : WireMockServer(WIREMOCK_PORT) {
           .withStatus(200),
       ),
   )
+
+  fun stubCourtHearingsByPrisoner(prisonerId: String, courtHearings: List<HmctsCourHearing>): StubMapping = stubFor(
+    get("/court-hearings/prisoner/$prisonerId")
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            TestUtil.objectMapper().writeValueAsString(courtHearings),
+          )
+          .withStatus(200),
+      ),
+  )
 }

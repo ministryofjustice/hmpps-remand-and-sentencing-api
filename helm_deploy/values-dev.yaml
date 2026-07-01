@@ -23,6 +23,7 @@ generic-service:
     HMPPS_SAR_TEMPLATE_PATH: /templates/template_remand-and-sentencing-api.mustache
     HMPPS_SAR_TEMPLATE_ENABLED: "true"
     COURT-DATA-INGESTION_API_URL: "https://court-data-ingestion-api-dev.hmpps.service.justice.gov.uk"
+    FEATURES_HMCTS_WARRANT_THING_TO_DO_ENABLED: "true"
 
   resources:
     requests:

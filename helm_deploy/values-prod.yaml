@@ -16,6 +16,7 @@ generic-service:
     ENVIRONMENT_NAME: PROD
     COURT-DATA-INGESTION_API_URL: "https://court-data-ingestion-api.hmpps.service.justice.gov.uk"
     FEATURES_APPEALS_ENABLED: "true"
+    FEATURES_HMCTS_WARRANT_THING_TO_DO_ENABLED: "false"
 
   resources:
     requests:

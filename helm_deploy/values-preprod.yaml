@@ -17,6 +17,7 @@ generic-service:
     ENVIRONMENT_NAME: PREPROD
     FEATURES_APPEALS_ENABLED: "true"
     COURT-DATA-INGESTION_API_URL: "https://court-data-ingestion-api-preprod.hmpps.service.justice.gov.uk"
+    FEATURES_HMCTS_WARRANT_THING_TO_DO_ENABLED: "true"
 
   allowlist:
     penetration-test-ip-1: 54.37.241.156/30
