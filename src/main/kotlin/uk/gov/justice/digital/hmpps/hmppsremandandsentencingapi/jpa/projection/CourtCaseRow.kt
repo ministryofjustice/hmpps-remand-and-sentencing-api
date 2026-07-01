@@ -109,4 +109,5 @@ data class CourtCaseRow(
   var courtAppearanceStatus: CourtAppearanceEntityStatus?,
   var appearanceChargeStatus: ChargeEntityStatus?,
   var appearanceSentenceStatus: SentenceEntityStatus?,
+  var appearanceSentenceTypeClassification: SentenceTypeClassification?,
 )

@@ -7,10 +7,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.stream.LongStream
 
@@ -175,10 +177,14 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(recalledCourtCaseUuid)
       .jsonPath("$.content.[0].canAppeal")
       .isEqualTo(false)
+      .jsonPath("$.content.[0].canBreach")
+      .isEqualTo(false)
       .jsonPath("$.content.[1].courtCaseUuid")
       .isEqualTo(courtCaseUuid)
       .jsonPath("$.content.[1].canAppeal")
       .isEqualTo(true)
+      .jsonPath("$.content.[1].canBreach")
+      .isEqualTo(false)
   }
 
   @Test
@@ -313,6 +319,35 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
     val messages = getMessages(3)
     Assertions.assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder("sentence.fix-single-charge.inserted", "sentence.updated", "sentence.period-length.inserted")
     Assertions.assertThat(messages).extracting<String> { it.personReference.identifiers.first().value }.containsOnly(courtCases.prisonerId)
+  }
+
+  @Test
+  fun `can breach when there is a DTO sentence on the court case`() {
+    val dtoSentence = DpsDataCreator.dpsCreateSentence(
+      sentenceTypeId = UUID.fromString("903ca33b-e264-4a16-883d-fee03a2a3396"),
+      periodLengths = listOf(
+        DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.TERM_LENGTH),
+      ),
+    )
+    val dtoCharge = DpsDataCreator.dpsCreateCharge(outcomeUuid = UUID.fromString("0460ad51-04ea-402a-a249-b152b052a385"), sentence = dtoSentence)
+    val dtoAppearance = dpsCreateCourtAppearance(outcomeUuid = UUID.fromString("bcc438da-b3b4-4ca8-a870-9d17543e4317"), charges = listOf(dtoCharge))
+    val (_, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dtoAppearance)))
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", createdCourtCase.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].canBreach")
+      .isEqualTo(true)
   }
 
   @Test

@@ -128,7 +128,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         minca.warrant_type as minCourtAppearanceWarrantType,
         ca.status_id as courtAppearanceStatus,
         c2.status_id as appearanceChargeStatus,
-        s2.status_id as appearanceSentenceStatus
+        s2.status_id as appearanceSentenceStatus,
+        st2.classification as appearanceSentenceTypeClassification
       from court_case cc
       join (select cc1.id, count(ca1.id) as appearance_count, string_agg(ca1.court_case_reference, ',') as case_references, min(ca1.appearance_date) as first_day_in_custody 
         from court_case cc1
@@ -165,6 +166,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
       left join charge c2 on c2.id = ac2.charge_id
       left join sentence s2 on s2.charge_id = c2.id
       left join recall_sentence rs2 on rs2.sentence_id = s2.id
+      left join sentence_type st2 on s2.sentence_type_id = st2.id
       left join court_case mtcc on mtcc.id = cc.merged_to_case_id
       left join court_appearance lmtca on mtcc.latest_court_appearance_id = lmtca.id
       left join court_appearance fca on fca.id = nlca.future_skeleton_appearance_id
