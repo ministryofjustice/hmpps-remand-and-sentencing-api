@@ -17,7 +17,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-class HmctsCourtDataControllerIntTest : IntegrationTestBase() {
+class HmctsCourtDataTest : IntegrationTestBase() {
 
   @Test
   fun `Test get appearance from hmcts data`() {

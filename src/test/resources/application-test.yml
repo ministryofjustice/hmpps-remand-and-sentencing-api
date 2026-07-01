@@ -79,3 +79,5 @@ springdoc:
 features:
   appeals:
     enabled: false
+  hmctsWarrantThingToDo:
+    enabled: true
