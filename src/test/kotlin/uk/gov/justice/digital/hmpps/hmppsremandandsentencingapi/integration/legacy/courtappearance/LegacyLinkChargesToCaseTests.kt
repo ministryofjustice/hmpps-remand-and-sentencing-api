@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -172,7 +173,23 @@ class LegacyLinkChargesToCaseTests : IntegrationTestBase() {
 
   @Test
   fun `should preserve aggravating factors when linking a charge to a source case`() {
-    val dpsCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true, sentence = null)
+    val dpsCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+        AggravatingFactor(
+          "OAFPC",
+          "Offence Aggravated by Foreign Power Connection",
+          description = "Offence Aggravated by Foreign Power Connection",
+          displayOrder = 10,
+        ),
+      ),
+      sentence = null,
+    )
     val sourceAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
     val (sourceCourtCaseUuid, _) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sourceAppearance)))
 

@@ -452,44 +452,60 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `should create a charge with terrorRelated true adds OATC (Terror Related) aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge()
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
-    assertThat(createCharge.terrorRelated ?: false).isTrue()
-    assertThat(createCharge.foreignPowerRelated ?: false).isFalse()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
 
   @Test
   fun `should create a charge with foreignPowerRelated true adds OAFPC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = true)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OAFPC",
+          "Offence Aggravated by Foreign Power Connection",
+          description = "Offence Aggravated by Foreign Power Connection",
+          displayOrder = 10,
+        ),
+      ),
+    )
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
-    assertThat(createCharge.terrorRelated ?: false).isFalse()
-    assertThat(createCharge.foreignPowerRelated ?: false).isTrue()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
   }
 
   @Test
   fun `should create a charge with both terrorRelated and foreignPowerRelated true adds both aggravating factors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+        AggravatingFactor(
+          "OAFPC",
+          "Offence Aggravated by Foreign Power Connection",
+          description = "Offence Aggravated by Foreign Power Connection",
+          displayOrder = 10,
+        ),
+      ),
+    )
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
-    assertThat(createCharge.terrorRelated ?: false).isTrue()
-    assertThat(createCharge.foreignPowerRelated ?: false).isTrue()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
   }
 
   @Test
   fun `should create a charge with neither flag set adds no aggravating factors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge()
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
-    assertThat(createCharge.terrorRelated ?: false).isFalse()
-    assertThat(createCharge.foreignPowerRelated ?: false).isFalse()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
@@ -497,8 +513,6 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `should create charge when when multiple aggravating factors are added which are neither terror related nor foreign power related`() {
     val charge = DpsDataCreator.dpsCreateCharge(
-      terrorRelated = null,
-      foreignPowerRelated = null,
       aggravatingFactors = listOf(
         AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
       ),

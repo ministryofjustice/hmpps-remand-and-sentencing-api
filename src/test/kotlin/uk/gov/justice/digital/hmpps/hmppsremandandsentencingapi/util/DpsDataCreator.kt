@@ -146,7 +146,7 @@ class DpsDataCreator {
       replacedChargeUuid: UUID? = null,
       createChargeOrder: Int? = null,
     ): CreateCharge = dpsCreateCharge(
-      appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, null, null, null, null, legacyData, prisonId, replacedChargeUuid, createChargeOrder,
+      appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, null, null, legacyData, prisonId, replacedChargeUuid, createChargeOrder,
     )
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
@@ -155,8 +155,6 @@ class DpsDataCreator {
       offenceStartDate: LocalDate = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
       outcomeUuid: UUID? = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
-      terrorRelated: Boolean? = true,
-      foreignPowerRelated: Boolean? = null,
       domesticViolenceRelated: Boolean? = null,
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
@@ -171,8 +169,6 @@ class DpsDataCreator {
       offenceStartDate,
       offenceEndDate,
       outcomeUuid,
-      terrorRelated,
-      foreignPowerRelated,
       domesticViolenceRelated,
       sentence,
       legacyData,
