@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
@@ -607,6 +608,8 @@ class RecallService(
               sentenceServeType = sentence.sentenceServeType,
               sentenceLegacyData = sentence.legacyData,
               outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
+              aggravatingFactors = sentence.charge.chargeAggravatingFactors
+                .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
               isRecallable = sentence.sentenceType?.isRecallable ?: true,
               sentenceDate = sentenceAppearance.appearanceDate,
               consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,

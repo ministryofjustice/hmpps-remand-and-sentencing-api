@@ -61,10 +61,9 @@ class PrisonerMergeDataCreator {
       eventId: Long = 1,
       courtCode: String = "COURT1",
       appearanceDate: LocalDate = LocalDate.now(),
-      appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       legacyData: CourtAppearanceLegacyData = courtAppearanceLegacyData(),
       charges: List<MergeCreateCharge> = listOf(mergeCreateCharge()),
-    ): MergeCreateCourtAppearance = MergeCreateCourtAppearance(eventId, courtCode, appearanceDate, appearanceTypeUuid, legacyData, charges)
+    ): MergeCreateCourtAppearance = MergeCreateCourtAppearance(eventId, courtCode, appearanceDate, legacyData, charges)
 
     fun mergeCreateCharge(
       chargeNOMISId: Long = 5453,

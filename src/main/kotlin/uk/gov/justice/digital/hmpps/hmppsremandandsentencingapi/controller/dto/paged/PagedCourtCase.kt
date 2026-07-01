@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import java.time.LocalDate
@@ -23,6 +24,7 @@ data class PagedCourtCase(
   val mergedToCase: PagedMergedToCase?,
   val firstDayInCustodyWarrantType: String,
   val canAppeal: Boolean,
+  val canBreach: Boolean,
 ) {
   companion object {
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
@@ -31,12 +33,19 @@ data class PagedCourtCase(
       val latestAppearanceCharges = courtCaseRows.filter { it.chargeId != null && it.chargeStatus != ChargeEntityStatus.DELETED }.groupBy { it.chargeId!! }
       val mergedFromCases = courtCaseRows.filter { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }.groupBy { it.mergedFromCaseId!! }
       val mergedToCase = courtCaseRows.firstOrNull { it.mergedToCaseId != null && it.mergedToAppearanceId != null }
-      val canAppeal = courtCaseRows.all { it.recallInAppearanceId == null } &&
+      val noRecalls = courtCaseRows.all { it.recallInAppearanceId == null }
+      val canAppeal = noRecalls &&
         courtCaseRows.any {
           it.courtCaseStatus == CourtCaseEntityStatus.ACTIVE &&
             it.courtAppearanceStatus == CourtAppearanceEntityStatus.ACTIVE &&
             it.appearanceChargeStatus == ChargeEntityStatus.ACTIVE &&
             it.appearanceSentenceStatus == SentenceEntityStatus.ACTIVE
+        }
+      val canBreach = noRecalls &&
+        courtCaseRows.any {
+          it.courtAppearanceStatus == CourtAppearanceEntityStatus.ACTIVE &&
+            it.appearanceChargeStatus == ChargeEntityStatus.ACTIVE &&
+            it.appearanceSentenceTypeClassification == SentenceTypeClassification.DTO
         }
       return PagedCourtCase(
         firstCourtCase.prisonerId,
@@ -56,6 +65,7 @@ data class PagedCourtCase(
         mergedToCase?.let { PagedMergedToCase.from(it) },
         firstCourtCase.minCourtAppearanceWarrantType,
         canAppeal,
+        canBreach,
       )
     }
   }

@@ -47,11 +47,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.repository.AppearanceChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi.documentMetadataRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.OAuthExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceSubtypeRepository
@@ -96,7 +98,14 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Sql("classpath:test_data/reset-database.sql")
-@ExtendWith(OAuthExtension::class, PrisonApiExtension::class, DocumentManagementApiExtension::class, AdjustmentsApiExtension::class, CourtRegisterApiExtension::class)
+@ExtendWith(
+  OAuthExtension::class,
+  PrisonApiExtension::class,
+  DocumentManagementApiExtension::class,
+  AdjustmentsApiExtension::class,
+  CourtRegisterApiExtension::class,
+  CourtDataIngestionApiExtension::class,
+)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
@@ -185,6 +194,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var courtAppearanceSubtypeRepository: CourtAppearanceSubtypeRepository
+
+  @Autowired
+  protected lateinit var appearanceTypeRepository: AppearanceTypeRepository
 
   @MockitoSpyBean
   protected lateinit var telemetryClient: TelemetryClient

@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.dao.OptimisticLockingFailureException
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -13,12 +12,10 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.AppearanceChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtAppearanceHistoryEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ImmigrationDetentionHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
@@ -33,17 +30,16 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.CourtAppearanceUtils
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ImmigrationDetentionService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.NextCourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionEntityUpdater
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZonedDateTime
+import java.time.LocalDate
 import java.util.*
 
 @Service
@@ -53,14 +49,15 @@ class LegacyCourtAppearanceService(
   private val appearanceOutcomeRepository: AppearanceOutcomeRepository,
   private val serviceUserService: ServiceUserService,
   private val chargeRepository: ChargeRepository,
-  private val legacyAppearanceTypeService: LegacyAppearanceTypeService,
   private val nextCourtAppearanceRepository: NextCourtAppearanceRepository,
   private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository,
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val appearanceChargeHistoryRepository: AppearanceChargeHistoryRepository,
   private val immigrationDetentionRepository: ImmigrationDetentionRepository,
   private val immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository,
-  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+  private val courtCaseService: CourtCaseService,
+  private val immigrationDetentionService: ImmigrationDetentionService,
+  private val nextCourtAppearanceService: NextCourtAppearanceService,
   private val featuresConfig: FeaturesConfig,
 ) {
 
@@ -77,9 +74,10 @@ class LegacyCourtAppearanceService(
         ChangeSource.NOMIS,
       ),
     )
-    courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCase.appearances + createdCourtAppearance)
-    handleUpdatingLatestCourtAppearanceInCourtCase(courtCase, createdCourtAppearance, getPerformedByUsername(courtAppearance))
-    handleMatchingNextCourtAppearance(createdCourtAppearance, courtAppearance)
+    courtCaseService.handleUpdatingLatestCourtAppearanceInCourtCase(courtCase, createdCourtAppearance, getPerformedByUsername(courtAppearance))
+    nextCourtAppearanceService.handleNextCourtAppearance(createdCourtAppearance, courtAppearance.legacyData.nomisAppearanceTypeCode, getPerformedByUsername(courtAppearance), courtAppearance.getAppearanceDateTime()) {
+      NextCourtAppearanceEntity.from(courtAppearance, createdCourtAppearance, it)
+    }
     return LegacyCourtAppearanceCreatedResponse(createdCourtAppearance.appearanceUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
   }
 
@@ -90,7 +88,7 @@ class LegacyCourtAppearanceService(
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val performedByUser = getPerformedByUsername(courtAppearance)
     val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, performedByUser, featuresConfig.appeals.enabled)
-    if (!existingCourtAppearance.isSame(updatedCourtAppearance)) {
+    if (!existingCourtAppearance.isSame(updatedCourtAppearance) && !isOvernightRun(existingCourtAppearance, updatedCourtAppearance)) {
       existingCourtAppearance.updateFrom(updatedCourtAppearance)
       courtAppearanceHistoryRepository.save(
         CourtAppearanceHistoryEntity.from(
@@ -98,79 +96,24 @@ class LegacyCourtAppearanceService(
           ChangeSource.NOMIS,
         ),
       )
-      handleUpdatingLatestCourtAppearanceInCourtCase(existingCourtAppearance.courtCase, existingCourtAppearance, performedByUser)
+      courtCaseService.handleUpdatingLatestCourtAppearanceInCourtCase(existingCourtAppearance.courtCase, existingCourtAppearance, performedByUser)
       entityChangeStatus = EntityChangeStatus.EDITED
     }
-    handleNextCourtAppearance(existingCourtAppearance, courtAppearance)
-    handleImmigrationDetention(existingCourtAppearance, courtAppearance, performedByUser)
+    nextCourtAppearanceService.handleNextCourtAppearance(existingCourtAppearance, courtAppearance.legacyData.nomisAppearanceTypeCode, getPerformedByUsername(courtAppearance), courtAppearance.getAppearanceDateTime()) {
+      NextCourtAppearanceEntity.from(courtAppearance, existingCourtAppearance, it)
+    }
+    immigrationDetentionService.handleImmigrationDetention(existingCourtAppearance, performedByUser) {
+      it.copyFrom(existingCourtAppearance, courtAppearance, performedByUser)
+    }
     return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
   }
 
-  private fun handleUpdatingLatestCourtAppearanceInCourtCase(courtCase: CourtCaseEntity, courtAppearance: CourtAppearanceEntity, performedByUser: String) {
-    val existingLatestCourtAppearance = courtCase.latestCourtAppearance
-    val newLatestCourAppearance = CourtAppearanceEntity.getLatestCourtAppearance(courtCase.appearances + courtAppearance)
-    if (existingLatestCourtAppearance?.id != newLatestCourAppearance?.id) {
-      courtCase.latestCourtAppearance = newLatestCourAppearance
-      courtCase.updatedAt = ZonedDateTime.now()
-      courtCase.updatedBy = performedByUser
-      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.NOMIS))
-    }
-  }
-
-  private fun handleNextCourtAppearance(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance) {
-    nextCourtAppearanceRepository.findFirstByFutureSkeletonAppearance(courtAppearance)?.let { existingNextCourtAppearance ->
-      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(updateRequest.legacyData.nomisAppearanceTypeCode, updateRequest.appearanceTypeUuid)
-      val toUpdate = NextCourtAppearanceEntity.from(updateRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype)
-      existingNextCourtAppearance.updateFrom(toUpdate)
-    } ?: handleMatchingNextCourtAppearance(courtAppearance, updateRequest)
-  }
-
-  private fun handleImmigrationDetention(courtAppearance: CourtAppearanceEntity, updateRequest: LegacyCreateCourtAppearance, performedByUser: String) {
-    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(courtAppearance.appearanceUuid).forEach { immigrationDetentionEntity ->
-      if (courtAppearance.appearanceOutcome?.outcomeType == "IMMIGRATION") {
-        val updatedImmigrationDetentionRecord = immigrationDetentionEntity.copyFrom(courtAppearance, updateRequest, performedByUser)
-        if (!immigrationDetentionEntity.isSame(updatedImmigrationDetentionRecord)) {
-          ImmigrationDetentionEntityUpdater.update(immigrationDetentionEntity, updatedImmigrationDetentionRecord)
-          immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
-        }
-      } else {
-        immigrationDetentionEntity.delete(performedByUser)
-        immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
-      }
-    }
-  }
-
-  private fun handleMatchingNextCourtAppearance(courtAppearance: CourtAppearanceEntity, legacyRequest: LegacyCreateCourtAppearance) {
-    courtAppearance.takeIf { it.statusId == CourtAppearanceEntityStatus.FUTURE }?.let { getMatchedNextCourtAppearanceOrLatest(it.courtCase, legacyRequest.appearanceDate.atTime(legacyRequest.legacyData.appearanceTime ?: LocalTime.of(10, 0)), courtAppearance.id) }?.let { matchedCourtAppearance ->
-      val appearanceTypeCourtAppearanceSubtype = legacyAppearanceTypeService.getAppearanceType(legacyRequest.legacyData.nomisAppearanceTypeCode, legacyRequest.appearanceTypeUuid)
-      matchedCourtAppearance.nextCourtAppearance?.let { matchedNextCourtAppearance ->
-        val toUpdate = NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype)
-        matchedNextCourtAppearance.updateFrom(toUpdate)
-      } ?: NextCourtAppearanceEntity.from(legacyRequest, courtAppearance, appearanceTypeCourtAppearanceSubtype).let { toCreateNextCourtAppearance ->
-        val savedNextCourtAppearance = nextCourtAppearanceRepository.save(toCreateNextCourtAppearance)
-        courtAppearanceRepository.updateNextCourtAppearance(
-          savedNextCourtAppearance,
-          getPerformedByUsername(legacyRequest),
-          ZonedDateTime.now(),
-          matchedCourtAppearance,
-        )
-        courtAppearanceHistoryRepository.save(
-          CourtAppearanceHistoryEntity.from(
-            courtAppearanceRepository.findByIdOrNull(matchedCourtAppearance.id)!!,
-            ChangeSource.NOMIS,
-          ),
-        )
-      }
-    }
-  }
+  fun isOvernightRun(existingCourtAppearance: CourtAppearanceEntity, updatedCourtAppearance: CourtAppearanceEntity): Boolean = existingCourtAppearance.appearanceDate.isEqual(LocalDate.now().minusDays(1)) &&
+    existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE &&
+    updatedCourtAppearance.statusId == CourtAppearanceEntityStatus.ACTIVE &&
+    existingCourtAppearance.isSameOtherThanStatusId(updatedCourtAppearance)
 
   private fun getPerformedByUsername(courtAppearance: LegacyCreateCourtAppearance): String = courtAppearance.performedByUser ?: serviceUserService.getUsername()
-
-  private fun getMatchedNextCourtAppearanceOrLatest(courtCase: CourtCaseEntity, appearanceDateTime: LocalDateTime, courtAppearanceId: Int): CourtAppearanceEntity? = courtAppearanceRepository.findByNextEventDateTime(courtCase.id, appearanceDateTime) ?: courtAppearanceRepository.findFirstByCourtCaseAndStatusIdInAndIdNotOrderByAppearanceDateDesc(
-    courtCase,
-    listOf(CourtAppearanceEntityStatus.ACTIVE, CourtAppearanceEntityStatus.FUTURE),
-    courtAppearanceId,
-  )
 
   @Transactional
   fun get(lifetimeUuid: UUID): LegacyCourtAppearance {
@@ -227,7 +170,7 @@ class LegacyCourtAppearanceService(
       appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
       true
     }
-    handleUpdatingLatestCourtAppearanceInCourtCase(existingCourtAppearance.courtCase, existingCourtAppearance, performedByUsername)
+    courtCaseService.handleUpdatingLatestCourtAppearanceInCourtCase(existingCourtAppearance.courtCase, existingCourtAppearance, performedByUsername)
     nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(existingCourtAppearance)
     eventsToEmit.add(
       EventMetadataCreator.courtAppearanceEventMetadata(
