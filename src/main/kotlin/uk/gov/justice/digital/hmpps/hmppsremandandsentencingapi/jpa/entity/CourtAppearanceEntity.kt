@@ -20,6 +20,7 @@ import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
@@ -103,13 +104,15 @@ class CourtAppearanceEntity(
   @JoinColumn(name = "appearance_id")
   var periodLengths: MutableSet<PeriodLengthEntity> = mutableSetOf()
 
-  fun isSame(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
+  fun isSame(other: CourtAppearanceEntity): Boolean = isSameOtherThanStatusId(other) &&
+    this.statusId == other.statusId
+
+  fun isSameOtherThanStatusId(other: CourtAppearanceEntity): Boolean = this.appearanceOutcome == other.appearanceOutcome &&
     this.courtCase == other.courtCase &&
     this.courtCode == other.courtCode &&
     this.courtCaseReference == other.courtCaseReference &&
     this.criminalAppealOfficeReference == other.criminalAppealOfficeReference &&
     this.appearanceDate.isEqual(other.appearanceDate) &&
-    this.statusId == other.statusId &&
     this.warrantType == other.warrantType &&
     this.overallConvictionDate == other.overallConvictionDate &&
     ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
@@ -142,6 +145,39 @@ class CourtAppearanceEntity(
       nextCourtAppearance,
       overallConvictionDate,
       courtAppearance.legacyData,
+      documents.toMutableSet(),
+      source = source,
+    )
+    courtAppearance.periodLengths = periodLengths.toMutableSet()
+    return courtAppearance
+  }
+
+  fun copyFrom(
+    updateCourtAppearanceSchedule: UpdateCourtAppearanceSchedule,
+    performedBy: String,
+  ): CourtAppearanceEntity {
+    val updatedLegacyData = legacyData?.copy(appearanceTime = updateCourtAppearanceSchedule.start.toLocalTime(), comments = updateCourtAppearanceSchedule.comments) ?: CourtAppearanceLegacyData.from(updateCourtAppearanceSchedule)
+    val courtAppearance = CourtAppearanceEntity(
+      0,
+      appearanceUuid,
+      appearanceOutcome,
+      courtCase,
+      updateCourtAppearanceSchedule.courtCode,
+      courtCaseReference,
+      criminalAppealOfficeReference,
+      updateCourtAppearanceSchedule.start.toLocalDate(),
+      getStatus(updateCourtAppearanceSchedule.start.toLocalDate(), updateCourtAppearanceSchedule.start.toLocalTime(), legacyData?.nomisOutcomeCode),
+      createdAt,
+      createdBy,
+      createdPrison,
+      ZonedDateTime.now(),
+      performedBy,
+      updateCourtAppearanceSchedule.prisonCode,
+      warrantType,
+      appearanceCharges.toMutableSet(),
+      nextCourtAppearance,
+      overallConvictionDate,
+      updatedLegacyData,
       documents.toMutableSet(),
       source = source,
     )

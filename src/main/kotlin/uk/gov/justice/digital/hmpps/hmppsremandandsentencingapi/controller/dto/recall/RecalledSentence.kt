@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactors
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import java.time.LocalDate
 import java.util.UUID
@@ -17,5 +17,5 @@ data class RecalledSentence(
   val sentenceServeType: String,
   val sentenceTypeDescription: String?,
   val consecutiveToSentenceUuid: UUID? = null,
-  val aggravatingFactors: AggravatingFactors? = null,
+  val aggravatingFactors: List<AggravatingFactor> = emptyList(),
 )

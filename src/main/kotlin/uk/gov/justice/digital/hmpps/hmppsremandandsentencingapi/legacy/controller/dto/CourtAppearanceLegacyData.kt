@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -22,7 +23,8 @@ data class CourtAppearanceLegacyData(
     appearanceTime == other?.appearanceTime &&
     outcomeDispositionCode == other?.outcomeDispositionCode &&
     outcomeConvictionFlag == other?.outcomeConvictionFlag &&
-    nomisAppearanceTypeCode == other?.nomisAppearanceTypeCode
+    nomisAppearanceTypeCode == other?.nomisAppearanceTypeCode &&
+    comments == other?.comments
 
   fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
     LocalDate.now().format(DateTimeFormatter.ISO_DATE),
@@ -46,6 +48,18 @@ data class CourtAppearanceLegacyData(
       null,
       null,
       null,
+    )
+
+    fun from(updateCourtAppearanceSchedule: UpdateCourtAppearanceSchedule): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
+      LocalDate.now().format(DateTimeFormatter.ISO_DATE),
+      null,
+      null,
+      null,
+      updateCourtAppearanceSchedule.start.toLocalTime(),
+      null,
+      null,
+      updateCourtAppearanceSchedule.reasonCode,
+      updateCourtAppearanceSchedule.comments,
     )
   }
 }

@@ -18,6 +18,7 @@ class PeriodLengthTypeMapper {
     const val NOMIS_IMPRISONMENT_TERM_CODE: String = "IMP"
     const val NOMIS_LICENCE_TERM_CODE: String = "LIC"
     const val NOMIS_SUPERVISION_TERM_CODE: String = "SUP"
+    const val NOMIS_BREACH_OF_SUPERVISION_REQUIREMENTS_CODE = "SEC104"
     val supportedNomisTermCodes: Set<String> = setOf(NOMIS_DETENTION_TERM_CODE, NOMIS_IMPRISONMENT_TERM_CODE, NOMIS_SUPERVISION_TERM_CODE)
 
     fun convertNomisToDps(periodLengthLegacyData: PeriodLengthLegacyData, sentenceCalcType: String): PeriodLengthType {
@@ -27,6 +28,7 @@ class PeriodLengthTypeMapper {
         periodLengthLegacyData.sentenceTermCode == NOMIS_IMPRISONMENT_TERM_CODE && termLengthSentenceCalcTypes.contains(sentenceCalcType) -> PeriodLengthType.TERM_LENGTH
         periodLengthLegacyData.sentenceTermCode == NOMIS_IMPRISONMENT_TERM_CODE && (extendedSentenceCalcTypes + recallExtendedSentenceCalcTypes).contains(sentenceCalcType) -> PeriodLengthType.CUSTODIAL_TERM
         periodLengthLegacyData.sentenceTermCode == NOMIS_LICENCE_TERM_CODE -> PeriodLengthType.LICENCE_PERIOD
+        periodLengthLegacyData.sentenceTermCode == NOMIS_BREACH_OF_SUPERVISION_REQUIREMENTS_CODE -> PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS
         supportedNomisTermCodes.contains(periodLengthLegacyData.sentenceTermCode) -> PeriodLengthType.SENTENCE_LENGTH
         else -> PeriodLengthType.UNSUPPORTED
       }
@@ -43,6 +45,7 @@ class PeriodLengthTypeMapper {
         periodLengthType == PeriodLengthType.LICENCE_PERIOD -> false to NOMIS_LICENCE_TERM_CODE
         periodLengthType == PeriodLengthType.TERM_LENGTH && (sentenceTypeClassification == SentenceTypeClassification.CIVIL || civilSentenceCalcTypes.contains(sentenceCalcType)) -> false to NOMIS_DETENTION_TERM_CODE
         periodLengthType == PeriodLengthType.TERM_LENGTH -> false to NOMIS_IMPRISONMENT_TERM_CODE
+        periodLengthType == PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS -> false to NOMIS_BREACH_OF_SUPERVISION_REQUIREMENTS_CODE
         else -> false to NOMIS_IMPRISONMENT_TERM_CODE
       }
       return lifeSentenceSentenceTermCode

@@ -667,6 +667,8 @@ class CourtAppearanceService(
       eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
     }
 
+    nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(courtAppearanceEntity)
+
     if (courtCaseEntity.appearances.all { it.statusId == CourtAppearanceEntityStatus.DELETED }) {
       courtCaseEntity.latestCourtAppearance = null
       courtCaseEntity.delete(serviceUserService.getUsername())

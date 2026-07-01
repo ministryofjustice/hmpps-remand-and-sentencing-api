@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtAppearance
@@ -98,6 +99,15 @@ class NextCourtAppearanceEntity(
       appearanceDate = nomisAppearance.appearanceDate,
       appearanceTime = nomisAppearance.legacyData.appearanceTime.takeUnless { time -> time == LocalTime.MIDNIGHT },
       courtCode = nomisAppearance.courtCode,
+      appearanceType = appearanceTypeCourtAppearanceSubtype.appearanceType,
+      courtAppearanceSubtype = appearanceTypeCourtAppearanceSubtype.courtAppearanceSubtype,
+      futureSkeletonAppearance = futureAppearance,
+    )
+
+    fun from(updateCourtAppearanceSchedule: UpdateCourtAppearanceSchedule, futureAppearance: CourtAppearanceEntity, appearanceTypeCourtAppearanceSubtype: AppearanceTypeCourtAppearanceSubtype): NextCourtAppearanceEntity = NextCourtAppearanceEntity(
+      appearanceDate = updateCourtAppearanceSchedule.start.toLocalDate(),
+      appearanceTime = updateCourtAppearanceSchedule.start.toLocalTime(),
+      courtCode = updateCourtAppearanceSchedule.courtCode,
       appearanceType = appearanceTypeCourtAppearanceSubtype.appearanceType,
       courtAppearanceSubtype = appearanceTypeCourtAppearanceSubtype.courtAppearanceSubtype,
       futureSkeletonAppearance = futureAppearance,
