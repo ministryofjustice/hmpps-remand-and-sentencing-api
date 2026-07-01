@@ -49,7 +49,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.LocalDate
 import java.util.UUID
@@ -73,8 +72,6 @@ class LegacySentenceServiceTests {
   private val recallHistoryRepository: RecallHistoryRepository = mockk(relaxed = true)
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository = mockk(relaxed = true)
   private val adjustmentsApiClient: AdjustmentsApiClient = mockk(relaxed = true)
-  private val aggravatingFactorsService: AggravatingFactorsService = mockk(relaxed = true)
-
   private val service = LegacySentenceService(
     sentenceRepository = sentenceRepository,
     chargeRepository = chargeRepository,
@@ -93,7 +90,6 @@ class LegacySentenceServiceTests {
     recallHistoryRepository = recallHistoryRepository,
     recallSentenceHistoryRepository = recallSentenceHistoryRepository,
     adjustmentsApiClient = adjustmentsApiClient,
-    aggravatingFactorsService = aggravatingFactorsService,
   )
 
   @Test
@@ -605,8 +601,6 @@ class LegacySentenceServiceTests {
         offenceEndDate = null,
         chargeOutcome = null,
         supersedingCharge = null,
-        terrorRelated = null,
-        foreignPowerRelated = null,
         domesticViolenceRelated = null,
         createdPrison = null,
         legacyData = null,
@@ -717,8 +711,6 @@ class LegacySentenceServiceTests {
         offenceEndDate = null,
         chargeOutcome = null,
         supersedingCharge = null,
-        terrorRelated = null,
-        foreignPowerRelated = null,
         domesticViolenceRelated = null,
         createdPrison = null,
         legacyData = null,

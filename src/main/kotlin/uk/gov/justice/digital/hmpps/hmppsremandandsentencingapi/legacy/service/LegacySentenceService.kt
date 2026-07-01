@@ -55,7 +55,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceDeletedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
 import java.util.*
@@ -79,8 +78,7 @@ class LegacySentenceService(
   private val recallHistoryRepository: RecallHistoryRepository,
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val adjustmentsApiClient: AdjustmentsApiClient,
-  aggravatingFactorsService: AggravatingFactorsService,
-) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService, aggravatingFactorsService) {
+) : LegacyBaseService(chargeRepository, appearanceChargeHistoryRepository, chargeHistoryRepository, serviceUserService) {
 
   @Transactional
   fun create(sentence: LegacyCreateSentence): RecordResponse<LegacySentenceCreatedResponse> {
