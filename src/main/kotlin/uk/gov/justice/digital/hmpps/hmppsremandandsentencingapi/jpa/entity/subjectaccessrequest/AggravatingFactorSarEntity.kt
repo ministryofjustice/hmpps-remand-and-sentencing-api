@@ -2,52 +2,51 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subj
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.OneToMany
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
 import org.hibernate.proxy.HibernateProxy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
-import java.time.ZonedDateTime
 
 @ConditionalOnSarEnabled
-@Entity
 @Immutable
+@Entity
 @Subselect(
   """
   select id
-   ,prisoner_id
-   ,latest_court_appearance_id
-   ,case_unique_identifier
-   ,status_id
-   ,created_at
-   ,updated_at
-  from court_case
-  where status_id not in ('DELETED', 'DUPLICATE')
+  ,code
+  ,title
+  ,description
+  ,status
+  ,display_order
+  from aggravating_factor
+  where status = 'ACTIVE'
   """,
 )
-@Synchronize("court_case")
-class CourtCaseSarEntity(
+@Synchronize("aggravating_factor")
+class AggravatingFactorSarEntity(
   @Id
-  @Column
-  var id: Int = 0,
-  var prisonerId: String,
-  @OneToMany(mappedBy = "courtCase")
-  var appearances: MutableSet<CourtAppearanceSarEntity> = mutableSetOf(),
-  @Suppress("JpaDataSourceORMInspection")
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "latest_court_appearance_id", referencedColumnName = "id", nullable = true)
-  var latestCourtAppearance: CourtAppearanceSarEntity?,
-  var caseUniqueIdentifier: String,
-  var statusId: String,
-  var createdAt: ZonedDateTime,
-  var updatedAt: ZonedDateTime,
-) {
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  val id: Int = 0,
 
+  @Column(nullable = false)
+  val code: String,
+
+  @Column(nullable = false)
+  val title: String,
+
+  @Column(nullable = true)
+  val description: String? = null,
+
+  @Column(nullable = false)
+  val status: String,
+
+  @Column(nullable = false)
+  val displayOrder: Int,
+) {
   final override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null) return false
@@ -56,7 +55,7 @@ class CourtCaseSarEntity(
     val thisEffectiveClass =
       if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
     if (thisEffectiveClass != oEffectiveClass) return false
-    other as CourtCaseSarEntity
+    other as AggravatingFactorSarEntity
 
     return id == other.id
   }

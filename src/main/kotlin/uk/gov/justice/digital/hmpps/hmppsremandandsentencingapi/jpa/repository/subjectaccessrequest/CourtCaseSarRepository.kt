@@ -17,6 +17,8 @@ interface CourtCaseSarRepository : CrudRepository<CourtCaseSarEntity, Integer> {
       "appearances.appearanceCharges.charge.sentences",
       "appearances.appearanceCharges.charge.sentences.sentenceType",
       "appearances.appearanceCharges.charge.sentences.periodLengths",
+      "appearances.appearanceCharges.charge.chargeAggravatingFactors",
+      "appearances.appearanceCharges.charge.chargeAggravatingFactors.aggravatingFactor",
       "appearances.appearanceOutcome",
       "appearances.nextCourtAppearance",
       "latestCourtAppearance",

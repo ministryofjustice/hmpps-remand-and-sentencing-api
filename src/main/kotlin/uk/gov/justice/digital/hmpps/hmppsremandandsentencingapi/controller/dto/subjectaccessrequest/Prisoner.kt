@@ -7,5 +7,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 data class Prisoner(
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
   override val prisonerNumber: String? = null,
+  @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
+  val prisonerName: String? = null,
+  val courtCases: List<CourtCase>? = listOf(),
+  val recalls: List<Recall>? = listOf(),
   val immigrationDetentions: List<ImmigrationDetention>? = listOf(),
 ) : SarContent
