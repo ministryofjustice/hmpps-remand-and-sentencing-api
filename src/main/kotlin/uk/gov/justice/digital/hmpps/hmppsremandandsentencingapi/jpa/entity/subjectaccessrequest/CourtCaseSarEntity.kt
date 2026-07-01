@@ -37,7 +37,7 @@ class CourtCaseSarEntity(
   @Column
   var id: Int = 0,
   var prisonerId: String,
-  @OneToMany(mappedBy = "courtCase", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "courtCase")
   var appearances: MutableSet<CourtAppearanceSarEntity> = mutableSetOf(),
   @Suppress("JpaDataSourceORMInspection")
   @ManyToOne(fetch = FetchType.LAZY)

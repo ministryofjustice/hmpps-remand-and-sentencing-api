@@ -41,7 +41,7 @@ class ChargeSarEntity(
   var chargeOutcome: ChargeOutcomeSarEntity?,
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceSarEntity> = mutableSetOf(),
-  @OneToMany(mappedBy = "charge", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "charge")
   var chargeAggravatingFactors: MutableSet<ChargeAggravatingFactorSarEntity> = mutableSetOf(),
   var offenceCode: String,
   var offenceStartDate: LocalDate?,
