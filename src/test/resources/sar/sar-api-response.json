@@ -18,9 +18,10 @@
           {
             "offenceCode": "AA06027",
             "offenceDescription": "Veterinary surgeon fail to notify incorrect certification",
-            "terrorRelated": "Yes",
-            "foreignPowerRelated": "No",
             "domesticViolenceRelated": "No",
+            "aggravatingFactors": [
+              "OATC"
+            ],
             "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
             "offenceEndDate": "No Data Held",
             "chargeOutcome": "Imprisonment",
@@ -42,9 +43,10 @@
           {
             "offenceCode": "EC10001",
             "offenceDescription": "Fail to comply /contravene provision in schedule 3 of Eggs and Chicks (Wales) Regulations 2010",
-            "terrorRelated": "Yes",
-            "foreignPowerRelated": "No",
             "domesticViolenceRelated": "No",
+            "aggravatingFactors": [
+              "OATC"
+            ],
             "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
             "offenceEndDate": "No Data Held",
             "chargeOutcome": "Imprisonment",
@@ -77,9 +79,10 @@
             {
               "offenceCode": "AA06027",
               "offenceDescription": "Veterinary surgeon fail to notify incorrect certification",
-              "terrorRelated": "Yes",
-              "foreignPowerRelated": "No",
               "domesticViolenceRelated": "No",
+              "aggravatingFactors": [
+                "OATC"
+              ],
               "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
               "offenceEndDate": "No Data Held",
               "chargeOutcome": "Imprisonment",
@@ -101,9 +104,10 @@
             {
               "offenceCode": "EC10001",
               "offenceDescription": "Fail to comply /contravene provision in schedule 3 of Eggs and Chicks (Wales) Regulations 2010",
-              "terrorRelated": "Yes",
-              "foreignPowerRelated": "No",
               "domesticViolenceRelated": "No",
+              "aggravatingFactors": [
+                "OATC"
+              ],
               "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
               "offenceEndDate": "No Data Held",
               "chargeOutcome": "Imprisonment",

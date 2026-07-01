@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.alldata
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import tools.jackson.databind.annotation.JsonSerialize

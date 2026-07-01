@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
@@ -24,8 +25,6 @@ import java.time.LocalDate
   ,offence_code
   ,offence_start_date
   ,offence_end_date
-  ,terror_related
-  ,foreign_power_related
   ,domestic_violence_related
   ,legacy_data
   ,status_id
@@ -42,11 +41,11 @@ class ChargeSarEntity(
   var chargeOutcome: ChargeOutcomeSarEntity?,
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceSarEntity> = mutableSetOf(),
+  @OneToMany(mappedBy = "charge", cascade = [CascadeType.ALL], orphanRemoval = true)
+  var chargeAggravatingFactors: MutableSet<ChargeAggravatingFactorSarEntity> = mutableSetOf(),
   var offenceCode: String,
   var offenceStartDate: LocalDate?,
   var offenceEndDate: LocalDate?,
-  var terrorRelated: Boolean?,
-  var foreignPowerRelated: Boolean?,
   var domesticViolenceRelated: Boolean?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: ChargeLegacyDataSar? = null,
