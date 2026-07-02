@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
@@ -390,7 +391,23 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
 
   @Test
   fun `should preserve aggravating factors on new charge record when creating sentence on charge in multiple appearances`() {
-    val dpsCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true, sentence = null)
+    val dpsCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          code = "OATC",
+          title = "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+        AggravatingFactor(
+          code = "OAFPC",
+          title = "Offence Aggravated by Foreign Power",
+          description = "Offence Aggravated by Foreign Power",
+          displayOrder = 10,
+        ),
+      ),
+      sentence = null,
+    )
     val firstAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
     val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
@@ -411,7 +428,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .expectStatus()
       .isCreated
 
-    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
-    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(dpsCharge.chargeUuid, "OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(dpsCharge.chargeUuid, "OAFPC")).isEqualTo(1)
   }
 }

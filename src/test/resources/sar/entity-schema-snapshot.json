@@ -86,7 +86,6 @@
     "createdBy": "String",
     "createdPrison": "String",
     "domesticViolenceRelated": "Boolean",
-    "foreignPowerRelated": "Boolean",
     "id": "int",
     "legacyData": "ChargeLegacyData",
     "mergedFromCourtCase": "CourtCaseEntity",
@@ -97,7 +96,6 @@
     "sentences": "Set",
     "statusId": "ChargeEntityStatus",
     "supersedingCharge": "ChargeEntity",
-    "terrorRelated": "Boolean",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String"
@@ -110,7 +108,6 @@
     "createdBy": "String",
     "createdPrison": "String",
     "domesticViolenceRelated": "Boolean",
-    "foreignPowerRelated": "Boolean",
     "id": "int",
     "legacyData": "ChargeLegacyData",
     "mergedFromCaseId": "Integer",
@@ -121,7 +118,6 @@
     "originalCharge": "ChargeEntity",
     "statusId": "ChargeEntityStatus",
     "supersedingChargeId": "Integer",
-    "terrorRelated": "Boolean",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String"
