@@ -945,11 +945,11 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `should create a charge to remove terrorRelated removes OATC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(aggravatingFactors = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)))
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
     val updateCharge = createCharge.copy(
-      terrorRelated = null,
+      aggravatingFactors = emptyList(),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = createAppearance.appearanceUuid,
     )
@@ -965,19 +965,17 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
 
-    assertThat(updateCharge.terrorRelated ?: false).isFalse()
-    assertThat(updateCharge.foreignPowerRelated ?: false).isFalse()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
 
   @Test
   fun `should create a charge to add foreignPowerRelated adds OAFPC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge()
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
     val updateCharge = createCharge.copy(
-      foreignPowerRelated = true,
+      aggravatingFactors = listOf(AggravatingFactor(code = "OAFPC", title = "Offence Aggravated by Foreign Power", description = "Offence Aggravated by Foreign Power", displayOrder = 10)),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = createAppearance.appearanceUuid,
     )
@@ -993,20 +991,17 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
 
-    assertThat(updateCharge.terrorRelated ?: false).isFalse()
-    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
   }
 
   @Test
   fun `should update a charge to swap terrorRelated for foreignPowerRelated replaces aggravating factors correctly`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(aggravatingFactors = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)))
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
     val updateCharge = createCharge.copy(
-      terrorRelated = null,
-      foreignPowerRelated = true,
+      aggravatingFactors = listOf(AggravatingFactor(code = "OAFPC", title = "Offence Aggravated by Foreign Power", description = "Offence Aggravated by Foreign Power", displayOrder = 10)),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = createAppearance.appearanceUuid,
     )
@@ -1022,15 +1017,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
 
-    assertThat(updateCharge.terrorRelated ?: false).isFalse()
-    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
   }
 
   @Test
   fun `should update a charge that exists in two appearances replaces aggravating factors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null, sentence = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(aggravatingFactors = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)))
     val (courtCaseUuid, createdCourtCase) = createCourtCase(
       DpsDataCreator.dpsCreateCourtCase(
         appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge))),
@@ -1044,8 +1037,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       ),
     )
     val updateCharge = createCharge.copy(
-      terrorRelated = null,
-      foreignPowerRelated = true,
+      aggravatingFactors = listOf(AggravatingFactor(code = "OAFPC", title = "Offence Aggravated by Foreign Power", description = "Offence Aggravated by Foreign Power", displayOrder = 10)),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = createdAppearance.appearanceUuid,
     )
@@ -1061,8 +1053,6 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
 
-    assertThat(updateCharge.terrorRelated ?: false).isFalse()
-    assertThat(updateCharge.foreignPowerRelated ?: false).isTrue()
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(0)
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
@@ -1107,7 +1097,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `should update charge when when an aggravating factors is added which is neither terror related nor foreign power related`() {
-    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val charge = DpsDataCreator.dpsCreateCharge()
     val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
     val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val updatedOffenceCodeCharge = charge.copy(
@@ -1142,7 +1132,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `should not modify aggravating factors when legacy af flags are unchanged`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(aggravatingFactors = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)))
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge), nextCourtAppearance = null)
     val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
     val firstUpdate = createAppearance.copy(

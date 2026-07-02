@@ -840,8 +840,6 @@ class RecallServiceMergeTest {
         statusId = ChargeEntityStatus.ACTIVE,
         chargeOutcome = null,
         supersedingCharge = null,
-        terrorRelated = null,
-        foreignPowerRelated = null,
         domesticViolenceRelated = null,
         createdBy = "TEST",
         createdPrison = null,

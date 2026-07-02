@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cha
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
@@ -75,7 +76,17 @@ class GetChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should get charge with terrorRelated true returns OATC in aggravatingFactors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null, sentence = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+      ),
+      sentence = null,
+    )
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
     webTestClient
@@ -92,7 +103,17 @@ class GetChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should get charge with foreignPowerRelated true returns OAFPC in aggravatingFactors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = true, sentence = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OAFPC",
+          "Offence Aggravated by Foreign Power Connection",
+          description = "Offence Aggravated by Foreign Power Connection",
+          displayOrder = 20,
+        ),
+      ),
+      sentence = null,
+    )
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
     webTestClient
@@ -109,7 +130,23 @@ class GetChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should get charge with both flags true returns both aggravating factors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = true, sentence = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+        AggravatingFactor(
+          "OAFPC",
+          "Offence Aggravated by Foreign Power Connection",
+          description = "Offence Aggravated by Foreign Power Connection",
+          displayOrder = 20,
+        ),
+      ),
+      sentence = null,
+    )
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
     webTestClient
@@ -128,7 +165,10 @@ class GetChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should get charge with no flags set returns empty aggravatingFactors`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null, sentence = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = emptyList(),
+      sentence = null,
+    )
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(dpsCreateCourtAppearance(charges = listOf(createCharge)))))
 
     webTestClient

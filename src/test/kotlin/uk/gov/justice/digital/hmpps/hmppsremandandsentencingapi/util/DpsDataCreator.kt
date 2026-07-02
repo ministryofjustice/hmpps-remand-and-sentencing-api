@@ -146,7 +146,7 @@ class DpsDataCreator {
       replacedChargeUuid: UUID? = null,
       createChargeOrder: Int? = null,
     ): CreateCharge = dpsCreateCharge(
-      appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, null, null, null, null, legacyData, prisonId, replacedChargeUuid, createChargeOrder,
+      appearanceUuid, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, outcomeUuid, null, null, legacyData, prisonId, replacedChargeUuid, createChargeOrder,
     )
     fun dpsCreateCharge(
       appearanceUuid: UUID? = null,
@@ -155,15 +155,13 @@ class DpsDataCreator {
       offenceStartDate: LocalDate = LocalDate.now(),
       offenceEndDate: LocalDate? = null,
       outcomeUuid: UUID? = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
-      terrorRelated: Boolean? = true,
-      foreignPowerRelated: Boolean? = null,
       domesticViolenceRelated: Boolean? = null,
       sentence: CreateSentence? = dpsCreateSentence(),
       legacyData: ChargeLegacyData? = null,
       prisonId: String = "PRISON1",
       replacedChargeUuid: UUID? = null,
       createChargeOrder: Int? = null,
-      aggravatingFactors: List<AggravatingFactor> = emptyList(),
+      aggravatingFactors: List<AggravatingFactor> = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)),
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
@@ -171,8 +169,6 @@ class DpsDataCreator {
       offenceStartDate,
       offenceEndDate,
       outcomeUuid,
-      terrorRelated,
-      foreignPowerRelated,
       domesticViolenceRelated,
       sentence,
       legacyData,
