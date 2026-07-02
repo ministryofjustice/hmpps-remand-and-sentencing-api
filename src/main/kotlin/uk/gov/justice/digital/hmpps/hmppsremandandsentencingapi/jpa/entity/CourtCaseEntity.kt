@@ -89,8 +89,6 @@ import java.util.UUID
         ColumnResult(name = "chargeOffenceCode"),
         ColumnResult(name = "chargeOffenceStartDate", type = LocalDate::class),
         ColumnResult(name = "chargeOffenceEndDate", type = LocalDate::class),
-        ColumnResult(name = "chargeTerrorRelated"),
-        ColumnResult(name = "chargeForeignPowerRelated"),
         ColumnResult(name = "chargeAggravatingFactorCode"),
         ColumnResult(name = "chargeAggravatingFactorTitle"),
         ColumnResult(name = "chargeAggravatingFactorDescription"),
