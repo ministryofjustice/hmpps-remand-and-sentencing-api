@@ -34,16 +34,10 @@ class AggravatingFactorsService(
       return
     }
 
-    aggravatingFactorRepository
-      .findByCodeIn(codesToAdd.toList())
-      .forEach { aggravatingFactor ->
-        charge.chargeAggravatingFactors.add(
-          ChargeAggravatingFactorEntity(
-            charge,
-            aggravatingFactor,
-          ),
-        )
-      }
+    val missingAggravatingFactors = aggravatingFactorRepository.findByCodeIn(codesToAdd.toList())
+    for (missingAggravatingFactor in missingAggravatingFactors) {
+      charge.chargeAggravatingFactors.add(ChargeAggravatingFactorEntity(charge, missingAggravatingFactor))
+    }
   }
 
   private fun removeUnwantedChargeAggravatingFactors(
