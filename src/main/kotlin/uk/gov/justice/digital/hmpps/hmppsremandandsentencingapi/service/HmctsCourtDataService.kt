@@ -46,7 +46,7 @@ class HmctsCourtDataService(
     )
   }
 
-  private fun mapDocumentType(documentType: String): String = if (documentType === "PRISON_COURT_REGISTER") {
+  private fun mapDocumentType(documentType: String): String = if (documentType == "PRISON_COURT_REGISTER") {
     "PRISON_COURT_REGISTER"
   } else {
     "HMCTS_WARRANT"
