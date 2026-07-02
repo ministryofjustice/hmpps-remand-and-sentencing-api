@@ -176,8 +176,6 @@ class CourtAppearanceServiceTests {
     offenceStartDate = LocalDate.now(),
     offenceEndDate = null,
     outcomeUuid = outcomeUuid,
-    terrorRelated = null,
-    foreignPowerRelated = null,
     domesticViolenceRelated = null,
     prisonId = "P",
     legacyData = null,

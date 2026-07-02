@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -141,12 +142,19 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should update charge when set terrorRelated adds OATC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = null, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge()
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
 
     val updateCharge = createCharge.copy(
-      terrorRelated = true,
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+      ),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = createAppearance.appearanceUuid,
     )
@@ -166,12 +174,21 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should update charge when clear terrorRelated removes OATC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+      ),
+    )
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
 
     val updateCharge = createCharge.copy(
-      terrorRelated = null,
+      aggravatingFactors = emptyList(),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = createAppearance.appearanceUuid,
     )
@@ -190,14 +207,35 @@ class UpdateChargeTests : IntegrationTestBase() {
 
   @Test
   fun `should update charge when linked to multiple appearances preserves aggravating factors on new charge record`() {
-    val charge = DpsDataCreator.dpsCreateCharge(terrorRelated = true, foreignPowerRelated = null)
+    val charge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+      ),
+    )
     val firstAppearance = dpsCreateCourtAppearance(charges = listOf(charge))
     val secondAppearance = dpsCreateCourtAppearance(charges = listOf(charge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
 
     val updateCharge = charge.copy(
-      terrorRelated = true,
-      foreignPowerRelated = true,
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+        AggravatingFactor(
+          "OAFPC",
+          "Offence Aggravated by Foreign Power Connection",
+          description = "Offence Aggravated by Foreign Power Connection",
+          displayOrder = 20,
+        ),
+      ),
       offenceStartDate = LocalDate.now().minusDays(1),
       appearanceUuid = secondAppearance.appearanceUuid,
     )

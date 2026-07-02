@@ -406,8 +406,6 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `return court cases along with aggravating factors`() {
     val charge = DpsDataCreator.dpsCreateCharge(
-      terrorRelated = null,
-      foreignPowerRelated = null,
       aggravatingFactors = listOf(
         AggravatingFactor(code = "DISV", title = "Disability of victim", description = "Disability of victim", displayOrder = 120),
       ),
