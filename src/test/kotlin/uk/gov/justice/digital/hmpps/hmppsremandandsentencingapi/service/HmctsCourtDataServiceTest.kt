@@ -28,9 +28,6 @@ class HmctsCourtDataServiceTest {
   @Mock
   lateinit var documentManagementApi: DocumentManagementApiClient
 
-  @Mock
-  lateinit var appearanceOutcomeService: AppearanceOutcomeService
-
   @InjectMocks
   lateinit var service: HmctsCourtDataService
 
