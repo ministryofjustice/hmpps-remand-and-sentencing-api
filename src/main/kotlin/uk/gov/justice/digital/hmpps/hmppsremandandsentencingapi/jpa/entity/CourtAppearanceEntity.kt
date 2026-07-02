@@ -156,7 +156,7 @@ class CourtAppearanceEntity(
     updateCourtAppearanceSchedule: UpdateCourtAppearanceSchedule,
     performedBy: String,
   ): CourtAppearanceEntity {
-    val updatedLegacyData = legacyData?.copy(appearanceTime = updateCourtAppearanceSchedule.start.toLocalTime(), comments = updateCourtAppearanceSchedule.comments) ?: CourtAppearanceLegacyData.from(updateCourtAppearanceSchedule)
+    val updatedLegacyData = legacyData?.copy(appearanceTime = updateCourtAppearanceSchedule.start.toLocalTime(), comments = updateCourtAppearanceSchedule.comments, nomisAppearanceTypeCode = updateCourtAppearanceSchedule.reasonCode) ?: CourtAppearanceLegacyData.from(updateCourtAppearanceSchedule)
     val courtAppearance = CourtAppearanceEntity(
       0,
       appearanceUuid,
