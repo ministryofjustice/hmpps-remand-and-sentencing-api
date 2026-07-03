@@ -35,6 +35,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
     .setParameter("appearanceDateFrom", appearanceDateFrom)
     .setParameter("appearanceDateTo", appearanceDateTo)
     .setParameter("bookingId", bookingId)
+    .setParameter("deletedStatus", "DELETED")
     .resultList as List<CourtCaseRow>
 
   companion object {
@@ -145,29 +146,29 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         limit :limit offset :offset) as appearanceData on appearanceData.id = cc.id
       join court_appearance lca on lca.id = cc.latest_court_appearance_id
       left join appearance_outcome ao on lca.appearance_outcome_id = ao.id
-      left join period_length apl on apl.appearance_id=lca.id
+      left join period_length apl on apl.appearance_id=lca.id and apl.status_id != :deletedStatus
       left join next_court_appearance nlca on nlca.id = lca.next_court_appearance_id
       left join appearance_type ncaat on ncaat.id = nlca.appearance_type_id
       left join court_appearance_subtype ncacas on ncacas.id = nlca.court_appearance_subtype_id
       left join appearance_charge ac on ac.appearance_id = lca.id
-      left join charge c on ac.charge_id = c.id
+      left join charge c on ac.charge_id = c.id and c.status_id != :deletedStatus
       left join charge_outcome co on c.charge_outcome_id = co.id
-      left join sentence s on s.charge_id = c.id
-      left join sentence cts on s.consecutive_to_id = cts.id
+      left join sentence s on s.charge_id = c.id and s.status_id != :deletedStatus
+      left join sentence cts on s.consecutive_to_id = cts.id and cts.status_id != :deletedStatus
       left join sentence_type st on s.sentence_type_id = st.id
-      left join period_length spl on spl.sentence_id = s.id
+      left join period_length spl on spl.sentence_id = s.id and spl.status_id != :deletedStatus
       left join recall_sentence rs on rs.sentence_id = s.id
-      left join court_case mcc on mcc.id = c.merged_from_case_id
-      left join court_appearance mca on mca.court_case_id = mcc.id
-      left join court_appearance ca on ca.court_case_id = cc.id
+      left join court_case mcc on mcc.id = c.merged_from_case_id and mcc.status_id != :deletedStatus
+      left join court_appearance mca on mca.court_case_id = mcc.id and mca.status_id != :deletedStatus
+      left join court_appearance ca on ca.court_case_id = cc.id and ca.status_id != :deletedStatus
       left join appearance_charge ac2 on ac2.appearance_id = ca.id
-      left join charge c2 on c2.id = ac2.charge_id
-      left join sentence s2 on s2.charge_id = c2.id
+      left join charge c2 on c2.id = ac2.charge_id and c2.status_id != :deletedStatus
+      left join sentence s2 on s2.charge_id = c2.id and s2.status_id != :deletedStatus
       left join recall_sentence rs2 on rs2.sentence_id = s2.id
       left join sentence_type st2 on s2.sentence_type_id = st2.id
-      left join court_case mtcc on mtcc.id = cc.merged_to_case_id
-      left join court_appearance lmtca on mtcc.latest_court_appearance_id = lmtca.id
-      left join court_appearance fca on fca.id = nlca.future_skeleton_appearance_id
+      left join court_case mtcc on mtcc.id = cc.merged_to_case_id and mtcc.status_id != :deletedStatus
+      left join court_appearance lmtca on mtcc.latest_court_appearance_id = lmtca.id and lmtca.status_id != :deletedStatus
+      left join court_appearance fca on fca.id = nlca.future_skeleton_appearance_id and fca.status_id != :deletedStatus
       left join charge_aggravating_factor caf on caf.charge_id = c.id
       left join aggravating_factor af on af.id = caf.aggravating_factor_id
       join court_appearance minca on minca.court_case_id = cc.id and minca.appearance_date = appearanceData.first_day_in_custody
