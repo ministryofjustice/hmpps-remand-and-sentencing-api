@@ -58,8 +58,6 @@ interface CourtCaseRepository :
 
   fun findByCaseUniqueIdentifier(caseUniqueIdentifier: String): CourtCaseEntity?
 
-  fun findByCaseUniqueIdentifierAndStatusIdNot(caseUniqueIdentifier: String, statusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED): CourtCaseEntity?
-
   @Query(
     """
     select cc from CourtCaseEntity cc
@@ -204,7 +202,13 @@ interface CourtCaseRepository :
 
   @Query(
     value = """
-    select * from court_case cc
+    select *, (select
+            count(*) 
+        from
+            court_case cc1
+        where
+            cc1.merged_to_case_id= cc.id 
+            and cc.status_id != 'DELETED') as totalMergedFromCount from court_case cc
     where cc.prisoner_id = :prisonerId
     and cc.legacy_data ->> 'bookingId' = :bookingId
   """,

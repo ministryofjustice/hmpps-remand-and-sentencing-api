@@ -293,7 +293,7 @@ class CourtAppearanceEntity(
     return result
   }
 
-  fun deleteStatus(): DeleteCourtAppearanceStatus = if (statusId != CourtAppearanceEntityStatus.DELETED && appearanceCharges.map { it.charge!! }.none { it.hasSentence() }) {
+  fun deleteStatus(): DeleteCourtAppearanceStatus = if (statusId != CourtAppearanceEntityStatus.DELETED && appearanceCharges.map { it.charge!! }.none { it.hasSentence() } && courtCase.totalMergedFromCount <= 0) {
     DeleteCourtAppearanceStatus.SUPPORTED
   } else {
     DeleteCourtAppearanceStatus.NOT_SUPPORTED
