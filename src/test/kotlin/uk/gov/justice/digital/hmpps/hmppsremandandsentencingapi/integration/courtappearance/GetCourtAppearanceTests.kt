@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.format.DateTimeFormatter
@@ -61,6 +64,35 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
       .exists()
       .jsonPath("$.charges[?(@.chargeUuid == '${activeCharge.chargeUuid}')]")
       .exists()
+  }
+
+  @Test
+  fun `dont return deleted overall sentence length`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+    val courtAppearance = createdCourtCase.appearances.first().copy(courtCaseUuid = courtCaseUuid, overallSentenceLength = null)
+    webTestClient
+      .put()
+      .uri("/court-appearance/${courtAppearance.appearanceUuid}")
+      .bodyValue(courtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val returnedCourtAppearance = webTestClient
+      .get()
+      .uri("/court-appearance/${courtAppearance.appearanceUuid!!}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+    Assertions.assertNull(returnedCourtAppearance.overallSentenceLength)
   }
 
   @Test
