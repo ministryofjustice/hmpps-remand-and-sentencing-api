@@ -138,7 +138,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     val imprisonmentAppearanceUuid = migrationResponse.appearances.first { it.eventId == imprisonmentAppearance.eventId }.appearanceUuid
     val sentenceUuid = migrationResponse.sentences.first().sentenceUuid
 
-    val sentenceOnGuiltyCharge = sentenceRepository.findBySentenceUuid(sentenceUuid).first { it.statusId != SentenceEntityStatus.DELETED }
+    val sentenceOnGuiltyCharge = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)!!
     assertThat(sentenceOnGuiltyCharge.sentenceType?.sentenceTypeUuid).isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid)
     assertThat(sentenceOnGuiltyCharge.legacyData?.sentenceCalcType).isEqualTo("LR_ORA")
     assertThat(sentenceOnGuiltyCharge.legacyData?.sentenceCategory).isEqualTo("2020")
@@ -156,7 +156,7 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     )
     putLegacySentence(sentenceUuid, updateMovingChargeToImprisonment)
 
-    val sentenceOnImprisonmentCharge = sentenceRepository.findBySentenceUuid(sentenceUuid).first { it.statusId != SentenceEntityStatus.DELETED }
+    val sentenceOnImprisonmentCharge = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)!!
     assertThat(sentenceOnImprisonmentCharge.legacyData?.sentenceCalcType).isEqualTo("LR_ORA")
     assertThat(sentenceOnImprisonmentCharge.legacyData?.sentenceCategory).isEqualTo("2020")
   }
