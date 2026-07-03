@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -67,6 +68,28 @@ class LegacyLinkCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(targetCourtCase.appearances.first().courtCode)
       .jsonPath("$.mergedToCaseDetails.warrantDate")
       .isEqualTo(targetCourtCase.appearances.first().appearanceDate.format(DateTimeFormatter.ISO_DATE))
+  }
+
+  @Test
+  fun `delete not supported in target court case`() {
+    val sourceCourtCase = DataCreator.migrationCreateCourtCase()
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(caseId = 2)
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCourtCase, targetCourtCase))
+    val response = migrateCases(courtCases)
+
+    val targetCourtCaseUuid = response.courtCases.first { it.caseId == targetCourtCase.caseId }.courtCaseUuid
+    val sourceCourtCaseUuid = response.courtCases.first { it.caseId == sourceCourtCase.caseId }.courtCaseUuid
+
+    linkCases(sourceCourtCaseUuid, targetCourtCaseUuid)
+    webTestClient
+      .get()
+      .uri("/court-case/$targetCourtCaseUuid")
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.latestAppearance.deleteStatus")
+      .isEqualTo(DeleteCourtAppearanceStatus.NOT_SUPPORTED.toString())
   }
 
   @Test
