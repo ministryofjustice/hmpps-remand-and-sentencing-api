@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
@@ -293,7 +294,14 @@ class CourtAppearanceEntity(
     return result
   }
 
-  fun deleteStatus(): DeleteCourtAppearanceStatus = if (statusId != CourtAppearanceEntityStatus.DELETED && appearanceCharges.map { it.charge!! }.none { it.hasSentence() } && courtCase.totalMergedFromCount <= 0) {
+  fun deleteStatus(): DeleteCourtAppearanceStatus = if (statusId != CourtAppearanceEntityStatus.DELETED &&
+    appearanceCharges.map { it.charge!! }.none { it.hasSentence() } &&
+    courtCase.totalMergedFromCount <= 0 &&
+    setOf(
+      CourtCaseEntityStatus.ACTIVE,
+      CourtCaseEntityStatus.INACTIVE,
+    ).contains(courtCase.statusId)
+  ) {
     DeleteCourtAppearanceStatus.SUPPORTED
   } else {
     DeleteCourtAppearanceStatus.NOT_SUPPORTED

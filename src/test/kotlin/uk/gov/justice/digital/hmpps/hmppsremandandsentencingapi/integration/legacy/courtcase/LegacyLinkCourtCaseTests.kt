@@ -68,6 +68,8 @@ class LegacyLinkCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(targetCourtCase.appearances.first().courtCode)
       .jsonPath("$.mergedToCaseDetails.warrantDate")
       .isEqualTo(targetCourtCase.appearances.first().appearanceDate.format(DateTimeFormatter.ISO_DATE))
+      .jsonPath("$.latestAppearance.deleteStatus")
+      .isEqualTo(DeleteCourtAppearanceStatus.NOT_SUPPORTED.toString())
   }
 
   @Test
