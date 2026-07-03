@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import org.springframework.test.web.reactive.server.returnResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -15,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
@@ -91,6 +91,73 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     assertThat(sentences[0].sentenceType).isNull()
     assertThat(sentences[0].legacyData?.sentenceCalcType).isEqualTo("CR")
     assertThat(sentences[0].legacyData?.sentenceCategory).isEqualTo("1991")
+  }
+
+  @Test
+  fun `update retains legacy calc data when sentence moves charge record from guilty to imprisonment`() {
+    val recalledSentenceLegacy = sentenceLegacyData(
+      sentenceCalcType = "LR_ORA",
+      sentenceCategory = "2020",
+      nomisLineReference = "17",
+    )
+    val migratedSentence = DataCreator.migrationCreateSentence(
+      fine = null,
+      legacyData = recalledSentenceLegacy,
+      returnToCustodyDate = LocalDate.of(2023, 1, 1),
+    )
+    val guiltyCharge = DataCreator.migrationCreateCharge(
+      legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1501", outcomeConvictionFlag = true, outcomeDispositionCode = "F"),
+      sentence = migratedSentence,
+    )
+    val guiltyAppearance = DataCreator.migrationCreateCourtAppearance(
+      eventId = 1,
+      appearanceDate = LocalDate.of(2021, 1, 15),
+      legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "1501", outcomeConvictionFlag = true, outcomeDispositionCode = "F"),
+      charges = listOf(guiltyCharge),
+    )
+    val imprisonmentAppearance = DataCreator.migrationCreateCourtAppearance(
+      eventId = 5,
+      appearanceDate = LocalDate.of(2021, 5, 10),
+      legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "1002", outcomeDescription = "Imprisonment"),
+      charges = listOf(
+        guiltyCharge.copy(
+          sentence = null,
+          legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "1002", outcomeDescription = "Imprisonment"),
+        ),
+      ),
+    )
+    val migrationResponse = migrateCases(
+      DataCreator.migrationCreateSentenceCourtCases(
+        courtCases = listOf(
+          DataCreator.migrationCreateCourtCase(appearances = listOf(guiltyAppearance, imprisonmentAppearance)),
+        ),
+      ),
+    )
+    val chargeUuid = migrationResponse.charges.first().chargeUuid
+    val imprisonmentAppearanceUuid = migrationResponse.appearances.first { it.eventId == imprisonmentAppearance.eventId }.appearanceUuid
+    val sentenceUuid = migrationResponse.sentences.first().sentenceUuid
+
+    val sentenceOnGuiltyCharge = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)!!
+    assertThat(sentenceOnGuiltyCharge.sentenceType?.sentenceTypeUuid).isEqualTo(LegacySentenceService.recallSentenceTypeBucketUuid)
+    assertThat(sentenceOnGuiltyCharge.legacyData?.sentenceCalcType).isEqualTo("LR_ORA")
+    assertThat(sentenceOnGuiltyCharge.legacyData?.sentenceCategory).isEqualTo("2020")
+
+    // Sentence start date change moves the charge record from guilty to imprisonment outcome
+    val updateMovingChargeToImprisonment = DataCreator.legacyCreateSentence(
+      chargeUuids = listOf(chargeUuid),
+      appearanceUuid = imprisonmentAppearanceUuid,
+      fine = null,
+      sentenceLegacyData = recalledSentenceLegacy.copy(
+        sentenceCalcType = null,
+        sentenceCategory = null,
+        sentenceTypeDesc = null,
+      ),
+    )
+    putLegacySentence(sentenceUuid, updateMovingChargeToImprisonment)
+
+    val sentenceOnImprisonmentCharge = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)!!
+    assertThat(sentenceOnImprisonmentCharge.legacyData?.sentenceCalcType).isEqualTo("LR_ORA")
+    assertThat(sentenceOnImprisonmentCharge.legacyData?.sentenceCategory).isEqualTo("2020")
   }
 
   @Test
