@@ -232,7 +232,8 @@
     "prisonerId": "String",
     "statusId": "CourtCaseEntityStatus",
     "updatedAt": "ZonedDateTime",
-    "updatedBy": "String"
+    "updatedBy": "String",
+    "totalMergedFromCount": "int"
   },
   "CourtCaseHistoryEntity": {
     "caseUniqueIdentifier": "String",

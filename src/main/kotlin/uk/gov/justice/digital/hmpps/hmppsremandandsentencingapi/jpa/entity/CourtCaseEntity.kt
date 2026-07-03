@@ -17,6 +17,7 @@ import jakarta.persistence.SqlResultSetMapping
 import jakarta.persistence.Table
 import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.DynamicUpdate
+import org.hibernate.annotations.Formula
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
@@ -175,6 +176,8 @@ class CourtCaseEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,
 
+  @Formula("(select count(*) from court_case cc where cc.merged_to_case_id= id and cc.status_id != 'DELETED')")
+  val totalMergedFromCount: Int = -1,
 ) {
   @OneToMany
   @JoinColumn(name = "court_case_id")
