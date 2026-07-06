@@ -18,6 +18,7 @@ data class LegacyCourtAppearance(
   val nextCourtAppearance: LegacyNextCourtAppearance?,
   val appearanceTypeUuid: UUID?,
   val nomisAppearanceTypeCode: String,
+  val comments: String?,
 ) {
   companion object {
 
@@ -35,6 +36,7 @@ data class LegacyCourtAppearance(
       courtAppearanceEntity.nextCourtAppearance?.let { LegacyNextCourtAppearance.from(it) },
       appearanceTypeUuid,
       nomisAppearanceTypeCode,
+      courtAppearanceEntity.legacyData?.comments,
     )
   }
 }

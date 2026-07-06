@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveRecallResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.PrisonerRecallsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsMessage
@@ -898,6 +899,21 @@ abstract class IntegrationTestBase {
   }
 
   protected fun uuid(i: Long) = UUID(0L, i)
+
+  protected fun updateCourtSchedules(appearanceUuid: UUID, updateCourtAppearanceSchedule: UpdateCourtAppearanceSchedule = DpsDataCreator.updateCourtAppearanceSchedule()): UpdateCourtAppearanceSchedule {
+    webTestClient
+      .put()
+      .uri("/court-appearance-schedule/$appearanceUuid")
+      .bodyValue(updateCourtAppearanceSchedule)
+      .headers {
+        it.authToken(roles = listOf("ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    return updateCourtAppearanceSchedule
+  }
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
