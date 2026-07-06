@@ -10,7 +10,9 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegisterApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
@@ -28,6 +30,9 @@ class HmctsCourtDataServiceTest {
   @Mock
   lateinit var documentManagementApi: DocumentManagementApiClient
 
+  @Mock
+  lateinit var courtRegisterApiClient: CourtRegisterApiClient
+
   @InjectMocks
   lateinit var service: HmctsCourtDataService
 
@@ -35,10 +40,11 @@ class HmctsCourtDataServiceTest {
   fun `should map hearing into court appearance with sentencing warrant`() {
     val hearingId = UUID.randomUUID()
     val documentId = UUID.randomUUID()
+    val courtId = UUID.randomUUID()
 
     val hearing = HmctsCourHearing(
       hearingId = hearingId,
-      courtId = UUID.randomUUID(),
+      courtId = courtId,
       hearingDate = LocalDateTime.of(2025, 1, 1, 10, 0),
       caseReferences = listOf("CASE123"),
       documents = listOf(
@@ -51,6 +57,11 @@ class HmctsCourtDataServiceTest {
       hearingType = "Hearing",
     )
 
+    val courtRegister = CourtRegister(
+      courtName = "Court",
+      courtId = UUID.randomUUID().toString(),
+      courtDescription = "Court description",
+    )
     val document = DocumentManagementApiDocument(
       documentUuid = documentId,
       documentFilename = "sentencing-warrant.pdf",
@@ -63,6 +74,9 @@ class HmctsCourtDataServiceTest {
       documentManagementApi.getDocumentsByIds(listOf(documentId.toString())),
     ).thenReturn(listOf(document))
 
+    `when`(courtRegisterApiClient.getCourtRegisterByHmctsId(courtId))
+      .thenReturn(courtRegister)
+
     val result = service.getCourtAppearanceFromHmctsHearingId(hearingId)
 
     assertEquals(hearingId, result.appearanceUuid)
@@ -74,6 +88,7 @@ class HmctsCourtDataServiceTest {
     assertEquals(1, result.documents.size)
     assertEquals("HMCTS_WARRANT", result.documents.first().documentType)
     assertEquals("sentencing-warrant.pdf", result.documents.first().fileName)
+    assertEquals(courtRegister.courtId, result.courtCode)
 
     verify(courtDataIngestionApi).getCourtHearing(hearingId)
   }
@@ -82,10 +97,11 @@ class HmctsCourtDataServiceTest {
   fun `should map prison court register document type`() {
     val hearingId = UUID.randomUUID()
     val documentId = UUID.randomUUID()
+    val courtId = UUID.randomUUID()
 
     val hearing = HmctsCourHearing(
       hearingId = hearingId,
-      courtId = UUID.randomUUID(),
+      courtId = courtId,
       hearingDate = LocalDateTime.now(),
       caseReferences = emptyList(),
       documents = listOf(
@@ -97,12 +113,20 @@ class HmctsCourtDataServiceTest {
       courtName = "Court",
       hearingType = "Hearing",
     )
+    val courtRegister = CourtRegister(
+      courtName = "Court",
+      courtId = UUID.randomUUID().toString(),
+      courtDescription = "Court description",
+    )
 
     `when`(courtDataIngestionApi.getCourtHearing(hearingId))
       .thenReturn(hearing)
 
     `when`(documentManagementApi.getDocumentsByIds(listOf(documentId.toString())))
       .thenReturn(emptyList())
+
+    `when`(courtRegisterApiClient.getCourtRegisterByHmctsId(courtId))
+      .thenReturn(courtRegister)
 
     val result = service.getCourtAppearanceFromHmctsHearingId(hearingId)
 
@@ -113,13 +137,14 @@ class HmctsCourtDataServiceTest {
   }
 
   @Test
-  fun `should use unknown filename when document not found`() {
+  fun `should use unknown filename when document not found and court not found`() {
     val hearingId = UUID.randomUUID()
     val documentId = UUID.randomUUID()
+    val courtId = UUID.randomUUID()
 
     val hearing = HmctsCourHearing(
       hearingId = hearingId,
-      courtId = UUID.randomUUID(),
+      courtId = courtId,
       hearingDate = LocalDateTime.now(),
       caseReferences = emptyList(),
       documents = listOf(
@@ -132,6 +157,9 @@ class HmctsCourtDataServiceTest {
       hearingType = "Hearing",
     )
 
+    `when`(courtRegisterApiClient.getCourtRegisterByHmctsId(courtId))
+      .thenReturn(null)
+
     `when`(courtDataIngestionApi.getCourtHearing(hearingId))
       .thenReturn(hearing)
 
@@ -143,6 +171,10 @@ class HmctsCourtDataServiceTest {
     assertEquals(
       "Unknown filename",
       result.documents.first().fileName,
+    )
+    assertEquals(
+      courtId.toString(),
+      result.courtCode,
     )
   }
 

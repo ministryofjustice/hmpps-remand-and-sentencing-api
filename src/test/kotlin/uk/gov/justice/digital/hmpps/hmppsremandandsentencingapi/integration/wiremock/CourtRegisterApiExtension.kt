@@ -8,6 +8,9 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.TestUtil
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
+import java.util.UUID
 
 class CourtRegisterApiExtension :
   BeforeAllCallback,
@@ -49,6 +52,16 @@ class CourtRegisterApiMockServer : WireMockServer(WIREMOCK_PORT) {
             }
             """.trimIndent(),
           )
+          .withStatus(200),
+      ),
+  )
+
+  fun stubGetHmctsCourtRegister(hmctsCourtId: UUID, courtRegister: CourtRegister): StubMapping = stubFor(
+    get("/courts/cp/$hmctsCourtId")
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(TestUtil.objectMapper().writeValueAsString(courtRegister))
           .withStatus(200),
       ),
   )

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegisterApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
@@ -14,16 +15,18 @@ import java.util.UUID
 class HmctsCourtDataService(
   val courtDataIngestionApi: CourtDataIngestionApiClient,
   val documentService: DocumentManagementApiClient,
+  val courtRegisterApiClient: CourtRegisterApiClient,
 ) {
 
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID): CourtAppearance {
     val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId)
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
+    val court = courtRegisterApiClient.getCourtRegisterByHmctsId(hearing.courtId)
 
     return CourtAppearance(
       appearanceUuid = courtHearingId,
       outcome = null,
-      courtCode = hearing.courtId.toString(), // TODO CDIA-169
+      courtCode = court?.courtId ?: hearing.courtId.toString(),
       courtCaseReference = hearing.caseReferences.firstOrNull(),
       criminalAppealOfficeReference = null,
       appearanceDate = hearing.hearingDate.toLocalDate(),
