@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.hmc
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.c
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -35,6 +37,11 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         ),
       ),
     )
+    val courtRegister = CourtRegister(
+      courtName = "My court",
+      courtId = UUID.randomUUID().toString(),
+      courtDescription = "My court description",
+    )
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
     )
@@ -45,6 +52,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
+    )
+    CourtRegisterApiExtension.courtRegisterApi.stubGetHmctsCourtRegister(
+      hmctsCourtHearing.courtId,
+      courtRegister,
     )
 
     val response = webTestClient
@@ -63,7 +74,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       CourtAppearance(
         appearanceUuid = response.appearanceUuid, // Random UUID
         outcome = null,
-        courtCode = hmctsCourtHearing.courtId.toString(),
+        courtCode = courtRegister.courtId,
         courtCaseReference = "ABC123",
         criminalAppealOfficeReference = null,
         appearanceDate = LocalDate.parse("2026-01-01"),
