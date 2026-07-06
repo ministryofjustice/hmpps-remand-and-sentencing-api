@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceTypeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceSubtypeEntity
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -26,7 +28,7 @@ data class CourtAppearanceLegacyData(
     nomisAppearanceTypeCode == other?.nomisAppearanceTypeCode &&
     comments == other?.comments
 
-  fun copyFrom(appearanceTime: LocalTime?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
+  fun copyFrom(appearanceTime: LocalTime?, appearanceType: AppearanceTypeEntity, courtAppearanceSubtypeEntity: CourtAppearanceSubtypeEntity?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
     LocalDate.now().format(DateTimeFormatter.ISO_DATE),
     nomisOutcomeCode,
     outcomeDescription,
@@ -34,11 +36,11 @@ data class CourtAppearanceLegacyData(
     appearanceTime,
     outcomeDispositionCode,
     outcomeConvictionFlag,
-    nomisAppearanceTypeCode,
+    courtAppearanceSubtypeEntity?.nomisCode ?: appearanceType.dpsToNomisMappingCode,
     comments,
   )
   companion object {
-    fun from(appearanceTime: LocalTime): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
+    fun from(appearanceTime: LocalTime, appearanceType: AppearanceTypeEntity, courtAppearanceSubtypeEntity: CourtAppearanceSubtypeEntity?): CourtAppearanceLegacyData = CourtAppearanceLegacyData(
       LocalDate.now().format(DateTimeFormatter.ISO_DATE),
       null,
       null,
@@ -46,7 +48,7 @@ data class CourtAppearanceLegacyData(
       appearanceTime,
       null,
       null,
-      null,
+      courtAppearanceSubtypeEntity?.nomisCode ?: appearanceType.dpsToNomisMappingCode,
       null,
     )
 
