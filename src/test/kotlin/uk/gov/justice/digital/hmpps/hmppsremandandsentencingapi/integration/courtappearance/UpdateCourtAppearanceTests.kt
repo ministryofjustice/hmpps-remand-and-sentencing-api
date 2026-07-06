@@ -17,9 +17,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
@@ -180,7 +182,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `updateAppearanceWithAddedAndRemovedDocuments_updatesMetadataCorrectly`() {
+  fun `update appearance with added and removed documents updates metadata correctly`() {
     val (docA) = uploadDocument()
     val (docB) = uploadDocument()
     documentManagementApi.stubUpdateDocumentMetadata(docA.documentUUID.toString())
@@ -811,6 +813,60 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(charge.outcomeUuid.toString())
       .jsonPath("$.appearances.[?(@.appearanceUuid == '${newAppearance.appearanceUuid}')].charges.[?(@.chargeUuid == '${charge.chargeUuid}')].outcome.outcomeUuid")
       .isEqualTo(ChargeService.replacedWithAnotherOutcomeUuid.toString())
+  }
+
+  @Test
+  fun `updating next court appearance type correctly returns nomisAppearanceTypeCode`() {
+    val futureAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 567, appearanceDate = LocalDate.now().plusDays(2), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = null, outcomeDescription = null, nextEventDateTime = null, nomisAppearanceTypeCode = "PS"), charges = emptyList())
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(legacyData = DataCreator.courtAppearanceLegacyData(nextEventDateTime = futureAppearance.appearanceDate.atTime(10, 0)), charges = emptyList())
+    val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(firstAppearance, futureAppearance))
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val firstAppearanceUuid = response.appearances.first { appearanceResponse -> firstAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+    val futureAppearanceUuid = response.appearances.first { appearanceResponse -> futureAppearance.eventId == appearanceResponse.eventId }.appearanceUuid
+    val courtCaseUuid = response.courtCases.first().courtCaseUuid
+
+    val updateCourtAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(courtCaseUuid = courtCaseUuid, appearanceUUID = firstAppearanceUuid, appearanceDate = firstAppearance.appearanceDate, charges = emptyList(), documents = emptyList(), nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(appearanceTypeUuid = UUID.fromString("1da09b6e-55cb-4838-a157-ee6944f2094c"), courtAppearanceSubtypeUuid = null))
+    webTestClient
+      .put()
+      .uri("/court-appearance/${updateCourtAppearance.appearanceUuid}")
+      .bodyValue(updateCourtAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(updateCourtAppearance.nextCourtAppearance!!.appearanceTypeUuid)!!
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/$futureAppearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.legacyData.nomisAppearanceTypeCode")
+      .isEqualTo(appearanceType.dpsToNomisMappingCode)
   }
 
   @Test
