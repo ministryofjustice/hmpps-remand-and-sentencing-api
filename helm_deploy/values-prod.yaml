@@ -59,3 +59,6 @@ generic-data-analytics-extractor:
       cpu: 1
     limits:
       memory: 4G
+
+manyChargesToSentenceFixCronjob:
+  enabled: true
