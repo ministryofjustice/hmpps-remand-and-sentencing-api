@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -10,6 +11,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `get appearance by lifetime uuid`() {
     val (lifetimeUuid, createdAppearance) = createLegacyCourtAppearance()
+    val updateCourtSchedules = updateCourtSchedules(lifetimeUuid, DpsDataCreator.updateCourtAppearanceSchedule(courtCode = createdAppearance.courtCode, reasonCode = createdAppearance.legacyData.nomisAppearanceTypeCode!!, start = createdAppearance.appearanceDate.atTime(createdAppearance.legacyData.appearanceTime!!)))
 
     webTestClient
       .get()
@@ -29,6 +31,8 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdAppearance.legacyData.nomisOutcomeCode!!)
       .jsonPath("$.appearanceTypeUuid")
       .isEqualTo("63e8fce0-033c-46ad-9edf-391b802d547a")
+      .jsonPath("$.comments")
+      .isEqualTo(updateCourtSchedules.comments!!)
   }
 
   @Test
