@@ -21,6 +21,7 @@ class HmctsCourtDataService(
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID): CourtAppearance {
     val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId)
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
+      .filter { it.duplicateOf == null }
     val court = courtRegisterApiClient.getCourtRegisterByHmctsId(hearing.courtId)
 
     return CourtAppearance(
@@ -36,13 +37,17 @@ class HmctsCourtDataService(
       overallSentenceLength = null,
       overallConvictionDate = null,
       legacyData = null,
-      documents = hearing.documents.map {
+      documents = hearing.documents.mapNotNull {
         val document = documents.find { document -> document.documentUuid == it.documentId }
-        UploadedDocument(
-          it.documentId,
-          mapDocumentType(it.documentType),
-          document?.documentFilename ?: "Unknown filename",
-        )
+        if (document != null) {
+          UploadedDocument(
+            it.documentId,
+            mapDocumentType(it.documentType),
+            document.documentFilename,
+          )
+        } else {
+          null
+        }
       },
       source = EventSource.DPS,
       deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,

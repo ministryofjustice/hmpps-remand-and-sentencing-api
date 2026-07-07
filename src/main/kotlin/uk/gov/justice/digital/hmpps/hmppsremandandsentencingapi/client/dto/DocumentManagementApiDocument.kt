@@ -5,4 +5,5 @@ import java.util.UUID
 data class DocumentManagementApiDocument(
   val documentUuid: UUID,
   val documentFilename: String,
+  val duplicateOf: UUID? = null,
 )
