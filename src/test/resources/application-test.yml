@@ -81,3 +81,5 @@ features:
     enabled: false
   hmctsWarrantThingToDo:
     enabled: true
+  appearanceSchedulesEvents:
+    enabled: true
