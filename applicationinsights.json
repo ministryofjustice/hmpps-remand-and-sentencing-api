@@ -81,6 +81,28 @@
           }
         ],
         "percentage": 1
+      },
+      {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "url.path",
+            "value": "/court-appearance-schedule/.*",
+            "matchType": "regexp"
+          }
+        ],
+        "percentage": 1
+      },
+      {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "url.path",
+            "value": "/search/court-appearance-schedules",
+            "matchType": "regexp"
+          }
+        ],
+        "percentage": 1
       }
     ]
   }

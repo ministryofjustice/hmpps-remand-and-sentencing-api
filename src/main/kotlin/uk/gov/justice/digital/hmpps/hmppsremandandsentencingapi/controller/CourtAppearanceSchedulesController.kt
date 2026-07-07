@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.CourtAppearanceSchedulesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceScheduleStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.SearchCourtAppearanceSchedulesRequest
@@ -24,7 +25,7 @@ import java.util.UUID
 
 @RestController
 @Tag(name = "court-appearance-schedules-controller", description = "Court Appearance schedules")
-class CourtAppearanceSchedulesController(private val courtAppearanceSchedulesService: CourtAppearanceSchedulesService, private val dpsDomainEventService: DpsDomainEventService) {
+class CourtAppearanceSchedulesController(private val courtAppearanceSchedulesService: CourtAppearanceSchedulesService, private val dpsDomainEventService: DpsDomainEventService, private val featuresConfig: FeaturesConfig) {
 
   @PostMapping("/search/court-appearance-schedules")
   @PreAuthorize("hasAnyRole('ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RW', 'ROLE_COURT_APPEARANCES__COURT_APPEARANCE_SCHEDULER__RO')")
@@ -90,6 +91,8 @@ class CourtAppearanceSchedulesController(private val courtAppearanceSchedulesSer
   )
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun updateCourtAppearanceSchedule(@PathVariable appearanceUuid: UUID, @RequestBody updateCourtAppearanceSchedule: UpdateCourtAppearanceSchedule) = courtAppearanceSchedulesService.updateCourtAppearanceSchedule(appearanceUuid, updateCourtAppearanceSchedule)?.let { eventsToEmit ->
-    dpsDomainEventService.emitEvents(eventsToEmit)
+    if (featuresConfig.appearanceSchedulesEvents.enabled) {
+      dpsDomainEventService.emitEvents(eventsToEmit)
+    }
   } ?: throw EntityNotFoundException("No court appearance schedule found at $appearanceUuid")
 }
