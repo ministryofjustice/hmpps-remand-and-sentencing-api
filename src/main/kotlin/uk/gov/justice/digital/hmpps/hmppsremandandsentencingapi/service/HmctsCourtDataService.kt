@@ -38,16 +38,14 @@ class HmctsCourtDataService(
       overallConvictionDate = null,
       legacyData = null,
       documents = hearing.documents.mapNotNull {
-        val document = documents.find { document -> document.documentUuid == it.documentId }
-        if (document != null) {
-          UploadedDocument(
-            it.documentId,
-            mapDocumentType(it.documentType),
-            document.documentFilename,
-          )
-        } else {
-          null
-        }
+        documents.find { document -> document.documentUuid == it.documentId }
+          ?.let { document ->
+            UploadedDocument(
+              it.documentId,
+              mapDocumentType(it.documentType),
+              document.documentFilename,
+            )
+          }
       },
       source = EventSource.DPS,
       deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
