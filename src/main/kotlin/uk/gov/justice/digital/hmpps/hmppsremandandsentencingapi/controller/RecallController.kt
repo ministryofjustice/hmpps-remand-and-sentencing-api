@@ -69,7 +69,14 @@ class RecallController(private val recallService: RecallService, private val dps
   fun getRecall(@PathVariable recallUuid: UUID): Recall = recallService.findRecallByUuid(recallUuid)
 
   @GetMapping("/person/{prisonerId}/search")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @PreAuthorize(
+    """
+    hasAnyRole('ROLE_REMAND_AND_SENTENCING', 
+               'ROLE_RELEASE_DATES_CALCULATOR',  
+               'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW',
+               'ROLE_REMAND_AND_SENTENCING__CCRD__RO')
+    """,
+  )
   @Operation(
     summary = "Search recalls for a person by period of custody",
     description = "Filter by bookingId (current period of custody) unless includeAllPeriods is true, when all recalls are returned with the current period listed first.",

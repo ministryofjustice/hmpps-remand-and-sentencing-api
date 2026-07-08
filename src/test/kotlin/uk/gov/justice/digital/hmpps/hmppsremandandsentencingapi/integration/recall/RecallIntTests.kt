@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
@@ -532,8 +533,18 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(recalls.first().courtCases.first().bookingId).isEqualTo(bookingId)
   }
 
-  @Test
-  fun `Get recalls filters by bookingId query param`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_AND_SENTENCING",
+      "ROLE_RELEASE_DATES_CALCULATOR",
+      "ROLE_REMAND_SENTENCING__RECORD_RECALL_RW",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_SENTENCING__RECORD_RECALL_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+    ],
+  )
+  fun `Get recalls filters by bookingId query param`(roleCsv: String) {
+    val roles = roleCsv.split(",")
     val activeBookingId = CUSTODY_FILTER_ACTIVE_BOOKING_ID
     val otherBookingId = CUSTODY_FILTER_OTHER_BOOKING_ID
     val appearanceDate = LocalDate.now().minusDays(30)
@@ -575,7 +586,7 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(allRecalls.prisonerRecallTotal).isEqualTo(2)
     assertThat(allRecalls.recalls.map { it.recallUuid }).containsExactly(currentPeriodRecallUuid, previousPeriodRecallUuid)
 
-    val filteredRecalls = getPrisonerRecallsResponse(CUSTODY_FILTER_PRISONER_ID, activeBookingId.toString())
+    val filteredRecalls = getPrisonerRecallsResponse(CUSTODY_FILTER_PRISONER_ID, activeBookingId.toString(), null, roles)
     assertThat(filteredRecalls.prisonerRecallTotal).isEqualTo(2)
     assertThat(filteredRecalls.recalls.map { it.recallUuid }).containsExactly(currentPeriodRecallUuid)
   }

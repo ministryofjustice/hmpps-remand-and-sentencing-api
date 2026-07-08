@@ -91,7 +91,7 @@ class ImmigrationDetentionController(
   ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId)
 
   @GetMapping("/person/{prisonerId}/latest")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO')")
   @Operation(
     summary = "Retrieve the last active record for the prisoner, sorted by created date descending",
     description = "This endpoint will retrieve the last active immigration detention record for the prisoner, sorted by created date descending",

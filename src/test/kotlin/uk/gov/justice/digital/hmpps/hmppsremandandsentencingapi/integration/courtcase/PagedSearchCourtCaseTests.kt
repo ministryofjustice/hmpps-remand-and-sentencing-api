@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -18,8 +20,16 @@ import java.util.stream.LongStream
 
 class PagedSearchCourtCaseTests : IntegrationTestBase() {
 
-  @Test
-  fun `return all court cases associated with a prisoner id`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+    ],
+  )
+  fun `return all court cases associated with a prisoner id`(roleCsv: String) {
+    val roles = roleCsv.split(",")
     val createdCourtCase = createCourtCase()
     webTestClient.get()
       .uri {
@@ -28,7 +38,7 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
           .build()
       }
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken(roles = roles)
       }
       .exchange()
       .expectStatus()
