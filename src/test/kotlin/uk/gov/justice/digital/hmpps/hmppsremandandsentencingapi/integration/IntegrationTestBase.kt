@@ -449,6 +449,7 @@ abstract class IntegrationTestBase {
     prisonerId: String,
     bookingId: String? = null,
     includeAllPeriods: Boolean? = null,
+    roles: List<String> = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"),
   ): PrisonerRecallsResponse = webTestClient
     .get()
     .uri {
@@ -462,7 +463,7 @@ abstract class IntegrationTestBase {
       builder.build()
     }
     .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+      it.authToken(roles = roles)
     }
     .exchange()
     .expectStatus()
@@ -578,11 +579,15 @@ abstract class IntegrationTestBase {
     .expectBody(DeleteImmigrationDetentionResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun getLatestImmigrationDetentionRecordByPrisonerId(prisonerId: String): List<ImmigrationDetention> = webTestClient
+  protected fun getLatestImmigrationDetentionRecordByPrisonerId(
+    prisonerId: String,
+    roles: List<String> =
+      listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"),
+  ): List<ImmigrationDetention> = webTestClient
     .get()
     .uri("/immigration-detention/person/$prisonerId/latest")
     .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
+      it.authToken(roles = roles)
     }
     .exchange()
     .expectStatus()

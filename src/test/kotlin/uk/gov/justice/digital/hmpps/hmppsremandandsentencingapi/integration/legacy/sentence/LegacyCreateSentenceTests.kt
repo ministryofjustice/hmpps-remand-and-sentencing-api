@@ -4,6 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -157,8 +159,16 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
     assertThat(recalls[0].source).isEqualTo(EventSource.NOMIS)
   }
 
-  @Test
-  fun `inactive sentences are returned`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+    ],
+  )
+  fun `inactive sentences are returned`(roleCsv: String) {
+    val roles = roleCsv.split(",")
     val (chargeLifetimeUuid, toCreateCharge) = createLegacyCharge()
     val legacySentence = DataCreator.legacyCreateSentence(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateCharge.appearanceLifetimeUuid, active = false)
     val response = webTestClient
@@ -197,7 +207,7 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
           .build()
       }
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.authToken(roles = roles)
       }
       .exchange()
       .expectStatus()

@@ -2,13 +2,23 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.sen
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 
 class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
 
-  @Test
-  fun `returns sentences to chain to grouped by appearance when there is an active sentence in the past`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+    ],
+  )
+  fun `returns sentences to chain to grouped by appearance when there is an active sentence in the past`(roleCsv: String) {
+    val roles = roleCsv.split(",")
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()
     val charge = appearance.charges.first()
@@ -19,7 +29,7 @@ class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
           .queryParam("sentenceUuids", sentence.sentenceUuid)
           .build()
       }
-      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .headers { it.authToken(roles = roles) }
       .exchange()
       .expectStatus()
       .isOk

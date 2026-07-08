@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.imm
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
@@ -16,8 +18,16 @@ import java.util.*
 
 class GetLatestImmigrationByPrisonerTests : IntegrationTestBase() {
 
-  @Test
-  fun `Get latest immigration detention record for a prisoner without NOMIS records`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+    ],
+  )
+  fun `Get latest immigration detention record for a prisoner without NOMIS records`(roleCsv: String) {
+    val roles = roleCsv.split(",")
     val id1 = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,
@@ -40,7 +50,7 @@ class GetLatestImmigrationByPrisonerTests : IntegrationTestBase() {
     )
     val secondImmigrationDetention = createImmigrationDetention(id2)
 
-    val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B")
+    val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B", roles)
 
     assertThat(immigrationDetentionRecords)
       .usingRecursiveComparison()
@@ -60,8 +70,16 @@ class GetLatestImmigrationByPrisonerTests : IntegrationTestBase() {
       )
   }
 
-  @Test
-  fun `Get latest immigration detention record for a prisoner with NOMIS records`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+    ],
+  )
+  fun `Get latest immigration detention record for a prisoner with NOMIS records`(roleCsv: String) {
+    val roles = roleCsv.split(",")
     val id1 = DpsDataCreator.dpsCreateImmigrationDetention(
       prisonerId = "B12345B",
       immigrationDetentionRecordType = DEPORTATION_ORDER,
@@ -76,7 +94,7 @@ class GetLatestImmigrationByPrisonerTests : IntegrationTestBase() {
 
     val (courtAppearanceUuid, legacyCourtAppearance) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500")
 
-    val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B")
+    val immigrationDetentionRecords = getLatestImmigrationDetentionRecordByPrisonerId("B12345B", roles)
 
     assertThat(immigrationDetentionRecords)
       .usingRecursiveComparison()

@@ -116,7 +116,7 @@ class CourtCaseController(
   }
 
   @GetMapping("/court-case/paged/search")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO')")
   @Operation(
     summary = "Retrieve all court cases for person (where each court case has at least one appearance in the past)",
     description = "This endpoint will retrieve all court cases for a person (where each court case has at least one appearance in the past - i.e. there exists a latest court appearance)",

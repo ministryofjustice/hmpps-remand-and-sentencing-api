@@ -48,7 +48,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
   fun getSentenceDetails(@PathVariable sentenceUuid: UUID): SentenceDetails = sentenceService.findSentenceDetailsByUuid(sentenceUuid) ?: throw EntityNotFoundException("No sentence found at $sentenceUuid")
 
   @GetMapping("/sentence/consecutive-to-details")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI', 'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO')")
   @Operation(
     summary = "Retrieve sentence consecutive to details",
     description = "This endpoint will retrieve consecutive to sentence details",
