@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeAggravatingFactorEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
@@ -11,6 +12,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.A
 class AggravatingFactorsService(
   private val aggravatingFactorRepository: AggravatingFactorRepository,
 ) {
+
+  fun isSame(
+    existingCharge: ChargeEntity,
+    updatedCharge: CreateCharge,
+  ): Boolean = existingCharge.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet() ==
+    updatedCharge.aggravatingFactors.map { it.code }.toSet()
 
   fun getAllByStatuses(
     statuses: List<AggravatingFactorStatus>,

@@ -103,7 +103,9 @@ class ChargeService(
     var activeRecord = existingCharge
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
 
-    if (!existingCharge.isSame(compareCharge, charge.sentence != null)) {
+    if (!existingCharge.isSame(compareCharge, charge.sentence != null) ||
+      !aggravatingFactorsService.isSame(existingCharge, charge)
+    ) {
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
         val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
         if (existingCharge.hasTwoOrMoreLiveCourtAppearance(courtAppearance)) {
