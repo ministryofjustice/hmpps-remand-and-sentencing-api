@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.4"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.0-beta"
   kotlin("plugin.spring") version "2.4.0"
   kotlin("plugin.jpa") version "2.4.0"
 }
@@ -48,13 +48,13 @@ dependencies {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_24
-  targetCompatibility = JavaVersion.VERSION_24
+  sourceCompatibility = JavaVersion.VERSION_25
+  targetCompatibility = JavaVersion.VERSION_25
 }
 
 tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24
+    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
   }
 }
 
