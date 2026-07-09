@@ -254,7 +254,7 @@ class UpdateChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `should persist aggravating factors when only aggravating factors change`() {
+  fun `should persist aggravating factors when only additional aggravating factor added`() {
     val createCharge = DpsDataCreator.dpsCreateCharge(
       aggravatingFactors = listOf(
         AggravatingFactor(
@@ -297,6 +297,46 @@ class UpdateChargeTests : IntegrationTestBase() {
 
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `should persist aggravating factors when only one aggravating factors swapped with another`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          "OATC",
+          "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 1,
+        ),
+      ),
+    )
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+
+    val updateCharge = createCharge.copy(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          code = "DISV",
+          title = "Disability of victim",
+          description = "Disability of victim",
+          displayOrder = 2,
+        ),
+      ),
+      appearanceUuid = createAppearance.appearanceUuid,
+    )
+    webTestClient.put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "DISV")).isEqualTo(1)
   }
 
   @Test

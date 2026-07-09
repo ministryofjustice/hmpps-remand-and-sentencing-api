@@ -1234,6 +1234,45 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
   }
 
+  @Test
+  fun `should persist aggravating factors when only charge aggravating factors change`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10),
+      ),
+    )
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge), nextCourtAppearance = null)
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+
+    val updateAppearance = createAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(
+        createCharge.copy(
+          appearanceUuid = createAppearance.appearanceUuid,
+          aggravatingFactors = listOf(
+            AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10),
+            AggravatingFactor(code = "OAFPC", title = "Offence Aggravated by Foreign Power", description = "Offence Aggravated by Foreign Power", displayOrder = 20),
+          ),
+        ),
+      ),
+      nextCourtAppearance = null,
+    )
+
+    // Act
+    webTestClient.put()
+      .uri("/court-appearance/${createAppearance.appearanceUuid}")
+      .bodyValue(updateAppearance)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
