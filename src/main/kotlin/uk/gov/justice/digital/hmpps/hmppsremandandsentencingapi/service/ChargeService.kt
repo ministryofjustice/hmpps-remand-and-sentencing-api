@@ -103,9 +103,7 @@ class ChargeService(
     var activeRecord = existingCharge
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
 
-    if (!existingCharge.isSame(compareCharge, charge.sentence != null) ||
-      !aggravatingFactorsService.isSame(existingCharge, charge)
-    ) {
+    if (!existingCharge.isSame(compareCharge, charge.sentence != null)) {
       if (existingCharge.offenceCode != compareCharge.offenceCode) {
         val replacedWithAnotherOutcome = chargeOutcomeRepository.findByOutcomeUuid(replacedWithAnotherOutcomeUuid)
         if (existingCharge.hasTwoOrMoreLiveCourtAppearance(courtAppearance)) {
@@ -183,8 +181,8 @@ class ChargeService(
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
       }
-      aggravatingFactorsService.replaceAggravatingFactors(activeRecord, charge.aggravatingFactors.map { it.code }.toSet())
     }
+    aggravatingFactorsService.replaceAggravatingFactors(activeRecord, charge.aggravatingFactors.map { it.code }.toSet())
     if (charge.sentence != null) {
       val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(
         charge.sentence,
