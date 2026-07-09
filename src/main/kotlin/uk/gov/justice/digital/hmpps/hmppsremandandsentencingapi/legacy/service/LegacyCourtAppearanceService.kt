@@ -206,14 +206,6 @@ class LegacyCourtAppearanceService(
             ChangeSource.NOMIS,
           ),
         )
-        eventsToEmit.add(
-          EventMetadataCreator.courtAppearanceEventMetadata(
-            existingCourtAppearance.courtCase.prisonerId,
-            existingCourtAppearance.courtCase.caseUniqueIdentifier,
-            existingCourtAppearance.appearanceUuid.toString(),
-            EventType.COURT_APPEARANCE_UPDATED,
-          ),
-        )
       }
 
       if (existingCharge.hasNoLiveCourtAppearances()) {

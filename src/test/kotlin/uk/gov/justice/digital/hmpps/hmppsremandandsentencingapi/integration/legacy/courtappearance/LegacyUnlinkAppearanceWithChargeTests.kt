@@ -25,9 +25,9 @@ class LegacyUnlinkAppearanceWithChargeTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-    val messages = getMessages(2)
-    Assertions.assertThat(messages).hasSize(2).extracting<String> { message -> message.eventType }.containsAll(listOf("court-appearance.updated", "charge.deleted"))
-    Assertions.assertThat(messages).hasSize(2).extracting<String> { message -> message.additionalInformation.get("source").asText() }.isEqualTo(listOf("NOMIS", "NOMIS"))
+    val messages = getMessages(1)
+    Assertions.assertThat(messages).hasSize(1).extracting<String> { message -> message.eventType }.containsAll(listOf("charge.deleted"))
+    Assertions.assertThat(messages).hasSize(1).extracting<String> { message -> message.additionalInformation.get("source").asText() }.isEqualTo(listOf("NOMIS"))
   }
 
   @Test
