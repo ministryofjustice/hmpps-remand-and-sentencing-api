@@ -146,7 +146,6 @@ class ChargeService(
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
 
         val newChargeRecord = chargeRepository.save(compareCharge.copyFromReplacedCharge(activeRecord))
-        aggravatingFactorsService.replaceAggravatingFactors(newChargeRecord, charge.aggravatingFactors.map { it.code }.toSet())
         chargeHistoryRepository.save(ChargeHistoryEntity.from(newChargeRecord, ChangeSource.DPS))
         activeRecord = newChargeRecord
         chargeChanges.add(EntityChangeStatus.CREATED to newChargeRecord)
@@ -177,15 +176,14 @@ class ChargeService(
           }
         compareCharge.appearanceCharges.removeAll { it.appearance == null }
         activeRecord = chargeRepository.save(compareCharge)
-        aggravatingFactorsService.replaceAggravatingFactors(activeRecord, charge.aggravatingFactors.map { it.code }.toSet())
         chargeHistoryRepository.save(ChargeHistoryEntity.from(activeRecord, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to activeRecord)
       } else {
         existingCharge.updateFrom(compareCharge)
-        aggravatingFactorsService.replaceAggravatingFactors(existingCharge, charge.aggravatingFactors.map { it.code }.toSet())
         chargeHistoryRepository.save(ChargeHistoryEntity.from(existingCharge, ChangeSource.DPS))
         chargeChanges.add(EntityChangeStatus.EDITED to existingCharge)
       }
+      aggravatingFactorsService.replaceAggravatingFactors(activeRecord, charge.aggravatingFactors.map { it.code }.toSet())
     }
     if (charge.sentence != null) {
       val (sentence, sentenceEventsToEmit) = sentenceService.createSentence(
