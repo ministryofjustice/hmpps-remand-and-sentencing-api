@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.DeleteCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataUpdate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentStatusUpdates
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -664,7 +664,7 @@ class CourtAppearanceService(
 
     val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()
     documentService.unlinkDocuments(courtAppearanceEntity.documents.toList())
-    val documentUpdates = courtAppearanceEntity.documents.map { DocumentMetadataUpdate(courtCaseEntity.prisonerId, it.documentUuid, DocumentMetadataStatus.DELETED) }
+    val documentUpdates = courtAppearanceEntity.documents.map { DocumentStatusUpdates(it.documentUuid, DocumentMetadataStatus.DELETED) }
 
     courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.takeUnless { it.statusId == CourtAppearanceEntityStatus.ACTIVE }?.let { futureAppearance ->
       eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)

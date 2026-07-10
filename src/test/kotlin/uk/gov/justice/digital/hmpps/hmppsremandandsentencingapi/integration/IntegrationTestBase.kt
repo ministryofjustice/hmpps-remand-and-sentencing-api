@@ -810,14 +810,13 @@ abstract class IntegrationTestBase {
     return documents
   }
 
-  protected fun verifyDocumentMetadataUpdated(documentUUID: UUID, prisonerId: String, status: String) {
+  protected fun verifyDocumentMetadataUpdated(documentUUID: UUID, status: String) {
     await untilAsserted {
       documentManagementApi.verify(
-        WireMock.putRequestedFor(WireMock.urlEqualTo("/documents/$documentUUID/metadata"))
+        WireMock.patchRequestedFor(WireMock.urlEqualTo("/documents/$documentUUID/metadata"))
           .withRequestBody(
             WireMock.equalToJson(
               documentMetadataRequest(
-                prisonerId,
                 status,
               ),
             ),

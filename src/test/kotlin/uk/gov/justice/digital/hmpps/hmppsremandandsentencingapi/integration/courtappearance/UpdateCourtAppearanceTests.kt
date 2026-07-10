@@ -38,7 +38,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `update appearance in existing court case`() {
     val (oldDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(oldDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(oldDocument.documentUUID.toString())
 
     val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
@@ -46,7 +46,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val createdCourtCase = getCourtCase(courtCase.first)
 
     val (newDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(newDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(newDocument.documentUUID.toString())
 
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore =
@@ -99,19 +99,19 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(oldDoc).isNotNull
     assertThat(oldDoc!!.appearance).isNull()
 
-    verifyDocumentMetadataUpdated(oldDocument.documentUUID, createdCourtCase.prisonerId, "Deleted")
+    verifyDocumentMetadataUpdated(oldDocument.documentUUID, "Deleted")
 
     val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, createdCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "Active")
   }
 
   @Test
   fun `still update appearance in existing court case even if dm api fails`() {
     val (oldDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(oldDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(oldDocument.documentUUID.toString())
 
     val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
@@ -119,7 +119,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val createdCourtCase = getCourtCase(courtCase.first)
 
     val (newDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadataToFail(newDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatusToFail(newDocument.documentUUID.toString())
 
     val appearanceId = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!.id
     val appearanceChargeHistoryBefore =
@@ -172,21 +172,21 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(oldDoc).isNotNull
     assertThat(oldDoc!!.appearance).isNull()
 
-    verifyDocumentMetadataUpdated(oldDocument.documentUUID, createdCourtCase.prisonerId, "Deleted")
+    verifyDocumentMetadataUpdated(oldDocument.documentUUID, "Deleted")
 
     val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, createdCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "Active")
   }
 
   @Test
   fun `update appearance with added and removed documents updates metadata correctly`() {
     val (docA) = uploadDocument()
     val (docB) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(docA.documentUUID.toString())
-    documentManagementApi.stubUpdateDocumentMetadata(docB.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(docA.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(docB.documentUUID.toString())
 
     val appearance = dpsCreateCourtAppearance(documents = listOf(docA, docB))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
@@ -194,7 +194,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val createdCourtCase = getCourtCase(courtCase.first)
 
     val (docC) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(docC.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(docC.documentUUID.toString())
 
     val updateCourtAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCase.first,
@@ -214,8 +214,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(docA.documentUUID, createdCourtCase.prisonerId, "Deleted")
-    verifyDocumentMetadataUpdated(docC.documentUUID, createdCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(docA.documentUUID, "Deleted")
+    verifyDocumentMetadataUpdated(docC.documentUUID, "Active")
   }
 
   @Test

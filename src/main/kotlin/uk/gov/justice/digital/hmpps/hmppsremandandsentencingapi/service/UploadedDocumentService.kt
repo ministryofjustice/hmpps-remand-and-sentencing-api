@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentMetadataUpdate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.DocumentStatusUpdates
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.UploadedDocumentEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -42,15 +42,15 @@ class UploadedDocumentService(
     documentUUIDs: List<UUID>,
     appearance: CourtAppearanceEntity,
     prisonerId: String,
-  ): MutableList<DocumentMetadataUpdate> {
-    val documentMetadataUpdates = mutableListOf<DocumentMetadataUpdate>()
+  ): MutableList<DocumentStatusUpdates> {
+    val documentStatusUpdates = mutableListOf<DocumentStatusUpdates>()
     val documentsToUnlink =
       uploadedDocumentRepository.findAllByAppearanceUUIDAndDocumentUuidNotIn(
         appearance.appearanceUuid,
         documentUUIDs,
       )
     unlinkDocuments(documentsToUnlink)
-    documentsToUnlink.forEach { document -> documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, document.documentUuid, DocumentMetadataStatus.DELETED)) }
+    documentsToUnlink.forEach { document -> documentStatusUpdates.add(DocumentStatusUpdates(document.documentUuid, DocumentMetadataStatus.DELETED)) }
 
     documentUUIDs.forEach { documentId ->
       val document = uploadedDocumentRepository.findByDocumentUuid(documentId)
@@ -64,10 +64,10 @@ class UploadedDocumentService(
     }
 
     documentUUIDs.forEach {
-      documentMetadataUpdates.add(DocumentMetadataUpdate(prisonerId, it, DocumentMetadataStatus.ACTIVE))
+      documentStatusUpdates.add(DocumentStatusUpdates(it, DocumentMetadataStatus.ACTIVE))
     }
 
-    return documentMetadataUpdates
+    return documentStatusUpdates
   }
 
   @Transactional
@@ -106,15 +106,14 @@ class UploadedDocumentService(
   }
 
   @Async
-  fun processDocumentMetadataUpdates(
-    updates: List<DocumentMetadataUpdate>,
+  fun setDocumentStatus(
+    updates: List<DocumentStatusUpdates>,
   ) {
     updates.forEach { update ->
       try {
-        documentManagementApiClient.updateDocumentMetadata(
-          prisonerId = update.prisonerId,
+        documentManagementApiClient.setDocumentStatus(
           documentId = update.documentId.toString(),
-          uploadStatus = update.status,
+          status = update.status,
         )
       } catch (e: Exception) {
         log.warn(

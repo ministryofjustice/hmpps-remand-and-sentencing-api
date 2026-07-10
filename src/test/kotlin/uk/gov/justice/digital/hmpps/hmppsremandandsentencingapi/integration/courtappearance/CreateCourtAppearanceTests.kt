@@ -30,7 +30,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val (courtCaseUuid, createdCourtCase) = createCourtCase()
 
     val (uploadedDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(uploadedDocument.documentUUID.toString())
 
     val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, documents = listOf(uploadedDocument))
     webTestClient
@@ -59,7 +59,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createdCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
   }
 
   @Test
@@ -67,7 +67,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val (courtCaseUuid, createdCourtCase) = createCourtCase()
 
     val (uploadedDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatusToFail(uploadedDocument.documentUUID.toString())
 
     val createCourtAppearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, documents = listOf(uploadedDocument))
     webTestClient
@@ -96,7 +96,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createdCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
   }
 
   @Test

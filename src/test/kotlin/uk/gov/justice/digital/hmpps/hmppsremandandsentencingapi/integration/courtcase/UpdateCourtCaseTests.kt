@@ -48,7 +48,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
 
     val (uploadedDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(uploadedDocument.documentUUID.toString())
 
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(uploadedDocument))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
@@ -65,7 +65,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, courtCase.second.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
   }
 
   @Test
@@ -73,7 +73,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
     val courtCase = createCourtCase()
 
     val (uploadedDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatusToFail(uploadedDocument.documentUUID.toString())
 
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, appearanceUUID = courtCase.second.appearances.first().appearanceUuid, courtCaseReference = "ADIFFERENTCOURTCASEREFERENCE", documents = listOf(uploadedDocument))
     val editedCourtCase = courtCase.second.copy(appearances = listOf(appearance))
@@ -90,7 +90,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, courtCase.second.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
   }
 
   @Test

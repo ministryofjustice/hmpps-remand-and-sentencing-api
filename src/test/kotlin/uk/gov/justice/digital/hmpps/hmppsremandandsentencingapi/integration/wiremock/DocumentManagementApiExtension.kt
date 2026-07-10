@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wir
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.delete
+import com.github.tomakehurst.wiremock.client.WireMock.patch
 import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.client.WireMock.put
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.http.HttpHeader
@@ -51,16 +51,16 @@ class DocumentManagementApiMockServer : WireMockServer(WireMockConfiguration.opt
       ),
   )
 
-  fun stubUpdateDocumentMetadata(documentId: String): StubMapping = stubFor(
-    put("/documents/$documentId/metadata")
+  fun stubUpdateDocumentStatus(documentId: String): StubMapping = stubFor(
+    patch("/documents/$documentId/metadata")
       .willReturn(
         aResponse()
           .withStatus(200),
       ),
   )
 
-  fun stubUpdateDocumentMetadataToFail(documentId: String): StubMapping = stubFor(
-    put("/documents/$documentId/metadata")
+  fun stubUpdateDocumentStatusToFail(documentId: String): StubMapping = stubFor(
+    patch("/documents/$documentId/metadata")
       .willReturn(
         aResponse()
           .withStatus(500),

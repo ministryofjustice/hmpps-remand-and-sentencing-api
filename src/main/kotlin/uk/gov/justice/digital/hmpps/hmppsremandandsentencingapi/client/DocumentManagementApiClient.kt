@@ -18,21 +18,17 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
       .toBodilessEntity()
       .block()
   }
-
-  fun updateDocumentMetadata(
-    prisonerId: String,
+  fun setDocumentStatus(
     documentId: String,
-    uploadStatus: DocumentMetadataStatus,
+    status: DocumentMetadataStatus,
   ) {
     webClient
-      .put()
+      .patch()
       .uri("/documents/{documentId}/metadata", documentId)
       .header("Service-Name", "Remand and Sentencing")
       .bodyValue(
         mapOf(
-          "prisonerId" to prisonerId,
-          "source" to "RemandSentencingUser",
-          "status" to uploadStatus,
+          "status" to status,
         ),
       )
       .retrieve()
