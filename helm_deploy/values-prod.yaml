@@ -20,7 +20,7 @@ generic-service:
     HMPPS_SAR_TEMPLATE_PATH: /templates/template_remand-and-sentencing-api.mustache
     HMPPS_SAR_TEMPLATE_ENABLED: "true"
     FEATURES_HMCTS_WARRANT_THING_TO_DO_ENABLED: "false"
-    FEATURES_APPEARANCE_SCHEDULES_EVENTS_ENABLED: "false"
+    FEATURES_APPEARANCE_SCHEDULES_EVENTS_ENABLED: "true"
 
   resources:
     requests:
