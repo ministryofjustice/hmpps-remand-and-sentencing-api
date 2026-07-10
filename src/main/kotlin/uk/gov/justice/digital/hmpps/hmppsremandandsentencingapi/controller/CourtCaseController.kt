@@ -80,7 +80,7 @@ class CourtCaseController(
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
+    uploadedDocumentService.setDocumentStatus(documentUpdates)
     return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
   }
 
@@ -111,7 +111,7 @@ class CourtCaseController(
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
+    uploadedDocumentService.setDocumentStatus(documentUpdates)
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
   }
 

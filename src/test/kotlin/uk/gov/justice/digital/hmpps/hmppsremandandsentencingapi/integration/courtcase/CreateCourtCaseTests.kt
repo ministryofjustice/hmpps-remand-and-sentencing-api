@@ -42,7 +42,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
   @Test
   fun `Successfully create court case and link document`() {
     val (uploadedDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(uploadedDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(uploadedDocument.documentUUID.toString())
 
     val createCourtCase = DpsDataCreator.dpsCreateCourtCase(
       appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))),
@@ -65,13 +65,13 @@ class CreateCourtCaseTests : IntegrationTestBase() {
         Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
       }
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
   }
 
   @Test
   fun `Create court case and link document finishes even if document management api fails`() {
     val (uploadedDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadataToFail(uploadedDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatusToFail(uploadedDocument.documentUUID.toString())
 
     val createCourtCase = DpsDataCreator.dpsCreateCourtCase(
       appearances = listOf(DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(uploadedDocument))),
@@ -94,7 +94,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
         Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
       }
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, createCourtCase.prisonerId, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
   }
 
   @Test

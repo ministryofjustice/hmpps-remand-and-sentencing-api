@@ -10,7 +10,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   @Test
   fun `provide no query parameters returns all documents`() {
     val (document) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(document.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(document.documentUUID.toString())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(document))
     val(_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     webTestClient
@@ -28,11 +28,11 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   @Test
   fun `match on case reference returns the document`() {
     val (document) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(document.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(document.documentUUID.toString())
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(document))
     val(courtCaseUuid, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val (otherDocument) = uploadDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(otherDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(otherDocument.documentUUID.toString())
     val otherAppearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(otherDocument), courtCaseReference = "OTHERREF")
     val(otherCourtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(otherAppearance)))
     webTestClient
@@ -65,7 +65,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
       documentType = "REMAND_WARRANT",
     )
     val documents = uploadDocument(listOf(docA, docB))
-    documents.forEach { documentManagementApi.stubUpdateDocumentMetadata(it.documentUUID.toString()) }
+    documents.forEach { documentManagementApi.stubUpdateDocumentStatus(it.documentUUID.toString()) }
 
     val appearanceA = DpsDataCreator.dpsCreateCourtAppearance(
       documents = listOf(docA),
@@ -101,9 +101,9 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
   @Test
   fun `match on warrant type document type combination`() {
     val document = DpsDataCreator.dpsCreateUploadedDocument()
-    documentManagementApi.stubUpdateDocumentMetadata(document.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(document.documentUUID.toString())
     val otherDocument = DpsDataCreator.dpsCreateUploadedDocument(documentType = "OTHER_DOC_TYPE")
-    documentManagementApi.stubUpdateDocumentMetadata(otherDocument.documentUUID.toString())
+    documentManagementApi.stubUpdateDocumentStatus(otherDocument.documentUUID.toString())
     uploadDocument(listOf(document, otherDocument))
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(document, otherDocument))
     val(courtCaseUuid, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
@@ -132,7 +132,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
     val shfDoc = DpsDataCreator.dpsCreateUploadedDocument()
     val manDoc = DpsDataCreator.dpsCreateUploadedDocument()
     val docs = uploadDocument(listOf(shfDoc, manDoc))
-    docs.forEach { documentManagementApi.stubUpdateDocumentMetadata(it.documentUUID.toString()) }
+    docs.forEach { documentManagementApi.stubUpdateDocumentStatus(it.documentUUID.toString()) }
 
     val shfAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       documents = listOf(shfDoc),
@@ -176,7 +176,7 @@ class GetPersonDocumentsTests : IntegrationTestBase() {
     val docA = DpsDataCreator.dpsCreateUploadedDocument(documentName = "warrant_bundle_A.pdf")
     val docB = DpsDataCreator.dpsCreateUploadedDocument(documentName = "hearing_notes_B.pdf")
     val docs = uploadDocument(listOf(docA, docB))
-    docs.forEach { documentManagementApi.stubUpdateDocumentMetadata(it.documentUUID.toString()) }
+    docs.forEach { documentManagementApi.stubUpdateDocumentStatus(it.documentUUID.toString()) }
 
     val appearanceA = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(docA), courtCode = "SHF", courtCaseReference = "CASE-A")
     val appearanceB = DpsDataCreator.dpsCreateCourtAppearance(documents = listOf(docB), courtCode = "MAN", courtCaseReference = "CASE-B")

@@ -51,7 +51,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
+    uploadedDocumentService.setDocumentStatus(documentUpdates)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
@@ -95,7 +95,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-    uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
+    uploadedDocumentService.setDocumentStatus(documentUpdates)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
 
@@ -122,7 +122,7 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
         )
       }
       dpsDomainEventService.emitEvents(records.eventsToEmit)
-      uploadedDocumentService.processDocumentMetadataUpdates(documentUpdates)
+      uploadedDocumentService.setDocumentStatus(documentUpdates)
     }
   }
 }
