@@ -210,6 +210,38 @@ class BookingCreateCourtCaseTests : IntegrationTestBase() {
     Assertions.assertThat(periodLengths).extracting<UUID> { it.periodLengthUuid }.allMatch { it.equals(periodLengthUuid) }
   }
 
+  @Test
+  fun `still return duplicate charges when requesting a court appearance`() {
+    val bookingCourtCases = BookingDataCreator.bookingCreateCourtCases()
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/booking")
+      .bodyValue(bookingCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(BookingCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+    val appearanceUuid = response.appearances.first().appearanceUuid
+    val chargeUuid = response.charges.first().chargeUuid
+    webTestClient
+      .get()
+      .uri("/legacy/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.lifetimeUuid == '$chargeUuid')]")
+      .exists()
+  }
+
   private fun checkChargeSnapshotOutcomeCode(appearanceLifetimeUuid: UUID, chargeLifetimeUuid: UUID, expectedOutcomeCode: String) {
     webTestClient
       .get()
