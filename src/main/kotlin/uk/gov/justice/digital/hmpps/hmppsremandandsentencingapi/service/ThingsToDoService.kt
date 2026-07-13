@@ -19,15 +19,15 @@ class ThingsToDoService(
       val totalCases = courtCaseRepository.countCourtCasesByPrisoner(prisonerId)
       if (totalCases == 0L) {
         val hearings = courtDataIngestionApi.getHearings(prisonerId)
-        val remandHearing = hearings.filter { hearing -> hearing.documents.any { it.documentType == "REMAND_WARRANT" } && hearing.caseReferences.size == 1 }
+        val warrantHearing = hearings.filter { hearing -> hearing.documents.any { it.isWarrant() } && hearing.caseReferences.size == 1 }
           .maxByOrNull { it.hearingDate }
-        if (remandHearing != null) {
+        if (warrantHearing != null) {
           return ThingsToDo(
             prisonerId = prisonerId,
-            thingsToDo = listOf(ThingToDoType.NEW_REMAND_WARRANT),
+            thingsToDo = if (warrantHearing.isRemandHearing()) listOf(ThingToDoType.NEW_REMAND_WARRANT) else listOf(ThingToDoType.NEW_SENTENCING_WARRANT),
             hearingThingsToDoData = HearingThingsToDoData(
-              remandHearing.hearingId,
-              remandHearing.caseReferences.first(),
+              warrantHearing.hearingId,
+              warrantHearing.caseReferences.first(),
             ),
           )
         }
