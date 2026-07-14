@@ -27,6 +27,7 @@ class AggravatingFactorsService(
     charge: ChargeEntity,
     codes: Set<String>,
   ) {
+    log.debug("Replacing aggravating factors for charge ${charge.chargeUuid} with codes $codes")
     removeUnwantedChargeAggravatingFactors(charge, codes)
 
     val existingCodesOnThisCharge = charge.chargeAggravatingFactors
