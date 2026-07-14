@@ -11,9 +11,16 @@ data class HmctsCourHearing(
   val caseReferences: List<String>,
   val hearingType: String,
   val documents: List<HmctsCourHearingDocument>,
-)
+) {
+  fun isRemandHearing() = documents.any { it.isRemandWarrant() }
+  fun isSentenceHearing() = documents.any { it.isSentenceWarrant() }
+}
 
 data class HmctsCourHearingDocument(
   val documentType: String,
   val documentId: UUID,
-)
+) {
+  fun isWarrant() = isRemandWarrant() || isSentenceWarrant()
+  fun isRemandWarrant() = documentType == "REMAND_WARRANT"
+  fun isSentenceWarrant() = documentType == "SENTENCING_WARRANT"
+}

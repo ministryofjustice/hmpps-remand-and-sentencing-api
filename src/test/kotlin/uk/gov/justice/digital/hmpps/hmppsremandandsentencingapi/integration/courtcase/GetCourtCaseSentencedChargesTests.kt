@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.cou
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
@@ -33,6 +34,31 @@ class GetCourtCaseSentencedChargesTests : IntegrationTestBase() {
       .isEqualTo(sentencedCharge.outcomeUuid.toString())
       .jsonPath("$.charges[?(@.chargeUuid == '${remandedCharge.chargeUuid}')]")
       .doesNotExist()
+  }
+
+  @Test
+  fun `allow retrieving inactive sentences`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+    val appearance = createdCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence!!
+    legacyUpdateSentence(sentence.sentenceUuid, DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, fine = null, active = false, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "SEC250", sentenceCategory = "2020")))
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/$courtCaseUuid/sentenced-charges")
+          .queryParam("sentenceStatuses", "ACTIVE,INACTIVE")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')]")
+      .exists()
   }
 
   @Test

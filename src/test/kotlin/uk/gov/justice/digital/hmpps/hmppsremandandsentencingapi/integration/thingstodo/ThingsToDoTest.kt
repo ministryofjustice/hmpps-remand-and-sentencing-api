@@ -47,21 +47,30 @@ class ThingsToDoTest : IntegrationTestBase() {
 
   companion object {
     val HMCTS_HEARING_ID = UUID.randomUUID()
-    val REMAND_WARRANT_DOCUMENT_ID = UUID.randomUUID()
+    val DOCUMENT_ID = UUID.randomUUID()
     val PRISONER_ID = "ABC123"
-    val REMAND_HEARING = HmctsCourHearing(
+    val SENTENCING_WARRANT = HmctsCourHearingDocument(
+      "SENTENCING_WARRANT",
+      DOCUMENT_ID,
+    )
+    val REMAND_WARRANT = HmctsCourHearingDocument(
+      "REMAND_WARRANT",
+      DOCUMENT_ID,
+    )
+    val HEARING = HmctsCourHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
       courtId = UUID.randomUUID(),
       hearingDate = LocalDateTime.of(2026, 1, 1, 1, 1, 1),
       caseReferences = listOf("ABC123"),
       hearingType = "First hearing",
-      documents = listOf(
-        HmctsCourHearingDocument(
-          "REMAND_WARRANT",
-          REMAND_WARRANT_DOCUMENT_ID,
-        ),
-      ),
+      documents = emptyList(),
+    )
+    val SENTENCING_HEARING = HEARING.copy(
+      documents = listOf(SENTENCING_WARRANT),
+    )
+    val REMAND_HEARING = HEARING.copy(
+      documents = listOf(REMAND_WARRANT),
     )
 
     @JvmStatic
@@ -92,12 +101,24 @@ class ThingsToDoTest : IntegrationTestBase() {
         ),
       ),
       Arguments.of(
-        "No existing court cases with sentencing warrant gives no thing to do",
-        REMAND_HEARING.copy(
+        "No existing court cases with sentencing warrant give sentencing thing to do",
+        SENTENCING_HEARING,
+        false,
+        ThingsToDo(
+          prisonerId = PRISONER_ID,
+          thingsToDo = listOf(ThingToDoType.NEW_SENTENCING_WARRANT),
+          hearingThingsToDoData = HearingThingsToDoData(
+            HMCTS_HEARING_ID,
+            "ABC123",
+          ),
+        ),
+      ),
+      Arguments.of(
+        "No existing court cases with pcr only document gives no thing to do",
+        HEARING.copy(
           documents = listOf(
-            HmctsCourHearingDocument(
-              "SENTENCING_WARRANT",
-              UUID.randomUUID(),
+            REMAND_WARRANT.copy(
+              documentType = "PRISON_COURT_REGISTER",
             ),
           ),
         ),
