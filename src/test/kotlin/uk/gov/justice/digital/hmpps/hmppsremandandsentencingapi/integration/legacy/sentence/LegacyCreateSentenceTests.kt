@@ -438,7 +438,15 @@ class LegacyCreateSentenceTests : IntegrationTestBase() {
       .expectStatus()
       .isCreated
 
-    assertThat(aggravatingFactors.countAggravatingFactor(dpsCharge.chargeUuid, "OATC")).isEqualTo(1)
-    assertThat(aggravatingFactors.countAggravatingFactor(dpsCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+    // Act
+    webTestClient
+      .get()
+      .uri("/charge/${dpsCharge.chargeUuid}")
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING")) }
+      .exchange()
+      .expectStatus().isOk
+
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
 }
