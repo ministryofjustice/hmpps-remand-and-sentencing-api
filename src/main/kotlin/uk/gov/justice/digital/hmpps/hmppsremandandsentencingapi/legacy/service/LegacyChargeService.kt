@@ -131,7 +131,7 @@ class LegacyChargeService(
     if (existingCourtAppearance.appearanceCharges.none { it.charge!!.chargeUuid == chargeUuid }) {
       val existingCharge = getUnlessDeleted(chargeUuid)
       val chargeEntity = chargeRepository.save(getUpdatedChargeEntity(existingCharge, chargeUuid, existingCourtAppearance, charge))
-      aggravatingFactorsService.replaceAggravatingFactors(chargeEntity, chargeEntity.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet())
+      aggravatingFactorsService.replaceAggravatingFactors(chargeEntity, existingCharge.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet())
 
       val appearanceCharge = AppearanceChargeEntity(
         existingCourtAppearance,
