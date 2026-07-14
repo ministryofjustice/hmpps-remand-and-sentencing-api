@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.v
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
@@ -281,7 +282,7 @@ class CourtCaseController(
     summary = "Retrieve all sentenced charges",
     description = "This endpoint returns all active sentenced charges",
   )
-  fun getSentencedCharges(@PathVariable courtCaseUuid: String): SentencedCharges = courtCaseService.getSentencedCharges(courtCaseUuid)?.let { (sentencedCharges, eventsToEmit) ->
+  fun getSentencedCharges(@PathVariable courtCaseUuid: String, @RequestParam(required = false, defaultValue = "ACTIVE") sentenceStatuses: List<SentenceEntityStatus>): SentencedCharges = courtCaseService.getSentencedCharges(courtCaseUuid, sentenceStatuses)?.let { (sentencedCharges, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     sentencedCharges
   } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")

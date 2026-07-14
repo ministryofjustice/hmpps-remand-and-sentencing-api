@@ -205,9 +205,9 @@ class CourtCaseService(
   ): CourtCaseValidationDate = courtCaseRepository.findValidationDates(courtCaseUuid, appearanceUuidToExclude)
 
   @Transactional
-  fun getSentencedCharges(courtCaseUuid: String): RecordResponse<SentencedCharges>? = courtCaseRepository.findSentencedCourtCase(courtCaseUuid)?.let { courtCaseEntity ->
+  fun getSentencedCharges(courtCaseUuid: String, sentenceStatuses: List<SentenceEntityStatus>): RecordResponse<SentencedCharges>? = courtCaseRepository.findSentencedCourtCase(courtCaseUuid)?.let { courtCaseEntity ->
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(courtCaseEntity)
-    RecordResponse(SentencedCharges.from(courtCaseEntity.appearances.flatMap { it.appearanceCharges }.map { it.charge!! }), eventsToEmit)
+    RecordResponse(SentencedCharges.from(courtCaseEntity.appearances.flatMap { it.appearanceCharges }.map { it.charge!! }, sentenceStatuses), eventsToEmit)
   }
 
   @Transactional(readOnly = true)
