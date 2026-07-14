@@ -7,13 +7,10 @@ data class SentencedCharges(
   val charges: List<Charge>,
 ) {
   companion object {
-    fun from(chargeEntities: List<ChargeEntity>): SentencedCharges = SentencedCharges(
-      chargeEntities.filter { it.sentences.any { sentence -> sentence.statusId == SentenceEntityStatus.ACTIVE } }.map {
+    fun from(chargeEntities: List<ChargeEntity>, sentenceStatuses: List<SentenceEntityStatus>): SentencedCharges = SentencedCharges(
+      chargeEntities.filter { it.sentences.any { sentence -> sentenceStatuses.contains(sentence.statusId) } }.map {
         Charge.from(it, { charge ->
-          charge.sentences.firstOrNull {
-            it.statusId ==
-              SentenceEntityStatus.ACTIVE
-          }
+          charge.sentences.firstOrNull { sentenceStatuses.contains(it.statusId) }
         })
       },
     )
