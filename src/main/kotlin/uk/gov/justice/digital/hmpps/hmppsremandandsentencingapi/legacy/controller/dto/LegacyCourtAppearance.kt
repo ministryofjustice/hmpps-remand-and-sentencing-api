@@ -22,7 +22,11 @@ data class LegacyCourtAppearance(
 ) {
   companion object {
 
-    val returnChargeStatuses: Set<ChargeEntityStatus> = setOf(ChargeEntityStatus.ACTIVE, ChargeEntityStatus.INACTIVE)
+    val returnChargeStatuses: Set<ChargeEntityStatus> = setOf(
+      ChargeEntityStatus.ACTIVE,
+      ChargeEntityStatus.INACTIVE,
+      ChargeEntityStatus.DUPLICATE,
+    )
 
     fun from(courtAppearanceEntity: CourtAppearanceEntity, appearanceTypeUuid: UUID, nomisAppearanceTypeCode: String, appearanceTime: LocalTime): LegacyCourtAppearance = LegacyCourtAppearance(
       courtAppearanceEntity.appearanceUuid,
