@@ -64,7 +64,7 @@ class LegacyChargeService(
       ),
     )
     if (charge.legacyData.nomisOutcomeCode == null) {
-      log.info("charge at ${createdCharge.chargeUuid} created in appearance ${charge.appearanceLifetimeUuid} with no outcome set")
+      log.info("charge at ${createdCharge.id} created in appearance [redacted appearanceLifetimeUuid] with no outcome set")
     }
     val appearanceCharge = AppearanceChargeEntity(
       courtAppearance,
