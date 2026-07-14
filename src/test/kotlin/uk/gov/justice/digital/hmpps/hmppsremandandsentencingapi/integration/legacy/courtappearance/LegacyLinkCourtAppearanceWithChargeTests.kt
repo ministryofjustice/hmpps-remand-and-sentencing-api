@@ -181,4 +181,46 @@ class LegacyLinkCourtAppearanceWithChargeTests : IntegrationTestBase() {
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
   }
+
+  @Test
+  fun `should not delete aggravating factors from the original charge record when linking it to another appearance`() {
+    val dpsCharge = DpsDataCreator.dpsCreateCharge(
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          code = "OATC",
+          title = "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+        AggravatingFactor(
+          code = "OAFPC",
+          title = "Offence Aggravated by Foreign Power",
+          description = "Offence Aggravated by Foreign Power",
+          displayOrder = 10,
+        ),
+      ),
+      sentence = null,
+    )
+    val firstAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(dpsCharge))
+    val secondAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf())
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+
+    val toUpdateCharge = DataCreator.legacyUpdateCharge()
+    webTestClient
+      .put()
+      .uri("/legacy/court-appearance/${secondAppearance.appearanceUuid}/charge/${dpsCharge.chargeUuid}")
+      .bodyValue(toUpdateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    assertThat(aggravatingFactors.countAggravatingFactor(dpsCharge.chargeUuid, "OATC")).isEqualTo(2)
+    assertThat(aggravatingFactors.countAggravatingFactor(dpsCharge.chargeUuid, "OAFPC")).isEqualTo(2)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
+    assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(1)
+  }
 }
