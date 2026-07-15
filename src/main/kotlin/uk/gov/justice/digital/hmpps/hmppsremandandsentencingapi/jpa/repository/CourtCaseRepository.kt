@@ -299,7 +299,7 @@ interface CourtCaseRepository :
     join c.sentences s
     left join s.periodLengths pl
     left join s.recallSentences rs
-    where cc.statusId = :courtCaseStatus and 
+    where cc.statusId != :courtCaseStatus and 
     ca.statusId = :courtAppearanceStatus and 
     c.statusId = :chargeStatus and 
     s.statusId != :sentenceStatus and
@@ -310,7 +310,7 @@ interface CourtCaseRepository :
   )
   fun findSentencedCourtCase(
     @Param("courtCaseUuid") courtCaseUuid: String,
-    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
     @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
     @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
