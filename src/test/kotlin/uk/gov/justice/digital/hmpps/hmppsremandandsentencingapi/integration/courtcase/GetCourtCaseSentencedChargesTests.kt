@@ -37,12 +37,24 @@ class GetCourtCaseSentencedChargesTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `allow retrieving inactive sentences`() {
+  fun `allow retrieving inactive sentences on inactive court cases`() {
     val (courtCaseUuid, createdCourtCase) = createCourtCase()
     val appearance = createdCourtCase.appearances.first()
     val charge = appearance.charges.first()
     val sentence = charge.sentence!!
     legacyUpdateSentence(sentence.sentenceUuid, DataCreator.legacyCreateSentence(chargeUuids = listOf(charge.chargeUuid), appearanceUuid = appearance.appearanceUuid, fine = null, active = false, sentenceLegacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "SEC250", sentenceCategory = "2020")))
+    val toUpdate = DataCreator.legacyCreateCourtCase(active = false)
+    webTestClient
+      .put()
+      .uri("/legacy/court-case/$courtCaseUuid")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
     webTestClient
       .get()
       .uri {
