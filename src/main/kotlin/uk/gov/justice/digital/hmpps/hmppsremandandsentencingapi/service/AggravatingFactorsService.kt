@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeAggravatingFactorEntity
@@ -18,17 +20,22 @@ class AggravatingFactorsService(
     .findByStatusInOrderByDisplayOrder(statuses)
     .map { AggravatingFactor.from(it) }
 
+  /**
+   * Scope both the add and remove ops to the current charge
+   */
   fun replaceAggravatingFactors(
     charge: ChargeEntity,
     codes: Set<String>,
   ) {
+    log.debug("Replacing aggravating factors for charge ${charge.chargeUuid} with codes $codes")
     removeUnwantedChargeAggravatingFactors(charge, codes)
 
-    val existingCodes = charge.chargeAggravatingFactors
+    val existingCodesOnThisCharge = charge.chargeAggravatingFactors
+      .filter { it.charge == charge }
       .map { it.aggravatingFactor.code }
       .toSet()
 
-    val codesToAdd = codes - existingCodes
+    val codesToAdd = codes - existingCodesOnThisCharge
 
     if (codesToAdd.isEmpty()) {
       return
@@ -48,11 +55,14 @@ class AggravatingFactorsService(
       val aggravatingFactorNotSelected =
         existing.aggravatingFactor.code !in codes
 
-      val aggravatingFactorReferencingPreviousCharge =
-        existing.charge != charge
+      val aggravatingFactorReferencingCharge =
+        existing.charge == charge
 
-      aggravatingFactorNotSelected ||
-        aggravatingFactorReferencingPreviousCharge
+      aggravatingFactorNotSelected && aggravatingFactorReferencingCharge
     }
+  }
+
+  companion object {
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }

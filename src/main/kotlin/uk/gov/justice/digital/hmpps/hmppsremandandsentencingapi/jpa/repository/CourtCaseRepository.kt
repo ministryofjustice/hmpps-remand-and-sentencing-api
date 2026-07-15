@@ -302,7 +302,7 @@ interface CourtCaseRepository :
     where cc.statusId = :courtCaseStatus and 
     ca.statusId = :courtAppearanceStatus and 
     c.statusId = :chargeStatus and 
-    s.statusId in :sentenceStatus and
+    s.statusId != :sentenceStatus and
     cc.caseUniqueIdentifier = :courtCaseUuid and
     rs is null
     order by cc.caseUniqueIdentifier desc limit 1
@@ -313,10 +313,7 @@ interface CourtCaseRepository :
     @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
     @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
-    @Param("sentenceStatus") sentenceStatuses: List<SentenceEntityStatus> = listOf(
-      SentenceEntityStatus.ACTIVE,
-      SentenceEntityStatus.MANY_CHARGES_DATA_FIX,
-    ),
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): CourtCaseEntity?
 
   @Query(

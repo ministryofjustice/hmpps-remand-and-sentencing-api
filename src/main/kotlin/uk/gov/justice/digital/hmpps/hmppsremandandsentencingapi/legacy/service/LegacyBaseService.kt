@@ -42,7 +42,7 @@ abstract class LegacyBaseService(
         }
 
       chargeRecord = chargeRepository.save(updatedCharge)
-      aggravatingFactorsService.replaceAggravatingFactors(chargeRecord, chargeRecord.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet())
+      aggravatingFactorsService.replaceAggravatingFactors(chargeRecord, existingCharge.chargeAggravatingFactors.map { it.aggravatingFactor.code }.toSet())
       val appearanceCharge = AppearanceChargeEntity(
         appearance,
         chargeRecord,

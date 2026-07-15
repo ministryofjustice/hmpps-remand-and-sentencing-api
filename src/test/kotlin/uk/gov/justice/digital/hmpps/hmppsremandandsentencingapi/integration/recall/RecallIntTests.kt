@@ -533,6 +533,87 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(recalls.first().courtCases.first().bookingId).isEqualTo(bookingId)
   }
 
+  @Test
+  fun `should retain aggravating factors on the charge when createRecall called`() {
+    val appearanceDate = LocalDate.now().minusDays(30)
+    val charge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDate),
+      aggravatingFactors = listOf(
+        AggravatingFactor(
+          code = "OATC",
+          title = "Offence Aggravated by Terrorist Connection",
+          description = "Offence Aggravated by Terrorist Connection",
+          displayOrder = 10,
+        ),
+      ),
+    )
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(charge),
+      courtCaseReference = "CC-AGG-FACTORS",
+      appearanceDate = appearanceDate,
+    )
+    val (_, courtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        appearances = listOf(appearance),
+      ),
+    )
+    val sentenceUuid = courtCase.appearances.first().charges.first().sentence!!.sentenceUuid
+
+    // Act
+    val recallUuid = createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        sentenceIds = listOf(sentenceUuid),
+      ),
+    ).recallUuid
+
+    val recall = getRecallByUUID(recallUuid)
+    val recalledSentence = recall.courtCases
+      .flatMap { it.sentences }
+      .first { it.sentenceUuid == sentenceUuid }
+
+    assertThat(recalledSentence.aggravatingFactors)
+      .extracting<String> { it.code }
+      .containsExactly("OATC")
+  }
+
+  @Test
+  fun `should retain aggravating factors on the charge when updateRecall called`() {
+    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+    val originalRecall = DpsDataCreator.dpsCreateRecall(
+      sentenceIds = listOf(
+        sentenceOne.sentenceUuid,
+        sentenceTwo.sentenceUuid,
+      ),
+    )
+    val uuid = createRecall(originalRecall).recallUuid
+    purgeQueues()
+
+    // Act
+    updateRecall(
+      CreateRecall(
+        prisonerId = "A12345B",
+        recallTypeCode = FTR_14,
+        revocationDate = originalRecall.revocationDate,
+        returnToCustodyDate = originalRecall.returnToCustodyDate,
+        createdByUsername = "user001",
+        createdByPrison = "New prison",
+        sentenceIds = listOf(sentenceOne.sentenceUuid),
+      ),
+      uuid,
+    )
+
+    val savedRecall = getRecallByUUID(uuid)
+    val recalledSentence = savedRecall.courtCases
+      .flatMap { it.sentences }
+      .first { it.sentenceUuid == sentenceOne.sentenceUuid }
+
+    assertThat(recalledSentence.aggravatingFactors)
+      .extracting<String> { it.code }
+      .containsExactly("OATC")
+  }
+
   @ParameterizedTest
   @ValueSource(
     strings = [
