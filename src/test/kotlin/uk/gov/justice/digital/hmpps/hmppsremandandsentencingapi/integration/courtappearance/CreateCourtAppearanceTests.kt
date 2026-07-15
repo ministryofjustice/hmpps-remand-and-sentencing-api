@@ -59,7 +59,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
   }
 
   @Test
@@ -96,7 +96,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val linkedDocument = uploadedDocumentRepository.findByDocumentUuid(uploadedDocument.documentUUID)
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
   }
 
   @Test

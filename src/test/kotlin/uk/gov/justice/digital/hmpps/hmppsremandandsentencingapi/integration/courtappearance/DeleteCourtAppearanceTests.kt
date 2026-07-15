@@ -95,7 +95,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
 
     await untilAsserted {
-      verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Deleted")
+      verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "DELETED")
     }
   }
 
@@ -119,7 +119,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
 
     await untilAsserted {
-      verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Deleted")
+      verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "DELETED")
     }
 
     val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!

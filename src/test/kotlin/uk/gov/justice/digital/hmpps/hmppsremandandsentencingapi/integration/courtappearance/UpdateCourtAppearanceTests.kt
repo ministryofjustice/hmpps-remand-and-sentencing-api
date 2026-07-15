@@ -99,13 +99,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(oldDoc).isNotNull
     assertThat(oldDoc!!.appearance).isNull()
 
-    verifyDocumentMetadataUpdated(oldDocument.documentUUID, "Deleted")
+    verifyDocumentMetadataUpdated(oldDocument.documentUUID, "DELETED")
 
     val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE")
   }
 
   @Test
@@ -172,13 +172,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(oldDoc).isNotNull
     assertThat(oldDoc!!.appearance).isNull()
 
-    verifyDocumentMetadataUpdated(oldDocument.documentUUID, "Deleted")
+    verifyDocumentMetadataUpdated(oldDocument.documentUUID, "DELETED")
 
     val newDoc = uploadedDocumentRepository.findByDocumentUuid(newDocument.documentUUID)
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE")
   }
 
   @Test
@@ -214,8 +214,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(docA.documentUUID, "Deleted")
-    verifyDocumentMetadataUpdated(docC.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(docA.documentUUID, "DELETED")
+    verifyDocumentMetadataUpdated(docC.documentUUID, "ACTIVE")
   }
 
   @Test
