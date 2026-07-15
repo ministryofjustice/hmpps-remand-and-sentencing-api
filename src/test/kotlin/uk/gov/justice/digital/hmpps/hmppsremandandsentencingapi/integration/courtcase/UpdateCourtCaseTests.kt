@@ -65,7 +65,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
   }
 
   @Test
@@ -90,7 +90,7 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "Active")
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
   }
 
   @Test

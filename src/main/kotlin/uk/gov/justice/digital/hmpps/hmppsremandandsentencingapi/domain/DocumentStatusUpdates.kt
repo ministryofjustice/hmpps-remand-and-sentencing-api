@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain
 
-import com.fasterxml.jackson.annotation.JsonValue
 import java.util.UUID
 
 data class DocumentStatusUpdates(
@@ -8,12 +7,8 @@ data class DocumentStatusUpdates(
   val status: DocumentMetadataStatus,
 )
 
-enum class DocumentMetadataStatus(val value: String) {
-  AWAITING("Awaiting"),
-  ACTIVE("Active"),
-  DELETED("Deleted"),
-  ;
-
-  @JsonValue
-  fun toValue(): String = value
+enum class DocumentMetadataStatus {
+  AWAITING,
+  ACTIVE,
+  DELETED,
 }
