@@ -43,7 +43,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
-    val createdCourtCase = getCourtCase(courtCase.first)
+    getCourtCase(courtCase.first)
 
     val (newDocument) = uploadDocument()
     documentManagementApi.stubUpdateDocumentStatus(newDocument.documentUUID.toString())
@@ -58,22 +58,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       documents = listOf(newDocument),
     )
 
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.appearanceUuid")
-      .value<String> { appearanceUuid ->
-        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
-      }
+    putCourtAppearance(createdAppearance.appearanceUuid, updateCourtAppearance)
+
     val messages = getMessages(8)
     assertThat(messages).hasSize(8).extracting<String> { it.eventType }.contains("court-appearance.updated")
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
@@ -116,7 +102,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = dpsCreateCourtAppearance(documents = listOf(oldDocument))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
-    val createdCourtCase = getCourtCase(courtCase.first)
+    getCourtCase(courtCase.first)
 
     val (newDocument) = uploadDocument()
     documentManagementApi.stubUpdateDocumentStatusToFail(newDocument.documentUUID.toString())
@@ -131,22 +117,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       documents = listOf(newDocument),
     )
 
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
-      .expectBody()
-      .jsonPath("$.appearanceUuid")
-      .value<String> { appearanceUuid ->
-        Assertions.assertThat(appearanceUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
-      }
+    putCourtAppearance(createdAppearance.appearanceUuid, updateCourtAppearance)
+
     val messages = getMessages(8)
     assertThat(messages).hasSize(8).extracting<String> { it.eventType }.contains("court-appearance.updated")
     assertThat(messages).extracting<String> { it.eventType }.contains("sentence.inserted")
@@ -191,7 +163,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val appearance = dpsCreateCourtAppearance(documents = listOf(docA, docB))
     val courtCase = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
     val createdAppearance = courtCase.second.appearances.first()
-    val createdCourtCase = getCourtCase(courtCase.first)
+    getCourtCase(courtCase.first)
 
     val (docC) = uploadDocument()
     documentManagementApi.stubUpdateDocumentStatus(docC.documentUUID.toString())
@@ -202,17 +174,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       documents = listOf(docB, docC),
     )
 
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(createdAppearance.appearanceUuid, updateCourtAppearance)
 
     verifyDocumentMetadataUpdated(docA.documentUUID, "DELETED")
     verifyDocumentMetadataUpdated(docC.documentUUID, "ACTIVE")
@@ -236,17 +198,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseUuid = courtCaseUuid,
       nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${noNextAppearance.appearanceUuid}")
-      .bodyValue(updateAppearanceToHaveNextCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(noNextAppearance.appearanceUuid, updateAppearanceToHaveNextCourtAppearance)
+
     val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
       courtCaseUuid,
       CourtAppearanceEntityStatus.FUTURE,
@@ -288,17 +242,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseUuid = courtCaseUuid,
       charges = listOf(editedCharge),
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${courtAppearanceWithNextCourtAppearance.appearanceUuid}")
-      .bodyValue(editAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(courtAppearanceWithNextCourtAppearance.appearanceUuid, editAppearance)
+
     val futureAppearance = courtAppearanceRepository.findByCourtCaseCaseUniqueIdentifierAndStatusId(
       courtCaseUuid,
       CourtAppearanceEntityStatus.FUTURE,
@@ -371,17 +317,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
     val createdAppearance = createdCourtCase.appearances.first()
       .copy(courtCaseUuid = courtCaseUuid, appearanceDate = appearanceDate.minusDays(10))
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(createdAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(createdAppearance.appearanceUuid, createdAppearance)
 
     val messages = getMessages(2)
     assertThat(messages).hasSize(2).extracting<String> { it.eventType }.contains("sentence.updated")
@@ -445,34 +382,15 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       nextCourtAppearance = null,
     )
 
-    webTestClient
-      .put()
-      .uri("/court-appearance/${futureAppearance.appearanceUuid}")
-      .bodyValue(futureAppearanceUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(futureAppearance.appearanceUuid, futureAppearanceUpdate)
 
     val updateCourtAppearance = createdAppearance.copy(
       courtCaseUuid = courtCaseUuid,
       appearanceUuid = createdAppearance.appearanceUuid,
       nextCourtAppearance = null,
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(createdAppearance.appearanceUuid, updateCourtAppearance)
 
     webTestClient
       .get()
@@ -492,17 +410,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val charge = courtCase.second.appearances.first().charges.first().copy(offenceCode = "OFF634624")
     val appearance =
       courtCase.second.appearances.first().copy(charges = listOf(charge), courtCaseUuid = courtCase.first)
-    webTestClient
-      .put()
-      .uri("/court-appearance/${appearance.appearanceUuid}")
-      .bodyValue(appearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(appearance.appearanceUuid, appearance)
 
     webTestClient
       .get()
@@ -533,17 +442,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
     val editedCharge = charge.copy(offenceStartDate = charge.offenceStartDate.minusDays(5))
     val editedAppearance = firstAppearance.copy(charges = listOf(editedCharge), courtCaseUuid = courtCaseUuid)
-    webTestClient
-      .put()
-      .uri("/court-appearance/${editedAppearance.appearanceUuid}")
-      .bodyValue(editedAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(editedAppearance.appearanceUuid, editedAppearance)
 
     webTestClient
       .get()
@@ -568,30 +468,13 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val secondCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "OFF567")
     val appearance =
       courtCase.second.appearances.first().copy(charges = listOf(charge, secondCharge), courtCaseUuid = courtCase.first)
-    webTestClient
-      .put()
-      .uri("/court-appearance/${appearance.appearanceUuid}")
-      .bodyValue(appearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(appearance.appearanceUuid, appearance)
+
     purgeQueues()
     val appearanceWithoutSecondCharge = appearance.copy(charges = listOf(charge))
-    webTestClient
-      .put()
-      .uri("/court-appearance/${appearance.appearanceUuid}")
-      .bodyValue(appearanceWithoutSecondCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+
+    putCourtAppearance(appearance.appearanceUuid, appearanceWithoutSecondCharge)
 
     val messages = getMessages(4)
     assertThat(messages).hasSize(4).extracting<String> { it.eventType }.contains("court-appearance.updated")
@@ -621,30 +504,11 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val editedCharge = charge.copy(sentence = sentenceWithoutPeriodLength)
     val editedAppearance = appearance.copy(charges = listOf(editedCharge))
 
-    webTestClient
-      .put()
-      .uri("/court-appearance/${appearance.appearanceUuid}")
-      .bodyValue(editedAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(appearance.appearanceUuid, editedAppearance)
+
     purgeQueues()
     val appearanceWithSentenceEdit = editedAppearance.copy(charges = listOf(editedCharge.copy(sentence = sentenceWithoutPeriodLength.copy(convictionDate = sentenceWithoutPeriodLength.convictionDate!!.minusDays(2L)))))
-    webTestClient
-      .put()
-      .uri("/court-appearance/${appearance.appearanceUuid}")
-      .bodyValue(appearanceWithSentenceEdit)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(appearance.appearanceUuid, appearanceWithSentenceEdit)
 
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.doesNotContain("sentence.period-length.deleted")
@@ -674,17 +538,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseUuid = courtCaseUuid,
       charges = createdAppearance.charges.map { it.copy(sentence = it.sentence?.copy(sentenceTypeId = edsUuid)) },
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(createdAppearance.appearanceUuid, updateAppearance)
 
     webTestClient
       .get()
@@ -717,17 +571,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseUuid = courtCaseUuid,
       nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(),
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(createdAppearance.appearanceUuid, updateAppearance)
 
     val messages = getMessages(2)
     assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-appearance.updated", "court-appearance.inserted")
@@ -750,17 +594,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseUuid = courtCaseUuid,
       nextCourtAppearance = null,
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(createdAppearance.appearanceUuid, updateAppearance)
 
     val messages = getMessages(2)
     assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("court-appearance.updated", "court-appearance.deleted")
@@ -787,17 +621,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       nextCourtAppearance = null,
     )
 
-    webTestClient
-      .put()
-      .uri("/court-appearance/${newAppearance.appearanceUuid}")
-      .bodyValue(newAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(newAppearance.appearanceUuid, newAppearance)
 
     webTestClient
       .get()
@@ -840,17 +664,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val courtCaseUuid = response.courtCases.first().courtCaseUuid
 
     val updateCourtAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(courtCaseUuid = courtCaseUuid, appearanceUUID = firstAppearanceUuid, appearanceDate = firstAppearance.appearanceDate, charges = emptyList(), documents = emptyList(), nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(appearanceTypeUuid = UUID.fromString("1da09b6e-55cb-4838-a157-ee6944f2094c"), courtAppearanceSubtypeUuid = null))
-    webTestClient
-      .put()
-      .uri("/court-appearance/${updateCourtAppearance.appearanceUuid}")
-      .bodyValue(updateCourtAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(updateCourtAppearance.appearanceUuid, updateCourtAppearance)
 
     val appearanceType = appearanceTypeRepository.findByAppearanceTypeUuid(updateCourtAppearance.nextCourtAppearance!!.appearanceTypeUuid)!!
 
@@ -982,99 +796,11 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseUuid = courtCaseUuid,
       charges = listOf(updatedCharge),
     )
-    webTestClient
-      .put()
-      .uri("/court-appearance/${createdAppearance.appearanceUuid}")
-      .bodyValue(updateAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(createdAppearance.appearanceUuid, updateAppearance)
 
     val latestSentence = sentenceRepository.findBySentenceUuid(createdSentence.sentenceUuid)[0]
     assertThat(latestSentence).isNotNull
     assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
-  }
-
-  @Test
-  fun `should create a charge to remove terrorRelated removes OATC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(aggravatingFactors = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)))
-    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
-    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
-    val updateCharge = createCharge.copy(
-      aggravatingFactors = emptyList(),
-      offenceStartDate = LocalDate.now().minusDays(1),
-      appearanceUuid = createAppearance.appearanceUuid,
-    )
-
-    // Act
-    webTestClient.put()
-      .uri("/charge/${createCharge.chargeUuid}")
-      .bodyValue(updateCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
-  }
-
-  @Test
-  fun `should create a charge to add foreignPowerRelated adds OAFPC aggravating factor`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge()
-    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
-    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
-    val updateCharge = createCharge.copy(
-      aggravatingFactors = listOf(AggravatingFactor(code = "OAFPC", title = "Offence Aggravated by Foreign Power", description = "Offence Aggravated by Foreign Power", displayOrder = 10)),
-      offenceStartDate = LocalDate.now().minusDays(1),
-      appearanceUuid = createAppearance.appearanceUuid,
-    )
-
-    // Act
-    webTestClient.put()
-      .uri("/charge/${createCharge.chargeUuid}")
-      .bodyValue(updateCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
-  }
-
-  @Test
-  fun `should update a charge to swap terrorRelated for foreignPowerRelated replaces aggravating factors correctly`() {
-    val createCharge = DpsDataCreator.dpsCreateCharge(aggravatingFactors = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)))
-    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
-    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
-    val updateCharge = createCharge.copy(
-      aggravatingFactors = listOf(AggravatingFactor(code = "OAFPC", title = "Offence Aggravated by Foreign Power", description = "Offence Aggravated by Foreign Power", displayOrder = 10)),
-      offenceStartDate = LocalDate.now().minusDays(1),
-      appearanceUuid = createAppearance.appearanceUuid,
-    )
-
-    // Act
-    webTestClient.put()
-      .uri("/charge/${createCharge.chargeUuid}")
-      .bodyValue(updateCharge)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(0)
-    assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
   }
 
   @Test
@@ -1135,17 +861,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
 
     // Act
-    webTestClient
-      .put()
-      .uri("/court-appearance/${newAppearance.appearanceUuid}")
-      .bodyValue(newAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(newAppearance.appearanceUuid, newAppearance)
 
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("OAFPC")).isEqualTo(0)
@@ -1171,17 +887,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
 
     // Act
-    webTestClient
-      .put()
-      .uri("/court-appearance/${newAppearance.appearanceUuid}")
-      .bodyValue(newAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isOk
+    putCourtAppearance(newAppearance.appearanceUuid, newAppearance)
 
     assertThat(aggravatingFactors.countAggravatingFactorForLatestCharge("DISV")).isEqualTo(1)
   }
@@ -1201,15 +907,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       ),
       nextCourtAppearance = null,
     )
-    webTestClient.put()
-      .uri("/court-appearance/${createAppearance.appearanceUuid}")
-      .bodyValue(firstUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
+    putCourtAppearance(createAppearance.appearanceUuid, firstUpdate)
     val secondUpdate = firstUpdate.copy(
       charges = listOf(
         createCharge.copy(
@@ -1220,15 +918,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
 
     // Act
-    webTestClient.put()
-      .uri("/court-appearance/${createAppearance.appearanceUuid}")
-      .bodyValue(secondUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
+    putCourtAppearance(createAppearance.appearanceUuid, secondUpdate)
 
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(0)
@@ -1259,18 +949,30 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
 
     // Act
-    webTestClient.put()
-      .uri("/court-appearance/${createAppearance.appearanceUuid}")
-      .bodyValue(updateAppearance)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
+    putCourtAppearance(createAppearance.appearanceUuid, updateAppearance)
 
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OATC")).isEqualTo(1)
     assertThat(aggravatingFactors.countAggravatingFactor(createCharge.chargeUuid, "OAFPC")).isEqualTo(1)
+  }
+
+  @Test
+  fun `keep legacy data after updating in DPS`() {
+    val (courtAppearanceUuid, createdCourtAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().plusDays(5)))
+    val updateAppearance = dpsCreateCourtAppearance(courtCaseUuid = createdCourtAppearance.courtCaseUuid)
+    putCourtAppearance(courtAppearanceUuid, updateAppearance)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/$courtAppearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.legacyData.appearanceTime")
+      .isEqualTo(createdCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
   }
 
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient

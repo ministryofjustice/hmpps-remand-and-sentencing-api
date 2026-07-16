@@ -192,6 +192,12 @@ class CourtAppearanceEntity(
     courtCase: CourtCaseEntity,
     createdBy: String,
   ): CourtAppearanceEntity {
+    val legacyData = (courtAppearance.legacyData ?: legacyData)?.let {
+      if (appearanceOutcome != null) {
+        return@let it.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null, outcomeConvictionFlag = null)
+      }
+      it
+    }
     val courtAppearanceEntity = CourtAppearanceEntity(
       0,
       UUID.randomUUID(),
@@ -212,7 +218,7 @@ class CourtAppearanceEntity(
       appearanceCharges.toMutableSet(),
       null,
       courtAppearance.overallConvictionDate,
-      courtAppearance.legacyData,
+      legacyData,
       documents.toMutableSet(),
       source = source,
     )
