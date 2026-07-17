@@ -32,8 +32,18 @@ class UploadedDocumentService(
         ?: throw EntityNotFoundException("No court appearance found with UUID $it")
     }
 
-    createUploadedDocument.documents.map {
-      UploadedDocumentEntity.from(it, serviceUserService.getUsername(), courtAppearance)
+    val username = serviceUserService.getUsername()
+    createUploadedDocument.documents.map { document ->
+      val existing = uploadedDocumentRepository.findByDocumentUuid(document.documentUUID)
+      if (existing != null) {
+        existing.appearance = courtAppearance
+        existing.fileName = document.fileName
+        existing.updatedBy = username
+        existing.updatedAt = ZonedDateTime.now()
+        existing
+      } else {
+        UploadedDocumentEntity.from(document, username, courtAppearance)
+      }
     }.forEach(uploadedDocumentRepository::save)
   }
 
