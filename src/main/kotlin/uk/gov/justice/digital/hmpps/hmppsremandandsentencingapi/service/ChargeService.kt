@@ -119,6 +119,7 @@ class ChargeService(
                   ChangeSource.DPS,
                 ),
               )
+              compareCharge.appearanceCharges.remove(appearanceCharge)
               appearanceCharge.charge = null
               appearanceCharge.appearance = null
             }
