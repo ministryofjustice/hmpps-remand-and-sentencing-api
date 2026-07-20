@@ -83,6 +83,7 @@ class LegacyLinkCourtCaseTests : IntegrationTestBase() {
     val sourceCourtCaseUuid = response.courtCases.first { it.caseId == sourceCourtCase.caseId }.courtCaseUuid
 
     linkCases(sourceCourtCaseUuid, targetCourtCaseUuid)
+
     webTestClient
       .get()
       .uri("/court-case/$targetCourtCaseUuid")
