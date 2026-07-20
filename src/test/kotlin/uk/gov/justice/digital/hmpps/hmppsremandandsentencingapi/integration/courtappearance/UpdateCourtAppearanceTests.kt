@@ -975,6 +975,33 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdCourtAppearance.legacyData.appearanceTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME))
   }
 
+  @Test
+  fun `must remove original outcome from appearance when updating offence code`() {
+    val migrationCharge = DataCreator.migrationCreateCharge(legacyData = DataCreator.chargeLegacyData(nomisOutcomeCode = "4560"))
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(migrationCharge))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(eventId = firstAppearance.eventId + 1, appearanceDate = firstAppearance.appearanceDate.minusDays(5), charges = listOf(migrationCharge), legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "4560"))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))
+    val response = migrateCases(DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase)))
+    val courtCaseUuid = response.courtCases.first { it.caseId == courtCase.caseId }.courtCaseUuid
+    val secondAppearanceUuid = response.appearances.first { it.eventId == secondAppearance.eventId }.appearanceUuid
+    val chargeUuid = response.charges.first { it.chargeNOMISId == migrationCharge.chargeNOMISId }.chargeUuid
+    val updatedCharge = DpsDataCreator.dpsCreateCharge(appearanceUuid = secondAppearanceUuid, chargeUuid = chargeUuid, offenceStartDate = migrationCharge.offenceStartDate!!, offenceCode = "ANOTHERCODE", outcomeUuid = UUID.fromString("dd912c55-ca0d-4a68-8b0d-ba0a5e73b471"))
+    val appearance = dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, appearanceUUID = secondAppearanceUuid, outcomeUuid = UUID.fromString("fb966699-7adf-4c58-8852-395951e77846"), courtCode = secondAppearance.courtCode, courtCaseReference = "NOMIS123", appearanceDate = secondAppearance.appearanceDate, warrantType = "NON_SENTENCING", overallSentenceLength = null, nextCourtAppearance = null, charges = listOf(updatedCharge), overallConvictionDate = null, documents = listOf())
+    putCourtAppearance(secondAppearanceUuid, appearance)
+    webTestClient
+      .get()
+      .uri("/court-appearance/$secondAppearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].outcome.outcomeUuid")
+      .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced with another
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
