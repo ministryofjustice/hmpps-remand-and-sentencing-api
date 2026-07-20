@@ -188,16 +188,15 @@ class CourtAppearanceService(
     }
     eventsToEmit.addAll(chargeRecords.heardCharges.flatMap { it.eventsToEmit } + chargeRecords.futureCharges.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
-    courtAppearance.overallSentenceLength?.let { createPeriodLength ->
-      // Ignore period-length events returned here because we do not emit them from createCourtAppearanceEntity
-      periodLengthService.create(
-        listOf(PeriodLengthEntity.from(createPeriodLength, serviceUserService.getUsername())),
-        createdCourtAppearance.periodLengths,
-        courtCaseEntity.prisonerId,
-        { createdPeriodLength ->
-          createdPeriodLength.appearanceEntity = createdCourtAppearance
-        },
+    val periodLengthsToCreate = courtAppearance.periodLengths?.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) } ?: courtAppearance.overallSentenceLength?.let {
+      listOf(
+        PeriodLengthEntity.from(it, serviceUserService.getUsername()),
       )
+    }
+    periodLengthsToCreate?.let {
+      periodLengthService.create(it, createdCourtAppearance.periodLengths, courtCaseEntity.prisonerId, { createdPeriodLength ->
+        createdPeriodLength.appearanceEntity = createdCourtAppearance
+      })
     }
 
     nextCourtAppearance?.futureSkeletonAppearance?.also { courtAppearanceEntity ->
@@ -243,12 +242,9 @@ class CourtAppearanceService(
       existingCourtAppearanceEntity.updateFrom(compareAppearance)
       appearanceChangeStatus = EntityChangeStatus.EDITED
     }
-    val toCreatePeriodLengths = courtAppearance.overallSentenceLength?.let {
+    val toCreatePeriodLengths = courtAppearance.periodLengths?.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) } ?: courtAppearance.overallSentenceLength?.let {
       listOf(
-        PeriodLengthEntity.from(
-          it,
-          serviceUserService.getUsername(),
-        ),
+        PeriodLengthEntity.from(it, serviceUserService.getUsername()),
       )
     } ?: emptyList()
     // Ignore period-length events returned here because we do not emit them from updateCourtAppearanceEntity

@@ -522,7 +522,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
     val appearance = dpsCreateCourtAppearance(
       charges = listOf(charge),
-      overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6),
+      periodLengths = listOf(DpsDataCreator.dpsCreatePeriodLength(years = 6)),
     )
     val (courtCaseUuid, createdCourtCase) = createCourtCase(
       DpsDataCreator.dpsCreateCourtCase(

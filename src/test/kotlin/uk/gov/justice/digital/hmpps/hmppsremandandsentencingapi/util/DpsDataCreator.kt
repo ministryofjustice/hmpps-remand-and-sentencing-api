@@ -78,6 +78,7 @@ class DpsDataCreator {
       legacyData: CourtAppearanceLegacyData? = null,
       prisonId: String = "PRISON1",
       documents: List<UploadedDocument> = listOf(dpsCreateUploadedDocument()),
+      periodLengths: List<CreatePeriodLength>? = listOf(dpsCreatePeriodLength()),
     ): CreateCourtAppearance = CreateCourtAppearance(
       courtCaseUuid,
       appearanceUUID,
@@ -94,6 +95,7 @@ class DpsDataCreator {
       legacyData,
       prisonId,
       documents,
+      periodLengths,
     )
 
     fun dpsCreateNonSentencedCourtCase(
@@ -132,6 +134,7 @@ class DpsDataCreator {
       legacyData,
       prisonId,
       documents,
+      null,
     )
 
     fun dpsCreateNonSentencedCharge(
