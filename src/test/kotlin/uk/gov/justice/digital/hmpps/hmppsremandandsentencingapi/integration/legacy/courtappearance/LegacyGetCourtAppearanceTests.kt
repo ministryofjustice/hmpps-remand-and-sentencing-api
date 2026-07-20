@@ -2,7 +2,9 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -55,7 +57,7 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `get nomis appearance type code of subtype when it exists`() {
-    val (courtCaseUuid, createdCourtCase) = createCourtCase(purgeQueues = false)
+    val (_, createdCourtCase) = createCourtCase(purgeQueues = false)
     val courtAppearance = createdCourtCase.appearances.first()
     val courtAppearanceMessages = getMessages(7).filter { message -> message.eventType == "court-appearance.inserted" }
     val futureAppearanceUuid = courtAppearanceMessages.map { message -> message.additionalInformation.get("courtAppearanceId").asText() }.first { it != courtAppearance.appearanceUuid.toString() }
@@ -72,6 +74,31 @@ class LegacyGetCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.nomisAppearanceTypeCode")
       .isEqualTo(courtAppearanceSubType!!.nomisCode)
+  }
+
+  @Test
+  fun `return merged charges`() {
+    val sourceAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 6)
+    val sourceCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(sourceAppearance), merged = true)
+    val targetCharge = DataCreator.migrationCreateCharge(mergedFromCaseId = sourceCourtCase.caseId, mergedFromDate = LocalDate.now().minusDays(10L))
+    val targetAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 5, charges = listOf(targetCharge))
+    val targetCourtCase = DataCreator.migrationCreateCourtCase(caseId = 2, appearances = listOf(targetAppearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(sourceCourtCase, targetCourtCase))
+    val response = migrateCases(courtCases)
+    val appearanceUuid = response.appearances.first { it.eventId == sourceAppearance.eventId }.appearanceUuid
+    val chargeUuid = response.charges.first { it.chargeNOMISId == sourceAppearance.charges.first().chargeNOMISId }.chargeUuid
+    webTestClient
+      .get()
+      .uri("/legacy/court-appearance/$appearanceUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[?(@.lifetimeUuid == '$chargeUuid')]")
+      .exists()
   }
 
   @Test
