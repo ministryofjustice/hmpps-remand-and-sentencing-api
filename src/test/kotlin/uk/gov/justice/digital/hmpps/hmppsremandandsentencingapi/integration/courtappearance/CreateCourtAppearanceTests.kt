@@ -160,7 +160,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     val concurrentCharge = DpsDataCreator.dpsCreateCharge(sentence = concurrentSentence)
     val consecutiveToSentence = DpsDataCreator.dpsCreateSentence(chargeNumber = "3", sentenceServeType = "CONSECUTIVE_TO", sentenceUuid = uuid(1), consecutiveToSentenceUuid = uuid(0))
     val consecutiveToCharge = DpsDataCreator.dpsCreateCharge(sentence = consecutiveToSentence)
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, charges = listOf(consecutiveToCharge, concurrentCharge, forthWithCharge), overallSentenceLength = DpsDataCreator.dpsCreatePeriodLength(years = 6))
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(courtCaseUuid = courtCase.first, charges = listOf(consecutiveToCharge, concurrentCharge, forthWithCharge), periodLengths = listOf(DpsDataCreator.dpsCreatePeriodLength(years = 6)))
     webTestClient
       .post()
       .uri("/court-appearance")

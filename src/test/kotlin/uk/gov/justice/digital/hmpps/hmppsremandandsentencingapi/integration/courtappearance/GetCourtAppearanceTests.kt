@@ -69,7 +69,7 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
   @Test
   fun `dont return deleted overall sentence length`() {
     val (courtCaseUuid, createdCourtCase) = createCourtCase()
-    val courtAppearance = createdCourtCase.appearances.first().copy(courtCaseUuid = courtCaseUuid, overallSentenceLength = null)
+    val courtAppearance = createdCourtCase.appearances.first().copy(courtCaseUuid = courtCaseUuid, periodLengths = emptyList())
     webTestClient
       .put()
       .uri("/court-appearance/${courtAppearance.appearanceUuid}")

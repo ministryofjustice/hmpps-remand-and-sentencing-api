@@ -285,6 +285,7 @@ class ImmigrationDetentionService(
       legacyData = null,
       prisonId = immigrationDetention.createdByPrison,
       documents = null,
+      periodLengths = null,
     )
   }
 
