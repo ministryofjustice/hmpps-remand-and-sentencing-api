@@ -570,54 +570,54 @@ class RecallService(
           courtCode = latestAppearance.courtCode,
           status = courtCase.statusId,
           isSentenced = activeAndInactiveSentencesWithAppearances.isNotEmpty(),
-          sentences = activeAndInactiveSentencesWithAppearances.map { (sentence, appearance) ->
-            val sentenceAppearance = if (appearance.warrantType == "SENTENCING") {
-              appearance
-            } else {
-              firstSentencingAppearance
-            }
-            RecallableCourtCaseSentence(
-              sentenceUuid = sentence.sentenceUuid,
-              offenceCode = sentence.charge.offenceCode,
-              offenceStartDate = sentence.charge.offenceStartDate,
-              offenceEndDate = sentence.charge.offenceEndDate,
-              outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
-              sentenceType = sentence.sentenceType?.description,
-              sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
-              classification = sentence.sentenceType?.classification,
-              systemOfRecord = "RAS",
-              fineAmount = sentence.fineAmount,
-              periodLengths = sentence.periodLengths
-                .filter { it.statusId != PeriodLengthEntityStatus.DELETED }
-                .map { periodLength ->
-                  PeriodLength(
-                    years = periodLength.years,
-                    months = periodLength.months,
-                    weeks = periodLength.weeks,
-                    days = periodLength.days,
-                    periodOrder = periodLength.periodOrder,
-                    periodLengthType = periodLength.periodLengthType,
-                    legacyData = periodLength.legacyData,
-                    periodLengthUuid = periodLength.periodLengthUuid,
-                  )
-                },
-              convictionDate = sentence.convictionDate,
-              chargeLegacyData = sentence.charge.legacyData,
-              countNumber = sentence.countNumber,
-              lineNumber = sentence.legacyData?.nomisLineReference,
-              sentenceServeType = sentence.sentenceServeType,
-              sentenceLegacyData = sentence.legacyData,
-              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
-              aggravatingFactors = sentence.charge.chargeAggravatingFactors
-                .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
-              isRecallable = sentence.sentenceType?.isRecallable ?: true,
-              sentenceDate = sentenceAppearance.appearanceDate,
-              consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
-              createdAt = sentence.legacyData?.postedDate
-                ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
-                ?: sentence.createdAt.toLocalDateTime(),
-            )
-          },
+          sentences = sortSentences(
+            activeAndInactiveSentencesWithAppearances.map { (sentence, appearance) ->
+              val sentenceAppearance =
+                if (appearance.warrantType == "SENTENCING") appearance else firstSentencingAppearance
+
+              RecallableCourtCaseSentence(
+                sentenceUuid = sentence.sentenceUuid,
+                offenceCode = sentence.charge.offenceCode,
+                offenceStartDate = sentence.charge.offenceStartDate,
+                offenceEndDate = sentence.charge.offenceEndDate,
+                outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
+                sentenceType = sentence.sentenceType?.description,
+                sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
+                classification = sentence.sentenceType?.classification,
+                systemOfRecord = "RAS",
+                fineAmount = sentence.fineAmount,
+                periodLengths = sentence.periodLengths
+                  .filter { it.statusId != PeriodLengthEntityStatus.DELETED }
+                  .map { periodLength ->
+                    PeriodLength(
+                      years = periodLength.years,
+                      months = periodLength.months,
+                      weeks = periodLength.weeks,
+                      days = periodLength.days,
+                      periodOrder = periodLength.periodOrder,
+                      periodLengthType = periodLength.periodLengthType,
+                      legacyData = periodLength.legacyData,
+                      periodLengthUuid = periodLength.periodLengthUuid,
+                    )
+                  },
+                convictionDate = sentence.convictionDate,
+                chargeLegacyData = sentence.charge.legacyData,
+                countNumber = sentence.countNumber,
+                lineNumber = sentence.legacyData?.nomisLineReference,
+                sentenceServeType = sentence.sentenceServeType,
+                sentenceLegacyData = sentence.legacyData,
+                outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
+                aggravatingFactors = sentence.charge.chargeAggravatingFactors
+                  .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
+                isRecallable = sentence.sentenceType?.isRecallable ?: true,
+                sentenceDate = sentenceAppearance.appearanceDate,
+                consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
+                createdAt = sentence.legacyData?.postedDate
+                  ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
+                  ?: sentence.createdAt.toLocalDateTime(),
+              )
+            },
+          ),
           appearanceDate = firstSentencingAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
@@ -635,6 +635,32 @@ class RecallService(
         eventsToEmit = eventsToEmit,
       )
     }
+  }
+
+  private fun sortSentences(sentences: List<RecallableCourtCaseSentence>): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
+    val aCount = a.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
+    val bCount = b.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
+
+    if (aCount != null && bCount != null) {
+      return@sortedWith aCount.compareTo(bCount)
+    }
+
+    if (aCount != null) return@sortedWith -1
+    if (bCount != null) return@sortedWith 1
+
+    val aLine = a.lineNumber?.toIntOrNull()
+    val bLine = b.lineNumber?.toIntOrNull()
+
+    if (aLine != null && bLine != null) {
+      return@sortedWith aLine.compareTo(bLine)
+    }
+    if (aLine != null) return@sortedWith -1
+    if (bLine != null) return@sortedWith 1
+
+    val aDate = a.offenceStartDate ?: LocalDate.MAX
+    val bDate = b.offenceStartDate ?: LocalDate.MAX
+
+    aDate.compareTo(bDate)
   }
 
   @VisibleForTesting
