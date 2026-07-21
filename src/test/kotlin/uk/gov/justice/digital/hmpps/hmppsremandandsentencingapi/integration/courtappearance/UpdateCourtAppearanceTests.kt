@@ -16,10 +16,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsPeriodLengthMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
@@ -1000,6 +1002,61 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].outcome.outcomeUuid")
       .isEqualTo("68e56c1f-b179-43da-9d00-1272805a7ad3") // replaced with another
+  }
+
+  @Test
+  fun `creating breach of supervision appearance period length attaches to a sentence`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge()
+    val sentencingAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), nextCourtAppearance = null, charges = listOf(sentencedCharge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencingAppearance)))
+    val breachPeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, days = 41, years = null)
+    val breachAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
+      overallSentenceLength = null,
+      nextCourtAppearance = null,
+      charges = listOf(
+        sentencedCharge.copy(sentence = null),
+      ),
+      periodLengths = listOf(breachPeriodLength),
+    )
+    putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
+    val courtCase = getCourtCase(courtCaseUuid)
+    val sentence = courtCase.appearances.first { sentencingAppearance.appearanceUuid == it.appearanceUuid }.charges.first { it.chargeUuid == sentencedCharge.chargeUuid }.sentence!!
+    Assertions.assertThat(sentence.periodLengths).anyMatch { periodLength -> periodLength.periodLengthUuid == breachPeriodLength.periodLengthUuid && periodLength.days == breachPeriodLength.days }
+    val events = getMessages(3)
+    Assertions.assertThat(events).anyMatch { it.eventType == "sentence.period-length.inserted" }
+    val periodLengthInsertedEvent = events.first { it.eventType == "sentence.period-length.inserted" }
+    val additionalInformation = objectMapper.treeToValue(periodLengthInsertedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)
+    Assertions.assertThat(additionalInformation.courtAppearanceId).isEqualTo(sentencingAppearance.appearanceUuid.toString())
+    Assertions.assertThat(additionalInformation.courtChargeId).isEqualTo(sentencedCharge.chargeUuid.toString())
+  }
+
+  @Test
+  fun `updating breach of supervision appearance period length results in sentence updated event`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge()
+    val sentencingAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), nextCourtAppearance = null, charges = listOf(sentencedCharge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencingAppearance)))
+    val breachPeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, days = 41, years = null)
+    val breachAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
+      overallSentenceLength = null,
+      nextCourtAppearance = null,
+      charges = listOf(
+        sentencedCharge.copy(sentence = null),
+      ),
+      periodLengths = listOf(breachPeriodLength),
+    )
+    putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
+    purgeQueues()
+    val updatedBreachPeriodLength = breachPeriodLength.copy(days = 50)
+    putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance.copy(periodLengths = listOf(updatedBreachPeriodLength)))
+    val events = getMessages(1)
+    val periodLengthUpdatedEvent = events.first { it.eventType == "sentence.period-length.updated" }
+    val additionalInformation = objectMapper.treeToValue(periodLengthUpdatedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)
+    Assertions.assertThat(additionalInformation.courtAppearanceId).isEqualTo(sentencingAppearance.appearanceUuid.toString())
+    Assertions.assertThat(additionalInformation.courtChargeId).isEqualTo(sentencedCharge.chargeUuid.toString())
   }
 
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient

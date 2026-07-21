@@ -75,7 +75,6 @@ class SentenceService(
       prisonerId,
       courtAppearanceId,
       courtCaseId,
-      shouldGenerateEvents = true,
     )
 
     val updateResponse = periodLengthService.update(
@@ -84,17 +83,16 @@ class SentenceService(
       prisonerId,
       courtAppearanceId,
       courtCaseId,
-      shouldGenerateEvents = true,
     )
 
     val createResponse = periodLengthService.create(
       newPeriodLengths,
       existingSentence.periodLengths,
       prisonerId,
+      courtCaseId,
       { created -> created.sentenceEntity = existingSentence },
       courtAppearanceId,
-      courtCaseId,
-      shouldGenerateEvents = true,
+
     )
 
     val periodLengthChangeRecord = RecordResponse(
@@ -131,10 +129,10 @@ class SentenceService(
       newPeriodLengths,
       createdSentence.periodLengths,
       prisonerId,
+      courtCaseId,
       { created -> created.sentenceEntity = createdSentence },
       courtAppearanceId,
-      courtCaseId,
-      shouldGenerateEvents = true,
+
     )
     val sentenceEvent = EventMetadataCreator.sentenceEventMetadata(
       prisonerId,
