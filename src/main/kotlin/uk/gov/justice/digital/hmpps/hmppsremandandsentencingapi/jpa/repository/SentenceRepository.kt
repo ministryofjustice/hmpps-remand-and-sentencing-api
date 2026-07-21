@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.MissingSentenceInformationDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ViewSentenceRow
@@ -347,4 +348,26 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     nativeQuery = true,
   )
   fun updateToSupportedSentenceType(@Param("sentenceTypeId") sentenceTypeId: Int, @Param("nomisCjaCode") nomisCjaCode: String, @Param("nomisSentenceCalcType") nomisSentenceCalcType: String)
+
+  @Query(
+    """
+    select cc.case_unique_identifier as courtCaseUuid, ca.appearance_uuid as appearanceUuid, c.charge_uuid as chargeUuid, s.sentence_uuid as sentenceUuid, s.id as sentenceId from sentence s
+    left join period_length pl on pl.sentence_id = s.id and pl.period_length_type = 'BREACH_OF_SUPERVISION_REQUIREMENTS' and pl.status_id != :deletedStatus
+    left join recall_sentence rs on rs.sentence_id = s.id
+    join charge c on c.id = s.charge_id
+    join appearance_charge ac on ac.charge_id = c.id
+    join court_appearance ca on ca.id = ac.appearance_id
+    join court_case cc on ca.court_case_id = cc.id
+    where s.status_id != :deletedStatus
+    and c.status_id != :deletedStatus
+    and ca.status_id != :deletedStatus
+    and cc.status_id != :deletedStatus
+    and cc.case_unique_identifier = :courtCaseUuid
+    and rs.id is null
+    order by case when pl.id is null then 0 else 1 end, s.count_number asc, s.legacy_data->>'nomisLineReference' asc
+    limit 1
+  """,
+    nativeQuery = true,
+  )
+  fun findLinkableBreachSentenceId(@Param("courtCaseUuid") courtCaseUuid: String, @Param("deletedStatus")deletedStatus: String = SentenceEntityStatus.DELETED.toString()): LinkBreachSentence
 }
