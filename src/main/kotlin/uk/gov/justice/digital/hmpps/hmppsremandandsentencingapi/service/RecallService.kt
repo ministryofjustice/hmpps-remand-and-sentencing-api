@@ -570,54 +570,52 @@ class RecallService(
           courtCode = latestAppearance.courtCode,
           status = courtCase.statusId,
           isSentenced = activeAndInactiveSentencesWithAppearances.isNotEmpty(),
-          sentences = sortSentences(
-            activeAndInactiveSentencesWithAppearances.map { (sentence, appearance) ->
-              val sentenceAppearance =
-                if (appearance.warrantType == "SENTENCING") appearance else firstSentencingAppearance
+          sentences = activeAndInactiveSentencesWithAppearances.map { (sentence, appearance) ->
+            val sentenceAppearance =
+              if (appearance.warrantType == "SENTENCING") appearance else firstSentencingAppearance
 
-              RecallableCourtCaseSentence(
-                sentenceUuid = sentence.sentenceUuid,
-                offenceCode = sentence.charge.offenceCode,
-                offenceStartDate = sentence.charge.offenceStartDate,
-                offenceEndDate = sentence.charge.offenceEndDate,
-                outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
-                sentenceType = sentence.sentenceType?.description,
-                sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
-                classification = sentence.sentenceType?.classification,
-                systemOfRecord = "RAS",
-                fineAmount = sentence.fineAmount,
-                periodLengths = sentence.periodLengths
-                  .filter { it.statusId != PeriodLengthEntityStatus.DELETED }
-                  .map { periodLength ->
-                    PeriodLength(
-                      years = periodLength.years,
-                      months = periodLength.months,
-                      weeks = periodLength.weeks,
-                      days = periodLength.days,
-                      periodOrder = periodLength.periodOrder,
-                      periodLengthType = periodLength.periodLengthType,
-                      legacyData = periodLength.legacyData,
-                      periodLengthUuid = periodLength.periodLengthUuid,
-                    )
-                  },
-                convictionDate = sentence.convictionDate,
-                chargeLegacyData = sentence.charge.legacyData,
-                countNumber = sentence.countNumber,
-                lineNumber = sentence.legacyData?.nomisLineReference,
-                sentenceServeType = sentence.sentenceServeType,
-                sentenceLegacyData = sentence.legacyData,
-                outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
-                aggravatingFactors = sentence.charge.chargeAggravatingFactors
-                  .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
-                isRecallable = sentence.sentenceType?.isRecallable ?: true,
-                sentenceDate = sentenceAppearance.appearanceDate,
-                consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
-                createdAt = sentence.legacyData?.postedDate
-                  ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
-                  ?: sentence.createdAt.toLocalDateTime(),
-              )
-            },
-          ),
+            RecallableCourtCaseSentence(
+              sentenceUuid = sentence.sentenceUuid,
+              offenceCode = sentence.charge.offenceCode,
+              offenceStartDate = sentence.charge.offenceStartDate,
+              offenceEndDate = sentence.charge.offenceEndDate,
+              outcome = sentence.charge.chargeOutcome?.outcomeName ?: sentence.charge.legacyData?.outcomeDescription,
+              sentenceType = sentence.sentenceType?.description,
+              sentenceTypeUuid = sentence.sentenceType?.sentenceTypeUuid.toString(),
+              classification = sentence.sentenceType?.classification,
+              systemOfRecord = "RAS",
+              fineAmount = sentence.fineAmount,
+              periodLengths = sentence.periodLengths
+                .filter { it.statusId != PeriodLengthEntityStatus.DELETED }
+                .map { periodLength ->
+                  PeriodLength(
+                    years = periodLength.years,
+                    months = periodLength.months,
+                    weeks = periodLength.weeks,
+                    days = periodLength.days,
+                    periodOrder = periodLength.periodOrder,
+                    periodLengthType = periodLength.periodLengthType,
+                    legacyData = periodLength.legacyData,
+                    periodLengthUuid = periodLength.periodLengthUuid,
+                  )
+                },
+              convictionDate = sentence.convictionDate,
+              chargeLegacyData = sentence.charge.legacyData,
+              countNumber = sentence.countNumber,
+              lineNumber = sentence.legacyData?.nomisLineReference,
+              sentenceServeType = sentence.sentenceServeType,
+              sentenceLegacyData = sentence.legacyData,
+              outcomeDescription = sentence.charge.chargeOutcome?.outcomeName,
+              aggravatingFactors = sentence.charge.chargeAggravatingFactors
+                .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
+              isRecallable = sentence.sentenceType?.isRecallable ?: true,
+              sentenceDate = sentenceAppearance.appearanceDate,
+              consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
+              createdAt = sentence.legacyData?.postedDate
+                ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
+                ?: sentence.createdAt.toLocalDateTime(),
+            )
+          },
           appearanceDate = firstSentencingAppearance.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
@@ -626,12 +624,19 @@ class RecallService(
 
     return if (!mergeDuplicateCourtCases) {
       RecordResponse(
-        record = RecallableCourtCasesResponse(cases = recallableCourtCases.sortedByDescending { it.appearanceDate }),
+        record = RecallableCourtCasesResponse(
+          cases = recallableCourtCases
+            .map { it.copy(sentences = sortSentences(it.sentences)) }
+            .sortedByDescending { it.appearanceDate },
+        ),
         eventsToEmit = eventsToEmit,
       )
     } else {
       RecordResponse(
-        record = RecallableCourtCasesResponse(cases = mergeAndSortCourtCases(recallableCourtCases)),
+        record = RecallableCourtCasesResponse(
+          cases = mergeAndSortCourtCases(recallableCourtCases)
+            .map { it.copy(sentences = sortSentences(it.sentences)) },
+        ),
         eventsToEmit = eventsToEmit,
       )
     }
