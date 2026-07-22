@@ -17,9 +17,10 @@ data class PagedLatestCourtAppearance(
   val legacyData: CourtAppearanceLegacyData?,
   val nextCourtAppearance: PagedNextCourtAppearance?,
   val charges: List<PagedCharge>,
+  val periodLengths: List<PagedAppearancePeriodLength>,
 ) {
   companion object {
-    fun from(courtCaseRow: CourtCaseRow, latestAppearanceCharges: Map<Int, List<CourtCaseRow>>): PagedLatestCourtAppearance = PagedLatestCourtAppearance(
+    fun from(courtCaseRow: CourtCaseRow, latestAppearanceCharges: Map<Int, List<CourtCaseRow>>, latestAppearancePeriodLengths: List<CourtCaseRow>): PagedLatestCourtAppearance = PagedLatestCourtAppearance(
       courtCaseRow.latestCourtAppearanceUuid,
       courtCaseRow.latestCourtAppearanceCaseReference,
       courtCaseRow.latestCourtAppearanceCriminalAppealOfficeReference,
@@ -33,6 +34,10 @@ data class PagedLatestCourtAppearance(
       latestAppearanceCharges.values.map {
         PagedCharge.from(it)
       },
+      latestAppearancePeriodLengths.map {
+        PagedAppearancePeriodLength.from(it)
+      },
+
     )
   }
 }

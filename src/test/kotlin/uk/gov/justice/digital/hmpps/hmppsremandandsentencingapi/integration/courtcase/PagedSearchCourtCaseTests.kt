@@ -442,4 +442,40 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .jsonPath("$.content.[*].latestCourtAppearance.charges.[*].aggravatingFactors.[0].code")
       .isEqualTo("DISV")
   }
+
+  @Test
+  fun `return breach of supervision appearance period length`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge()
+    val sentencingAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), nextCourtAppearance = null, charges = listOf(sentencedCharge))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencingAppearance)))
+    val breachPeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, days = 41, years = null)
+    val breachAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
+      overallSentenceLength = null,
+      nextCourtAppearance = null,
+      charges = listOf(
+        sentencedCharge.copy(sentence = null),
+      ),
+      periodLengths = listOf(breachPeriodLength),
+    )
+    putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", createdCourtCase.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].overallSentenceLength")
+      .doesNotExist()
+      .jsonPath("$.content.[0].latestCourtAppearance.periodLengths[?(@.periodLengthUuid == '${breachPeriodLength.periodLengthUuid}')]")
+      .exists()
+  }
 }
