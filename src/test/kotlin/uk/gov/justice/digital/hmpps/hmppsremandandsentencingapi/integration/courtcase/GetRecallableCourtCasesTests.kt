@@ -443,22 +443,22 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
 
 @Nested
 inner class SentenceOrdering {
-    @Test
-    fun `getRecallableCourtCases sorts sentences by ascending count number`() {
-      val sentences = listOf(
-        recallableSentence(countNumber = "3"),
-        recallableSentence(countNumber = "1"),
-        recallableSentence(countNumber = "2"),
-      )
+  @Test
+  fun `getRecallableCourtCases sorts sentences by ascending count number`() {
+    val sentences = listOf(
+      recallableSentence(countNumber = "3"),
+      recallableSentence(countNumber = "1"),
+      recallableSentence(countNumber = "2"),
+    )
 
-      val result = service.getRecallableCourtCasesWith(sentences)
+    val result = service.getRecallableCourtCasesWith(sentences)
 
-      assertThat(result.record.cases.single().sentences.map { it.countNumber })
-        .containsExactly("1", "2", "3")
-    }
+    assertThat(result.record.cases.single().sentences.map { it.countNumber })
+      .containsExactly("1", "2", "3")
+  }
 
-    @Test
-    fun `getRecallableCourtCases sorts sentences without count number by ascending NOMIS line number`() {
+  @Test
+  fun `getRecallableCourtCases sorts sentences without count number by ascending NOMIS line number`() {
     val sentences = listOf(
       recallableSentence(countNumber = null, lineNumber = "30"),
       recallableSentence(countNumber = null, lineNumber = "10"),
@@ -469,10 +469,10 @@ inner class SentenceOrdering {
 
     assertThat(result.record.cases.single().sentences.map { it.lineNumber })
       .containsExactly("10", "20", "30")
-    }
+  }
 
-    @Test
-    fun `getRecallableCourtCases sorts sentences without count number or line number by offence date`() {
+  @Test
+  fun `getRecallableCourtCases sorts sentences without count number or line number by offence date`() {
     val sentences = listOf(
       recallableSentence(
         countNumber = null,
@@ -498,6 +498,6 @@ inner class SentenceOrdering {
         LocalDate.of(2024, 1, 1),
         LocalDate.of(2024, 3, 1),
         LocalDate.of(2024, 5, 1),
-    )
+      )
   }
 }
