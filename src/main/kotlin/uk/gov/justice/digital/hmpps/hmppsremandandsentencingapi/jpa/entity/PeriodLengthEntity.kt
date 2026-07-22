@@ -168,6 +168,25 @@ class PeriodLengthEntity(
     updatedAt = ZonedDateTime.now()
     updatedBy = username
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PeriodLengthEntity
+
+    if (id != other.id) return false
+    if (periodLengthUuid != other.periodLengthUuid) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = id
+    result = 31 * result + periodLengthUuid.hashCode()
+    return result
+  }
+
   companion object {
     fun from(periodLength: CreatePeriodLength, createdBy: String): PeriodLengthEntity = PeriodLengthEntity(
       periodLengthUuid = periodLength.periodLengthUuid,
