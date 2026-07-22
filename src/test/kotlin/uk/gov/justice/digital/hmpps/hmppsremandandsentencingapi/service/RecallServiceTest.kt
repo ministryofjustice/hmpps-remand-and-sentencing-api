@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -76,6 +77,97 @@ class RecallServiceTest {
     courtCaseRepository,
     fixManyChargesToSentenceService,
   )
+
+  private fun createCourtCaseWithSentences(
+    sentences: List<SentenceEntity>,
+  ): CourtCaseEntity {
+    val courtCase = CourtCaseEntity(
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      caseUniqueIdentifier = UUID.randomUUID().toString(),
+      statusId = CourtCaseEntityStatus.ACTIVE,
+      createdBy = "test-user",
+    )
+
+    val appearance = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = null,
+      appearanceDate = LocalDate.of(2026, 1, 1),
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+
+    appearance.appearanceCharges.addAll(
+      sentences.map {
+        AppearanceChargeEntity(
+          courtAppearanceEntity = appearance,
+          chargeEntity = it.charge,
+          createdBy = "test-user",
+          createdPrison = "TEST",
+        )
+      },
+    )
+
+    courtCase.appearances = setOf(appearance)
+    courtCase.latestCourtAppearance = appearance
+
+    return courtCase
+  }
+
+  private fun createRecallableSentence(
+    countNumber: String? = null,
+    lineNumber: String? = null,
+    offenceStartDate: LocalDate = LocalDate.now(),
+  ): SentenceEntity {
+    val charge = ChargeEntity(
+      chargeUuid = UUID.randomUUID(),
+      offenceCode = "TEST123",
+      statusId = ChargeEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      offenceStartDate = offenceStartDate,
+      offenceEndDate = null,
+      chargeOutcome = null,
+      supersedingCharge = null,
+      domesticViolenceRelated = null,
+      legacyData = ChargeLegacyData(
+        postedDate = "2024-01-01",
+        bookingId = null,
+        nomisOutcomeCode = "1002",
+        outcomeDescription = "Guilty",
+        outcomeDispositionCode = "C",
+        outcomeConvictionFlag = true,
+        offenceDescription = "Test offence",
+      ),
+      appearanceCharges = mutableSetOf(),
+    )
+
+    return SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = SentenceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      sentenceServeType = "FORTHWITH",
+      consecutiveTo = null,
+      supersedingSentence = null,
+      charge = charge,
+      convictionDate = LocalDate.now(),
+      legacyData = SentenceLegacyData(
+        postedDate = "2024-01-01",
+        bookingId = null,
+        nomisLineReference = lineNumber,
+      ),
+      fineAmount = null,
+      countNumber = countNumber,
+      sentenceType = null,
+    )
+  }
 
   @Test
   fun `delete a dps recall checks for adjustment and deletes if found`() {
@@ -173,6 +265,78 @@ class RecallServiceTest {
     val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
 
     assertThat(result.record.cases).isEmpty()
+  }
+
+  @Test
+  fun `getRecallableCourtCases sorts sentences by ascending count number`() {
+    val sentences = listOf(
+      createRecallableSentence(countNumber = null, lineNumber = "1"),
+      createRecallableSentence(countNumber = "3"),
+      createRecallableSentence(countNumber = "1"),
+      createRecallableSentence(countNumber = "2"),
+    )
+
+    val courtCase = createCourtCaseWithSentences(sentences)
+
+    every {
+      courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    } returns listOf(courtCase)
+
+    val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(result.record.cases.single().sentences.map { it.countNumber })
+      .containsExactly("1", "2", "3", null)
+  }
+
+  @Test
+  fun `getRecallableCourtCases sorts sentences without count number by ascending NOMIS line number`() {
+    val sentences = listOf(
+      createRecallableSentence(countNumber = null, lineNumber = "30"),
+      createRecallableSentence(countNumber = null, lineNumber = "10"),
+      createRecallableSentence(countNumber = null, lineNumber = "20"),
+      createRecallableSentence(countNumber = "1"),
+    )
+
+    val courtCase = createCourtCaseWithSentences(sentences)
+
+    every {
+      courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    } returns listOf(courtCase)
+
+    val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(result.record.cases.single().sentences.map { it.countNumber ?: it.lineNumber })
+      .containsExactly("1", "10", "20", "30")
+  }
+
+  @Test
+  fun `getRecallableCourtCases sorts sentences without count number or line number by offence date`() {
+    val sentences = listOf(
+      createRecallableSentence(
+        offenceStartDate = LocalDate.of(2024, 5, 1),
+      ),
+      createRecallableSentence(
+        offenceStartDate = LocalDate.of(2024, 1, 1),
+      ),
+      createRecallableSentence(
+        offenceStartDate = LocalDate.of(2024, 3, 1),
+      ),
+    )
+
+    val courtCase = createCourtCaseWithSentences(sentences)
+
+    every {
+      courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    } returns listOf(courtCase)
+
+    val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(result.record.cases.single().sentences.map { it.offenceStartDate })
+      .containsExactly(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 3, 1),
+        LocalDate.of(2024, 5, 1),
+      )
   }
 
   @Test
@@ -769,12 +933,14 @@ class RecallServiceTest {
       appearanceCharges = mutableSetOf(),
     ).apply {
       appearanceCharges.add(
-        AppearanceChargeEntity(
-          courtAppearanceEntity = testCourtAppearance,
-          chargeEntity = this,
-          createdBy = "test-user",
-          createdPrison = "TEST",
-        ),
+        appearance.appearanceCharges = sentences.map {
+          AppearanceChargeEntity(
+            appearance,
+            it.charge,
+            "test-user",
+            "TEST",
+          )
+        }.toMutableSet(),
       )
     }
     private val testNonLegacyRecallEntity = RecallEntity(
