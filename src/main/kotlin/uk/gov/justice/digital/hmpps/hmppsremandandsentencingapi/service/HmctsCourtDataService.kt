@@ -49,6 +49,7 @@ class HmctsCourtDataService(
       },
       source = EventSource.DPS,
       deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+      emptyList(),
     )
   }
 

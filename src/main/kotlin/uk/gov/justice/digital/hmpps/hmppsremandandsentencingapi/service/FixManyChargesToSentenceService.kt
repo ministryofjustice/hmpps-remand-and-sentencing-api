@@ -87,7 +87,10 @@ class FixManyChargesToSentenceService(
           it.legacyData?.nomisLineReference = null
         }
         eventsToEmit.add(sentenceEventToEmit)
-        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata, username) { it.periodLengthUuid = UUID.randomUUID() }
+        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata, username) {
+          it.periodLengthUuid = UUID.randomUUID()
+          it.appearanceEntity = null
+        }
         eventsToEmit.addAll(periodLengthEventsToEmit)
       }
     }
