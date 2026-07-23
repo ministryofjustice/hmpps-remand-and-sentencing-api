@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
@@ -329,6 +330,38 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
     val messages = getMessages(3)
     Assertions.assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder("sentence.fix-single-charge.inserted", "sentence.updated", "sentence.period-length.inserted")
     Assertions.assertThat(messages).extracting<String> { it.personReference.identifiers.first().value }.containsOnly(courtCases.prisonerId)
+  }
+
+  @Test
+  fun `keep single breach of supervision term length on retained sentence and remove from the rest`() {
+    val termLength = DataCreator.migrationCreatePeriodLength(periodLengthId = DataCreator.nomisPeriodLengthId(termSequence = 1), legacyData = DataCreator.periodLengthLegacyData(sentenceTermCode = "IMP"))
+    val breachOfSupervisionTermLength = DataCreator.migrationCreatePeriodLength(periodLengthId = DataCreator.nomisPeriodLengthId(termSequence = 2), legacyData = DataCreator.periodLengthLegacyData(sentenceTermCode = "SEC104"))
+    val sentence = DataCreator.migrationCreateSentence(periodLengths = listOf(termLength, breachOfSupervisionTermLength))
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+    val response = migrateCases(courtCases)
+    val breachOfSupervisionUuid = response.sentenceTerms.first { it.sentenceTermNOMISId == breachOfSupervisionTermLength.periodLengthId }.periodLengthUuid
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val periodLengthRecords = periodLengthRepository.findByPeriodLengthUuid(breachOfSupervisionUuid)
+    Assertions.assertThat(periodLengthRecords).extracting<PeriodLengthEntityStatus> { it.statusId }.containsExactlyInAnyOrder(
+      PeriodLengthEntityStatus.ACTIVE,
+      PeriodLengthEntityStatus.DELETED,
+    )
   }
 
   @Test
