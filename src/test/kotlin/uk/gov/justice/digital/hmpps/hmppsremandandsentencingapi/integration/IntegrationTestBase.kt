@@ -919,6 +919,18 @@ abstract class IntegrationTestBase {
     return updateCourtAppearanceSchedule
   }
 
+  protected fun putCourtAppearance(appearanceUuid: UUID, appearance: CreateCourtAppearance) = webTestClient
+    .put()
+    .uri("/court-appearance/$appearanceUuid")
+    .bodyValue(appearance)
+    .headers {
+      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      it.contentType = MediaType.APPLICATION_JSON
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
     val IMMIGRATION_DECISION_TO_DEPORT_UUID: UUID = UUID.fromString("b28afb19-dd94-4970-8071-e616b33274cb")

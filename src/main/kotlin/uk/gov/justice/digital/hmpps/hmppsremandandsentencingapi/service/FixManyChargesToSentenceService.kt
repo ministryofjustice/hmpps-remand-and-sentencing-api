@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
@@ -87,7 +88,14 @@ class FixManyChargesToSentenceService(
           it.legacyData?.nomisLineReference = null
         }
         eventsToEmit.add(sentenceEventToEmit)
-        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata, username) { it.periodLengthUuid = UUID.randomUUID() }
+        val periodLengthEventsToEmit = fixPeriodLengths(sentenceRecordEventMetadata, username) {
+          if (it.periodLengthType == PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS) {
+            it.statusId = PeriodLengthEntityStatus.DELETED
+          } else {
+            it.periodLengthUuid = UUID.randomUUID()
+            it.appearanceEntity = null
+          }
+        }
         eventsToEmit.addAll(periodLengthEventsToEmit)
       }
     }
