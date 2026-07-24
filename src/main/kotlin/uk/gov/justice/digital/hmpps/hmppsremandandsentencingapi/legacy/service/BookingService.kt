@@ -314,6 +314,7 @@ class BookingService(
         createdAppearance.courtCase.caseUniqueIdentifier,
         createdAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
+        createdAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
       ),
     )
     return createdAppearance

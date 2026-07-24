@@ -71,6 +71,7 @@ class CourtAppearanceSchedulesService(private val courtAppearanceRepository: Cou
           existingCourtAppearance.courtCase.caseUniqueIdentifier,
           existingCourtAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
+          existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
         ),
       )
     }

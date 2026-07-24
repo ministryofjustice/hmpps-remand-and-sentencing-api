@@ -151,6 +151,7 @@ class CourtAppearanceService(
         createdCourtAppearance.courtCase.caseUniqueIdentifier,
         createdCourtAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
+        createdCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
       ),
     )
     val chargeRecords = createCharges(
@@ -208,6 +209,7 @@ class CourtAppearanceService(
           courtAppearanceEntity.courtCase.caseUniqueIdentifier,
           courtAppearanceEntity.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_INSERTED,
+          courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE,
         ),
       )
     }
@@ -305,6 +307,7 @@ class CourtAppearanceService(
           activeRecord.courtCase.caseUniqueIdentifier,
           activeRecord.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
+          activeRecord.statusId == CourtAppearanceEntityStatus.FUTURE,
         ),
       )
     }
@@ -365,6 +368,7 @@ class CourtAppearanceService(
               activeFutureSkeletonAppearance.courtCase.caseUniqueIdentifier,
               activeFutureSkeletonAppearance.appearanceUuid.toString(),
               EventType.COURT_APPEARANCE_UPDATED,
+              activeFutureSkeletonAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
             ),
           )
           return@let EntityChangeStatus.EDITED to RecordResponse(activeFutureSkeletonAppearance, eventsToEmit)
@@ -429,6 +433,7 @@ class CourtAppearanceService(
           futureCourtAppearance.courtCase.caseUniqueIdentifier,
           futureCourtAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_INSERTED,
+          futureCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
         ),
       )
       activeRecord.nextCourtAppearance = savedNextCourtAppearance
@@ -616,6 +621,7 @@ class CourtAppearanceService(
 
   @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
+    val isOnFutureCourtAppearance = courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE
     courtAppearanceEntity.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity, ChangeSource.DPS))
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
@@ -625,6 +631,7 @@ class CourtAppearanceService(
         courtAppearanceEntity.courtCase.caseUniqueIdentifier,
         courtAppearanceEntity.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_DELETED,
+        isOnFutureCourtAppearance,
       ),
     )
     courtAppearanceEntity.appearanceCharges
