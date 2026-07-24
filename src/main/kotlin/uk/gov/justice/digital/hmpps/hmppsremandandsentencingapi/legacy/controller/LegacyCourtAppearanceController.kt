@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
@@ -29,13 +27,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceDomainEventService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/legacy/court-appearance", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-appearance-controller", description = "CRUD operations for syncing court appearance data from NOMIS Court Events into remand and sentencing api database.")
-class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val eventService: CourtAppearanceDomainEventService, private val legacyChargeService: LegacyChargeService, private val legacyDomainEventService: LegacyDomainEventService) {
+class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: LegacyCourtAppearanceService, private val legacyChargeService: LegacyChargeService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -51,8 +48,9 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  fun create(@RequestBody courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse = legacyCourtAppearanceService.create(courtAppearance).also {
-    eventService.create(it.prisonerId, it.lifetimeUuid.toString(), it.courtCaseUuid, EventSource.NOMIS)
+  fun create(@RequestBody courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse = legacyCourtAppearanceService.create(courtAppearance).let { (legacyCourtAppearanceCreatedResponse, eventsToEmit) ->
+    legacyDomainEventService.emitEvents(eventsToEmit)
+    legacyCourtAppearanceCreatedResponse
   }
 
   @PutMapping("/{lifetimeUuid}")
@@ -69,10 +67,8 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
   fun update(@PathVariable lifetimeUuid: UUID, @RequestBody courtAppearance: LegacyCreateCourtAppearance): ResponseEntity<Void> {
-    legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also { (entityChangeStatus, legacyCourtAppearanceCreatedResponse) ->
-      if (entityChangeStatus == EntityChangeStatus.EDITED) {
-        eventService.update(legacyCourtAppearanceCreatedResponse.prisonerId, legacyCourtAppearanceCreatedResponse.lifetimeUuid.toString(), legacyCourtAppearanceCreatedResponse.courtCaseUuid, EventSource.NOMIS)
-      }
+    legacyCourtAppearanceService.update(lifetimeUuid, courtAppearance).also { (_, eventsToEmit) ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
     return ResponseEntity.noContent().build()
   }

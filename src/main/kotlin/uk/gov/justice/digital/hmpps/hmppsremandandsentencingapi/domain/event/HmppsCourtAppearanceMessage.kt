@@ -4,4 +4,5 @@ data class HmppsCourtAppearanceMessage(
   val courtAppearanceId: String,
   val courtCaseId: String,
   val source: EventSource = EventSource.DPS,
+  val isOnFutureCourtAppearance: Boolean,
 )

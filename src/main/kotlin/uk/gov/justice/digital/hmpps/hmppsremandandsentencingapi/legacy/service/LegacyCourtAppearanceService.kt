@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -20,7 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.AppearanceOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -62,7 +62,8 @@ class LegacyCourtAppearanceService(
 ) {
 
   @Transactional
-  fun create(courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse {
+  fun create(courtAppearance: LegacyCreateCourtAppearance): RecordResponse<LegacyCourtAppearanceCreatedResponse> {
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtAppearance.courtCaseUuid)?.takeUnless { entity -> entity.statusId == CourtCaseEntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at ${courtAppearance.courtCaseUuid}")
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val createdCourtAppearance = courtAppearanceRepository.save(
@@ -78,12 +79,21 @@ class LegacyCourtAppearanceService(
     nextCourtAppearanceService.handleNextCourtAppearance(createdCourtAppearance, courtAppearance.legacyData.nomisAppearanceTypeCode, getPerformedByUsername(courtAppearance), courtAppearance.getAppearanceDateTime()) {
       NextCourtAppearanceEntity.from(courtAppearance, createdCourtAppearance, it)
     }
-    return LegacyCourtAppearanceCreatedResponse(createdCourtAppearance.appearanceUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId)
+    eventsToEmit.add(
+      EventMetadataCreator.courtAppearanceEventMetadata(
+        createdCourtAppearance.courtCase.prisonerId,
+        createdCourtAppearance.courtCase.caseUniqueIdentifier,
+        createdCourtAppearance.appearanceUuid.toString(),
+        EventType.COURT_APPEARANCE_INSERTED,
+        createdCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+      ),
+    )
+    return RecordResponse(LegacyCourtAppearanceCreatedResponse(createdCourtAppearance.appearanceUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId), eventsToEmit)
   }
 
   @Transactional
-  fun update(lifetimeUuid: UUID, courtAppearance: LegacyCreateCourtAppearance): Pair<EntityChangeStatus, LegacyCourtAppearanceCreatedResponse> {
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
+  fun update(lifetimeUuid: UUID, courtAppearance: LegacyCreateCourtAppearance): RecordResponse<LegacyCourtAppearanceCreatedResponse> {
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val performedByUser = getPerformedByUsername(courtAppearance)
@@ -97,7 +107,15 @@ class LegacyCourtAppearanceService(
         ),
       )
       courtCaseService.handleUpdatingLatestCourtAppearanceInCourtCase(existingCourtAppearance.courtCase, existingCourtAppearance, performedByUser)
-      entityChangeStatus = EntityChangeStatus.EDITED
+      eventsToEmit.add(
+        EventMetadataCreator.courtAppearanceEventMetadata(
+          existingCourtAppearance.courtCase.prisonerId,
+          existingCourtAppearance.courtCase.caseUniqueIdentifier,
+          existingCourtAppearance.appearanceUuid.toString(),
+          EventType.COURT_APPEARANCE_UPDATED,
+          existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+        ),
+      )
     }
     nextCourtAppearanceService.handleNextCourtAppearance(existingCourtAppearance, courtAppearance.legacyData.nomisAppearanceTypeCode, getPerformedByUsername(courtAppearance), courtAppearance.getAppearanceDateTime()) {
       NextCourtAppearanceEntity.from(courtAppearance, existingCourtAppearance, it)
@@ -105,7 +123,7 @@ class LegacyCourtAppearanceService(
     immigrationDetentionService.handleImmigrationDetention(existingCourtAppearance, performedByUser) {
       it.copyFrom(existingCourtAppearance, courtAppearance, performedByUser)
     }
-    return entityChangeStatus to LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId)
+    return RecordResponse(LegacyCourtAppearanceCreatedResponse(lifetimeUuid, updatedCourtAppearance.courtCase.caseUniqueIdentifier, updatedCourtAppearance.courtCase.prisonerId), eventsToEmit)
   }
 
   fun isOvernightRun(existingCourtAppearance: CourtAppearanceEntity, updatedCourtAppearance: CourtAppearanceEntity): Boolean = existingCourtAppearance.appearanceDate.isEqual(LocalDate.now().minusDays(1)) &&
@@ -131,6 +149,7 @@ class LegacyCourtAppearanceService(
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val performedByUsername = performedByUser ?: serviceUserService.getUsername()
+    val isOnFutureAppearance = existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE
     existingCourtAppearance.delete(performedByUsername)
     courtAppearanceHistoryRepository.save(
       CourtAppearanceHistoryEntity.from(
@@ -155,7 +174,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.appearanceUuid.toString(),
             appearanceCharge.charge!!.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
-            existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+            isOnFutureAppearance,
           ),
         )
       }
@@ -178,6 +197,7 @@ class LegacyCourtAppearanceService(
         existingCourtAppearance.courtCase.caseUniqueIdentifier,
         existingCourtAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_DELETED,
+        isOnFutureAppearance,
       ),
     )
     immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(lifetimeUuid).forEach { immigrationDetentionEntity ->
@@ -212,6 +232,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.courtCase.caseUniqueIdentifier,
             existingCourtAppearance.appearanceUuid.toString(),
             EventType.COURT_APPEARANCE_UPDATED,
+            existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
           ),
         )
       }
