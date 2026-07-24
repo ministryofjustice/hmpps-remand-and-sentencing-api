@@ -48,9 +48,9 @@ class LegacyCourtAppearanceController(private val legacyCourtAppearanceService: 
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW')")
-  fun create(@RequestBody courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse = legacyCourtAppearanceService.create(courtAppearance).let {
-    legacyDomainEventService.emitEvents(it.eventsToEmit)
-    it.record
+  fun create(@RequestBody courtAppearance: LegacyCreateCourtAppearance): LegacyCourtAppearanceCreatedResponse = legacyCourtAppearanceService.create(courtAppearance).let { (legacyCourtAppearanceCreatedResponse, eventsToEmit) ->
+    legacyDomainEventService.emitEvents(eventsToEmit)
+    legacyCourtAppearanceCreatedResponse
   }
 
   @PutMapping("/{lifetimeUuid}")
