@@ -22,4 +22,6 @@ data class HearingThingsToDoData(
   val courtCaseReference: String,
   @Schema(description = "The date of the hearing for this thing to do", nullable = true)
   val hearingDate: LocalDate,
+  @Schema(description = "The type of the hearing for this thing to do", nullable = true)
+  val hearingType: String,
 )

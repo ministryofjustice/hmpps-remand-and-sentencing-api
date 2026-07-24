@@ -29,6 +29,7 @@ class ThingsToDoService(
               warrantHearing.hearingId,
               warrantHearing.caseReferences.first(),
               warrantHearing.hearingDate.toLocalDate(),
+              warrantHearing.hearingType,
             ),
           )
         }
