@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDate
 import java.util.UUID
 
 data class ThingsToDo(
@@ -19,4 +20,6 @@ data class HearingThingsToDoData(
   val hearingId: UUID,
   @Schema(description = "The case reference of the hearing for this thing to do", nullable = true)
   val courtCaseReference: String,
+  @Schema(description = "The date of the hearing for this thing to do", nullable = true)
+  val hearingDate: LocalDate,
 )

@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.T
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 import java.util.stream.Stream
@@ -85,6 +86,7 @@ class ThingsToDoTest : IntegrationTestBase() {
           hearingThingsToDoData = HearingThingsToDoData(
             HMCTS_HEARING_ID,
             "ABC123",
+            LocalDate.of(2026, 1, 1),
           ),
         ),
       ),
@@ -110,6 +112,7 @@ class ThingsToDoTest : IntegrationTestBase() {
           hearingThingsToDoData = HearingThingsToDoData(
             HMCTS_HEARING_ID,
             "ABC123",
+            LocalDate.of(2026, 1, 1),
           ),
         ),
       ),

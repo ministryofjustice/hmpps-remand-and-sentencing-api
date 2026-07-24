@@ -28,6 +28,7 @@ class ThingsToDoService(
             hearingThingsToDoData = HearingThingsToDoData(
               warrantHearing.hearingId,
               warrantHearing.caseReferences.first(),
+              warrantHearing.hearingDate.toLocalDate(),
             ),
           )
         }
