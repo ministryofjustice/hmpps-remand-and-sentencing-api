@@ -93,6 +93,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         ),
         source = EventSource.DPS,
         deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+        periodLengths = emptyList(),
       ),
     )
   }

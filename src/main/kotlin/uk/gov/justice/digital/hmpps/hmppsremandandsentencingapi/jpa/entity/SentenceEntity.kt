@@ -375,6 +375,24 @@ class SentenceEntity(
     statusId = SentenceEntityStatus.DELETED
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SentenceEntity
+
+    if (id != other.id) return false
+    if (sentenceUuid != other.sentenceUuid) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = id
+    result = 31 * result + sentenceUuid.hashCode()
+    return result
+  }
+
   companion object {
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
       val sentenceEntity = SentenceEntity(

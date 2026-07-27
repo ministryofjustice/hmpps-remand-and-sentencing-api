@@ -11,7 +11,6 @@ import org.springframework.http.MediaType
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -1070,16 +1069,4 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     .isOk
     .returnResult(CourtCase::class.java)
     .responseBody.blockFirst()!!
-
-  private fun putCourtAppearance(appearanceUuid: UUID, appearance: CreateCourtAppearance) = webTestClient
-    .put()
-    .uri("/court-appearance/$appearanceUuid")
-    .bodyValue(appearance)
-    .headers {
-      it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-      it.contentType = MediaType.APPLICATION_JSON
-    }
-    .exchange()
-    .expectStatus()
-    .isOk
 }

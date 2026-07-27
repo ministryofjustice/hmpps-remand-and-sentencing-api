@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
@@ -332,6 +333,38 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `keep single breach of supervision term length on retained sentence and remove from the rest`() {
+    val termLength = DataCreator.migrationCreatePeriodLength(periodLengthId = DataCreator.nomisPeriodLengthId(termSequence = 1), legacyData = DataCreator.periodLengthLegacyData(sentenceTermCode = "IMP"))
+    val breachOfSupervisionTermLength = DataCreator.migrationCreatePeriodLength(periodLengthId = DataCreator.nomisPeriodLengthId(termSequence = 2), legacyData = DataCreator.periodLengthLegacyData(sentenceTermCode = "SEC104"))
+    val sentence = DataCreator.migrationCreateSentence(periodLengths = listOf(termLength, breachOfSupervisionTermLength))
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+    val response = migrateCases(courtCases)
+    val breachOfSupervisionUuid = response.sentenceTerms.first { it.sentenceTermNOMISId == breachOfSupervisionTermLength.periodLengthId }.periodLengthUuid
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val periodLengthRecords = periodLengthRepository.findByPeriodLengthUuid(breachOfSupervisionUuid)
+    Assertions.assertThat(periodLengthRecords).extracting<PeriodLengthEntityStatus> { it.statusId }.containsExactlyInAnyOrder(
+      PeriodLengthEntityStatus.ACTIVE,
+      PeriodLengthEntityStatus.DELETED,
+    )
+  }
+
+  @Test
   fun `can breach when there is a DTO sentence on the court case`() {
     val dtoSentence = DpsDataCreator.dpsCreateSentence(
       sentenceTypeId = UUID.fromString("903ca33b-e264-4a16-883d-fee03a2a3396"),
@@ -441,5 +474,41 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(createdCourtCase.second.prisonerId)
       .jsonPath("$.content.[*].latestCourtAppearance.charges.[*].aggravatingFactors.[0].code")
       .isEqualTo("DISV")
+  }
+
+  @Test
+  fun `return breach of supervision appearance period length`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge()
+    val sentencingAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), nextCourtAppearance = null, charges = listOf(sentencedCharge))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencingAppearance)))
+    val breachPeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, days = 41, years = null)
+    val breachAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
+      overallSentenceLength = null,
+      nextCourtAppearance = null,
+      charges = listOf(
+        sentencedCharge.copy(sentence = null),
+      ),
+      periodLengths = listOf(breachPeriodLength),
+    )
+    putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
+    webTestClient.get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", createdCourtCase.prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.[0].overallSentenceLength")
+      .doesNotExist()
+      .jsonPath("$.content.[0].latestCourtAppearance.periodLengths[?(@.periodLengthUuid == '${breachPeriodLength.periodLengthUuid}')]")
+      .exists()
   }
 }

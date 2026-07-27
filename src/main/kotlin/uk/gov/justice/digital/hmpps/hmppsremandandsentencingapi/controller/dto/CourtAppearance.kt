@@ -26,6 +26,7 @@ data class CourtAppearance(
   val documents: List<UploadedDocument> = emptyList(),
   val source: EventSource,
   val deleteStatus: DeleteCourtAppearanceStatus,
+  val periodLengths: List<PeriodLength>,
 ) {
   companion object {
 
@@ -47,6 +48,7 @@ data class CourtAppearance(
       courtAppearanceEntity.documents.map { UploadedDocument.from(it) },
       courtAppearanceEntity.source,
       courtAppearanceEntity.deleteStatus(),
+      courtAppearanceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.map { PeriodLength.from(it) },
     )
   }
 }

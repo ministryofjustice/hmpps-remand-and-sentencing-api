@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
@@ -34,6 +35,8 @@ data class PagedCourtCase(
       val mergedFromCases = courtCaseRows.filter { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }.groupBy { it.mergedFromCaseId!! }
       val mergedToCase = courtCaseRows.firstOrNull { it.mergedToCaseId != null && it.mergedToAppearanceId != null }
       val noRecalls = courtCaseRows.all { it.recallInAppearanceId == null }
+      val periodLengths = courtCaseRows.filter { it.appearancePeriodLengthUuid != null }.groupBy { it.appearancePeriodLengthUuid!! }.values.map { it.first() }
+      val overallSentenceLength = periodLengths.firstOrNull { it.appearancePeriodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }
       val canAppeal = noRecalls &&
         courtCaseRows.any {
           it.courtCaseStatus == CourtCaseEntityStatus.ACTIVE &&
@@ -55,11 +58,11 @@ data class PagedCourtCase(
         firstCourtCase.appearanceCount,
         ((firstCourtCase.caseReferences?.split(",") ?: emptyList()) + legacyReferences).toSet(),
         firstCourtCase.firstDayInCustody,
-        firstCourtCase.takeIf { it.appearancePeriodLengthType != null && it.appearancePeriodLengthOrder != null }?.let {
+        overallSentenceLength?.let {
           PagedAppearancePeriodLength
             .from(it)
         },
-        PagedLatestCourtAppearance.from(firstCourtCase, latestAppearanceCharges),
+        PagedLatestCourtAppearance.from(firstCourtCase, latestAppearanceCharges, periodLengths),
         mergedFromCases.values.map { PagedMergedFromCase.from(it) },
         courtCaseRows.filter { it.courtAppearanceId != null }.all { it.recallInAppearanceId != null },
         mergedToCase?.let { PagedMergedToCase.from(it) },
