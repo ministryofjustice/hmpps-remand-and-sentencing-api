@@ -526,7 +526,15 @@ abstract class IntegrationTestBase {
     .expectBody(DeleteRecallResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()) = webTestClient
+  protected fun createImmigrationDetention(immigrationDetention: CreateImmigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention()) = createImmigrationDetentionExchange(
+    immigrationDetention,
+  )
+    .expectStatus()
+    .isCreated
+    .expectBody(SaveImmigrationDetentionResponse::class.java)
+    .returnResult().responseBody!!
+
+  protected fun createImmigrationDetentionExchange(immigrationDetention: CreateImmigrationDetention): WebTestClient.ResponseSpec = webTestClient
     .post()
     .uri("/immigration-detention")
     .bodyValue(immigrationDetention)
@@ -535,12 +543,20 @@ abstract class IntegrationTestBase {
       it.contentType = MediaType.APPLICATION_JSON
     }
     .exchange()
+
+  protected fun updateImmigrationDetention(immigrationDetention: CreateImmigrationDetention, uuid: UUID) = updateImmigrationDetentionExchange(
+    immigrationDetention,
+    uuid,
+  )
     .expectStatus()
-    .isCreated
+    .isOk
     .expectBody(SaveImmigrationDetentionResponse::class.java)
     .returnResult().responseBody!!
 
-  protected fun updateImmigrationDetention(immigrationDetention: CreateImmigrationDetention, uuid: UUID) = webTestClient
+  protected fun updateImmigrationDetentionExchange(
+    immigrationDetention: CreateImmigrationDetention,
+    uuid: UUID,
+  ): WebTestClient.ResponseSpec = webTestClient
     .put()
     .uri("/immigration-detention/$uuid")
     .bodyValue(immigrationDetention)
@@ -549,10 +565,6 @@ abstract class IntegrationTestBase {
       it.contentType = MediaType.APPLICATION_JSON
     }
     .exchange()
-    .expectStatus()
-    .isOk
-    .expectBody(SaveImmigrationDetentionResponse::class.java)
-    .returnResult().responseBody!!
 
   protected fun getImmigrationDetentionByUUID(immigrationDetentionUuid: UUID): ImmigrationDetention = webTestClient
     .get()
