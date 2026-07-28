@@ -54,6 +54,10 @@ ingress:
 features:
   appeals:
     enabled: false
+  hmctsWarrantThingToDo:
+    enabled: false
+  appearanceSchedulesEvents:
+    enabled: false
 
 springdoc:
   api-docs:
