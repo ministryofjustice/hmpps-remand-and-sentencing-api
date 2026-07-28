@@ -332,4 +332,20 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun findIdWithManyChargesDataFixByUpdatedAtDesc(@Param("limit") limit: Int): Set<Int>
+
+  @Query(
+    """select count(cc)
+    from CourtCaseEntity cc
+    join cc.appearances app
+    where cc.prisonerId = :prisonerId 
+    and cc.latestCourtAppearance is not null 
+    and cc.statusId not in :courtCaseStatuses
+    and app.courtCaseReference = :courtCaseReference
+  """,
+  )
+  fun countCourtCasesByPrisonerAndCourtCaseReference(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseReference") courtCaseReference: String,
+    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
+  ): Long
 }

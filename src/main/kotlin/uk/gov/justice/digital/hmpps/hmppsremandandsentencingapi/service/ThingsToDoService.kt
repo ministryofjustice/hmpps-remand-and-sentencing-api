@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDoType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingsToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
@@ -16,15 +17,17 @@ class ThingsToDoService(
 ) {
   fun getThingsToDo(prisonerId: String): ThingsToDo {
     if (features.hmctsWarrantThingToDo.enabled) {
-      val totalCases = courtCaseRepository.countCourtCasesByPrisoner(prisonerId)
-      if (totalCases == 0L) {
-        val hearings = courtDataIngestionApi.getHearings(prisonerId)
-        val warrantHearing = hearings.filter { hearing -> hearing.documents.any { it.isWarrant() } && hearing.caseReferences.size == 1 }
-          .maxByOrNull { it.hearingDate }
-        if (warrantHearing != null) {
-          return ThingsToDo(
-            prisonerId = prisonerId,
-            thingsToDo = if (warrantHearing.isRemandHearing()) listOf(ThingToDoType.NEW_REMAND_WARRANT) else listOf(ThingToDoType.NEW_SENTENCING_WARRANT),
+      val hearings = courtDataIngestionApi.getHearings(prisonerId)
+      val warrantHearings = hearings.filter { hearing -> hearing.documents.any { it.isWarrant() } && hearing.caseReferences.size == 1 }
+
+      val thingsToDo = warrantHearings
+        .filter { warrantHearing ->
+          val totalCases = courtCaseRepository.countCourtCasesByPrisonerAndCourtCaseReference(prisonerId, warrantHearing.caseReferences[0])
+          totalCases == 0L
+        }
+        .map { warrantHearing ->
+          ThingToDo(
+            type = if (warrantHearing.isRemandHearing()) ThingToDoType.NEW_REMAND_WARRANT else ThingToDoType.NEW_SENTENCING_WARRANT,
             hearingThingsToDoData = HearingThingsToDoData(
               warrantHearing.hearingId,
               warrantHearing.caseReferences.first(),
@@ -33,13 +36,16 @@ class ThingsToDoService(
             ),
           )
         }
-      }
+
+      return ThingsToDo(
+        prisonerId = prisonerId,
+        thingsToDo = thingsToDo,
+      )
     }
 
     return ThingsToDo(
       prisonerId = prisonerId,
       thingsToDo = emptyList(),
-      hearingThingsToDoData = null,
     )
   }
 }

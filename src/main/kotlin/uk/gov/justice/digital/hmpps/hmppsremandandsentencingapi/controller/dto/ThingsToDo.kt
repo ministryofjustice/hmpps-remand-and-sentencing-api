@@ -6,10 +6,12 @@ import java.util.UUID
 
 data class ThingsToDo(
   val prisonerId: String,
-  val thingsToDo: List<ThingToDoType> = emptyList(),
+  val thingsToDo: List<ThingToDo>,
+)
+data class ThingToDo(
+  val type: ThingToDoType,
   val hearingThingsToDoData: HearingThingsToDoData?,
 )
-
 enum class ThingToDoType {
   NEW_REMAND_WARRANT,
   NEW_SENTENCING_WARRANT,
