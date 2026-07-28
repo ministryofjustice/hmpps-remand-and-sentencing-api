@@ -55,9 +55,9 @@ features:
   appeals:
     enabled: false
   hmctsWarrantThingToDo:
-    enabled: true
+    enabled: false
   appearanceSchedulesEvents:
-    enabled: true
+    enabled: false
 
 springdoc:
   api-docs:
