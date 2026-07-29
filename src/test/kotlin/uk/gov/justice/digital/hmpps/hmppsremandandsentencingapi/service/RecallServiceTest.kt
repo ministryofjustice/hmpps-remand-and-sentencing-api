@@ -147,7 +147,7 @@ class RecallServiceTest {
       appearanceCharges = mutableSetOf(),
     )
 
-    return SentenceEntity(
+    val sentence = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       statusId = SentenceEntityStatus.ACTIVE,
       createdBy = "test-user",
@@ -166,6 +166,9 @@ class RecallServiceTest {
       countNumber = countNumber,
       sentenceType = null,
     )
+
+    charge.sentences.add(sentence)
+    return sentence
   }
 
   @Test
