@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -49,7 +50,7 @@ class ImmigrationDetentionController(
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createImmigrationDetention(
-    @RequestBody createImmigrationDetention: CreateImmigrationDetention,
+    @Valid @RequestBody createImmigrationDetention: CreateImmigrationDetention,
   ): SaveImmigrationDetentionResponse = immigrationDetentionService.createImmigrationDetention(createImmigrationDetention).let { (response, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     response
@@ -143,7 +144,7 @@ class ImmigrationDetentionController(
   )
   @ResponseStatus(HttpStatus.OK)
   fun updateImmigrationDetention(
-    @RequestBody immigrationDetention: CreateImmigrationDetention,
+    @Valid @RequestBody immigrationDetention: CreateImmigrationDetention,
     @PathVariable immigrationDetentionUuid: UUID,
   ): SaveImmigrationDetentionResponse = immigrationDetentionService.updateImmigrationDetention(immigrationDetention, immigrationDetentionUuid)
     .let { (response, eventsToEmit) ->

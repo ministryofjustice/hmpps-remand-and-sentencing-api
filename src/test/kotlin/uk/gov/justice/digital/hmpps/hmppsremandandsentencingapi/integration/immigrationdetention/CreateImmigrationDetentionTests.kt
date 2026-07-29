@@ -2,13 +2,20 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.imm
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.NullSource
+import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ImmigrationDetention
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus.INACTIVE
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType.OTHER_REASON
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.IS91
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType.NO_LONGER_OF_INTEREST
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -172,5 +179,70 @@ class CreateImmigrationDetentionTests : IntegrationTestBase() {
     assertThat(messages).extracting<String> { it.eventType }
       .contains("court-case.inserted")
       .doesNotContain("court-case.updated")
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+    "23423.444, The Home Office Reference Number should contain only letters, numbers and '/'",
+    "-2342344, The Home Office Reference Number should contain only letters, numbers and '/'",
+    "B12345B@, The Home Office Reference Number should contain only letters, numbers and '/'",
+    "B12345B#, The Home Office Reference Number should contain only letters, numbers and '/'",
+    "B12345B%, The Home Office Reference Number should contain only letters, numbers and '/'",
+    "B12345B&, The Home Office Reference Number should contain only letters, numbers and '/'",
+    "1233, The Home Office Reference Number should be between 5 and 16 characters.",
+    "0123456789ABCDEF1A, The Home Office Reference Number should be between 5 and 16 characters.",
+    "'', The Home Office Reference Number should be between 5 and 16 characters.",
+  )
+  fun `Should fail to create an Immigration Detention record based on invalid home office ref no`(
+    homeOfficeReferenceNumber: String?,
+    error: String,
+  ) {
+    val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
+      prisonerId = "B12345BÍ",
+      immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+      noLongerOfInterestReason = OTHER_REASON,
+      noLongerOfInterestComment = "A Comment",
+      recordDate = LocalDate.of(2021, 1, 1),
+      homeOfficeReferenceNumber = homeOfficeReferenceNumber,
+      createdByUsername = "aUser",
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+    )
+
+    // Act
+    createImmigrationDetentionExchange(immigrationDetention).expectStatus()
+      .isBadRequest.expectBody<ErrorResponse>().value { errorMessage ->
+        assertThat(errorMessage?.userMessage).contains("homeOfficeReferenceNumber: $error")
+      }
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(
+    strings = [
+      "23423444",
+      "2342344/",
+      "B123/45B",
+      "BBBBB",
+      "BBBBBBBBBBBBBBBC",
+      "12345",
+      "0123456789ABCDEF",
+    ],
+  )
+  fun `Should succeed in creating an Immigration Detention record based on valid home office ref no`(homeOfficeReferenceNumber: String?) {
+    val immigrationDetention = DpsDataCreator.dpsCreateImmigrationDetention(
+      prisonerId = "B12345BÍ",
+      immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+      noLongerOfInterestReason = OTHER_REASON,
+      noLongerOfInterestComment = "A Comment",
+      recordDate = LocalDate.of(2021, 1, 1),
+      homeOfficeReferenceNumber = homeOfficeReferenceNumber,
+      createdByUsername = "aUser",
+      createdByPrison = "PRI",
+      appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+    )
+
+    // Act
+    createImmigrationDetentionExchange(immigrationDetention).expectStatus().isCreated
   }
 }
