@@ -158,7 +158,7 @@ class RecallServiceTest {
       charge = charge,
       convictionDate = LocalDate.now(),
       legacyData = SentenceLegacyData(
-        postedDate = "2024-01-01",
+        postedDate = "2024-01-01T00:00:00",
         bookingId = null,
         nomisLineReference = lineNumber,
       ),
