@@ -138,7 +138,6 @@ class RecallServiceTest {
       domesticViolenceRelated = null,
       legacyData = ChargeLegacyData(
         postedDate = "2024-01-01",
-        bookingId = null,
         nomisOutcomeCode = "1002",
         outcomeDescription = "Guilty",
         outcomeDispositionCode = "C",
@@ -933,14 +932,12 @@ class RecallServiceTest {
       appearanceCharges = mutableSetOf(),
     ).apply {
       appearanceCharges.add(
-        appearance.appearanceCharges = sentences.map {
-          AppearanceChargeEntity(
-            appearance,
-            it.charge,
-            "test-user",
-            "TEST",
-          )
-        }.toMutableSet(),
+        AppearanceChargeEntity(
+          courtAppearanceEntity = testCourtAppearance,
+          chargeEntity = this,
+          createdBy = "test-user",
+          createdPrison = "TEST",
+        ),
       )
     }
     private val testNonLegacyRecallEntity = RecallEntity(
