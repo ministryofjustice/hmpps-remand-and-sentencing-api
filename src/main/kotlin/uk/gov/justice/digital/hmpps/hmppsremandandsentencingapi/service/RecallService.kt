@@ -626,15 +626,48 @@ class RecallService(
 
     return if (!mergeDuplicateCourtCases) {
       RecordResponse(
-        record = RecallableCourtCasesResponse(cases = recallableCourtCases.sortedByDescending { it.appearanceDate }),
+        record = RecallableCourtCasesResponse(
+          cases = recallableCourtCases
+            .map { it.copy(sentences = sortSentences(it.sentences)) }
+            .sortedByDescending { it.appearanceDate },
+        ),
         eventsToEmit = eventsToEmit,
       )
     } else {
       RecordResponse(
-        record = RecallableCourtCasesResponse(cases = mergeAndSortCourtCases(recallableCourtCases)),
+        record = RecallableCourtCasesResponse(
+          cases = mergeAndSortCourtCases(recallableCourtCases)
+            .map { it.copy(sentences = sortSentences(it.sentences)) },
+        ),
         eventsToEmit = eventsToEmit,
       )
     }
+  }
+
+  private fun sortSentences(sentences: List<RecallableCourtCaseSentence>): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
+    val aCount = a.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
+    val bCount = b.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
+
+    if (aCount != null && bCount != null) {
+      return@sortedWith aCount.compareTo(bCount)
+    }
+
+    if (aCount != null) return@sortedWith -1
+    if (bCount != null) return@sortedWith 1
+
+    val aLine = a.lineNumber?.toIntOrNull()
+    val bLine = b.lineNumber?.toIntOrNull()
+
+    if (aLine != null && bLine != null) {
+      return@sortedWith aLine.compareTo(bLine)
+    }
+    if (aLine != null) return@sortedWith -1
+    if (bLine != null) return@sortedWith 1
+
+    val aDate = a.offenceStartDate ?: LocalDate.MAX
+    val bDate = b.offenceStartDate ?: LocalDate.MAX
+
+    aDate.compareTo(bDate)
   }
 
   @VisibleForTesting
