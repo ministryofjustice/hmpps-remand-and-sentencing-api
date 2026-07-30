@@ -139,19 +139,23 @@ class FixManyChargesToSentenceService(
         periodLength.statusId = PeriodLengthEntityStatus.ACTIVE
         periodLength.updatedAt = ZonedDateTime.now()
         periodLength.updatedBy = username ?: serviceUserService.getUsername()
+        // The periodLength.statusId could potentially become DELETED after the following call
         periodLengthModifyFunction(periodLength)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(periodLength, ChangeSource.DPS))
-        periodLengthEventsToEmit.add(
-          EventMetadataCreator.periodLengthEventMetadata(
-            eventMetadata.prisonerId,
-            eventMetadata.courtCaseId!!,
-            eventMetadata.courtAppearanceId!!,
-            eventMetadata.chargeId!!,
-            sentenceRecord.sentenceUuid.toString(),
-            periodLength.periodLengthUuid.toString(),
-            EventType.PERIOD_LENGTH_INSERTED,
-          ),
-        )
+        // Do not emit insert events for periodLengths that are DELETED
+        if (periodLength.statusId == PeriodLengthEntityStatus.ACTIVE) {
+          periodLengthEventsToEmit.add(
+            EventMetadataCreator.periodLengthEventMetadata(
+              eventMetadata.prisonerId,
+              eventMetadata.courtCaseId!!,
+              eventMetadata.courtAppearanceId!!,
+              eventMetadata.chargeId!!,
+              sentenceRecord.sentenceUuid.toString(),
+              periodLength.periodLengthUuid.toString(),
+              EventType.PERIOD_LENGTH_INSERTED,
+            ),
+          )
+        }
       }
     return periodLengthEventsToEmit
   }
