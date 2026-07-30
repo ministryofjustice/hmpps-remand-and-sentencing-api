@@ -7,6 +7,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
 import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Subselect
 import org.hibernate.annotations.Synchronize
@@ -37,6 +38,7 @@ class CourtCaseSarEntity(
   var id: Int = 0,
   var prisonerId: String,
   @OneToMany(mappedBy = "courtCase")
+  @OrderBy("appearanceDate DESC")
   var appearances: MutableSet<CourtAppearanceSarEntity> = mutableSetOf(),
   @Suppress("JpaDataSourceORMInspection")
   @ManyToOne(fetch = FetchType.LAZY)
