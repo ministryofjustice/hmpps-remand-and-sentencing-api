@@ -6,6 +6,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.returnResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 
@@ -50,5 +51,58 @@ class ManyChargesToSentenceTests : IntegrationTestBase() {
 
     val sentencesAfter = sentenceRepository.findBySentenceUuid(sentenceUuid)
     assertThat(sentencesAfter).hasSize(1)
+  }
+
+  @Test
+  fun `breach of supervision many-charges fix does not emit period-length inserted for deleted terms`() {
+    val breachTerm = DataCreator.migrationCreatePeriodLength(
+      legacyData = DataCreator.periodLengthLegacyData(sentenceTermCode = "SEC104"),
+    )
+    val sentence = DataCreator.migrationCreateSentence(periodLengths = listOf(breachTerm))
+    val firstCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1, sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 2, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(courtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult<MigrationCreateCourtCasesResponse>()
+      .responseBody.blockFirst()!!
+
+    val breachPeriodUuid = response.sentenceTerms.first().periodLengthUuid
+    purgeQueues()
+
+    webTestClient
+      .put()
+      .uri("/person/${DEFAULT_PRISONER_ID}/fix-many-charges-to-sentence")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__RECORD_RECALL_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    val periodLengthRecords = periodLengthRepository.findByPeriodLengthUuid(breachPeriodUuid)
+    assertThat(periodLengthRecords).extracting<PeriodLengthEntityStatus> { it.statusId }.containsExactlyInAnyOrder(
+      PeriodLengthEntityStatus.ACTIVE,
+      PeriodLengthEntityStatus.DELETED,
+    )
+
+    val messages = getMessages(2)
+    assertThat(messages.map { it.eventType }).containsExactlyInAnyOrder(
+      "sentence.fix-single-charge.inserted",
+      "sentence.updated",
+    )
+    assertThat(messages.map { it.eventType }).doesNotContain("sentence.period-length.inserted")
   }
 }
