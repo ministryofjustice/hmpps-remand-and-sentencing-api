@@ -71,6 +71,50 @@ class SarIntegrationTests :
   }
 
   @Test
+  fun `SAR API should return court cases in latest appearance date order`() {
+    val prisonerId = getPrn() as String
+    createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        prisonerId = prisonerId,
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(
+            appearanceDate = LocalDate.of(2026, 7, 29),
+            nextCourtAppearance = null,
+          ),
+          DpsDataCreator.dpsCreateCourtAppearance(
+            appearanceDate = LocalDate.of(2026, 7, 18),
+            nextCourtAppearance = null,
+          ),
+          DpsDataCreator.dpsCreateCourtAppearance(
+            appearanceDate = LocalDate.of(2026, 7, 22),
+            nextCourtAppearance = null,
+          ),
+        ),
+      ),
+    )
+
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("prn", prisonerId)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.content.courtCases[0].appearances.length()").isEqualTo(3)
+      .jsonPath("$.content.courtCases[0].appearances[0].appearanceDate").isEqualTo("2026-07-29")
+      .jsonPath("$.content.courtCases[0].appearances[1].appearanceDate").isEqualTo("2026-07-22")
+      .jsonPath("$.content.courtCases[0].appearances[2].appearanceDate").isEqualTo("2026-07-18")
+  }
+
+  @Test
   fun `SAR API should get empty court cases, recalls & immigrationDetentions by valid prisoner id with no data yet associated`() {
     val stub = PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DpsDataCreator.DEFAULT_PRISONER_ID)
     createCourtCaseTwoSentences()
