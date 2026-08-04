@@ -26,6 +26,7 @@ data class Recall(
   val createdByUsername: String,
   val createdByPrison: String?,
   val source: EventSource,
+  val postedDate: String? = null,
   val courtCases: List<RecallCourtCaseDetails> = emptyList(),
   val ual: RecallUALAdjustment? = null,
   val calculationRequestId: Int? = null,
@@ -46,6 +47,12 @@ data class Recall(
       createdAt = recall.createdAt,
       createdByPrison = recall.createdPrison,
       source = recall.source,
+      // NOMIS recalls have one sentence, so take postedDate from that sentence's legacy data
+      postedDate = if (recall.source == EventSource.NOMIS) {
+        sentences.firstOrNull()?.sentence?.legacyData?.postedDate
+      } else {
+        null
+      },
       courtCases = sentences.groupBy { recallSentence -> createRecallCourtCaseDetailsForGrouping(recallSentence) }
         .map { (group, groupedSentences) ->
           group.copy(
