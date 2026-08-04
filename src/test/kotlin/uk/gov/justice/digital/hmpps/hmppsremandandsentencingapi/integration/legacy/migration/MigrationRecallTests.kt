@@ -44,12 +44,13 @@ class MigrationRecallTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     adjustmentsApi.stubGetAdjustmentsDefaultToNone()
-    val recalls = getRecallsByPrisonerId(migrationCourtCases.prisonerId)
+    val response = getPrisonerRecallsResponse(migrationCourtCases.prisonerId)
     // NOMIS recalls with the same type and arrest date are grouped into one recall
-    assertThat(recalls).hasSize(1)
-    assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
-    assertThat(recalls[0].courtCases[0].sentences).hasSize(2)
-    assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
+    assertThat(response.recalls).hasSize(1)
+    assertThat(response.prisonerRecallTotal).isEqualTo(1)
+    assertThat(response.recalls[0].recallType).isEqualTo(RecallType.FTR_28)
+    assertThat(response.recalls[0].courtCases[0].sentences).hasSize(2)
+    assertThat(response.recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
   }
 
   @Test
@@ -84,11 +85,12 @@ class MigrationRecallTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     adjustmentsApi.stubGetAdjustmentsDefaultToNone()
-    val recalls = getRecallsByPrisonerId(migrationCourtCases.prisonerId)
+    val response = getPrisonerRecallsResponse(migrationCourtCases.prisonerId)
     // NOMIS recalls get grouped
-    assertThat(recalls).hasSize(1)
-    assertThat(recalls[0].recallType).isEqualTo(RecallType.LR)
-    assertThat(recalls[0].courtCases[0].sentences).hasSize(2)
-    assertThat(recalls[0].returnToCustodyDate).isNull()
+    assertThat(response.recalls).hasSize(1)
+    assertThat(response.prisonerRecallTotal).isEqualTo(1)
+    assertThat(response.recalls[0].recallType).isEqualTo(RecallType.LR)
+    assertThat(response.recalls[0].courtCases[0].sentences).hasSize(2)
+    assertThat(response.recalls[0].returnToCustodyDate).isNull()
   }
 }
