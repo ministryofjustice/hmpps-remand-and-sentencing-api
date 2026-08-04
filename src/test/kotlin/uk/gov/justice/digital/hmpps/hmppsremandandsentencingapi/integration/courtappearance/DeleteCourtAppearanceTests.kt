@@ -1,16 +1,21 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import org.assertj.core.api.Assertions
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.untilAsserted
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsPeriodLengthMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
+import java.time.LocalDate
 
 class DeleteCourtAppearanceTests : IntegrationTestBase() {
   @Test
@@ -124,6 +129,43 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
 
     val deletedAppearance = courtAppearanceRepository.findByAppearanceUuid(createdAppearance.appearanceUuid)!!
     assertEquals(CourtAppearanceEntityStatus.DELETED, deletedAppearance.statusId)
+  }
+
+  @Test
+  fun `deleting appearance with period length associated to a sentence emits period length deleted event`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge()
+    val sentencingAppearance = dpsCreateCourtAppearance(appearanceDate = LocalDate.now().minusDays(10), nextCourtAppearance = null, charges = listOf(sentencedCharge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencingAppearance)))
+    val breachPeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, days = 41, years = null)
+    val breachAppearance = dpsCreateCourtAppearance(
+      courtCaseUuid = courtCaseUuid,
+      warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
+      overallSentenceLength = null,
+      nextCourtAppearance = null,
+      charges = listOf(
+        sentencedCharge.copy(sentence = null),
+      ),
+      periodLengths = listOf(breachPeriodLength),
+    )
+    putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
+    purgeQueues()
+    webTestClient.delete()
+      .uri("/court-appearance/${breachAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+      .expectBody()
+
+    val events = getMessages(4)
+    Assertions.assertThat(events).anyMatch { it.eventType == "sentence.period-length.deleted" }
+    val periodLengthInsertedEvent = events.first { it.eventType == "sentence.period-length.deleted" }
+    val additionalInformation = objectMapper.treeToValue(periodLengthInsertedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)
+    Assertions.assertThat(additionalInformation.courtAppearanceId).isEqualTo(sentencingAppearance.appearanceUuid.toString())
+    Assertions.assertThat(additionalInformation.courtChargeId).isEqualTo(sentencedCharge.chargeUuid.toString())
   }
 
   @Test
