@@ -79,7 +79,7 @@ class RecallController(private val recallService: RecallService, private val dps
   )
   @Operation(
     summary = "Search recalls for a person by period of custody",
-    description = "Filter by bookingId (current period of custody) unless includeAllPeriods is true, when all recalls are returned with the current period listed first.",
+    description = "Filter by bookingId (current period of custody) unless includeAllPeriods is true, when all recalls are returned with the current period listed first. NOMIS recalls are grouped.",
   )
   @ApiResponses(
     value = [

@@ -404,7 +404,7 @@ class RecallService(
     }
     return PrisonerRecallsResponse(
       recalls = sortedRecalls,
-      prisonerRecallTotal = allRecalls.size.toLong(),
+      prisonerRecallTotal = NomisRecallGrouper.group(allRecalls).size,
     )
   }
 
