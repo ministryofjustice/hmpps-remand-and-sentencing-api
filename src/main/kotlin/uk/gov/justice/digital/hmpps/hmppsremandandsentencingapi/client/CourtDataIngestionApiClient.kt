@@ -16,6 +16,13 @@ class CourtDataIngestionApiClient(@Qualifier("courtDataIngestionApiWebClient") p
     .bodyToMono(HmctsCourHearing::class.java)
     .block()!!
 
+  fun getCourtHearing(courtHearingId: UUID, prisonerNumber: String): HmctsCourHearing = webClient
+    .get()
+    .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$courtHearingId")
+    .retrieve()
+    .bodyToMono(HmctsCourHearing::class.java)
+    .block()!!
+
   fun getHearings(prisonerId: String): List<HmctsCourHearing> = webClient
     .get()
     .uri("/court-hearings/prisoner/$prisonerId")

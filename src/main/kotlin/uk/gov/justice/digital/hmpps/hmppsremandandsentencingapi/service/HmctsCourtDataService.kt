@@ -18,14 +18,24 @@ class HmctsCourtDataService(
   val courtRegisterApiClient: CourtRegisterApiClient,
 ) {
 
+  @Deprecated("CDIA-273 Use endpoint with prisoner number instead")
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID): CourtAppearance {
     val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId)
+    return getCourtAppearance(hearing)
+  }
+
+  fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID, prisonerNumber: String): CourtAppearance {
+    val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId, prisonerNumber)
+    return getCourtAppearance(hearing)
+  }
+
+  private fun getCourtAppearance(hearing: HmctsCourHearing): CourtAppearance {
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
       .filter { it.duplicateOf == null }
     val court = courtRegisterApiClient.getCourtRegisterByHmctsId(hearing.courtId)
 
     return CourtAppearance(
-      appearanceUuid = courtHearingId,
+      appearanceUuid = hearing.hearingId,
       outcome = null,
       courtCode = court?.courtId ?: hearing.courtId.toString(),
       courtCaseReference = hearing.caseReferences.firstOrNull(),

@@ -39,4 +39,20 @@ class HmctsCourtDataController(
     ],
   )
   fun getCourtAppearanceFromHmctsHearingId(@PathVariable courtHearingId: UUID): CourtAppearance = hmctsCourtDataService.getCourtAppearanceFromHmctsHearingId(courtHearingId)
+
+  @GetMapping("/{courtHearingId}/prisoner/{prisonerNumber}/appearance")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Retrieve court case details",
+    description = "This endpoint will retrieve court case details",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns court case details"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
+    ],
+  )
+  fun getCourtAppearanceFromHmctsHearingId(@PathVariable courtHearingId: UUID, @PathVariable prisonerNumber: String): CourtAppearance = hmctsCourtDataService.getCourtAppearanceFromHmctsHearingId(courtHearingId, prisonerNumber)
 }
