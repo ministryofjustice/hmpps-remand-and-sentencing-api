@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @ExtendWith(MockKExtension::class)
@@ -27,24 +26,12 @@ class BulkFixManyChargesToSentenceServiceTests {
   @MockK
   private lateinit var dpsDomainEventService: DpsDomainEventService
 
-  @MockK
-  private lateinit var courtCaseEntity1: CourtCaseEntity
-
-  @MockK
-  private lateinit var courtCaseEntity2: CourtCaseEntity
-
-  @MockK
-  private lateinit var courtCaseEntity3: CourtCaseEntity
-
-  @MockK
-  private lateinit var courtCaseEntity4: CourtCaseEntity
-
   @InjectMockKs(overrideValues = true)
   private lateinit var bulkFixManyChargesToSentenceService: BulkFixManyChargesToSentenceService
 
   @Test
   fun `should call fixCourtCaseSentences multiple times returning the sum of all generated events`() {
-    every { courtCaseSarRepository.findIdWithManyChargesDataFixByUpdatedAtDesc(4) } returns setOf(1, 2, 3, 4)
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast() } returns listOf(1, 2, 3, 4)
     every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(1, 2, 3, 4), "BATCH_JOB") } returns events(40)
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
@@ -57,7 +44,7 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should call fixCourtCaseSentences once returning the generated events for that fix`() {
-    every { courtCaseSarRepository.findIdWithManyChargesDataFixByUpdatedAtDesc(1) } returns setOf(
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast() } returns listOf(
       1,
     )
 
@@ -73,7 +60,7 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should do nothing when query returns and empty list`() {
-    every { courtCaseSarRepository.findIdWithManyChargesDataFixByUpdatedAtDesc(1) } returns setOf()
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast() } returns listOf()
     every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(), "BATCH_JOB") } returns mutableSetOf()
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
