@@ -20,9 +20,7 @@ class BulkFixManyChargesToSentenceService(
   fun fixCourtCaseSentences(limit: Int) {
     log.info("Starting Bulk Fix Many Charges to Single Sentence async job with limit {}", limit)
     val events = mutableSetOf<EventMetadata>()
-    val allCourtCaseIds = courtCaseRepository.findIdWithManyChargesDataFixByConsecutiveToLast()
-
-    val courtCaseUuids = allCourtCaseIds.distinct().take(limit).toSet()
+    val courtCaseUuids = courtCaseRepository.findIdWithManyChargesDataFixByConsecutiveToLast(limit)
     events.addAll(fixManyChargesToSentenceService.fixCourtCasesById(courtCaseUuids, "BATCH_JOB"))
     log.info("Completed Bulk Fix Many Charges to Single Sentence for {} affected court cases. Emitted a total of {} events", limit, events.size)
     dpsDomainEventService.emitEvents(events)
