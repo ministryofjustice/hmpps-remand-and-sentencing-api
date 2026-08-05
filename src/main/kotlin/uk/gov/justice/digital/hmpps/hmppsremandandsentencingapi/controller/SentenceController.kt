@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.M
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceService
@@ -148,4 +149,19 @@ class SentenceController(private val sentenceService: SentenceService, private v
   fun hasSentences(
     @PathVariable prisonerId: String,
   ): Boolean = sentenceService.hasSentences(prisonerId)
+
+  @GetMapping("/sentence/{sentenceUuid}/delete-status")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Delete sentence status",
+    description = "This endpoint will return details of whether a sentence can be deleted or not and the reason for not deleting",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns delete status and reason"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun deleteSentenceStatus(@PathVariable sentenceUuid: UUID, @RequestParam(required = false, defaultValue = "") sentenceUuidsInChain: List<UUID>): DeleteSentenceStatusDetails = sentenceService.findSentenceDeleteStatusByUuid(sentenceUuid, sentenceUuidsInChain)
 }
