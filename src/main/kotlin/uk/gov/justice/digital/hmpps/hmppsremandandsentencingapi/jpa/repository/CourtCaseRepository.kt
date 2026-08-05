@@ -317,14 +317,16 @@ interface CourtCaseRepository :
   ): CourtCaseEntity?
 
   @Query(
-    value = """select cc.id from sentence s
-                left join sentence consec on consec.consecutive_to_id = s.id and consec.status_id != 'DELETED'
-                join charge c on c.id = s.charge_id
-                join appearance_charge ac on ac.charge_id = c.id
-                join court_appearance ca on ca.id = ac.appearance_id
-                join court_case cc on cc.id = ca.court_case_id
-                where s.status_id = 'MANY_CHARGES_DATA_FIX' and c.status_id != 'DELETED' and ca.status_id != 'DELETED' and cc.status_id != 'DELETED'
-                order by s.consecutive_to_id desc nulls first, consec.id desc nulls first
+    value = """select cc.id from court_case cc
+                join (
+                  select ca.court_case_id, bool_or(s.consecutive_to_id is not null or consec.id is not null) as has_consecutive_to from sentence s 
+                  left join sentence consec on consec.consecutive_to_id = s.id and consec.status_id != 'DELETED'
+                  join charge c on c.id = s.charge_id
+                  join appearance_charge ac on ac.charge_id = c.id
+                  join court_appearance ca on ca.id = ac.appearance_id
+                  where s.status_id = 'MANY_CHARGES_DATA_FIX'
+                  group by ca.court_case_id) as consec_cases on consec_cases.court_case_id = cc.id
+                order by (case when consec_cases.has_consecutive_to then 2 else 1 end) asc, cc.updated_at desc
                 limit :limit
            """,
     nativeQuery = true,
