@@ -317,21 +317,18 @@ interface CourtCaseRepository :
   ): CourtCaseEntity?
 
   @Query(
-    value = """SELECT cc.id      
-               FROM court_case cc      
-               WHERE EXISTS (SELECT 1 
-                             FROM court_appearance cap 
-                             JOIN appearance_charge ac ON ac.appearance_id = cap.id
-                             JOIN charge c ON c.id = ac.charge_id
-                             JOIN sentence s ON s.charge_id = c.id
-                             WHERE cap.court_case_id = cc.id 
-                             AND s.status_id = 'MANY_CHARGES_DATA_FIX')      
-               ORDER BY cc.updated_at DESC      
-               LIMIT :limit    
+    value = """select cc.id from sentence s
+                left join sentence consec on consec.consecutive_to_id = s.id and consec.status_id != 'DELETED'
+                join charge c on c.id = s.charge_id 
+                join appearance_charge ac on ac.charge_id = c.id 
+                join court_appearance ca on ca.id = ac.appearance_id 
+                join court_case cc on cc.id = ca.court_case_id 
+                where s.status_id = 'MANY_CHARGES_DATA_FIX' and c.status_id != 'DELETED' and ca.status_id != 'DELETED' and cc.status_id != 'DELETED' 
+                order by s.consecutive_to_id desc nulls first, consec.id desc nulls first, cc.updated_at desc  
            """,
     nativeQuery = true,
   )
-  fun findIdWithManyChargesDataFixByUpdatedAtDesc(@Param("limit") limit: Int): Set<Int>
+  fun findIdWithManyChargesDataFixByConsecutiveToLast(): List<Int>
 
   @Query(
     """select count(cc)

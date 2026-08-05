@@ -33,7 +33,7 @@ class CourtCaseAdminController(
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "202", description = "Cleanup tiggered"),
+      ApiResponse(responseCode = "202", description = "Cleanup triggered"),
     ],
   )
   fun cleanupManyChargesToSentence() {
