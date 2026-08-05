@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReason
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReasonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -378,14 +379,15 @@ class SentenceService(
 
   @Transactional(readOnly = true)
   fun findSentenceDeleteStatusByUuid(sentenceUuid: UUID, sentenceUuidsInChain: List<UUID>): DeleteSentenceStatusDetails = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)?.let { sentenceEntity ->
-    val reasons: MutableList<DeleteSentenceStatusReason> = mutableListOf()
+    val reasons: MutableList<DeleteSentenceStatusReasonDetails> = mutableListOf()
     var status = DeleteSentenceStatus.SUPPORTED
-    if (sentenceEntity.periodLengths.any { periodLength -> periodLength.statusId != PeriodLengthEntityStatus.DELETED && periodLength.appearanceEntity != null && periodLength.appearanceEntity?.statusId != CourtAppearanceEntityStatus.DELETED }) {
-      reasons.add(DeleteSentenceStatusReason.HAS_APPEARANCE_PERIOD_LENGTH)
+    sentenceEntity.periodLengths.filter { periodLength -> periodLength.statusId != PeriodLengthEntityStatus.DELETED && periodLength.appearanceEntity != null && periodLength.appearanceEntity?.statusId != CourtAppearanceEntityStatus.DELETED }.forEach { periodLengthEntity ->
+      reasons.add(DeleteSentenceStatusReasonDetails.from(DeleteSentenceStatusReason.HAS_APPEARANCE_PERIOD_LENGTH, mapOf("appearanceUuid" to periodLengthEntity.appearanceEntity!!.appearanceUuid, "periodLengthType" to periodLengthEntity.periodLengthType)))
       status = DeleteSentenceStatus.NOT_SUPPORTED
     }
+
     if (hasSentencesAfterOnOtherCourtAppearance(listOf(sentenceUuid) + sentenceUuidsInChain).hasSentenceAfterOnOtherCourtAppearance) {
-      reasons.add(DeleteSentenceStatusReason.HAS_SENTENCES_AFTER_ON_OTHER_COURT_APPEARANCE)
+      reasons.add(DeleteSentenceStatusReasonDetails.from(DeleteSentenceStatusReason.HAS_SENTENCES_AFTER_ON_OTHER_COURT_APPEARANCE))
       status = DeleteSentenceStatus.NOT_SUPPORTED
     }
     DeleteSentenceStatusDetails(status, reasons)

@@ -34,7 +34,7 @@ class SentenceDeleteStatusTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.status")
       .isEqualTo(DeleteSentenceStatus.NOT_SUPPORTED.name)
-      .jsonPath("$.reasons")
+      .jsonPath("$.reasons[*].reason")
       .isEqualTo(listOf(DeleteSentenceStatusReason.HAS_SENTENCES_AFTER_ON_OTHER_COURT_APPEARANCE.name))
   }
 
@@ -59,7 +59,7 @@ class SentenceDeleteStatusTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.status")
       .isEqualTo(DeleteSentenceStatus.NOT_SUPPORTED.name)
-      .jsonPath("$.reasons")
+      .jsonPath("$.reasons[*].reason")
       .isEqualTo(listOf(DeleteSentenceStatusReason.HAS_SENTENCES_AFTER_ON_OTHER_COURT_APPEARANCE.name))
   }
 
@@ -117,8 +117,10 @@ class SentenceDeleteStatusTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.status")
       .isEqualTo(DeleteSentenceStatus.NOT_SUPPORTED.name)
-      .jsonPath("$.reasons")
+      .jsonPath("$.reasons[*].reason")
       .isEqualTo(listOf(DeleteSentenceStatusReason.HAS_APPEARANCE_PERIOD_LENGTH.name))
+      .jsonPath("$.reasons[*].metadata.appearanceUuid")
+      .isEqualTo(listOf(breachAppearance.appearanceUuid.toString()))
   }
 
   @Test

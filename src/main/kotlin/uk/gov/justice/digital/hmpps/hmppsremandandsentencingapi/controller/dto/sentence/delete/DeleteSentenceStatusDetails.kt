@@ -2,5 +2,5 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 data class DeleteSentenceStatusDetails(
   val status: DeleteSentenceStatus,
-  val reasons: List<DeleteSentenceStatusReason>,
+  val reasons: List<DeleteSentenceStatusReasonDetails>,
 )
