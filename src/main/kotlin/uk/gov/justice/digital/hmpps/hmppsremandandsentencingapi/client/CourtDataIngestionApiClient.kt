@@ -9,13 +9,6 @@ import java.util.UUID
 @Component
 class CourtDataIngestionApiClient(@Qualifier("courtDataIngestionApiWebClient") private val webClient: WebClient) {
 
-  fun getCourtHearing(courtHearingId: UUID): HmctsCourHearing = webClient
-    .get()
-    .uri("/court-hearings/$courtHearingId")
-    .retrieve()
-    .bodyToMono(HmctsCourHearing::class.java)
-    .block()!!
-
   fun getCourtHearing(courtHearingId: UUID, prisonerNumber: String): HmctsCourHearing = webClient
     .get()
     .uri("/court-hearings/prisoner/$prisonerNumber/hearing/$courtHearingId")
