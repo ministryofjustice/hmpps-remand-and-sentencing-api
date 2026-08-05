@@ -23,7 +23,7 @@
         <br/>
     {{/courtCases}}
     {{^courtCases}}
-        <p>No Court Case Data Held</p>
+        <p>No Data Held</p>
     {{/courtCases}}
 
     <h2>Recalls</h2>
@@ -38,7 +38,7 @@
         </table>
     {{/recalls}}
     {{^recalls}}
-        <p>No Recall Data Held</p>
+        <p>No Data Held</p>
     {{/recalls}}
 
     <h2>Immigration Detentions</h2>
@@ -53,7 +53,7 @@
         </table>
     {{/immigrationDetentions}}
     {{^immigrationDetentions}}
-        <p>No Immigration Detention Data Held</p>
+        <p>No Data Held</p>
     {{/immigrationDetentions}}
 
 {{/.}}
@@ -86,7 +86,7 @@
             <tr><td>Domestic Violence Related</td><td>{{ optionalValue domesticViolenceRelated }}</td></tr>
             <tr>
                 <td>Aggravating Factors</td>
-                <td>{{#aggravatingFactors}}{{.}}<br/>{{/aggravatingFactors}}{{^aggravatingFactors}}No Aggravating Factors Held{{/aggravatingFactors}}</td>
+                <td>{{#aggravatingFactors}}{{.}}<br/>{{/aggravatingFactors}}{{^aggravatingFactors}}No Data Held{{/aggravatingFactors}}</td>
             </tr>
         </table>
         {{#liveSentence}}
@@ -95,12 +95,12 @@
                 <tr><td>Type Description</td><td>{{ optionalValue sentenceTypeDescription }}</td></tr>
                 <tr><td>Type Classification</td><td>{{ optionalValue sentenceTypeClassification }}</td></tr>
                 <tr><td>Serve Type</td><td>{{ optionalValue sentenceServeType }}</td></tr>
-                <tr><td>Period Lengths</td><td>{{#periodLengths}}{{years}} year(s), {{months}} month(s), {{weeks}} week(s), {{days}} day(s) {{/periodLengths}}<br/></td></tr>
+                <tr><td>Period Lengths</td><td>{{#periodLengths}}{{years}} year(s), {{months}} month(s), {{weeks}} week(s), {{days}} day(s) {{/periodLengths}}{{^periodLengths}}No Data Held{{/periodLengths}}<br/></td></tr>
             </table>
         {{/liveSentence}}
     {{/charges}}
     {{^charges}}
-        <p>No Charges Held</p>
+        <p>No Data Held</p>
     {{/charges}}
     </div>
 {{/inline}}
