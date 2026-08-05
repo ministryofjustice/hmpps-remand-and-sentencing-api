@@ -703,6 +703,7 @@ class RecallIntTests : IntegrationTestBase() {
     assertThat(recalls).hasSize(1)
 
     val theRecall = recalls[0]
+    assertThat(theRecall.postedDate).isNotNull()
     assertThat(theRecall)
       .usingRecursiveComparison()
       .ignoringCollectionOrder()
@@ -718,6 +719,7 @@ class RecallIntTests : IntegrationTestBase() {
           createdAt = theRecall.createdAt,
           createdByPrison = null,
           source = EventSource.NOMIS,
+          postedDate = theRecall.postedDate,
           courtCases = listOf(
             RecallCourtCaseDetails(
               courtCaseReference = null,
