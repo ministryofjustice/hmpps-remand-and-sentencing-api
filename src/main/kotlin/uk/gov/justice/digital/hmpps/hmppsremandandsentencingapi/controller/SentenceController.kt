@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceService
-import java.util.*
+import java.util.UUID
 
 @RestController
 @Tag(name = "sentence-controller", description = "Sentences")
