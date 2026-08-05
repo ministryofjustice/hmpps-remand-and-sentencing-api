@@ -31,7 +31,7 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should call fixCourtCaseSentences multiple times returning the sum of all generated events`() {
-    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast() } returns listOf(1, 2, 3, 4)
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast(4) } returns setOf(1, 2, 3, 4)
     every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(1, 2, 3, 4), "BATCH_JOB") } returns events(40)
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
@@ -44,7 +44,7 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should call fixCourtCaseSentences once returning the generated events for that fix`() {
-    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast() } returns listOf(
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast(1) } returns setOf(
       1,
     )
 
@@ -60,7 +60,7 @@ class BulkFixManyChargesToSentenceServiceTests {
 
   @Test
   fun `should do nothing when query returns and empty list`() {
-    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast() } returns listOf()
+    every { courtCaseSarRepository.findIdWithManyChargesDataFixByConsecutiveToLast(1) } returns setOf()
     every { fixManyChargesToSentenceService.fixCourtCasesById(setOf(), "BATCH_JOB") } returns mutableSetOf()
     every { dpsDomainEventService.emitEvents(any()) } just Runs
 
