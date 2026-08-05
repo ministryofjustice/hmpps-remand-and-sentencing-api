@@ -400,11 +400,11 @@ class RecallService(
     }
     val sortedRecalls = when {
       includeAllPeriods && bookingId.isNotEmpty() -> sortRecallsWithCurrentPeriodFirst(filteredRecalls, bookingId)
-      else -> sortRecallsByCreatedAtDesc(filteredRecalls)
+      else -> sortRecallsByCreatedAtDesc(NomisRecallGrouper.group(filteredRecalls))
     }
     return PrisonerRecallsResponse(
       recalls = sortedRecalls,
-      prisonerRecallTotal = allRecalls.size.toLong(),
+      prisonerRecallTotal = NomisRecallGrouper.group(allRecalls).size,
     )
   }
 
@@ -412,10 +412,10 @@ class RecallService(
 
   private fun sortRecallsWithCurrentPeriodFirst(recalls: List<Recall>, bookingId: String): List<Recall> {
     val currentPeriodRecalls = sortRecallsByCreatedAtDesc(
-      recalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, bookingId) },
+      NomisRecallGrouper.group(recalls.filter { recall -> isRecallInCurrentPeriodOfCustody(recall, bookingId) }),
     )
     val previousPeriodRecalls = sortRecallsByCreatedAtDesc(
-      recalls.filter { recall -> !isRecallInCurrentPeriodOfCustody(recall, bookingId) },
+      NomisRecallGrouper.group(recalls.filter { recall -> !isRecallInCurrentPeriodOfCustody(recall, bookingId) }),
     )
     return currentPeriodRecalls + previousPeriodRecalls
   }

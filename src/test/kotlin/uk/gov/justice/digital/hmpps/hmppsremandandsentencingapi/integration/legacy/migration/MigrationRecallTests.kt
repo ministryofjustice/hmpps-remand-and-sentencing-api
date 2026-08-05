@@ -15,19 +15,21 @@ class MigrationRecallTests : IntegrationTestBase() {
   @Test
   fun `can create sentences and associated recall entities`() {
     val firstSentence = DataCreator.migrationCreateSentence(
+      sentenceId = DataCreator.migrationSentenceId(sequence = 1),
       legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"),
       returnToCustodyDate = LocalDate.of(2024, 1, 1),
     )
     val secondSentence = DataCreator.migrationCreateSentence(
+      sentenceId = DataCreator.migrationSentenceId(sequence = 2),
       legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020"),
       returnToCustodyDate = LocalDate.of(2024, 1, 1),
     )
-    val firstCharge = DataCreator.migrationCreateCharge(sentence = firstSentence)
-    val secondCharge = DataCreator.migrationCreateCharge(sentence = secondSentence)
+    val firstCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 5453, sentence = firstSentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 5454, sentence = secondSentence)
     val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
     val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
     val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
-    val response = webTestClient
+    webTestClient
       .post()
       .uri("/legacy/court-case/migration")
       .bodyValue(migrationCourtCases)
@@ -42,33 +44,33 @@ class MigrationRecallTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     adjustmentsApi.stubGetAdjustmentsDefaultToNone()
-    val recalls = getRecallsByPrisonerId(migrationCourtCases.prisonerId)
-    assertThat(recalls).hasSize(2)
-    assertThat(recalls[0].recallType).isEqualTo(RecallType.FTR_28)
-    assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
-    assertThat(recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
-
-    assertThat(recalls[1].recallType).isEqualTo(RecallType.FTR_28)
-    assertThat(recalls[1].courtCases[0].sentences).hasSize(1)
-    assertThat(recalls[1].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
+    val response = getPrisonerRecallsResponse(migrationCourtCases.prisonerId)
+    // NOMIS recalls with the same type and arrest date are grouped into one recall
+    assertThat(response.recalls).hasSize(1)
+    assertThat(response.prisonerRecallTotal).isEqualTo(1)
+    assertThat(response.recalls[0].recallType).isEqualTo(RecallType.FTR_28)
+    assertThat(response.recalls[0].courtCases[0].sentences).hasSize(2)
+    assertThat(response.recalls[0].returnToCustodyDate).isEqualTo(LocalDate.of(2024, 1, 1))
   }
 
   @Test
   fun `return to custody date not set for non FTR sentences`() {
     val firstSentence = DataCreator.migrationCreateSentence(
+      sentenceId = DataCreator.migrationSentenceId(sequence = 1),
       legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "LR", sentenceCategory = "2020"),
       returnToCustodyDate = LocalDate.of(2024, 1, 1),
     )
     val secondSentence = DataCreator.migrationCreateSentence(
+      sentenceId = DataCreator.migrationSentenceId(sequence = 2),
       legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "LR", sentenceCategory = "2020"),
       returnToCustodyDate = LocalDate.of(2024, 1, 1),
     )
-    val firstCharge = DataCreator.migrationCreateCharge(sentence = firstSentence)
-    val secondCharge = DataCreator.migrationCreateCharge(sentence = secondSentence)
+    val firstCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 5453, sentence = firstSentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 5454, sentence = secondSentence)
     val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
     val migrationCourtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
     val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(migrationCourtCase))
-    val response = webTestClient
+    webTestClient
       .post()
       .uri("/legacy/court-case/migration")
       .bodyValue(migrationCourtCases)
@@ -83,14 +85,12 @@ class MigrationRecallTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     adjustmentsApi.stubGetAdjustmentsDefaultToNone()
-    val recalls = getRecallsByPrisonerId(migrationCourtCases.prisonerId)
-    assertThat(recalls).hasSize(2)
-    assertThat(recalls[0].recallType).isEqualTo(RecallType.LR)
-    assertThat(recalls[0].courtCases[0].sentences).hasSize(1)
-    assertThat(recalls[0].returnToCustodyDate).isNull()
-
-    assertThat(recalls[1].recallType).isEqualTo(RecallType.LR)
-    assertThat(recalls[1].courtCases[0].sentences).hasSize(1)
-    assertThat(recalls[1].returnToCustodyDate).isNull()
+    val response = getPrisonerRecallsResponse(migrationCourtCases.prisonerId)
+    // NOMIS recalls get grouped
+    assertThat(response.recalls).hasSize(1)
+    assertThat(response.prisonerRecallTotal).isEqualTo(1)
+    assertThat(response.recalls[0].recallType).isEqualTo(RecallType.LR)
+    assertThat(response.recalls[0].courtCases[0].sentences).hasSize(2)
+    assertThat(response.recalls[0].returnToCustodyDate).isNull()
   }
 }

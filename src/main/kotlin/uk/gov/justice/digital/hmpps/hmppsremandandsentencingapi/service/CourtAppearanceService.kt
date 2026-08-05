@@ -652,6 +652,13 @@ class CourtAppearanceService(
         appearanceCharge.charge = null
         true
       }
+    eventsToEmit.addAll(
+      periodLengthService.delete(
+        emptyList(),
+        courtAppearanceEntity.periodLengths,
+        courtAppearanceEntity.courtCase.prisonerId,
+      ).eventsToEmit,
+    )
     return RecordResponse(
       courtAppearanceEntity,
       eventsToEmit,
@@ -670,7 +677,7 @@ class CourtAppearanceService(
       ?: throw EntityNotFoundException("No court appearance found at $courtAppearanceUUID")
 
     if (courtAppearanceEntity.deleteStatus() == DeleteCourtAppearanceStatus.NOT_SUPPORTED) {
-      throw CannotDeleteCourtAppearanceException("Deleteing court appearance at $courtAppearanceUUID is not supported")
+      throw CannotDeleteCourtAppearanceException("Deleting court appearance at $courtAppearanceUUID is not supported")
     }
     val courtCaseEntity = courtAppearanceEntity.courtCase
 
