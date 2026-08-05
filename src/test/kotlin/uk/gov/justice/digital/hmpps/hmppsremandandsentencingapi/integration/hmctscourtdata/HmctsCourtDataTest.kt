@@ -23,6 +23,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
 
   @Test
   fun `Test get appearance from hmcts data`() {
+    val prisonerNumber = "PRIS123"
     val hmctsCourtHearing = HmctsCourHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
@@ -44,6 +45,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     )
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
+      prisonerNumber,
     )
     DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
       listOf(
@@ -60,7 +62,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
 
     val response = webTestClient
       .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/appearance")
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON

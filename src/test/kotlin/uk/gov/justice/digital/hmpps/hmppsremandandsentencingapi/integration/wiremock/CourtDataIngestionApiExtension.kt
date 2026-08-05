@@ -37,8 +37,8 @@ class CourtDataIngestionApiMockServer : WireMockServer(WIREMOCK_PORT) {
     private const val WIREMOCK_PORT = 8553
   }
 
-  fun stubCourtHearing(courtHearing: HmctsCourHearing): StubMapping = stubFor(
-    get("/court-hearings/${courtHearing.hearingId}")
+  fun stubCourtHearing(courtHearing: HmctsCourHearing, prisonerNumber: String): StubMapping = stubFor(
+    get("/court-hearings/prisoner/$prisonerNumber/hearing/${courtHearing.hearingId}")
       .willReturn(
         aResponse()
           .withHeader("Content-Type", "application/json")
