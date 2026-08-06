@@ -517,9 +517,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Test
   fun `updating the appearance changing sentence type`() {
-    val sdsUuid = UUID.fromString("1104e683-5467-4340-b961-ff53672c4f39")
-    val edsUuid = UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0")
-    val sentence = DpsDataCreator.dpsCreateSentence(sentenceTypeId = sdsUuid)
+    val civilImprisonmentSentenceTypeUuid = UUID.fromString("18826041-43f4-402b-b529-56c58fa8bc3c")
+    val botusSentenceType = UUID.fromString("d721e4c9-6ba8-47b7-8744-c58ef2703eab")
+    val sentence = DpsDataCreator.dpsCreateSentence(sentenceTypeId = civilImprisonmentSentenceTypeUuid, periodLengths = listOf(DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.TERM_LENGTH)))
     val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
     val appearance = dpsCreateCourtAppearance(
       charges = listOf(charge),
@@ -534,10 +534,10 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
 
     val createdAppearance = createdCourtCase.appearances.first()
-    // Update from SDS sentence to EDS sentence
+    // Update from civil sentence to BOTUS sentence
     val updateAppearance = createdAppearance.copy(
       courtCaseUuid = courtCaseUuid,
-      charges = createdAppearance.charges.map { it.copy(sentence = it.sentence?.copy(sentenceTypeId = edsUuid)) },
+      charges = createdAppearance.charges.map { it.copy(sentence = it.sentence?.copy(sentenceTypeId = botusSentenceType)) },
     )
     putCourtAppearance(createdAppearance.appearanceUuid, updateAppearance)
 
@@ -552,7 +552,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("$.charges.[?(@.chargeUuid == '${charge.chargeUuid}')].sentence.sentenceType.sentenceTypeUuid")
-      .isEqualTo(edsUuid.toString())
+      .isEqualTo(botusSentenceType.toString())
+    val messages = getMessages(2)
+    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("sentence.updated", "sentence.period-length.updated")
   }
 
   @Test
