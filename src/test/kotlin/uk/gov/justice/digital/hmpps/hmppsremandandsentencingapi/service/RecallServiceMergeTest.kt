@@ -66,7 +66,7 @@ class RecallServiceMergeTest {
   @Nested
   inner class MergeAndSortRecallableCourtCases {
     @Test
-    fun `dedupes duplicate sentences, merges court cases, and keeps non duplicates`() {
+    fun `keeps winning case and drops other cases that share a duplicate sentence`() {
       val dupKeyOffence = "OFF1"
       val dupStart = LocalDate.of(2020, 1, 1)
       val dupSentenceDate = LocalDate.of(2020, 2, 1)
@@ -103,13 +103,11 @@ class RecallServiceMergeTest {
 
       assertThat(result).hasSize(1)
 
-      val merged = result.single()
-      assertThat(merged.courtCode).isEqualTo("C1")
-      assertThat(merged.courtCaseUuid).isEqualTo("CASE-2")
-      assertThat(merged.sentences.map { it.offenceCode }).containsExactlyInAnyOrder(dupKeyOffence, "A1", "B1")
-      assertThat(merged.sentences.filter { it.offenceCode == dupKeyOffence }).hasSize(1)
-      assertThat(merged.sentences.single { it.offenceCode == dupKeyOffence }.createdAt)
-        .isEqualTo(LocalDateTime.of(2020, 2, 2, 10, 0))
+      val kept = result.single()
+      assertThat(kept.courtCode).isEqualTo("C1")
+      assertThat(kept.courtCaseUuid).isEqualTo("CASE-2")
+      assertThat(kept.sentences.map { it.offenceCode }).containsExactlyInAnyOrder(dupKeyOffence, "B1")
+      assertThat(kept.sentences.map { it.offenceCode }).doesNotContain("A1")
     }
 
     @Test
@@ -154,7 +152,7 @@ class RecallServiceMergeTest {
     }
 
     @Test
-    fun `merges 4 court cases with shared duplicate into latest duplicate sentence court case`() {
+    fun `keeps latest duplicate sentence court case and drops other cases sharing the duplicate`() {
       val earliestDup1 = recallableSentence(UUID.randomUUID(), "OFF-DUPLICATE", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
       val dup2 = earliestDup1.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 2, 10, 0))
       val dup3 = earliestDup1.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 3, 10, 0))
@@ -173,15 +171,11 @@ class RecallServiceMergeTest {
       val result = service.mergeAndSortCourtCases(listOf(case4, case2, case3, case1))
 
       assertThat(result).hasSize(1)
-      val merged = result.single()
+      val kept = result.single()
 
-      assertThat(merged.courtCaseUuid).isEqualTo("CASE-4")
-      assertThat(merged.sentences.map { it.offenceCode })
-        .containsExactlyInAnyOrder("OFF-DUPLICATE", "U1", "U2", "U3", "U4")
-
-      assertThat(merged.sentences.filter { it.offenceCode == "OFF-DUPLICATE" }).hasSize(1)
-      assertThat(merged.sentences.single { it.offenceCode == "OFF-DUPLICATE" }.createdAt)
-        .isEqualTo(LocalDateTime.of(2020, 2, 4, 10, 0))
+      assertThat(kept.courtCaseUuid).isEqualTo("CASE-4")
+      assertThat(kept.sentences.map { it.offenceCode }).containsExactlyInAnyOrder("OFF-DUPLICATE", "U4")
+      assertThat(kept.sentences.map { it.offenceCode }).doesNotContain("U1", "U2", "U3")
     }
 
     @Test
@@ -216,7 +210,7 @@ class RecallServiceMergeTest {
     }
 
     @Test
-    fun `merges duplicate cases and leaves non duplicate cases unchanged`() {
+    fun `drops duplicate cases and leaves non duplicate cases unchanged`() {
       val dupStart = LocalDate.of(2020, 1, 1)
       val dupSentenceDate = LocalDate.of(2020, 2, 1)
 
@@ -272,9 +266,10 @@ class RecallServiceMergeTest {
 
       assertThat(result.map { it.courtCaseUuid }).containsExactly("CASE-2", "CASE-3", "CASE-4")
 
-      val resultMergedCase2 = result[0]
-      assertThat(resultMergedCase2.courtCaseUuid).isEqualTo("CASE-2")
-      assertThat(resultMergedCase2.sentences.map { it.offenceCode }).containsExactlyInAnyOrder("OFF-DUP", "U1", "U2", "U3")
+      val keptCase2 = result[0]
+      assertThat(keptCase2.courtCaseUuid).isEqualTo("CASE-2")
+      assertThat(keptCase2.sentences.map { it.offenceCode }).containsExactlyInAnyOrder("OFF-DUP", "U2", "U3")
+      assertThat(keptCase2.sentences.map { it.offenceCode }).doesNotContain("U1")
 
       val resultCase3 = result[1]
       assertThat(resultCase3.courtCaseUuid).isEqualTo("CASE-3")
@@ -318,7 +313,7 @@ class RecallServiceMergeTest {
     }
 
     @Test
-    fun `keeps both duplicates on latest appearance while merging unique downstream sentences`() {
+    fun `keeps winning case with its own sentences and drops the other duplicate case`() {
       val latestAppearanceDup1 = recallableSentence(
         uuid = UUID.randomUUID(),
         offenceCode = "TH68010",
@@ -365,11 +360,10 @@ class RecallServiceMergeTest {
       val result = service.mergeAndSortCourtCases(listOf(latestCase, otherCase))
 
       assertThat(result).hasSize(1)
-      val merged = result.single()
-      assertThat(merged.sentences.map { it.sentenceUuid })
+      val kept = result.single()
+      assertThat(kept.courtCaseUuid).isEqualTo("CASE-OTHER")
+      assertThat(kept.sentences.map { it.sentenceUuid })
         .containsExactlyInAnyOrder(
-          latestAppearanceDup1.sentenceUuid,
-          latestAppearanceDup2.sentenceUuid,
           crossCaseDuplicateOnOtherCase.sentenceUuid,
           uniqueDownstream.sentenceUuid,
         )
@@ -507,7 +501,7 @@ class RecallServiceMergeTest {
     }
 
     @Test
-    fun `merges linked cases to case 5 when it has the latest winning sentence`() {
+    fun `keeps case 5 when it has the latest winning sentence and drops linked cases`() {
       val sharedAppearanceDate = LocalDate.of(2025, 5, 1)
 
       val offXFromCase5 = recallableSentence(
@@ -540,15 +534,14 @@ class RecallServiceMergeTest {
       val result = service.mergeAndSortCourtCases(listOf(case3, case4, case5))
 
       assertThat(result).hasSize(1)
-      val merged = result.single()
-      assertThat(merged.courtCaseUuid).isEqualTo("CASE-5")
-      assertThat(merged.sentences.map { it.offenceCode }).containsExactlyInAnyOrder("OFF_X", "OFF_Y")
-      assertThat(merged.sentences.single { it.offenceCode == "OFF_X" }.sentenceUuid).isEqualTo(offXFromCase5.sentenceUuid)
-      assertThat(merged.sentences.single { it.offenceCode == "OFF_Y" }.sentenceUuid).isEqualTo(offYFromCase4.sentenceUuid)
+      val kept = result.single()
+      assertThat(kept.courtCaseUuid).isEqualTo("CASE-5")
+      assertThat(kept.sentences.map { it.offenceCode }).containsExactly("OFF_X")
+      assertThat(kept.sentences.single().sentenceUuid).isEqualTo(offXFromCase5.sentenceUuid)
     }
 
     @Test
-    fun `merges transitively linked court cases`() {
+    fun `keeps winning case from transitively linked court cases and drops the others`() {
       val keyAStart = LocalDate.of(2020, 1, 1)
       val keyADate = LocalDate.of(2020, 2, 1)
       val keyBStart = LocalDate.of(2020, 3, 1)
@@ -586,10 +579,9 @@ class RecallServiceMergeTest {
       val result = service.mergeAndSortCourtCases(listOf(case3, case2, case1))
 
       assertThat(result).hasSize(1)
-      val merged = result.single()
-      assertThat(merged.courtCaseUuid).isEqualTo("CASE-3")
-      assertThat(merged.sentences.map { it.offenceCode })
-        .containsExactlyInAnyOrder("A", "B", "U1", "U2", "U3")
+      val kept = result.single()
+      assertThat(kept.courtCaseUuid).isEqualTo("CASE-3")
+      assertThat(kept.sentences.map { it.offenceCode }).containsExactlyInAnyOrder("B", "U3")
     }
 
     @Test
@@ -718,7 +710,7 @@ class RecallServiceMergeTest {
     }
 
     @Test
-    fun `returns merged cases when merge duplicate court cases is true`() {
+    fun `returns winning case when merge duplicate court cases is true`() {
       val olderDup = recallableSentence(UUID.randomUUID(), "OFF1", LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1), LocalDateTime.of(2020, 2, 1, 10, 0))
       val newerDup = olderDup.copy(sentenceUuid = UUID.randomUUID(), createdAt = LocalDateTime.of(2020, 2, 2, 10, 0))
 
