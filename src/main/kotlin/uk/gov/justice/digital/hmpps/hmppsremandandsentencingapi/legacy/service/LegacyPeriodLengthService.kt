@@ -21,8 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 @Service
 class LegacyPeriodLengthService(
