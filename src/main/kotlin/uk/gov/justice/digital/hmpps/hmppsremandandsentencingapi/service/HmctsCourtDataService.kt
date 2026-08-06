@@ -18,12 +18,6 @@ class HmctsCourtDataService(
   val courtRegisterApiClient: CourtRegisterApiClient,
 ) {
 
-  @Deprecated("CDIA-273 Use endpoint with prisoner number instead")
-  fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID): CourtAppearance {
-    val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId)
-    return getCourtAppearance(hearing)
-  }
-
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID, prisonerNumber: String): CourtAppearance {
     val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId, prisonerNumber)
     return getCourtAppearance(hearing)
