@@ -81,5 +81,6 @@ features:
     enabled: false
   hmctsWarrantThingToDo:
     enabled: true
+    repeatRemandHearingEnabled: true
   appearanceSchedulesEvents:
     enabled: true

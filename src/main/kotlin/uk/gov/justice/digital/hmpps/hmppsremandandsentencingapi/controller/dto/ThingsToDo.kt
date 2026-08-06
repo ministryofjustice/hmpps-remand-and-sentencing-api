@@ -10,20 +10,28 @@ data class ThingsToDo(
 )
 data class ThingToDo(
   val type: ThingToDoType,
-  val hearingThingsToDoData: HearingThingsToDoData?,
+  val hearingThingsToDoData: HearingThingsToDoData,
 )
 enum class ThingToDoType {
-  NEW_REMAND_WARRANT,
-  NEW_SENTENCING_WARRANT,
+  NEW_WARRANT,
 }
 
 data class HearingThingsToDoData(
-  @Schema(description = "The ID of the hearing for this thing to do", nullable = true)
+  @Schema(description = "The ID of the hearing for this thing to do")
   val hearingId: UUID,
-  @Schema(description = "The case reference of the hearing for this thing to do", nullable = true)
+  @Schema(description = "The case reference of the hearing for this thing to do")
   val courtCaseReference: String,
-  @Schema(description = "The date of the hearing for this thing to do", nullable = true)
+  @Schema(description = "The date of the hearing for this thing to do")
   val hearingDate: LocalDate,
-  @Schema(description = "The type of the hearing for this thing to do", nullable = true)
+  @Schema(description = "The type of the hearing for this thing to do")
   val hearingType: String,
+  @Schema(description = "The type of the hearing for this thing to do")
+  val warrantType: HearingThingsToDoWarrantType,
+  @Schema(description = "The ID of the existing court case for this warrant", nullable = true)
+  val courtCaseUuid: String?,
 )
+
+enum class HearingThingsToDoWarrantType {
+  REMAND,
+  SENTENCING,
+}

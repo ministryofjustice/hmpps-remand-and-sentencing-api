@@ -16,6 +16,7 @@ data class AppealsConfig(
 
 data class HmctsWarrantThingToDoConfig(
   val enabled: Boolean,
+  val repeatRemandHearingEnabled: Boolean,
 )
 
 data class AppearanceSchedulesEventsConfig(

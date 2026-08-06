@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Hmcts
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoWarrantType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDoType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingsToDo
@@ -24,13 +25,15 @@ class ThingsToDoTest : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Things to do {0}")
   @MethodSource("thingsToDoArguments")
-  fun `Test get things to do`(testMessage: String, hearings: List<HmctsCourHearing>, createCourtAppearance: CreateCourtAppearance?, expectedThingsToDo: ThingsToDo) {
+  fun `Test get things to do`(testMessage: String, hearings: List<HmctsCourHearing>, createCourtAppearance: CreateCourtAppearance?, expectedHearingData: List<HearingThingsToDoData>?) {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
       PRISONER_ID,
       hearings,
     )
-    if (createCourtAppearance != null) {
+    val createdCourtCase = if (createCourtAppearance != null) {
       createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = PRISONER_ID, appearances = listOf(createCourtAppearance)))
+    } else {
+      null
     }
 
     val response = webTestClient
@@ -45,6 +48,17 @@ class ThingsToDoTest : IntegrationTestBase() {
       .returnResult(ThingsToDo::class.java)
       .responseBody.blockFirst()!!
 
+    val expectedThingsToDo = ThingsToDo(
+      prisonerId = PRISONER_ID,
+      thingsToDo = expectedHearingData.orEmpty().map {
+        ThingToDo(
+          type = ThingToDoType.NEW_WARRANT,
+          hearingThingsToDoData = it.copy(
+            courtCaseUuid = if (it.courtCaseUuid != null) createdCourtCase!!.first else null,
+          ),
+        )
+      },
+    )
     Assertions.assertThat(response).isEqualTo(expectedThingsToDo)
   }
 
@@ -82,18 +96,14 @@ class ThingsToDoTest : IntegrationTestBase() {
         "No existing court cases with remand warrant give a thing to do",
         listOf(REMAND_HEARING),
         null,
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = listOf(
-            ThingToDo(
-              type = ThingToDoType.NEW_REMAND_WARRANT,
-              hearingThingsToDoData = HearingThingsToDoData(
-                HMCTS_HEARING_ID,
-                "ABC123",
-                LocalDate.of(2026, 1, 1),
-                hearingType = "First hearing",
-              ),
-            ),
+        listOf(
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.REMAND,
+            courtCaseUuid = null,
           ),
         ),
       ),
@@ -105,27 +115,20 @@ class ThingsToDoTest : IntegrationTestBase() {
           ),
         ),
         null,
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = emptyList(),
-        ),
+        null,
       ),
       Arguments.of(
         "No existing court cases with sentencing warrant give sentencing thing to do",
         listOf(SENTENCING_HEARING),
         null,
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = listOf(
-            ThingToDo(
-              type = ThingToDoType.NEW_SENTENCING_WARRANT,
-              hearingThingsToDoData = HearingThingsToDoData(
-                HMCTS_HEARING_ID,
-                "ABC123",
-                LocalDate.of(2026, 1, 1),
-                hearingType = "First hearing",
-              ),
-            ),
+        listOf(
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.SENTENCING,
+            courtCaseUuid = null,
           ),
         ),
       ),
@@ -141,21 +144,32 @@ class ThingsToDoTest : IntegrationTestBase() {
           ),
         ),
         null,
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = emptyList(),
-        ),
+        null,
       ),
       Arguments.of(
-        "Existing court case with same reference  with remand warrant gives no thing to do",
+        "Existing court case with same reference with remand warrant gives thing to do with case reference",
         listOf(REMAND_HEARING),
         DpsDataCreator.dpsCreateCourtAppearance(
           courtCaseReference = REMAND_HEARING.caseReferences[0],
         ),
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = emptyList(),
+        listOf(
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.REMAND,
+            courtCaseUuid = "EXISTING ID",
+          ),
         ),
+      ),
+      Arguments.of(
+        "Existing court case with same reference with sentencing warrant gives no thing to do",
+        listOf(SENTENCING_HEARING),
+        DpsDataCreator.dpsCreateCourtAppearance(
+          courtCaseReference = SENTENCING_HEARING.caseReferences[0],
+        ),
+        null,
       ),
       Arguments.of(
         "Existing court case with different reference with remand warrant gives no remand thing to do",
@@ -163,18 +177,14 @@ class ThingsToDoTest : IntegrationTestBase() {
         DpsDataCreator.dpsCreateCourtAppearance(
           courtCaseReference = "OTHERCASEREF123",
         ),
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = listOf(
-            ThingToDo(
-              type = ThingToDoType.NEW_REMAND_WARRANT,
-              hearingThingsToDoData = HearingThingsToDoData(
-                HMCTS_HEARING_ID,
-                "ABC123",
-                LocalDate.of(2026, 1, 1),
-                hearingType = "First hearing",
-              ),
-            ),
+        listOf(
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.REMAND,
+            courtCaseUuid = null,
           ),
         ),
       ),
@@ -182,27 +192,22 @@ class ThingsToDoTest : IntegrationTestBase() {
         "No court case with multiple hearings give multiple things to do",
         listOf(REMAND_HEARING, SENTENCING_HEARING),
         null,
-        ThingsToDo(
-          prisonerId = PRISONER_ID,
-          thingsToDo = listOf(
-            ThingToDo(
-              type = ThingToDoType.NEW_REMAND_WARRANT,
-              hearingThingsToDoData = HearingThingsToDoData(
-                HMCTS_HEARING_ID,
-                "ABC123",
-                LocalDate.of(2026, 1, 1),
-                hearingType = "First hearing",
-              ),
-            ),
-            ThingToDo(
-              type = ThingToDoType.NEW_SENTENCING_WARRANT,
-              hearingThingsToDoData = HearingThingsToDoData(
-                HMCTS_HEARING_ID,
-                "ABC123",
-                LocalDate.of(2026, 1, 1),
-                hearingType = "First hearing",
-              ),
-            ),
+        listOf(
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.REMAND,
+            courtCaseUuid = null,
+          ),
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.SENTENCING,
+            courtCaseUuid = null,
           ),
         ),
       ),

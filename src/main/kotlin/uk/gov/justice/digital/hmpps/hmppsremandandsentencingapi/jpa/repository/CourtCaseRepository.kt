@@ -334,7 +334,7 @@ interface CourtCaseRepository :
   fun findIdWithManyChargesDataFixByConsecutiveToLast(@Param("limit") limit: Int): Set<Int>
 
   @Query(
-    """select count(cc)
+    """select cc
     from CourtCaseEntity cc
     join cc.appearances app
     where cc.prisonerId = :prisonerId 
@@ -343,9 +343,9 @@ interface CourtCaseRepository :
     and app.courtCaseReference = :courtCaseReference
   """,
   )
-  fun countCourtCasesByPrisonerAndCourtCaseReference(
+  fun findCourtCasesByPrisonerAndCourtCaseReference(
     @Param("prisonerId") prisonerId: String,
     @Param("courtCaseReference") courtCaseReference: String,
     @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
-  ): Long
+  ): List<CourtCaseEntity>
 }
