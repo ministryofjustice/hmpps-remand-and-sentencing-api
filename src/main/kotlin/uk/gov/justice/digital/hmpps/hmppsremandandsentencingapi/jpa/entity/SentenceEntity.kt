@@ -396,7 +396,7 @@ class SentenceEntity(
   companion object {
     fun from(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
       val sentenceEntity = SentenceEntity(
-        sentenceUuid = sentence.sentenceUuid ?: UUID.randomUUID(),
+        sentenceUuid = sentence.sentenceUuid,
         countNumber = sentence.chargeNumber,
         statusId = SentenceEntityStatus.ACTIVE,
         createdBy = createdBy,

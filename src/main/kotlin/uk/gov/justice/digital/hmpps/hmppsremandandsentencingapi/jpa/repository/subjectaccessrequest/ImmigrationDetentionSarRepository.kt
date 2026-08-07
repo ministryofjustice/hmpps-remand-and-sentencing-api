@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.
 import org.springframework.data.repository.CrudRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.ImmigrationDetentionSarEntity
 
-interface ImmigrationDetentionSarRepository : CrudRepository<ImmigrationDetentionSarEntity, Integer> {
+interface ImmigrationDetentionSarRepository : CrudRepository<ImmigrationDetentionSarEntity, Int> {
 
   fun findByPrisonerId(prisonerId: String): List<ImmigrationDetentionSarEntity>
 }

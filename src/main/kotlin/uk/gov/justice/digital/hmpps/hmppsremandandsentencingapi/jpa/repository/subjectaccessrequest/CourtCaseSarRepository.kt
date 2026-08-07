@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.Condition
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.CourtCaseSarEntity
 
 @ConditionalOnSarEnabled
-interface CourtCaseSarRepository : CrudRepository<CourtCaseSarEntity, Integer> {
+interface CourtCaseSarRepository : CrudRepository<CourtCaseSarEntity, Int> {
 
   @EntityGraph(
     attributePaths = [
