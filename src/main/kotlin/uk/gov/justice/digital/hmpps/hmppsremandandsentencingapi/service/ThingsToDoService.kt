@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoWarrantType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDoType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingsToDo
@@ -21,18 +22,27 @@ class ThingsToDoService(
       val warrantHearings = hearings.filter { hearing -> hearing.documents.any { it.isWarrant() } && hearing.caseReferences.size == 1 }
 
       val thingsToDo = warrantHearings
-        .filter { warrantHearing ->
-          val totalCases = courtCaseRepository.countCourtCasesByPrisonerAndCourtCaseReference(prisonerId, warrantHearing.caseReferences[0])
-          totalCases == 0L
-        }
-        .map { warrantHearing ->
+        .mapNotNull { warrantHearing ->
+          val cases = courtCaseRepository.findCourtCasesByPrisonerAndCourtCaseReference(prisonerId, warrantHearing.caseReferences[0])
+          val case = cases.maxByOrNull { it.appearances.maxOf { it.appearanceDate } }
+
+          val newCourtCase = case == null
+          val repeatRemand = features.hmctsWarrantThingToDo.repeatRemandHearingEnabled &&
+            case != null &&
+            warrantHearing.isRemandHearing()
+          val thingToDoSupported = newCourtCase || repeatRemand
+          if (!thingToDoSupported) {
+            return@mapNotNull null
+          }
           ThingToDo(
-            type = if (warrantHearing.isRemandHearing()) ThingToDoType.NEW_REMAND_WARRANT else ThingToDoType.NEW_SENTENCING_WARRANT,
+            type = ThingToDoType.NEW_WARRANT,
             hearingThingsToDoData = HearingThingsToDoData(
-              warrantHearing.hearingId,
-              warrantHearing.caseReferences.first(),
-              warrantHearing.hearingDate.toLocalDate(),
-              warrantHearing.hearingType,
+              hearingId = warrantHearing.hearingId,
+              courtCaseReference = warrantHearing.caseReferences.first(),
+              hearingDate = warrantHearing.hearingDate.toLocalDate(),
+              hearingType = warrantHearing.hearingType,
+              warrantType = if (warrantHearing.isRemandHearing()) HearingThingsToDoWarrantType.REMAND else HearingThingsToDoWarrantType.SENTENCING,
+              courtCaseUuid = case?.caseUniqueIdentifier,
             ),
           )
         }
