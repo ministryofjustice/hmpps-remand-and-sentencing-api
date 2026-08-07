@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.L
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyPeriodLengthService
 import java.util.function.Consumer
 import kotlin.toString
 
@@ -25,6 +27,7 @@ class PeriodLengthService(
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
   private val serviceUserService: ServiceUserService,
   private val sentenceRepository: SentenceRepository,
+  private val legacyPeriodLengthService: LegacyPeriodLengthService,
 ) {
   fun create(
     createPeriodLengthEntities: List<PeriodLengthEntity>,
@@ -82,25 +85,31 @@ class PeriodLengthService(
     prisonerId: String,
     courtAppearanceId: String? = null,
     courtCaseId: String? = null,
+    existingSentenceType: SentenceTypeEntity? = null,
+    updatedSentenceType: SentenceTypeEntity? = null,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
 
     existingPeriodLengths.forEach { existing ->
       val updated = updatedPeriodLengths.firstOrNull { it.periodLengthUuid == existing.periodLengthUuid }
-      if (updated != null && !existing.isSame(updated)) {
-        updated.legacyData = updated.legacyData?.let { legacyData ->
-          if (existing.periodLengthType != updated.periodLengthType) {
-            legacyData.sentenceTermCode = null
-            legacyData.lifeSentence = null
+      if (updated != null) {
+        val nomisMappingDifferent = legacyPeriodLengthService.isNomisMappingDifferent(existing, existingSentenceType, updated, updatedSentenceType)
+        if (!existing.isSame(updated)) {
+          updated.legacyData = updated.legacyData?.let { legacyData ->
+            if (existing.periodLengthType != updated.periodLengthType) {
+              legacyData.sentenceTermCode = null
+              legacyData.lifeSentence = null
+            }
+            legacyData
           }
-          legacyData
+
+          existing.updateFrom(updated, serviceUserService.getUsername())
+          periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing, ChangeSource.DPS))
+          entityChangeStatus = EntityChangeStatus.EDITED
         }
 
-        existing.updateFrom(updated, serviceUserService.getUsername())
-        periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(existing, ChangeSource.DPS))
-        entityChangeStatus = EntityChangeStatus.EDITED
-        if (existing.sentenceEntity != null) {
+        if ((entityChangeStatus == EntityChangeStatus.EDITED || nomisMappingDifferent) && existing.sentenceEntity != null) {
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
               prisonerId,
