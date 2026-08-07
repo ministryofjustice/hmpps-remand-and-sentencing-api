@@ -64,6 +64,7 @@ class SentenceService(
     val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
+    val existingSentenceType = existingSentence.sentenceType
     val activeRecord = existingSentence
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     var sentenceChangeStatus = if (courtAppearanceDateChanged) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
@@ -89,6 +90,8 @@ class SentenceService(
       prisonerId,
       courtAppearanceId,
       courtCaseId,
+      existingSentenceType,
+      sentenceType,
     )
 
     val createResponse = periodLengthService.create(

@@ -7,15 +7,18 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyPeriodLengthCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.util.PeriodLengthTypeMapper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.util.UUID
 
@@ -153,4 +156,16 @@ class LegacyPeriodLengthService(
     }.filter { periodLength -> periodLength.sentenceEntity!!.charge.appearanceCharges.isNotEmpty() }
     .map { periodLength -> LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!) }
     .firstOrNull()
+
+  fun isNomisMappingDifferent(existingPeriodLength: PeriodLengthEntity, existingSentenceType: SentenceTypeEntity?, updatedPeriodLength: PeriodLengthEntity, updatedSentenceType: SentenceTypeEntity?): Boolean {
+    val (existingIsLifeSentence, existingSentenceTermCode) = getNomisMapping(existingPeriodLength, existingSentenceType)
+    val (updatedIsLifeSentence, updatedSentenceTermCode) = getNomisMapping(updatedPeriodLength, updatedSentenceType)
+    return existingIsLifeSentence != updatedIsLifeSentence || existingSentenceTermCode != updatedSentenceTermCode
+  }
+
+  private fun getNomisMapping(periodLength: PeriodLengthEntity, sentenceType: SentenceTypeEntity?): Pair<Boolean?, String?> = if (sentenceType != null && periodLength.periodLengthType != PeriodLengthType.UNSUPPORTED) {
+    PeriodLengthTypeMapper.convertDpsToNomis(periodLength.periodLengthType, sentenceType.classification, periodLength.legacyData, sentenceType.nomisSentenceCalcType)
+  } else {
+    periodLength.legacyData?.lifeSentence to periodLength.legacyData?.sentenceTermCode
+  }
 }
