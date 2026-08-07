@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
-import org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY
+import org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -79,10 +79,10 @@ class HmppsRemandAndSentencingApiExceptionHandler {
       else -> e.message ?: "Invalid state"
     }
     return ResponseEntity
-      .status(UNPROCESSABLE_ENTITY)
+      .status(UNPROCESSABLE_CONTENT)
       .body(
         ErrorResponse(
-          status = UNPROCESSABLE_ENTITY,
+          status = UNPROCESSABLE_CONTENT,
           userMessage = userMessage,
           developerMessage = e.message,
         ),
@@ -174,10 +174,10 @@ class HmppsRemandAndSentencingApiExceptionHandler {
   fun handleChargeAlreadySentencedException(e: ChargeAlreadySentencedException): ResponseEntity<ErrorResponse> {
     log.error("Charge already sentenced exception", e)
     return ResponseEntity
-      .status(UNPROCESSABLE_ENTITY)
+      .status(UNPROCESSABLE_CONTENT)
       .body(
         ErrorResponse(
-          status = UNPROCESSABLE_ENTITY,
+          status = UNPROCESSABLE_CONTENT,
           userMessage = "charge already sentenced failure: ${e.message}",
           developerMessage = e.message,
         ),
@@ -206,7 +206,7 @@ class HmppsRemandAndSentencingApiExceptionHandler {
       .body(
         ErrorResponse(
           status = CONFLICT,
-          userMessage = e.message ?: "This court appearance has been deleted and cannot be modified",
+          userMessage = e.message,
           developerMessage = e.message,
         ),
       )

@@ -77,8 +77,6 @@ springdoc:
     enabled: true
 
 features:
-  appeals:
-    enabled: false
   hmctsWarrantThingToDo:
     enabled: true
     repeatRemandHearingEnabled: true

@@ -6,7 +6,6 @@ import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -58,7 +57,6 @@ class LegacyCourtAppearanceService(
   private val courtCaseService: CourtCaseService,
   private val immigrationDetentionService: ImmigrationDetentionService,
   private val nextCourtAppearanceService: NextCourtAppearanceService,
-  private val featuresConfig: FeaturesConfig,
 ) {
 
   @Transactional
@@ -67,7 +65,7 @@ class LegacyCourtAppearanceService(
     val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtAppearance.courtCaseUuid)?.takeUnless { entity -> entity.statusId == CourtCaseEntityStatus.DELETED } ?: throw EntityNotFoundException("No court case found at ${courtAppearance.courtCaseUuid}")
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val createdCourtAppearance = courtAppearanceRepository.save(
-      CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, getPerformedByUsername(courtAppearance), featuresConfig.appeals.enabled),
+      CourtAppearanceEntity.from(courtAppearance, dpsOutcome, courtCase, getPerformedByUsername(courtAppearance)),
     )
     courtAppearanceHistoryRepository.save(
       CourtAppearanceHistoryEntity.from(
@@ -97,7 +95,7 @@ class LegacyCourtAppearanceService(
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val dpsOutcome = courtAppearance.legacyData.nomisOutcomeCode?.let { nomisCode -> appearanceOutcomeRepository.findByNomisCode(nomisCode) }
     val performedByUser = getPerformedByUsername(courtAppearance)
-    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, performedByUser, featuresConfig.appeals.enabled)
+    val updatedCourtAppearance = existingCourtAppearance.copyFrom(courtAppearance, dpsOutcome, performedByUser)
     if (!existingCourtAppearance.isSame(updatedCourtAppearance) && !isOvernightRun(existingCourtAppearance, updatedCourtAppearance)) {
       existingCourtAppearance.updateFrom(updatedCourtAppearance)
       courtAppearanceHistoryRepository.save(

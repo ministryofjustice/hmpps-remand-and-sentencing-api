@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.AppearanceOutcomeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -95,7 +94,6 @@ class MigrationService(
   private val recallSentenceHistoryRepository: RecallSentenceHistoryRepository,
   private val recallHistoryRepository: RecallHistoryRepository,
   private val uploadedDocumentRepository: UploadedDocumentRepository,
-  private val featuresConfig: FeaturesConfig,
 ) {
 
   @Transactional
@@ -287,7 +285,7 @@ class MigrationService(
 
   fun createAppearance(migrationCreateCourtAppearance: MigrationCreateCourtAppearance, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: MigrationDataTracking, referenceData: MigrationReferenceData): CourtAppearanceEntity {
     val dpsAppearanceOutcome = migrationCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { referenceData.dpsAppearanceOutcomes[it] }
-    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.createdByUsername, courtCaseReference, featuresConfig.appeals.enabled))
+    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(migrationCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.createdByUsername, courtCaseReference))
     val charges = migrationCreateCourtAppearance.charges.map { charge -> createCharge(charge, tracking, referenceData, migrationCreateCourtAppearance.eventId) }
     charges.forEach { charge ->
       val appearanceChargeEntity = AppearanceChargeEntity(

@@ -289,7 +289,7 @@ class BookingService(
 
   fun createAppearance(bookingCreateCourtAppearance: BookingCreateCourtAppearance, createdCourtCase: CourtCaseEntity, courtCaseReference: String?, tracking: BookingDataTracking, referenceData: BookingReferenceData): CourtAppearanceEntity {
     val dpsAppearanceOutcome = bookingCreateCourtAppearance.legacyData.nomisOutcomeCode?.let { referenceData.dpsAppearanceOutcomes[it] }
-    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(bookingCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.createdByUsername, courtCaseReference, featuresConfig.appeals.enabled))
+    val createdAppearance = courtAppearanceRepository.save(CourtAppearanceEntity.from(bookingCreateCourtAppearance, dpsAppearanceOutcome, createdCourtCase, tracking.createdByUsername, courtCaseReference))
     val charges = bookingCreateCourtAppearance.charges.map { charge ->
       createCharge(
         charge,
