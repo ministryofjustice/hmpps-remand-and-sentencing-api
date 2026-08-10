@@ -989,7 +989,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val secondAppearanceUuid = response.appearances.first { it.eventId == secondAppearance.eventId }.appearanceUuid
     val chargeUuid = response.charges.first { it.chargeNOMISId == migrationCharge.chargeNOMISId }.chargeUuid
     val updatedCharge = DpsDataCreator.dpsCreateCharge(appearanceUuid = secondAppearanceUuid, chargeUuid = chargeUuid, offenceStartDate = migrationCharge.offenceStartDate!!, offenceCode = "ANOTHERCODE", outcomeUuid = UUID.fromString("dd912c55-ca0d-4a68-8b0d-ba0a5e73b471"))
-    val appearance = dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, appearanceUUID = secondAppearanceUuid, outcomeUuid = UUID.fromString("fb966699-7adf-4c58-8852-395951e77846"), courtCode = secondAppearance.courtCode, courtCaseReference = "NOMIS123", appearanceDate = secondAppearance.appearanceDate, warrantType = "NON_SENTENCING", overallSentenceLength = null, nextCourtAppearance = null, charges = listOf(updatedCharge), overallConvictionDate = null, documents = listOf())
+    val appearance = dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, appearanceUUID = secondAppearanceUuid, outcomeUuid = UUID.fromString("fb966699-7adf-4c58-8852-395951e77846"), courtCode = secondAppearance.courtCode, courtCaseReference = "NOMIS123", appearanceDate = secondAppearance.appearanceDate, warrantType = "NON_SENTENCING", nextCourtAppearance = null, charges = listOf(updatedCharge), overallConvictionDate = null, documents = listOf())
     putCourtAppearance(secondAppearanceUuid, appearance)
     webTestClient
       .get()
@@ -1014,7 +1014,6 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val breachAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCaseUuid,
       warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
-      overallSentenceLength = null,
       nextCourtAppearance = null,
       charges = listOf(
         sentencedCharge.copy(sentence = null),
@@ -1042,7 +1041,6 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val breachAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCaseUuid,
       warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
-      overallSentenceLength = null,
       nextCourtAppearance = null,
       charges = listOf(
         sentencedCharge.copy(sentence = null),

@@ -97,7 +97,6 @@ class SentenceDeleteStatusTests : IntegrationTestBase() {
     val breachAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       courtCaseUuid = courtCaseUuid,
       warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
-      overallSentenceLength = null,
       nextCourtAppearance = null,
       charges = listOf(
         sentencedCharge.copy(sentence = null),
