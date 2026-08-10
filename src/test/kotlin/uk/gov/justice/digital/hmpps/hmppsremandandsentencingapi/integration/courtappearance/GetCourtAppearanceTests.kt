@@ -92,7 +92,6 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
       .isOk
       .returnResult(CourtAppearance::class.java)
       .responseBody.blockFirst()!!
-    Assertions.assertNull(returnedCourtAppearance.overallSentenceLength)
     Assertions.assertTrue(returnedCourtAppearance.periodLengths.isEmpty())
   }
 

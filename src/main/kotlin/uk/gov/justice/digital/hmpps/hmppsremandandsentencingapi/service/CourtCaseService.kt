@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponseWithDocumentUpdates
@@ -92,7 +93,13 @@ class CourtCaseService(
     val eventsToEmit =
       toDeleteAppearances.flatMap { courtAppearanceService.deleteCourtAppearance(it).eventsToEmit }.toMutableSet()
     val appearanceRecords =
-      createCourtCase.appearances.map { courtAppearanceService.createCourtAppearance(it, courtCase) }
+      createCourtCase.appearances.map {
+        courtAppearanceService.createCourtAppearance(
+          it,
+          courtCase,
+          CourtCaseHierarchyData(courtCase.prisonerId, courtCase.caseUniqueIdentifier, it.appearanceUuid),
+        )
+      }
     val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)

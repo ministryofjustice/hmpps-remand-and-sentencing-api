@@ -485,7 +485,6 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
     val breachAppearance = dpsCreateCourtAppearance(
       courtCaseUuid = courtCaseUuid,
       warrantType = "BREACH_OF_SUPERVISION_REQUIREMENTS",
-      overallSentenceLength = null,
       nextCourtAppearance = null,
       charges = listOf(
         sentencedCharge.copy(sentence = null),

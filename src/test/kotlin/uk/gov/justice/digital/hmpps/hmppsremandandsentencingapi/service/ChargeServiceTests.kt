@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
@@ -58,7 +59,7 @@ class ChargeServiceTests {
     every { chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(any(), any()) } returns null
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(any()) } returns null
     every { chargeRepository.save(any()) } returns savedCharge
-    every { sentenceService.createSentence(any(), any(), any(), any(), any(), any(), any()) } returns
+    every { sentenceService.createSentence(any(), any(), any(), any()) } returns
       RecordResponse(savedSentence, mutableSetOf())
 
     val createCharge = CreateCharge(
@@ -88,10 +89,8 @@ class ChargeServiceTests {
     val result = chargeService.createCharge(
       createCharge,
       mutableMapOf(),
-      "A1234BC",
-      "CASE-1",
       courtAppearance,
-      false,
+      courtCaseHierarchyData = CourtCaseHierarchyData("A1234BC", "CASE-1", courtAppearance.appearanceUuid),
     )
 
     assertThat(result.record).isSameAs(savedCharge)
@@ -120,7 +119,7 @@ class ChargeServiceTests {
     every { chargeRepository.findFirstByAppearanceChargesAppearanceAppearanceUuidAndChargeUuidAndStatusIdNotOrderByCreatedAtDesc(appearanceUuid, replacedUuid) } returns null
     every { chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(replacedUuid) } returns supersedingCharge
     every { chargeRepository.save(any()) } returns savedCharge
-    every { sentenceService.createSentence(any(), any(), any(), any(), any(), any(), any()) } returns
+    every { sentenceService.createSentence(any(), any(), any(), any()) } returns
       RecordResponse(savedSentence, mutableSetOf())
 
     val createCharge = CreateCharge(
@@ -150,10 +149,8 @@ class ChargeServiceTests {
     val result = chargeService.createCharge(
       createCharge,
       mutableMapOf(),
-      "B222BC",
-      "CASE-2",
       courtAppearance,
-      false,
+      courtCaseHierarchyData = CourtCaseHierarchyData("B222BC", "CASE-2", courtAppearance.appearanceUuid),
     )
 
     assertThat(result.record).isSameAs(savedCharge)

@@ -41,7 +41,7 @@ class LegacyGetPeriodLengthTests : IntegrationTestBase() {
   @Test
   fun `no period-length exists (with a sentence associated) for uuid results in not found`() {
     val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance()
-    val periodLengthUuidWithNoSentence = sentencedAppearance.overallSentenceLength?.periodLengthUuid
+    val periodLengthUuidWithNoSentence = sentencedAppearance.periodLengths!!.first().periodLengthUuid
 
     webTestClient
       .get()

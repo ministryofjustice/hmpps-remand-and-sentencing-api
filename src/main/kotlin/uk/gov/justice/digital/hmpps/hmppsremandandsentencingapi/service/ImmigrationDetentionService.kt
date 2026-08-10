@@ -263,7 +263,6 @@ class ImmigrationDetentionService(
       courtCaseReference = null,
       criminalAppealOfficeReference = null,
       warrantType = "IMMIGRATION",
-      overallSentenceLength = null,
       nextCourtAppearance = null,
       charges = listOf(
         CreateCharge(
