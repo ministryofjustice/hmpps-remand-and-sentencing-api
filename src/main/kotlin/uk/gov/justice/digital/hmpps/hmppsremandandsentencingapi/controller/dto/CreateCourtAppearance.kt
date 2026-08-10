@@ -18,7 +18,6 @@ data class CreateCourtAppearance(
   val criminalAppealOfficeReference: String?,
   val appearanceDate: LocalDate,
   val warrantType: String,
-  val overallSentenceLength: CreatePeriodLength?,
   val nextCourtAppearance: CreateNextCourtAppearance?,
   val charges: List<CreateCharge>,
   val overallConvictionDate: LocalDate?,

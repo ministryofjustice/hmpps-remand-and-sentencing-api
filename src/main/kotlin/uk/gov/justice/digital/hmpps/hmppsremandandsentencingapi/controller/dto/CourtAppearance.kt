@@ -5,7 +5,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Eve
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import java.time.LocalDate
 import java.util.UUID
@@ -20,7 +19,6 @@ data class CourtAppearance(
   val warrantType: String,
   val nextCourtAppearance: NextCourtAppearance?,
   val charges: List<Charge>,
-  val overallSentenceLength: PeriodLength?,
   val overallConvictionDate: LocalDate?,
   val legacyData: CourtAppearanceLegacyData?,
   val documents: List<UploadedDocument> = emptyList(),
@@ -42,7 +40,6 @@ data class CourtAppearance(
       courtAppearanceEntity.warrantType,
       courtAppearanceEntity.nextCourtAppearance?.let { NextCourtAppearance.from(it) },
       courtAppearanceEntity.appearanceCharges.filter { returnChargeStatuses.contains(it.charge!!.statusId) }.map { Charge.from(it.charge!!) },
-      courtAppearanceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.firstOrNull { it.periodLengthType == PeriodLengthType.OVERALL_SENTENCE_LENGTH }?.let { PeriodLength.from(it) },
       courtAppearanceEntity.overallConvictionDate,
       courtAppearanceEntity.legacyData,
       courtAppearanceEntity.documents.map { UploadedDocument.from(it) },

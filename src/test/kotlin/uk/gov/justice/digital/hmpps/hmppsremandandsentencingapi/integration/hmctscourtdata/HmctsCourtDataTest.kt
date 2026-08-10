@@ -83,7 +83,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         warrantType = "NON_SENTENCING",
         nextCourtAppearance = null,
         charges = emptyList(),
-        overallSentenceLength = null,
         overallConvictionDate = null,
         legacyData = null,
         documents = listOf(

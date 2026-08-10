@@ -38,7 +38,6 @@ class HmctsCourtDataService(
       warrantType = mapWarrantType(hearing),
       nextCourtAppearance = null,
       charges = emptyList(),
-      overallSentenceLength = null,
       overallConvictionDate = null,
       legacyData = null,
       documents = hearing.documents.mapNotNull {
