@@ -97,13 +97,10 @@ class SentenceService(
       courtCaseHierarchyData,
 
     )
+    eventsToEmit.addAll(deleteResponse.eventsToEmit)
+    eventsToEmit.addAll(updateResponse.eventsToEmit)
+    eventsToEmit.addAll(createResponse.flatMap { it.eventsToEmit })
 
-    val periodLengthChangeRecord = RecordResponse(
-      EntityChangeStatus.NO_CHANGE,
-      (deleteResponse.eventsToEmit + updateResponse.eventsToEmit + createResponse.eventsToEmit).toMutableSet(),
-    )
-
-    eventsToEmit.addAll(periodLengthChangeRecord.eventsToEmit)
     if (sentenceChangeStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
@@ -144,7 +141,7 @@ class SentenceService(
       EventType.SENTENCE_INSERTED,
     )
     eventsToEmit.add(sentenceEvent)
-    eventsToEmit.addAll(periodLengthResponse.eventsToEmit)
+    eventsToEmit.addAll(periodLengthResponse.flatMap { it.eventsToEmit })
     sentencesCreated.put(sentence.sentenceUuid, createdSentence)
     return RecordResponse(createdSentence, eventsToEmit)
   }

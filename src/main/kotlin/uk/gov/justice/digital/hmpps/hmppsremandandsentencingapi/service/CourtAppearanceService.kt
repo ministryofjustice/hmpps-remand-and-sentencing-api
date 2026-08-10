@@ -169,6 +169,17 @@ class CourtAppearanceService(
         createdCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
       ),
     )
+
+    val periodLengthsToCreate = courtAppearance.periodLengths?.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }
+    periodLengthsToCreate?.let {
+      val periodLengthHierarchyData = CourtCaseHierarchyData(courtCaseHierarchyData.prisonerId, courtCaseHierarchyData.courtCaseId, null)
+      val createdPeriodLengths = periodLengthService.create(it, createdCourtAppearance.periodLengths, { createdPeriodLength ->
+        createdPeriodLength.appearanceEntity = createdCourtAppearance
+      }, periodLengthHierarchyData)
+      eventsToEmit.addAll(createdPeriodLengths.flatMap { it.eventsToEmit })
+      courtCaseHierarchyData.courtAppearancePeriodLengths.addAll(createdPeriodLengths.map { it.record })
+    }
+
     val chargeRecords = createCharges(
       courtAppearance.charges,
       createdCourtAppearance,
@@ -202,15 +213,6 @@ class CourtAppearanceService(
     }
     eventsToEmit.addAll(chargeRecords.heardCharges.flatMap { it.eventsToEmit } + chargeRecords.futureCharges.flatMap { it.eventsToEmit })
     createdCourtAppearance.nextCourtAppearance = nextCourtAppearance
-    val periodLengthsToCreate = courtAppearance.periodLengths?.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }
-    periodLengthsToCreate?.let {
-      val periodLengthHierarchyData = CourtCaseHierarchyData(courtCaseHierarchyData.prisonerId, courtCaseHierarchyData.courtCaseId, null)
-      eventsToEmit.addAll(
-        periodLengthService.create(it, createdCourtAppearance.periodLengths, { createdPeriodLength ->
-          createdPeriodLength.appearanceEntity = createdCourtAppearance
-        }, periodLengthHierarchyData).eventsToEmit,
-      )
-    }
 
     nextCourtAppearance?.futureSkeletonAppearance?.also { courtAppearanceEntity ->
       eventsToEmit.add(
@@ -275,15 +277,16 @@ class CourtAppearanceService(
         periodLengthHierarchyData,
       ).eventsToEmit,
     )
-
-    eventsToEmit.addAll(
-      periodLengthService.create(
-        toCreatePeriodLengths,
-        existingCourtAppearanceEntity.periodLengths,
-        { created -> created.appearanceEntity = existingCourtAppearanceEntity },
-        periodLengthHierarchyData,
-      ).eventsToEmit,
+    val createdPeriodLengths = periodLengthService.create(
+      toCreatePeriodLengths,
+      existingCourtAppearanceEntity.periodLengths,
+      { created -> created.appearanceEntity = existingCourtAppearanceEntity },
+      periodLengthHierarchyData,
     )
+    eventsToEmit.addAll(
+      createdPeriodLengths.flatMap { it.eventsToEmit },
+    )
+    courtCaseHierarchyData.courtAppearancePeriodLengths.addAll(createdPeriodLengths.map { it.record })
     courtCaseHierarchyData.courtAppearanceUuid = existingCourtAppearanceEntity.appearanceUuid
     val (chargesChangedStatus, chargeEventsToEmit) = updateCharges(
       courtAppearance.charges,

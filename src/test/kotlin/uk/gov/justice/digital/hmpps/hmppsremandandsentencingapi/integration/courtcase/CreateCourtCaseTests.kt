@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 
 class CreateCourtCaseTests : IntegrationTestBase() {
@@ -95,6 +96,20 @@ class CreateCourtCaseTests : IntegrationTestBase() {
       }
 
     verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
+  }
+
+  @Test
+  fun `creating breach of imprisonable offence attached to appearance and sentence`() {
+    val breachOfImprisonableOffencePeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_IMPRISONABLE_OFFENCE, months = 3, years = null)
+    val sentence = DpsDataCreator.dpsCreateSentence(periodLengths = listOf(breachOfImprisonableOffencePeriodLength))
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(sentencedCharge), periodLengths = listOf(breachOfImprisonableOffencePeriodLength))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val periodLengthRecords = periodLengthRepository.findByPeriodLengthUuid(breachOfImprisonableOffencePeriodLength.periodLengthUuid)
+    Assertions.assertThat(periodLengthRecords.size).isEqualTo(1)
+    val periodLength = periodLengthRecords.first()
+    assertThat(periodLength.appearanceEntity).isNotNull
+    assertThat(periodLength.sentenceEntity).isNotNull
   }
 
   @Test

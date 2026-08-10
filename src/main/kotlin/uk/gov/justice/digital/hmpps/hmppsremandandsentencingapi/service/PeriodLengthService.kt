@@ -34,18 +34,16 @@ class PeriodLengthService(
     existingPeriodLengths: MutableSet<PeriodLengthEntity>,
     onCreateConsumer: Consumer<PeriodLengthEntity>,
     courtCaseHierarchyData: CourtCaseHierarchyData,
-  ): RecordResponse<EntityChangeStatus> {
-    val eventsToEmit = mutableSetOf<EventMetadata>()
-    var entityChangeStatus = EntityChangeStatus.NO_CHANGE
-
+  ): List<RecordResponse<PeriodLengthEntity>> {
     val toAddPeriodLengths = createPeriodLengthEntities
       .filter { new -> existingPeriodLengths.none { it.periodLengthUuid == new.periodLengthUuid } }
       .map {
-        onCreateConsumer.accept(it)
-        val linkBreachSentence = linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseHierarchyData.courtCaseId!!, it)
-        val saved = periodLengthRepository.save(it)
+        val periodLength = courtCaseHierarchyData.courtAppearancePeriodLengths.firstOrNull { courtAppearancePeriodLength -> courtAppearancePeriodLength.periodLengthUuid == it.periodLengthUuid } ?: it
+        val eventsToEmit = mutableSetOf<EventMetadata>()
+        onCreateConsumer.accept(periodLength)
+        val linkBreachSentence = linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseHierarchyData.courtCaseId!!, periodLength)
+        val saved = periodLengthRepository.save(periodLength)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved, ChangeSource.DPS))
-        entityChangeStatus = EntityChangeStatus.CREATED
         if (saved.sentenceEntity != null) {
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
@@ -59,11 +57,9 @@ class PeriodLengthService(
             ),
           )
         }
-        saved
+        RecordResponse(saved, eventsToEmit)
       }
-
-    existingPeriodLengths.addAll(toAddPeriodLengths)
-    return RecordResponse(entityChangeStatus, eventsToEmit)
+    return toAddPeriodLengths
   }
 
   private fun linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseUuid: String, periodLengthEntity: PeriodLengthEntity): LinkBreachSentence? {
