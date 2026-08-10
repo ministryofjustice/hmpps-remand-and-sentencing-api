@@ -2,12 +2,12 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
@@ -32,10 +32,8 @@ class PeriodLengthService(
   fun create(
     createPeriodLengthEntities: List<PeriodLengthEntity>,
     existingPeriodLengths: MutableSet<PeriodLengthEntity>,
-    prisonerId: String,
-    courtCaseId: String,
     onCreateConsumer: Consumer<PeriodLengthEntity>,
-    courtAppearanceId: String? = null,
+    courtCaseHierarchyData: CourtCaseHierarchyData,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -44,16 +42,16 @@ class PeriodLengthService(
       .filter { new -> existingPeriodLengths.none { it.periodLengthUuid == new.periodLengthUuid } }
       .map {
         onCreateConsumer.accept(it)
-        val linkBreachSentence = linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseId, it)
+        val linkBreachSentence = linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseHierarchyData.courtCaseId!!, it)
         val saved = periodLengthRepository.save(it)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved, ChangeSource.DPS))
         entityChangeStatus = EntityChangeStatus.CREATED
         if (saved.sentenceEntity != null) {
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
-              prisonerId,
-              courtCaseId,
-              linkBreachSentence?.appearanceUuid?.toString() ?: courtAppearanceId.toString(),
+              courtCaseHierarchyData.prisonerId,
+              courtCaseHierarchyData.courtCaseId!!,
+              linkBreachSentence?.appearanceUuid?.toString() ?: courtCaseHierarchyData.courtAppearanceUuid.toString(),
               linkBreachSentence?.chargeUuid?.toString() ?: saved.sentenceEntity?.charge?.chargeUuid.toString(),
               saved.sentenceEntity?.sentenceUuid.toString(),
               saved.periodLengthUuid.toString(),
@@ -82,11 +80,7 @@ class PeriodLengthService(
   fun update(
     updatedPeriodLengths: List<PeriodLengthEntity>,
     existingPeriodLengths: MutableSet<PeriodLengthEntity>,
-    prisonerId: String,
-    courtAppearanceId: String? = null,
-    courtCaseId: String? = null,
-    existingSentenceType: SentenceTypeEntity? = null,
-    updatedSentenceType: SentenceTypeEntity? = null,
+    courtCaseHierarchyData: CourtCaseHierarchyData,
   ): RecordResponse<EntityChangeStatus> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     var entityChangeStatus = EntityChangeStatus.NO_CHANGE
@@ -94,7 +88,7 @@ class PeriodLengthService(
     existingPeriodLengths.forEach { existing ->
       val updated = updatedPeriodLengths.firstOrNull { it.periodLengthUuid == existing.periodLengthUuid }
       if (updated != null) {
-        val nomisMappingDifferent = legacyPeriodLengthService.isNomisMappingDifferent(existing, existingSentenceType, updated, updatedSentenceType)
+        val nomisMappingDifferent = legacyPeriodLengthService.isNomisMappingDifferent(existing, courtCaseHierarchyData.existingSentenceType, updated, courtCaseHierarchyData.updatedSentenceType)
         if (!existing.isSame(updated)) {
           updated.legacyData = updated.legacyData?.let { legacyData ->
             if (existing.periodLengthType != updated.periodLengthType) {
@@ -112,9 +106,9 @@ class PeriodLengthService(
         if ((entityChangeStatus == EntityChangeStatus.EDITED || nomisMappingDifferent) && existing.sentenceEntity != null) {
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
-              prisonerId,
-              courtCaseId ?: existing.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.courtCase.caseUniqueIdentifier,
-              courtAppearanceId ?: existing.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.appearanceUuid.toString(),
+              courtCaseHierarchyData.prisonerId,
+              courtCaseHierarchyData.courtCaseId ?: existing.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.courtCase.caseUniqueIdentifier,
+              courtCaseHierarchyData.courtAppearanceUuid?.toString() ?: existing.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.appearanceUuid.toString(),
               existing.sentenceEntity?.charge?.chargeUuid.toString(),
               existing.sentenceEntity?.sentenceUuid.toString(),
               existing.periodLengthUuid.toString(),
@@ -131,9 +125,7 @@ class PeriodLengthService(
   fun delete(
     createPeriodLengthEntities: List<PeriodLengthEntity>,
     existingPeriodLengths: MutableSet<PeriodLengthEntity>,
-    prisonerId: String,
-    courtAppearanceId: String? = null,
-    courtCaseId: String? = null,
+    courtCaseHierarchyData: CourtCaseHierarchyData,
   ): RecordResponse<List<PeriodLengthEntity>> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
 
@@ -142,14 +134,14 @@ class PeriodLengthService(
     }
 
     toDelete.forEach { existing ->
-      val deletedPeriodLength = delete(existing, prisonerId, courtCaseId, courtAppearanceId)
+      val deletedPeriodLength = delete(existing, courtCaseHierarchyData)
       eventsToEmit.addAll(deletedPeriodLength.eventsToEmit)
     }
 
     return RecordResponse(toDelete, eventsToEmit)
   }
 
-  fun delete(periodLength: PeriodLengthEntity, prisonerId: String, courtCaseId: String?, courtAppearanceId: String?): RecordResponse<PeriodLengthEntity> {
+  fun delete(periodLength: PeriodLengthEntity, courtCaseHierarchyData: CourtCaseHierarchyData): RecordResponse<PeriodLengthEntity> {
     val changeStatus = if (periodLength.statusId == PeriodLengthEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     val eventsToEmit = mutableSetOf<EventMetadata>()
     periodLength.delete(serviceUserService.getUsername())
@@ -159,9 +151,9 @@ class PeriodLengthService(
       if (periodLength.sentenceEntity != null) {
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
-            prisonerId,
-            courtCaseId ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.courtCase.caseUniqueIdentifier,
-            courtAppearanceId ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.appearanceUuid.toString(),
+            courtCaseHierarchyData.prisonerId,
+            courtCaseHierarchyData.courtCaseId ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.courtCase.caseUniqueIdentifier,
+            courtCaseHierarchyData.courtAppearanceUuid?.toString() ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.appearanceUuid.toString(),
             periodLength.sentenceEntity?.charge?.chargeUuid.toString(),
             periodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLength.periodLengthUuid.toString(),

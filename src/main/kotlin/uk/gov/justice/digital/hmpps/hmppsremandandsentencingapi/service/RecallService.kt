@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceWithCaseUuid
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -355,9 +356,7 @@ class RecallService(
       sentenceService.deleteSentence(
         it.sentence,
         it.sentence.charge,
-        recallToDelete.prisonerId,
-        appearance.courtCase.caseUniqueIdentifier,
-        appearance.appearanceUuid.toString(),
+        CourtCaseHierarchyData(recallToDelete.prisonerId, appearance.courtCase.caseUniqueIdentifier, appearance.appearanceUuid),
       ).eventsToEmit
     } else {
       emptyList()

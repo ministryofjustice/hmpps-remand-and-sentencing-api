@@ -221,9 +221,6 @@ class CourtAppearanceEntity(
       documents.toMutableSet(),
       source = source,
     )
-    courtAppearance.overallSentenceLength?.let {
-      courtAppearanceEntity.periodLengths = mutableSetOf(PeriodLengthEntity.from(it, createdBy))
-    }
     return courtAppearanceEntity
   }
 

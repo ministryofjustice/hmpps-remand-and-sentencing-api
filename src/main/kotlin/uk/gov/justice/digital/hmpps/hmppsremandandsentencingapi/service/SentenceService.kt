@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReason
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReasonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
@@ -55,19 +56,20 @@ class SentenceService(
 ) {
 
   @Transactional
-  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
+  fun createSentence(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, courtCaseHierarchyData: CourtCaseHierarchyData): RecordResponse<SentenceEntity> {
     val existingSentence = getSentenceFromChargeOrUuid(chargeEntity, sentence.sentenceUuid)
-    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceDateChanged, courtAppearanceId) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, prisonerId, courtCaseId, courtAppearanceId)
+    return if (existingSentence != null) updateSentenceEntity(existingSentence, sentence, chargeEntity, sentencesCreated, courtCaseHierarchyData) else createSentenceEntity(sentence, chargeEntity, sentencesCreated, courtCaseHierarchyData)
   }
 
-  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceDateChanged: Boolean, courtAppearanceId: String): RecordResponse<SentenceEntity> {
+  private fun updateSentenceEntity(existingSentence: SentenceEntity, sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, courtCaseHierarchyData: CourtCaseHierarchyData): RecordResponse<SentenceEntity> {
     val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
     val compareSentence = existingSentence.copyFrom(sentence, serviceUserService.getUsername(), chargeEntity, consecutiveToSentence, sentenceType)
-    val existingSentenceType = existingSentence.sentenceType
+    courtCaseHierarchyData.existingSentenceType = existingSentence.sentenceType
+    courtCaseHierarchyData.updatedSentenceType = sentenceType
     val activeRecord = existingSentence
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
-    var sentenceChangeStatus = if (courtAppearanceDateChanged) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
+    var sentenceChangeStatus = if (courtCaseHierarchyData.courtAppearanceDateChanged == true) EntityChangeStatus.EDITED else EntityChangeStatus.NO_CHANGE
     if (!existingSentence.isSame(compareSentence)) {
       existingSentence.updateFrom(compareSentence)
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence, ChangeSource.DPS))
@@ -79,28 +81,20 @@ class SentenceService(
     val deleteResponse = periodLengthService.delete(
       newPeriodLengths,
       existingSentence.periodLengths,
-      prisonerId,
-      courtAppearanceId,
-      courtCaseId,
+      courtCaseHierarchyData,
     )
 
     val updateResponse = periodLengthService.update(
       newPeriodLengths,
       existingSentence.periodLengths,
-      prisonerId,
-      courtAppearanceId,
-      courtCaseId,
-      existingSentenceType,
-      sentenceType,
+      courtCaseHierarchyData,
     )
 
     val createResponse = periodLengthService.create(
       newPeriodLengths,
       existingSentence.periodLengths,
-      prisonerId,
-      courtCaseId,
       { created -> created.sentenceEntity = existingSentence },
-      courtAppearanceId,
+      courtCaseHierarchyData,
 
     )
 
@@ -113,11 +107,11 @@ class SentenceService(
     if (sentenceChangeStatus == EntityChangeStatus.EDITED) {
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
-          prisonerId,
-          courtCaseId,
+          courtCaseHierarchyData.prisonerId,
+          courtCaseHierarchyData.courtCaseId!!,
           chargeEntity.chargeUuid.toString(),
           activeRecord.sentenceUuid.toString(),
-          courtAppearanceId,
+          courtCaseHierarchyData.courtAppearanceUuid!!.toString(),
           EventType.SENTENCE_UPDATED,
         ),
       )
@@ -126,7 +120,7 @@ class SentenceService(
     return RecordResponse(activeRecord, eventsToEmit)
   }
 
-  private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
+  private fun createSentenceEntity(sentence: CreateSentence, chargeEntity: ChargeEntity, sentencesCreated: MutableMap<UUID, SentenceEntity>, courtCaseHierarchyData: CourtCaseHierarchyData): RecordResponse<SentenceEntity> {
     val eventsToEmit = mutableSetOf<EventMetadata>()
     val consecutiveToSentence = sentence.consecutiveToSentenceUuid?.let { sentencesCreated[it] } ?: sentence.consecutiveToSentenceUuid?.let { sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(it) }
     val sentenceType = sentence.sentenceTypeId?.let { sentenceTypeId -> sentenceTypeRepository.findBySentenceTypeUuid(sentenceTypeId) ?: throw EntityNotFoundException("No sentence type found at $sentenceTypeId") }
@@ -137,18 +131,16 @@ class SentenceService(
     val periodLengthResponse = periodLengthService.create(
       newPeriodLengths,
       createdSentence.periodLengths,
-      prisonerId,
-      courtCaseId,
       { created -> created.sentenceEntity = createdSentence },
-      courtAppearanceId,
+      courtCaseHierarchyData,
 
     )
     val sentenceEvent = EventMetadataCreator.sentenceEventMetadata(
-      prisonerId,
-      courtCaseId,
+      courtCaseHierarchyData.prisonerId,
+      courtCaseHierarchyData.courtCaseId!!,
       chargeEntity.chargeUuid.toString(),
       createdSentence.sentenceUuid.toString(),
-      courtAppearanceId,
+      courtCaseHierarchyData.courtAppearanceUuid!!.toString(),
       EventType.SENTENCE_INSERTED,
     )
     eventsToEmit.add(sentenceEvent)
@@ -166,7 +158,7 @@ class SentenceService(
   fun findSentenceDetailsByUuid(sentenceUuid: UUID): SentenceDetails? = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentenceUuid)?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.let { SentenceDetails.from(it) }
 
   @Transactional
-  fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, prisonerId: String, courtCaseId: String, courtAppearanceId: String): RecordResponse<SentenceEntity> {
+  fun deleteSentence(sentence: SentenceEntity, chargeEntity: ChargeEntity, courtCaseHierarchyData: CourtCaseHierarchyData): RecordResponse<SentenceEntity> {
     val changeStatus = if (sentence.statusId == SentenceEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     sentence.delete(serviceUserService.getUsername())
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
@@ -174,11 +166,11 @@ class SentenceService(
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence, ChangeSource.DPS))
       eventsToEmit.add(
         EventMetadataCreator.sentenceEventMetadata(
-          prisonerId,
-          courtCaseId,
+          courtCaseHierarchyData.prisonerId,
+          courtCaseHierarchyData.courtCaseId!!,
           chargeEntity.chargeUuid.toString(),
           sentence.sentenceUuid.toString(),
-          courtAppearanceId,
+          courtCaseHierarchyData.courtAppearanceUuid!!.toString(),
           EventType.SENTENCE_DELETED,
         ),
       )
@@ -187,7 +179,7 @@ class SentenceService(
     handleRecallsForDeletedSentence(sentence, eventsToEmit)
 
     sentence.periodLengths.forEach { periodLengths ->
-      val deletedPeriodLength = periodLengthService.delete(periodLengths, prisonerId, courtCaseId, courtAppearanceId)
+      val deletedPeriodLength = periodLengthService.delete(periodLengths, courtCaseHierarchyData)
       eventsToEmit.addAll(deletedPeriodLength.eventsToEmit)
     }
     return RecordResponse(sentence, eventsToEmit)
@@ -259,9 +251,7 @@ class SentenceService(
   fun moveSentencesToNewCharge(
     existingCharge: ChargeEntity,
     newChargeRecord: ChargeEntity,
-    prisonerId: String,
-    courtCaseId: String,
-    courtAppearanceId: String,
+    courtCaseHierarchyData: CourtCaseHierarchyData,
   ): MutableSet<EventMetadata> {
     val existingSentences = existingCharge.sentences.filter { it.statusId != SentenceEntityStatus.DELETED }
     return existingSentences.map { existingSentence ->
@@ -272,11 +262,11 @@ class SentenceService(
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(existingSentence, ChangeSource.DPS))
       existingCharge.sentences.remove(existingSentence)
       EventMetadataCreator.sentenceEventMetadata(
-        prisonerId,
-        courtCaseId,
+        courtCaseHierarchyData.prisonerId,
+        courtCaseHierarchyData.courtCaseId!!,
         newChargeRecord.chargeUuid.toString(),
         existingSentence.sentenceUuid.toString(),
-        courtAppearanceId,
+        courtCaseHierarchyData.courtAppearanceUuid.toString(),
         EventType.SENTENCE_UPDATED,
       )
     }.toMutableSet()
