@@ -631,6 +631,21 @@ abstract class IntegrationTestBase {
     .expectBody(ImmigrationDetention::class.java)
     .returnResult().responseBody!!
 
+  protected fun isImmigrationDetentionPrisoner(
+    prisonerId: String,
+    roles: List<String> = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"),
+  ): Boolean = webTestClient
+    .get()
+    .uri("/immigration-detention/person/$prisonerId/exists")
+    .headers {
+      it.authToken(roles = roles)
+    }
+    .exchange()
+    .expectStatus()
+    .isOk
+    .expectBody(Boolean::class.java)
+    .returnResult().responseBody!!
+
   protected fun deleteLegacySentence(uuid: UUID) = webTestClient
     .delete()
     .uri("/legacy/sentence/$uuid")
