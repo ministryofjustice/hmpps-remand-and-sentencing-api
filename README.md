@@ -44,3 +44,19 @@ To regenerate the latest view of the Entity Model Schema for comparison see [Sar
 
 Likewise, to regenerate the latest version of the api / html for review see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarIntegrationTests.kt)
 
+#### Deploying template changes to Pre-prod / Prod
+
+Any changes to the SAR Template will cause an ERRORED response once deployed to Pre-Prod / Prod and will require 
+re-registration with the Subject Access Request change control process Slack channel ``#haa-sar-functionality-change-request``
+
+e.g.
+
+```
+Hi Team, we've made a change to https://github.com/ministryofjustice/hmpps-remand-and-sentencing-api/blob/main/src/main/resources/templates/template_remand-and-sentencing-api.mustache would you please re-register this in the Pre-Prod environment.
+```
+
+> Note: The team may require email evidence this change was approved by the OSAR team.
+
+Once UAT testing on the change by the OSAR team has been carried out a subsequent request to ``#haa-sar-functionality-change-request`` to register the change in production will need to be carried out
+
+For further details on this see https://dsdmoj.atlassian.net/wiki/spaces/NDSS/pages/6057492933/SAR+Quickstart+for+Developers#Why-do-I-need-to-pre-register-templates%3F
