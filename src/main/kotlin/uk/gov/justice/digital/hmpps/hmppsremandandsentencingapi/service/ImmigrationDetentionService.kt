@@ -245,6 +245,10 @@ class ImmigrationDetentionService(
     return allRecords.firstOrNull()
   }
 
+  @Transactional(readOnly = true)
+  fun isImmigrationDetentionPrisoner(prisonerId: String): Boolean = immigrationDetentionRepository.existsByPrisonerIdAndStatusId(prisonerId) ||
+    courtAppearanceRepository.existsNomisImmigrationDetentionRecordsForPrisoner(prisonerId, emptyList())
+
   private fun createCourtAppearanceFromImmigrationDetention(
     immigrationDetention: CreateImmigrationDetention,
     courtCaseUuid: String? = null,

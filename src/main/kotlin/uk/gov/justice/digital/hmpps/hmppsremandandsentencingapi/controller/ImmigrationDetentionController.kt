@@ -91,6 +91,23 @@ class ImmigrationDetentionController(
     @PathVariable prisonerId: String,
   ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId)
 
+  @GetMapping("/person/{prisonerId}/exists")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO')")
+  @Operation(
+    summary = "Check if this is an immigration detention prisoner",
+    description = "Returns true if the prisoner has an immigration detention record or nomis flagged immigration detention record",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns true or false"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun isImmigrationDetentionPrisoner(
+    @PathVariable prisonerId: String,
+  ): Boolean = immigrationDetentionService.isImmigrationDetentionPrisoner(prisonerId)
+
   @GetMapping("/person/{prisonerId}/latest")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO')")
   @Operation(

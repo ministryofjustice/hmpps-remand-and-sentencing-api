@@ -64,14 +64,8 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
 
   @Query(
     """
-      select ca, cc, ca.appearanceOutcome from CourtAppearanceEntity ca
-      join ca.courtCase cc
-      where
-      ca.statusId = :courtAppearanceStatus and
-      ca.source = "NOMIS" and
-      cc.statusId in :courtCaseStatuses and
-      cc.prisonerId = :prisonerId and
-      ca.appearanceUuid not in :excludeAppearanceUuids
+      select ca, cc, ca.appearanceOutcome
+      $NOMIS_IMMIGRATION_DETENTION_FROM_WHERE
       order by ca.createdAt desc
     """,
   )
@@ -81,6 +75,33 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
     @Param("courtCaseStatuses") courtCaseStatus: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.ACTIVE, CourtCaseEntityStatus.INACTIVE),
     @Param("courtAppearanceStatus") courtAppearanceStatuses: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE,
   ): List<CourtAppearanceEntity>
+
+  @Query(
+    """
+      select case when count(ca) > 0 then true else false end
+      $NOMIS_IMMIGRATION_DETENTION_FROM_WHERE
+    """,
+  )
+  fun existsNomisImmigrationDetentionRecordsForPrisoner(
+    @Param("prisonerId") prisonerId: String,
+    @Param("excludeAppearanceUuids") excludeAppearanceUuids: List<UUID>,
+    @Param("courtCaseStatuses") courtCaseStatus: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.ACTIVE, CourtCaseEntityStatus.INACTIVE),
+    @Param("courtAppearanceStatus") courtAppearanceStatuses: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.IMMIGRATION_APPEARANCE,
+  ): Boolean
+
+  companion object {
+    const val NOMIS_IMMIGRATION_DETENTION_FROM_WHERE =
+      """
+        from CourtAppearanceEntity ca
+        join ca.courtCase cc
+        where
+        ca.statusId = :courtAppearanceStatus and
+        ca.source = 'NOMIS' and
+        cc.statusId in :courtCaseStatuses and
+        cc.prisonerId = :prisonerId and
+        ca.appearanceUuid not in :excludeAppearanceUuids
+      """
+  }
 
   @Modifying
   @Query(
