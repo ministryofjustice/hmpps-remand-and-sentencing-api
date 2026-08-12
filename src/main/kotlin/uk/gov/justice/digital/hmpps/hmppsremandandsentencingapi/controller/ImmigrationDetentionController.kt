@@ -92,7 +92,7 @@ class ImmigrationDetentionController(
   ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId)
 
   @GetMapping("/person/{prisonerId}/exists")
-  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO')")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RW', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")
   @Operation(
     summary = "Check if this is an immigration detention prisoner",
     description = "Returns true if the prisoner has an immigration detention record or nomis flagged immigration detention record",
