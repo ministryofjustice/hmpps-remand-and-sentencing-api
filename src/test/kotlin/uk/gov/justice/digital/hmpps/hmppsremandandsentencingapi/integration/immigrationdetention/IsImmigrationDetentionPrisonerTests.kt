@@ -16,7 +16,21 @@ class IsImmigrationDetentionPrisonerTests : IntegrationTestBase() {
     strings = [
       "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW",
       "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
       "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_FOOBAR",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_FOOBAR",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_FOOBAR",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RO,ROLE_FOOBAR",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
     ],
   )
   fun `Should return true when the prisoner has a DPS immigration detention record`(roleCsv: String) {
@@ -40,6 +54,11 @@ class IsImmigrationDetentionPrisonerTests : IntegrationTestBase() {
     strings = [
       "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW",
       "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
     ],
   )
   fun `Should return true when the prisoner only has a NOMIS immigration detention record`(roleCsv: String) {
@@ -49,9 +68,19 @@ class IsImmigrationDetentionPrisonerTests : IntegrationTestBase() {
     assertThat(isImmigrationDetentionPrisoner("B12345B", roles)).isTrue()
   }
 
-  @Test
-  fun `Should return false when the prisoner has no immigration detention records`() {
-    assertThat(isImmigrationDetentionPrisoner("599540")).isFalse()
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW",
+      "ROLE_REMAND_AND_SENTENCING__CCRD__RO",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+      "ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW,ROLE_REMAND_AND_SENTENCING__CCRD__RO,ROLE_REMAND_AND_SENTENCING_SENTENCE_RW,ROLE_REMAND_AND_SENTENCING_SENTENCE_RO",
+    ],
+  )
+  fun `Should return false when the prisoner has no immigration detention records`(roleCsv: String) {
+    val roles = roleCsv.split(",")
+    assertThat(isImmigrationDetentionPrisoner("599540", roles)).isFalse()
   }
 
   @Test
@@ -64,13 +93,20 @@ class IsImmigrationDetentionPrisonerTests : IntegrationTestBase() {
       .isUnauthorized
   }
 
-  @Test
-  fun `Should return 403 when missing valid role`() {
+  @ParameterizedTest
+  @ValueSource(
+    strings = [
+      "ROLE_FOOBAR",
+      "ROLE_REMAND_AND_SENTENCING_SENTENCE_RW_TYPO",
+      "ROLE_FOOBAR,ROLE_ANOTHER_INVALID",
+    ],
+  )
+  fun `Should return 403 when missing valid role`(roleCsv: String) {
     webTestClient
       .get()
       .uri("/immigration-detention/person/B12345B/exists")
       .headers {
-        it.authToken(roles = listOf("ROLE_FOOBAR"))
+        it.authToken(roles = roleCsv.split(","))
       }
       .exchange()
       .expectStatus()
