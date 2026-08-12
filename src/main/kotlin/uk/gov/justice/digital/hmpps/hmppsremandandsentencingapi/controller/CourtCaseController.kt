@@ -81,11 +81,7 @@ class CourtCaseController(
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-
-    // TODO (TANQ)
-    val caseReferences = updatedCourtCaseReferences?.caseReferences
-
-    uploadedDocumentService.setDocumentStatus(documentUpdates)
+    uploadedDocumentService.updateDocumentMetadata(documentUpdates, updatedCourtCaseReferences?.caseReferences)
     return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
   }
 
@@ -116,11 +112,7 @@ class CourtCaseController(
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
-
-    // TODO (TANQ)
-    val caseReferences = updatedCourtCaseReferences?.caseReferences
-
-    uploadedDocumentService.setDocumentStatus(documentUpdates)
+    uploadedDocumentService.updateDocumentMetadata(documentUpdates, updatedCourtCaseReferences?.caseReferences)
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
   }
 

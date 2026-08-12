@@ -106,6 +106,7 @@ class UploadedDocumentService(
   }
 
   @Async
+  @Deprecated("Use updateDocumentMetadata instead")
   fun setDocumentStatus(
     updates: List<DocumentStatusUpdates>,
   ) {
@@ -114,6 +115,29 @@ class UploadedDocumentService(
         documentManagementApiClient.setDocumentStatus(
           documentId = update.documentId.toString(),
           status = update.status,
+        )
+      } catch (e: Exception) {
+        log.warn(
+          "Failed to update metadata for document {} with status {}",
+          update.documentId,
+          update.status,
+          e,
+        )
+      }
+    }
+  }
+
+  @Async
+  fun updateDocumentMetadata(
+    updates: List<DocumentStatusUpdates>,
+    caseReferences: Set<String>? = emptySet(),
+  ) {
+    updates.forEach { update ->
+      try {
+        documentManagementApiClient.updateDocumentMetadata(
+          documentId = update.documentId.toString(),
+          status = update.status,
+          caseReferences = caseReferences.takeIf { update.status == DocumentMetadataStatus.ACTIVE }.orEmpty(),
         )
       } catch (e: Exception) {
         log.warn(

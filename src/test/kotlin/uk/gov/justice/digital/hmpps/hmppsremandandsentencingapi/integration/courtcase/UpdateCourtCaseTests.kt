@@ -65,7 +65,8 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
+    val caseReferences = editedCourtCase.appearances.mapNotNull { it.courtCaseReference }
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", caseReferences)
   }
 
   @Test
@@ -90,7 +91,8 @@ class UpdateCourtCaseTests : IntegrationTestBase() {
       .expectStatus()
       .isOk
 
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE")
+    val caseReferences = editedCourtCase.appearances.mapNotNull { it.courtCaseReference }
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", caseReferences)
   }
 
   @Test

@@ -92,7 +92,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE")
+    val caseReferences = listOfNotNull(updateCourtAppearance.courtCaseReference)
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE", caseReferences)
   }
 
   @Test
@@ -151,7 +152,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE")
+    val caseReferences = listOfNotNull(updateCourtAppearance.courtCaseReference)
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE", caseReferences)
   }
 
   @Test
@@ -178,7 +180,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     putCourtAppearance(createdAppearance.appearanceUuid, updateCourtAppearance)
 
     verifyDocumentMetadataUpdated(docA.documentUUID, "DELETED")
-    verifyDocumentMetadataUpdated(docC.documentUUID, "ACTIVE")
+    val caseReferences = listOfNotNull(updateCourtAppearance.courtCaseReference)
+    verifyDocumentMetadataUpdated(docC.documentUUID, "ACTIVE", caseReferences)
   }
 
   @Test
