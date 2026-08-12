@@ -45,12 +45,17 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { (appearance, eventsToEmit, documentUpdates) ->
-    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
+    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)
+    updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
       eventsToEmit.add(
         EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
+
+    // TODO (TANQ)
+    val caseReferences = updatedCourtCaseReferences?.caseReferences
+
     uploadedDocumentService.setDocumentStatus(documentUpdates)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
@@ -89,12 +94,17 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   )
   @ResponseStatus(HttpStatus.OK)
   fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearanceByAppearanceUuid(createCourtAppearance.copy(appearanceUuid = appearanceUuid), appearanceUuid)?.let { (appearance, eventsToEmit, documentUpdates) ->
-    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
+    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)
+    updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
       eventsToEmit.add(
         EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
       )
     }
     dpsDomainEventService.emitEvents(eventsToEmit)
+
+    // TODO (TANQ)
+    val caseReferences = updatedCourtCaseReferences?.caseReferences
+
     uploadedDocumentService.setDocumentStatus(documentUpdates)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
   } ?: throw EntityNotFoundException("No court case found at ${createCourtAppearance.courtCaseUuid}")
@@ -116,12 +126,17 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID) {
     courtAppearanceService.delete(appearanceUuid).let { (records, courtCaseUuid, documentUpdates) ->
-      courtCaseReferenceService.updateCourtCaseReferences(courtCaseUuid)?.takeIf { it.hasUpdated }?.let {
+      val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCaseUuid)
+      updatedCourtCaseReferences?.takeIf { it.hasUpdated }?.let {
         records.eventsToEmit.add(
           EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
         )
       }
       dpsDomainEventService.emitEvents(records.eventsToEmit)
+
+      // TODO (TANQ)
+      val caseReferences = updatedCourtCaseReferences?.caseReferences
+
       uploadedDocumentService.setDocumentStatus(documentUpdates)
     }
   }
