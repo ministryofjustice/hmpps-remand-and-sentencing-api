@@ -92,7 +92,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE")
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE", "ADIFFERENTCOURTCASEREFERENCE")
   }
 
   @Test
@@ -151,7 +151,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newDoc).isNotNull
     assertThat(newDoc!!.appearance?.appearanceUuid).isEqualTo(createdAppearance.appearanceUuid)
 
-    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE")
+    verifyDocumentMetadataUpdated(newDocument.documentUUID, "ACTIVE", "ADIFFERENTCOURTCASEREFERENCE")
   }
 
   @Test
@@ -178,7 +178,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     putCourtAppearance(createdAppearance.appearanceUuid, updateCourtAppearance)
 
     verifyDocumentMetadataUpdated(docA.documentUUID, "DELETED")
-    verifyDocumentMetadataUpdated(docC.documentUUID, "ACTIVE")
+    verifyDocumentMetadataUpdated(docC.documentUUID, "ACTIVE", "GH123456789")
   }
 
   @Test

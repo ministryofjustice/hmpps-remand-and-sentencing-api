@@ -837,7 +837,7 @@ abstract class IntegrationTestBase {
     return documents
   }
 
-  protected fun verifyDocumentMetadataUpdated(documentUUID: UUID, status: String) {
+  protected fun verifyDocumentMetadataUpdated(documentUUID: UUID, status: String, caseReference: String? = null) {
     await untilAsserted {
       documentManagementApi.verify(
         WireMock.patchRequestedFor(WireMock.urlEqualTo("/documents/$documentUUID/metadata"))
@@ -845,6 +845,7 @@ abstract class IntegrationTestBase {
             WireMock.equalToJson(
               documentMetadataRequest(
                 status,
+                caseReference,
               ),
             ),
           ),

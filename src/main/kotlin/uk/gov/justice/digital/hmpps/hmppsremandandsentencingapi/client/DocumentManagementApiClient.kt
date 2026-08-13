@@ -18,6 +18,8 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
       .toBodilessEntity()
       .block()
   }
+
+  @Deprecated("Use updateDocumentMetadata instead")
   fun setDocumentStatus(
     documentId: String,
     status: DocumentMetadataStatus,
@@ -34,6 +36,31 @@ class DocumentManagementApiClient(@Qualifier("documentManagementApiWebClient") p
       .retrieve()
       .toBodilessEntity()
       .block()
+  }
+
+  fun updateDocumentMetadata(
+    documentId: String,
+    status: DocumentMetadataStatus,
+    caseReference: String? = null,
+  ) {
+    webClient
+      .patch()
+      .uri("/documents/{documentId}/metadata", documentId)
+      .header("Service-Name", "Remand and Sentencing")
+      .bodyValue(buildDocumentMetadataPath(status, caseReference))
+      .retrieve()
+      .toBodilessEntity()
+      .block()
+  }
+
+  private fun buildDocumentMetadataPath(status: DocumentMetadataStatus, caseReference: String? = null): Map<String, Any> {
+    val metadata = mutableMapOf<String, Any>(
+      "status" to status,
+      "isUnread" to false,
+    )
+
+    caseReference.takeIf { !it.isNullOrBlank() }?.let { metadata["caseReferences"] = listOf(it) }
+    return metadata
   }
 
   fun getDocumentsByIds(documentIds: List<String>): List<DocumentManagementApiDocument> = webClient

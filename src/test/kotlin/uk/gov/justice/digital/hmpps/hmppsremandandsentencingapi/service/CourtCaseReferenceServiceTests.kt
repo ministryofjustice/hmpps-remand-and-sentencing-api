@@ -45,7 +45,9 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = setOf(activeCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
+
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(1).extracting<String> { it.offenderCaseReference }
       .contains(activeCourtAppearance.courtCaseReference!!)
@@ -60,7 +62,9 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = setOf(deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
+
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(0).extracting<String> { it.offenderCaseReference }
       .doesNotContain(deletedCourtAppearance.courtCaseReference!!)
@@ -77,7 +81,9 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = setOf(activeCourtAppearance, deletedCourtAppearance)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
+
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(5).extracting<String> { it.offenderCaseReference }
       .containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
@@ -86,7 +92,6 @@ class CourtCaseReferenceServiceTests {
   @Test
   fun `remove DPS legacy refs not on active appearances but keep NOMIS ones`() {
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
-
     val nomisRef = "NOMIS-CASE-REFERENCE"
     val dpsRef = "DPS-CASE-REFERENCE"
     courtCase.legacyData = CourtCaseLegacyData(
@@ -96,10 +101,8 @@ class CourtCaseReferenceServiceTests {
       ),
       1L,
     )
-
     val active = generateCourtAppearance("ACTIVE-CASE-REF", CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(active)
-
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
@@ -115,11 +118,9 @@ class CourtCaseReferenceServiceTests {
     val newRef = "ANEWREFERENCE"
     val courtCase = CourtCaseEntity.from(DpsDataCreator.dpsCreateCourtCase(), "U")
     courtCase.legacyData = generateLegacyData(listOf(oldRef))
-
     val stillUsingOld = generateCourtAppearance(oldRef, CourtAppearanceEntityStatus.ACTIVE, courtCase)
     val editedToNew = generateCourtAppearance(newRef, CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(stillUsingOld, editedToNew)
-
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
