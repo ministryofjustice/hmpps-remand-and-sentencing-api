@@ -65,8 +65,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
     val toStoreCaseReferences = existingCaseReferences.filter { existingCaseReference -> allCaseRefsToRemove.none { toRemoveCaseReference -> toRemoveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
     courtCaseEntity.legacyData = CourtCaseLegacyData(toStoreCaseReferences.toMutableList(), courtCaseEntity.legacyData?.bookingId)
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity, ChangeSource.DPS))
-
-    return UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, ZonedDateTime.now(), hasCaseReferenceChanged(toAddCaseReferences, toRemoveCaseReferences, courtCaseEntity.statusId), getCaseReferences(toStoreCaseReferences))
+    return UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, ZonedDateTime.now(), hasCaseReferenceChanged(toAddCaseReferences, toRemoveCaseReferences, courtCaseEntity.statusId))
   }
 
   @Transactional
@@ -87,6 +86,4 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
   }
 
   private fun hasCaseReferenceChanged(toAddCaseReferences: List<CaseReferenceLegacyData>, toRemoveCaseReferences: List<CaseReferenceLegacyData>, courtCaseStatus: CourtCaseEntityStatus): Boolean = ((toAddCaseReferences.isNotEmpty() || toRemoveCaseReferences.isNotEmpty()) && courtCaseStatus != CourtCaseEntityStatus.DELETED)
-
-  private fun getCaseReferences(toStoreCaseReferences: List<CaseReferenceLegacyData>): Set<String> = toStoreCaseReferences.map { it.offenderCaseReference }.toSet()
 }

@@ -46,12 +46,11 @@ class CourtCaseReferenceServiceTests {
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
-    val updatedCourtCases = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
 
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(1).extracting<String> { it.offenderCaseReference }
       .contains(activeCourtAppearance.courtCaseReference!!)
-    Assertions.assertThat(updatedCourtCases?.caseReferences).hasSize(1).contains(activeCourtAppearance.courtCaseReference!!)
   }
 
   @Test
@@ -64,12 +63,11 @@ class CourtCaseReferenceServiceTests {
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
-    val updatedCourtCases = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
 
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(0).extracting<String> { it.offenderCaseReference }
       .doesNotContain(deletedCourtAppearance.courtCaseReference!!)
-    Assertions.assertThat(updatedCourtCases?.caseReferences).hasSize(0).doesNotContain(deletedCourtAppearance.courtCaseReference!!)
   }
 
   @Test
@@ -84,12 +82,11 @@ class CourtCaseReferenceServiceTests {
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
-    val updatedCourtCases = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
 
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences).hasSize(5).extracting<String> { it.offenderCaseReference }
       .containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
-    Assertions.assertThat(updatedCourtCases?.caseReferences).hasSize(5).containsExactlyInAnyOrder("ANEWREFERENCE", *existingReferences.toTypedArray())
   }
 
   @Test
@@ -109,11 +106,10 @@ class CourtCaseReferenceServiceTests {
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
-    val updatedCourtCases = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
 
     val refs = courtCase.legacyData!!.caseReferences.map { it.offenderCaseReference }
     Assertions.assertThat(refs).containsExactlyInAnyOrder("ACTIVE-CASE-REF", nomisRef)
-    Assertions.assertThat(updatedCourtCases?.caseReferences).containsExactlyInAnyOrder("ACTIVE-CASE-REF", nomisRef)
   }
 
   @Test
@@ -128,14 +124,13 @@ class CourtCaseReferenceServiceTests {
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
-    val updatedCourtCases = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
+    courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
 
     val caseReferences = courtCase.legacyData!!.caseReferences
     Assertions.assertThat(caseReferences)
       .hasSize(2)
       .extracting<String> { it.offenderCaseReference }
       .containsExactlyInAnyOrder(oldRef, newRef)
-    Assertions.assertThat(updatedCourtCases?.caseReferences).hasSize(2).containsExactlyInAnyOrder(oldRef, newRef)
   }
 
   private fun generateLegacyData(caseReferences: List<String>): CourtCaseLegacyData = CourtCaseLegacyData(caseReferences.map { CaseReferenceLegacyData(it, LocalDateTime.now()) }.toMutableList(), 1L)

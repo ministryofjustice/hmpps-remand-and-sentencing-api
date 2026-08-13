@@ -64,7 +64,7 @@ class UploadedDocumentService(
     }
 
     documentUUIDs.forEach {
-      documentStatusUpdates.add(DocumentStatusUpdates(it, DocumentMetadataStatus.ACTIVE))
+      documentStatusUpdates.add(DocumentStatusUpdates(it, DocumentMetadataStatus.ACTIVE, appearance.courtCaseReference))
     }
 
     return documentStatusUpdates
@@ -128,16 +128,13 @@ class UploadedDocumentService(
   }
 
   @Async
-  fun updateDocumentMetadata(
-    updates: List<DocumentStatusUpdates>,
-    caseReferences: Set<String>? = emptySet(),
-  ) {
+  fun updateDocumentMetadata(updates: List<DocumentStatusUpdates>) {
     updates.forEach { update ->
       try {
         documentManagementApiClient.updateDocumentMetadata(
           documentId = update.documentId.toString(),
           status = update.status,
-          caseReferences = caseReferences.takeIf { update.status == DocumentMetadataStatus.ACTIVE }.orEmpty(),
+          caseReference = update.caseReference.takeIf { update.status == DocumentMetadataStatus.ACTIVE },
         )
       } catch (e: Exception) {
         log.warn(

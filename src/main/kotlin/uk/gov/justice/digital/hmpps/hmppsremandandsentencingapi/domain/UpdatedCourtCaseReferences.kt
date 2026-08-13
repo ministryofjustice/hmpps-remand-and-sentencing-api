@@ -7,5 +7,4 @@ data class UpdatedCourtCaseReferences(
   val courtCaseId: String,
   val timeUpdated: ZonedDateTime,
   val hasUpdated: Boolean,
-  val caseReferences: Set<String>? = emptySet(),
 )

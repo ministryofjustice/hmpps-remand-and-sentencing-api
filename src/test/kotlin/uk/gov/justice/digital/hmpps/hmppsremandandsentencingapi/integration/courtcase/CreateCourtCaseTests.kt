@@ -66,8 +66,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
         Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
       }
 
-    val caseReferences = createCourtCase.appearances.mapNotNull { it.courtCaseReference }
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", caseReferences)
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", "GH123456789")
   }
 
   @Test
@@ -96,8 +95,7 @@ class CreateCourtCaseTests : IntegrationTestBase() {
         Assertions.assertThat(courtCaseUuid).matches("([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})")
       }
 
-    val caseReferences = createCourtCase.appearances.mapNotNull { it.courtCaseReference }
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", caseReferences)
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", "GH123456789")
   }
 
   @Test

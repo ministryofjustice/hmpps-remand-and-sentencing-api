@@ -60,8 +60,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
 
-    val caseReferences = createdCourtCase.appearances.mapNotNull { it.courtCaseReference }
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", caseReferences)
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", "GH123456789")
   }
 
   @Test
@@ -99,8 +98,7 @@ class CreateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(linkedDocument).isNotNull
     assertThat(linkedDocument!!.appearance?.appearanceUuid).isEqualTo(createCourtAppearance.appearanceUuid)
 
-    val caseReferences = createdCourtCase.appearances.mapNotNull { it.courtCaseReference }
-    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", caseReferences)
+    verifyDocumentMetadataUpdated(uploadedDocument.documentUUID, "ACTIVE", "GH123456789")
   }
 
   @Test

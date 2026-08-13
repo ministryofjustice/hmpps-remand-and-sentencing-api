@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.requests.documentManagementApi
 
-fun documentMetadataRequest(status: String, caseReferences: String): String {
-  val caseReferencesList = if (!caseReferences.isEmpty()) {
+fun documentMetadataRequest(status: String, caseReference: String?): String {
+  val caseReferencesList = if (!caseReference.isNullOrBlank()) {
     """
       ,
-      "caseReferences": [ "$caseReferences" ]
+      "caseReferences": [ "$caseReference" ]
     """.trimIndent()
   } else {
     ""
