@@ -103,8 +103,8 @@ class PeriodLengthService(
           eventsToEmit.add(
             EventMetadataCreator.periodLengthEventMetadata(
               courtCaseHierarchyData.prisonerId,
-              courtCaseHierarchyData.courtCaseId ?: existing.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.courtCase.caseUniqueIdentifier,
-              courtCaseHierarchyData.courtAppearanceUuid?.toString() ?: existing.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.appearanceUuid.toString(),
+              courtCaseHierarchyData.courtCaseId ?: existing.sentenceEntity!!.charge.appearanceCharges.first { appearanceWarrantTypes.contains(it.appearance!!.warrantType) }.appearance!!.courtCase.caseUniqueIdentifier,
+              courtCaseHierarchyData.courtAppearanceUuid?.toString() ?: existing.sentenceEntity!!.charge.appearanceCharges.first { appearanceWarrantTypes.contains(it.appearance!!.warrantType) }.appearance!!.appearanceUuid.toString(),
               existing.sentenceEntity?.charge?.chargeUuid.toString(),
               existing.sentenceEntity?.sentenceUuid.toString(),
               existing.periodLengthUuid.toString(),
@@ -148,8 +148,8 @@ class PeriodLengthService(
         eventsToEmit.add(
           EventMetadataCreator.periodLengthEventMetadata(
             courtCaseHierarchyData.prisonerId,
-            courtCaseHierarchyData.courtCaseId ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.courtCase.caseUniqueIdentifier,
-            courtCaseHierarchyData.courtAppearanceUuid?.toString() ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { it.appearance?.warrantType == "SENTENCING" }.appearance!!.appearanceUuid.toString(),
+            courtCaseHierarchyData.courtCaseId ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { appearanceWarrantTypes.contains(it.appearance!!.warrantType) }.appearance!!.courtCase.caseUniqueIdentifier,
+            courtCaseHierarchyData.courtAppearanceUuid?.toString() ?: periodLength.sentenceEntity!!.charge.appearanceCharges.first { appearanceWarrantTypes.contains(it.appearance!!.warrantType) }.appearance!!.appearanceUuid.toString(),
             periodLength.sentenceEntity?.charge?.chargeUuid.toString(),
             periodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLength.periodLengthUuid.toString(),
@@ -159,5 +159,9 @@ class PeriodLengthService(
       }
     }
     return RecordResponse(periodLength, eventsToEmit)
+  }
+
+  companion object {
+    val appearanceWarrantTypes = setOf("SENTENCING", "BREACH_OF_IMPRISONABLE_OFFENCE")
   }
 }

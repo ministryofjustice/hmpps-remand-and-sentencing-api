@@ -1058,6 +1058,23 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(additionalInformation.courtChargeId).isEqualTo(sentencedCharge.chargeUuid.toString())
   }
 
+  @Test
+  fun `updating breach of imprisonable offence period length`() {
+    val breachOfImprisonableOffencePeriodLength = DpsDataCreator.dpsCreatePeriodLength(type = PeriodLengthType.BREACH_OF_IMPRISONABLE_OFFENCE)
+    val sentence = DpsDataCreator.dpsCreateSentence(periodLengths = listOf(breachOfImprisonableOffencePeriodLength))
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = dpsCreateCourtAppearance(periodLengths = listOf(breachOfImprisonableOffencePeriodLength), charges = listOf(charge), warrantType = "BREACH_OF_IMPRISONABLE_OFFENCE")
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val updatedBreachOfImprisonableOffencePeriodLength = breachOfImprisonableOffencePeriodLength.copy(months = 3)
+    val updatedSentence = sentence.copy(periodLengths = listOf(updatedBreachOfImprisonableOffencePeriodLength))
+    val updatedCharge = charge.copy(sentence = updatedSentence)
+    val updatedAppearance = appearance.copy(periodLengths = listOf(updatedBreachOfImprisonableOffencePeriodLength), charges = listOf(updatedCharge), courtCaseUuid = courtCaseUuid)
+    putCourtAppearance(updatedAppearance.appearanceUuid, updatedAppearance)
+    val courtCase = getCourtCase(courtCaseUuid)
+    val periodLength = courtCase.appearances.first { it.appearanceUuid == updatedAppearance.appearanceUuid }.periodLengths.first { it.periodLengthUuid == updatedBreachOfImprisonableOffencePeriodLength.periodLengthUuid }
+    Assertions.assertThat(periodLength.months).isEqualTo(updatedBreachOfImprisonableOffencePeriodLength.months)
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
