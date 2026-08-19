@@ -38,7 +38,7 @@ class PeriodTypeMapperTests {
       Arguments.of(false, "IMP", "EDS18", PeriodLengthType.CUSTODIAL_TERM),
       Arguments.of(false, "IMP", "FTR_ORA", PeriodLengthType.SENTENCE_LENGTH),
       Arguments.of(false, "LIC", "EDS18", PeriodLengthType.LICENCE_PERIOD),
-      Arguments.of(false, "SEC105", "SEC105", PeriodLengthType.UNSUPPORTED),
+      Arguments.of(false, "SEC86", "SEC86", PeriodLengthType.UNSUPPORTED),
       Arguments.of(false, "LIC", "LR_EDS18", PeriodLengthType.LICENCE_PERIOD),
       Arguments.of(false, "LIC", "LR_SEC236A", PeriodLengthType.LICENCE_PERIOD),
       Arguments.of(false, "LIC", "SDOPCU18", PeriodLengthType.LICENCE_PERIOD),
@@ -50,6 +50,7 @@ class PeriodTypeMapperTests {
       Arguments.of(false, "IMP", "DTO_ORA", PeriodLengthType.TERM_LENGTH),
       Arguments.of(false, "IMP", "A/FINE", PeriodLengthType.TERM_LENGTH),
       Arguments.of(false, "SEC104", "DTO", PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS),
+      Arguments.of(false, "SEC105", "DTO", PeriodLengthType.BREACH_OF_IMPRISONABLE_OFFENCE),
     )
 
     @JvmStatic
@@ -66,6 +67,7 @@ class PeriodTypeMapperTests {
       Arguments.of(PeriodLengthType.UNSUPPORTED, null, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105"), null),
       Arguments.of(PeriodLengthType.SENTENCE_LENGTH, SentenceTypeClassification.STANDARD, false, "SUP", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SUP"), null),
       Arguments.of(PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS, SentenceTypeClassification.DTO, false, "SEC104", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC104"), null),
+      Arguments.of(PeriodLengthType.BREACH_OF_IMPRISONABLE_OFFENCE, SentenceTypeClassification.DTO, false, "SEC105", DataCreator.periodLengthLegacyData(lifeSentence = false, sentenceTermCode = "SEC105"), null),
     )
   }
 }
