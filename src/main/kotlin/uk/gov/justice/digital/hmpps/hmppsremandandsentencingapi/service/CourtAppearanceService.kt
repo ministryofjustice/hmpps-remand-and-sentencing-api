@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.util.UUID
 
 @Service
@@ -69,6 +70,7 @@ class CourtAppearanceService(
           courtCaseEntity.caseUniqueIdentifier,
           createCourtAppearance.appearanceUuid,
           false,
+          isBreach = Constants.breachWarrantTypes.contains(createCourtAppearance.warrantType),
         )
         val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity, courtCaseHierarchyData)
         courtCaseEntity.latestCourtAppearance =
@@ -93,6 +95,7 @@ class CourtAppearanceService(
           courtCaseEntity.caseUniqueIdentifier,
           appearanceUuid,
           false,
+          isBreach = Constants.breachWarrantTypes.contains(createCourtAppearance.warrantType),
         )
         val savedAppearance = if (existingCourtAppearance != null) {
           updateCourtAppearanceEntity(
@@ -167,12 +170,13 @@ class CourtAppearanceService(
         createdCourtAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
         createdCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+        courtCaseHierarchyData.isBreach,
       ),
     )
 
     val periodLengthsToCreate = courtAppearance.periodLengths?.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) }
     periodLengthsToCreate?.let {
-      val periodLengthHierarchyData = CourtCaseHierarchyData(courtCaseHierarchyData.prisonerId, courtCaseHierarchyData.courtCaseId, null)
+      val periodLengthHierarchyData = CourtCaseHierarchyData(courtCaseHierarchyData.prisonerId, courtCaseHierarchyData.courtCaseId, null, isBreach = courtCaseHierarchyData.isBreach)
       val createdPeriodLengths = periodLengthService.create(it, createdCourtAppearance.periodLengths, { createdPeriodLength ->
         createdPeriodLength.appearanceEntity = createdCourtAppearance
       }, periodLengthHierarchyData)
@@ -222,6 +226,7 @@ class CourtAppearanceService(
           courtAppearanceEntity.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_INSERTED,
           courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE,
+          courtCaseHierarchyData.isBreach,
         ),
       )
     }
@@ -261,7 +266,7 @@ class CourtAppearanceService(
     }
 
     val toCreatePeriodLengths = courtAppearance.periodLengths?.map { PeriodLengthEntity.from(it, serviceUserService.getUsername()) } ?: emptyList()
-    val periodLengthHierarchyData = CourtCaseHierarchyData(courtCaseHierarchyData.prisonerId, courtCaseHierarchyData.courtCaseId, null)
+    val periodLengthHierarchyData = CourtCaseHierarchyData(courtCaseHierarchyData.prisonerId, courtCaseHierarchyData.courtCaseId, null, isBreach = courtCaseHierarchyData.isBreach)
     eventsToEmit.addAll(
       periodLengthService.delete(
         toCreatePeriodLengths,
@@ -314,6 +319,7 @@ class CourtAppearanceService(
           courtCaseHierarchyData.courtAppearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
           activeRecord.statusId == CourtAppearanceEntityStatus.FUTURE,
+          courtCaseHierarchyData.isBreach,
         ),
       )
     }
@@ -375,6 +381,7 @@ class CourtAppearanceService(
               activeFutureSkeletonAppearance.appearanceUuid.toString(),
               EventType.COURT_APPEARANCE_UPDATED,
               activeFutureSkeletonAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+              false,
             ),
           )
           return@let EntityChangeStatus.EDITED to RecordResponse(activeFutureSkeletonAppearance, eventsToEmit)
@@ -443,6 +450,7 @@ class CourtAppearanceService(
           futureCourtAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_INSERTED,
           futureCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          courtCaseHierarchyData.isBreach,
         ),
       )
       activeRecord.nextCourtAppearance = savedNextCourtAppearance
@@ -636,6 +644,7 @@ class CourtAppearanceService(
         courtAppearanceEntity.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_DELETED,
         isOnFutureCourtAppearance,
+        false,
       ),
     )
     val courtCaseHierarchyData = CourtCaseHierarchyData(

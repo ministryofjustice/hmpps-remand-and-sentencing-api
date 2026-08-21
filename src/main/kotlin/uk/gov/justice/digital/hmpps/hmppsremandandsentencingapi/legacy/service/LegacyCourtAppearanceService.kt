@@ -84,6 +84,7 @@ class LegacyCourtAppearanceService(
         createdCourtAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
         createdCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+        false,
       ),
     )
     return RecordResponse(LegacyCourtAppearanceCreatedResponse(createdCourtAppearance.appearanceUuid, courtCase.caseUniqueIdentifier, courtCase.prisonerId), eventsToEmit)
@@ -112,6 +113,7 @@ class LegacyCourtAppearanceService(
           existingCourtAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
           existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          false,
         ),
       )
     }
@@ -173,6 +175,7 @@ class LegacyCourtAppearanceService(
             appearanceCharge.charge!!.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
             isOnFutureAppearance,
+            false,
           ),
         )
       }
@@ -196,6 +199,7 @@ class LegacyCourtAppearanceService(
         existingCourtAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_DELETED,
         isOnFutureAppearance,
+        false,
       ),
     )
     immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(lifetimeUuid).forEach { immigrationDetentionEntity ->
@@ -231,6 +235,7 @@ class LegacyCourtAppearanceService(
             existingCourtAppearance.appearanceUuid.toString(),
             EventType.COURT_APPEARANCE_UPDATED,
             existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+            false,
           ),
         )
       }
@@ -251,6 +256,7 @@ class LegacyCourtAppearanceService(
             existingCharge.chargeUuid.toString(),
             EventType.CHARGE_DELETED,
             existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+            false,
           ),
         )
       }

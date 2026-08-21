@@ -92,6 +92,7 @@ class SentenceTypeUpdateService(
             sentenceId = sentenceUuid.toString(),
             courtAppearanceId = appearance.appearanceUuid.toString(),
             eventType = EventType.SENTENCE_UPDATED,
+            false,
           ),
         )
       }

@@ -25,6 +25,7 @@ class PeriodLengthDomainEventService(
     courtCaseId: String,
     courtAppearanceId: String,
     source: EventSource,
+    isBreach: Boolean,
   ) {
     snsService.publishDomainEvent(
       "sentence.period-length.inserted",
@@ -38,6 +39,7 @@ class PeriodLengthDomainEventService(
         courtCaseId = courtCaseId,
         courtAppearanceId = courtAppearanceId,
         source = source,
+        isBreach = isBreach,
       ),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
@@ -51,6 +53,7 @@ class PeriodLengthDomainEventService(
     courtCaseId: String,
     courtAppearanceId: String,
     source: EventSource,
+    isBreach: Boolean,
   ) {
     snsService.publishDomainEvent(
       "sentence.period-length.updated",
@@ -64,6 +67,7 @@ class PeriodLengthDomainEventService(
         courtCaseId = courtCaseId,
         courtAppearanceId = courtAppearanceId,
         source = source,
+        isBreach = isBreach,
       ),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
@@ -77,6 +81,7 @@ class PeriodLengthDomainEventService(
     courtCaseId: String,
     courtAppearanceId: String,
     source: EventSource,
+    isBreach: Boolean,
   ) {
     snsService.publishDomainEvent(
       "sentence.period-length.deleted",
@@ -90,6 +95,7 @@ class PeriodLengthDomainEventService(
         courtCaseId = courtCaseId,
         courtAppearanceId = courtAppearanceId,
         source = source,
+        isBreach = isBreach,
       ),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )

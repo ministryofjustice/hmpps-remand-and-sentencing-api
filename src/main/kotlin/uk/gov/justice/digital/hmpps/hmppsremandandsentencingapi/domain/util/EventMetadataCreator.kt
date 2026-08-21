@@ -17,7 +17,8 @@ class EventMetadataCreator {
       courtAppearanceId: String,
       eventType: EventType,
       isOnFutureAppearance: Boolean,
-    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, null, null, null, eventType, isOnFutureAppearance = isOnFutureAppearance)
+      isBreach: Boolean,
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, null, null, null, eventType, isOnFutureAppearance = isOnFutureAppearance, isBreach = isBreach)
 
     fun chargeEventMetadata(
       prisonerId: String,
@@ -26,7 +27,8 @@ class EventMetadataCreator {
       chargeId: String,
       eventType: EventType,
       isOnFutureAppearance: Boolean,
-    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, null, null, eventType, isOnFutureAppearance = isOnFutureAppearance)
+      isBreach: Boolean,
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, null, null, eventType, isOnFutureAppearance = isOnFutureAppearance, isBreach = isBreach)
 
     fun sentenceEventMetadata(
       prisonerId: String,
@@ -35,7 +37,8 @@ class EventMetadataCreator {
       sentenceId: String,
       courtAppearanceId: String,
       eventType: EventType,
-    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, sentenceId, null, eventType)
+      isBreach: Boolean,
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, sentenceId, null, eventType, isBreach = isBreach)
 
     fun fixSentenceEventMetadata(
       prisonerId: String,
@@ -64,6 +67,7 @@ class EventMetadataCreator {
       sentenceId: String,
       periodLengthId: String,
       eventType: EventType,
+      isBreach: Boolean,
     ): EventMetadata = EventMetadata(
       prisonerId = prisonerId,
       courtCaseId = courtCaseId,
@@ -73,6 +77,7 @@ class EventMetadataCreator {
       recallId = null,
       eventType = eventType,
       periodLengthId = periodLengthId,
+      isBreach = isBreach,
     )
   }
 }

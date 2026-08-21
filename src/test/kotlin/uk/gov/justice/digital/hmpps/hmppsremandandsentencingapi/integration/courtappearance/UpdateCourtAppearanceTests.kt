@@ -1026,6 +1026,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(sentence.periodLengths).anyMatch { periodLength -> periodLength.periodLengthUuid == breachPeriodLength.periodLengthUuid && periodLength.days == breachPeriodLength.days }
     val events = getMessages(3)
     Assertions.assertThat(events).anyMatch { it.eventType == "sentence.period-length.inserted" }
+    Assertions.assertThat(events.map { it.additionalInformation.get("isBreach").asBoolean() }).allMatch { it }
     val periodLengthInsertedEvent = events.first { it.eventType == "sentence.period-length.inserted" }
     val additionalInformation = objectMapper.treeToValue(periodLengthInsertedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)
     Assertions.assertThat(additionalInformation.courtAppearanceId).isEqualTo(sentencingAppearance.appearanceUuid.toString())

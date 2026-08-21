@@ -47,6 +47,7 @@ class DpsDomainEventService(
             eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
             eventMetaData.prisonerId,
@@ -55,6 +56,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.CHARGE_DELETED -> chargeDomainEventService.delete(
             eventMetaData.prisonerId,
@@ -62,6 +64,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
             eventMetaData.prisonerId,
@@ -69,6 +72,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.COURT_APPEARANCE_UPDATED -> courtAppearanceDomainEventService.update(
             eventMetaData.prisonerId,
@@ -76,6 +80,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.COURT_APPEARANCE_DELETED -> courtAppearanceDomainEventService.delete(
             eventMetaData.prisonerId,
@@ -83,6 +88,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.DPS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.SENTENCE_INSERTED -> sentenceDomainEventService.create(
             eventMetaData.prisonerId,
@@ -91,6 +97,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
+            eventMetaData.isBreach(),
           )
           EventType.SENTENCE_FIX_SINGLE_CHARGE_INSERTED -> sentenceDomainEventService.createFromFix(
             eventMetaData.prisonerId,
@@ -108,6 +115,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
+            eventMetaData.isBreach(),
           )
           EventType.SENTENCE_DELETED -> sentenceDomainEventService.delete(
             eventMetaData.prisonerId,
@@ -116,6 +124,7 @@ class DpsDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.DPS,
+            eventMetaData.isBreach(),
           )
 
           EventType.RECALL_INSERTED -> recallDomainEventService.create(
@@ -146,6 +155,7 @@ class DpsDomainEventService(
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
             source = EventSource.DPS,
+            eventMetaData.isBreach(),
           )
           EventType.PERIOD_LENGTH_UPDATED -> periodLengthDomainEventService.update(
             prisonerId = eventMetaData.prisonerId,
@@ -155,6 +165,7 @@ class DpsDomainEventService(
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
             source = EventSource.DPS,
+            eventMetaData.isBreach(),
           )
           EventType.PERIOD_LENGTH_DELETED -> periodLengthDomainEventService.delete(
             prisonerId = eventMetaData.prisonerId,
@@ -164,6 +175,7 @@ class DpsDomainEventService(
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
             source = EventSource.DPS,
+            eventMetaData.isBreach(),
           )
 
           EventType.METADATA_ONLY -> {}

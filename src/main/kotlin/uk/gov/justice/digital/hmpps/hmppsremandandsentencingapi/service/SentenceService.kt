@@ -110,6 +110,7 @@ class SentenceService(
           activeRecord.sentenceUuid.toString(),
           courtCaseHierarchyData.courtAppearanceUuid!!.toString(),
           EventType.SENTENCE_UPDATED,
+          courtCaseHierarchyData.isBreach,
         ),
       )
     }
@@ -139,6 +140,7 @@ class SentenceService(
       createdSentence.sentenceUuid.toString(),
       courtCaseHierarchyData.courtAppearanceUuid!!.toString(),
       EventType.SENTENCE_INSERTED,
+      courtCaseHierarchyData.isBreach,
     )
     eventsToEmit.add(sentenceEvent)
     eventsToEmit.addAll(periodLengthResponse.flatMap { it.eventsToEmit })
@@ -169,6 +171,7 @@ class SentenceService(
           sentence.sentenceUuid.toString(),
           courtCaseHierarchyData.courtAppearanceUuid!!.toString(),
           EventType.SENTENCE_DELETED,
+          courtCaseHierarchyData.isBreach,
         ),
       )
     }
@@ -265,6 +268,7 @@ class SentenceService(
         existingSentence.sentenceUuid.toString(),
         courtCaseHierarchyData.courtAppearanceUuid.toString(),
         EventType.SENTENCE_UPDATED,
+        courtCaseHierarchyData.isBreach,
       )
     }.toMutableSet()
   }

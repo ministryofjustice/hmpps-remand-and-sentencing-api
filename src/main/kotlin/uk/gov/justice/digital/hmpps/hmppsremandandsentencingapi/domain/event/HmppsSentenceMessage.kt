@@ -6,4 +6,5 @@ data class HmppsSentenceMessage(
   val courtCaseId: String,
   val courtAppearanceId: String,
   val source: EventSource = EventSource.DPS,
+  val isBreach: Boolean,
 )
