@@ -18,6 +18,7 @@ data class Sentence(
   val legacyData: SentenceLegacyData?,
   val consecutiveToSentenceUuid: UUID?,
   val hasRecall: Boolean,
+  val active: Boolean,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity): Sentence = Sentence(
@@ -31,6 +32,7 @@ data class Sentence(
       sentenceEntity.legacyData,
       sentenceEntity.consecutiveTo?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.sentenceUuid,
       sentenceEntity.totalRecallSentences > 0,
+      sentenceEntity.statusId == SentenceEntityStatus.ACTIVE,
     )
   }
 }
