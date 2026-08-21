@@ -190,15 +190,15 @@ class ThingsToDoTest : IntegrationTestBase() {
       ),
       Arguments.of(
         "No court case with multiple hearings give multiple things to do",
-        listOf(REMAND_HEARING, SENTENCING_HEARING),
+        listOf(REMAND_HEARING, SENTENCING_HEARING.copy(hearingDate = LocalDate.of(2026, 6, 1).atStartOfDay())),
         null,
         listOf(
           HearingThingsToDoData(
             hearingId = HMCTS_HEARING_ID,
             courtCaseReference = "ABC123",
-            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingDate = LocalDate.of(2026, 6, 1),
             hearingType = "First hearing",
-            warrantType = HearingThingsToDoWarrantType.REMAND,
+            warrantType = HearingThingsToDoWarrantType.SENTENCING,
             courtCaseUuid = null,
           ),
           HearingThingsToDoData(
@@ -206,7 +206,7 @@ class ThingsToDoTest : IntegrationTestBase() {
             courtCaseReference = "ABC123",
             hearingDate = LocalDate.of(2026, 1, 1),
             hearingType = "First hearing",
-            warrantType = HearingThingsToDoWarrantType.SENTENCING,
+            warrantType = HearingThingsToDoWarrantType.REMAND,
             courtCaseUuid = null,
           ),
         ),
