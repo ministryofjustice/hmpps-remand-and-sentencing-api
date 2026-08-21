@@ -45,6 +45,8 @@ class ThingsToDoService(
               courtCaseUuid = case?.caseUniqueIdentifier,
             ),
           )
+        }.sortedByDescending {
+          it.hearingThingsToDoData.hearingDate
         }
 
       return ThingsToDo(
