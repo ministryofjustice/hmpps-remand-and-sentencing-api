@@ -14,4 +14,7 @@ data class EventMetadata(
   val previousSentenceIds: List<String>? = null,
   val originalSentenceId: String? = null,
   val isOnFutureAppearance: Boolean? = null,
-)
+  val isBreach: Boolean? = null,
+) {
+  fun isBreach(): Boolean = isBreach ?: false
+}

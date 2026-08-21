@@ -150,6 +150,7 @@ class LegacyCourtCaseService(
                 charge.chargeUuid.toString(),
                 EventType.CHARGE_UPDATED,
                 appearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+                false,
               )
             }
         },

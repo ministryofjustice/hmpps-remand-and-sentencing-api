@@ -315,6 +315,7 @@ class BookingService(
         createdAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
         createdAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+        false,
       ),
     )
     return createdAppearance
@@ -343,6 +344,7 @@ class BookingService(
         bookingHierarchyData.courtAppearanceId,
         createdCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
+        false,
         false,
       ),
     )
@@ -414,6 +416,7 @@ class BookingService(
           sentenceId = createdSentence.sentenceUuid.toString(),
           periodLengthId = createdPeriodLength.periodLengthUuid.toString(),
           eventType = EventType.PERIOD_LENGTH_INSERTED,
+          false,
         ),
       )
       createdPeriodLength
@@ -427,6 +430,7 @@ class BookingService(
         createdSentence.sentenceUuid.toString(),
         bookingHierarchyData.courtAppearanceId,
         EventType.SENTENCE_INSERTED,
+        false,
       ),
     )
     return createdSentence

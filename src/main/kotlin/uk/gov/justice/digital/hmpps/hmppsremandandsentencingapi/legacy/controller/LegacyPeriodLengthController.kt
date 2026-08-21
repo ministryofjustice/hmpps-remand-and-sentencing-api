@@ -59,6 +59,7 @@ class LegacyPeriodLengthController(
       periodLengthId = periodLengthCreated.periodLengthUuid.toString(),
       source = EventSource.NOMIS,
       courtChargeId = periodLengthCreated.chargeUuid.toString(),
+      isBreach = false,
     )
   }
 
@@ -109,6 +110,7 @@ class LegacyPeriodLengthController(
         courtCaseId = legacyPeriodLength.courtCaseId,
         courtAppearanceId = legacyPeriodLength.courtAppearanceId.toString(),
         source = EventSource.NOMIS,
+        isBreach = false,
       )
     }
   }
@@ -141,6 +143,7 @@ class LegacyPeriodLengthController(
         periodLengthId = updatedPeriodLength.periodLengthUuid.toString(),
         source = EventSource.NOMIS,
         courtChargeId = updatedPeriodLength.chargeUuid.toString(),
+        isBreach = false,
       )
     }
   }

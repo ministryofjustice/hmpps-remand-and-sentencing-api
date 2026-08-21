@@ -7,4 +7,5 @@ data class HmppsPeriodLengthMessage(
   val courtCaseId: String,
   val courtAppearanceId: String,
   val source: EventSource = EventSource.DPS,
+  val isBreach: Boolean,
 )

@@ -12,4 +12,5 @@ data class CourtCaseHierarchyData(
   var existingSentenceType: SentenceTypeEntity? = null,
   var updatedSentenceType: SentenceTypeEntity? = null,
   val courtAppearancePeriodLengths: MutableSet<PeriodLengthEntity> = mutableSetOf(),
+  val isBreach: Boolean = false,
 )

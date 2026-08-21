@@ -16,35 +16,35 @@ class ChargeDomainEventService(
   @Value("\${court.charge.getByIdPath}") private val courtChargeLookupPath: String,
 ) {
 
-  fun create(prisonerId: String, chargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource, isOnFutureAppearance: Boolean) {
+  fun create(prisonerId: String, chargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource, isOnFutureAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "charge.inserted",
       "Charge inserted",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       ZonedDateTime.now(),
-      HmppsCourtChargeMessage(chargeId, courtCaseId, source, courtAppearanceId, isOnFutureAppearance),
+      HmppsCourtChargeMessage(chargeId, courtCaseId, source, courtAppearanceId, isOnFutureAppearance, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun update(prisonerId: String, chargeId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureAppearance: Boolean) {
+  fun update(prisonerId: String, chargeId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "charge.updated",
       "Charge updated",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       ZonedDateTime.now(),
-      HmppsCourtChargeMessage(chargeId, courtCaseId, source, courtAppearanceId, isOnFutureAppearance),
+      HmppsCourtChargeMessage(chargeId, courtCaseId, source, courtAppearanceId, isOnFutureAppearance, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun delete(prisonerId: String, chargeId: String, courtCaseId: String, source: EventSource, isOnFutureAppearance: Boolean) {
+  fun delete(prisonerId: String, chargeId: String, courtCaseId: String, source: EventSource, isOnFutureAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "charge.deleted",
       "Charge deleted",
       generateDetailsUri(courtChargeLookupPath, chargeId),
       ZonedDateTime.now(),
-      HmppsCourtChargeMessage(chargeId, courtCaseId, source, null, isOnFutureAppearance),
+      HmppsCourtChargeMessage(chargeId, courtCaseId, source, null, isOnFutureAppearance, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }

@@ -54,6 +54,7 @@ class PeriodLengthService(
               saved.sentenceEntity?.sentenceUuid.toString(),
               saved.periodLengthUuid.toString(),
               EventType.PERIOD_LENGTH_INSERTED,
+              courtCaseHierarchyData.isBreach,
             ),
           )
         }
@@ -109,6 +110,7 @@ class PeriodLengthService(
               existing.sentenceEntity?.sentenceUuid.toString(),
               existing.periodLengthUuid.toString(),
               EventType.PERIOD_LENGTH_UPDATED,
+              courtCaseHierarchyData.isBreach,
             ),
           )
         }
@@ -154,6 +156,7 @@ class PeriodLengthService(
             periodLength.sentenceEntity?.sentenceUuid.toString(),
             periodLength.periodLengthUuid.toString(),
             EventType.PERIOD_LENGTH_DELETED,
+            courtCaseHierarchyData.isBreach,
           ),
         )
       }

@@ -16,35 +16,35 @@ class CourtAppearanceDomainEventService(
   @Value("\${court.appearance.getByIdPath}") private val courtAppearanceLookupPath: String,
 ) {
 
-  fun create(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean) {
+  fun create(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "court-appearance.inserted",
       "Court appearance inserted",
       generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
       ZonedDateTime.now(),
-      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance),
+      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun update(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean) {
+  fun update(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "court-appearance.updated",
       "Court appearance updated",
       generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
       ZonedDateTime.now(),
-      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance),
+      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun delete(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean) {
+  fun delete(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "court-appearance.deleted",
       "Court appearance deleted",
       generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
       ZonedDateTime.now(),
-      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance),
+      HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }

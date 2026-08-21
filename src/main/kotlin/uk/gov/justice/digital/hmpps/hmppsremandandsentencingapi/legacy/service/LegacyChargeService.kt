@@ -90,6 +90,7 @@ class LegacyChargeService(
           createdCharge.chargeUuid.toString(),
           EventType.CHARGE_INSERTED,
           courtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          false,
         ),
       ),
     )
@@ -155,6 +156,7 @@ class LegacyChargeService(
           chargeUuid.toString(),
           EventType.CHARGE_UPDATED,
           existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          false,
         ),
       )
       eventsToEmit.add(
@@ -164,6 +166,7 @@ class LegacyChargeService(
           existingCourtAppearance.appearanceUuid.toString(),
           EventType.COURT_APPEARANCE_UPDATED,
           existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          false,
         ),
       )
     }
@@ -194,6 +197,7 @@ class LegacyChargeService(
           chargeRecord.chargeUuid.toString(),
           EventType.CHARGE_UPDATED,
           appearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          false,
         ),
       )
     }
@@ -244,6 +248,7 @@ class LegacyChargeService(
           null,
           legacyCharge.lifetimeUuid.toString(),
           EventType.CHARGE_DELETED,
+          false,
           false,
         ),
       )
@@ -320,6 +325,7 @@ class LegacyChargeService(
           chargeUuid.toString(),
           EventType.CHARGE_UPDATED,
           appearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+          false,
         ),
       )
     }

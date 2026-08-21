@@ -153,6 +153,7 @@ class FixManyChargesToSentenceService(
               sentenceRecord.sentenceUuid.toString(),
               periodLength.periodLengthUuid.toString(),
               EventType.PERIOD_LENGTH_INSERTED,
+              false,
             ),
           )
         }

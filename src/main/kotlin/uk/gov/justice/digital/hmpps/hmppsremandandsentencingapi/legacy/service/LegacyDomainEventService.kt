@@ -53,6 +53,7 @@ class LegacyDomainEventService(
             eventMetaData.courtAppearanceId!!,
             EventSource.NOMIS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.CHARGE_UPDATED -> chargeDomainEventService.update(
             eventMetaData.prisonerId,
@@ -61,6 +62,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.CHARGE_DELETED -> chargeDomainEventService.delete(
             eventMetaData.prisonerId,
@@ -68,6 +70,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.COURT_APPEARANCE_INSERTED -> courtAppearanceDomainEventService.create(
             eventMetaData.prisonerId,
@@ -75,6 +78,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.COURT_APPEARANCE_UPDATED -> courtAppearanceDomainEventService.update(
             eventMetaData.prisonerId,
@@ -82,6 +86,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.COURT_APPEARANCE_DELETED -> courtAppearanceDomainEventService.delete(
             eventMetaData.prisonerId,
@@ -89,6 +94,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             EventSource.NOMIS,
             eventMetaData.isOnFutureAppearance!!,
+            eventMetaData.isBreach(),
           )
           EventType.SENTENCE_INSERTED -> sentenceDomainEventService.create(
             eventMetaData.prisonerId,
@@ -97,6 +103,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.NOMIS,
+            false,
           )
           EventType.SENTENCE_FIX_SINGLE_CHARGE_INSERTED -> sentenceDomainEventService.createFromFix(
             eventMetaData.prisonerId,
@@ -114,6 +121,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.NOMIS,
+            eventMetaData.isBreach(),
           )
           EventType.SENTENCE_DELETED -> sentenceDomainEventService.delete(
             eventMetaData.prisonerId,
@@ -122,6 +130,7 @@ class LegacyDomainEventService(
             eventMetaData.courtCaseId!!,
             eventMetaData.courtAppearanceId!!,
             EventSource.NOMIS,
+            eventMetaData.isBreach(),
           )
 
           EventType.RECALL_INSERTED -> recallDomainEventService.create(
@@ -152,6 +161,7 @@ class LegacyDomainEventService(
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
             source = EventSource.NOMIS,
+            eventMetaData.isBreach(),
           )
           EventType.PERIOD_LENGTH_UPDATED -> periodLengthDomainEventService.update(
             prisonerId = eventMetaData.prisonerId,
@@ -161,6 +171,7 @@ class LegacyDomainEventService(
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
             source = EventSource.NOMIS,
+            eventMetaData.isBreach(),
           )
           EventType.PERIOD_LENGTH_DELETED -> periodLengthDomainEventService.delete(
             prisonerId = eventMetaData.prisonerId,
@@ -170,6 +181,7 @@ class LegacyDomainEventService(
             courtCaseId = eventMetaData.courtCaseId!!,
             courtAppearanceId = eventMetaData.courtAppearanceId!!,
             source = EventSource.NOMIS,
+            eventMetaData.isBreach(),
           )
 
           EventType.METADATA_ONLY -> {}

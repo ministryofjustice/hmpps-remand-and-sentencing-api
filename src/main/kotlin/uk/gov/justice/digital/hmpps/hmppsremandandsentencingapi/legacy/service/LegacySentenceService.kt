@@ -144,6 +144,7 @@ class LegacySentenceService(
           createdSentence.sentenceUuid.toString(),
           courtAppearance.appearanceUuid.toString(),
           EventType.SENTENCE_INSERTED,
+          false,
         ),
       )
 
@@ -397,6 +398,7 @@ class LegacySentenceService(
             legacySentenceCreatedResponse.lifetimeUuid.toString(),
             legacySentenceCreatedResponse.appearanceUuid.toString(),
             eventType,
+            false,
           ),
         )
       }
@@ -524,6 +526,7 @@ class LegacySentenceService(
         sentenceId = sentenceDeleteResponse.lifetimeUuid.toString(),
         courtAppearanceId = sentenceDeleteResponse.appearanceUuid.toString(),
         eventType = EventType.SENTENCE_DELETED,
+        false,
       ),
     )
 

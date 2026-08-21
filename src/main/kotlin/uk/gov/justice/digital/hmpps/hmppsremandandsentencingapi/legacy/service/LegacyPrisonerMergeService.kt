@@ -182,6 +182,7 @@ class LegacyPrisonerMergeService(
                   sentenceEntity.sentenceUuid.toString(),
                   courtAppearance.appearanceUuid.toString(),
                   EventType.SENTENCE_UPDATED,
+                  false,
                 ),
               )
             }
@@ -448,6 +449,7 @@ class LegacyPrisonerMergeService(
         createdAppearance.appearanceUuid.toString(),
         EventType.COURT_APPEARANCE_INSERTED,
         createdAppearance.statusId == CourtAppearanceEntityStatus.FUTURE,
+        false,
       ),
     )
     return createdAppearance
@@ -477,6 +479,7 @@ class LegacyPrisonerMergeService(
         createdCharge.chargeUuid.toString(),
         EventType.CHARGE_INSERTED,
         mergeHierarchyData.isFutureCourtAppearance,
+        false,
       ),
     )
     return createdCharge
@@ -547,6 +550,7 @@ class LegacyPrisonerMergeService(
           sentenceId = createdSentence.sentenceUuid.toString(),
           periodLengthId = createdPeriodLength.periodLengthUuid.toString(),
           eventType = EventType.PERIOD_LENGTH_INSERTED,
+          false,
         ),
       )
       createdPeriodLength
@@ -560,6 +564,7 @@ class LegacyPrisonerMergeService(
         createdSentence.sentenceUuid.toString(),
         mergeHierarchyData.courtAppearanceId,
         EventType.SENTENCE_INSERTED,
+        false,
       ),
     )
     return createdSentence

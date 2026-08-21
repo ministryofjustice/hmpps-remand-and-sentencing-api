@@ -16,13 +16,13 @@ class SentenceDomainEventService(
   @Value("\${ingress.url}") private val ingressUrl: String,
   @Value("\${court.sentence.getByIdPath}") private val sentenceLookupPath: String,
 ) {
-  fun create(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource) {
+  fun create(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "sentence.inserted",
       "Sentence inserted",
       generateDetailsUri(sentenceLookupPath, sentenceId),
       ZonedDateTime.now(),
-      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, courtAppearanceId, source),
+      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, courtAppearanceId, source, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
@@ -38,24 +38,24 @@ class SentenceDomainEventService(
     )
   }
 
-  fun update(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource) {
+  fun update(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "sentence.updated",
       "Sentence updated",
       generateDetailsUri(sentenceLookupPath, sentenceId),
       ZonedDateTime.now(),
-      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, courtAppearanceId, source),
+      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, courtAppearanceId, source, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
 
-  fun delete(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource) {
+  fun delete(prisonerId: String, sentenceId: String, courtChargeId: String, courtCaseId: String, courtAppearanceId: String, source: EventSource, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "sentence.deleted",
       "Sentence deleted",
       generateDetailsUri(sentenceLookupPath, sentenceId),
       ZonedDateTime.now(),
-      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, courtAppearanceId, source),
+      HmppsSentenceMessage(sentenceId, courtChargeId, courtCaseId, courtAppearanceId, source, isBreach),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
