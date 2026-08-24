@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.ChargeHistoryEntity
@@ -39,7 +40,7 @@ class LegacyCourtCaseService(
 ) {
 
   @Transactional
-  fun create(courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
+  fun create(courtCase: LegacyCreateCourtCase): RecordResponse<LegacyCourtCaseCreatedResponse> {
     val createdCourtCase = courtCaseRepository.save(
       CourtCaseEntity.from(
         courtCase,
@@ -52,7 +53,16 @@ class LegacyCourtCaseService(
         ChangeSource.NOMIS,
       ),
     )
-    return LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier)
+    return RecordResponse(
+      LegacyCourtCaseCreatedResponse(createdCourtCase.caseUniqueIdentifier),
+      mutableSetOf(
+        EventMetadataCreator.courtCaseEventMetadata(
+          createdCourtCase.prisonerId,
+          createdCourtCase.caseUniqueIdentifier,
+          EventType.COURT_CASE_INSERTED,
+        ),
+      ),
+    )
   }
 
   @Transactional(readOnly = true)
@@ -70,7 +80,7 @@ class LegacyCourtCaseService(
   }
 
   @Transactional
-  fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse {
+  fun update(courtCaseUuid: String, courtCase: LegacyCreateCourtCase): RecordResponse<LegacyCourtCaseCreatedResponse> {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     val status = if (courtCase.active) CourtCaseEntityStatus.ACTIVE else CourtCaseEntityStatus.INACTIVE
     courtCaseRepository.updateLegacyDataBookingIdById(courtCase.bookingId ?: courtCase.legacyData.bookingId, status, ZonedDateTime.now(), getPerformedByUsername(courtCase), existingCourtCase.id)
@@ -80,13 +90,22 @@ class LegacyCourtCaseService(
         ChangeSource.NOMIS,
       ),
     )
-    return LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier)
+    return RecordResponse(
+      LegacyCourtCaseCreatedResponse(existingCourtCase.caseUniqueIdentifier),
+      mutableSetOf(
+        EventMetadataCreator.courtCaseEventMetadata(
+          courtCase.prisonerId,
+          existingCourtCase.caseUniqueIdentifier,
+          EventType.COURT_CASE_UPDATED,
+        ),
+      ),
+    )
   }
 
   private fun getPerformedByUsername(courtCase: LegacyCreateCourtCase): String = courtCase.performedByUser ?: serviceUserService.getUsername()
 
   @Transactional
-  fun linkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String, linkCase: LegacyLinkCase?): Pair<String, String> {
+  fun linkCourtCases(sourceCourtCaseUuid: String, targetCourtCaseUuid: String, linkCase: LegacyLinkCase?): MutableSet<EventMetadata> {
     val sourceCourtCase = getUnlessDeleted(sourceCourtCaseUuid)
     val targetCourtCase = getUnlessDeleted(targetCourtCaseUuid)
     sourceCourtCase.statusId = CourtCaseEntityStatus.MERGED
@@ -100,7 +119,13 @@ class LegacyCourtCaseService(
         ChangeSource.NOMIS,
       ),
     )
-    return sourceCourtCaseUuid to sourceCourtCase.prisonerId
+    return mutableSetOf(
+      EventMetadataCreator.courtCaseEventMetadata(
+        sourceCourtCase.prisonerId,
+        sourceCourtCaseUuid,
+        EventType.COURT_CASE_UPDATED,
+      ),
+    )
   }
 
   @Transactional
@@ -160,13 +185,20 @@ class LegacyCourtCaseService(
   }
 
   @Transactional
-  fun delete(courtCaseUuid: String, performedByUser: String?) {
+  fun delete(courtCaseUuid: String, performedByUser: String?): MutableSet<EventMetadata> {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
     existingCourtCase.delete(performedByUser ?: serviceUserService.getUsername())
     courtCaseHistoryRepository.save(
       CourtCaseHistoryEntity.from(
         existingCourtCase,
         ChangeSource.NOMIS,
+      ),
+    )
+    return mutableSetOf(
+      EventMetadataCreator.courtCaseEventMetadata(
+        existingCourtCase.prisonerId,
+        courtCaseUuid,
+        EventType.COURT_CASE_DELETED,
       ),
     )
   }

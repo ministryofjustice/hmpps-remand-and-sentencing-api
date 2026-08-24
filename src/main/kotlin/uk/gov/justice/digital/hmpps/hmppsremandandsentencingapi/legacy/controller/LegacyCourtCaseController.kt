@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtCaseCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateCourtCase
@@ -28,13 +27,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.reconciliation.ReconciliationCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyCourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 
 @RestController
 @RequestMapping("/legacy/court-case", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "legacy-court-case-controller", description = "CRUD operations for syncing court case data from NOMIS into remand and sentencing api database.")
-class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val eventService: CourtCaseDomainEventService, private val courtCaseReferenceService: CourtCaseReferenceService, private val legacyDomainEventService: LegacyDomainEventService) {
+class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtCaseService, private val courtCaseReferenceService: CourtCaseReferenceService, private val legacyDomainEventService: LegacyDomainEventService) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -50,8 +48,9 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
-  fun create(@RequestBody courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse = legacyCourtCaseService.create(courtCase).also {
-    eventService.create(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
+  fun create(@RequestBody courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse = legacyCourtCaseService.create(courtCase).let {
+    legacyDomainEventService.emitEvents(it.eventsToEmit)
+    it.record
   }
 
   @GetMapping("/{courtCaseUuid}")
@@ -85,7 +84,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun update(@PathVariable courtCaseUuid: String, @RequestBody courtCase: LegacyCreateCourtCase): ResponseEntity<Void> {
     legacyCourtCaseService.update(courtCaseUuid, courtCase).also {
-      eventService.update(it.courtCaseUuid, courtCase.prisonerId, EventSource.NOMIS)
+      legacyDomainEventService.emitEvents(it.eventsToEmit)
     }
     return ResponseEntity.noContent().build()
   }
@@ -108,9 +107,8 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
     @RequestHeader("performedByUser", required = false)
     performedByUser: String?,
   ) {
-    legacyCourtCaseService.get(courtCaseUuid).also { legacyCourtCase ->
-      legacyCourtCaseService.delete(courtCaseUuid, performedByUser)
-      eventService.delete(courtCaseUuid, legacyCourtCase.prisonerId, EventSource.NOMIS)
+    legacyCourtCaseService.delete(courtCaseUuid, performedByUser).also { eventsToEmit ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
   }
 
@@ -129,8 +127,8 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun linkCourtCase(@PathVariable sourceCourtCaseUuid: String, @PathVariable targetCourtCaseUuid: String, @RequestBody(required = false) linkCase: LegacyLinkCase?) = legacyCourtCaseService.linkCourtCases(sourceCourtCaseUuid, targetCourtCaseUuid, linkCase)
-    .also { (courtCaseUuid, prisonerId) ->
-      eventService.update(courtCaseUuid, prisonerId, EventSource.NOMIS)
+    .also { eventsToEmit ->
+      legacyDomainEventService.emitEvents(eventsToEmit)
     }
 
   @PutMapping("/{sourceCourtCaseUuid}/unlink/{targetCourtCaseUuid}")

@@ -6,6 +6,10 @@ import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceTypeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
@@ -30,7 +34,7 @@ class LegacyPeriodLengthService(
   private val sentenceRepository: SentenceRepository,
 ) {
   @Transactional
-  fun create(periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse {
+  fun create(periodLength: LegacyCreatePeriodLength): RecordResponse<LegacyPeriodLengthCreatedResponse> {
     val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLength.sentenceUuid)
     val firstSentenceEntity = sentenceEntities.firstOrNull()
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLength.sentenceUuid}")
@@ -54,18 +58,32 @@ class LegacyPeriodLengthService(
     val appearance = firstSentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
       ?: throw EntityNotFoundException("No appearance found for sentence ${firstSentenceEntity.sentenceUuid}")
 
-    return LegacyPeriodLengthCreatedResponse(
-      periodLengthUuid = periodLengthUuid,
-      sentenceUuid = periodLength.sentenceUuid,
-      chargeUuid = firstSentenceEntity.charge.chargeUuid,
-      appearanceUuid = appearance.appearanceUuid,
-      courtCaseId = appearance.courtCase.id.toString(),
-      prisonerId = appearance.courtCase.prisonerId,
+    return RecordResponse(
+      LegacyPeriodLengthCreatedResponse(
+        periodLengthUuid = periodLengthUuid,
+        sentenceUuid = periodLength.sentenceUuid,
+        chargeUuid = firstSentenceEntity.charge.chargeUuid,
+        appearanceUuid = appearance.appearanceUuid,
+        courtCaseId = appearance.courtCase.id.toString(),
+        prisonerId = appearance.courtCase.prisonerId,
+      ),
+      mutableSetOf(
+        EventMetadataCreator.periodLengthEventMetadata(
+          prisonerId = appearance.courtCase.prisonerId,
+          courtCaseId = appearance.courtCase.id.toString(),
+          courtAppearanceId = appearance.appearanceUuid.toString(),
+          chargeId = firstSentenceEntity.charge.chargeUuid.toString(),
+          sentenceId = periodLength.sentenceUuid.toString(),
+          periodLengthId = periodLengthUuid.toString(),
+          eventType = EventType.PERIOD_LENGTH_INSERTED,
+          isBreach = false,
+        ),
+      ),
     )
   }
 
   @Transactional
-  fun update(periodLengthUuid: UUID, periodLengthUpdate: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse? {
+  fun update(periodLengthUuid: UUID, periodLengthUpdate: LegacyCreatePeriodLength): RecordResponse<LegacyPeriodLengthCreatedResponse>? {
     val existingPeriodLengths = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid)
       .filter { it.sentenceEntity != null }
       .takeIf { it.isNotEmpty() }
@@ -105,13 +123,27 @@ class LegacyPeriodLengthService(
     val appearance = sentenceEntity.charge.appearanceCharges.firstOrNull()?.appearance
       ?: throw EntityNotFoundException("No appearance found for sentence ${sentenceEntity.sentenceUuid}")
 
-    return LegacyPeriodLengthCreatedResponse(
-      periodLengthUuid = periodLengthUuid,
-      sentenceUuid = periodLengthUpdate.sentenceUuid,
-      chargeUuid = sentenceEntity.charge.chargeUuid,
-      appearanceUuid = appearance.appearanceUuid,
-      courtCaseId = appearance.courtCase.id.toString(),
-      prisonerId = appearance.courtCase.prisonerId,
+    return RecordResponse(
+      LegacyPeriodLengthCreatedResponse(
+        periodLengthUuid = periodLengthUuid,
+        sentenceUuid = periodLengthUpdate.sentenceUuid,
+        chargeUuid = sentenceEntity.charge.chargeUuid,
+        appearanceUuid = appearance.appearanceUuid,
+        courtCaseId = appearance.courtCase.id.toString(),
+        prisonerId = appearance.courtCase.prisonerId,
+      ),
+      mutableSetOf(
+        EventMetadataCreator.periodLengthEventMetadata(
+          prisonerId = appearance.courtCase.prisonerId,
+          courtCaseId = appearance.courtCase.id.toString(),
+          courtAppearanceId = appearance.appearanceUuid.toString(),
+          chargeId = sentenceEntity.charge.chargeUuid.toString(),
+          sentenceId = periodLengthUpdate.sentenceUuid.toString(),
+          periodLengthId = periodLengthUuid.toString(),
+          eventType = EventType.PERIOD_LENGTH_UPDATED,
+          isBreach = false,
+        ),
+      ),
     )
   }
 
@@ -147,7 +179,7 @@ class LegacyPeriodLengthService(
 
   @Retryable(maxAttempts = 3, retryFor = [CannotAcquireLockException::class])
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): LegacyPeriodLength? = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid)
+  fun deletePeriodLengthWithSentence(periodLengthUuid: UUID, performedByUser: String?): MutableSet<EventMetadata>? = periodLengthRepository.findByPeriodLengthUuidAndStatusIdNot(periodLengthUuid)
     .asSequence()
     .filter { it.sentenceEntity != null }
     .map { periodLength ->
@@ -156,6 +188,20 @@ class LegacyPeriodLengthService(
     }.filter { periodLength -> periodLength.sentenceEntity!!.charge.appearanceCharges.isNotEmpty() }
     .map { periodLength -> LegacyPeriodLength.from(periodLength, periodLength.sentenceEntity!!) }
     .firstOrNull()
+    ?.let { legacyPeriodLength ->
+      mutableSetOf(
+        EventMetadataCreator.periodLengthEventMetadata(
+          prisonerId = legacyPeriodLength.prisonerId,
+          courtCaseId = legacyPeriodLength.courtCaseId,
+          courtAppearanceId = legacyPeriodLength.courtAppearanceId.toString(),
+          chargeId = legacyPeriodLength.courtChargeId.toString(),
+          sentenceId = legacyPeriodLength.sentenceUuid.toString(),
+          periodLengthId = legacyPeriodLength.periodLengthUuid.toString(),
+          eventType = EventType.PERIOD_LENGTH_DELETED,
+          isBreach = false,
+        ),
+      )
+    }
 
   fun isNomisMappingDifferent(existingPeriodLength: PeriodLengthEntity, existingSentenceType: SentenceTypeEntity?, updatedPeriodLength: PeriodLengthEntity, updatedSentenceType: SentenceTypeEntity?): Boolean {
     val (existingIsLifeSentence, existingSentenceTermCode) = getNomisMapping(existingPeriodLength, existingSentenceType)
