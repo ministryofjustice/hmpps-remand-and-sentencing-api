@@ -79,5 +79,15 @@ class EventMetadataCreator {
       periodLengthId = periodLengthId,
       isBreach = isBreach,
     )
+
+    fun breachEventMetadata(
+      prisonerId: String,
+      courtCaseId: String,
+      courtAppearanceId: String,
+      courtAppearanceIds: Set<String>,
+      chargeIds: Set<String>,
+      sentenceIds: List<String>,
+      periodLengthIds: Set<String>,
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, null, null, null, EventType.BREACH_INSERTED, courtAppearanceIds = courtAppearanceIds, chargeIds = chargeIds, sentenceIds = sentenceIds, periodLengthIds = periodLengthIds)
   }
 }

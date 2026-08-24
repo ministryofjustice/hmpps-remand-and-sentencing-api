@@ -183,7 +183,7 @@ class LegacyDomainEventService(
             source = EventSource.NOMIS,
             eventMetaData.isBreach(),
           )
-
+          EventType.BREACH_INSERTED -> {}
           EventType.METADATA_ONLY -> {}
         }
       }

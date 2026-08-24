@@ -177,6 +177,16 @@ class DpsDomainEventService(
             source = EventSource.DPS,
             eventMetaData.isBreach(),
           )
+          EventType.BREACH_INSERTED -> courtAppearanceDomainEventService.createBreach(
+            prisonerId = eventMetaData.prisonerId,
+            courtCaseId = eventMetaData.courtCaseId!!,
+            courtAppearanceId = eventMetaData.courtAppearanceId!!,
+            courtAppearanceIds = eventMetaData.courtAppearanceIds!!,
+            chargeIds = eventMetaData.chargeIds!!,
+            sentenceIds = eventMetaData.sentenceIds!!,
+            periodLengthIds = eventMetaData.periodLengthIds!!,
+            source = EventSource.DPS,
+          )
 
           EventType.METADATA_ONLY -> {}
         }

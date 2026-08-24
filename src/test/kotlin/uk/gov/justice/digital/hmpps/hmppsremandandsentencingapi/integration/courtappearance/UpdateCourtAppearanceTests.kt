@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsBreachMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsPeriodLengthMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -1024,13 +1025,18 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = getCourtCase(courtCaseUuid)
     val sentence = courtCase.appearances.first { sentencingAppearance.appearanceUuid == it.appearanceUuid }.charges.first { it.chargeUuid == sentencedCharge.chargeUuid }.sentence!!
     Assertions.assertThat(sentence.periodLengths).anyMatch { periodLength -> periodLength.periodLengthUuid == breachPeriodLength.periodLengthUuid && periodLength.days == breachPeriodLength.days }
-    val events = getMessages(3)
+    val events = getMessages(4)
     Assertions.assertThat(events).anyMatch { it.eventType == "sentence.period-length.inserted" }
-    Assertions.assertThat(events.map { it.additionalInformation.get("isBreach").asBoolean() }).allMatch { it }
+    Assertions.assertThat(events.filter { it.eventType != "breach.inserted" }.map { it.additionalInformation.get("isBreach").asBoolean() }).allMatch { it }
     val periodLengthInsertedEvent = events.first { it.eventType == "sentence.period-length.inserted" }
     val additionalInformation = objectMapper.treeToValue(periodLengthInsertedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)
     Assertions.assertThat(additionalInformation.courtAppearanceId).isEqualTo(sentencingAppearance.appearanceUuid.toString())
     Assertions.assertThat(additionalInformation.courtChargeId).isEqualTo(sentencedCharge.chargeUuid.toString())
+    Assertions.assertThat(events).anyMatch { it.eventType == "breach.inserted" }
+    val breachInsertedEvent = events.first { it.eventType == "breach.inserted" }
+    val breachAdditionalInformation = objectMapper.treeToValue(breachInsertedEvent.additionalInformation, HmppsBreachMessage::class.java)
+    Assertions.assertThat(breachAdditionalInformation.courtCaseId).isEqualTo(courtCaseUuid)
+    Assertions.assertThat(breachAdditionalInformation.periodLengthIds).contains(breachPeriodLength.periodLengthUuid.toString())
   }
 
   @Test
