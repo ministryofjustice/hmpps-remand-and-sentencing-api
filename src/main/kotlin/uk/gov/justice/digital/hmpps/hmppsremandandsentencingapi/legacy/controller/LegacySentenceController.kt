@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceDomainEventService
 import java.util.UUID
 
 @RestController
@@ -32,7 +31,6 @@ import java.util.UUID
 @Tag(name = "legacy-sentence-controller", description = "CRUD operations for syncing sentence data from NOMIS Offender sentences into remand and sentencing api database.")
 class LegacySentenceController(
   private val legacySentenceService: LegacySentenceService,
-  private val eventService: SentenceDomainEventService,
   private val legacyEventService: LegacyDomainEventService,
 ) {
 

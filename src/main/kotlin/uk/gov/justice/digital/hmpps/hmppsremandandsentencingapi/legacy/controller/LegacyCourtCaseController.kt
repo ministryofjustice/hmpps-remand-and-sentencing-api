@@ -50,7 +50,7 @@ class LegacyCourtCaseController(private val legacyCourtCaseService: LegacyCourtC
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW')")
   fun create(@RequestBody courtCase: LegacyCreateCourtCase): LegacyCourtCaseCreatedResponse = legacyCourtCaseService.create(courtCase).let {
     legacyDomainEventService.emitEvents(it.eventsToEmit)
-    return it.record
+    it.record
   }
 
   @GetMapping("/{courtCaseUuid}")

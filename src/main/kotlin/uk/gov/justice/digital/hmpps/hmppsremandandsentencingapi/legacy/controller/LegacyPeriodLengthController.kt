@@ -51,7 +51,7 @@ class LegacyPeriodLengthController(
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW')")
   fun create(@RequestBody periodLength: LegacyCreatePeriodLength): LegacyPeriodLengthCreatedResponse = legacyPeriodLengthService.create(periodLength).let {
     legacyDomainEventService.emitEvents(it.eventsToEmit)
-    return it.record
+    it.record
   }
 
   @GetMapping("/{periodLengthUuid}")
