@@ -15,6 +15,9 @@ data class EventMetadata(
   val originalSentenceId: String? = null,
   val isOnFutureAppearance: Boolean? = null,
   val isBreach: Boolean? = null,
+  val courtAppearanceIds: Set<String>? = null,
+  val chargeIds: Set<String>? = null,
+  val periodLengthIds: Set<String>? = null,
 ) {
   fun isBreach(): Boolean = isBreach ?: false
 }

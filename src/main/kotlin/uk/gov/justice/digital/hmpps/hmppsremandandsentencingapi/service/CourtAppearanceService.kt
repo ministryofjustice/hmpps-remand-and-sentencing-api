@@ -236,9 +236,27 @@ class CourtAppearanceService(
       createdCourtAppearance,
       courtCaseEntity.prisonerId,
     )
-
+    if (courtCaseHierarchyData.isBreach) {
+      eventsToEmit.add(generateBreachInsertedEvent(eventsToEmit, courtCaseHierarchyData))
+    }
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(createdCourtAppearance, ChangeSource.DPS))
     return RecordResponseWithDocumentUpdates(createdCourtAppearance, eventsToEmit, documentUpdates)
+  }
+
+  private fun generateBreachInsertedEvent(eventsToEmit: MutableSet<EventMetadata>, courtCaseHierarchyData: CourtCaseHierarchyData): EventMetadata {
+    val courtAppearanceIds = eventsToEmit.filter { it.courtAppearanceId != null }.map { it.courtAppearanceId!! }.toSet()
+    val chargeIds = eventsToEmit.filter { it.chargeId != null }.map { it.chargeId!! }.toSet()
+    val sentenceIds = eventsToEmit.filter { it.sentenceId != null }.map { it.sentenceId!! }.distinct()
+    val periodLengthIds = eventsToEmit.filter { it.periodLengthId != null }.map { it.periodLengthId!! }.toSet()
+    return EventMetadataCreator.breachEventMetadata(
+      courtCaseHierarchyData.prisonerId,
+      courtCaseHierarchyData.courtCaseId!!,
+      courtCaseHierarchyData.courtAppearanceUuid.toString(),
+      courtAppearanceIds,
+      chargeIds,
+      sentenceIds,
+      periodLengthIds,
+    )
   }
 
   private fun updateCourtAppearanceEntity(

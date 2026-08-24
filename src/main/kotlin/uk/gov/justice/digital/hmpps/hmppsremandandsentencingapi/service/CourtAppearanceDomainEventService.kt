@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsBreachMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtAppearanceMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
@@ -45,6 +46,17 @@ class CourtAppearanceDomainEventService(
       generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
       ZonedDateTime.now(),
       HmppsCourtAppearanceMessage(courtAppearanceId, courtCaseId, source, isOnFutureCourtAppearance, isBreach),
+      PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
+    )
+  }
+
+  fun createBreach(prisonerId: String, courtCaseId: String, courtAppearanceId: String, courtAppearanceIds: Set<String>, chargeIds: Set<String>, sentenceIds: List<String>, periodLengthIds: Set<String>, source: EventSource) {
+    snsService.publishDomainEvent(
+      "breach.inserted",
+      "Breach inserted",
+      generateDetailsUri(courtAppearanceLookupPath, courtAppearanceId),
+      ZonedDateTime.now(),
+      HmppsBreachMessage(courtCaseId, courtAppearanceIds, chargeIds, sentenceIds, periodLengthIds, source),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
