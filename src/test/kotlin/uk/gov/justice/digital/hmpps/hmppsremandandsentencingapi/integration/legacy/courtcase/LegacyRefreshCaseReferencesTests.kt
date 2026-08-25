@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -110,6 +112,26 @@ class LegacyRefreshCaseReferencesTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     Assertions.assertThat(result.appearances.filter { it.appearanceUuid == toUpdateAppearance.appearanceUuid }).hasSize(1)
+  }
+
+  @Test
+  fun `remove case reference from NOMIS future appearance`() {
+    val futureAppearance = DataCreator.legacyCreateCourtAppearance(appearanceDate = LocalDate.now().plusDays(2))
+    val (appearanceUuid, createdCourtAppearance) = createLegacyCourtAppearance(legacyCreateCourtAppearance = futureAppearance)
+    val refreshCaseReferences = RefreshCaseReferences(mutableListOf(), "SOME_USER")
+    webTestClient
+      .put()
+      .uri("/legacy/court-case/${createdCourtAppearance.courtCaseUuid}/case-references/refresh")
+      .bodyValue(refreshCaseReferences)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    val courtAppearance = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)!!
+    Assertions.assertThat(courtAppearance.courtCaseReference).isNull()
   }
 
   @Test
