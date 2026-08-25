@@ -36,21 +36,27 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
     val appearanceStatuses = courtCaseEntity.appearances.groupBy { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
     val activeCaseReferences = appearanceStatuses.getOrDefault(true, emptySet())
       .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
-      .map {
+      .groupBy { courtAppearance -> courtAppearance.courtCaseReference!! }
+      .entries
+      .map { (courtCaseReference, appearances) ->
+        val firstAppearance = appearances.minBy { it.createdAt }
         CaseReferenceLegacyData(
-          offenderCaseReference = it.courtCaseReference!!,
-          updatedDate = it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
-          source = it.source,
+          offenderCaseReference = courtCaseReference,
+          updatedDate = firstAppearance.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+          source = firstAppearance.source,
         )
       }
     val inactiveCaseReferences = appearanceStatuses.getOrDefault(false, emptySet())
       .filter { courtAppearance -> courtAppearance.courtCaseReference != null }
       .filter { courtAppearance -> activeCaseReferences.none { it.offenderCaseReference == courtAppearance.courtCaseReference } }
-      .map {
+      .groupBy { courtAppearance -> courtAppearance.courtCaseReference!! }
+      .entries
+      .map { (courtCaseReference, appearances) ->
+        val firstAppearance = appearances.minBy { it.createdAt }
         CaseReferenceLegacyData(
-          offenderCaseReference = it.courtCaseReference!!,
-          updatedDate = it.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
-          source = it.source,
+          offenderCaseReference = courtCaseReference,
+          updatedDate = firstAppearance.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+          source = firstAppearance.source,
         )
       }
     val existingCaseReferences = courtCaseEntity.legacyData?.caseReferences ?: mutableListOf()
@@ -73,7 +79,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
     courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)?.let { courtCase ->
       val performedByUsername = refreshCaseReferences.performedByUser ?: serviceUserService.getUsername()
       val legacyCourtCaseReferences = refreshCaseReferences.caseReferences.map { it.offenderCaseReference }.toSet()
-      val toEditAppearances = courtCase.appearances.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
+      val toEditAppearances = courtCase.appearances.filter { it.statusId != CourtAppearanceEntityStatus.DELETED }.filter { it.courtCaseReference != null && !legacyCourtCaseReferences.contains(it.courtCaseReference) }
       toEditAppearances.forEach { editedAppearance ->
         editedAppearance.updatedAndRemoveCaseReference(performedByUsername)
         courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(editedAppearance, ChangeSource.NOMIS))
