@@ -70,10 +70,13 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
 
     val toStoreCaseReferences = existingCaseReferences.filter { existingCaseReference -> allCaseRefsToRemove.none { toRemoveCaseReference -> toRemoveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
     val hasChanged = hasCaseReferenceChanged(toAddCaseReferences, toRemoveCaseReferences, courtCaseEntity.statusId)
-    if (hasChanged || courtCaseEntity.legacyData == null) {
+    val shouldInitialise = courtCaseEntity.legacyData == null
+    if (hasChanged || shouldInitialise) {
       courtCaseEntity.legacyData = CourtCaseLegacyData(toStoreCaseReferences.toMutableList(), courtCaseEntity.legacyData?.bookingId)
-      courtCaseEntity.updatedAt = ZonedDateTime.now()
-      courtCaseEntity.updatedBy = serviceUserService.getUsername()
+      if (!shouldInitialise) {
+        courtCaseEntity.updatedAt = ZonedDateTime.now()
+        courtCaseEntity.updatedBy = serviceUserService.getUsername()
+      }
       courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity, ChangeSource.DPS))
     }
 
