@@ -146,9 +146,13 @@ class LegacyCourtAppearanceService(
   @Retryable(maxAttempts = 3, retryFor = [OptimisticLockingFailureException::class])
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun delete(lifetimeUuid: UUID, performedByUser: String?): MutableSet<EventMetadata> {
-    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val existingCourtAppearance = getUnlessDeleted(lifetimeUuid)
     val performedByUsername = performedByUser ?: serviceUserService.getUsername()
+    return deleteCourtAppearance(existingCourtAppearance, performedByUsername)
+  }
+
+  fun deleteCourtAppearance(existingCourtAppearance: CourtAppearanceEntity, performedByUsername: String): MutableSet<EventMetadata> {
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
     val isOnFutureAppearance = existingCourtAppearance.statusId == CourtAppearanceEntityStatus.FUTURE
     existingCourtAppearance.delete(performedByUsername)
     courtAppearanceHistoryRepository.save(
@@ -202,7 +206,7 @@ class LegacyCourtAppearanceService(
         false,
       ),
     )
-    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(lifetimeUuid).forEach { immigrationDetentionEntity ->
+    immigrationDetentionRepository.findByCourtAppearanceUuidAndStatusId(existingCourtAppearance.appearanceUuid).forEach { immigrationDetentionEntity ->
       immigrationDetentionEntity.delete(performedByUsername)
       immigrationDetentionHistoryRepository.save(ImmigrationDetentionHistoryEntity.from(immigrationDetentionEntity))
     }

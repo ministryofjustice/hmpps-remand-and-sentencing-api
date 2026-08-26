@@ -2,8 +2,11 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service
 
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -37,6 +40,7 @@ class LegacyCourtCaseService(
   private val chargeHistoryRepository: ChargeHistoryRepository,
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
   private val legacyAppearanceTypeService: LegacyAppearanceTypeService,
+  private val legacyCourtAppearanceService: LegacyCourtAppearanceService,
 ) {
 
   @Transactional
@@ -184,23 +188,29 @@ class LegacyCourtCaseService(
     return eventsToEmit
   }
 
-  @Transactional
+  @Retryable(maxAttempts = 3, retryFor = [OptimisticLockingFailureException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   fun delete(courtCaseUuid: String, performedByUser: String?): MutableSet<EventMetadata> {
     val existingCourtCase = getUnlessDeleted(courtCaseUuid)
-    existingCourtCase.delete(performedByUser ?: serviceUserService.getUsername())
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    val performedByUsername = performedByUser ?: serviceUserService.getUsername()
+    existingCourtCase.delete(performedByUsername)
     courtCaseHistoryRepository.save(
       CourtCaseHistoryEntity.from(
         existingCourtCase,
         ChangeSource.NOMIS,
       ),
     )
-    return mutableSetOf(
+    eventsToEmit.add(
       EventMetadataCreator.courtCaseEventMetadata(
         existingCourtCase.prisonerId,
         courtCaseUuid,
         EventType.COURT_CASE_DELETED,
       ),
     )
+    val appearanceEvents = existingCourtCase.appearances.filter { it.statusId != CourtAppearanceEntityStatus.DELETED }.flatMap { legacyCourtAppearanceService.deleteCourtAppearance(it, performedByUsername) }
+    eventsToEmit.addAll(appearanceEvents)
+    return eventsToEmit
   }
 
   private fun getUnlessDeleted(courtCaseUuid: String): CourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
