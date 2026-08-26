@@ -96,6 +96,21 @@ class SentenceController(private val sentenceService: SentenceService, private v
   )
   fun hasSentencesAfterOnOtherCase(@RequestParam sentenceUuids: List<UUID>): HasSentenceAfterOnOtherCourtAppearanceResponse = sentenceService.hasSentencesAfterOnOtherCourtAppearance(sentenceUuids)
 
+  @GetMapping("/sentence/sentences-blocking-mark-as-inactive")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Sentences blocking mark as inactive",
+    description = "Given the sentences being marked inactive, returns the uuids of any of those sentences that have an active sentence consecutive to them outside of the selection. An empty list means the selection can be marked inactive.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns the blocking sentence uuids, empty if none"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun sentencesBlockingMarkAsInactive(@RequestParam sentenceUuids: List<UUID>): List<UUID> = sentenceService.sentencesBlockingMarkAsInactive(sentenceUuids)
+
   @PostMapping("/sentence/consecutive-chain/has-a-loop")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(

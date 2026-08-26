@@ -248,6 +248,8 @@ class SentenceService(
     sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuids),
   )
 
+  fun sentencesBlockingMarkAsInactive(sentenceUuids: List<UUID>): List<UUID> = sentenceRepository.findSentenceUuidsBlockingMarkAsInactive(sentenceUuids)
+
   fun moveSentencesToNewCharge(
     existingCharge: ChargeEntity,
     newChargeRecord: ChargeEntity,
