@@ -69,9 +69,18 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
     val allCaseRefsToRemove = toRemoveCaseReferences.plus(dpsCaseReferencesToRemove)
 
     val toStoreCaseReferences = existingCaseReferences.filter { existingCaseReference -> allCaseRefsToRemove.none { toRemoveCaseReference -> toRemoveCaseReference.offenderCaseReference == existingCaseReference.offenderCaseReference } }
-    courtCaseEntity.legacyData = CourtCaseLegacyData(toStoreCaseReferences.toMutableList(), courtCaseEntity.legacyData?.bookingId)
-    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity, ChangeSource.DPS))
-    return UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, ZonedDateTime.now(), hasCaseReferenceChanged(toAddCaseReferences, toRemoveCaseReferences, courtCaseEntity.statusId))
+    val hasChanged = hasCaseReferenceChanged(toAddCaseReferences, toRemoveCaseReferences, courtCaseEntity.statusId)
+    val shouldInitialise = courtCaseEntity.legacyData == null
+    if (hasChanged || shouldInitialise) {
+      courtCaseEntity.legacyData = CourtCaseLegacyData(toStoreCaseReferences.toMutableList(), courtCaseEntity.legacyData?.bookingId)
+      if (!shouldInitialise) {
+        courtCaseEntity.updatedAt = ZonedDateTime.now()
+        courtCaseEntity.updatedBy = serviceUserService.getUsername()
+      }
+      courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCaseEntity, ChangeSource.DPS))
+    }
+
+    return UpdatedCourtCaseReferences(courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, ZonedDateTime.now(), hasChanged)
   }
 
   @Transactional

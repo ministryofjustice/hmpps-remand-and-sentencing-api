@@ -43,6 +43,7 @@ class CourtCaseReferenceServiceTests {
 
     val activeCourtAppearance = generateCourtAppearance("REFERENCE1", CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(activeCourtAppearance)
+    every { serviceUserService.getUsername() } returns "USER"
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
@@ -60,6 +61,7 @@ class CourtCaseReferenceServiceTests {
     courtCase.legacyData = generateLegacyData(listOf(oldCaseReference))
     val deletedCourtAppearance = generateCourtAppearance(oldCaseReference, CourtAppearanceEntityStatus.DELETED, courtCase)
     courtCase.appearances = setOf(deletedCourtAppearance)
+    every { serviceUserService.getUsername() } returns "USER"
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
@@ -79,6 +81,7 @@ class CourtCaseReferenceServiceTests {
     val activeCourtAppearance = generateCourtAppearance("ANEWREFERENCE", CourtAppearanceEntityStatus.ACTIVE, courtCase)
     val deletedCourtAppearance = generateCourtAppearance("OLDCASEREFERENCE", CourtAppearanceEntityStatus.DELETED, courtCase)
     courtCase.appearances = setOf(activeCourtAppearance, deletedCourtAppearance)
+    every { serviceUserService.getUsername() } returns "USER"
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
@@ -103,6 +106,7 @@ class CourtCaseReferenceServiceTests {
     )
     val active = generateCourtAppearance("ACTIVE-CASE-REF", CourtAppearanceEntityStatus.ACTIVE, courtCase)
     courtCase.appearances = setOf(active)
+    every { serviceUserService.getUsername() } returns "USER"
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
 
@@ -123,6 +127,7 @@ class CourtCaseReferenceServiceTests {
     courtCase.appearances = setOf(stillUsingOld, editedToNew)
     every { courtCaseRepository.findByCaseUniqueIdentifier(courtCase.caseUniqueIdentifier) } returns courtCase
     every { courtCaseHistoryRepository.save(any()) } returns mockk()
+    every { serviceUserService.getUsername() } returns "USER"
 
     courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
 

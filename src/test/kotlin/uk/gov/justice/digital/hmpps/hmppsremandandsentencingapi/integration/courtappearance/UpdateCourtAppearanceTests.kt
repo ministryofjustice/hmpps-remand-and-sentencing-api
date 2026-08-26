@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCrea
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.UUID
 
 class UpdateCourtAppearanceTests : IntegrationTestBase() {
@@ -1080,6 +1081,22 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val courtCase = getCourtCase(courtCaseUuid)
     val periodLength = courtCase.appearances.first { it.appearanceUuid == updatedAppearance.appearanceUuid }.periodLengths.first { it.periodLengthUuid == updatedBreachOfImprisonableOffencePeriodLength.periodLengthUuid }
     Assertions.assertThat(periodLength.months).isEqualTo(updatedBreachOfImprisonableOffencePeriodLength.months)
+  }
+
+  @Test
+  fun `updating case reference results in legacy court case reference updated event`() {
+    val courtCaseReference = "123abc456"
+    val firstAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(courtCaseReference = courtCaseReference)
+    val secondAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(courtCaseReference = courtCaseReference)
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+    val updatedReference = courtCaseReference.uppercase(Locale.getDefault())
+    val updateFirstAppearance = firstAppearance.copy(courtCaseUuid = courtCaseUuid, courtCaseReference = updatedReference)
+    putCourtAppearance(firstAppearance.appearanceUuid, updateFirstAppearance)
+    purgeQueues()
+    val updateSecondAppearance = secondAppearance.copy(courtCaseUuid = courtCaseUuid, courtCaseReference = updatedReference)
+    putCourtAppearance(secondAppearance.appearanceUuid, updateSecondAppearance)
+    val events = getMessages(2)
+    Assertions.assertThat(events).extracting<String> { it.eventType }.contains("legacy.court-case-references.updated")
   }
 
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
