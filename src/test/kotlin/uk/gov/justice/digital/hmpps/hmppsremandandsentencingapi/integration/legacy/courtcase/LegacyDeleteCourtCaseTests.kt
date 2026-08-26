@@ -27,6 +27,23 @@ class LegacyDeleteCourtCaseTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `delete non deleted appearances while deleting court case`() {
+    val (courtCaseUuid) = createCourtCase()
+    webTestClient
+      .delete()
+      .uri("/legacy/court-case/$courtCaseUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val messages = getMessages(4)
+    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("court-case.deleted", "court-appearance.deleted")
+  }
+
+  @Test
   fun `no token results in unauthorized`() {
     webTestClient
       .delete()
