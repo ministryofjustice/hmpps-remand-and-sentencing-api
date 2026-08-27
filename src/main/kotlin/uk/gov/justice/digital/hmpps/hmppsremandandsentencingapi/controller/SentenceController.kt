@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.H
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.MissingSentenceAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceUuidsWithActiveSentencesAfterResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
@@ -96,20 +97,20 @@ class SentenceController(private val sentenceService: SentenceService, private v
   )
   fun hasSentencesAfterOnOtherCase(@RequestParam sentenceUuids: List<UUID>): HasSentenceAfterOnOtherCourtAppearanceResponse = sentenceService.hasSentencesAfterOnOtherCourtAppearance(sentenceUuids)
 
-  @GetMapping("/sentence/sentences-blocking-mark-as-inactive")
+  @GetMapping("/sentence/has-active-sentences-after-on-other-court-appearance")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
-    summary = "Sentences blocking mark as inactive",
-    description = "Given the sentences being marked inactive, returns the uuids of any of those sentences that have an active sentence consecutive to them outside of the selection. An empty list means the selection can be marked inactive.",
+    summary = "Sentences that have an active sentence consecutive to them outside of the given selection",
+    description = "Given a set of sentence uuids, returns the uuids of those sentences that have another active sentence consecutive to them which is not part of the given selection. An empty list means none of the selection is blocked.",
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "200", description = "Returns the blocking sentence uuids, empty if none"),
+      ApiResponse(responseCode = "200", description = "Returns the sentence uuids with an active sentence after them, empty if none"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun sentencesBlockingMarkAsInactive(@RequestParam sentenceUuids: List<UUID>): List<UUID> = sentenceService.sentencesBlockingMarkAsInactive(sentenceUuids)
+  fun hasActiveSentencesAfterOnOtherCourtAppearance(@RequestParam sentenceUuids: List<UUID>): SentenceUuidsWithActiveSentencesAfterResponse = sentenceService.sentenceUuidsWithActiveSentencesAfter(sentenceUuids)
 
   @PostMapping("/sentence/consecutive-chain/has-a-loop")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")

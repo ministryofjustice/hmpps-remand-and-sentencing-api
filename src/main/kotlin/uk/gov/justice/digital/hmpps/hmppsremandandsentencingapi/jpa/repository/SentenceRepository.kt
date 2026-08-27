@@ -197,21 +197,21 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-      select distinct sct.sentenceUuid from SentenceEntity s
-      join s.consecutiveTo sct
-      join s.charge c
+      select distinct sentenceWithActiveAfter.sentenceUuid from SentenceEntity activeSentenceAfter
+      join activeSentenceAfter.consecutiveTo sentenceWithActiveAfter
+      join activeSentenceAfter.charge c
       join c.appearanceCharges ac
       join ac.appearance ca
       join ca.courtCase cc
-      where sct.sentenceUuid in :sentenceUuids
-      and s.sentenceUuid not in :sentenceUuids
-      and s.statusId = :#{#sentenceStatus}
+      where sentenceWithActiveAfter.sentenceUuid in :sentenceUuids
+      and activeSentenceAfter.sentenceUuid not in :sentenceUuids
+      and activeSentenceAfter.statusId = :#{#sentenceStatus}
       and c.statusId = :#{#chargeStatus}
       and ca.statusId = :#{#courtAppearanceStatus}
       and cc.statusId = :#{#courtCaseStatus}
     """,
   )
-  fun findSentenceUuidsBlockingMarkAsInactive(
+  fun findSentenceUuidsWithActiveSentencesAfter(
     @Param("sentenceUuids") sentenceUuids: List<UUID>,
     @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.ACTIVE,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,

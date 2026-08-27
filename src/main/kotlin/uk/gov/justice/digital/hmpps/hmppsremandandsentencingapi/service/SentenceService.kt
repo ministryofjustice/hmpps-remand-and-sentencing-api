@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.M
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceUuidsWithActiveSentencesAfterResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
@@ -248,7 +249,9 @@ class SentenceService(
     sentenceRepository.sentencesAfterOnOtherCourtAppearanceDetails(sentenceUuids),
   )
 
-  fun sentencesBlockingMarkAsInactive(sentenceUuids: List<UUID>): List<UUID> = sentenceRepository.findSentenceUuidsBlockingMarkAsInactive(sentenceUuids)
+  fun sentenceUuidsWithActiveSentencesAfter(sentenceUuids: List<UUID>): SentenceUuidsWithActiveSentencesAfterResponse = SentenceUuidsWithActiveSentencesAfterResponse(
+    sentenceRepository.findSentenceUuidsWithActiveSentencesAfter(sentenceUuids),
+  )
 
   fun moveSentencesToNewCharge(
     existingCharge: ChargeEntity,
