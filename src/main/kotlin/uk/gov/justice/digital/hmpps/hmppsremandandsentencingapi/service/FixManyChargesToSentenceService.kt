@@ -38,8 +38,8 @@ class FixManyChargesToSentenceService(
   private val sentenceRepository: SentenceRepository,
 ) {
   @Transactional
-  fun fixPrisoner(prisonerId: String): MutableSet<EventMetadata> = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId).flatMap { courtCase ->
-    fixSentences(courtCaseToSentences(courtCase))
+  fun fixPrisoner(prisonerId: String, username: String? = null): MutableSet<EventMetadata> = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId).flatMap { courtCase ->
+    fixSentences(courtCaseToSentences(courtCase), username)
   }.toMutableSet()
 
   fun fixCourtCaseSentences(courtCase: CourtCaseEntity): MutableSet<EventMetadata> = fixSentences(courtCaseToSentences(courtCase))

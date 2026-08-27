@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.admin.FixSingleSentenceMultipleChargesPeople
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.BulkFixManyChargesToSentenceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 
 @RestController
 @RequestMapping("/person-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "person-admin-controller", description = "Person admin")
-class PersonAdminController(private val bulkFixManyChargesToSentenceService: BulkFixManyChargesToSentenceService) {
+class PersonAdminController(private val bulkFixManyChargesToSentenceService: BulkFixManyChargesToSentenceService, private val serviceUserService: ServiceUserService) {
 
   @PostMapping("/fix-many-charges-to-sentence")
   @ResponseStatus(HttpStatus.ACCEPTED)
@@ -31,6 +32,6 @@ class PersonAdminController(private val bulkFixManyChargesToSentenceService: Bul
     ],
   )
   fun cleanupManyChargesToSentence(@RequestBody fixSingleSentenceMultipleChargesPeople: FixSingleSentenceMultipleChargesPeople) {
-    bulkFixManyChargesToSentenceService.fixPeople(fixSingleSentenceMultipleChargesPeople)
+    bulkFixManyChargesToSentenceService.fixPeople(fixSingleSentenceMultipleChargesPeople, serviceUserService.getUsername())
   }
 }
