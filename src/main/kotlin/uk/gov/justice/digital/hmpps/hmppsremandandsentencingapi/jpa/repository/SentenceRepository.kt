@@ -195,6 +195,30 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     ),
   ): List<SentenceAfterOnAnotherCourtAppearanceRow>
 
+  @Query(
+    """
+      select distinct sentenceWithActiveAfter.sentenceUuid from SentenceEntity activeSentenceAfter
+      join activeSentenceAfter.consecutiveTo sentenceWithActiveAfter
+      join activeSentenceAfter.charge c
+      join c.appearanceCharges ac
+      join ac.appearance ca
+      join ca.courtCase cc
+      where sentenceWithActiveAfter.sentenceUuid in :sentenceUuids
+      and activeSentenceAfter.sentenceUuid not in :sentenceUuids
+      and activeSentenceAfter.statusId = :#{#sentenceStatus}
+      and c.statusId = :#{#chargeStatus}
+      and ca.statusId = :#{#courtAppearanceStatus}
+      and cc.statusId = :#{#courtCaseStatus}
+    """,
+  )
+  fun findSentenceUuidsWithActiveSentencesAfter(
+    @Param("sentenceUuids") sentenceUuids: List<UUID>,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.ACTIVE,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.ACTIVE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+  ): List<UUID>
+
   fun findConsecutiveToSentences(
     @Param("prisonerId") prisonerId: String,
     @Param("beforeOrOnAppearanceDate") beforeOrOnAppearanceDate: LocalDate,
