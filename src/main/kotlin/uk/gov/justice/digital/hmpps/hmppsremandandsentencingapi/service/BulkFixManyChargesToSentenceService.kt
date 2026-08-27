@@ -29,9 +29,9 @@ class BulkFixManyChargesToSentenceService(
 
   @Async
   @Transactional
-  fun fixPeople(fixSingleSentenceMultipleChargesPeople: FixSingleSentenceMultipleChargesPeople) {
+  fun fixPeople(fixSingleSentenceMultipleChargesPeople: FixSingleSentenceMultipleChargesPeople, username: String) {
     log.info("Starting Bulk Fix Many Charges to Single Sentence people async job")
-    val events = fixSingleSentenceMultipleChargesPeople.prisonerIds.flatMap { fixManyChargesToSentenceService.fixPrisoner(it) }.toSet()
+    val events = fixSingleSentenceMultipleChargesPeople.prisonerIds.flatMap { fixManyChargesToSentenceService.fixPrisoner(it, username) }.toSet()
     dpsDomainEventService.emitEvents(events)
     log.info("Completed Bulk Fix Many Charges to Single Sentence people async job. Emitted a total of {} events", events.size)
   }
