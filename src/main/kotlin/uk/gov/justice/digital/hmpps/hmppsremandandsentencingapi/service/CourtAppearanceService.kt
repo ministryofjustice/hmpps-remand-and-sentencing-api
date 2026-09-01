@@ -652,9 +652,16 @@ class CourtAppearanceService(
   @Transactional
   fun deleteCourtAppearance(courtAppearanceEntity: CourtAppearanceEntity): RecordResponse<CourtAppearanceEntity> {
     val isOnFutureCourtAppearance = courtAppearanceEntity.statusId == CourtAppearanceEntityStatus.FUTURE
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+    courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.takeUnless { it.statusId == CourtAppearanceEntityStatus.ACTIVE }?.let { futureAppearance ->
+      courtAppearanceEntity.nextCourtAppearance = null
+      eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
+    }
+
+    nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(courtAppearanceEntity)
     courtAppearanceEntity.delete(serviceUserService.getUsername())
     courtAppearanceHistoryRepository.save(CourtAppearanceHistoryEntity.from(courtAppearanceEntity, ChangeSource.DPS))
-    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+
     eventsToEmit.add(
       EventMetadataCreator.courtAppearanceEventMetadata(
         courtAppearanceEntity.courtCase.prisonerId,
@@ -718,12 +725,6 @@ class CourtAppearanceService(
     val eventsToEmit = deleteCourtAppearance(courtAppearanceEntity).eventsToEmit.toMutableSet()
     documentService.unlinkDocuments(courtAppearanceEntity.documents.toList())
     val documentUpdates = courtAppearanceEntity.documents.map { DocumentStatusUpdates(it.documentUuid, DocumentMetadataStatus.DELETED) }
-
-    courtAppearanceEntity.nextCourtAppearance?.futureSkeletonAppearance?.takeUnless { it.statusId == CourtAppearanceEntityStatus.ACTIVE }?.let { futureAppearance ->
-      eventsToEmit.addAll(deleteCourtAppearance(futureAppearance).eventsToEmit)
-    }
-
-    nextCourtAppearanceRepository.deleteByFutureSkeletonAppearance(courtAppearanceEntity)
 
     if (courtCaseEntity.appearances.all { it.statusId == CourtAppearanceEntityStatus.DELETED }) {
       courtCaseEntity.latestCourtAppearance = null
