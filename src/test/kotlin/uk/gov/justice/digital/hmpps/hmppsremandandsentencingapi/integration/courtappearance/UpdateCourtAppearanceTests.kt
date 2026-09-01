@@ -1024,6 +1024,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     )
     val sentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentencedCharge.sentence!!.sentenceUuid)!!
     sentenceEntity.statusId = SentenceEntityStatus.INACTIVE
+    sentenceEntity.legacyData = DataCreator.sentenceLegacyData(active = false)
     sentenceRepository.save(sentenceEntity)
     putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
     val courtCase = getCourtCase(courtCaseUuid)
@@ -1040,6 +1041,8 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val breachAdditionalInformation = objectMapper.treeToValue(breachInsertedEvent.additionalInformation, HmppsBreachMessage::class.java)
     Assertions.assertThat(breachAdditionalInformation.courtCaseId).isEqualTo(courtCaseUuid)
     Assertions.assertThat(breachAdditionalInformation.periodLengthIds).contains(breachPeriodLength.periodLengthUuid.toString())
+    Assertions.assertThat(sentence.status).isEqualTo(SentenceEntityStatus.ACTIVE)
+    Assertions.assertThat(sentence.legacyData!!.active).isNull()
   }
 
   @Test
