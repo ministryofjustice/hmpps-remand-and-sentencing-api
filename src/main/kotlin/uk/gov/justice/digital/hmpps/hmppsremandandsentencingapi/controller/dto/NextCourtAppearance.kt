@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -10,7 +11,7 @@ data class NextCourtAppearance(
   val appearanceTime: LocalTime?,
   val courtCode: String,
   val appearanceType: AppearanceType,
-  val futureSkeletonAppearanceUuid: UUID,
+  val futureSkeletonAppearanceUuid: UUID?,
   val courtAppearanceSubType: CourtAppearanceSubtype?,
 ) {
   companion object {
@@ -19,7 +20,7 @@ data class NextCourtAppearance(
       nextCourtAppearanceEntity.appearanceTime,
       nextCourtAppearanceEntity.courtCode,
       AppearanceType.from(nextCourtAppearanceEntity.appearanceType),
-      nextCourtAppearanceEntity.futureSkeletonAppearance.appearanceUuid,
+      nextCourtAppearanceEntity.futureSkeletonAppearance.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.appearanceUuid,
       nextCourtAppearanceEntity.courtAppearanceSubtype?.let { CourtAppearanceSubtype.from(it) },
     )
   }
