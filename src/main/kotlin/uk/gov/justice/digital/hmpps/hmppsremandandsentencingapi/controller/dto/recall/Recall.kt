@@ -86,7 +86,7 @@ data class Recall(
                   .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
               )
             }.sortedWith { a, b ->
-            SentenceOrdering.compare(
+              SentenceOrdering.compare(
                 a.countNumber,
                 b.countNumber,
                 a.lineNumber,
