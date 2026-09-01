@@ -79,6 +79,8 @@ class PeriodLengthService(
         sentenceEntity.statusId = SentenceEntityStatus.ACTIVE
         sentenceEntity.updatedAt = ZonedDateTime.now()
         sentenceEntity.updatedBy = serviceUserService.getUsername()
+        sentenceEntity.updatedPrison = periodLengthEntity.createdPrison
+        sentenceEntity.legacyData = sentenceEntity.legacyData?.copy(active = null)
         sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity, ChangeSource.DPS))
         linkBreachSentence.eventsToEmit.add(
           EventMetadataCreator.sentenceEventMetadata(
