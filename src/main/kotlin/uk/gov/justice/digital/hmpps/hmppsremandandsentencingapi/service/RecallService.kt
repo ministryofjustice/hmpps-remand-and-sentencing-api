@@ -643,30 +643,17 @@ class RecallService(
     }
   }
 
-  private fun sortSentences(sentences: List<RecallableCourtCaseSentence>): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
-    val aCount = a.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
-    val bCount = b.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
-
-    if (aCount != null && bCount != null) {
-      return@sortedWith aCount.compareTo(bCount)
-    }
-
-    if (aCount != null) return@sortedWith -1
-    if (bCount != null) return@sortedWith 1
-
-    val aLine = a.lineNumber?.toIntOrNull()
-    val bLine = b.lineNumber?.toIntOrNull()
-
-    if (aLine != null && bLine != null) {
-      return@sortedWith aLine.compareTo(bLine)
-    }
-    if (aLine != null) return@sortedWith -1
-    if (bLine != null) return@sortedWith 1
-
-    val aDate = a.offenceStartDate ?: LocalDate.MAX
-    val bDate = b.offenceStartDate ?: LocalDate.MAX
-
-    aDate.compareTo(bDate)
+  private fun sortSentences(
+    sentences: List<RecallableCourtCaseSentence>,
+  ): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
+    SentenceOrdering.compare(
+      a.countNumber,
+      b.countNumber,
+      a.lineNumber,
+      b.lineNumber,
+      a.offenceStartDate,
+      b.offenceStartDate,
+    )
   }
 
   @VisibleForTesting
