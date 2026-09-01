@@ -9,15 +9,19 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordRes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyPeriodLengthService
+import java.time.ZonedDateTime
 import java.util.function.Consumer
 import kotlin.toString
 
@@ -27,6 +31,7 @@ class PeriodLengthService(
   private val periodLengthHistoryRepository: PeriodLengthHistoryRepository,
   private val serviceUserService: ServiceUserService,
   private val sentenceRepository: SentenceRepository,
+  private val sentenceHistoryRepository: SentenceHistoryRepository,
   private val legacyPeriodLengthService: LegacyPeriodLengthService,
 ) {
   fun create(
@@ -41,7 +46,7 @@ class PeriodLengthService(
         val periodLength = courtCaseHierarchyData.courtAppearancePeriodLengths.firstOrNull { courtAppearancePeriodLength -> courtAppearancePeriodLength.periodLengthUuid == it.periodLengthUuid } ?: it
         val eventsToEmit = mutableSetOf<EventMetadata>()
         onCreateConsumer.accept(periodLength)
-        val linkBreachSentence = linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseHierarchyData.courtCaseId!!, periodLength)
+        val linkBreachSentenceRecordResponse = linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseHierarchyData.courtCaseId!!, periodLength)
         val saved = periodLengthRepository.save(periodLength)
         periodLengthHistoryRepository.save(PeriodLengthHistoryEntity.from(saved, ChangeSource.DPS))
         if (saved.sentenceEntity != null) {
@@ -49,26 +54,44 @@ class PeriodLengthService(
             EventMetadataCreator.periodLengthEventMetadata(
               courtCaseHierarchyData.prisonerId,
               courtCaseHierarchyData.courtCaseId!!,
-              linkBreachSentence?.appearanceUuid?.toString() ?: courtCaseHierarchyData.courtAppearanceUuid.toString(),
-              linkBreachSentence?.chargeUuid?.toString() ?: saved.sentenceEntity?.charge?.chargeUuid.toString(),
+              linkBreachSentenceRecordResponse?.record?.appearanceUuid?.toString() ?: courtCaseHierarchyData.courtAppearanceUuid.toString(),
+              linkBreachSentenceRecordResponse?.record?.chargeUuid?.toString() ?: saved.sentenceEntity?.charge?.chargeUuid.toString(),
               saved.sentenceEntity?.sentenceUuid.toString(),
               saved.periodLengthUuid.toString(),
               EventType.PERIOD_LENGTH_INSERTED,
               courtCaseHierarchyData.isBreach,
             ),
           )
+          linkBreachSentenceRecordResponse?.eventsToEmit?.let { sentenceEventsToEmit -> eventsToEmit.addAll(sentenceEventsToEmit) }
         }
         RecordResponse(saved, eventsToEmit)
       }
     return toAddPeriodLengths
   }
 
-  private fun linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseUuid: String, periodLengthEntity: PeriodLengthEntity): LinkBreachSentence? {
-    var linkBreachSentence: LinkBreachSentence? = null
+  private fun linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseUuid: String, periodLengthEntity: PeriodLengthEntity): RecordResponse<LinkBreachSentence>? {
+    var linkBreachSentence: RecordResponse<LinkBreachSentence>? = null
     if (periodLengthEntity.appearanceEntity != null && periodLengthEntity.sentenceEntity == null && periodLengthEntity.periodLengthType == PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS) {
-      linkBreachSentence = sentenceRepository.findLinkableBreachSentenceId(courtCaseUuid)
-      val sentenceEntity = sentenceRepository.findByIdOrNull(linkBreachSentence.sentenceId)
+      linkBreachSentence = RecordResponse(sentenceRepository.findLinkableBreachSentenceId(courtCaseUuid), mutableSetOf())
+      val sentenceEntity = sentenceRepository.findByIdOrNull(linkBreachSentence.record.sentenceId)
       periodLengthEntity.sentenceEntity = sentenceEntity
+      sentenceEntity?.takeIf { it.statusId != SentenceEntityStatus.ACTIVE }?.let { sentenceEntity ->
+        sentenceEntity.statusId = SentenceEntityStatus.ACTIVE
+        sentenceEntity.updatedAt = ZonedDateTime.now()
+        sentenceEntity.updatedBy = serviceUserService.getUsername()
+        sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity, ChangeSource.DPS))
+        linkBreachSentence.eventsToEmit.add(
+          EventMetadataCreator.sentenceEventMetadata(
+            linkBreachSentence.record.prisonerId,
+            linkBreachSentence.record.courtCaseUuid,
+            linkBreachSentence.record.chargeUuid.toString(),
+            linkBreachSentence.record.sentenceUuid.toString(),
+            linkBreachSentence.record.appearanceUuid.toString(),
+            EventType.SENTENCE_UPDATED,
+            true,
+          ),
+        )
+      }
     }
 
     return linkBreachSentence
