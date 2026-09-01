@@ -1022,18 +1022,20 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       ),
       periodLengths = listOf(breachPeriodLength),
     )
+    val sentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentencedCharge.sentence!!.sentenceUuid)!!
+    sentenceEntity.statusId = SentenceEntityStatus.INACTIVE
+    sentenceRepository.save(sentenceEntity)
     putCourtAppearance(breachAppearance.appearanceUuid, breachAppearance)
     val courtCase = getCourtCase(courtCaseUuid)
     val sentence = courtCase.appearances.first { sentencingAppearance.appearanceUuid == it.appearanceUuid }.charges.first { it.chargeUuid == sentencedCharge.chargeUuid }.sentence!!
     Assertions.assertThat(sentence.periodLengths).anyMatch { periodLength -> periodLength.periodLengthUuid == breachPeriodLength.periodLengthUuid && periodLength.days == breachPeriodLength.days }
-    val events = getMessages(4)
-    Assertions.assertThat(events).anyMatch { it.eventType == "sentence.period-length.inserted" }
+    val events = getMessages(5)
+    Assertions.assertThat(events).extracting<String> { it.eventType }.contains("sentence.period-length.inserted", "breach.inserted", "sentence.updated")
     Assertions.assertThat(events.filter { it.eventType != "breach.inserted" }.map { it.additionalInformation.get("isBreach").asBoolean() }).allMatch { it }
     val periodLengthInsertedEvent = events.first { it.eventType == "sentence.period-length.inserted" }
     val additionalInformation = objectMapper.treeToValue(periodLengthInsertedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)
     Assertions.assertThat(additionalInformation.courtAppearanceId).isEqualTo(sentencingAppearance.appearanceUuid.toString())
     Assertions.assertThat(additionalInformation.courtChargeId).isEqualTo(sentencedCharge.chargeUuid.toString())
-    Assertions.assertThat(events).anyMatch { it.eventType == "breach.inserted" }
     val breachInsertedEvent = events.first { it.eventType == "breach.inserted" }
     val breachAdditionalInformation = objectMapper.treeToValue(breachInsertedEvent.additionalInformation, HmppsBreachMessage::class.java)
     Assertions.assertThat(breachAdditionalInformation.courtCaseId).isEqualTo(courtCaseUuid)

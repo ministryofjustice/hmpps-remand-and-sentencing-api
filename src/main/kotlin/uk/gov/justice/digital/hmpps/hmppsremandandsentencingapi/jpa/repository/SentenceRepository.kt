@@ -375,7 +375,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    select cc.case_unique_identifier as courtCaseUuid, ca.appearance_uuid as appearanceUuid, c.charge_uuid as chargeUuid, s.sentence_uuid as sentenceUuid, s.id as sentenceId from sentence s
+    select cc.prisoner_id as prisonerId, cc.case_unique_identifier as courtCaseUuid, ca.appearance_uuid as appearanceUuid, c.charge_uuid as chargeUuid, s.sentence_uuid as sentenceUuid, s.id as sentenceId from sentence s
     left join period_length pl on pl.sentence_id = s.id and pl.period_length_type = 'BREACH_OF_SUPERVISION_REQUIREMENTS' and pl.status_id != :deletedStatus
     left join recall_sentence rs on rs.sentence_id = s.id
     join charge c on c.id = s.charge_id
