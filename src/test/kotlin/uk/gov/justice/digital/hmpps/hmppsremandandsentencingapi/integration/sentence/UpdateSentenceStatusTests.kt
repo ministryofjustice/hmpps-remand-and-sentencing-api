@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
 class UpdateSentenceStatusTests : IntegrationTestBase() {
@@ -17,7 +18,8 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
 
   @Test
   fun `updates the status and reason of a sentence`() {
-    val createdSentence = createCourtCase().second.appearances.first().charges.first().sentence!!
+    val appearance = createCourtCase().second.appearances.first()
+    val createdSentence = appearance.charges.first().sentence!!
 
     webTestClient
       .patch()
@@ -25,6 +27,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
       .bodyValue(
         UpdateSentenceStatusRequest(
+          appearanceUuid = appearance.appearanceUuid,
           sentenceUuids = listOf(createdSentence.sentenceUuid!!),
           status = SentenceEntityStatus.INACTIVE,
           reason = "Sentence was recorded in error",
@@ -47,8 +50,11 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
 
   @Test
   fun `updates the status of multiple sentences with a null reason`() {
-    val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
-    val sentenceUuids = listOf(sentenceOne.sentenceUuid!!, sentenceTwo.sentenceUuid!!)
+    val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", sentence = DpsDataCreator.dpsCreateSentence())
+    val secondCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "EC10001", sentence = DpsDataCreator.dpsCreateSentence())
+    val createAppearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val sentenceUuids = listOf(firstCharge.sentence!!.sentenceUuid!!, secondCharge.sentence!!.sentenceUuid!!)
 
     webTestClient
       .patch()
@@ -56,6 +62,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
       .bodyValue(
         UpdateSentenceStatusRequest(
+          appearanceUuid = createAppearance.appearanceUuid,
           sentenceUuids = sentenceUuids,
           status = SentenceEntityStatus.INACTIVE,
           reason = null,
@@ -79,6 +86,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
       .uri("/sentence/status")
       .bodyValue(
         UpdateSentenceStatusRequest(
+          appearanceUuid = UUID.randomUUID(),
           sentenceUuids = listOf(UUID.randomUUID()),
           status = SentenceEntityStatus.INACTIVE,
           reason = null,
@@ -97,6 +105,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
       .headers { it.authToken(roles = listOf("ROLE_OTHER_FUNCTION")) }
       .bodyValue(
         UpdateSentenceStatusRequest(
+          appearanceUuid = UUID.randomUUID(),
           sentenceUuids = listOf(UUID.randomUUID()),
           status = SentenceEntityStatus.INACTIVE,
           reason = null,

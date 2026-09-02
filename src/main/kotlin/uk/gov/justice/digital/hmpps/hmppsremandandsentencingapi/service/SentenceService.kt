@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
@@ -56,6 +57,7 @@ class SentenceService(
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val recallHistoryRepository: RecallHistoryRepository,
+  private val courtAppearanceRepository: CourtAppearanceRepository,
 ) {
 
   @Transactional
@@ -189,8 +191,10 @@ class SentenceService(
   }
 
   @Transactional
-  fun updateSentenceStatus(sentenceUuids: List<UUID>, status: SentenceEntityStatus, reason: String?): RecordResponse<UpdateSentenceStatusResponse> {
+  fun updateSentenceStatus(appearanceUuid: UUID, sentenceUuids: List<UUID>, status: SentenceEntityStatus, reason: String?): RecordResponse<UpdateSentenceStatusResponse> {
+    val appearance = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)!!
     val sentences = sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentenceUuids)
+    val isBreach = Constants.breachWarrantTypes.contains(appearance.warrantType)
 
     val username = serviceUserService.getUsername()
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
@@ -199,20 +203,17 @@ class SentenceService(
       sentence.updateStatus(status, reason, username)
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence, ChangeSource.DPS))
 
-      val appearance = sentence.charge.appearanceCharges.firstOrNull { it.appearance?.statusId == CourtAppearanceEntityStatus.ACTIVE }?.appearance
-      if (appearance != null) {
-        eventsToEmit.add(
-          EventMetadataCreator.sentenceEventMetadata(
-            appearance.courtCase.prisonerId,
-            appearance.courtCase.caseUniqueIdentifier,
-            sentence.charge.chargeUuid.toString(),
-            sentence.sentenceUuid.toString(),
-            appearance.appearanceUuid.toString(),
-            EventType.SENTENCE_UPDATED,
-            Constants.breachWarrantTypes.contains(appearance.warrantType),
-          ),
-        )
-      }
+      eventsToEmit.add(
+        EventMetadataCreator.sentenceEventMetadata(
+          appearance.courtCase.prisonerId,
+          appearance.courtCase.caseUniqueIdentifier,
+          sentence.charge.chargeUuid.toString(),
+          sentence.sentenceUuid.toString(),
+          appearance.appearanceUuid.toString(),
+          EventType.SENTENCE_UPDATED,
+          isBreach,
+        ),
+      )
     }
 
     return RecordResponse(

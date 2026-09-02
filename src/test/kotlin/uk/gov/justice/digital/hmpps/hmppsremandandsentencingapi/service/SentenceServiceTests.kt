@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
@@ -21,6 +22,7 @@ class SentenceServiceTests {
   private val sentenceHistoryRepository = mockk<SentenceHistoryRepository>(relaxed = true)
   private val recallSentenceRepository = mockk<RecallSentenceRepository>(relaxed = true)
   private val recallHistoryRepository = mockk<RecallHistoryRepository>(relaxed = true)
+  private val courtAppearanceRepository = mockk<CourtAppearanceRepository>(relaxed = true)
 
   private val sentenceService = SentenceService(
     sentenceRepository = sentenceRepository,
@@ -31,6 +33,7 @@ class SentenceServiceTests {
     fixManyChargesToSentenceService = fixManyChargesToSentenceService,
     recallSentenceRepository = recallSentenceRepository,
     recallHistoryRepository = recallHistoryRepository,
+    courtAppearanceRepository = courtAppearanceRepository,
   )
 
   @Nested

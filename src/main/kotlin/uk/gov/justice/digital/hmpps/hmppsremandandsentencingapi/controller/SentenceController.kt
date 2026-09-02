@@ -198,7 +198,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun updateSentenceStatus(@Valid @RequestBody request: UpdateSentenceStatusRequest): UpdateSentenceStatusResponse = sentenceService.updateSentenceStatus(request.sentenceUuids, request.status, request.reason).let { (response, eventsToEmit) ->
+  fun updateSentenceStatus(@Valid @RequestBody request: UpdateSentenceStatusRequest): UpdateSentenceStatusResponse = sentenceService.updateSentenceStatus(request.appearanceUuid, request.sentenceUuids, request.status, request.reason).let { (response, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     response
   }
