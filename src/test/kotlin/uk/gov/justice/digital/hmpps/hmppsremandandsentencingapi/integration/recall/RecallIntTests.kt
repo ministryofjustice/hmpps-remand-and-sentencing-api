@@ -496,6 +496,76 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `Get recall orders sentences by count number`() {
+    val appearanceDate = LocalDate.now().minusDays(30)
+
+    val firstCharge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(
+        chargeNumber = "3",
+        convictionDate = appearanceDate,
+      ),
+      offenceStartDate = LocalDate.of(2025, 2, 3),
+    )
+
+    val secondCharge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(
+        chargeNumber = "1",
+        convictionDate = appearanceDate,
+      ),
+      offenceStartDate = LocalDate.of(2025, 3, 4),
+    )
+
+    val thirdCharge = DpsDataCreator.dpsCreateCharge(
+      sentence = DpsDataCreator.dpsCreateSentence(
+        chargeNumber = "2",
+        convictionDate = appearanceDate,
+      ),
+      offenceStartDate = LocalDate.of(2025, 4, 5),
+    )
+
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(
+      charges = listOf(
+        firstCharge,
+        secondCharge,
+        thirdCharge,
+      ),
+      courtCaseReference = "CC1",
+      appearanceDate = appearanceDate,
+    )
+
+    val (_, courtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        appearances = listOf(appearance),
+      ),
+    )
+
+    val sentences = courtCase.appearances
+      .first()
+      .charges
+      .map { it.sentence!! }
+
+    val recall = DpsDataCreator.dpsCreateRecall(
+      revocationDate = LocalDate.of(2024, 7, 1),
+      returnToCustodyDate = LocalDate.of(2024, 7, 20),
+      recallTypeCode = LR,
+      sentenceIds = listOf(
+        sentences[0].sentenceUuid,
+        sentences[1].sentenceUuid,
+        sentences[2].sentenceUuid,
+      ),
+    )
+
+    val recallUuid = createRecall(recall).recallUuid
+
+    val actualRecall = getRecallByUUID(recallUuid)
+
+    assertThat(actualRecall.courtCases.single().sentences)
+      .extracting<String> { it.countNumber }
+      .containsExactly("1", "2", "3")
+  }
+
+  @Test
   fun `Get recalls returns bookingId from court case legacy data`() {
     val bookingId = CUSTODY_FILTER_ACTIVE_BOOKING_ID
     val appearanceDate = LocalDate.now().minusDays(30)

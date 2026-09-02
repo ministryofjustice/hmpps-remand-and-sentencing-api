@@ -85,7 +85,20 @@ data class Recall(
                 aggravatingFactors = it.sentence.charge.chargeAggravatingFactors
                   .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
               )
-            }.sortedBy { it.offenceStartDate },
+            }.sortedWith { a, b ->
+              SentenceOrdering.compare(
+                SentenceOrderingKey(
+                  countNumber = a.countNumber,
+                  lineNumber = a.lineNumber,
+                  offenceStartDate = a.offenceStartDate,
+                ),
+                SentenceOrderingKey(
+                  countNumber = b.countNumber,
+                  lineNumber = b.lineNumber,
+                  offenceStartDate = b.offenceStartDate,
+                ),
+              )
+            },
           )
         },
       ual = ualAdjustment?.let { RecallUALAdjustment(it.id!!, it.days!!) },
