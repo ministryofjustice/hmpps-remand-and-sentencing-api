@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
@@ -59,5 +60,25 @@ class LegacyUpdateSentenceBookingIdTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `no appearance results is unprocessable`() {
+    val (_, createdCourtCase) = createCourtCase()
+    val courtAppearance = createdCourtCase.appearances.first()
+    val sentence = courtAppearance.charges.first().sentence!!
+    deleteCourtAppearance(courtAppearance.appearanceUuid)
+    val toUpdate = DataCreator.legacyUpdateSentenceBookingId()
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/${sentence.sentenceUuid}/booking-id")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT)
   }
 }

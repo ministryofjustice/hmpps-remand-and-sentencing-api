@@ -86,6 +86,7 @@ class LegacySentenceController(
       ApiResponse(responseCode = "204", description = "No content"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "422", description = "Unprocessable , requires the sentence to be associated to a charge which has an association with an appearance"),
     ],
   )
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
