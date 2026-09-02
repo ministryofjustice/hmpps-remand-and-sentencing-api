@@ -73,24 +73,6 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `returns not found when a sentence does not exist`() {
-    webTestClient
-      .patch()
-      .uri("/sentence/status")
-      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
-      .bodyValue(
-        UpdateSentenceStatusRequest(
-          sentenceUuids = listOf(UUID.randomUUID()),
-          status = SentenceEntityStatus.INACTIVE,
-          reason = "Reason",
-        ),
-      )
-      .exchange()
-      .expectStatus()
-      .isNotFound
-  }
-
-  @Test
   fun `no token results in unauthorized`() {
     webTestClient
       .patch()

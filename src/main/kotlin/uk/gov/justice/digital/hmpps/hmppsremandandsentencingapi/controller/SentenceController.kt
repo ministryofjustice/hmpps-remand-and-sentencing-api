@@ -196,7 +196,6 @@ class SentenceController(private val sentenceService: SentenceService, private v
       ApiResponse(responseCode = "200", description = "Returns the uuids of the sentences that were updated"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
-      ApiResponse(responseCode = "404", description = "One or more sentences not found"),
     ],
   )
   fun updateSentenceStatus(@Valid @RequestBody request: UpdateSentenceStatusRequest): UpdateSentenceStatusResponse = sentenceService.updateSentenceStatus(request.sentenceUuids, request.status, request.reason).let { (response, eventsToEmit) ->

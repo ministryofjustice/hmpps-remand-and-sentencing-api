@@ -191,11 +191,6 @@ class SentenceService(
   @Transactional
   fun updateSentenceStatus(sentenceUuids: List<UUID>, status: SentenceEntityStatus, reason: String?): RecordResponse<UpdateSentenceStatusResponse> {
     val sentences = sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentenceUuids)
-    val foundSentenceUuids = sentences.map { it.sentenceUuid }.toSet()
-    val missingSentenceUuids = sentenceUuids.filterNot { foundSentenceUuids.contains(it) }
-    if (missingSentenceUuids.isNotEmpty()) {
-      throw EntityNotFoundException("No sentence(s) found at $missingSentenceUuids")
-    }
 
     val username = serviceUserService.getUsername()
     val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
