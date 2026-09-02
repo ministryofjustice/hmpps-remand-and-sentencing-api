@@ -54,7 +54,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceDeletedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateSentenceBookingId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.AggravatingFactorsService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
 import java.time.ZonedDateTime
@@ -247,11 +249,7 @@ class LegacySentenceService(
     sentenceUuid: UUID,
     createSentence: LegacyCreateSentence,
   ): RecordResponse<LegacySentenceCreatedResponse> {
-    RetrySynchronizationManager.getContext()?.let { retryContext ->
-      if (retryContext.retryCount > 0) {
-        log.info("sentence update retry with context: count = ${retryContext.retryCount}, lastException = ${retryContext.lastThrowable?.javaClass?.name}, exhausted=${retryContext.isExhaustedOnly}")
-      }
-    }
+    logRetryException()
     val sentence = createSentence.copy()
     sentenceRepository.acquireSentenceTransactionLock(sentenceUuid)
     val dpsSentenceType = getDpsSentenceType(sentence.legacyData.sentenceCategory, sentence.legacyData.sentenceCalcType)
@@ -363,25 +361,13 @@ class LegacySentenceService(
       // This works for the race condition because `update-sentence` is invoked twice in such cases.
       checkAndUpdatePeriodLengthStatus(existingSentence, getPerformedByUsername(sentence))
 
-      entityChangeStatus =
-        if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
-      val courtAppearance = activeRecord.charge.appearanceCharges
-        .map { it.appearance!! }
-        .filter { it.statusId != CourtAppearanceEntityStatus.DELETED }
-        .maxByOrNull { it.appearanceDate }
-        ?: throw IllegalStateException("No active court appearance found for charge ${activeRecord.charge.chargeUuid}")
+      entityChangeStatus = if (entityChangeStatus != EntityChangeStatus.NO_CHANGE) entityChangeStatus else EntityChangeStatus.EDITED
 
       if (createRecallEvent != null) {
         eventMetaDataList.add(createRecallEvent)
       }
 
-      val legacySentenceCreatedResponse = LegacySentenceCreatedResponse(
-        courtAppearance.courtCase.prisonerId,
-        activeRecord.sentenceUuid,
-        activeRecord.charge.chargeUuid,
-        courtAppearance.appearanceUuid,
-        courtAppearance.courtCase.caseUniqueIdentifier,
-      )
+      val legacySentenceCreatedResponse = LegacySentenceCreatedResponse.from(activeRecord)
 
       val eventType = when (entityChangeStatus) {
         EntityChangeStatus.EDITED -> EventType.SENTENCE_UPDATED
@@ -409,6 +395,46 @@ class LegacySentenceService(
       record = responses.first(),
       eventsToEmit = eventMetaDataList,
     )
+  }
+
+  @Retryable(maxAttempts = 3, retryFor = [ObjectOptimisticLockingFailureException::class, CannotAcquireLockException::class, LockAcquisitionException::class])
+  @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
+  fun updateBookingId(sentenceUuid: UUID, updateSentenceBookingId: LegacyUpdateSentenceBookingId): MutableSet<EventMetadata> {
+    logRetryException()
+    sentenceRepository.acquireSentenceTransactionLock(sentenceUuid)
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    sentenceRepository.findBySentenceUuid(sentenceUuid)
+      .filter { it.statusId != SentenceEntityStatus.DELETED }
+      .forEach { sentenceRecord ->
+        if (sentenceRecord.legacyData?.bookingId != updateSentenceBookingId.bookingId) {
+          sentenceRecord.legacyData =
+            sentenceRecord.legacyData?.copy(bookingId = updateSentenceBookingId.bookingId) ?: SentenceLegacyData.from(
+              updateSentenceBookingId,
+            )
+          sentenceRecord.updatedAt = ZonedDateTime.now()
+          sentenceRecord.updatedBy = updateSentenceBookingId.performedByUser ?: serviceUserService.getUsername()
+          sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord, ChangeSource.NOMIS))
+          val legacySentenceCreatedResponse = LegacySentenceCreatedResponse.from(sentenceRecord)
+          eventsToEmit.add(
+            EventMetadataCreator.sentenceEventMetadata(
+              legacySentenceCreatedResponse.prisonerId,
+              legacySentenceCreatedResponse.courtCaseId,
+              legacySentenceCreatedResponse.chargeLifetimeUuid.toString(),
+              legacySentenceCreatedResponse.lifetimeUuid.toString(),
+              legacySentenceCreatedResponse.appearanceUuid.toString(),
+              EventType.SENTENCE_UPDATED,
+              false,
+            ),
+          )
+        }
+      }
+    return eventsToEmit
+  }
+
+  private fun logRetryException() = RetrySynchronizationManager.getContext()?.let { retryContext ->
+    if (retryContext.retryCount > 0) {
+      log.info("sentence update retry with context: count = ${retryContext.retryCount}, lastException = ${retryContext.lastThrowable?.javaClass?.name}, exhausted=${retryContext.isExhaustedOnly}")
+    }
   }
 
   private fun getPerformedByUsername(sentence: LegacyCreateSentence): String = sentence.performedByUser ?: serviceUserService.getUsername()
