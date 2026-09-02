@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import org.slf4j.LoggerFactory
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
@@ -45,14 +46,15 @@ data class LegacySentence(
 
       val latestRecall = sentenceEntity.latestRecall()
       val sentenceTypeAndCategory = getSentenceCalcTypeAndCategory(sentenceEntity, latestRecall)
-
+      val active = sentenceEntity.statusId == SentenceEntityStatus.ACTIVE
+      log.debug("sentence uuid {} is active {} with status {}", sentenceEntity.sentenceUuid, active, sentenceEntity.statusId)
       return LegacySentence(
         courtCase.prisonerId,
         courtCase.caseUniqueIdentifier,
         sentenceEntity.charge.chargeUuid,
         sentenceEntity.sentenceUuid,
         firstSentenceAppearance.appearanceUuid,
-        sentenceEntity.statusId == SentenceEntityStatus.ACTIVE,
+        active,
         sentenceTypeAndCategory.first,
         sentenceTypeAndCategory.second,
         sentenceEntity.consecutiveTo?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.sentenceUuid,
@@ -109,5 +111,7 @@ data class LegacySentence(
 
       return latestRecall.recallType.toLegacySentenceType(recallLegacyData.sentenceCalcType!!, classification ?: SentenceTypeClassification.STANDARD) to recallLegacyData.sentenceCategory!!
     }
+
+    val log = LoggerFactory.getLogger(LegacySentence::class.java)
   }
 }
