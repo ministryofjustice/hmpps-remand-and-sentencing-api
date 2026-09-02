@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -19,6 +21,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceUuidsWithActiveSentencesAfterResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceStatusRequest
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceStatusResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
@@ -180,4 +184,23 @@ class SentenceController(private val sentenceService: SentenceService, private v
     ],
   )
   fun deleteSentenceStatus(@PathVariable sentenceUuid: UUID, @RequestParam(required = false, defaultValue = "") sentenceUuidsInChain: List<UUID>): DeleteSentenceStatusDetails = sentenceService.findSentenceDeleteStatusByUuid(sentenceUuid, sentenceUuidsInChain)
+
+  @PatchMapping("/sentence/status")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Update the status of one or more sentences",
+    description = "Updates the status of the given sentences, e.g. marking them inactive, and records the reason for the change",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns the uuids of the sentences that were updated"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "One or more sentences not found"),
+    ],
+  )
+  fun updateSentenceStatus(@Valid @RequestBody request: UpdateSentenceStatusRequest): UpdateSentenceStatusResponse = sentenceService.updateSentenceStatus(request.sentenceUuids, request.status, request.reason).let { (response, eventsToEmit) ->
+    dpsDomainEventService.emitEvents(eventsToEmit)
+    response
+  }
 }

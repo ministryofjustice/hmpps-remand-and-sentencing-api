@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceUuidsWithActiveSentencesAfterResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceStatusResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReason
@@ -41,6 +42,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -184,6 +186,44 @@ class SentenceService(
       eventsToEmit.addAll(deletedPeriodLength.eventsToEmit)
     }
     return RecordResponse(sentence, eventsToEmit)
+  }
+
+  @Transactional
+  fun updateSentenceStatus(sentenceUuids: List<UUID>, status: SentenceEntityStatus, reason: String?): RecordResponse<UpdateSentenceStatusResponse> {
+    val sentences = sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentenceUuids)
+    val foundSentenceUuids = sentences.map { it.sentenceUuid }.toSet()
+    val missingSentenceUuids = sentenceUuids.filterNot { foundSentenceUuids.contains(it) }
+    if (missingSentenceUuids.isNotEmpty()) {
+      throw EntityNotFoundException("No sentence(s) found at $missingSentenceUuids")
+    }
+
+    val username = serviceUserService.getUsername()
+    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+
+    sentences.forEach { sentence ->
+      sentence.updateStatus(status, reason, username)
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence, ChangeSource.DPS))
+
+      val appearance = sentence.charge.appearanceCharges.firstOrNull { it.appearance?.statusId == CourtAppearanceEntityStatus.ACTIVE }?.appearance
+      if (appearance != null) {
+        eventsToEmit.add(
+          EventMetadataCreator.sentenceEventMetadata(
+            appearance.courtCase.prisonerId,
+            appearance.courtCase.caseUniqueIdentifier,
+            sentence.charge.chargeUuid.toString(),
+            sentence.sentenceUuid.toString(),
+            appearance.appearanceUuid.toString(),
+            EventType.SENTENCE_UPDATED,
+            Constants.breachWarrantTypes.contains(appearance.warrantType),
+          ),
+        )
+      }
+    }
+
+    return RecordResponse(
+      UpdateSentenceStatusResponse(sentences.map { it.sentenceUuid }),
+      eventsToEmit,
+    )
   }
 
   private fun handleRecallsForDeletedSentence(

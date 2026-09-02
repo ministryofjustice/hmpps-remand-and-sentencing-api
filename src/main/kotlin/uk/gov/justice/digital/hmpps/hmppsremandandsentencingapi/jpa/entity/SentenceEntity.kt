@@ -217,6 +217,8 @@ class SentenceEntity(
   var fineAmount: BigDecimal?,
   @Formula("(select count(*) from recall_sentence rs where rs.sentence_id= id)")
   val totalRecallSentences: Int = -1,
+  @Column
+  var reason: String? = null,
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
@@ -373,6 +375,13 @@ class SentenceEntity(
     updatedAt = ZonedDateTime.now()
     updatedBy = updatedUser
     statusId = SentenceEntityStatus.DELETED
+  }
+
+  fun updateStatus(status: SentenceEntityStatus, reason: String?, updatedUser: String) {
+    updatedAt = ZonedDateTime.now()
+    updatedBy = updatedUser
+    statusId = status
+    this.reason = reason
   }
 
   override fun equals(other: Any?): Boolean {
