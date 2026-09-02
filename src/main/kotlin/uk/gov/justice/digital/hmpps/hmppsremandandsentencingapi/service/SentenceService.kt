@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceDetailsForConsecValidation
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceUuidsWithActiveSentencesAfterResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateSentenceStatusResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReason
@@ -36,14 +35,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallSentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -57,7 +54,6 @@ class SentenceService(
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val recallSentenceRepository: RecallSentenceRepository,
   private val recallHistoryRepository: RecallHistoryRepository,
-  private val courtAppearanceRepository: CourtAppearanceRepository,
 ) {
 
   @Transactional
@@ -188,38 +184,6 @@ class SentenceService(
       eventsToEmit.addAll(deletedPeriodLength.eventsToEmit)
     }
     return RecordResponse(sentence, eventsToEmit)
-  }
-
-  @Transactional
-  fun updateSentenceStatus(appearanceUuid: UUID, sentenceUuids: List<UUID>, status: SentenceEntityStatus, reason: String?): RecordResponse<UpdateSentenceStatusResponse> {
-    val appearance = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)!!
-    val sentences = sentenceRepository.findBySentenceUuidInAndStatusIdNot(sentenceUuids)
-    val isBreach = Constants.breachWarrantTypes.contains(appearance.warrantType)
-
-    val username = serviceUserService.getUsername()
-    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
-
-    sentences.forEach { sentence ->
-      sentence.updateStatus(status, reason, username)
-      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentence, ChangeSource.DPS))
-
-      eventsToEmit.add(
-        EventMetadataCreator.sentenceEventMetadata(
-          appearance.courtCase.prisonerId,
-          appearance.courtCase.caseUniqueIdentifier,
-          sentence.charge.chargeUuid.toString(),
-          sentence.sentenceUuid.toString(),
-          appearance.appearanceUuid.toString(),
-          EventType.SENTENCE_UPDATED,
-          isBreach,
-        ),
-      )
-    }
-
-    return RecordResponse(
-      UpdateSentenceStatusResponse(sentences.map { it.sentenceUuid }),
-      eventsToEmit,
-    )
   }
 
   private fun handleRecallsForDeletedSentence(
