@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySearchSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateSentenceBookingId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import java.util.UUID
@@ -73,6 +74,24 @@ class LegacySentenceController(
       it.record
     }
     return ResponseEntity.noContent().build()
+  }
+
+  @PutMapping("/{lifetimeUuid}/booking-id")
+  @Operation(
+    summary = "Update a sentence booking id",
+    description = "Synchronise an update of sentence booking id from NOMIS Offender sentences into remand and sentencing API.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "No content"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RW')")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun updateBookingId(@PathVariable lifetimeUuid: UUID, @RequestBody updateSentenceBookingId: LegacyUpdateSentenceBookingId) = legacySentenceService.updateBookingId(lifetimeUuid, updateSentenceBookingId).let {
+    legacyEventService.emitEvents(it)
   }
 
   @GetMapping("/{lifetimeUuid}")
