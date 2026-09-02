@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.math.BigDecimal
@@ -18,6 +19,7 @@ data class PagedSentence(
   val fineAmount: BigDecimal?,
   val periodLengths: List<PagedSentencePeriodLength>,
   val hasRecall: Boolean,
+  val status: SentenceEntityStatus,
 ) {
   companion object {
     fun from(sentenceRows: List<CourtCaseRow>): PagedSentence {
@@ -34,6 +36,7 @@ data class PagedSentence(
         sentence.sentenceFineAmount,
         periodLengths.values.map { PagedSentencePeriodLength.from(it.first()) },
         sentence.recallSentenceId != null,
+        sentence.sentenceStatus!!,
       )
     }
   }
