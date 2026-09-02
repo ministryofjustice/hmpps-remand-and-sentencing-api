@@ -87,12 +87,16 @@ data class Recall(
               )
             }.sortedWith { a, b ->
               SentenceOrdering.compare(
-                a.countNumber,
-                b.countNumber,
-                a.lineNumber,
-                b.lineNumber,
-                a.offenceStartDate,
-                b.offenceStartDate,
+                SentenceOrderingKey(
+                  countNumber = a.countNumber,
+                  lineNumber = a.lineNumber,
+                  offenceStartDate = a.offenceStartDate,
+                ),
+                SentenceOrderingKey(
+                  countNumber = b.countNumber,
+                  lineNumber = b.lineNumber,
+                  offenceStartDate = b.offenceStartDate,
+                ),
               )
             },
           )

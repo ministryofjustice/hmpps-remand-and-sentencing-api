@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceOrdering
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceOrderingKey
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceWithCaseUuid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -648,12 +649,16 @@ class RecallService(
     sentences: List<RecallableCourtCaseSentence>,
   ): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
     SentenceOrdering.compare(
-      a.countNumber,
-      b.countNumber,
-      a.lineNumber,
-      b.lineNumber,
-      a.offenceStartDate,
-      b.offenceStartDate,
+      SentenceOrderingKey(
+        countNumber = a.countNumber,
+        lineNumber = a.lineNumber,
+        offenceStartDate = a.offenceStartDate,
+      ),
+      SentenceOrderingKey(
+        countNumber = b.countNumber,
+        lineNumber = b.lineNumber,
+        offenceStartDate = b.offenceStartDate,
+      ),
     )
   }
 

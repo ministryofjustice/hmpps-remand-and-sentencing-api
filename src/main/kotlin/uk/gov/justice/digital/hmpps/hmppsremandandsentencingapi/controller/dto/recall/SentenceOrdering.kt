@@ -4,15 +4,11 @@ import java.time.LocalDate
 
 object SentenceOrdering {
   fun compare(
-    aCountNumber: String?,
-    bCountNumber: String?,
-    aLineNumber: String?,
-    bLineNumber: String?,
-    aOffenceStartDate: LocalDate?,
-    bOffenceStartDate: LocalDate?,
+    a: SentenceOrderingKey,
+    b: SentenceOrderingKey,
   ): Int {
-    val aCount = aCountNumber?.takeIf { it != "-1" }?.toIntOrNull()
-    val bCount = bCountNumber?.takeIf { it != "-1" }?.toIntOrNull()
+    val aCount = a.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
+    val bCount = b.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
 
     if (aCount != null && bCount != null) {
       return aCount.compareTo(bCount)
@@ -21,8 +17,8 @@ object SentenceOrdering {
     if (aCount != null) return -1
     if (bCount != null) return 1
 
-    val aLine = aLineNumber?.toIntOrNull()
-    val bLine = bLineNumber?.toIntOrNull()
+    val aLine = a.lineNumber?.toIntOrNull()
+    val bLine = b.lineNumber?.toIntOrNull()
 
     if (aLine != null && bLine != null) {
       return aLine.compareTo(bLine)
@@ -31,8 +27,8 @@ object SentenceOrdering {
     if (aLine != null) return -1
     if (bLine != null) return 1
 
-    val aDate = aOffenceStartDate ?: LocalDate.MAX
-    val bDate = bOffenceStartDate ?: LocalDate.MAX
+    val aDate = a.offenceStartDate ?: LocalDate.MAX
+    val bDate = b.offenceStartDate ?: LocalDate.MAX
 
     return aDate.compareTo(bDate)
   }
