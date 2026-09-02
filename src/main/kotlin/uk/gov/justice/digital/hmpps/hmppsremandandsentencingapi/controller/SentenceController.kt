@@ -8,9 +8,9 @@ import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.Valid
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -185,7 +185,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
   )
   fun deleteSentenceStatus(@PathVariable sentenceUuid: UUID, @RequestParam(required = false, defaultValue = "") sentenceUuidsInChain: List<UUID>): DeleteSentenceStatusDetails = sentenceService.findSentenceDeleteStatusByUuid(sentenceUuid, sentenceUuidsInChain)
 
-  @PatchMapping("/sentence/status")
+  @PutMapping("/sentence/status")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
   @Operation(
     summary = "Update the status of one or more sentences",

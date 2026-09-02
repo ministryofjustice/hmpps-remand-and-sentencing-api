@@ -22,7 +22,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
     val createdSentence = appearance.charges.first().sentence!!
 
     webTestClient
-      .patch()
+      .put()
       .uri("/sentence/status")
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
       .bodyValue(
@@ -57,7 +57,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
     val sentenceUuids = listOf(firstCharge.sentence!!.sentenceUuid!!, secondCharge.sentence!!.sentenceUuid!!)
 
     webTestClient
-      .patch()
+      .put()
       .uri("/sentence/status")
       .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
       .bodyValue(
@@ -82,7 +82,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
   @Test
   fun `no token results in unauthorized`() {
     webTestClient
-      .patch()
+      .put()
       .uri("/sentence/status")
       .bodyValue(
         UpdateSentenceStatusRequest(
@@ -100,7 +100,7 @@ class UpdateSentenceStatusTests : IntegrationTestBase() {
   @Test
   fun `token with incorrect role is forbidden`() {
     webTestClient
-      .patch()
+      .put()
       .uri("/sentence/status")
       .headers { it.authToken(roles = listOf("ROLE_OTHER_FUNCTION")) }
       .bodyValue(
