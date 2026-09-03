@@ -299,6 +299,7 @@ class SentenceEntity(
       updatedBy = createdBy,
       fineAmount = sentence.fine?.fineAmount,
       countNumber = countNumber,
+      reason = reason,
     )
     return sentenceEntity
   }
@@ -403,7 +404,7 @@ class SentenceEntity(
       val sentenceEntity = SentenceEntity(
         sentenceUuid = sentence.sentenceUuid,
         countNumber = sentence.chargeNumber,
-        statusId = SentenceEntityStatus.ACTIVE,
+        statusId = sentence.status ?: SentenceEntityStatus.ACTIVE,
         createdBy = createdBy,
         createdPrison = sentence.prisonId,
         supersedingSentence = null,
@@ -413,6 +414,7 @@ class SentenceEntity(
         sentenceType = sentenceType,
         convictionDate = sentence.convictionDate,
         fineAmount = sentence.fineAmount?.fineAmount,
+        reason = sentence.reason,
       )
       return sentenceEntity
     }
@@ -427,6 +429,7 @@ class SentenceEntity(
       isManyCharges: Boolean,
       convictionDate: LocalDate? = null,
       countNumber: String? = null,
+      reason: String? = null,
     ): SentenceEntity = SentenceEntity(
       sentenceUuid = sentenceUuid,
       statusId = if (isManyCharges) {
@@ -446,6 +449,7 @@ class SentenceEntity(
       legacyData = sentence.legacyData,
       fineAmount = sentence.fine?.fineAmount,
       countNumber = countNumber,
+      reason = reason,
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {

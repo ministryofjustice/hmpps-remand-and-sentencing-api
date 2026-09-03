@@ -14,6 +14,6 @@ data class CreateSentence(
   val convictionDate: LocalDate?,
   val fineAmount: CreateFineAmount?,
   val prisonId: String?,
-  val status: SentenceEntityStatus? = null,
-  val reason: String? = null,
+  val status: SentenceEntityStatus?,
+  val reason: String?,
 )
