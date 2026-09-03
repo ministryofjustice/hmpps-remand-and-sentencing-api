@@ -41,7 +41,7 @@ class HmctsCourtDataService(
       courtCode = court?.courtId ?: hearing.courtId.toString(),
       courtCaseReference = hearing.caseReferences.firstOrNull(),
       criminalAppealOfficeReference = null,
-      appearanceDate = hearing.hearingDate.toLocalDate(),
+      appearanceDate = hearing.hearingDate,
       warrantType = mapWarrantType(hearing),
       nextCourtAppearance = hearing.nextHearing?.let { mapNextCourtAppearance(it) },
       charges = hearing.charges.map { mapCharge(it) },
