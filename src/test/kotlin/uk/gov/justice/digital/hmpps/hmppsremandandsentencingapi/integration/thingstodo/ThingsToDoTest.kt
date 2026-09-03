@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import java.util.stream.Stream
 
@@ -78,7 +77,7 @@ class ThingsToDoTest : IntegrationTestBase() {
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
       courtId = UUID.randomUUID(),
-      hearingDate = LocalDateTime.of(2026, 1, 1, 1, 1, 1),
+      hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123"),
       hearingType = "First hearing",
       documents = emptyList(),
@@ -190,7 +189,7 @@ class ThingsToDoTest : IntegrationTestBase() {
       ),
       Arguments.of(
         "No court case with multiple hearings give multiple things to do",
-        listOf(REMAND_HEARING, SENTENCING_HEARING.copy(hearingDate = LocalDate.of(2026, 6, 1).atStartOfDay())),
+        listOf(REMAND_HEARING, SENTENCING_HEARING.copy(hearingDate = LocalDate.of(2026, 6, 1))),
         null,
         listOf(
           HearingThingsToDoData(

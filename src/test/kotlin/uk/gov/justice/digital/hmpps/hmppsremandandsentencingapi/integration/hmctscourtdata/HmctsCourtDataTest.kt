@@ -36,7 +36,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
       courtId = UUID.randomUUID(),
-      hearingDate = LocalDateTime.of(2026, 1, 1, 1, 1, 1),
+      hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123", "EFG456"),
       hearingType = "First hearing",
       documents = listOf(
