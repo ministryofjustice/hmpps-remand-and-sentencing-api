@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -117,8 +118,8 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           appearanceDate = LocalDate.of(2026, 8, 15),
           appearanceTime = LocalTime.of(10, 0),
           courtCode = hmctsCourtHearing.nextHearing?.hmppsCourtId!!,
-          appearanceType = AppearanceType(appearanceTypeUuid = response.nextCourtAppearance!!.appearanceType.appearanceTypeUuid, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
-          futureSkeletonAppearanceUuid = response.nextCourtAppearance.futureSkeletonAppearanceUuid,
+          appearanceType = AppearanceType(appearanceTypeUuid = Constants.nilUUID, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
+          futureSkeletonAppearanceUuid = Constants.nilUUID,
           courtAppearanceSubType = null,
         ),
         charges = listOf(
