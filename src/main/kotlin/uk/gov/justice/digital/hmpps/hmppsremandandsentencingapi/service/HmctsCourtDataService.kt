@@ -68,12 +68,12 @@ class HmctsCourtDataService(
     appearanceTime = nextAppearance.hearingDate.toLocalTime(),
     courtCode = nextAppearance.hmppsCourtId ?: nextAppearance.hmppsCourtId.toString(),
     appearanceType = AppearanceType(
-      appearanceTypeUuid = DUMMY_ID,
+      appearanceTypeUuid = UUID.randomUUID(),
       description = "Unknown appearance type",
       displayOrder = 1,
       hasSubtypes = false,
     ),
-    futureSkeletonAppearanceUuid = DUMMY_ID,
+    futureSkeletonAppearanceUuid = UUID.randomUUID(),
     courtAppearanceSubType = null,
   )
 
@@ -81,7 +81,7 @@ class HmctsCourtDataService(
     val outcomeId = mapCodeToOutcome(charge.results.first().code)
     val outcome = outcomeId?.let { chargeOutcomeService.findByUuid(it) }
     return Charge(
-      chargeUuid = DUMMY_ID,
+      chargeUuid = UUID.randomUUID(),
       offenceCode = charge.code,
       offenceStartDate = charge.startDate,
       offenceEndDate = charge.endDate,
@@ -109,8 +109,5 @@ class HmctsCourtDataService(
   private fun mapCodeToOutcome(code: String): UUID? = when (code) {
     "RIB" -> UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8")
     else -> null
-  }
-  companion object {
-    val DUMMY_ID = UUID.randomUUID()
   }
 }

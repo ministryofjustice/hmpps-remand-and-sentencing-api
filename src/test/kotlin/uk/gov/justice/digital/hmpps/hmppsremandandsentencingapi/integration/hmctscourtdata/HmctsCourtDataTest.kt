@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.HmctsCourtDataService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -118,13 +117,13 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           appearanceDate = LocalDate.of(2026, 8, 15),
           appearanceTime = LocalTime.of(10, 0),
           courtCode = hmctsCourtHearing.nextHearing?.hmppsCourtId!!,
-          appearanceType = AppearanceType(appearanceTypeUuid = HmctsCourtDataService.DUMMY_ID, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
-          futureSkeletonAppearanceUuid = HmctsCourtDataService.DUMMY_ID,
+          appearanceType = AppearanceType(appearanceTypeUuid = response.nextCourtAppearance!!.appearanceType.appearanceTypeUuid, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
+          futureSkeletonAppearanceUuid = response.nextCourtAppearance.futureSkeletonAppearanceUuid,
           courtAppearanceSubType = null,
         ),
         charges = listOf(
           Charge(
-            chargeUuid = HmctsCourtDataService.DUMMY_ID,
+            chargeUuid = response.charges.first().chargeUuid,
             offenceCode = "TH68001",
             offenceStartDate = LocalDate.of(2026, 6, 15),
             offenceEndDate = LocalDate.of(2026, 7, 15),
