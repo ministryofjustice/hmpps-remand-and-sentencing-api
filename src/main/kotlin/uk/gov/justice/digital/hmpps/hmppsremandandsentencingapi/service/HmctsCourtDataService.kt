@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -68,12 +69,12 @@ class HmctsCourtDataService(
     appearanceTime = nextAppearance.hearingDate.toLocalTime(),
     courtCode = nextAppearance.hmppsCourtId ?: nextAppearance.hmppsCourtId.toString(),
     appearanceType = AppearanceType(
-      appearanceTypeUuid = UUID.randomUUID(),
+      appearanceTypeUuid = Constants.nilUUID,
       description = "Unknown appearance type",
       displayOrder = 1,
       hasSubtypes = false,
     ),
-    futureSkeletonAppearanceUuid = UUID.randomUUID(),
+    futureSkeletonAppearanceUuid = Constants.nilUUID,
     courtAppearanceSubType = null,
   )
 
