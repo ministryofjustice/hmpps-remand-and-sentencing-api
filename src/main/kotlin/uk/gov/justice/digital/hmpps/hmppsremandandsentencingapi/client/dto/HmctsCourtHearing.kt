@@ -8,7 +8,7 @@ data class HmctsCourtHearing(
   val hearingId: UUID,
   val courtName: String,
   val courtId: UUID,
-  val hearingDate: LocalDateTime,
+  val hearingDate: LocalDate,
   val caseReferences: List<String>,
   val hearingType: String,
   val documents: List<HmctsCourHearingDocument>,
