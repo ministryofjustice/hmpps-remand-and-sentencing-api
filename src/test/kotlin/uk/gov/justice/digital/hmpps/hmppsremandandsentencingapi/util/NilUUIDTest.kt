@@ -8,6 +8,6 @@ class NilUUIDTest {
 
   @Test
   fun `Nil UUID generates a valid nil UUID`() {
-    assertThat(nilUUID.toString()).isEqualTo("00000000-0000-0000-0000-00000000000")
+    assertThat(nilUUID.toString()).isEqualTo("00000000-0000-0000-0000-000000000000")
   }
 }
