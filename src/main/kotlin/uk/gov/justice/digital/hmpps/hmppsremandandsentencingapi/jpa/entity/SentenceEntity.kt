@@ -235,6 +235,7 @@ class SentenceEntity(
     convictionDate == other.convictionDate &&
     ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
     statusId == other.statusId &&
+    reason == other.reason &&
     ((legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true)
 
   fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.status != RecallEntityStatus.DELETED }.maxByOrNull { it.createdAt }
@@ -244,7 +245,7 @@ class SentenceEntity(
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       countNumber = sentence.chargeNumber,
-      statusId = this.statusId,
+      statusId = sentence.status ?: this.statusId,
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
@@ -258,6 +259,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fineAmount?.fineAmount,
       legacyData = legacyData,
+      reason = sentence.reason ?: this.reason,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableSet()
     return sentenceEntity
@@ -369,19 +371,13 @@ class SentenceEntity(
     convictionDate = sentence.convictionDate
     legacyData = sentence.legacyData
     fineAmount = sentence.fineAmount
+    reason = sentence.reason
   }
 
   fun delete(updatedUser: String) {
     updatedAt = ZonedDateTime.now()
     updatedBy = updatedUser
     statusId = SentenceEntityStatus.DELETED
-  }
-
-  fun updateStatus(status: SentenceEntityStatus, reason: String?, updatedUser: String) {
-    updatedAt = ZonedDateTime.now()
-    updatedBy = updatedUser
-    statusId = status
-    this.reason = reason
   }
 
   override fun equals(other: Any?): Boolean {
