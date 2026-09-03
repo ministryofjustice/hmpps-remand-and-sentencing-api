@@ -306,6 +306,7 @@ class LegacySentenceService(
                   isManyCharges = isManyCharges,
                   convictionDate = sourceSentence?.convictionDate,
                   countNumber = sourceSentence?.countNumber,
+                  reason = sourceSentence?.reason,
                 ),
               )
             }.also { newSentence ->
