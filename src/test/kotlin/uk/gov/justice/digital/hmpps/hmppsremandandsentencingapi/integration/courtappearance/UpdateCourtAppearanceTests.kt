@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -37,6 +38,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   @Autowired
   private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
   private val aggravatingFactors by lazy { ChargeAggravatingFactorHelper(jdbcTemplate) }
+
+  @Autowired
+  private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
 
   @Test
   fun `update appearance in existing court case`() {
@@ -806,6 +810,61 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val latestSentence = sentenceRepository.findBySentenceUuid(createdSentence.sentenceUuid)[0]
     assertThat(latestSentence).isNotNull
     assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+  }
+
+  @Test
+  fun `updating a sentence to inactive with a reason persists the status, reason and history`() {
+    val sentence = DpsDataCreator.dpsCreateSentence()
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    val createdAppearance = createdCourtCase.appearances.first()
+    val updatedSentence = createdAppearance.charges.first().sentence!!.copy(status = SentenceEntityStatus.INACTIVE, reason = "Sentence quashed on appeal")
+    val updatedCharge = createdAppearance.charges.first().copy(sentence = updatedSentence)
+    val updateAppearance = createdAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(updatedCharge),
+    )
+    putCourtAppearance(createdAppearance.appearanceUuid, updateAppearance)
+
+    val latestSentence = sentenceRepository.findBySentenceUuid(sentence.sentenceUuid)[0]
+    assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+    assertThat(latestSentence.reason).isEqualTo("Sentence quashed on appeal")
+
+    val history = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentence.sentenceUuid }
+    assertThat(history).anyMatch { it.statusId == SentenceEntityStatus.INACTIVE && it.reason == "Sentence quashed on appeal" }
+
+    val messages = getMessages(1)
+    Assertions.assertThat(messages).extracting<String> { it.eventType }.contains("sentence.updated")
+  }
+
+  @Test
+  fun `updating an unrelated field after marking a sentence inactive preserves its status and reason`() {
+    val sentence = DpsDataCreator.dpsCreateSentence()
+    val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    val createdAppearance = createdCourtCase.appearances.first()
+    val inactiveSentence = createdAppearance.charges.first().sentence!!.copy(status = SentenceEntityStatus.INACTIVE, reason = "Sentence quashed on appeal")
+    val inactiveCharge = createdAppearance.charges.first().copy(sentence = inactiveSentence)
+    putCourtAppearance(
+      createdAppearance.appearanceUuid,
+      createdAppearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(inactiveCharge)),
+    )
+    purgeQueues()
+
+    val furtherUpdatedSentence = inactiveSentence.copy(status = null, reason = null, convictionDate = LocalDate.now().minusDays(3))
+    val furtherUpdatedCharge = inactiveCharge.copy(sentence = furtherUpdatedSentence)
+    putCourtAppearance(
+      createdAppearance.appearanceUuid,
+      createdAppearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(furtherUpdatedCharge)),
+    )
+
+    val latestSentence = sentenceRepository.findBySentenceUuid(sentence.sentenceUuid)[0]
+    assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+    assertThat(latestSentence.reason).isEqualTo("Sentence quashed on appeal")
   }
 
   @Test
