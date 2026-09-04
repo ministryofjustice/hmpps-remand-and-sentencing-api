@@ -108,8 +108,8 @@ class HmctsCourtDataService(
   }
 
   private fun mapCodeToOutcome(code: String): UUID? = when (code) {
-    "RIB", "RI" -> UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8")
-    "WDRN" -> UUID.fromString("e5b25a2a-bc49-4d8e-9c52-7c6f36d50dbb")
+    "RIB", "RI" -> UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2")
+    "WDRN" -> UUID.fromString("6d2eb21d-ec02-48fa-9fcd-02e73b8e45ca")
     else -> null
   }
 }
