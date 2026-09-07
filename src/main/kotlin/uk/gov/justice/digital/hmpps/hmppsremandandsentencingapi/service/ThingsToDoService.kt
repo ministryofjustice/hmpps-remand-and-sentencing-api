@@ -39,7 +39,7 @@ class ThingsToDoService(
             hearingThingsToDoData = HearingThingsToDoData(
               hearingId = warrantHearing.hearingId,
               courtCaseReference = warrantHearing.caseReferences.first(),
-              hearingDate = warrantHearing.hearingDate.toLocalDate(),
+              hearingDate = warrantHearing.hearingDate,
               hearingType = warrantHearing.hearingType,
               warrantType = if (warrantHearing.isRemandHearing()) HearingThingsToDoWarrantType.REMAND else HearingThingsToDoWarrantType.SENTENCING,
               courtCaseUuid = case?.caseUniqueIdentifier,

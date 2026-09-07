@@ -231,9 +231,9 @@
     "mergedToDate": "LocalDate",
     "prisonerId": "String",
     "statusId": "CourtCaseEntityStatus",
+    "totalMergedFromCount": "int",
     "updatedAt": "ZonedDateTime",
-    "updatedBy": "String",
-    "totalMergedFromCount": "int"
+    "updatedBy": "String"
   },
   "CourtCaseHistoryEntity": {
     "caseUniqueIdentifier": "String",
@@ -490,6 +490,7 @@
     "id": "int",
     "legacyData": "SentenceLegacyData",
     "periodLengths": "Set",
+    "reason": "String",
     "recallSentences": "Set",
     "sentenceServeType": "String",
     "sentenceType": "SentenceTypeEntity",
@@ -514,6 +515,7 @@
     "id": "int",
     "legacyData": "SentenceLegacyData",
     "originalSentence": "SentenceEntity",
+    "reason": "String",
     "sentenceServeType": "String",
     "sentenceTypeId": "Integer",
     "sentenceUuid": "UUID",

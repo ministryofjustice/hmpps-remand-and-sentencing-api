@@ -13,11 +13,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
@@ -32,6 +32,9 @@ class HmctsCourtDataServiceTest {
   @Mock
   lateinit var courtRegisterApiClient: CourtRegisterApiClient
 
+  @Mock
+  lateinit var chargeOutcomeService: ChargeOutcomeService
+
   @InjectMocks
   lateinit var service: HmctsCourtDataService
 
@@ -43,10 +46,10 @@ class HmctsCourtDataServiceTest {
     val duplicateDocumentId = UUID.randomUUID()
     val courtId = UUID.randomUUID()
 
-    val hearing = HmctsCourHearing(
+    val hearing = HmctsCourtHearing(
       hearingId = hearingId,
       courtId = courtId,
-      hearingDate = LocalDateTime.of(2025, 1, 1, 10, 0),
+      hearingDate = LocalDate.of(2025, 1, 1),
       caseReferences = listOf("CASE123"),
       documents = listOf(
         HmctsCourHearingDocument(
@@ -109,10 +112,10 @@ class HmctsCourtDataServiceTest {
     val documentId = UUID.randomUUID()
     val courtId = UUID.randomUUID()
 
-    val hearing = HmctsCourHearing(
+    val hearing = HmctsCourtHearing(
       hearingId = hearingId,
       courtId = courtId,
-      hearingDate = LocalDateTime.now(),
+      hearingDate = LocalDate.now(),
       caseReferences = emptyList(),
       documents = listOf(
         HmctsCourHearingDocument(
@@ -155,10 +158,10 @@ class HmctsCourtDataServiceTest {
     val documentId = UUID.randomUUID()
     val courtId = UUID.randomUUID()
 
-    val hearing = HmctsCourHearing(
+    val hearing = HmctsCourtHearing(
       hearingId = hearingId,
       courtId = courtId,
-      hearingDate = LocalDateTime.now(),
+      hearingDate = LocalDate.now(),
       caseReferences = emptyList(),
       documents = listOf(
         HmctsCourHearingDocument(

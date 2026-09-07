@@ -5,8 +5,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoWarrantType
@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import java.util.stream.Stream
 
@@ -25,7 +24,7 @@ class ThingsToDoTest : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Things to do {0}")
   @MethodSource("thingsToDoArguments")
-  fun `Test get things to do`(testMessage: String, hearings: List<HmctsCourHearing>, createCourtAppearance: CreateCourtAppearance?, expectedHearingData: List<HearingThingsToDoData>?) {
+  fun `Test get things to do`(testMessage: String, hearings: List<HmctsCourtHearing>, createCourtAppearance: CreateCourtAppearance?, expectedHearingData: List<HearingThingsToDoData>?) {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
       PRISONER_ID,
       hearings,
@@ -74,11 +73,11 @@ class ThingsToDoTest : IntegrationTestBase() {
       "REMAND_WARRANT",
       DOCUMENT_ID,
     )
-    val HEARING = HmctsCourHearing(
+    val HEARING = HmctsCourtHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
       courtId = UUID.randomUUID(),
-      hearingDate = LocalDateTime.of(2026, 1, 1, 1, 1, 1),
+      hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123"),
       hearingType = "First hearing",
       documents = emptyList(),
@@ -190,7 +189,7 @@ class ThingsToDoTest : IntegrationTestBase() {
       ),
       Arguments.of(
         "No court case with multiple hearings give multiple things to do",
-        listOf(REMAND_HEARING, SENTENCING_HEARING.copy(hearingDate = LocalDate.of(2026, 6, 1).atStartOfDay())),
+        listOf(REMAND_HEARING, SENTENCING_HEARING.copy(hearingDate = LocalDate.of(2026, 6, 1))),
         null,
         listOf(
           HearingThingsToDoData(

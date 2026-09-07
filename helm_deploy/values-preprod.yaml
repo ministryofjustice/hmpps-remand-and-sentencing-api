@@ -44,3 +44,4 @@ generic-prometheus-alerts:
 
 manyChargesToSentenceFixCronjob:
   enabled: true
+  schedule: "30 2 * * 1-5" # 2:30am mon-fri

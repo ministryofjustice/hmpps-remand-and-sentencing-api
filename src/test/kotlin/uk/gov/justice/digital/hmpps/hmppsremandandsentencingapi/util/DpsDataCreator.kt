@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.FTR_14
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
@@ -188,6 +189,8 @@ class DpsDataCreator {
       convictionDate: LocalDate? = LocalDate.now().minusDays(7),
       fineAmount: CreateFineAmount? = null,
       prisonId: String = "PRISON1",
+      status: SentenceEntityStatus? = null,
+      reason: String? = null,
     ): CreateSentence = CreateSentence(
       sentenceUuid!!,
       chargeNumber,
@@ -198,6 +201,8 @@ class DpsDataCreator {
       convictionDate,
       fineAmount,
       prisonId,
+      status,
+      reason,
     )
 
     fun dpsCreateRecall(

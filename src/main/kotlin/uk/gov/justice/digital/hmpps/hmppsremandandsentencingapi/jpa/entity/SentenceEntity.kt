@@ -217,6 +217,8 @@ class SentenceEntity(
   var fineAmount: BigDecimal?,
   @Formula("(select count(*) from recall_sentence rs where rs.sentence_id= id)")
   val totalRecallSentences: Int = -1,
+  @Column
+  var reason: String? = null,
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")
@@ -233,6 +235,7 @@ class SentenceEntity(
     convictionDate == other.convictionDate &&
     ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
     statusId == other.statusId &&
+    reason == other.reason &&
     ((legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true)
 
   fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.status != RecallEntityStatus.DELETED }.maxByOrNull { it.createdAt }
@@ -242,7 +245,7 @@ class SentenceEntity(
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       countNumber = sentence.chargeNumber,
-      statusId = this.statusId,
+      statusId = sentence.status ?: this.statusId,
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
@@ -256,6 +259,7 @@ class SentenceEntity(
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fineAmount?.fineAmount,
       legacyData = legacyData,
+      reason = sentence.reason ?: this.reason,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableSet()
     return sentenceEntity
@@ -295,6 +299,7 @@ class SentenceEntity(
       updatedBy = createdBy,
       fineAmount = sentence.fine?.fineAmount,
       countNumber = countNumber,
+      reason = reason,
     )
     return sentenceEntity
   }
@@ -367,6 +372,7 @@ class SentenceEntity(
     convictionDate = sentence.convictionDate
     legacyData = sentence.legacyData
     fineAmount = sentence.fineAmount
+    reason = sentence.reason
   }
 
   fun delete(updatedUser: String) {
@@ -398,7 +404,7 @@ class SentenceEntity(
       val sentenceEntity = SentenceEntity(
         sentenceUuid = sentence.sentenceUuid,
         countNumber = sentence.chargeNumber,
-        statusId = SentenceEntityStatus.ACTIVE,
+        statusId = sentence.status ?: SentenceEntityStatus.ACTIVE,
         createdBy = createdBy,
         createdPrison = sentence.prisonId,
         supersedingSentence = null,
@@ -408,6 +414,7 @@ class SentenceEntity(
         sentenceType = sentenceType,
         convictionDate = sentence.convictionDate,
         fineAmount = sentence.fineAmount?.fineAmount,
+        reason = sentence.reason,
       )
       return sentenceEntity
     }
@@ -422,6 +429,7 @@ class SentenceEntity(
       isManyCharges: Boolean,
       convictionDate: LocalDate? = null,
       countNumber: String? = null,
+      reason: String? = null,
     ): SentenceEntity = SentenceEntity(
       sentenceUuid = sentenceUuid,
       statusId = if (isManyCharges) {
@@ -441,6 +449,7 @@ class SentenceEntity(
       legacyData = sentence.legacyData,
       fineAmount = sentence.fine?.fineAmount,
       countNumber = countNumber,
+      reason = reason,
     )
 
     fun from(sentence: MigrationCreateSentence, createdBy: String, chargeEntity: ChargeEntity, sentenceTypeEntity: SentenceTypeEntity?): SentenceEntity {

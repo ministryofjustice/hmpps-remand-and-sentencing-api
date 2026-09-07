@@ -5,9 +5,16 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtResult
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.NextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -15,8 +22,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.UUID
 
 class HmctsCourtDataTest : IntegrationTestBase() {
@@ -24,11 +34,11 @@ class HmctsCourtDataTest : IntegrationTestBase() {
   @Test
   fun `Test get appearance from hmcts data`() {
     val prisonerNumber = "PRIS123"
-    val hmctsCourtHearing = HmctsCourHearing(
+    val hmctsCourtHearing = HmctsCourtHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
       courtId = UUID.randomUUID(),
-      hearingDate = LocalDateTime.of(2026, 1, 1, 1, 1, 1),
+      hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123", "EFG456"),
       hearingType = "First hearing",
       documents = listOf(
@@ -36,6 +46,31 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           "REMAND_WARRANT",
           REMAND_WARRANT_DOCUMENT_ID,
         ),
+      ),
+      charges = listOf(
+        HmctsCourtCharge(
+          listingNumber = 1,
+          offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+          pleaDate = LocalDate.of(2026, 8, 15),
+          pleaValue = "NOT_GUILTY",
+          startDate = LocalDate.of(2026, 6, 15),
+          endDate = LocalDate.of(2026, 7, 15),
+          title = "Theft from the person of another",
+          wording = "Theft from the person of another",
+          code = "TH68001",
+          results = listOf(
+            HmctsCourtResult(
+              code = "RIB",
+              description = "Remanded in custody with bail direction",
+            ),
+          ),
+        ),
+      ),
+      nextHearing = HmctsNextCourtHearing(
+        courtName = "Central London County Court",
+        hmctsCourtId = UUID.randomUUID(),
+        hmppsCourtId = UUID.randomUUID().toString(),
+        hearingDate = LocalDateTime.of(2026, 8, 15, 10, 0),
       ),
     )
     val courtRegister = CourtRegister(
@@ -81,8 +116,32 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         criminalAppealOfficeReference = null,
         appearanceDate = LocalDate.parse("2026-01-01"),
         warrantType = "NON_SENTENCING",
-        nextCourtAppearance = null,
-        charges = emptyList(),
+        nextCourtAppearance = NextCourtAppearance(
+          appearanceDate = LocalDate.of(2026, 8, 15),
+          appearanceTime = LocalTime.of(10, 0),
+          courtCode = hmctsCourtHearing.nextHearing?.hmppsCourtId!!,
+          appearanceType = AppearanceType(appearanceTypeUuid = Constants.nilUUID, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
+          futureSkeletonAppearanceUuid = Constants.nilUUID,
+          courtAppearanceSubType = null,
+        ),
+        charges = listOf(
+          Charge(
+            chargeUuid = response.charges.first().chargeUuid,
+            offenceCode = "TH68001",
+            offenceStartDate = LocalDate.of(2026, 6, 15),
+            offenceEndDate = LocalDate.of(2026, 7, 15),
+            outcome = ChargeOutcome(
+              outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+              outcomeName = "Remand in custody",
+              nomisCode = "4531",
+              outcomeType = "REMAND",
+              displayOrder = 570,
+              dispositionCode = "INTERIM",
+              status = ReferenceEntityStatus.ACTIVE,
+            ),
+            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt,
+          ),
+        ),
         overallConvictionDate = null,
         legacyData = null,
         documents = listOf(

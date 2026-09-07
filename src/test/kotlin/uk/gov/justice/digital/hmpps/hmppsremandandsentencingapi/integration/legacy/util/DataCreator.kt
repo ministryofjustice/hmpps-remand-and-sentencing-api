@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyLinkChargeToCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateSentenceBookingId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyUpdateWholeCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtAppearance
@@ -141,6 +142,11 @@ class DataCreator {
       returnToCustodyDate = returnToCustodyDate,
       performedByUser = performedByUser,
     )
+
+    fun legacyUpdateSentenceBookingId(
+      bookingId: Long = 99L,
+      performedByUser: String? = "USER11",
+    ): LegacyUpdateSentenceBookingId = LegacyUpdateSentenceBookingId(bookingId, performedByUser)
 
     fun legacyUpdateWholeCharge(offenceCode: String = "ANOTHERCODE", performedByUser: String? = null): LegacyUpdateWholeCharge = LegacyUpdateWholeCharge(offenceCode, performedByUser)
 

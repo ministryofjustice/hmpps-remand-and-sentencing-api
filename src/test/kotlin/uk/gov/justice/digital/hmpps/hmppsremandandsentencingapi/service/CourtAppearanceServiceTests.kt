@@ -206,6 +206,8 @@ class CourtAppearanceServiceTests {
         convictionDate = null,
         fineAmount = null,
         prisonId = null,
+        status = null,
+        reason = null,
       )
     },
     replacingChargeUuid = replacingChargeUuid,

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.TestUtil
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearing
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 
 class CourtDataIngestionApiExtension :
   BeforeAllCallback,
@@ -37,7 +37,7 @@ class CourtDataIngestionApiMockServer : WireMockServer(WIREMOCK_PORT) {
     private const val WIREMOCK_PORT = 8553
   }
 
-  fun stubCourtHearing(courtHearing: HmctsCourHearing, prisonerNumber: String): StubMapping = stubFor(
+  fun stubCourtHearing(courtHearing: HmctsCourtHearing, prisonerNumber: String): StubMapping = stubFor(
     get("/court-hearings/prisoner/$prisonerNumber/hearing/${courtHearing.hearingId}")
       .willReturn(
         aResponse()
@@ -49,7 +49,7 @@ class CourtDataIngestionApiMockServer : WireMockServer(WIREMOCK_PORT) {
       ),
   )
 
-  fun stubCourtHearingsByPrisoner(prisonerId: String, courtHearings: List<HmctsCourHearing>): StubMapping = stubFor(
+  fun stubCourtHearingsByPrisoner(prisonerId: String, courtHearings: List<HmctsCourtHearing>): StubMapping = stubFor(
     get("/court-hearings/prisoner/$prisonerId")
       .willReturn(
         aResponse()
