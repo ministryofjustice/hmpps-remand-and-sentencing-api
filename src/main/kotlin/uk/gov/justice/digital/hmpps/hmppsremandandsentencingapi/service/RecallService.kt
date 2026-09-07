@@ -23,6 +23,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.r
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceOrdering
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceOrderingKey
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.SentenceWithCaseUuid
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -643,30 +645,21 @@ class RecallService(
     }
   }
 
-  private fun sortSentences(sentences: List<RecallableCourtCaseSentence>): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
-    val aCount = a.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
-    val bCount = b.countNumber?.takeIf { it != "-1" }?.toIntOrNull()
-
-    if (aCount != null && bCount != null) {
-      return@sortedWith aCount.compareTo(bCount)
-    }
-
-    if (aCount != null) return@sortedWith -1
-    if (bCount != null) return@sortedWith 1
-
-    val aLine = a.lineNumber?.toIntOrNull()
-    val bLine = b.lineNumber?.toIntOrNull()
-
-    if (aLine != null && bLine != null) {
-      return@sortedWith aLine.compareTo(bLine)
-    }
-    if (aLine != null) return@sortedWith -1
-    if (bLine != null) return@sortedWith 1
-
-    val aDate = a.offenceStartDate ?: LocalDate.MAX
-    val bDate = b.offenceStartDate ?: LocalDate.MAX
-
-    aDate.compareTo(bDate)
+  private fun sortSentences(
+    sentences: List<RecallableCourtCaseSentence>,
+  ): List<RecallableCourtCaseSentence> = sentences.sortedWith { a, b ->
+    SentenceOrdering.compare(
+      SentenceOrderingKey(
+        countNumber = a.countNumber,
+        lineNumber = a.lineNumber,
+        offenceStartDate = a.offenceStartDate,
+      ),
+      SentenceOrderingKey(
+        countNumber = b.countNumber,
+        lineNumber = b.lineNumber,
+        offenceStartDate = b.offenceStartDate,
+      ),
+    )
   }
 
   @VisibleForTesting
