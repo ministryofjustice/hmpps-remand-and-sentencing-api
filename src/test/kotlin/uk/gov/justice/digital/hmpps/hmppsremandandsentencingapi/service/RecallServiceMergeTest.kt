@@ -832,7 +832,7 @@ class RecallServiceMergeTest {
         statusId = ChargeEntityStatus.ACTIVE,
         chargeOutcome = null,
         supersedingCharge = null,
-        domesticViolenceRelated = null,
+        findingOfDomesticAbuse = null,
         createdBy = "TEST",
         createdPrison = null,
         legacyData = null,

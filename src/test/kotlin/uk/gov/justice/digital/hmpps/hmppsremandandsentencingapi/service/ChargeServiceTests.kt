@@ -68,7 +68,7 @@ class ChargeServiceTests {
       offenceStartDate = LocalDate.now(),
       offenceEndDate = null,
       outcomeUuid = null,
-      domesticViolenceRelated = null,
+      findingOfDomesticAbuse = null,
       prisonId = "P",
       legacyData = null,
       sentence = CreateSentence(
@@ -130,7 +130,7 @@ class ChargeServiceTests {
       offenceStartDate = LocalDate.now(),
       offenceEndDate = null,
       outcomeUuid = null,
-      domesticViolenceRelated = null,
+      findingOfDomesticAbuse = null,
       prisonId = "P",
       legacyData = null,
       sentence = CreateSentence(

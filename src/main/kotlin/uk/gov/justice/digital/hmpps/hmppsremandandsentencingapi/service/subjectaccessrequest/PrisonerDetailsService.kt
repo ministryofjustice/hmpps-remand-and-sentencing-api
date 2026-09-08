@@ -152,7 +152,7 @@ class PrisonerDetailsService(
         Charge(
           chargeSarEntity?.offenceCode,
           offenceDesc,
-          chargeSarEntity?.domesticViolenceRelated,
+          chargeSarEntity?.findingOfDomesticAbuse,
           chargeSarEntity?.chargeAggravatingFactors?.mapNotNull { it.aggravatingFactor?.code },
           chargeSarEntity?.offenceStartDate,
           chargeSarEntity?.offenceEndDate,

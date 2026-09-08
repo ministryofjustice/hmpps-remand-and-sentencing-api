@@ -139,7 +139,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               dispositionCode = "INTERIM",
               status = ReferenceEntityStatus.ACTIVE,
             ),
-            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt,
+            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
           ),
         ),
         overallConvictionDate = null,

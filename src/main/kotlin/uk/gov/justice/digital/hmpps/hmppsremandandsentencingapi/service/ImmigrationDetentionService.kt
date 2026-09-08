@@ -276,7 +276,7 @@ class ImmigrationDetentionService(
           offenceStartDate = immigrationDetention.recordDate,
           offenceEndDate = null,
           outcomeUuid = chargeOutcomeService.findByUuid(appearanceOutcome.relatedChargeOutcomeUuid)?.outcomeUuid,
-          domesticViolenceRelated = null,
+          findingOfDomesticAbuse = null,
           sentence = null,
           legacyData = null,
           prisonId = immigrationDetention.createdByPrison,
