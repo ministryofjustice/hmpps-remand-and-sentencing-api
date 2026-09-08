@@ -24,7 +24,7 @@ import java.time.LocalDate
   ,offence_code
   ,offence_start_date
   ,offence_end_date
-  ,domestic_violence_related
+  ,finding_of_domestic_abuse
   ,legacy_data
   ,status_id
   from charge
@@ -45,7 +45,7 @@ class ChargeSarEntity(
   var offenceCode: String,
   var offenceStartDate: LocalDate?,
   var offenceEndDate: LocalDate?,
-  var domesticViolenceRelated: Boolean?,
+  var findingOfDomesticAbuse: Boolean?,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: ChargeLegacyDataSar? = null,
   var statusId: String,

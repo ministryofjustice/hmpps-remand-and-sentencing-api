@@ -84,6 +84,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         co.outcome_name as chargeOutcomeName,
         c.legacy_data as chargeLegacyData,
         c.created_at as chargeCreatedAt,
+        c.finding_of_domestic_abuse as chargeFindingOfDomesticAbuse,
         s.id as sentenceId,
         s.sentence_uuid as sentenceUuid,
         s.count_number as sentenceCountNumber,
