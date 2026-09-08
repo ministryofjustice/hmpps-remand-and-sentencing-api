@@ -18,7 +18,7 @@
           {
             "offenceCode": "AA06027",
             "offenceDescription": "Veterinary surgeon fail to notify incorrect certification",
-            "domesticViolenceRelated": "No",
+            "findingOfDomesticAbuse": "No",
             "aggravatingFactors": [
               "OATC"
             ],
@@ -43,7 +43,7 @@
           {
             "offenceCode": "EC10001",
             "offenceDescription": "Fail to comply /contravene provision in schedule 3 of Eggs and Chicks (Wales) Regulations 2010",
-            "domesticViolenceRelated": "No",
+            "findingOfDomesticAbuse": "No",
             "aggravatingFactors": [
               "OATC"
             ],
@@ -79,7 +79,7 @@
             {
               "offenceCode": "AA06027",
               "offenceDescription": "Veterinary surgeon fail to notify incorrect certification",
-              "domesticViolenceRelated": "No",
+              "findingOfDomesticAbuse": "No",
               "aggravatingFactors": [
                 "OATC"
               ],
@@ -104,7 +104,7 @@
             {
               "offenceCode": "EC10001",
               "offenceDescription": "Fail to comply /contravene provision in schedule 3 of Eggs and Chicks (Wales) Regulations 2010",
-              "domesticViolenceRelated": "No",
+              "findingOfDomesticAbuse": "No",
               "aggravatingFactors": [
                 "OATC"
               ],

@@ -33,7 +33,7 @@ class ChargeHistoryEntity(
   var statusId: ChargeEntityStatus,
   val chargeOutcomeId: Int?,
   var supersedingChargeId: Int?,
-  val domesticViolenceRelated: Boolean?,
+  val findingOfDomesticAbuse: Boolean?,
   val createdAt: ZonedDateTime = ZonedDateTime.now(),
   val createdBy: String,
   val createdPrison: String?,
@@ -53,7 +53,7 @@ class ChargeHistoryEntity(
   companion object {
     fun from(chargeEntity: ChargeEntity, changeSource: ChangeSource): ChargeHistoryEntity = ChargeHistoryEntity(
       0, chargeEntity.chargeUuid, chargeEntity.offenceCode, chargeEntity.offenceStartDate, chargeEntity.offenceEndDate,
-      chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.domesticViolenceRelated,
+      chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.findingOfDomesticAbuse,
       chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
       chargeEntity.updatedPrison, chargeEntity.legacyData, chargeEntity.mergedFromCourtCase?.id, chargeEntity,
       mergedFromDate = chargeEntity.mergedFromDate, changeSource = changeSource,

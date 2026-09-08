@@ -135,7 +135,7 @@ class RecallServiceTest {
       offenceEndDate = null,
       chargeOutcome = null,
       supersedingCharge = null,
-      domesticViolenceRelated = null,
+      findingOfDomesticAbuse = null,
       legacyData = ChargeLegacyData(
         postedDate = "2024-01-01",
         nomisOutcomeCode = "1002",
@@ -929,7 +929,7 @@ class RecallServiceTest {
       offenceEndDate = null,
       chargeOutcome = null,
       supersedingCharge = null,
-      domesticViolenceRelated = null,
+      findingOfDomesticAbuse = null,
       createdPrison = null,
       legacyData = null,
       appearanceCharges = mutableSetOf(),

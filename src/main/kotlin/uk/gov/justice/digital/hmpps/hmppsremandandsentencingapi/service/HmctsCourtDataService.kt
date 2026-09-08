@@ -92,6 +92,7 @@ class HmctsCourtDataService(
       legacyData = null,
       mergedFromCase = null,
       createdAt = ZonedDateTime.now(),
+      findingOfDomesticAbuse = null,
     )
   }
 
