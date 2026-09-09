@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
@@ -15,6 +16,7 @@ data class SentenceConsecutiveToDetails(
   val sentenceUuid: UUID,
   val countNumber: String?,
   val chargeLegacyData: ChargeLegacyData?,
+  val status: SentenceEntityStatus,
 ) {
   companion object {
     fun from(consecutiveToSentenceRow: ConsecutiveToSentenceRow): SentenceConsecutiveToDetails = SentenceConsecutiveToDetails(
@@ -27,6 +29,7 @@ data class SentenceConsecutiveToDetails(
       consecutiveToSentenceRow.sentenceUuid,
       consecutiveToSentenceRow.countNumber,
       consecutiveToSentenceRow.chargeLegacyData,
+      consecutiveToSentenceRow.status,
     )
   }
 }

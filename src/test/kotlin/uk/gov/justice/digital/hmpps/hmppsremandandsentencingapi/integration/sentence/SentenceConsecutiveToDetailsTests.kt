@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 
 class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
 
@@ -46,6 +47,7 @@ class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
     Assertions.assertThat(sentenceConsecutiveToDetails.offenceStartDate).isEqualTo(charge.offenceStartDate)
     Assertions.assertThat(sentenceConsecutiveToDetails.offenceEndDate).isEqualTo(charge.offenceEndDate)
     Assertions.assertThat(sentenceConsecutiveToDetails.countNumber).isEqualTo(sentence.chargeNumber)
+    Assertions.assertThat(sentenceConsecutiveToDetails.status).isEqualTo(SentenceEntityStatus.ACTIVE)
   }
 
   @Test
