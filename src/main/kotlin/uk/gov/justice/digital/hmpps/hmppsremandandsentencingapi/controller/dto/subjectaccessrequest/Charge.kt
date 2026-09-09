@@ -15,7 +15,7 @@ data class Charge(
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
   val offenceDescription: String?,
   @param:JsonSerialize(using = BooleanSerializer::class, nullsUsing = BooleanNullSerializer::class)
-  val domesticViolenceRelated: Boolean?,
+  val findingOfDomesticAbuse: Boolean?,
   val aggravatingFactors: List<String>? = listOf(),
   @param:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   @param:JsonSerialize(nullsUsing = LocalDateNullSerializer::class)

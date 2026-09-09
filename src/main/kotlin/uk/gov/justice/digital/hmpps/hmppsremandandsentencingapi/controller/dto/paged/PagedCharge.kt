@@ -19,6 +19,7 @@ data class PagedCharge(
   val sentence: PagedSentence?,
   val mergedFromCase: PagedMergedFromCase?,
   val createdAt: ZonedDateTime,
+  val findingOfDomesticAbuse: Boolean?,
 ) {
   companion object {
     fun from(chargeRows: List<CourtCaseRow>): PagedCharge {
@@ -44,6 +45,7 @@ data class PagedCharge(
         sentenceRows?.let { PagedSentence.from(it) },
         charge.takeIf { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }?.let { PagedMergedFromCase.from(listOf(it)) },
         charge.chargeCreatedAt!!,
+        charge.chargeFindingOfDomesticAbuse,
       )
     }
   }

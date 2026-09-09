@@ -192,7 +192,7 @@ class CourtAppearanceServiceTests {
     offenceStartDate = LocalDate.now(),
     offenceEndDate = null,
     outcomeUuid = outcomeUuid,
-    domesticViolenceRelated = null,
+    findingOfDomesticAbuse = null,
     prisonId = "P",
     legacyData = null,
     sentence = sentenceUuid?.let {

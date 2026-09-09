@@ -110,7 +110,7 @@ class LegacyPeriodLengthTests {
       offenceEndDate = null,
       chargeOutcome = null,
       supersedingCharge = null,
-      domesticViolenceRelated = null,
+      findingOfDomesticAbuse = null,
       createdPrison = null,
       legacyData = null,
       appearanceCharges = mutableSetOf(),

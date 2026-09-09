@@ -96,7 +96,7 @@ class AggravatingFactorsServiceTest {
     statusId = ChargeEntityStatus.ACTIVE,
     chargeOutcome = null,
     supersedingCharge = null,
-    domesticViolenceRelated = null,
+    findingOfDomesticAbuse = null,
     createdAt = ZonedDateTime.now(),
     createdBy = "test-user",
     createdPrison = null,

@@ -1,0 +1,2 @@
+ALTER TABLE charge RENAME COLUMN domestic_violence_related to finding_of_domestic_abuse;
+ALTER TABLE charge_history RENAME COLUMN domestic_violence_related to finding_of_domestic_abuse;
