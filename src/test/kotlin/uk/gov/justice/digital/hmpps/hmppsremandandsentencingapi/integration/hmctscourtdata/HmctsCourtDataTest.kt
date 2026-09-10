@@ -158,6 +158,121 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     )
   }
 
+  @Test
+  fun `Test get minimal appearance from hmcts data`() {
+    val prisonerNumber = "PRIS123"
+    val hmctsCourtHearing = HmctsCourtHearing(
+      hearingId = HMCTS_HEARING_ID,
+      courtName = "My court",
+      courtId = UUID.randomUUID(),
+      hearingDate = LocalDate.of(2026, 1, 1),
+      caseReferences = listOf("ABC123", "EFG456"),
+      hearingType = "First hearing",
+      documents = listOf(
+        HmctsCourHearingDocument(
+          "REMAND_WARRANT",
+          REMAND_WARRANT_DOCUMENT_ID,
+        ),
+      ),
+      charges = listOf(
+        HmctsCourtCharge(
+          listingNumber = null,
+          offenceLegislation = null,
+          pleaDate = null,
+          pleaValue = null,
+          startDate = LocalDate.of(2026, 6, 15),
+          endDate = null,
+          title = "Theft from the person of another",
+          wording = "Theft from the person of another",
+          code = "TH68001",
+          results = listOf(
+            HmctsCourtResult(
+              code = "RIB",
+              description = "Remanded in custody with bail direction",
+            ),
+          ),
+        ),
+      ),
+      nextHearing = null,
+    )
+    val courtRegister = CourtRegister(
+      courtName = "My court",
+      courtId = UUID.randomUUID().toString(),
+      courtDescription = "My court description",
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      prisonerNumber,
+    )
+    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
+      listOf(
+        DocumentManagementApiDocument(
+          REMAND_WARRANT_DOCUMENT_ID,
+          documentFilename = "RemandWarrant.pdf",
+        ),
+      ),
+    )
+    CourtRegisterApiExtension.courtRegisterApi.stubGetHmctsCourtRegister(
+      hmctsCourtHearing.courtId,
+      courtRegister,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response).isEqualTo(
+      CourtAppearance(
+        appearanceUuid = response.appearanceUuid, // Random UUID
+        outcome = null,
+        courtCode = courtRegister.courtId,
+        courtCaseReference = "ABC123",
+        criminalAppealOfficeReference = null,
+        appearanceDate = LocalDate.parse("2026-01-01"),
+        warrantType = "NON_SENTENCING",
+        nextCourtAppearance = null,
+        charges = listOf(
+          Charge(
+            chargeUuid = response.charges.first().chargeUuid,
+            offenceCode = "TH68001",
+            offenceStartDate = LocalDate.of(2026, 6, 15),
+            offenceEndDate = null,
+            outcome = ChargeOutcome(
+              outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+              outcomeName = "Remand in custody",
+              nomisCode = "4531",
+              outcomeType = "REMAND",
+              displayOrder = 570,
+              dispositionCode = "INTERIM",
+              status = ReferenceEntityStatus.ACTIVE,
+            ),
+            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
+          ),
+        ),
+        overallConvictionDate = null,
+        legacyData = null,
+        documents = listOf(
+          UploadedDocument(
+            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentType = "HMCTS_WARRANT",
+            fileName = "RemandWarrant.pdf",
+          ),
+        ),
+        source = EventSource.DPS,
+        deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+        periodLengths = emptyList(),
+      ),
+    )
+  }
+
   companion object {
     val HMCTS_HEARING_ID = UUID.randomUUID()
     val REMAND_WARRANT_DOCUMENT_ID = UUID.randomUUID()
