@@ -33,6 +33,7 @@ class CourtCaseHistoryEntity(
   val updatedBy: String?,
   @Enumerated(EnumType.STRING)
   var statusId: CourtCaseEntityStatus,
+  var reason: String? = null,
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,
   val createdPrison: String?,
@@ -48,7 +49,7 @@ class CourtCaseHistoryEntity(
     fun from(courtCaseEntity: CourtCaseEntity, changeSource: ChangeSource): CourtCaseHistoryEntity = CourtCaseHistoryEntity(
       0, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.latestCourtAppearance?.id,
       courtCaseEntity.createdAt, courtCaseEntity.createdBy, courtCaseEntity.updatedAt, courtCaseEntity.updatedBy,
-      courtCaseEntity.statusId, courtCaseEntity.legacyData, courtCaseEntity.createdPrison,
+      courtCaseEntity.statusId, courtCaseEntity.reason, courtCaseEntity.legacyData, courtCaseEntity.createdPrison,
       courtCaseEntity.mergedToCase?.id, courtCaseEntity.mergedToDate, courtCaseEntity, changeSource = changeSource,
     )
   }

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -9,11 +10,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencedCharges
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponseWithDocumentUpdates
@@ -63,6 +66,23 @@ class CourtCaseService(
       savedCourtCase,
       eventsToEmit,
       documentUpdates,
+    )
+  }
+
+  @Transactional
+  fun updateCourtCaseStatus(courtCaseUuid: String, updateCourtCaseStatus: UpdateCourtCaseStatus): Set<EventMetadata> {
+    val courtCase = courtCaseRepository.findByCaseUniqueIdentifier(courtCaseUuid)
+      ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+    require(updateCourtCaseStatus.status == CourtCaseEntityStatus.ACTIVE || updateCourtCaseStatus.status == CourtCaseEntityStatus.INACTIVE) {
+      "Court case status can only be set to ACTIVE or INACTIVE via this endpoint"
+    }
+    courtCase.statusId = updateCourtCaseStatus.status
+    courtCase.reason = updateCourtCaseStatus.reason
+    courtCase.updatedAt = ZonedDateTime.now()
+    courtCase.updatedBy = serviceUserService.getUsername()
+    courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.DPS))
+    return setOf(
+      EventMetadataCreator.courtCaseEventMetadata(courtCase.prisonerId, courtCase.caseUniqueIdentifier, EventType.COURT_CASE_UPDATED),
     )
   }
 
