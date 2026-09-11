@@ -655,6 +655,44 @@ class RecallServiceTest {
       assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.ACTIVE)
       assertThat(sentenceHistorySaves.map { it.statusId }).contains(SentenceEntityStatus.INACTIVE)
     }
+
+    @Test
+    fun `update a dps recall creates UAL when linked adjustment is missing and dates still require UAL`() {
+      val recallUuid = testNonLegacyRecallEntity.recallUuid
+      every { recallRepository.findOneByRecallUuid(recallUuid) } returns testNonLegacyRecallEntity
+      every { recallRepository.save(any()) } returns testNonLegacyRecallEntity
+      every { recallHistoryRepository.save(any()) } returns mockk()
+      every { recallSentenceHistoryRepository.save(any()) } returns mockk()
+      every { recallTypeRepository.findOneByCode(any()) } returns RecallTypeEntity(0, RecallType.LR, "Standard")
+      every { adjustmentsApiClient.getRecallAdjustment(DpsDataCreator.DEFAULT_PRISONER_ID, recallUuid) } returns null
+
+      service.updateRecall(
+        recallUuid,
+        baseRecall.copy(
+          revocationDate = LocalDate.of(2024, 1, 1),
+          returnToCustodyDate = LocalDate.of(2024, 1, 20),
+        ),
+      )
+
+      verify {
+        adjustmentsApiClient.createAdjustments(
+          listOf(
+            AdjustmentDto(
+              id = null,
+              person = DpsDataCreator.DEFAULT_PRISONER_ID,
+              adjustmentType = "UNLAWFULLY_AT_LARGE",
+              fromDate = LocalDate.of(2024, 1, 2),
+              toDate = LocalDate.of(2024, 1, 19),
+              days = null,
+              recallId = recallUuid.toString(),
+              unlawfullyAtLarge = UnlawfullyAtLargeDto(),
+            ),
+          ),
+        )
+      }
+      verify(exactly = 0) { adjustmentsApiClient.updateAdjustment(any()) }
+      verify(exactly = 0) { adjustmentsApiClient.deleteAdjustment(any()) }
+    }
   }
 
   @Nested

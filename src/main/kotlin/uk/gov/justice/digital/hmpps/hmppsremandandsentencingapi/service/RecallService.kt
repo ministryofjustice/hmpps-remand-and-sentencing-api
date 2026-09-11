@@ -254,20 +254,30 @@ class RecallService(
         ),
       )
     } else if (originalRequiresAdjustment && (originalRevocationDate != newRevocationDate || originalRTCDate != newRTCDate)) {
-      val originalAdjustment = requireNotNull(
-        adjustmentsApiClient.getRecallAdjustment(
-          prisonerId,
-          recallUuid,
-        ),
-      ) { "Original adjustment is missing" }
-      adjustmentsApiClient.updateAdjustment(
-        createUalDtoForRecall(
-          prisonerId,
-          newRevocationDate,
-          newRTCDate!!,
-          recallUuid,
-        ).copy(id = originalAdjustment.id),
-      )
+      // Editing a UAL in the Adjustments-UI that came from a recall results in the ual being unlinked.
+      // This logic creates new UAL for the recall if it has been unlinked
+      val originalAdjustment = adjustmentsApiClient.getRecallAdjustment(prisonerId, recallUuid)
+      if (originalAdjustment != null) {
+        adjustmentsApiClient.updateAdjustment(
+          createUalDtoForRecall(
+            prisonerId = prisonerId,
+            revocationDate = newRevocationDate,
+            rtcDate = newRTCDate!!,
+            recallUuid = recallUuid,
+          ).copy(id = originalAdjustment.id),
+        )
+      } else {
+        adjustmentsApiClient.createAdjustments(
+          listOf(
+            createUalDtoForRecall(
+              prisonerId = prisonerId,
+              revocationDate = newRevocationDate,
+              rtcDate = newRTCDate!!,
+              recallUuid = recallUuid,
+            ),
+          ),
+        )
+      }
     }
   }
 
