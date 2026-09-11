@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtCaseResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.LatestOffenceDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencedCharges
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
@@ -114,6 +115,26 @@ class CourtCaseController(
     dpsDomainEventService.emitEvents(eventsToEmit)
     uploadedDocumentService.updateDocumentMetadata(documentUpdates)
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
+  }
+
+  @PutMapping("/court-case/{courtCaseUuid}/status")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Update court case status",
+    description = "This endpoint marks a court case as active or inactive",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "Status updated"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun updateCourtCaseStatus(@RequestBody updateCourtCaseStatus: UpdateCourtCaseStatus, @PathVariable courtCaseUuid: String) {
+    val eventsToEmit = courtCaseService.updateCourtCaseStatus(courtCaseUuid, updateCourtCaseStatus)
+    dpsDomainEventService.emitEvents(eventsToEmit)
   }
 
   @GetMapping("/court-case/paged/search")
