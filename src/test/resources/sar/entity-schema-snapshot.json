@@ -230,6 +230,7 @@
     "mergedToCase": "CourtCaseEntity",
     "mergedToDate": "LocalDate",
     "prisonerId": "String",
+    "reason": "String",
     "statusId": "CourtCaseEntityStatus",
     "totalMergedFromCount": "int",
     "updatedAt": "ZonedDateTime",
@@ -248,6 +249,7 @@
     "mergedToDate": "LocalDate",
     "originalCourtCase": "CourtCaseEntity",
     "prisonerId": "String",
+    "reason": "String",
     "statusId": "CourtCaseEntityStatus",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String"
