@@ -58,7 +58,7 @@ class UpdateCourtCaseStatusTests : IntegrationTestBase() {
     webTestClient
       .put()
       .uri("/court-case/${courtCase.first}/status")
-      .bodyValue(UpdateCourtCaseStatus(status = CourtCaseEntityStatus.ACTIVE, reason = null))
+      .bodyValue(UpdateCourtCaseStatus(status = CourtCaseEntityStatus.ACTIVE, reason = "This should be ignored"))
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
         it.contentType = MediaType.APPLICATION_JSON

@@ -72,6 +72,20 @@ class CourtCaseServiceTests {
   }
 
   @Test
+  fun `updateCourtCaseStatus clears any reason supplied when marking a court case as active`() {
+    val courtCase = createCourtCase(status = CourtCaseEntityStatus.INACTIVE, reason = "Duplicate case")
+    every { courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) } returns courtCase
+
+    courtCaseService.updateCourtCaseStatus(
+      caseUniqueIdentifier,
+      UpdateCourtCaseStatus(status = CourtCaseEntityStatus.ACTIVE, reason = "This should be ignored"),
+    )
+
+    assertThat(courtCase.statusId).isEqualTo(CourtCaseEntityStatus.ACTIVE)
+    assertThat(courtCase.reason).isNull()
+  }
+
+  @Test
   fun `updateCourtCaseStatus throws when court case cannot be found`() {
     every { courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) } returns null
 

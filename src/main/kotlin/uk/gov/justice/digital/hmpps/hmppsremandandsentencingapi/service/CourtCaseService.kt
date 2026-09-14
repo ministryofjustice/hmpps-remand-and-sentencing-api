@@ -77,7 +77,7 @@ class CourtCaseService(
       "Court case status can only be set to ACTIVE or INACTIVE via this endpoint"
     }
     courtCase.statusId = updateCourtCaseStatus.status
-    courtCase.reason = updateCourtCaseStatus.reason
+    courtCase.reason = if (updateCourtCaseStatus.status == CourtCaseEntityStatus.ACTIVE) null else updateCourtCaseStatus.reason
     courtCase.updatedAt = ZonedDateTime.now()
     courtCase.updatedBy = serviceUserService.getUsername()
     courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.DPS))
