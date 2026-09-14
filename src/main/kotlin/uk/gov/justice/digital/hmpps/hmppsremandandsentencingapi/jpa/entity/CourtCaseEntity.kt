@@ -174,6 +174,9 @@ class CourtCaseEntity(
   @Enumerated(EnumType.STRING)
   var statusId: CourtCaseEntityStatus,
 
+  @Column
+  var reason: String? = null,
+
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: CourtCaseLegacyData? = null,
 
