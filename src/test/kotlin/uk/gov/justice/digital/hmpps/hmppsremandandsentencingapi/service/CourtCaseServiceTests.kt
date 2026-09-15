@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ImmutableCourtCaseException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
@@ -108,6 +109,34 @@ class CourtCaseServiceTests {
         UpdateCourtCaseStatus(status = CourtCaseEntityStatus.MERGED, reason = null),
       )
     }.isInstanceOf(IllegalArgumentException::class.java)
+  }
+
+  @Test
+  fun `updateCourtCaseStatus rejects a status change on a DELETED court case`() {
+    val courtCase = createCourtCase(status = CourtCaseEntityStatus.DELETED)
+    every { courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) } returns courtCase
+
+    assertThatThrownBy {
+      courtCaseService.updateCourtCaseStatus(
+        caseUniqueIdentifier,
+        UpdateCourtCaseStatus(status = CourtCaseEntityStatus.ACTIVE, reason = null),
+      )
+    }.isInstanceOf(ImmutableCourtCaseException::class.java)
+    verify(exactly = 0) { courtCaseHistoryRepository.save(any()) }
+  }
+
+  @Test
+  fun `updateCourtCaseStatus rejects a status change on a MERGED court case`() {
+    val courtCase = createCourtCase(status = CourtCaseEntityStatus.MERGED)
+    every { courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier) } returns courtCase
+
+    assertThatThrownBy {
+      courtCaseService.updateCourtCaseStatus(
+        caseUniqueIdentifier,
+        UpdateCourtCaseStatus(status = CourtCaseEntityStatus.ACTIVE, reason = null),
+      )
+    }.isInstanceOf(ImmutableCourtCaseException::class.java)
+    verify(exactly = 0) { courtCaseHistoryRepository.save(any()) }
   }
 
   private fun createCourtCase(status: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE, reason: String? = null): CourtCaseEntity = CourtCaseEntity(
