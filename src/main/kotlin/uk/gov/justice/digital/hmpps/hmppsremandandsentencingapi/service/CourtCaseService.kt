@@ -76,6 +76,9 @@ class CourtCaseService(
     require(updateCourtCaseStatus.status == CourtCaseEntityStatus.ACTIVE || updateCourtCaseStatus.status == CourtCaseEntityStatus.INACTIVE) {
       "Court case status can only be set to ACTIVE or INACTIVE via this endpoint"
     }
+    if (courtCase.statusId == CourtCaseEntityStatus.DELETED || courtCase.statusId == CourtCaseEntityStatus.MERGED) {
+      throw ImmutableCourtCaseException("Cannot change status of a court case with status ${courtCase.statusId}")
+    }
     courtCase.statusId = updateCourtCaseStatus.status
     courtCase.reason = if (updateCourtCaseStatus.status == CourtCaseEntityStatus.ACTIVE) null else updateCourtCaseStatus.reason
     courtCase.updatedAt = ZonedDateTime.now()

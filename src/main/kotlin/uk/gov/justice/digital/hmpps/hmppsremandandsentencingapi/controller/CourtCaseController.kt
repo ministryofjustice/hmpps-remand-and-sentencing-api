@@ -126,6 +126,7 @@ class CourtCaseController(
   @ApiResponses(
     value = [
       ApiResponse(responseCode = "204", description = "Status updated"),
+      ApiResponse(responseCode = "400", description = "Bad request, e.g. status is not ACTIVE/INACTIVE or the court case is DELETED/MERGED"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
       ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
