@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalTime
@@ -26,6 +27,7 @@ class HmctsCourtDataService(
   val documentService: DocumentManagementApiClient,
   val courtRegisterApiClient: CourtRegisterApiClient,
   val chargeOutcomeService: ChargeOutcomeService,
+  val appearanceOutcomeService: AppearanceOutcomeService,
 ) {
 
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID, prisonerNumber: String): CourtAppearance {
@@ -37,17 +39,28 @@ class HmctsCourtDataService(
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
       .filter { it.duplicateOf == null }
     val court = courtRegisterApiClient.getCourtRegisterByHmctsId(hearing.courtId)
+    val charges = hearing.charges.map { mapCharge(it) }
+    val chargeOutcomeIds = charges.mapNotNull { it.outcome?.outcomeUuid }
+
+    val appearanceOutcome = if (chargeOutcomeIds.distinct().size == 1) {
+      // All charge outcomes the same, find matching appearance outcome.
+      val chargeOutcomeId = chargeOutcomeIds.first()
+      val appearanceOutcomes = appearanceOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
+      appearanceOutcomes.find { it.relatedChargeOutcomeUuid == chargeOutcomeId }
+    } else {
+      null
+    }
 
     return CourtAppearance(
       appearanceUuid = hearing.hearingId,
-      outcome = null,
+      outcome = appearanceOutcome,
       courtCode = court?.courtId ?: hearing.courtId.toString(),
       courtCaseReference = hearing.caseReferences.firstOrNull(),
       criminalAppealOfficeReference = null,
       appearanceDate = hearing.hearingDate,
       warrantType = mapWarrantType(hearing),
       nextCourtAppearance = hearing.nextHearing?.let { mapNextCourtAppearance(it) },
-      charges = hearing.charges.map { mapCharge(it) },
+      charges = charges,
       overallConvictionDate = null,
       legacyData = null,
       documents = hearing.documents.mapNotNull {

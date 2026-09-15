@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.NextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
@@ -62,6 +63,23 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             HmctsCourtResult(
               code = "RIB",
               description = "Remanded in custody with bail direction",
+            ),
+          ),
+        ),
+        HmctsCourtCharge(
+          listingNumber = 2,
+          offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+          pleaDate = LocalDate.of(2026, 8, 15),
+          pleaValue = "NOT_GUILTY",
+          startDate = LocalDate.of(2026, 6, 14),
+          endDate = null,
+          title = "Another crime",
+          wording = "Another crime",
+          code = "X123ABC",
+          results = listOf(
+            HmctsCourtResult(
+              code = "WDRN",
+              description = "Withdrawn",
             ),
           ),
         ),
@@ -141,6 +159,178 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             ),
             aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
           ),
+          Charge(
+            chargeUuid = response.charges[1].chargeUuid,
+            offenceCode = "X123ABC",
+            offenceStartDate = LocalDate.of(2026, 6, 14),
+            offenceEndDate = null,
+            outcome = ChargeOutcome(
+              outcomeUuid = UUID.fromString("6d2eb21d-ec02-48fa-9fcd-02e73b8e45ca"),
+              outcomeName = "Withdrawn",
+              nomisCode = "2051",
+              outcomeType = "NON_CUSTODIAL",
+              displayOrder = 150,
+              dispositionCode = "FINAL",
+              status = ReferenceEntityStatus.ACTIVE,
+            ),
+            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges[1].createdAt, findingOfDomesticAbuse = null,
+          ),
+        ),
+        overallConvictionDate = null,
+        legacyData = null,
+        documents = listOf(
+          UploadedDocument(
+            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentType = "HMCTS_WARRANT",
+            fileName = "RemandWarrant.pdf",
+          ),
+        ),
+        source = EventSource.DPS,
+        deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+        periodLengths = emptyList(),
+      ),
+    )
+  }
+
+  @Test
+  fun `Test get appearance from with offence outcomes all the same hmcts data`() {
+    val prisonerNumber = "PRIS123"
+    val hmctsCourtHearing = HmctsCourtHearing(
+      hearingId = HMCTS_HEARING_ID,
+      courtName = "My court",
+      courtId = UUID.randomUUID(),
+      hearingDate = LocalDate.of(2026, 1, 1),
+      caseReferences = listOf("ABC123", "EFG456"),
+      hearingType = "First hearing",
+      documents = listOf(
+        HmctsCourHearingDocument(
+          "REMAND_WARRANT",
+          REMAND_WARRANT_DOCUMENT_ID,
+        ),
+      ),
+      charges = listOf(
+        HmctsCourtCharge(
+          listingNumber = 1,
+          offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+          pleaDate = LocalDate.of(2026, 8, 15),
+          pleaValue = "NOT_GUILTY",
+          startDate = LocalDate.of(2026, 6, 15),
+          endDate = LocalDate.of(2026, 7, 15),
+          title = "Theft from the person of another",
+          wording = "Theft from the person of another",
+          code = "TH68001",
+          results = listOf(
+            HmctsCourtResult(
+              code = "RIB",
+              description = "Remanded in custody with bail direction",
+            ),
+          ),
+        ),
+        HmctsCourtCharge(
+          listingNumber = 2,
+          offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+          pleaDate = LocalDate.of(2026, 8, 15),
+          pleaValue = "NOT_GUILTY",
+          startDate = LocalDate.of(2026, 6, 14),
+          endDate = null,
+          title = "Another crime",
+          wording = "Another crime",
+          code = "X123ABC",
+          results = listOf(
+            HmctsCourtResult(
+              code = "RIB",
+              description = "Remanded in custody with bail direction",
+            ),
+          ),
+        ),
+      ),
+      nextHearing = null,
+    )
+    val courtRegister = CourtRegister(
+      courtName = "My court",
+      courtId = UUID.randomUUID().toString(),
+      courtDescription = "My court description",
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      prisonerNumber,
+    )
+    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
+      listOf(
+        DocumentManagementApiDocument(
+          REMAND_WARRANT_DOCUMENT_ID,
+          documentFilename = "RemandWarrant.pdf",
+        ),
+      ),
+    )
+    CourtRegisterApiExtension.courtRegisterApi.stubGetHmctsCourtRegister(
+      hmctsCourtHearing.courtId,
+      courtRegister,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response).isEqualTo(
+      CourtAppearance(
+        appearanceUuid = response.appearanceUuid, // Random UUID
+        outcome = CourtAppearanceOutcome(
+          outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+          outcomeName = "Remand in custody",
+          nomisCode = "4531",
+          outcomeType = "REMAND",
+          displayOrder = 70,
+          relatedChargeOutcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+          isSubList = false, dispositionCode = "INTERIM", status = ReferenceEntityStatus.ACTIVE, warrantType = "NON_SENTENCING",
+        ),
+        courtCode = courtRegister.courtId,
+        courtCaseReference = "ABC123",
+        criminalAppealOfficeReference = null,
+        appearanceDate = LocalDate.parse("2026-01-01"),
+        warrantType = "NON_SENTENCING",
+        nextCourtAppearance = null,
+        charges = listOf(
+          Charge(
+            chargeUuid = response.charges.first().chargeUuid,
+            offenceCode = "TH68001",
+            offenceStartDate = LocalDate.of(2026, 6, 15),
+            offenceEndDate = LocalDate.of(2026, 7, 15),
+            outcome = ChargeOutcome(
+              outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+              outcomeName = "Remand in custody",
+              nomisCode = "4531",
+              outcomeType = "REMAND",
+              displayOrder = 570,
+              dispositionCode = "INTERIM",
+              status = ReferenceEntityStatus.ACTIVE,
+            ),
+            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
+          ),
+          Charge(
+            chargeUuid = response.charges[1].chargeUuid,
+            offenceCode = "X123ABC",
+            offenceStartDate = LocalDate.of(2026, 6, 14),
+            offenceEndDate = null,
+            outcome = ChargeOutcome(
+              outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+              outcomeName = "Remand in custody",
+              nomisCode = "4531",
+              outcomeType = "REMAND",
+              displayOrder = 570,
+              dispositionCode = "INTERIM",
+              status = ReferenceEntityStatus.ACTIVE,
+            ),
+            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges[1].createdAt, findingOfDomesticAbuse = null,
+          ),
         ),
         overallConvictionDate = null,
         legacyData = null,
@@ -187,8 +377,8 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           code = "TH68001",
           results = listOf(
             HmctsCourtResult(
-              code = "RIB",
-              description = "Remanded in custody with bail direction",
+              code = "XXX",
+              description = "Unknown outcome",
             ),
           ),
         ),
@@ -245,15 +435,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             offenceCode = "TH68001",
             offenceStartDate = LocalDate.of(2026, 6, 15),
             offenceEndDate = null,
-            outcome = ChargeOutcome(
-              outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
-              outcomeName = "Remand in custody",
-              nomisCode = "4531",
-              outcomeType = "REMAND",
-              displayOrder = 570,
-              dispositionCode = "INTERIM",
-              status = ReferenceEntityStatus.ACTIVE,
-            ),
+            outcome = null,
             aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
           ),
         ),
