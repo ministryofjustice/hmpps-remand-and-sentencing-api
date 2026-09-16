@@ -18,4 +18,5 @@ data class RecalledSentence(
   val sentenceTypeDescription: String?,
   val consecutiveToSentenceUuid: UUID? = null,
   val aggravatingFactors: List<AggravatingFactor> = emptyList(),
+  val findingOfDomesticAbuse: Boolean?,
 )

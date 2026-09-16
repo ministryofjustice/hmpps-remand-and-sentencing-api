@@ -627,6 +627,7 @@ class RecallService(
               createdAt = sentence.legacyData?.postedDate
                 ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
                 ?: sentence.createdAt.toLocalDateTime(),
+              findingOfDomesticAbuse = sentence.charge.findingOfDomesticAbuse,
             )
           },
           appearanceDate = firstSentencingAppearance.appearanceDate,

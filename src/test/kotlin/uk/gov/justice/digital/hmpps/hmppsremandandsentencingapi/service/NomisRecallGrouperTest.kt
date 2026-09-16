@@ -160,6 +160,7 @@ class NomisRecallGrouperTest {
         periodLengths = emptyList(),
         sentenceServeType = "CONCURRENT",
         sentenceTypeDescription = null,
+        findingOfDomesticAbuse = null,
       ),
     ),
   )
