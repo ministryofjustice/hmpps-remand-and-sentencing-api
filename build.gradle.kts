@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.7"
-  kotlin("plugin.spring") version "2.4.10"
-  kotlin("plugin.jpa") version "2.4.10"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.9"
+  kotlin("plugin.spring") version "2.4.20"
+  kotlin("plugin.jpa") version "2.4.20"
 }
 
 configurations {
@@ -19,7 +19,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.31.1")
 
   // Database dependencies
@@ -58,13 +58,11 @@ tasks {
   }
 }
 
-extra["hibernate.version"] = "7.2.2.Final"
-
-val test by testing.suites.existing(JvmTestSuite::class)
+val testSuite = testing.suites.named<JvmTestSuite>("test")
 
 tasks.register<Test>("initialiseDatabase") {
-  testClassesDirs = files(test.map { it.sources.output.classesDirs })
-  classpath = files(test.map { it.sources.runtimeClasspath })
+  testClassesDirs = files(testSuite.map { it.sources.output.classesDirs })
+  classpath = files(testSuite.map { it.sources.runtimeClasspath })
   include("**/InitialiseDatabase.class")
   onlyIf { gradle.startParameter.taskNames.contains("initialiseDatabase") }
 }
