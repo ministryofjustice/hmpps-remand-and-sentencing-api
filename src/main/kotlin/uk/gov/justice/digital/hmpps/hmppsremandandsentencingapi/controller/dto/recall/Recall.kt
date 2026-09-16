@@ -84,6 +84,7 @@ data class Recall(
                 consecutiveToSentenceUuid = it.sentence.consecutiveTo?.sentenceUuid,
                 aggravatingFactors = it.sentence.charge.chargeAggravatingFactors
                   .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
+                findingOfDomesticAbuse = it.sentence.charge.findingOfDomesticAbuse,
               )
             }.sortedWith { a, b ->
               SentenceOrdering.compare(

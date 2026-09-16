@@ -811,6 +811,7 @@ class RecallServiceMergeTest {
       sentenceDate = sentenceDate,
       consecutiveToSentenceUuid = null,
       createdAt = createdAt,
+      findingOfDomesticAbuse = null,
     )
 
     private fun courtCaseWithSentence(
