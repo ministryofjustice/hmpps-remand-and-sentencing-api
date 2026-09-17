@@ -71,6 +71,8 @@ class ChargeEntity(
   @JoinColumn(name = "merged_from_case_id")
   var mergedFromCourtCase: CourtCaseEntity? = null,
   var mergedFromDate: LocalDate? = null,
+
+  val hmctsChargeId: UUID? = null,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()
@@ -125,6 +127,7 @@ class ChargeEntity(
     chargeAggravatingFactors.toMutableSet(),
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
+    hmctsChargeId = charge.hmctsChargeId,
   )
 
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -256,6 +259,7 @@ class ChargeEntity(
       chargeAggravatingFactors = mutableSetOf(),
       createdBy = createdBy,
       createdPrison = charge.prisonId,
+      hmctsChargeId = charge.hmctsChargeId,
     )
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = ChargeEntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, findingOfDomesticAbuse = null, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), chargeAggravatingFactors = mutableSetOf(), createdBy = createdBy, createdPrison = null)

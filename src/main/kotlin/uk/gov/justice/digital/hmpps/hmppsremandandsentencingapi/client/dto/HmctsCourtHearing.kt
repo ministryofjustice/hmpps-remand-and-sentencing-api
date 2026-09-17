@@ -29,6 +29,7 @@ data class HmctsCourHearingDocument(
 }
 
 data class HmctsCourtCharge(
+  val chargeId: UUID,
   val listingNumber: Int?,
   val offenceLegislation: String?,
   val code: String,
@@ -52,4 +53,5 @@ data class HmctsNextCourtHearing(
   val hmctsCourtId: UUID,
   val hmppsCourtId: String? = null,
   val hearingDate: LocalDateTime?,
+  val hearingId: UUID?,
 )

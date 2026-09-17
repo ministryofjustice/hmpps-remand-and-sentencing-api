@@ -52,7 +52,7 @@ class HmctsCourtDataService(
     }
 
     return CourtAppearance(
-      appearanceUuid = hearing.hearingId,
+      appearanceUuid = UUID.randomUUID(),
       outcome = appearanceOutcome,
       courtCode = court?.courtId ?: hearing.courtId.toString(),
       courtCaseReference = hearing.caseReferences.firstOrNull(),
@@ -75,7 +75,8 @@ class HmctsCourtDataService(
       },
       source = EventSource.DPS,
       deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
-      emptyList(),
+      periodLengths = emptyList(),
+      hmctsCourtHearingId = hearing.hearingId,
     )
   }
 
@@ -91,6 +92,7 @@ class HmctsCourtDataService(
     ),
     futureSkeletonAppearanceUuid = Constants.nilUUID,
     courtAppearanceSubType = null,
+    hmctsCourtHearingId = nextAppearance.hearingId,
   )
 
   private fun mapCharge(charge: HmctsCourtCharge): Charge {
@@ -108,6 +110,7 @@ class HmctsCourtDataService(
       mergedFromCase = null,
       createdAt = ZonedDateTime.now(),
       findingOfDomesticAbuse = null,
+      hmctsChargeId = charge.chargeId,
     )
   }
 

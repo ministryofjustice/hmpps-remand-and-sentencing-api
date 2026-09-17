@@ -12,6 +12,7 @@ data class NextCourtAppearance(
   val appearanceType: AppearanceType,
   val futureSkeletonAppearanceUuid: UUID,
   val courtAppearanceSubType: CourtAppearanceSubtype?,
+  val hmctsCourtHearingId: UUID?,
 ) {
   companion object {
     fun from(nextCourtAppearanceEntity: NextCourtAppearanceEntity): NextCourtAppearance = NextCourtAppearance(
@@ -21,6 +22,7 @@ data class NextCourtAppearance(
       AppearanceType.from(nextCourtAppearanceEntity.appearanceType),
       nextCourtAppearanceEntity.futureSkeletonAppearance.appearanceUuid,
       nextCourtAppearanceEntity.courtAppearanceSubtype?.let { CourtAppearanceSubtype.from(it) },
+      nextCourtAppearanceEntity.hmctsCourtHearingId,
     )
   }
 }

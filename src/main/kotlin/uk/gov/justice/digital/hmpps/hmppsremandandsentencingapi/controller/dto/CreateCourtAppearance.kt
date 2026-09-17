@@ -25,4 +25,5 @@ data class CreateCourtAppearance(
   val prisonId: String,
   val documents: List<UploadedDocument>?,
   val periodLengths: List<CreatePeriodLength>?,
+  val hmctsCourtHearingId: UUID? = null,
 )

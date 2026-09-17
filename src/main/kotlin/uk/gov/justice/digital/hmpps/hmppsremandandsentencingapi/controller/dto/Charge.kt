@@ -19,6 +19,7 @@ data class Charge(
   val mergedFromCase: MergedFromCase?,
   val createdAt: ZonedDateTime,
   val findingOfDomesticAbuse: Boolean?,
+  val hmctsChargeId: UUID? = null,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity, getSentenceFunction: java.util.function.Function<ChargeEntity, SentenceEntity?> = { it.getLiveSentence() }): Charge = Charge(
@@ -38,6 +39,7 @@ data class Charge(
       },
       chargeEntity.createdAt,
       chargeEntity.findingOfDomesticAbuse,
+      chargeEntity.hmctsChargeId,
     )
   }
 }

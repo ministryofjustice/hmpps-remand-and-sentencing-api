@@ -94,7 +94,7 @@ class HmctsCourtDataServiceTest {
 
     val result = service.getCourtAppearanceFromHmctsHearingId(hearingId, prisonerNumber)
 
-    assertThat(result.appearanceUuid).isEqualTo(hearingId)
+    assertThat(result.hmctsCourtHearingId).isEqualTo(hearingId)
     assertThat(result.courtCaseReference).isEqualTo("CASE123")
     assertThat(result.warrantType).isEqualTo("SENTENCING")
     assertThat(result.source).isEqualTo(EventSource.DPS)
