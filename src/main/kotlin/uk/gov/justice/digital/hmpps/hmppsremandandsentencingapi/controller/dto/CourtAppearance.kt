@@ -25,6 +25,7 @@ data class CourtAppearance(
   val source: EventSource,
   val deleteStatus: DeleteCourtAppearanceStatus,
   val periodLengths: List<PeriodLength>,
+  val hmctsCourtHearingId: UUID? = null,
 ) {
   companion object {
 
@@ -46,6 +47,7 @@ data class CourtAppearance(
       courtAppearanceEntity.source,
       courtAppearanceEntity.deleteStatus(),
       courtAppearanceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.map { PeriodLength.from(it) },
+      courtAppearanceEntity.hmctsCourtHearingId,
     )
   }
 }

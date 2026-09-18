@@ -98,7 +98,8 @@
     "supersedingCharge": "ChargeEntity",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String"
+    "updatedPrison": "String",
+    "hmctsChargeId": "UUID"
   },
   "ChargeHistoryEntity": {
     "changeSource": "ChangeSource",
@@ -172,7 +173,8 @@
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String",
-    "warrantType": "String"
+    "warrantType": "String",
+    "hmctsCourtHearingId": "UUID"
   },
   "CourtAppearanceHistoryEntity": {
     "appearanceDate": "LocalDate",
@@ -333,7 +335,8 @@
     "courtAppearanceSubtype": "CourtAppearanceSubtypeEntity",
     "courtCode": "String",
     "futureSkeletonAppearance": "CourtAppearanceEntity",
-    "id": "int"
+    "id": "int",
+    "hmctsCourtHearingId": "UUID"
   },
   "NextCourtAppearanceSarEntity": {
     "appearanceDate": "LocalDate",

@@ -60,7 +60,8 @@ class DpsDataCreator {
       appearanceTypeUuid: UUID = UUID.fromString("63e8fce0-033c-46ad-9edf-391b802d547a"),
       prisonId: String = "PRISON1",
       courtAppearanceSubtypeUuid: UUID? = UUID.fromString("3f1c9e42-7c8a-4c1e-9a5d-2f6b8d1a9e73"),
-    ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid, prisonId, courtAppearanceSubtypeUuid)
+      hmctsHearingId: UUID? = UUID.fromString("b4633d51-2d33-4d29-87d4-ac086665f838"),
+    ): CreateNextCourtAppearance = CreateNextCourtAppearance(appearanceDate, appearanceTime, courtCode, appearanceTypeUuid, prisonId, courtAppearanceSubtypeUuid, hmctsHearingId)
 
     fun dpsCreateCourtAppearance(
       courtCaseUuid: String? = null,
@@ -78,6 +79,7 @@ class DpsDataCreator {
       prisonId: String = "PRISON1",
       documents: List<UploadedDocument> = listOf(dpsCreateUploadedDocument()),
       periodLengths: List<CreatePeriodLength>? = listOf(dpsCreatePeriodLength()),
+      hmctsCourtHearingId: UUID? = UUID.fromString("ebd29fb1-7d45-4462-9091-27ccf883ac11"),
     ): CreateCourtAppearance = CreateCourtAppearance(
       courtCaseUuid,
       appearanceUUID,
@@ -94,6 +96,7 @@ class DpsDataCreator {
       prisonId,
       documents,
       periodLengths,
+      hmctsCourtHearingId,
     )
 
     fun dpsCreateNonSentencedCourtCase(
@@ -162,6 +165,7 @@ class DpsDataCreator {
       replacedChargeUuid: UUID? = null,
       createChargeOrder: Int? = null,
       aggravatingFactors: List<AggravatingFactor> = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)),
+      hmctsChargeId: UUID? = UUID.fromString("48a3b2d1-5a5a-4233-a5ef-a27882a4436b"),
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
@@ -175,6 +179,7 @@ class DpsDataCreator {
       prisonId,
       replacedChargeUuid,
       createChargeOrder,
+      hmctsChargeId,
       aggravatingFactors,
     )
 
