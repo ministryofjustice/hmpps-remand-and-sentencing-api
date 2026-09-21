@@ -33,6 +33,4 @@ interface CourtCaseSarRepository : CrudRepository<CourtCaseSarEntity, Int> {
     ],
   )
   fun findByPrisonerId(prisonerId: String): List<CourtCaseSarEntity>
-
-  fun existsByPrisonerId(prisonerId: String): Boolean
 }

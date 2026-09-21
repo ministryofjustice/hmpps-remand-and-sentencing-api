@@ -33,10 +33,15 @@ class PrisonerDetailsService(
     prisonerNumber: String,
     from: LocalDate? = null,
     to: LocalDate? = null,
-  ): SarContent? = courtCaseSarRepository.existsByPrisonerId(prisonerNumber).takeIf { it }?.let {
+  ): SarContent? {
     val courtCases = mapCourtCases(courtCaseSarRepository.findByPrisonerId(prisonerNumber), from, to)
     val recalls = mapRecalls(recallSarRepository.findByPrisonerId(prisonerNumber), from, to)
-    val immigrationDetentions = mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber), from, to)
+    val immigrationDetentions =
+      mapImmigrationDetentions(immigrationDetentionSarRepository.findByPrisonerId(prisonerNumber), from, to)
+    if (courtCases.isEmpty() && recalls.isEmpty() && immigrationDetentions.isEmpty()) {
+      return null
+    }
+
     val personDetails = personService.getPersonDetailsByPrisonerIdCached(prisonerNumber)
     val prisonerName = personDetails?.let { "${personDetails.firstName} ${personDetails.lastName}" }
 
