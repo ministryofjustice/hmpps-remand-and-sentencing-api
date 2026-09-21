@@ -56,7 +56,7 @@ jobs:
       upload-build-artifacts: ${{ github.ref == 'refs/heads/main' }}
       java-version: "25"
       localstack-tag: "4"
-      postgres-tag: "17"
+      postgres-tag: "18"
       postgres-db: ras
       postgres-username: ras-user
       postgres-password: ras-pass

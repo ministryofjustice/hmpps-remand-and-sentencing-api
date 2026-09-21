@@ -99,6 +99,8 @@ class CourtAppearanceEntity(
 
   @Enumerated(EnumType.STRING)
   var source: EventSource = DPS,
+
+  val hmctsCourtHearingId: UUID? = null,
 ) {
 
   @OneToMany
@@ -333,6 +335,7 @@ class CourtAppearanceEntity(
         overallConvictionDate = courtAppearance.overallConvictionDate,
         legacyData = courtAppearance.legacyData,
         appearanceCharges = mutableSetOf(),
+        hmctsCourtHearingId = courtAppearance.hmctsCourtHearingId,
       )
       return courtAppearanceEntity
     }

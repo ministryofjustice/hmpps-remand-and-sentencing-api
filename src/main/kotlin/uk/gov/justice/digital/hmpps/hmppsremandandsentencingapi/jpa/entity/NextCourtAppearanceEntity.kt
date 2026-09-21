@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.AppearanceTypeCourtAppearanceSubtype
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 @Entity
 @Table(name = "next_court_appearance")
@@ -41,6 +42,7 @@ class NextCourtAppearanceEntity(
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "future_skeleton_appearance_id")
   var futureSkeletonAppearance: CourtAppearanceEntity,
+  val hmctsCourtHearingId: UUID? = null,
 ) {
   fun isSame(other: NextCourtAppearanceEntity?): Boolean = other != null &&
     appearanceDate.isEqual(other.appearanceDate) &&
@@ -66,6 +68,7 @@ class NextCourtAppearanceEntity(
       appearanceType = appearanceTypeEntity,
       courtAppearanceSubtype = courtAppearanceSubtype,
       futureSkeletonAppearance = futureSkeletonAppearance,
+      hmctsCourtHearingId = nextCourtAppearance.hmctsCourtHearingId,
     )
 
     fun from(nomisAppearance: MigrationCreateCourtAppearance, nomisFutureAppearance: MigrationCreateCourtAppearance, futureAppearance: CourtAppearanceEntity, appearanceTypeCourtAppearanceSubtype: AppearanceTypeCourtAppearanceSubtype): NextCourtAppearanceEntity = NextCourtAppearanceEntity(

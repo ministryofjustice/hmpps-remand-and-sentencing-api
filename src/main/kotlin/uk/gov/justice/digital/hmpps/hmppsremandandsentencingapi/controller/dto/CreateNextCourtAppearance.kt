@@ -11,4 +11,5 @@ data class CreateNextCourtAppearance(
   val appearanceTypeUuid: UUID,
   val prisonId: String,
   val courtAppearanceSubtypeUuid: UUID?,
+  val hmctsCourtHearingId: UUID? = null,
 )

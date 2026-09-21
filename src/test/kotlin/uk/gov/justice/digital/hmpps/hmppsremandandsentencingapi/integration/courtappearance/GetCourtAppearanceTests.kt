@@ -42,6 +42,12 @@ class GetCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(createdAppearance.charges[0].sentence!!.sentenceUuid.toString())
       .jsonPath("$.charges[0].sentence.chargeNumber")
       .isEqualTo(createdAppearance.charges[0].sentence!!.chargeNumber)
+      .jsonPath("$.hmctsCourtHearingId")
+      .isEqualTo(createdAppearance.hmctsCourtHearingId)
+      .jsonPath("$.charges[0].hmctsChargeId")
+      .isEqualTo(createdAppearance.charges[0].hmctsChargeId.toString())
+      .jsonPath("$.nextCourtAppearance.hmctsCourtHearingId")
+      .isEqualTo(createdAppearance.nextCourtAppearance.hmctsCourtHearingId)
   }
 
   @Test

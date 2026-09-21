@@ -50,6 +50,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       ),
       charges = listOf(
         HmctsCourtCharge(
+          chargeId = UUID.randomUUID(),
           listingNumber = 1,
           offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
           pleaDate = LocalDate.of(2026, 8, 15),
@@ -67,6 +68,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           ),
         ),
         HmctsCourtCharge(
+          chargeId = UUID.randomUUID(),
           listingNumber = 2,
           offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
           pleaDate = LocalDate.of(2026, 8, 15),
@@ -89,6 +91,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         hmctsCourtId = UUID.randomUUID(),
         hmppsCourtId = UUID.randomUUID().toString(),
         hearingDate = LocalDateTime.of(2026, 8, 15, 10, 0),
+        hearingId = UUID.randomUUID(),
       ),
     )
     val courtRegister = CourtRegister(
@@ -128,6 +131,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     Assertions.assertThat(response).isEqualTo(
       CourtAppearance(
         appearanceUuid = response.appearanceUuid, // Random UUID
+        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
         outcome = null,
         courtCode = courtRegister.courtId,
         courtCaseReference = "ABC123",
@@ -141,10 +145,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           appearanceType = AppearanceType(appearanceTypeUuid = Constants.nilUUID, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
           futureSkeletonAppearanceUuid = Constants.nilUUID,
           courtAppearanceSubType = null,
+          hmctsCourtHearingId = hmctsCourtHearing.nextHearing.hearingId,
         ),
         charges = listOf(
           Charge(
             chargeUuid = response.charges.first().chargeUuid,
+            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
             offenceCode = "TH68001",
             offenceStartDate = LocalDate.of(2026, 6, 15),
             offenceEndDate = LocalDate.of(2026, 7, 15),
@@ -161,6 +167,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           ),
           Charge(
             chargeUuid = response.charges[1].chargeUuid,
+            hmctsChargeId = hmctsCourtHearing.charges[1].chargeId,
             offenceCode = "X123ABC",
             offenceStartDate = LocalDate.of(2026, 6, 14),
             offenceEndDate = null,
@@ -225,6 +232,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               description = "Remanded in custody with bail direction",
             ),
           ),
+          chargeId = UUID.randomUUID(),
         ),
         HmctsCourtCharge(
           listingNumber = 2,
@@ -242,6 +250,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               description = "Remanded in custody with bail direction",
             ),
           ),
+          chargeId = UUID.randomUUID(),
         ),
       ),
       nextHearing = null,
@@ -298,9 +307,11 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         appearanceDate = LocalDate.parse("2026-01-01"),
         warrantType = "NON_SENTENCING",
         nextCourtAppearance = null,
+        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
         charges = listOf(
           Charge(
             chargeUuid = response.charges.first().chargeUuid,
+            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
             offenceCode = "TH68001",
             offenceStartDate = LocalDate.of(2026, 6, 15),
             offenceEndDate = LocalDate.of(2026, 7, 15),
@@ -317,6 +328,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           ),
           Charge(
             chargeUuid = response.charges[1].chargeUuid,
+            hmctsChargeId = hmctsCourtHearing.charges[1].chargeId,
             offenceCode = "X123ABC",
             offenceStartDate = LocalDate.of(2026, 6, 14),
             offenceEndDate = null,
@@ -366,6 +378,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       ),
       charges = listOf(
         HmctsCourtCharge(
+          chargeId = UUID.randomUUID(),
           listingNumber = null,
           offenceLegislation = null,
           pleaDate = null,
@@ -422,6 +435,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     Assertions.assertThat(response).isEqualTo(
       CourtAppearance(
         appearanceUuid = response.appearanceUuid, // Random UUID
+        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
         outcome = null,
         courtCode = courtRegister.courtId,
         courtCaseReference = "ABC123",
@@ -432,6 +446,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         charges = listOf(
           Charge(
             chargeUuid = response.charges.first().chargeUuid,
+            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
             offenceCode = "TH68001",
             offenceStartDate = LocalDate.of(2026, 6, 15),
             offenceEndDate = null,
