@@ -11,7 +11,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.subjectaccessrequest.util.ExpectResponseData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
@@ -23,6 +22,7 @@ import uk.gov.justice.digital.hmpps.subjectaccessrequest.SarIntegrationTestHelpe
 import uk.gov.justice.digital.hmpps.subjectaccessrequest.SarIntegrationTestHelperConfig
 import uk.gov.justice.digital.hmpps.subjectaccessrequest.SarReportTest
 import java.time.LocalDate
+import java.util.UUID
 
 /**
  * To generate sar-generated-report.html.log, execute below and check the src/test/resources folder
@@ -133,9 +133,7 @@ class SarIntegrationTests :
       }
       .exchange()
       .expectStatus()
-      .isOk
-      .expectBody()
-      .json(ExpectResponseData.emptyFullDataResponse())
+      .isNoContent
     PrisonApiExtension.prisonApi.removeStub(stub)
   }
 
@@ -173,6 +171,97 @@ class SarIntegrationTests :
       .exchange()
       .expectStatus()
       .isEqualTo(204)
+  }
+
+  @Test
+  fun `SAR API should get 204 when all collections return empty from service`() {
+    arrange()
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("prn", DpsDataCreator.DEFAULT_PRISONER_ID)
+          .queryParam("fromDate", "2010-01-01")
+          .queryParam("toDate", "2010-01-02")
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus()
+      .isEqualTo(204)
+  }
+
+  @Test
+  fun `SAR API should get 200 when only recalls collection returns populated from service`() {
+    PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DpsDataCreator.DEFAULT_PRISONER_ID)
+    CourtRegisterApiExtension.courtRegisterApi.stubGetCourtRegister("COURT1")
+    AdjustmentsApiExtension.adjustmentsApi.stubAllowCreateAdjustments()
+    createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(
+          UUID.randomUUID(),
+        ),
+      ),
+    )
+
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("prn", DpsDataCreator.DEFAULT_PRISONER_ID)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.courtCases.length()").isEqualTo(0)
+      .jsonPath("$.content.immigrationDetentions.length()").isEqualTo(0)
+      .jsonPath("$.content.recalls.length()").isEqualTo(1)
+      .jsonPath("$.content.recalls[0].recallType").isEqualTo("FTR_14")
+  }
+
+  @Test
+  fun `SAR API should get 200 when only immigration detention collection and court cases returns populated from service`() {
+    PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DpsDataCreator.DEFAULT_PRISONER_ID)
+    CourtRegisterApiExtension.courtRegisterApi.stubGetCourtRegister("COURT1")
+    AdjustmentsApiExtension.adjustmentsApi.stubAllowCreateAdjustments()
+    createImmigrationDetention(
+      DpsDataCreator.dpsCreateImmigrationDetention(
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        immigrationDetentionRecordType = ImmigrationDetentionRecordType.IS91,
+        recordDate = LocalDate.of(2021, 1, 1),
+        createdByUsername = "aUser",
+        createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_IS91_UUID,
+      ),
+    )
+
+    webTestClient
+      .get()
+      .uri { uriBuilder ->
+        uriBuilder
+          .path("/subject-access-request")
+          .queryParam("prn", DpsDataCreator.DEFAULT_PRISONER_ID)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_SAR_DATA_ACCESS"))
+      }
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.courtCases[0].appearances.length()").isEqualTo(1)
+      .jsonPath("$.content.courtCases[0].appearances[0].appearanceDate").isEqualTo("2021-01-01")
+      .jsonPath("$.content.immigrationDetentions.length()").isEqualTo(1)
+      .jsonPath("$.content.immigrationDetentions[0].recordDate").isEqualTo("2021-01-01")
+      .jsonPath("$.content.recalls.length()").isEqualTo(0)
   }
 
   @Test

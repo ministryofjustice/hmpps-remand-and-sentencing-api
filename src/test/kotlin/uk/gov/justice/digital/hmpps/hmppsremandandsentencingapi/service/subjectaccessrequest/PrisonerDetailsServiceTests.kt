@@ -139,9 +139,9 @@ class PrisonerDetailsServiceTests {
     arrange("22959")
 
     // Act
-    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)) as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("22959", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)) as Prisoner?
 
-    assertThat(prisoner.courtCases?.count()).isEqualTo(0)
+    assertThat(prisoner).isNull()
   }
 
   @Test
@@ -255,13 +255,36 @@ class PrisonerDetailsServiceTests {
   }
 
   @Test
-  fun `should return no Immigration Detention Prisoner Details FROM date TO date`() {
+  fun `should return no Immigration Detention Prisoner Details FROM date TO date but recalls exists`() {
     arrange("5574")
+    every { recallSarRepository.findByPrisonerId("5574") } returns listOf(
+      MockedResponseData.constructBaseRecallSarEntity(
+        "5574",
+        LocalDate.of(2026, 6, 3),
+        LocalDate.of(2026, 7, 2),
+      ),
+    )
 
     // Act
     val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 2), to = LocalDate.of(2026, 6, 5)) as Prisoner
 
     assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(0)
+  }
+
+  @Test
+  fun `should return no Recalls Prisoner Details FROM date TO date but immigration exists`() {
+    arrange("5574")
+    every { immigrationDetentionSarRepository.findByPrisonerId("5574") } returns listOf(
+      MockedResponseData.constructImmigrationDetentionSarEntity(
+        "5574",
+        LocalDate.of(2026, 6, 3),
+      ),
+    )
+
+    // Act
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574", from = LocalDate.of(2026, 6, 2), to = LocalDate.of(2026, 6, 5)) as Prisoner
+
+    assertThat(prisoner.recalls?.count()).isEqualTo(0)
   }
 
   @Test
@@ -280,32 +303,16 @@ class PrisonerDetailsServiceTests {
     arrangeEmpty("5574")
 
     // Act
-    val prisoner = prisonerDetailsService.getPrisonerDetails("5574") as Prisoner
+    val prisoner = prisonerDetailsService.getPrisonerDetails("5574") as Prisoner?
 
-    assertThat(prisoner.immigrationDetentions?.count()).isEqualTo(0)
-    assertThat(prisoner.recalls?.count()).isEqualTo(0)
-    assertThat(prisoner.courtCases?.count()).isEqualTo(0)
-    assertThat(prisoner.prisonerName).isEqualTo("John Smith")
-    assertThat(prisoner.prisonerNumber).isEqualTo("5574")
+    assertThat(prisoner).isNull()
   }
 
   @Test
-  fun `should find prisoner id in at least one court case`() {
+  fun `should return no prisoner details when all collections empty`() {
     every { courtCaseSarRepository.findByPrisonerId("44959") } returns listOf()
-    every { courtCaseSarRepository.existsByPrisonerId("44959") } returns true
     every { recallSarRepository.findByPrisonerId("44959") } returns listOf()
     every { immigrationDetentionSarRepository.findByPrisonerId("44959") } returns listOf()
-    every { personService.getPersonDetailsByPrisonerIdCached("44959") } returns null
-
-    // Act
-    val prisoner = prisonerDetailsService.getPrisonerDetails("44959") as Prisoner
-
-    assertThat(prisoner).isEqualTo(Prisoner("44959", null, listOf(), listOf(), listOf()))
-  }
-
-  @Test
-  fun `should find no prisoner id with a court case`() {
-    every { courtCaseSarRepository.existsByPrisonerId("44959") } returns false
 
     // Act
     val prisoner = prisonerDetailsService.getPrisonerDetails("44959") as Prisoner?
@@ -345,7 +352,6 @@ class PrisonerDetailsServiceTests {
     every { personService.getPersonDetailsByPrisonerIdCached(prn) } returns MockedResponseData.constructPrisonerDetails(
       prn,
     )
-    every { courtCaseSarRepository.existsByPrisonerId(prn) } returns true
   }
 
   private fun arrangeEmpty(prn: String) {
@@ -355,6 +361,5 @@ class PrisonerDetailsServiceTests {
     every { personService.getPersonDetailsByPrisonerIdCached(prn) } returns MockedResponseData.constructPrisonerDetails(
       prn,
     )
-    every { courtCaseSarRepository.existsByPrisonerId(prn) } returns true
   }
 }
