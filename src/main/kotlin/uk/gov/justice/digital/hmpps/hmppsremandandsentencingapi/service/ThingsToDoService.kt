@@ -27,10 +27,14 @@ class ThingsToDoService(
           val case = cases.maxByOrNull { it.appearances.maxOf { it.appearanceDate } }
 
           val newCourtCase = case == null
-          val repeatRemand = features.hmctsWarrantThingToDo.repeatRemandHearingEnabled &&
-            case != null &&
+          val newRemandCaseSupported = newCourtCase && warrantHearing.isRemandHearing()
+          val repeatRemandSupported = features.hmctsWarrantThingToDo.repeatRemandHearingEnabled &&
+            !newCourtCase &&
             warrantHearing.isRemandHearing()
-          val thingToDoSupported = newCourtCase || repeatRemand
+          val newSentencingCaseSupported = features.hmctsWarrantThingToDo.sentencingEnabled &&
+            newCourtCase &&
+            warrantHearing.isSentenceHearing()
+          val thingToDoSupported = newRemandCaseSupported || newSentencingCaseSupported || repeatRemandSupported
           if (!thingToDoSupported) {
             return@mapNotNull null
           }
@@ -49,10 +53,14 @@ class ThingsToDoService(
           it.hearingThingsToDoData.hearingDate
         }
 
-      return ThingsToDo(
-        prisonerId = prisonerId,
-        thingsToDo = thingsToDo,
-      )
+      val multipleNotifications = thingsToDo.size > 1
+      val multipleNotificationsSupported = multipleNotifications && features.hmctsWarrantThingToDo.multipleNotificationsEnabled
+      if (!multipleNotifications || multipleNotificationsSupported) {
+        return ThingsToDo(
+          prisonerId = prisonerId,
+          thingsToDo = thingsToDo,
+        )
+      }
     }
 
     return ThingsToDo(

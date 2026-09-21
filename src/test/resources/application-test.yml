@@ -80,5 +80,7 @@ features:
   hmctsWarrantThingToDo:
     enabled: true
     repeatRemandHearingEnabled: true
+    sentencingEnabled: true
+    multipleNotificationsEnabled: true
   appearanceSchedulesEvents:
     enabled: true

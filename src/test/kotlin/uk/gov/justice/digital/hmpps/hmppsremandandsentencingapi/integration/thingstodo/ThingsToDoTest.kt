@@ -1,10 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.thingstodo
 
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
@@ -19,6 +22,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCrea
 import java.time.LocalDate
 import java.util.UUID
 import java.util.stream.Stream
+import kotlin.collections.map
+import kotlin.collections.orEmpty
 
 class ThingsToDoTest : IntegrationTestBase() {
 
@@ -59,6 +64,164 @@ class ThingsToDoTest : IntegrationTestBase() {
       },
     )
     Assertions.assertThat(response).isEqualTo(expectedThingsToDo)
+  }
+
+  @Nested
+  inner class FeatureToggleTests {
+    @Nested
+    @TestPropertySource(
+      properties = [
+        "features.hmctsWarrantThingToDo.multipleNotificationsEnabled=false",
+      ],
+    )
+    inner class MultipleNotificationsTests {
+
+      @Test
+      fun `Multiple things to do not supported if feature toggle disabled`() {
+        CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
+          PRISONER_ID,
+          listOf(REMAND_HEARING, SENTENCING_HEARING),
+        )
+        val response = webTestClient
+          .get()
+          .uri("/things-to-do/prisoner/$PRISONER_ID")
+          .headers {
+            it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+            it.contentType = MediaType.APPLICATION_JSON
+          }
+          .exchange()
+          .expectStatus().isOk
+          .returnResult(ThingsToDo::class.java)
+          .responseBody.blockFirst()!!
+
+        Assertions.assertThat(response).isEqualTo(
+          ThingsToDo(
+            prisonerId = PRISONER_ID,
+            thingsToDo = emptyList(),
+          ),
+        )
+      }
+
+      @Test
+      fun `Single things to do supported if feature toggle disabled`() {
+        CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
+          PRISONER_ID,
+          listOf(REMAND_HEARING),
+        )
+        val response = webTestClient
+          .get()
+          .uri("/things-to-do/prisoner/$PRISONER_ID")
+          .headers {
+            it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+            it.contentType = MediaType.APPLICATION_JSON
+          }
+          .exchange()
+          .expectStatus().isOk
+          .returnResult(ThingsToDo::class.java)
+          .responseBody.blockFirst()!!
+
+        Assertions.assertThat(response).isEqualTo(
+          ThingsToDo(
+            prisonerId = PRISONER_ID,
+            thingsToDo = listOf(
+              ThingToDo(
+                ThingToDoType.NEW_WARRANT,
+                HearingThingsToDoData(
+                  hearingId = HMCTS_HEARING_ID,
+                  courtCaseReference = "ABC123",
+                  hearingDate = LocalDate.of(2026, 1, 1),
+                  hearingType = "First hearing",
+                  warrantType = HearingThingsToDoWarrantType.REMAND,
+                  courtCaseUuid = null,
+                ),
+
+              ),
+            ),
+          ),
+        )
+      }
+    }
+
+    @Nested
+    @TestPropertySource(
+      properties = [
+        "features.hmctsWarrantThingToDo.sentencingEnabled=false",
+      ],
+    )
+    inner class SentencingWarrantNotificationsTests {
+
+      @Test
+      fun `Sentencing warrant things to do not supported if feature toggle disabled`() {
+        CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
+          PRISONER_ID,
+          listOf(SENTENCING_HEARING),
+        )
+        val response = webTestClient
+          .get()
+          .uri("/things-to-do/prisoner/$PRISONER_ID")
+          .headers {
+            it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+            it.contentType = MediaType.APPLICATION_JSON
+          }
+          .exchange()
+          .expectStatus().isOk
+          .returnResult(ThingsToDo::class.java)
+          .responseBody.blockFirst()!!
+
+        Assertions.assertThat(response).isEqualTo(
+          ThingsToDo(
+            prisonerId = PRISONER_ID,
+            thingsToDo = emptyList(),
+          ),
+        )
+      }
+    }
+
+    @Nested
+    @TestPropertySource(
+      properties = [
+        "features.hmctsWarrantThingToDo.repeatRemandHearingEnabled=false",
+      ],
+    )
+    inner class RepeatRemandWarrantNotificationsTests {
+
+      @Test
+      fun `Repeat remand things to do not supported if feature toggle disabled`() {
+        CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
+          PRISONER_ID,
+          listOf(REMAND_HEARING),
+        )
+        createCourtCase(
+          DpsDataCreator.dpsCreateCourtCase(
+            prisonerId = PRISONER_ID,
+            appearances = listOf(
+              DpsDataCreator.dpsCreateCourtAppearance(
+                courtCaseReference = REMAND_HEARING.caseReferences[0],
+              ),
+            ),
+          ),
+        )
+
+        val response = webTestClient
+          .get()
+          .uri("/things-to-do/prisoner/$PRISONER_ID")
+          .headers {
+            it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RO"))
+            it.contentType = MediaType.APPLICATION_JSON
+          }
+          .exchange()
+          .expectStatus().isOk
+          .returnResult(ThingsToDo::class.java)
+          .responseBody.blockFirst()!!
+
+        Assertions.assertThat(response).isEqualTo(
+          ThingsToDo(
+            prisonerId = PRISONER_ID,
+            thingsToDo = emptyList(),
+          ),
+        )
+      }
+    }
   }
 
   companion object {
