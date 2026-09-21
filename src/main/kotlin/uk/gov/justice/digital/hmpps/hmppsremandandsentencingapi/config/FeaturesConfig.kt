@@ -12,6 +12,8 @@ data class FeaturesConfig @ConstructorBinding constructor(
 data class HmctsWarrantThingToDoConfig(
   val enabled: Boolean,
   val repeatRemandHearingEnabled: Boolean,
+  val sentencingEnabled: Boolean,
+  val multipleNotificationsEnabled: Boolean,
 )
 
 data class AppearanceSchedulesEventsConfig(
