@@ -93,8 +93,12 @@ class HmctsCourtDataService(
   )
 
   private fun mapCharge(charge: HmctsCourtCharge): Charge {
-    val outcomeId = mapCodeToOutcome(charge.results.first().code)
-    val outcome = outcomeId?.let { chargeOutcomeService.findByUuid(it) }
+    val outcome = if (charge.results.size == 1) {
+      val outcomeId = mapCodeToOutcome(charge.results.first().code)
+      outcomeId?.let { chargeOutcomeService.findByUuid(it) }
+    } else {
+      null
+    }
     return Charge(
       chargeUuid = UUID.randomUUID(),
       offenceCode = charge.code,
