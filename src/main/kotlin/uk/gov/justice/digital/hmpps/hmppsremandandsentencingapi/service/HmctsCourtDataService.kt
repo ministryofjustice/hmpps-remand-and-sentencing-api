@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegisterApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
@@ -25,7 +24,6 @@ import java.util.UUID
 class HmctsCourtDataService(
   val courtDataIngestionApi: CourtDataIngestionApiClient,
   val documentService: DocumentManagementApiClient,
-  val courtRegisterApiClient: CourtRegisterApiClient,
   val chargeOutcomeService: ChargeOutcomeService,
   val appearanceOutcomeService: AppearanceOutcomeService,
 ) {
@@ -38,7 +36,6 @@ class HmctsCourtDataService(
   private fun getCourtAppearance(hearing: HmctsCourtHearing): CourtAppearance {
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
       .filter { it.duplicateOf == null }
-    val court = courtRegisterApiClient.getCourtRegisterByHmctsId(hearing.courtId)
     val charges = hearing.charges.map { mapCharge(it) }
     val chargeOutcomeIds = charges.mapNotNull { it.outcome?.outcomeUuid }
 
@@ -54,7 +51,7 @@ class HmctsCourtDataService(
     return CourtAppearance(
       appearanceUuid = UUID.randomUUID(),
       outcome = appearanceOutcome,
-      courtCode = court?.courtId ?: hearing.courtId.toString(),
+      courtCode = hearing.courtCode ?: Constants.nilUUID.toString(),
       courtCaseReference = hearing.caseReferences.firstOrNull(),
       criminalAppealOfficeReference = null,
       appearanceDate = hearing.hearingDate,
@@ -83,7 +80,7 @@ class HmctsCourtDataService(
   private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing): NextCourtAppearance? = NextCourtAppearance(
     appearanceDate = nextAppearance.hearingDate?.toLocalDate() ?: LocalDate.MIN,
     appearanceTime = nextAppearance.hearingDate?.toLocalTime() ?: LocalTime.MIN,
-    courtCode = nextAppearance.hmppsCourtId ?: nextAppearance.hmppsCourtId.toString(),
+    courtCode = nextAppearance.hmppsCourtId ?: Constants.nilUUID.toString(),
     appearanceType = AppearanceType(
       appearanceTypeUuid = Constants.nilUUID,
       description = "Unknown appearance type",

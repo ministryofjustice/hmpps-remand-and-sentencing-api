@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.c
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
@@ -35,9 +34,11 @@ class HmctsCourtDataTest : IntegrationTestBase() {
   @Test
   fun `Test get appearance from hmcts data`() {
     val prisonerNumber = "PRIS123"
+    val courtRegisterId = UUID.randomUUID().toString()
     val hmctsCourtHearing = HmctsCourtHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
+      courtCode = courtRegisterId,
       courtId = UUID.randomUUID(),
       hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123", "EFG456"),
@@ -94,11 +95,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         hearingId = UUID.randomUUID(),
       ),
     )
-    val courtRegister = CourtRegister(
-      courtName = "My court",
-      courtId = UUID.randomUUID().toString(),
-      courtDescription = "My court description",
-    )
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
       prisonerNumber,
@@ -110,10 +106,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
-    )
-    CourtRegisterApiExtension.courtRegisterApi.stubGetHmctsCourtRegister(
-      hmctsCourtHearing.courtId,
-      courtRegister,
     )
 
     val response = webTestClient
@@ -133,7 +125,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         appearanceUuid = response.appearanceUuid, // Random UUID
         hmctsCourtHearingId = hmctsCourtHearing.hearingId,
         outcome = null,
-        courtCode = courtRegister.courtId,
+        courtCode = courtRegisterId,
         courtCaseReference = "ABC123",
         criminalAppealOfficeReference = null,
         appearanceDate = LocalDate.parse("2026-01-01"),
@@ -202,9 +194,11 @@ class HmctsCourtDataTest : IntegrationTestBase() {
   @Test
   fun `Test get appearance from with offence outcomes all the same hmcts data`() {
     val prisonerNumber = "PRIS123"
+    val courtRegisterId = UUID.randomUUID().toString()
     val hmctsCourtHearing = HmctsCourtHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
+      courtCode = courtRegisterId,
       courtId = UUID.randomUUID(),
       hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123", "EFG456"),
@@ -255,11 +249,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       ),
       nextHearing = null,
     )
-    val courtRegister = CourtRegister(
-      courtName = "My court",
-      courtId = UUID.randomUUID().toString(),
-      courtDescription = "My court description",
-    )
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
       prisonerNumber,
@@ -272,11 +261,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         ),
       ),
     )
-    CourtRegisterApiExtension.courtRegisterApi.stubGetHmctsCourtRegister(
-      hmctsCourtHearing.courtId,
-      courtRegister,
-    )
-
     val response = webTestClient
       .get()
       .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
@@ -301,7 +285,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           relatedChargeOutcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
           isSubList = false, dispositionCode = "INTERIM", status = ReferenceEntityStatus.ACTIVE, warrantType = "NON_SENTENCING",
         ),
-        courtCode = courtRegister.courtId,
+        courtCode = courtRegisterId,
         courtCaseReference = "ABC123",
         criminalAppealOfficeReference = null,
         appearanceDate = LocalDate.parse("2026-01-01"),
@@ -366,6 +350,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     val hmctsCourtHearing = HmctsCourtHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
+      courtCode = null,
       courtId = UUID.randomUUID(),
       hearingDate = LocalDate.of(2026, 1, 1),
       caseReferences = listOf("ABC123", "EFG456"),
@@ -415,10 +400,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         ),
       ),
     )
-    CourtRegisterApiExtension.courtRegisterApi.stubGetHmctsCourtRegister(
-      hmctsCourtHearing.courtId,
-      courtRegister,
-    )
 
     val response = webTestClient
       .get()
@@ -437,7 +418,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         appearanceUuid = response.appearanceUuid, // Random UUID
         hmctsCourtHearingId = hmctsCourtHearing.hearingId,
         outcome = null,
-        courtCode = courtRegister.courtId,
+        courtCode = Constants.nilUUID.toString(),
         courtCaseReference = "ABC123",
         criminalAppealOfficeReference = null,
         appearanceDate = LocalDate.parse("2026-01-01"),
