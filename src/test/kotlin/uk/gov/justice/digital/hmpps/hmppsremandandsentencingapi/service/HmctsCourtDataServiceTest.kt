@@ -9,9 +9,7 @@ import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegisterApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.DocumentManagementApiDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
@@ -28,9 +26,6 @@ class HmctsCourtDataServiceTest {
 
   @Mock
   lateinit var documentManagementApi: DocumentManagementApiClient
-
-  @Mock
-  lateinit var courtRegisterApiClient: CourtRegisterApiClient
 
   @Mock
   lateinit var chargeOutcomeService: ChargeOutcomeService
@@ -52,6 +47,7 @@ class HmctsCourtDataServiceTest {
     val hearing = HmctsCourtHearing(
       hearingId = hearingId,
       courtId = courtId,
+      courtCode = courtId.toString(),
       hearingDate = LocalDate.of(2025, 1, 1),
       caseReferences = listOf("CASE123"),
       documents = listOf(
@@ -66,12 +62,6 @@ class HmctsCourtDataServiceTest {
       ),
       courtName = "Court",
       hearingType = "Hearing",
-    )
-
-    val courtRegister = CourtRegister(
-      courtName = "Court",
-      courtId = UUID.randomUUID().toString(),
-      courtDescription = "Court description",
     )
     val document = DocumentManagementApiDocument(
       documentUuid = documentId,
@@ -89,9 +79,6 @@ class HmctsCourtDataServiceTest {
     whenever(documentManagementApi.getDocumentsByIds(listOf(documentId.toString(), duplicateDocumentId.toString())))
       .thenReturn(listOf(document, duplicateDocument))
 
-    whenever(courtRegisterApiClient.getCourtRegisterByHmctsId(courtId))
-      .thenReturn(courtRegister)
-
     val result = service.getCourtAppearanceFromHmctsHearingId(hearingId, prisonerNumber)
 
     assertThat(result.hmctsCourtHearingId).isEqualTo(hearingId)
@@ -103,7 +90,7 @@ class HmctsCourtDataServiceTest {
     assertThat(result.documents).hasSize(1)
     assertThat(result.documents.first().documentType).isEqualTo("HMCTS_WARRANT")
     assertThat(result.documents.first().fileName).isEqualTo("sentencing-warrant.pdf")
-    assertThat(result.courtCode).isEqualTo(courtRegister.courtId)
+    assertThat(result.courtCode).isEqualTo(courtId.toString())
 
     verify(courtDataIngestionApi).getCourtHearing(hearingId, prisonerNumber)
   }
@@ -129,59 +116,10 @@ class HmctsCourtDataServiceTest {
       courtName = "Court",
       hearingType = "Hearing",
     )
-    val courtRegister = CourtRegister(
-      courtName = "Court",
-      courtId = UUID.randomUUID().toString(),
-      courtDescription = "Court description",
-    )
     val document = DocumentManagementApiDocument(
       documentUuid = documentId,
       documentFilename = "sentencing-warrant.pdf",
     )
-
-    whenever(courtDataIngestionApi.getCourtHearing(hearingId, prisonerNumber))
-      .thenReturn(hearing)
-
-    whenever(documentManagementApi.getDocumentsByIds(listOf(documentId.toString())))
-      .thenReturn(listOf(document))
-
-    whenever(courtRegisterApiClient.getCourtRegisterByHmctsId(courtId))
-      .thenReturn(courtRegister)
-
-    val result = service.getCourtAppearanceFromHmctsHearingId(hearingId, prisonerNumber)
-
-    assertThat(result.documents.first().documentType)
-      .isEqualTo("PRISON_COURT_REGISTER")
-  }
-
-  @Test
-  fun `should handle court not found`() {
-    val prisonerNumber = "ABC123"
-    val hearingId = UUID.randomUUID()
-    val documentId = UUID.randomUUID()
-    val courtId = UUID.randomUUID()
-
-    val hearing = HmctsCourtHearing(
-      hearingId = hearingId,
-      courtId = courtId,
-      hearingDate = LocalDate.now(),
-      caseReferences = emptyList(),
-      documents = listOf(
-        HmctsCourHearingDocument(
-          documentId = documentId,
-          documentType = "SENTENCING_WARRANT",
-        ),
-      ),
-      courtName = "Court",
-      hearingType = "Hearing",
-    )
-    val document = DocumentManagementApiDocument(
-      documentUuid = documentId,
-      documentFilename = "sentencing-warrant.pdf",
-    )
-
-    whenever(courtRegisterApiClient.getCourtRegisterByHmctsId(courtId))
-      .thenReturn(null)
 
     whenever(courtDataIngestionApi.getCourtHearing(hearingId, prisonerNumber))
       .thenReturn(hearing)
@@ -191,7 +129,7 @@ class HmctsCourtDataServiceTest {
 
     val result = service.getCourtAppearanceFromHmctsHearingId(hearingId, prisonerNumber)
 
-    assertThat(result.courtCode)
-      .isEqualTo(courtId.toString())
+    assertThat(result.documents.first().documentType)
+      .isEqualTo("PRISON_COURT_REGISTER")
   }
 }

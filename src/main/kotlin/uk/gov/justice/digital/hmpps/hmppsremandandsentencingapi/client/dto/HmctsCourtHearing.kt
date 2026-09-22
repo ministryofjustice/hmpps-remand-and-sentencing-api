@@ -8,6 +8,7 @@ data class HmctsCourtHearing(
   val hearingId: UUID,
   val courtName: String,
   val courtId: UUID,
+  val courtCode: String? = null,
   val hearingDate: LocalDate,
   val caseReferences: List<String>,
   val hearingType: String,
