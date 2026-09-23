@@ -373,6 +373,14 @@ class ThingsToDoTest : IntegrationTestBase() {
           ),
         ),
       ),
+      Arguments.of(
+        "Existing court case with lower case reference with sentencing warrant gives no thing to do",
+        listOf(SENTENCING_HEARING),
+        DpsDataCreator.dpsCreateCourtAppearance(
+          courtCaseReference = SENTENCING_HEARING.caseReferences[0].lowercase(),
+        ),
+        null,
+      ),
     )
   }
 }

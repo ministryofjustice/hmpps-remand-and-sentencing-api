@@ -340,7 +340,7 @@ interface CourtCaseRepository :
     where cc.prisonerId = :prisonerId 
     and cc.latestCourtAppearance is not null 
     and cc.statusId not in :courtCaseStatuses
-    and app.courtCaseReference = :courtCaseReference
+    and app.courtCaseReference ILIKE :courtCaseReference
   """,
   )
   fun findCourtCasesByPrisonerAndCourtCaseReference(
