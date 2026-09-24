@@ -50,8 +50,8 @@ class MustacheHtmlRendererTest {
 
     val doc = Jsoup.parse(html)
     assertThat(doc.select("#name").text()).isEqualTo("Joe Bloggs")
-    assertThat(doc.select("#nomsNumber").text()).isEqualTo("Joe Bloggs")
-    assertThat(doc.select("#prisonNumber").text()).isEqualTo("Joe Bloggs")
+    assertThat(doc.select("#nomsNumber").text()).isEqualTo("AA4453")
+    assertThat(doc.select("#prisonNumber").text()).isEqualTo("993453")
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "sample-doc.html").writeBytes(html.toByteArray())
