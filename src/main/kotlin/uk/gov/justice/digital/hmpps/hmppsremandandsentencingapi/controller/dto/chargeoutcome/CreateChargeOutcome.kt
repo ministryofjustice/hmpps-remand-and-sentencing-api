@@ -17,5 +17,6 @@ data class CreateChargeOutcome(
   val displayOrder: Int,
   @field:NotBlank(message = "Disposition Code must not be blank")
   val dispositionCode: String,
+  val hmctsCode: String?,
   val status: ReferenceEntityStatus,
 )

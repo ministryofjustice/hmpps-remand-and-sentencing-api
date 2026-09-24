@@ -28,6 +28,7 @@ class ChargeOutcomeEntity(
   var outcomeType: String,
   var displayOrder: Int,
   var dispositionCode: String,
+  var hmctsCode: String? = null,
   @Enumerated(EnumType.STRING)
   var status: ReferenceEntityStatus,
 ) {
@@ -38,6 +39,7 @@ class ChargeOutcomeEntity(
     outcomeType = createChargeOutcome.outcomeType
     displayOrder = createChargeOutcome.displayOrder
     dispositionCode = createChargeOutcome.dispositionCode
+    hmctsCode = createChargeOutcome.hmctsCode
     status = createChargeOutcome.status
   }
 
@@ -52,6 +54,7 @@ class ChargeOutcomeEntity(
       nomisCode == other.nomisCode &&
       outcomeType == other.outcomeType &&
       dispositionCode == other.dispositionCode &&
+      hmctsCode == other.hmctsCode &&
       status == other.status
   }
 
@@ -63,6 +66,7 @@ class ChargeOutcomeEntity(
     result = 31 * result + nomisCode.hashCode()
     result = 31 * result + outcomeType.hashCode()
     result = 31 * result + dispositionCode.hashCode()
+    result = 31 * result + (hmctsCode?.hashCode() ?: 0)
     result = 31 * result + status.hashCode()
     return result
   }
@@ -76,6 +80,7 @@ class ChargeOutcomeEntity(
       createChargeOutcome.outcomeType,
       createChargeOutcome.displayOrder,
       createChargeOutcome.dispositionCode,
+      createChargeOutcome.hmctsCode,
       createChargeOutcome.status,
     )
   }

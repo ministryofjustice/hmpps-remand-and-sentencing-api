@@ -259,6 +259,7 @@ class DpsDataCreator {
       outcomeType: String = "REMAND",
       displayOrder: Int = 50,
       dispositionCode: String = "INTERIM",
+      hmctsCode: String? = null,
       status: ReferenceEntityStatus = ReferenceEntityStatus.ACTIVE,
     ): CreateChargeOutcome = CreateChargeOutcome(
       outcomeUuid,
@@ -267,6 +268,7 @@ class DpsDataCreator {
       outcomeType,
       displayOrder,
       dispositionCode,
+      hmctsCode,
       status,
     )
 

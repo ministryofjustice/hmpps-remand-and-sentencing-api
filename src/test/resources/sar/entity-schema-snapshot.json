@@ -131,6 +131,7 @@
     "outcomeName": "String",
     "outcomeType": "String",
     "outcomeUuid": "UUID",
+    "hmctsCode": "String",
     "status": "ReferenceEntityStatus"
   },
   "ChargeOutcomeSarEntity": {

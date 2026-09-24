@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Hmcts
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.NextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
@@ -36,7 +37,8 @@ class HmctsCourtDataService(
   private fun getCourtAppearance(hearing: HmctsCourtHearing): CourtAppearance {
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
       .filter { it.duplicateOf == null }
-    val charges = hearing.charges.map { mapCharge(it) }
+    val chargeOutcomes = chargeOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
+    val charges = hearing.charges.map { mapCharge(it, chargeOutcomes) }
     val chargeOutcomeIds = charges.mapNotNull { it.outcome?.outcomeUuid }
 
     val appearanceOutcome = if (chargeOutcomeIds.distinct().size == 1) {
@@ -92,10 +94,9 @@ class HmctsCourtDataService(
     hmctsCourtHearingId = nextAppearance.hearingId,
   )
 
-  private fun mapCharge(charge: HmctsCourtCharge): Charge {
+  private fun mapCharge(charge: HmctsCourtCharge, chargeOutcomes: List<ChargeOutcome>): Charge {
     val outcome = if (charge.results.size == 1) {
-      val outcomeId = mapCodeToOutcome(charge.results.first().code)
-      outcomeId?.let { chargeOutcomeService.findByUuid(it) }
+      chargeOutcomes.find { it.hmctsCode == charge.results.first().code }
     } else {
       null
     }
@@ -125,11 +126,5 @@ class HmctsCourtDataService(
     "SENTENCING"
   } else {
     "NON_SENTENCING"
-  }
-
-  private fun mapCodeToOutcome(code: String): UUID? = when (code) {
-    "RIB", "RI" -> UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2")
-    "WDRN" -> UUID.fromString("6d2eb21d-ec02-48fa-9fcd-02e73b8e45ca")
-    else -> null
   }
 }
