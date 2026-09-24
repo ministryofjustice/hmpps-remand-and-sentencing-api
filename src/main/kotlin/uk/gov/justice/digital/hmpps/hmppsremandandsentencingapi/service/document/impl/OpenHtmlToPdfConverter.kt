@@ -1,7 +1,8 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.impl
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.HtmlToPdfConverter
 import java.io.ByteArrayOutputStream
 
 @Service

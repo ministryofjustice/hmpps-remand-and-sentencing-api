@@ -4,6 +4,7 @@ import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.impl.OpenHtmlToPdfConverter
 import java.io.File
 
 class OpenHtmlToPdfConverterTest {
@@ -13,7 +14,12 @@ class OpenHtmlToPdfConverterTest {
     val courtCases1 = linkedMapOf<String, Any?>("courtName" to "Birmingham Crown Court")
     val courtCases2 = linkedMapOf<String, Any?>("courtName" to "Nottingham Crown Court")
     val data = linkedMapOf<String, Any?>("name" to "Joe", "surname" to "Bloggs", "courtCases" to listOf(courtCases1, courtCases2))
-    val html = convertTemplateToHtml("sample-doc.mustache", data)
+    val html = convertTemplateToHtml(object : DocumentDetail<LinkedHashMap<String, Any?>> {
+      override val templateName: String
+        get() = "sample-doc.mustache"
+      override val data: LinkedHashMap<String, Any?>
+        get() = data
+    })
 
     val pdfConverter = OpenHtmlToPdfConverter()
     var resp = pdfConverter.convert(html)

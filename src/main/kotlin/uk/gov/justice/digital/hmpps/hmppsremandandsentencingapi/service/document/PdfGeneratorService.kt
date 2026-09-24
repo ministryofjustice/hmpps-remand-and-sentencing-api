@@ -1,16 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document
 
-import org.springframework.core.io.ClassPathResource
 import java.io.InputStream
 
-class PdfGeneratorService<T, U : DocumentDetail<T>>(
-  val htmlRenderer: HtmlRenderer<T, U>,
+class PdfGeneratorService<T : DocumentDetail<*>>(
+  val htmlRenderer: HtmlRenderer<T>,
   val htmlToPdfConverter: HtmlToPdfConverter,
 ) {
 
-  fun renderServiceTemplate(documentDetail: U): InputStream {
-    val template = ClassPathResource("templates/" + documentDetail.templateName).file.readText()
-    val html = this.htmlRenderer.render(template, documentDetail.data)
+  fun renderServiceTemplate(documentDetail: T): InputStream {
+    val html = this.htmlRenderer.render(documentDetail)
     val doc = this.htmlToPdfConverter.convertToStream(html)
     return doc
   }
