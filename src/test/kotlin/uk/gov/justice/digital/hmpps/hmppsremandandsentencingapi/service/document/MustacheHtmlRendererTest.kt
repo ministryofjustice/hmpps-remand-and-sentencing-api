@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.documen
 import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
-import org.springframework.core.io.ClassPathResource
 
 class MustacheHtmlRendererTest {
 
@@ -20,5 +19,4 @@ class MustacheHtmlRendererTest {
       "Court Name Is: Nottingham Crown Court",
     )
   }
-
 }

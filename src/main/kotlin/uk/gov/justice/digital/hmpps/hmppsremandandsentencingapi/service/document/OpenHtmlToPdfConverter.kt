@@ -18,5 +18,4 @@ class OpenHtmlToPdfConverter : HtmlToPdfConverter {
 
     return contentOutputStream.toByteArray()
   }
-
 }

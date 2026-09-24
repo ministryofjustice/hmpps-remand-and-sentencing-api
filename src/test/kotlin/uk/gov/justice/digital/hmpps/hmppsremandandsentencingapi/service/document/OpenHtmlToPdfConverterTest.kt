@@ -9,7 +9,7 @@ import java.io.File
 class OpenHtmlToPdfConverterTest {
 
   @Test
-  fun `should render simple html from basic template and data`() {
+  fun `should render pdf from simple html`() {
     val courtCases1 = linkedMapOf<String, Any?>("courtName" to "Birmingham Crown Court")
     val courtCases2 = linkedMapOf<String, Any?>("courtName" to "Nottingham Crown Court")
     val data = linkedMapOf<String, Any?>("name" to "Joe", "surname" to "Bloggs", "courtCases" to listOf(courtCases1, courtCases2))
@@ -29,5 +29,4 @@ class OpenHtmlToPdfConverterTest {
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "sample-doc.pdf").writeBytes(resp)
   }
-
 }

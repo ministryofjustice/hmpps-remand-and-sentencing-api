@@ -8,7 +8,7 @@ import org.jsoup.nodes.Entities
 import org.springframework.stereotype.Service
 
 @Service
-class MustacheHtmlRenderer<T> : HtmlRenderer<T> {
+class MustacheHtmlRenderer<T, U : DocumentDetail<T>> : HtmlRenderer<T, U> {
 
   override fun render(templateName: String, data: T): String {
     val handlebars = Handlebars()
@@ -32,5 +32,4 @@ class MustacheHtmlRenderer<T> : HtmlRenderer<T> {
 
     return serviceFragment.toString()
   }
-
 }
