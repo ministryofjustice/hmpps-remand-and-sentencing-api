@@ -1,9 +1,186 @@
 <html>
+<head>
+  <style>
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      color: #000;
+    }
+
+    .restricted {
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 40px;
+    }
+
+    .rule {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .field-label {
+      display: inline-block;
+      width: 90px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .header {
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .addressee {
+      float: left;
+    }
+
+    .date {
+      float: right;
+    }
+
+    .sentences-table {
+      border-collapse: collapse;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .sentences-table td {
+      padding: 2px 0;
+    }
+
+    .sentences-table .periodLength {
+      width: 220px;
+    }
+
+    .sentences-table .offence {
+        width: 300px;
+    }
+
+    .total-row td {
+      padding-top: 10px;
+    }
+
+    .part-b-table {
+      margin-top: 10px;
+    }
+
+    .part-b-table td {
+      padding: 4px 10px 4px 0;
+    }
+
+    .part-b-label {
+      text-align: right;
+      padding-right: 10px;
+    }
+
+    .authorised-person-label {
+        padding-left: 20px;
+    }
+
+    .amount {
+      text-decoration: underline;
+      font-weight: bold;
+    }
+
+    .signature-block {
+      margin-top: 60px;
+    }
+
+    .signature-label {
+      display: inline-block;
+      width: 130px;
+      padding: 4px;
+    }
+
+    .fill-line {
+        display: inline-block;
+        border-bottom: 1px dotted #000;
+    }
+
+    .fill-line--money {
+        width: 150px;
+    }
+
+    .fill-line--date {
+        width: 150px;
+    }
+
+    .fill-line--signature {
+        width: 260px;
+    }
+
+  </style>
+</head>
 <body>
-{{#.}}
-    <h1>Name      : {{name}}</h1>
-    <h1>NOMS No   : {{nomsNumber}}</h1>
-    <h1>Prison No : {{prisonNumber}}</h1>
-{{/.}}
+  <p class="restricted">RESTRICTED</p>
+
+  <div class="header">
+    <div class="addressee">
+      The Clerk of Justices<br/>
+      {{courtName}}<br/>
+      {{courtName}}
+    </div>
+    <div class="date">{{date}}</div>
+  </div>
+
+  <p>Sir/Madam</p>
+  <p class="rule">RULE 63(1) MAGISTRATES' COURTS RULES 1981</p>
+  <p>
+    <span class="field-label">Name</span>: <span id="name">{{name}}</span><br/>
+    <span class="field-label">NOMS No</span>: <span id="nomsNumber">{{nomsNumber}}</span><br/>
+    <span class="field-label">Prison No</span>: <span id="prisonNumber">{{prisonNumber}}</span>
+  </p>
+
+  <p class="section-title">PART A</p>
+  <p>The above named prisoner was committed to prison by your court on {{date}} to serve the following term(s) in default of payment:</p>
+
+  <table class="sentences-table">
+    {{#sentences}}
+    <tr>
+      <td class="periodLength">{{periodLength}}</td>
+      <td class="offence">{{offence}}</td>
+      <td></td>
+    </tr>
+    {{/sentences}}
+    <tr class="total-row">
+      <td class="periodLength"></td>
+      <td class="offence">TOTAL :</td>
+      <td></td>
+    </tr>
+  </table>
+
+  <p>I hereby certify that he was received into custody on {{date}} and that he will cease to be held on warrant on <span class="fill-line fill-line--date">&nbsp;</span>.</p>
+
+  <p class="section-title">PART B</p>
+
+  <table class="part-b-table">
+    <tr>
+      <td class="part-b-label">Paid after issue of warrant of commitment:</td>
+        <td>&#163;<span class="fill-line fill-line--money">&nbsp;</span></td>
+    </tr>
+    <tr>
+      <td class="part-b-label">Before reception into prison:</td>
+        <td>&#163;<span class="fill-line fill-line--money">&nbsp;</span></td>
+    </tr>
+    <tr>
+      <td class="part-b-label">After reception into prison:</td>
+      <td>&#163;<span class="amount">0.00</span></td>
+    </tr>
+    <tr>
+      <td class="part-b-label">Total:</td>
+        <td>&#163;<span class="fill-line fill-line--money">&nbsp;</span></td>
+    </tr>
+  </table>
+
+  <div class="signature-block">
+    <span class="signature-label">Signed</span>: <span class="fill-line fill-line--signature">&nbsp;</span><span class="authorised-person-label">Authorised person</span><br/>
+    <span class="signature-label">Contact name</span>: <span class="fill-line fill-line--signature">&nbsp;</span><br/>
+    <span class="signature-label">Telephone number</span>: {{telephoneNumber}}<br/>
+    <span class="signature-label">{{prisonName}}</span>
+  </div>
 </body>
 </html>
