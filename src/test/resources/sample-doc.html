@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <style>
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      color: #000;
+    }
+
+    .restricted {
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 40px;
+    }
+
+    .rule {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .field-label {
+      display: inline-block;
+      width: 90px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .header {
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .addressee {
+      float: left;
+    }
+
+    .date {
+      float: right;
+    }
+
+    .sentences-table {
+      border-collapse: collapse;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .sentences-table td {
+      padding: 2px 0;
+    }
+
+    .sentences-table .periodLength {
+      width: 220px;
+    }
+
+    .sentences-table .offence {
+        width: 300px;
+    }
+
+    .total-row td {
+      padding-top: 10px;
+    }
+
+    .part-b-table {
+      margin-top: 10px;
+    }
+
+    .part-b-table td {
+      padding: 4px 10px 4px 0;
+    }
+
+    .part-b-label {
+      text-align: right;
+      padding-right: 10px;
+    }
+
+    .authorised-person-label {
+        padding-left: 20px;
+    }
+
+    .amount {
+      text-decoration: underline;
+      font-weight: bold;
+    }
+
+    .signature-block {
+      margin-top: 60px;
+    }
+
+    .signature-label {
+      display: inline-block;
+      width: 130px;
+      padding: 4px;
+    }
+
+    .fill-line {
+        display: inline-block;
+        border-bottom: 1px dotted #000;
+    }
+
+    .fill-line--money {
+        width: 150px;
+    }
+
+    .fill-line--date {
+        width: 150px;
+    }
+
+    .fill-line--signature {
+        width: 260px;
+    }
+
+  </style>
+</head>
+<body>
+  <p class="restricted">RESTRICTED</p>
+
+  <div class="header">
+    <div class="addressee">
+      <!-- GET {{prison-api}}/api/agencies/{court_appearance.court_code}?withAddresses=true -->
+      The Clerk of Justices<br/>
+      Airdrie Sheriff Court<br/>
+      Airdrie Sheriff Court
+    </div>
+    <div class="date">17/09/2026 <!-- Date Doc Generated --></div>
+  </div>
+
+  <p>Sir/Madam</p>
+  <p class="rule">RULE 63(1) MAGISTRATES' COURTS RULES 1981</p>
+  <p>
+    <span class="field-label">Name</span>: <span id="name">Joe Bloggs</span><br/> <!-- GET {{hmpps-person-record}}/person/prison/{court_case.prisoner_id} -->
+    <span class="field-label">NOMS No</span>: <span id="nomsNumber">AA4453</span><br/> <!-- court_case.prisoner_Id -->
+    <span class="field-label">Prison No</span>: <span id="prisonNumber">993453</span> <!-- GET {{prison-api}}/api/offenders/{court_case.prisoner_id} -> BookingID -->
+  </p>
+
+  <p class="section-title">PART A</p>
+  <!-- court_appearance.appearance_date -->
+  <p>The above named prisoner was committed to prison by your court on 17/09/2026 to serve the following term(s) in default of payment:</p>
+
+  <table class="sentences-table">
+    
+    <tbody><tr>
+      <td class="periodLength">0 Years 1 Month 0 Day</td> <!-- period_length.days/weeks/months/years -->
+      <td class="offence">Abandon a fighting dog</td> <!-- GET {{manage-offences-api}}/offences/code/unique/{charge.offence_code} -->
+      <td>£50</td> <!-- sentence.fine_amount -->
+    </tr>
+    
+    <tr>
+      <td class="periodLength">0 Years 1 Month 0 Day</td> <!-- period_length.days/weeks/months/years -->
+      <td class="offence">ASSAULT COURT/PRISON OFFICER</td>  <!-- GET {{manage-offences-api}}/offences/code/unique/{charge.offence_code} -->
+      <td>£150</td> <!-- sentence.fine_amount -->
+    </tr>
+    
+    <tr class="total-row">
+      <td class="periodLength"/>
+      <td class="offence">TOTAL : £200</td> <!-- SUM of sentence.fine_amount -->
+      <td/>
+    </tr>
+  </tbody></table>
+
+  <!-- court_appearance.appearance_date -->
+  <p>I hereby certify that he/she was received into custody on 17/09/2026 and that he/she will cease to be held on warrant on <span class="fill-line fill-line--date">????</span>.</p>
+
+  <p class="section-title">PART B</p>
+
+  <table class="part-b-table">
+    <tbody><tr>
+      <td class="part-b-label">Paid after issue of warrant of commitment:</td>
+        <td>£<span class="fill-line fill-line--money"> </span></td>
+    </tr>
+    <tr>
+      <td class="part-b-label">Before reception into prison:</td>
+        <td>£<span class="fill-line fill-line--money"> </span></td>
+    </tr>
+    <tr>
+      <td class="part-b-label">After reception into prison:</td>
+      <td>£<span class="amount">0.00</span></td>
+    </tr>
+    <tr>
+      <td class="part-b-label">Total:</td>
+        <td>£<span class="fill-line fill-line--money"> </span></td>
+    </tr>
+  </tbody></table>
+
+  <div class="signature-block">
+    <span class="signature-label">Signed</span>: <span class="fill-line fill-line--signature"> </span><span class="authorised-person-label">Authorised person</span><br/>
+    <span class="signature-label">Contact name</span>: <span class="fill-line fill-line--signature"> </span><br/>
+    <span class="signature-label">Telephone number</span>: 128 555 1719<br/> <!-- Grab agencyId from GET {{prison-api}}/api/offenders/A8580EA then call GET {{prison-api}}/api/agencies/KMI?withAddresses=true -> phones[type = 'BUS'].number -->
+    <span class="signature-label">KIRKHAM (HMP)</span> <!-- Grab agencyId from GET {{prison-api}}/api/offenders/A8580EA then call GET {{prison-api}}/api/agencies/KMI?withAddresses=true -> description -->
+  </div>
+</body>
+</html>
+
+
+<!-- SQL
+
+SELECT ca.court_code
+      ,ca.appearance_date
+      ,cc.prisoner_id
+      ,s.fine_amount
+      ,coalesce(pl.days, 0) days
+      ,coalesce(pl.weeks, 0) weeks
+      ,coalesce(pl.months, 0) months
+      ,coalesce(pl.years, 0) years
+     ,c.offence_code
+FROM court_case cc
+JOIN court_appearance ca on cc.id = ca.court_case_id
+JOIN appearance_charge ap on ca.id = ap.appearance_id
+JOIN charge c on ap.charge_id = c.id
+JOIN sentence s on c.id = s.charge_id
+JOIN appearance_outcome ao on ca.appearance_outcome_id = ao.id
+JOIN period_length pl on s.id = pl.sentence_id
+WHERE cc.prisoner_id = 'A8580EA'
+  and ca.status_id = 'ACTIVE'
+  and ao.outcome_name = 'Imprisonment in default of a fine';
+
+-->
