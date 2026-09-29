@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.impl
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache
 
 import com.github.jknack.handlebars.Context
 import com.github.jknack.handlebars.Handlebars
@@ -9,10 +9,9 @@ import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentDetail
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.HtmlRenderer
-import java.text.NumberFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatCurrencyHelper
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatDateHelper
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatPeriodHelper
 
 @Service
 class MustacheHtmlRenderer<T : DocumentDetail<*>> : HtmlRenderer<T> {
@@ -32,15 +31,8 @@ class MustacheHtmlRenderer<T : DocumentDetail<*>> : HtmlRenderer<T> {
   }
 
   private fun registerHelpers(handlebars: Handlebars) {
-    handlebars.registerHelper("formatDate") { value: Any?, _ ->
-      when (value) {
-        null -> null
-        is LocalDate -> value.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-        else -> value.toString()
-      }
-    }
-    handlebars.registerHelper("formatCurrency") { value: Double?, _ ->
-      value?.let { NumberFormat.getCurrencyInstance(Locale.UK).format(it) }
-    }
+    handlebars.registerHelper("formatDate", FormatDateHelper())
+    handlebars.registerHelper("formatCurrency", FormatCurrencyHelper())
+    handlebars.registerHelper("formatPeriod", FormatPeriodHelper())
   }
 }

@@ -1,7 +1,7 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.impl
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document
 
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentDetail
 import java.time.LocalDate
+import java.time.Period
 
 class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants986.Data> {
   override val templateName: String = "lodge-warrants-986.mustache"
@@ -20,6 +20,6 @@ class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants98
     fun totalFineAmount(): Double = this.sentences.sumOf { sentence -> sentence.fineAmount }
   }
 
-  data class Sentence(val periodLength: String, val offence: String, val fineAmount: Double)
+  data class Sentence(val periodLength: Period, val offence: String, val fineAmount: Double)
   data class Court(val name: String, val premise: String, val street: String, val town: String, val county: String, val postalCode: String)
 }

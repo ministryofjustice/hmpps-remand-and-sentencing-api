@@ -4,9 +4,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.jsoup.helper.W3CDom
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.impl.LodgeWarrants986
 import java.io.File
 import java.time.LocalDate
+import java.time.Period
 
 class MustacheHtmlRendererTest {
 
@@ -38,8 +38,9 @@ class MustacheHtmlRendererTest {
       docGeneratedDate = LocalDate.parse("2026-09-29"),
       sentenceDate = LocalDate.parse("2026-09-17"),
       sentences = listOf(
-        LodgeWarrants986.Sentence("0 Years 1 Month 0 Weeks 0 Days", "Abandon a fighting dog", 100.0),
-        LodgeWarrants986.Sentence("0 Years 1 Month 0 Weeks 0 Days", "ASSAULT COURT/PRISON OFFICER", 50.0),
+        LodgeWarrants986.Sentence(Period.of(1,2,0), "Abandon a fighting dog", 100.0),
+        LodgeWarrants986.Sentence(Period.of(0,1,0), "ASSAULT COURT/PRISON OFFICER", 50.0),
+        LodgeWarrants986.Sentence(Period.of(1,1,8), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
       ),
       telephoneNumber = "128 555 1719",
       prisonName = "KIRKHAM (HMP)",
