@@ -13,6 +13,7 @@ generic-service:
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api-dev.hmpps.service.justice.gov.uk"
     ADJUSTMENTS_API_URL: "https://adjustments-api-dev.hmpps.service.justice.gov.uk"
     COURT-REGISTER_API_URL: https://court-register-api-dev.hmpps.service.justice.gov.uk
+    PERSON_RECORD_URL: https://hmpps-person-record-dev.hmpps.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: DEV
     SPRINGDOC_API-DOCS_ENABLED: "true"

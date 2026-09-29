@@ -23,6 +23,7 @@ class WebClientConfiguration(
   @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
   @param:Value("\${adjustments.api.url}") private val adjustmentsApiUri: String,
   @param:Value("\${court-data-ingestion.api.url}") private val courtDataIngestionApiUri: String,
+  @param:Value("\${person-record.api.url}") private val personRecordApiUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
@@ -42,6 +43,16 @@ class WebClientConfiguration(
     authorizedClientManager,
     "court-register-api",
     courtRegisterApiUri,
+  )
+
+  @Bean
+  fun personRecordWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "person-record",
+    personRecordApiUri,
   )
 
   private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->

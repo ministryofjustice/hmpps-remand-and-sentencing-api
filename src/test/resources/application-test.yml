@@ -63,6 +63,10 @@ court-data-ingestion:
   api:
     url: http://localhost:8553
 
+person-record:
+  api:
+    url: http://localhost:8554
+
 ingress:
   url: localhost:8080
 
