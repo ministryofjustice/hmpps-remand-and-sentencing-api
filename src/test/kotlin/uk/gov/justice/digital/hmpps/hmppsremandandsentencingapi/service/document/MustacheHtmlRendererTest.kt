@@ -4,9 +4,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.jsoup.helper.W3CDom
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.dto.PeriodLength
 import java.io.File
 import java.time.LocalDate
-import java.time.Period
 
 class MustacheHtmlRendererTest {
 
@@ -32,43 +32,44 @@ class MustacheHtmlRendererTest {
   @Test
   fun `should render html from LodgeWarrants986 with total amount sum`() {
     val sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(Period.of(1, 2, 0)), "Abandon a fighting dog", 100.0),
-      LodgeWarrants986.Sentence(listOf(Period.of(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
-      LodgeWarrants986.Sentence(listOf(Period.of(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 2, 0)), "Abandon a fighting dog", 100.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
     )
 
     assertLodgeWarrants986(
       sentences = sentences,
       expectedTotal = "£1,150.00",
-      outputFileName = "lodge-warrants-with-sum-total.html",
+      outputFileName = "lodge-warrants-with-sum-total.html"
     )
   }
 
   @Test
   fun `should render html from LodgeWarrants986 with multiple periods for single sentence`() {
     val sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(Period.of(1, 2, 0), Period.of(1, 2, 0), Period.of(1, 2, 0), Period.of(1, 2, 0)), "Abandon a fighting dog", 100.0),
-      LodgeWarrants986.Sentence(listOf(Period.of(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
-      LodgeWarrants986.Sentence(listOf(Period.of(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 2, 0), PeriodLength(1, 2, 0), PeriodLength(1, 2, 0), PeriodLength(1, 2, 0)), "Abandon a fighting dog", 100.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
     )
 
     assertLodgeWarrants986(
       sentences = sentences,
       expectedTotal = "£1,150.00",
-      outputFileName = "lodge-warrants-with-multiple-periods.html",
+      outputFileName = "lodge-warrants-with-multiple-periods.html"
     )
   }
 
   @Test
-  fun `should render html from LodgeWarrants986 with empty total sum`() {
+  fun `should render html from LodgeWarrants986 with empty total sum and custom period order`() {
     val sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(Period.of(1, 2, 0)), "Abandon a fighting dog", 0.0),
+      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 2, 1, periodOrder = "weeks,days,years,months")), "Abandon a fighting dog", 0.0),
     )
 
     assertLodgeWarrants986(
       sentences = sentences,
       expectedTotal = "£0.00",
       outputFileName = "lodge-warrants-with-empty-total.html",
+      expectedPeriodOrder = "1 Week 0 Days 1 Year 2 Months"
     )
   }
 
@@ -84,7 +85,7 @@ class MustacheHtmlRendererTest {
     version = "3.23",
   )
 
-  private fun assertLodgeWarrants986(sentences: List<LodgeWarrants986.Sentence>, expectedTotal: String, outputFileName: String) {
+  private fun assertLodgeWarrants986(sentences: List<LodgeWarrants986.Sentence>, expectedTotal: String, outputFileName: String, expectedPeriodOrder: String? = null) {
     val lodgeWarrants986 = LodgeWarrants986(lodgeWarrants986SampleData(sentences))
     val resp = convertTemplateToHtml(lodgeWarrants986)
     val html = W3CDom().asString(resp)
@@ -93,6 +94,9 @@ class MustacheHtmlRendererTest {
     assertThat(doc.select("#name").text()).isEqualTo("Joe Bloggs")
     assertThat(doc.select("#nomsNumber").text()).isEqualTo("AA4453")
     assertThat(doc.select(".total-row > .fine-amount")[0].text()).isEqualTo(expectedTotal)
+    if (expectedPeriodOrder != null) {
+      assertThat(doc.select(".periodLength")[0].text()).isEqualTo(expectedPeriodOrder)
+    }
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, outputFileName).writeBytes(html.toByteArray())

@@ -2,9 +2,9 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.documen
 
 import com.github.jknack.handlebars.Helper
 import com.github.jknack.handlebars.Options
-import java.time.Period
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.dto.PeriodLength
 
-class FormatPeriodHelper : Helper<Period> {
+class FormatPeriodHelper : Helper<PeriodLength> {
 
   fun labelPeriod(length: Int, phraseSingular: String, phrasePlural: String, hideIfZero: Boolean = false): String {
     if (hideIfZero && length == 0) {
@@ -15,20 +15,18 @@ class FormatPeriodHelper : Helper<Period> {
     return "$length $phrasePlural"
   }
 
-  override fun apply(value: Period?, options: Options?): String? = value?.let {
-    val days = value.days % 7
-    val weeks = value.days / 7
-    val months = value.months
-    val years = value.years
+  override fun apply(value: PeriodLength?, options: Options?): String? = value?.let {
+    val labelsMap = mapOf(
+      "years" to labelPeriod(value.years, "Year", "Years"),
+      "months" to labelPeriod(value.months, "Month", "Months"),
+      "weeks" to labelPeriod(value.weeks, "Week", "Weeks", true),
+      "days" to labelPeriod(value.days, "Day", "Days"),
+    )
 
-    buildString {
-      append(labelPeriod(years, "Year", "Years"))
-      append(" ")
-      append(labelPeriod(months, "Month", "Months"))
-      append(" ")
-      append(labelPeriod(weeks, "Week", "Weeks", true))
-      append(" ")
-      append(labelPeriod(days, "Day", "Days"))
-    }.trim()
+    value.periodOrder
+      .split(",")
+      .map { p -> labelsMap[p.trim()].orEmpty() }
+      .filter { it.isNotBlank() }
+      .joinToString(" ")
   }
 }
