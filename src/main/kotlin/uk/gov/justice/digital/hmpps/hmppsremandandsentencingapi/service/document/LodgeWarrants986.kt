@@ -20,6 +20,6 @@ class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants98
     fun totalFineAmount(): Double = this.sentences.sumOf { sentence -> sentence.fineAmount }
   }
 
-  data class Sentence(val periodLength: Period, val offence: String, val fineAmount: Double)
+  data class Sentence(val termLengths: List<Period>, val offence: String, val fineAmount: Double)
   data class Court(val name: String, val premise: String, val street: String, val town: String, val county: String, val postalCode: String)
 }

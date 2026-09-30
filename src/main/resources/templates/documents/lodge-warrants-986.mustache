@@ -68,6 +68,7 @@
     }
 
     .sentences-table td {
+      vertical-align: top;
       padding: 2px 0;
     }
 
@@ -178,7 +179,11 @@
   <table class="sentences-table">
     {{#sentences}}
     <tr>
-      <td class="periodLength">{{formatPeriod periodLength}}</td>
+      <td class="periodLength">
+        {{#termLengths}}
+          {{formatPeriod .}}<br/>
+        {{/termLengths}}
+      </td>
       <td class="offence">{{offence}}</td>
       <td class="fine-amount">{{formatCurrency fineAmount}}</td>
       <td/>
