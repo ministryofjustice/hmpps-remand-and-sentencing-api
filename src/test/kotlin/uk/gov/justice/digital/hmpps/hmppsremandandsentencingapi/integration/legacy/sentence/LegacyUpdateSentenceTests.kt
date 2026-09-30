@@ -280,23 +280,6 @@ class LegacyUpdateSentenceTests : IntegrationTestBase() {
     assertThat(sentencesGroupedByStatus.values.map { it.size }).allMatch { it == 1 } // check there is only ever 1 sentence record for the status, charge combination, in this race condition before the fix there were two entries for the same status, charge combination which causes adverse side effects when retrieving the sentence for a given charge
   }
 
-  private fun putLegacySentence(
-    sentenceUuid: UUID,
-    legacyUpdate: LegacyCreateSentence,
-  ) {
-    webTestClient
-      .put()
-      .uri("/legacy/sentence/$sentenceUuid")
-      .bodyValue(legacyUpdate)
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus()
-      .isNoContent
-  }
-
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
