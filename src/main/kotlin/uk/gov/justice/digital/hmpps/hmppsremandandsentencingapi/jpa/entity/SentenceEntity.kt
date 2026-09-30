@@ -243,10 +243,11 @@ class SentenceEntity(
   fun earliestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.status != RecallEntityStatus.DELETED }.minByOrNull { it.createdAt }
 
   fun copyFrom(sentence: CreateSentence, createdBy: String, chargeEntity: ChargeEntity, consecutiveTo: SentenceEntity?, sentenceType: SentenceTypeEntity?): SentenceEntity {
+    val status = sentence.status ?: this.statusId
     val sentenceEntity = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
       countNumber = sentence.chargeNumber,
-      statusId = sentence.status ?: this.statusId,
+      statusId = status,
       createdBy = createdBy,
       createdPrison = sentence.prisonId,
       supersedingSentence = this,
@@ -259,7 +260,7 @@ class SentenceEntity(
       updatedBy = createdBy,
       updatedPrison = sentence.prisonId,
       fineAmount = sentence.fineAmount?.fineAmount,
-      legacyData = legacyData,
+      legacyData = legacyData?.copy(active = status == SentenceEntityStatus.ACTIVE),
       reason = sentence.reason ?: this.reason,
     )
     sentenceEntity.periodLengths = sentence.periodLengths.map { PeriodLengthEntity.from(it, createdBy) }.toMutableSet()

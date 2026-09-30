@@ -823,6 +823,23 @@ abstract class IntegrationTestBase {
     .isCreated.returnResult(LegacySentenceCreatedResponse::class.java)
     .responseBody.blockFirst()!!
 
+  protected fun putLegacySentence(
+    sentenceUuid: UUID,
+    legacyUpdate: LegacyCreateSentence,
+  ) {
+    webTestClient
+      .put()
+      .uri("/legacy/sentence/$sentenceUuid")
+      .bodyValue(legacyUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_SENTENCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+  }
+
   protected fun uploadDocument(documents: List<UploadedDocument> = listOf(DpsDataCreator.dpsCreateUploadedDocument())): List<UploadedDocument> {
     webTestClient.post()
       .uri("/uploaded-documents")

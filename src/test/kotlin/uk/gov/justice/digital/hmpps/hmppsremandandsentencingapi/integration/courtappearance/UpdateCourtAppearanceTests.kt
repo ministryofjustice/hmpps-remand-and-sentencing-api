@@ -19,11 +19,13 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Hmp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsPeriodLengthMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension.Companion.documentManagementApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCreateSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -818,7 +820,17 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val charge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
     val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
     val (courtCaseUuid, createdCourtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+    val legacyUpdate = LegacyCreateSentence(
+      chargeUuids = listOf(charge.chargeUuid),
+      appearanceUuid = appearance.appearanceUuid,
+      active = true,
+      legacyData = sentenceLegacyData(),
+      consecutiveToLifetimeUuid = null,
+      performedByUser = null,
+    )
 
+    putLegacySentence(sentence.sentenceUuid, legacyUpdate)
+    purgeQueues()
     val createdAppearance = createdCourtCase.appearances.first()
     val updatedSentence = createdAppearance.charges.first().sentence!!.copy(status = SentenceEntityStatus.INACTIVE, reason = "Sentence quashed on appeal")
     val updatedCharge = createdAppearance.charges.first().copy(sentence = updatedSentence)
@@ -831,6 +843,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     val latestSentence = sentenceRepository.findBySentenceUuid(sentence.sentenceUuid)[0]
     assertThat(latestSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
     assertThat(latestSentence.reason).isEqualTo("Sentence quashed on appeal")
+    assertThat(latestSentence.legacyData?.active).isFalse
 
     val history = sentenceHistoryRepository.findAll().filter { it.sentenceUuid == sentence.sentenceUuid }
     assertThat(history).anyMatch { it.statusId == SentenceEntityStatus.INACTIVE && it.reason == "Sentence quashed on appeal" }
