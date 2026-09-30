@@ -825,7 +825,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       appearanceUuid = appearance.appearanceUuid,
       active = true,
       legacyData = sentenceLegacyData(),
-      consecutiveToLifetimeUuid = null, // Not consecutive to anything so should preserve the FORTHWITH status
+      consecutiveToLifetimeUuid = null,
       performedByUser = null,
     )
 
