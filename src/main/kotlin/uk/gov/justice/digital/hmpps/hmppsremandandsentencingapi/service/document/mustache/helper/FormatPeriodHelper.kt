@@ -12,7 +12,7 @@ class FormatPeriodHelper : Helper<Period> {
     } else if (length == 1) {
       return "$length $phraseSingular"
     }
-    return " $length $phrasePlural"
+    return "$length $phrasePlural"
   }
 
   override fun apply(value: Period?, options: Options?): String? = value?.let {

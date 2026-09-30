@@ -22,7 +22,7 @@ class MustacheHtmlRenderer<T : DocumentDetail<*>> : HtmlRenderer<T> {
     val context = Context
       .newBuilder(documentDetail.data)
       .build()
-    val template = ClassPathResource("templates/" + documentDetail.templateName).file.readText()
+    val template = ClassPathResource("templates/documents/${documentDetail.templateName}.mustache").file.readText()
     val compiledServiceTemplate = handlebars.compileInline(template)
     val html = compiledServiceTemplate.apply(context)
     val jsoupDocument = Jsoup.parse(html)

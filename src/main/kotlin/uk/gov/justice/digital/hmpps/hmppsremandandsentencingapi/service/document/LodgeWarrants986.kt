@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.Period
 
 class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants986.Data> {
-  override val templateName: String = "lodge-warrants-986.mustache"
+  override val templateName: String = "lodge-warrants-986"
 
   data class Data(
     val name: String,

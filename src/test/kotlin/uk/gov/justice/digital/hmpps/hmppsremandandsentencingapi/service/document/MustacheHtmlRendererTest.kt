@@ -17,7 +17,7 @@ class MustacheHtmlRendererTest {
     val data = linkedMapOf<String, Any?>("name" to "Joe", "surname" to "Bloggs", "courtCases" to listOf(courtCases1, courtCases2))
     val resp = convertTemplateToHtml(object : DocumentDetail<LinkedHashMap<String, Any?>> {
       override val templateName: String
-        get() = "sample-doc.mustache"
+        get() = "sample-doc"
       override val data: LinkedHashMap<String, Any?>
         get() = data
     })
@@ -30,7 +30,7 @@ class MustacheHtmlRendererTest {
   }
 
   @Test
-  fun `should render html from LodgeWarrants986`() {
+  fun `should render html from LodgeWarrants986 with total amount sum`() {
     val sampleData = LodgeWarrants986.Data(
       name = "Joe Bloggs",
       nomsNumber = "AA4453",
@@ -54,8 +54,38 @@ class MustacheHtmlRendererTest {
     val doc = Jsoup.parse(html)
     assertThat(doc.select("#name").text()).isEqualTo("Joe Bloggs")
     assertThat(doc.select("#nomsNumber").text()).isEqualTo("AA4453")
+    assertThat(doc.select(".total-row > .fine-amount")[0].text()).isEqualTo("£1,150.00")
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
-    File(outputDir, "sample-doc.html").writeBytes(html.toByteArray())
+    File(outputDir, "lodge-warrants-with-sum-total.html").writeBytes(html.toByteArray())
+  }
+
+  @Test
+  fun `should render html from LodgeWarrants986 with empty total sum`() {
+    val sampleData = LodgeWarrants986.Data(
+      name = "Joe Bloggs",
+      nomsNumber = "AA4453",
+      court = LodgeWarrants986.Court("Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA"),
+      docGeneratedDate = LocalDate.parse("2026-09-29"),
+      sentenceDate = LocalDate.parse("2026-09-17"),
+      sentences = listOf(
+        LodgeWarrants986.Sentence(Period.of(1, 2, 0), "Abandon a fighting dog", 0.0),
+      ),
+      telephoneNumber = "128 555 1719",
+      prisonName = "KIRKHAM (HMP)",
+      version = "3.23",
+    )
+
+    val lodgeWarrants986 = LodgeWarrants986(sampleData)
+    val resp = convertTemplateToHtml(lodgeWarrants986)
+    val html = W3CDom().asString(resp)
+
+    val doc = Jsoup.parse(html)
+    assertThat(doc.select("#name").text()).isEqualTo("Joe Bloggs")
+    assertThat(doc.select("#nomsNumber").text()).isEqualTo("AA4453")
+    assertThat(doc.select(".total-row > .fine-amount")[0].text()).isEqualTo("£0.00")
+
+    val outputDir = File("build/test-generated").apply { mkdirs() }
+    File(outputDir, "lodge-warrants-with-empty-total.html").writeBytes(html.toByteArray())
   }
 }
