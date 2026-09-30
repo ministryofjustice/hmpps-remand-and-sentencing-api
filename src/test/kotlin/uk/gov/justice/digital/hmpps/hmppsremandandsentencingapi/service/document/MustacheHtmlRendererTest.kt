@@ -40,7 +40,7 @@ class MustacheHtmlRendererTest {
     assertLodgeWarrants986(
       sentences = sentences,
       expectedTotal = "£1,150.00",
-      outputFileName = "lodge-warrants-with-sum-total.html"
+      outputFileName = "lodge-warrants-with-sum-total.html",
     )
   }
 
@@ -55,7 +55,7 @@ class MustacheHtmlRendererTest {
     assertLodgeWarrants986(
       sentences = sentences,
       expectedTotal = "£1,150.00",
-      outputFileName = "lodge-warrants-with-multiple-periods.html"
+      outputFileName = "lodge-warrants-with-multiple-periods.html",
     )
   }
 
@@ -69,7 +69,7 @@ class MustacheHtmlRendererTest {
       sentences = sentences,
       expectedTotal = "£0.00",
       outputFileName = "lodge-warrants-with-empty-total.html",
-      expectedPeriodOrder = "1 Week 0 Days 1 Year 2 Months"
+      expectedPeriodOrder = "1 Week 0 Days 1 Year 2 Months",
     )
   }
 
