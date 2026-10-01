@@ -33,8 +33,24 @@ class UploadedDocumentService(
     }
 
     createUploadedDocument.documents.map {
-      UploadedDocumentEntity.from(it, serviceUserService.getUsername(), courtAppearance)
-    }.forEach(uploadedDocumentRepository::save)
+      val existingDocument = uploadedDocumentRepository.findByDocumentUuid(it.documentUUID)
+      if (existingDocument != null) {
+        if (existingDocument.appearance != null) {
+          throw IllegalArgumentException("Document ${it.documentUUID} already exists with appearance")
+        }
+        existingDocument.appearance = courtAppearance
+        existingDocument.updatedAt = ZonedDateTime.now()
+        existingDocument.updatedBy = serviceUserService.getUsername()
+      } else {
+        uploadedDocumentRepository.save(
+          UploadedDocumentEntity.from(
+            it,
+            serviceUserService.getUsername(),
+            courtAppearance,
+          ),
+        )
+      }
+    }
   }
 
   @Transactional
