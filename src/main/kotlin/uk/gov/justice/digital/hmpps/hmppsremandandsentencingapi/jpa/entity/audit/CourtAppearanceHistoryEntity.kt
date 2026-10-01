@@ -45,6 +45,7 @@ class CourtAppearanceHistoryEntity(
   val warrantType: String,
   val nextCourtAppearanceId: Int?,
   val overallConvictionDate: LocalDate?,
+  val hmctsCourtHearingId: UUID? = null,
   @JdbcTypeCode(SqlTypes.JSON)
   val legacyData: CourtAppearanceLegacyData?,
   @OneToOne
@@ -74,6 +75,7 @@ class CourtAppearanceHistoryEntity(
       warrantType = courtAppearanceEntity.warrantType,
       nextCourtAppearanceId = courtAppearanceEntity.nextCourtAppearance?.id,
       overallConvictionDate = courtAppearanceEntity.overallConvictionDate,
+      hmctsCourtHearingId = courtAppearanceEntity.hmctsCourtHearingId,
       legacyData = courtAppearanceEntity.legacyData,
       originalAppearance = courtAppearanceEntity,
       source = courtAppearanceEntity.source,
