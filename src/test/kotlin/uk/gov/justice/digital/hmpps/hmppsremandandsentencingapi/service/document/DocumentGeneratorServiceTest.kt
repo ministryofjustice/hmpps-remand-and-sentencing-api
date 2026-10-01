@@ -29,7 +29,7 @@ class DocumentGeneratorServiceTest {
 
   @Test
   fun `should render pdf from from LodgeWarrants986`() {
-    val htmlRenderer: HtmlRenderer<LodgeWarrants986> = MustacheHtmlRenderer()
+    val htmlRenderer: HtmlRenderer = MustacheHtmlRenderer()
     val pdfConverter: HtmlToDocumentConverter = OpenHtmlToPdfConverter()
     val lodgeWarrants986 = LodgeWarrants986(sampleData())
     val pdfGeneratorService = DocumentGeneratorService(htmlRenderer, pdfConverter)

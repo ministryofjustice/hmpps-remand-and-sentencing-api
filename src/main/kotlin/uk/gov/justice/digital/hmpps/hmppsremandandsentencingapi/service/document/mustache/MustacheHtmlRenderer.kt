@@ -5,7 +5,6 @@ import com.github.jknack.handlebars.Handlebars
 import org.jsoup.Jsoup
 import org.jsoup.helper.W3CDom
 import org.springframework.core.io.ClassPathResource
-import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentDetail
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.HtmlRenderer
@@ -13,10 +12,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatDateHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatPeriodHelper
 
-@Service
-class MustacheHtmlRenderer<T : DocumentDetail<*>> : HtmlRenderer<T> {
+class MustacheHtmlRenderer : HtmlRenderer {
 
-  override fun render(documentDetail: T): Document {
+  override fun <T : DocumentDetail<*>> render(documentDetail: T): Document {
     val handlebars = Handlebars()
     registerHelpers(handlebars)
     val context = Context

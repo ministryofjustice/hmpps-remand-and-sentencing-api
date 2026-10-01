@@ -2,12 +2,12 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.documen
 
 import java.io.InputStream
 
-class DocumentGeneratorService<T : DocumentDetail<*>>(
-  val htmlRenderer: HtmlRenderer<T>,
+class DocumentGeneratorService(
+  val htmlRenderer: HtmlRenderer,
   val htmlToDocumentConverter: HtmlToDocumentConverter,
 ) {
 
-  fun renderDocument(documentDetail: T): InputStream {
+  fun <T : DocumentDetail<*>> renderDocument(documentDetail: T): InputStream {
     val html = this.htmlRenderer.render(documentDetail)
     val doc = this.htmlToDocumentConverter.convertToStream(html)
     return doc

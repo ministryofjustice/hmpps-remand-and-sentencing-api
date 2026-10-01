@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.MissingSentenceInformationDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
@@ -194,6 +195,28 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       SentenceEntityStatus.INACTIVE,
     ),
   ): List<SentenceAfterOnAnotherCourtAppearanceRow>
+
+  @Query(
+    """
+    SELECT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine(ca.courtCode, ca.appearanceDate, s.fineAmount, c.offenceCode, s.id, pl.id, pl.days, pl.weeks, pl.months, pl.years, pl.periodOrder) 
+    FROM SentenceEntity s
+    JOIN s.charge c
+    JOIN c.appearanceCharges ac
+    JOIN ac.appearance ca
+    JOIN ca.courtCase cc
+    JOIN s.periodLengths pl
+    JOIN ca.appearanceOutcome ao
+    WHERE cc.prisonerId = :prisonerId
+    AND ca.statusId = :#{#courtAppearanceStatus}
+    AND ao.outcomeName = :outcomeName
+    ORDER BY pl.updatedAt DESC
+  """,
+  )
+  fun findCourtCodesForImprisonmentInDefaultOfFine(
+    @Param("prisonerId") prisonerId: String,
+    @Param("outcomeName") outcomeName: String = "Imprisonment in default of a fine",
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+  ): List<ImprisonmentInDefaultOfFine>
 
   @Query(
     """

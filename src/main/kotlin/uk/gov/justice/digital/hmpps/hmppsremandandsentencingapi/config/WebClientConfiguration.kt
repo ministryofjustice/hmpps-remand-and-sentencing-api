@@ -23,11 +23,14 @@ class WebClientConfiguration(
   @param:Value("\${document.management.api.url}") private val documentManagementApiUri: String,
   @param:Value("\${adjustments.api.url}") private val adjustmentsApiUri: String,
   @param:Value("\${court-data-ingestion.api.url}") private val courtDataIngestionApiUri: String,
+  @param:Value("\${person-record.api.url}") private val personRecordUri: String,
+  @param:Value("\${prison-register.api.url}") private val prisonRegisterUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
 ) {
 
+  @Deprecated("This is a NOMIS Wrapper Service and should be avoided")
   @Bean
   fun prisonApiWebClient(webclientBuilder: WebClient.Builder): WebClient = webclientBuilder
     .baseUrl(prisonApiUri)
@@ -42,6 +45,26 @@ class WebClientConfiguration(
     authorizedClientManager,
     "court-register-api",
     courtRegisterApiUri,
+  )
+
+  @Bean
+  fun personRecordWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "person-record",
+    personRecordUri,
+  )
+
+  @Bean
+  fun prisonRegisterWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: WebClient.Builder,
+  ): WebClient = builder.authorisedWebClient(
+    authorizedClientManager,
+    "prison-register",
+    prisonRegisterUri,
   )
 
   private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction = ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
