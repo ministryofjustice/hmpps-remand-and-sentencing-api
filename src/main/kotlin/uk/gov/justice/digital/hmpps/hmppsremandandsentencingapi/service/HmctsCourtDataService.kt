@@ -5,16 +5,22 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsResultKeys
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.NextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalTime
@@ -27,6 +33,7 @@ class HmctsCourtDataService(
   val documentService: DocumentManagementApiClient,
   val chargeOutcomeService: ChargeOutcomeService,
   val appearanceOutcomeService: AppearanceOutcomeService,
+  val sentenceTypeService: SentenceTypeService,
 ) {
 
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID, prisonerNumber: String): CourtAppearance {
@@ -95,7 +102,9 @@ class HmctsCourtDataService(
   )
 
   private fun mapCharge(charge: HmctsCourtCharge, chargeOutcomes: List<ChargeOutcome>): Charge {
-    val outcome = if (charge.results.size == 1) {
+    val resultsWithMapping = charge.results.filter { result -> chargeOutcomes.find { result.code == it.hmctsCode } != null }
+
+    val outcome = if (resultsWithMapping.size == 1) {
       chargeOutcomes.find { it.hmctsCode == charge.results.first().code }
     } else {
       null
@@ -107,12 +116,64 @@ class HmctsCourtDataService(
       offenceEndDate = charge.endDate,
       outcome = outcome,
       aggravatingFactors = emptyList(),
-      sentence = null,
+      sentence = mapSentence(charge, resultsWithMapping),
       legacyData = null,
       mergedFromCase = null,
       createdAt = ZonedDateTime.now(),
       findingOfDomesticAbuse = null,
       hmctsChargeId = charge.chargeId,
+    )
+  }
+
+  private fun mapSentence(charge: HmctsCourtCharge, resultsWithMapping: List<HmctsCourtResult>): Sentence? {
+    if (resultsWithMapping.size != 1) {
+      return null
+    }
+
+    val result = resultsWithMapping[0]
+    val extensionPeriod = result.findValue(HmctsResultKeys.EXTENSION_PERIOD) != null
+    val extensionPeriod35 = result.findValue(HmctsResultKeys.EXTENSION_PERIOD_SECTION_35A) != null
+    val consecutive = result.findValue(HmctsResultKeys.CONSECUTIVE_TO_OFFENCE) != null ||
+      result.findValue(HmctsResultKeys.CONCURRENT) == "false"
+    val foreignPower = result.findValue(HmctsResultKeys.FOREIGN_POWER_SECTION_31) == "true"
+
+    if (extensionPeriod || extensionPeriod35 || consecutive || foreignPower) {
+      return null
+    }
+
+    val imprisonmentPeriod = result.findValue(HmctsResultKeys.IMPRISONMENT_PERIOD)
+
+    if (imprisonmentPeriod.isNullOrEmpty()) {
+      return null
+    }
+    // currently only support concurrent standard sentences.
+
+    val sentenceType = sentenceTypeService.findByUuid(UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"))
+    val duration = HmctsDurationParts.parseDuration(imprisonmentPeriod)
+
+    return Sentence(
+      sentenceUuid = UUID.randomUUID(),
+      chargeNumber = null,
+      periodLengths = listOf(
+        PeriodLength(
+          years = duration.years,
+          months = duration.months,
+          weeks = duration.weeks,
+          days = duration.days,
+          periodOrder = "years,months,weeks,days",
+          periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+          legacyData = null,
+          periodLengthUuid = UUID.randomUUID(),
+        ),
+      ),
+      consecutiveToSentenceUuid = null,
+      sentenceServeType = "CONCURRENT",
+      sentenceType = sentenceType,
+      convictionDate = charge.convictionDate,
+      fineAmount = null,
+      legacyData = null,
+      hasRecall = false,
+      status = SentenceEntityStatus.ACTIVE,
     )
   }
 
