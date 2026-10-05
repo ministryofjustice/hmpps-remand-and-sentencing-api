@@ -6,7 +6,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonDetails
 
 @Component
-class PrisonRegisterClient(@Qualifier("personRecordWebClient") private val webClient: WebClient) {
+class PrisonRegisterClient(@Qualifier("prisonRegisterWebClient") private val webClient: WebClient) {
 
   fun getPrisonDetails(prisonerId: String): PrisonDetails = webClient
     .get()

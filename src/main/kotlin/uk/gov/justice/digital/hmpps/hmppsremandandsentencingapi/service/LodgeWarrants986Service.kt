@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegisterApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.ManageOffencesApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.PersonRecordClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.PrisonRegisterClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateLodgeWarrants986
@@ -19,6 +20,7 @@ class LodgeWarrants986Service(
   private val courtRegisterApiClient: CourtRegisterApiClient,
   private val personRecordClient: PersonRecordClient,
   private val prisonRegisterClient: PrisonRegisterClient,
+  private val manageOffencesApiClient: ManageOffencesApiClient,
 ) {
 
   fun renderDocument(createLodgeWarrants986: CreateLodgeWarrants986): InputStream {
@@ -32,7 +34,7 @@ class LodgeWarrants986Service(
     val personRecord = personRecordClient.getPersonPrison(createLodgeWarrants986.prisonerId)
     val courtName = courtRegister?.courtName.orEmpty()
     val name = "${personRecord.firstName} ${personRecord.lastName}"
-    val prisonName = prisonRegisterClient.getPrisonDetails(createLodgeWarrants986.prisonerId).prisonName // TODO on monday this will probably be broken on the test
+    val prisonName = prisonRegisterClient.getPrisonDetails(createLodgeWarrants986.prisonerId).prisonName
 
     val sentenceList = imprisonmentInDefaultOfFineList.groupBy { it.sentenceId }.map { (_, sentenceList) ->
       val periodLengths = sentenceList.map {
@@ -47,7 +49,7 @@ class LodgeWarrants986Service(
       val sentence = sentenceList.first()
       LodgeWarrants986.Sentence(
         periodLengths,
-        sentence.offenceCode, //TODO on monday lookup Manage Court Cases
+        manageOffencesApiClient.getOffenceDetails(sentence.offenceCode).description,
         sentence.fineAmount?.toDouble() ?: 0.0,
       )
     }
@@ -75,5 +77,4 @@ class LodgeWarrants986Service(
 
     return documentGeneratorService.renderDocument(lodgeWarrants986)
   }
-
 }

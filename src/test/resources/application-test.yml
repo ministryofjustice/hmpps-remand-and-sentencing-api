@@ -71,6 +71,10 @@ prison-register:
   api:
     url: http://localhost:8555
 
+manage-offences:
+  api:
+    url: http://localhost:8556
+
 ingress:
   url: localhost:8080
 

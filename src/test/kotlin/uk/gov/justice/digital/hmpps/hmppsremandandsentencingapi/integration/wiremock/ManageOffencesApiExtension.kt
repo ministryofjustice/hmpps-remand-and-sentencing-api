@@ -9,40 +9,40 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.TestUtil
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.OffenceDetails
 
-class PersonRecordExtension :
+class ManageOffencesApiExtension :
   BeforeAllCallback,
   AfterAllCallback,
   BeforeEachCallback {
 
   companion object {
     @JvmField
-    val personRecord = PersonRecordMockServer()
+    val manageOffencesApi = ManageOffencesMockServer()
   }
   override fun beforeAll(context: ExtensionContext) {
-    personRecord.start()
+    manageOffencesApi.start()
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    personRecord.resetRequests()
+    manageOffencesApi.resetRequests()
   }
   override fun afterAll(context: ExtensionContext) {
-    personRecord.stop()
+    manageOffencesApi.stop()
   }
 }
 
-class PersonRecordMockServer : WireMockServer(WIREMOCK_PORT) {
+class ManageOffencesMockServer : WireMockServer(WIREMOCK_PORT) {
   companion object {
-    private const val WIREMOCK_PORT = 8554
+    private const val WIREMOCK_PORT = 8556
   }
 
-  fun stubGetPersonPrison(prisonerId: String, personPrison: PersonPrison): StubMapping = stubFor(
-    get("/person/prison/$prisonerId")
+  fun stubManageOffences(offenceCode: String, offenceDetails: OffenceDetails): StubMapping = stubFor(
+    get("/offences/code/unique/$offenceCode")
       .willReturn(
         aResponse()
           .withHeader("Content-Type", "application/json")
-          .withBody(TestUtil.objectMapper().writeValueAsString(personPrison))
+          .withBody(TestUtil.objectMapper().writeValueAsString(offenceDetails))
           .withStatus(200),
       ),
   )
