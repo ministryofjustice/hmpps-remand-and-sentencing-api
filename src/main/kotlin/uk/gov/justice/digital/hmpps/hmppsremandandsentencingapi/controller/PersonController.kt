@@ -26,9 +26,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.Consecut
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.FixManyChargesToSentenceService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceEnvelopeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonService
 import java.time.LocalDate
 
 @RestController

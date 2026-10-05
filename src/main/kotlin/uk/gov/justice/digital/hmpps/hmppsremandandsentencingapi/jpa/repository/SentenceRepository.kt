@@ -198,7 +198,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    SELECT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine(ca.courtCode, ca.appearanceDate, s.fineAmount, c.offenceCode, s.id, pl.id, pl.days, pl.weeks, pl.months, pl.years, pl.periodOrder) 
+    SELECT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine(ca.courtCode, ca.appearanceDate, s.fineAmount, c.offenceCode, s.id, pl.days, pl.weeks, pl.months, pl.years, pl.periodOrder) 
     FROM SentenceEntity s
     JOIN s.charge c
     JOIN c.appearanceCharges ac

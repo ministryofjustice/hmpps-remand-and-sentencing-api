@@ -56,6 +56,14 @@ prison-register:
   api:
     url: http://localhost:8555
 
+manage-offences:
+  api:
+    url: http://localhost:8556
+
+prisoner-search:
+  api:
+    url: http://localhost:8557
+
 ingress:
   url: localhost:8080
 
@@ -65,6 +73,8 @@ features:
   hmctsWarrantThingToDo:
     enabled: false
     repeatRemandHearingEnabled: false
+    sentencingEnabled: false
+    multipleNotificationsEnabled: false
   appearanceSchedulesEvents:
     enabled: false
 

@@ -3,15 +3,15 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
 
 @Component
 class PrisonRegisterClient(@Qualifier("prisonRegisterWebClient") private val webClient: WebClient) {
 
-  fun getPrisonDetails(prisonerId: String): PrisonDetails = webClient
+  fun getAgencyDetails(agencyId: String): AgencyDetails = webClient
     .get()
-    .uri("/prisons/id/{prisonerId}", prisonerId)
+    .uri("/api/agencies/{agencyId}", agencyId)
     .retrieve()
-    .bodyToMono(typeReference<PrisonDetails>())
+    .bodyToMono(typeReference<AgencyDetails>())
     .block()!!
 }

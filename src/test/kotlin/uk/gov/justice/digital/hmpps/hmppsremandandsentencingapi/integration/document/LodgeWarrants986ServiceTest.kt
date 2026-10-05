@@ -2,9 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.doc
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.OffenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateLodgeWarrants986
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PersonRecordExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonRegisterExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonSearchExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.LodgeWarrants986Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
@@ -64,12 +66,14 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
         PersonPrison.Gender("N", "Not Known / Not Recorded"),
       ),
     )
-    PrisonRegisterExtension.prisonRegister.stubGetPrisonDetails(DEFAULT_PRISONER_ID, PrisonDetails("KMI", "Kirkham (HMP)", true))
+    PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("KMI", AgencyDetails("KMI", "Kirkham (HMP)", "PRISON", true, listOf(AgencyDetails.Address("Freckleton Road", "Kirkham", "Preston", "Lancashire", "PR4 2RN")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
+    PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("COURT1", AgencyDetails("COURT1", "COURT (#1)", "COURT", true, listOf(AgencyDetails.Address("Court Address Line 1", "Court Address Line 2", "Court Address Town", "Court Address County", "ABC DEF")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
+    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(DEFAULT_PRISONER_ID, PrisonSearchDetails("KMI", "Kirkham (HMP)"))
     ManageOffencesApiExtension.manageOffencesApi.stubManageOffences("AA06027", OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification"))
   }
 
   private fun arrangeMultipleOffencesAndPeriods() {
-    val courtCode = "HNDNMC"
+    val courtCode = "COURT1"
     val appearanceDate = LocalDate.of(2014, 7, 9)
     val fineAmount = CreateFineAmount(BigDecimal("620.00"))
 
@@ -106,7 +110,9 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
         PersonPrison.Gender("N", "Not Known / Not Recorded"),
       ),
     )
-    PrisonRegisterExtension.prisonRegister.stubGetPrisonDetails(DEFAULT_PRISONER_ID, PrisonDetails("KMI", "Kirkham (HMP)", true))
+    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(DEFAULT_PRISONER_ID, PrisonSearchDetails("KMI", "Kirkham (HMP)"))
+    PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("KMI", AgencyDetails("KMI", "Kirkham (HMP)", "PRISON", true, listOf(AgencyDetails.Address("Freckleton Road", "Kirkham", "Preston", "Lancashire", "PR4 2RN")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
+    PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("COURT1", AgencyDetails("COURT1", "COURT (#1)", "COURT", true, listOf(AgencyDetails.Address("Court Address Line 1", "Court Address Line 2", "Court Address Town", "Court Address County", "ABC DEF")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
     ManageOffencesApiExtension.manageOffencesApi.stubManageOffences("CJ88001", OffenceDetails(50171, "CJ88001", "Common assault"))
     ManageOffencesApiExtension.manageOffencesApi.stubManageOffences("CA03010", OffenceDetails(48437, "CA03010", "Veterinary surgeon fail to notify incorrect certification"))
     ManageOffencesApiExtension.manageOffencesApi.stubManageOffences("RL01043", OffenceDetails(64441, "RL01043", "Board a train without a valid ticket - railway bye-law"))

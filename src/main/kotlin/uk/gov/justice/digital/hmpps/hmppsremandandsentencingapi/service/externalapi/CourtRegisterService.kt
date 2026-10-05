@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi
 
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable

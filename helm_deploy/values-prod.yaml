@@ -12,6 +12,11 @@ generic-service:
     PRISON_API_URL: https://prison-api.prison.service.justice.gov.uk
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api.hmpps.service.justice.gov.uk"
     ADJUSTMENTS_API_URL: "https://adjustments-api.hmpps.service.justice.gov.uk"
+    COURT-REGISTER_API_URL: https://court-register-api.hmpps.service.justice.gov.uk
+    PERSON-RECORD_API_URL: https://hmpps-person-record.hmpps.service.justice.gov.uk
+    PRISON-REGISTER_API_URL: https://prison-register.hmpps.service.justice.gov.uk
+    MANAGE_OFFENCES_API_URL: https://manage-offences-api.hmpps.service.justice.gov.uk
+    PRISONER-SEARCH_API_URL: https://prisoner-search.prison.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PROD
     COURT-DATA-INGESTION_API_URL: "https://court-data-ingestion-api.hmpps.service.justice.gov.uk"

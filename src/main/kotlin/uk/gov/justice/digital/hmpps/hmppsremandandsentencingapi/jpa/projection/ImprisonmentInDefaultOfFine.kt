@@ -9,7 +9,6 @@ class ImprisonmentInDefaultOfFine(
   val fineAmount: BigDecimal?,
   val offenceCode: String,
   val sentenceId: Int,
-  val periodId: Int,
   val days: Int?,
   val weeks: Int?,
   val months: Int?,
