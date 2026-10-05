@@ -543,11 +543,16 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = LocalDate.of(2026, 10, 1),
           results = listOf(
             HmctsCourtResult(
+              code = "GPTAC",
+              description = "Guilty plea taken into account Defendant's guilty plea taken into account when imposing sentence.",
+              keyValuePairs = emptyList(),
+            ),
+            HmctsCourtResult(
               code = "IMP",
               description = "Imprisonment",
               keyValuePairs = listOf(
                 ResultKeyValue(
-                  key = "Imprisonment period",
+                  key = "Imprisonment Period",
                   value = "1 Years 60 Days",
                 ),
               ),
