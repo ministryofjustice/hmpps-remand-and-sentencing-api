@@ -105,7 +105,7 @@ class HmctsCourtDataService(
     val resultsWithMapping = charge.results.filter { result -> chargeOutcomes.find { result.code == it.hmctsCode } != null }
 
     val outcome = if (resultsWithMapping.size == 1) {
-      chargeOutcomes.find { it.hmctsCode == charge.results.first().code }
+      chargeOutcomes.find { it.hmctsCode == resultsWithMapping.first().code }
     } else {
       null
     }
@@ -131,15 +131,16 @@ class HmctsCourtDataService(
     }
 
     val result = resultsWithMapping[0]
-    val extensionPeriod = result.findValue(HmctsResultKeys.EXTENSION_PERIOD) != null
-    val extensionPeriod35 = result.findValue(HmctsResultKeys.EXTENSION_PERIOD_SECTION_35A) != null
-    val consecutive = result.findValue(HmctsResultKeys.CONSECUTIVE_TO_OFFENCE) != null ||
-      result.findValue(HmctsResultKeys.CONCURRENT) == "false"
-    val foreignPower = result.findValue(HmctsResultKeys.FOREIGN_POWER_SECTION_31) == "true"
-
-    if (extensionPeriod || extensionPeriod35 || consecutive || foreignPower) {
-      return null
-    }
+    // TODO remove logic to enable testing in dev where data is nonsensical.
+//    val extensionPeriod = result.findValue(HmctsResultKeys.EXTENSION_PERIOD) != null
+//    val extensionPeriod35 = result.findValue(HmctsResultKeys.EXTENSION_PERIOD_SECTION_35A) != null
+//    val consecutive = result.findValue(HmctsResultKeys.CONSECUTIVE_TO_OFFENCE) != null ||
+//      result.findValue(HmctsResultKeys.CONCURRENT) == "false"
+//    val foreignPower = result.findValue(HmctsResultKeys.FOREIGN_POWER_SECTION_31) == "true"
+//
+//    if (extensionPeriod || extensionPeriod35 || consecutive || foreignPower) {
+//      return null
+//    }
 
     val imprisonmentPeriod = result.findValue(HmctsResultKeys.IMPRISONMENT_PERIOD)
 

@@ -73,7 +73,7 @@ enum class HmctsResultKeys(val key: String) {
   CUSTODIAL_PERIOD("Custodial period"),
   EXTENSION_PERIOD("Extension period"),
   EXTENSION_PERIOD_SECTION_35A("Extension period section 35A (immediate custodial sentence)"),
-  IMPRISONMENT_PERIOD("Imprisonment period"),
+  IMPRISONMENT_PERIOD("Imprisonment Period"),
   FOREIGN_JURISDICTION("Number of days in custody in foreign jurisdiction to count"),
   FOREIGN_POWER_SECTION_31("This offence is aggravated by the foreign power condition being met in relation to it as defined by section 31 of the National Security Act 2023"),
   TOTAL_CUSTODIAL_PERIOD("Total custodial period"),
