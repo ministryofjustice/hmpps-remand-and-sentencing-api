@@ -25,6 +25,12 @@
         ],
       "minimumReleaseAge": "7 days",
       "pinDigests": true
+    },
+    {
+      "matchPackageNames": ["uk.gov.justice.hmpps.gradle-spring-boot"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "1 day",
+      "automerge": true
     }
   ]
 }
