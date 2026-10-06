@@ -8,10 +8,15 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsHearingAutopopulateEligibility
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.HmctsCourtDataService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.HmctsHearingAutopopulateEligibilityService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.HmctsHearingIdPair
 import java.util.UUID
 
 @RestController
@@ -22,6 +27,7 @@ import java.util.UUID
 )
 class HmctsCourtDataController(
   private val hmctsCourtDataService: HmctsCourtDataService,
+  private val hmctsHearingAutopopulateEligibilityService: HmctsHearingAutopopulateEligibilityService,
 ) {
 
   @GetMapping("/{courtHearingId}/prisoner/{prisonerNumber}/appearance")
@@ -39,4 +45,20 @@ class HmctsCourtDataController(
     ],
   )
   fun getCourtAppearanceFromHmctsHearingId(@PathVariable courtHearingId: UUID, @PathVariable prisonerNumber: String): CourtAppearance = hmctsCourtDataService.getCourtAppearanceFromHmctsHearingId(courtHearingId, prisonerNumber)
+
+  @PostMapping("/hearing-autopopulate-eligibility")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")
+  @Operation(
+    summary = "Is the hearing eligible for autopopulation",
+    description = "This endpoint will retrieve hmcts hearing and check if its eligible for the autopopulate journey",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns eligibility details"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "Not found if no court case at uuid"),
+    ],
+  )
+  fun areHmctsHearingsEligibleForAutopopulate(@RequestBody hearingIdPairs: List<HmctsHearingIdPair>): List<HmctsHearingAutopopulateEligibility> = hmctsHearingAutopopulateEligibilityService.areHmctsHearingsEligibleForAutopopulate(hearingIdPairs)
 }

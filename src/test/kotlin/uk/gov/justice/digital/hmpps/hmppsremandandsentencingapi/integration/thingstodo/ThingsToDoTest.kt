@@ -236,6 +236,10 @@ class ThingsToDoTest : IntegrationTestBase() {
       "REMAND_WARRANT",
       DOCUMENT_ID,
     )
+    val PCR = HmctsCourHearingDocument(
+      "PRISON_COURT_REGISTER",
+      DOCUMENT_ID,
+    )
     val HEARING = HmctsCourtHearing(
       hearingId = HMCTS_HEARING_ID,
       courtName = "My court",
@@ -246,10 +250,10 @@ class ThingsToDoTest : IntegrationTestBase() {
       documents = emptyList(),
     )
     val SENTENCING_HEARING = HEARING.copy(
-      documents = listOf(SENTENCING_WARRANT),
+      documents = listOf(SENTENCING_WARRANT, PCR),
     )
     val REMAND_HEARING = HEARING.copy(
-      documents = listOf(REMAND_WARRANT),
+      documents = listOf(REMAND_WARRANT, PCR),
     )
 
     @JvmStatic
@@ -334,7 +338,7 @@ class ThingsToDoTest : IntegrationTestBase() {
         null,
       ),
       Arguments.of(
-        "Existing court case with different reference with remand warrant gives no remand thing to do",
+        "Existing court case with different reference with remand warrant gives thing to do",
         listOf(REMAND_HEARING),
         DpsDataCreator.dpsCreateCourtAppearance(
           courtCaseReference = "OTHERCASEREF123",
@@ -372,6 +376,21 @@ class ThingsToDoTest : IntegrationTestBase() {
             courtCaseUuid = null,
           ),
         ),
+      ),
+      Arguments.of(
+        "No PCR on hearing results in no thing to do",
+        listOf(REMAND_HEARING.copy(documents = REMAND_HEARING.documents.filterNot { it.isPcr() })),
+        null,
+        null,
+      ),
+      Arguments.of(
+        "Existing court case with appearance on hearing date gives no thing to do",
+        listOf(REMAND_HEARING),
+        DpsDataCreator.dpsCreateCourtAppearance(
+          courtCaseReference = REMAND_HEARING.caseReferences[0],
+          appearanceDate = REMAND_HEARING.hearingDate,
+        ),
+        null,
       ),
       Arguments.of(
         "Existing court case with lower case reference with sentencing warrant gives no thing to do",

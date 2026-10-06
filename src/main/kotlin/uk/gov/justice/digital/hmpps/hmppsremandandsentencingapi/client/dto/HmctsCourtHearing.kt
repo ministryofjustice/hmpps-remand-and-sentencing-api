@@ -25,6 +25,7 @@ data class HmctsCourHearingDocument(
   val documentId: UUID,
 ) {
   fun isWarrant() = isRemandWarrant() || isSentenceWarrant()
+  fun isPcr() = documentType == "PRISON_COURT_REGISTER"
   fun isRemandWarrant() = documentType == "REMAND_WARRANT"
   fun isSentenceWarrant() = documentType == "SENTENCING_WARRANT"
 }
