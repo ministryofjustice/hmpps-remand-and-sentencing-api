@@ -35,10 +35,10 @@ class LodgeWarrants986Service(
     val imprisonmentInDefaultOfFine = imprisonmentInDefaultOfFineList.first()
     val courtRegister = courtRegisterService.getCourtRegisterByCourtCodeCached(imprisonmentInDefaultOfFine.courtCode)
     val personRecord = personRecordService.getPersonPrison(createLodgeWarrants986.prisonerId)
-    val courtName = courtRegister?.courtName.orEmpty()
+    val courtName = courtRegister?.courtName
     val name = "${personRecord?.firstName} ${personRecord?.lastName}".trim()
     val prison = prisonSearchService.getPrisonerCached(createLodgeWarrants986.prisonerId)
-    val prisonName = prison?.prisonName ?: "No Data Held"
+    val prisonName = prison?.prisonName
     val courtAddress: AgencyDetails.Address? = courtRegister?.let {
       prisonRegisterService.getAgencyDetailsCached(it.courtId)?.addresses?.first()
     }
@@ -48,13 +48,7 @@ class LodgeWarrants986Service(
 
     val sentenceList = imprisonmentInDefaultOfFineList.groupBy { it.sentenceId }.map { (_, sentenceList) ->
       val periodLengths = sentenceList.map {
-        PeriodLength(
-          it.years ?: 0,
-          it.months ?: 0,
-          it.weeks ?: 0,
-          it.days ?: 0,
-          it.periodOrder ?: "years,months,weeks,days",
-        )
+        PeriodLength.fromNullable(it.years, it.months, it.weeks, it.days, it.periodOrder)
       }
       val sentence = sentenceList.first()
       LodgeWarrants986.Sentence(
@@ -71,7 +65,7 @@ class LodgeWarrants986Service(
         LodgeWarrants986.Court(
           courtName,
           courtAddress?.addressLine1 ?: createLodgeWarrants986.courtPremise ?: "",
-          courtAddress?.addressLine1 ?: createLodgeWarrants986.courtStreet ?: "",
+          courtAddress?.addressLine2 ?: createLodgeWarrants986.courtStreet ?: "",
           courtAddress?.town ?: createLodgeWarrants986.courtTown ?: "",
           courtAddress?.county ?: createLodgeWarrants986.courtCounty ?: "",
           courtAddress?.postcode ?: createLodgeWarrants986.courtPostalCode ?: "",

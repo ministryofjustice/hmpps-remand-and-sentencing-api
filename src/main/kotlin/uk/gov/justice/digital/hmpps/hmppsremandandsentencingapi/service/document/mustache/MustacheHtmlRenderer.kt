@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatCurrencyHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatDateHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatPeriodHelper
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.OptionalValueHelper
 
 class MustacheHtmlRenderer : HtmlRenderer {
 
@@ -32,5 +33,6 @@ class MustacheHtmlRenderer : HtmlRenderer {
     handlebars.registerHelper("formatDate", FormatDateHelper())
     handlebars.registerHelper("formatCurrency", FormatCurrencyHelper())
     handlebars.registerHelper("formatPeriod", FormatPeriodHelper())
+    handlebars.registerHelper("optionalValue", OptionalValueHelper())
   }
 }

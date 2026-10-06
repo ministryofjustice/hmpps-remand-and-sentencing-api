@@ -68,6 +68,9 @@ ingress:
   url: localhost:8080
 
 features:
+  client-api:
+    prison-register:
+      enabled: false
   appeals:
     enabled: false
   hmctsWarrantThingToDo:
