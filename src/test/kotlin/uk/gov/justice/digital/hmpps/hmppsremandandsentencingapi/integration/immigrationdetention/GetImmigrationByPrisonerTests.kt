@@ -167,4 +167,14 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
         ),
       )
   }
+
+  @Test
+  fun `filter by bookingId`() {
+    val bookingId = 1L
+    val (nomisCourtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", bookingId = bookingId)
+    val (otherBookingCourtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500", bookingId = bookingId + 1)
+    val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B", bookingId)
+    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }.containsExactlyInAnyOrder(nomisCourtAppearanceUuid)
+    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }.doesNotContain(otherBookingCourtAppearanceUuid)
+  }
 }

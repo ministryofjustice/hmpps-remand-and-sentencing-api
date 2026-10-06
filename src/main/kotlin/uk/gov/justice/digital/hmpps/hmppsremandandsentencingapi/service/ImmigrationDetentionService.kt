@@ -218,14 +218,16 @@ class ImmigrationDetentionService(
   }
 
   @Transactional(readOnly = true)
-  fun findImmigrationDetentionByPrisonerId(prisonerId: String): List<ImmigrationDetention> {
+  fun findImmigrationDetentionByPrisonerId(prisonerId: String, bookingId: String): List<ImmigrationDetention> {
     val dpsRecords = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE)
       .map { ImmigrationDetention.from(it) }
     val dpsCourtAppearanceUuids = dpsRecords.map { it.courtAppearanceUuid }.distinct()
     val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId, dpsCourtAppearanceUuids)
       .map { courtAppearance: CourtAppearanceEntity -> ImmigrationDetention.fromCourtAppearance(courtAppearance, prisonerId) }
 
-    return dpsRecords + nomisRecords
+    val courtAppearanceUuids = dpsCourtAppearanceUuids + nomisRecords.map { it.courtAppearanceUuid }
+    val bookingCourtAppearanceUuids = courtAppearanceRepository.findAppearanceUuidsByBookingIdOrAll(courtAppearanceUuids, bookingId).toSet()
+    return (dpsRecords + nomisRecords).filter { bookingCourtAppearanceUuids.contains(it.courtAppearanceUuid) }
   }
 
   @Transactional(readOnly = true)
