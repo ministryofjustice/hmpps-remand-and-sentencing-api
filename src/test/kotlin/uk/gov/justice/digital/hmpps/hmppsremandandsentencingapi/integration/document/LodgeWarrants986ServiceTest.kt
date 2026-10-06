@@ -35,7 +35,7 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
   @Test
   fun `should generate pdf from CreateLodgeWarrants986 dto with single offence`() {
     arrangeSingleOffence()
-    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(DEFAULT_PRISONER_ID, "Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
+    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(DEFAULT_PRISONER_ID, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "lodge-warrants-single-sample.pdf").writeBytes(resp.readAllBytes())
@@ -44,7 +44,7 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
   @Test
   fun `should generate pdf from CreateLodgeWarrants986 dto with multiple offences and random set of periods`() {
     arrangeMultipleOffencesAndPeriods()
-    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(DEFAULT_PRISONER_ID, "Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
+    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(DEFAULT_PRISONER_ID, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "lodge-warrants-multiple-sample.pdf").writeBytes(resp.readAllBytes())

@@ -36,7 +36,7 @@ class LodgeWarrants986Service(
     val courtRegister = courtRegisterService.getCourtRegisterByCourtCodeCached(imprisonmentInDefaultOfFine.courtCode)
     val personRecord = personRecordService.getPersonPrison(createLodgeWarrants986.prisonerId)
     val courtName = courtRegister?.courtName
-    val name = "${personRecord?.firstName} ${personRecord?.lastName}".trim()
+    val name = personRecord?.let { "${it.firstName} ${it.lastName}".trim() } ?: createLodgeWarrants986.prisonerId
     val prison = prisonSearchService.getPrisoner(createLodgeWarrants986.prisonerId)
     val prisonName = prison?.prisonName
     val courtAddress: AgencyDetails.Address? = courtRegister?.let {

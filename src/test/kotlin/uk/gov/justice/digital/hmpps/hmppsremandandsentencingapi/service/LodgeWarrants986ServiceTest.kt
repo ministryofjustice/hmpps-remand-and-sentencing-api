@@ -166,7 +166,7 @@ class LodgeWarrants986ServiceTest {
     lodgeWarrants986Service.renderDocument(createLodgeWarrants986)
 
     val data = documentSlot.captured.data
-    assertThat(data.name).isEqualTo("")
+    assertThat(data.name).isEqualTo("A1234BC")
     assertThat(data.prisonName).isNull()
     assertThat(data.telephoneNumber).isEqualTo("01234 567890")
     assertThat(data.court.name).isNull()
