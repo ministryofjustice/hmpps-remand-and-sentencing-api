@@ -70,7 +70,7 @@ ingress:
 features:
   client-api:
     prison-register:
-      enabled: false
+      enabled: true
   appeals:
     enabled: false
   hmctsWarrantThingToDo:
