@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoData
@@ -8,47 +9,40 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.H
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDoType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingsToDo
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 
 @Service
 class ThingsToDoService(
   val courtDataIngestionApi: CourtDataIngestionApiClient,
-  val courtCaseRepository: CourtCaseRepository,
+  val hmctsHearingAutopopulateEligibilityService: HmctsHearingAutopopulateEligibilityService,
   val features: FeaturesConfig,
 ) {
+
+  @Transactional(readOnly = true)
   fun getThingsToDo(prisonerId: String): ThingsToDo {
     if (features.hmctsWarrantThingToDo.enabled) {
       val hearings = courtDataIngestionApi.getHearings(prisonerId)
-      val warrantHearings = hearings.filter { hearing -> hearing.documents.any { it.isWarrant() } && hearing.caseReferences.size == 1 }
 
-      val thingsToDo = warrantHearings
-        .mapNotNull { warrantHearing ->
-          val cases = courtCaseRepository.findCourtCasesByPrisonerAndCourtCaseReference(prisonerId, warrantHearing.caseReferences[0])
-          val case = cases.maxByOrNull { it.appearances.maxOf { it.appearanceDate } }
-
-          val newCourtCase = case == null
-          val newRemandCaseSupported = newCourtCase && warrantHearing.isRemandHearing()
-          val repeatRemandSupported = features.hmctsWarrantThingToDo.repeatRemandHearingEnabled &&
-            !newCourtCase &&
-            warrantHearing.isRemandHearing()
-          val newSentencingCaseSupported = features.hmctsWarrantThingToDo.sentencingEnabled &&
-            newCourtCase &&
-            warrantHearing.isSentenceHearing()
-          val thingToDoSupported = newRemandCaseSupported || newSentencingCaseSupported || repeatRemandSupported
-          if (!thingToDoSupported) {
-            return@mapNotNull null
-          }
-          ThingToDo(
-            type = ThingToDoType.NEW_WARRANT,
-            hearingThingsToDoData = HearingThingsToDoData(
-              hearingId = warrantHearing.hearingId,
-              courtCaseReference = warrantHearing.caseReferences.first(),
-              hearingDate = warrantHearing.hearingDate,
-              hearingType = warrantHearing.hearingType,
-              warrantType = if (warrantHearing.isRemandHearing()) HearingThingsToDoWarrantType.REMAND else HearingThingsToDoWarrantType.SENTENCING,
-              courtCaseUuid = case?.caseUniqueIdentifier,
-            ),
+      val thingsToDo = hearings
+        .mapNotNull { hearing ->
+          val hearingEligibility = hmctsHearingAutopopulateEligibilityService.isHmctsHearingEligibleForAutopopulate(
+            hearing,
+            prisonerId,
           )
+          if (hearingEligibility.hasWarrantAndPcr && !hearingEligibility.hasBeenCompleted && hearingEligibility.features.all { it.enabled }) {
+            ThingToDo(
+              type = ThingToDoType.NEW_WARRANT,
+              hearingThingsToDoData = HearingThingsToDoData(
+                hearingId = hearing.hearingId,
+                courtCaseReference = hearing.caseReferences.first(),
+                hearingDate = hearing.hearingDate,
+                hearingType = hearing.hearingType,
+                warrantType = if (hearing.isRemandHearing()) HearingThingsToDoWarrantType.REMAND else HearingThingsToDoWarrantType.SENTENCING,
+                courtCaseUuid = hearingEligibility.existingCaseIdentifier,
+              ),
+            )
+          } else {
+            null
+          }
         }.sortedByDescending {
           it.hearingThingsToDoData.hearingDate
         }

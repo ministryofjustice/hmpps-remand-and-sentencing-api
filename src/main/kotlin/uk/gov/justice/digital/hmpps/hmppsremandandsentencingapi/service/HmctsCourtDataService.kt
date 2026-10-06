@@ -86,7 +86,7 @@ class HmctsCourtDataService(
     )
   }
 
-  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing): NextCourtAppearance? = NextCourtAppearance(
+  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing): NextCourtAppearance = NextCourtAppearance(
     appearanceDate = nextAppearance.hearingDate?.toLocalDate() ?: LocalDate.MIN,
     appearanceTime = nextAppearance.hearingDate?.toLocalTime() ?: LocalTime.MIN,
     courtCode = nextAppearance.hmppsCourtId ?: Constants.nilUUID.toString(),
