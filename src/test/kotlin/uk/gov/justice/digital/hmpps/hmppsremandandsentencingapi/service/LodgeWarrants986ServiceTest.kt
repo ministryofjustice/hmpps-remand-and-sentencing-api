@@ -92,8 +92,8 @@ class LodgeWarrants986ServiceTest {
     every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(prisonerId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns CourtRegister("COURT1", "Liverpool Crown Court", "Liverpool Crown Court Description")
     every { personRecordService.getPersonPrison(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
-    every { prisonSearchService.getPrisonerCached(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)")
-    every { prisonRegisterService.getAgencyDetailsCached("COURT1") } returns AgencyDetails(
+    every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)")
+    every { prisonRegisterService.getAgencyDetails("COURT1") } returns AgencyDetails(
       "COURT1",
       "COURT (#1)",
       "COURT",
@@ -101,7 +101,7 @@ class LodgeWarrants986ServiceTest {
       listOf(AgencyDetails.Address("Court Address Line 1", "Court Address Line 2", "Court Address Town", "Court Address County", "ABC DEF")),
       listOf(AgencyDetails.Telephone("0394839394")),
     )
-    every { prisonRegisterService.getAgencyDetailsCached("KMI") } returns AgencyDetails(
+    every { prisonRegisterService.getAgencyDetails("KMI") } returns AgencyDetails(
       "KMI",
       "Kirkham (HMP)",
       "PRISON",
@@ -109,7 +109,7 @@ class LodgeWarrants986ServiceTest {
       listOf(AgencyDetails.Address("Freckleton Road", "Kirkham", "Preston", "Lancashire", "PR4 2RN")),
       listOf(AgencyDetails.Telephone("0123456789")),
     )
-    every { manageOffencesService.getOffenceDetailsCached("AA06027") } returns OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification")
+    every { manageOffencesService.getOffenceDetails("AA06027") } returns OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification")
 
     val documentSlot = slot<LodgeWarrants986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
@@ -156,8 +156,8 @@ class LodgeWarrants986ServiceTest {
     every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(prisonerId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns null
     every { personRecordService.getPersonPrison(prisonerId) } returns null
-    every { prisonSearchService.getPrisonerCached(prisonerId) } returns null
-    every { manageOffencesService.getOffenceDetailsCached("AA06027") } returns null
+    every { prisonSearchService.getPrisoner(prisonerId) } returns null
+    every { manageOffencesService.getOffenceDetails("AA06027") } returns null
 
     val documentSlot = slot<LodgeWarrants986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))

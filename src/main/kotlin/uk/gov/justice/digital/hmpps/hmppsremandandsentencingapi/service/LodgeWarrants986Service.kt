@@ -37,13 +37,13 @@ class LodgeWarrants986Service(
     val personRecord = personRecordService.getPersonPrison(createLodgeWarrants986.prisonerId)
     val courtName = courtRegister?.courtName
     val name = "${personRecord?.firstName} ${personRecord?.lastName}".trim()
-    val prison = prisonSearchService.getPrisonerCached(createLodgeWarrants986.prisonerId)
+    val prison = prisonSearchService.getPrisoner(createLodgeWarrants986.prisonerId)
     val prisonName = prison?.prisonName
     val courtAddress: AgencyDetails.Address? = courtRegister?.let {
-      prisonRegisterService.getAgencyDetailsCached(it.courtId)?.addresses?.first()
+      prisonRegisterService.getAgencyDetails(it.courtId)?.addresses?.first()
     }
     val prisonTelephone: AgencyDetails.Telephone? = prison?.let {
-      prisonRegisterService.getAgencyDetailsCached(prison.prisonId)?.phones?.first()
+      prisonRegisterService.getAgencyDetails(prison.prisonId)?.phones?.first()
     }
 
     val sentenceList = imprisonmentInDefaultOfFineList.groupBy { it.sentenceId }.map { (_, sentenceList) ->
@@ -53,7 +53,7 @@ class LodgeWarrants986Service(
       val sentence = sentenceList.first()
       LodgeWarrants986.Sentence(
         periodLengths,
-        manageOffencesService.getOffenceDetailsCached(sentence.offenceCode)?.description ?: "Offence Code (${sentence.offenceCode})",
+        manageOffencesService.getOffenceDetails(sentence.offenceCode)?.description ?: "Offence Code (${sentence.offenceCode})",
         sentence.fineAmount?.toDouble() ?: 0.0,
       )
     }

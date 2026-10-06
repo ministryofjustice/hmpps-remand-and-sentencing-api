@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Perso
 @Service
 class PersonRecordService(private val personRecordClient: PersonRecordClient) {
 
-  @Cacheable("prisonRegisterGetAgencyDetails")
   fun getPersonPrison(prisonerId: String): PersonPrison? {
     try {
       return personRecordClient.getPersonPrison(prisonerId)
