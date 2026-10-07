@@ -30,53 +30,53 @@ class MustacheHtmlRendererTest {
   }
 
   @Test
-  fun `should render html from LodgeWarrants986 with total amount sum`() {
+  fun `should render html from F986 with total amount sum`() {
     val sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 2, 0)), "Abandon a fighting dog", 100.0),
-      LodgeWarrants986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
-      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
+      F986.Sentence(listOf(PeriodLength(1, 2, 0)), "Abandon a fighting dog", 100.0),
+      F986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
+      F986.Sentence(listOf(PeriodLength(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
     )
 
-    assertLodgeWarrants986(
+    assertF986(
       sentences = sentences,
       expectedTotal = "£1,150.00",
-      outputFileName = "lodge-warrants-with-sum-total.html",
+      outputFileName = "f986-with-sum-total.html",
     )
   }
 
   @Test
-  fun `should render html from LodgeWarrants986 with multiple periods for single sentence`() {
+  fun `should render html from F986 with multiple periods for single sentence`() {
     val sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 2, 0), PeriodLength(1, 2, 0), PeriodLength(1, 2, 0), PeriodLength(1, 2, 0)), "Abandon a fighting dog", 100.0),
-      LodgeWarrants986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
-      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
+      F986.Sentence(listOf(PeriodLength(1, 2, 0), PeriodLength(1, 2, 0), PeriodLength(1, 2, 0), PeriodLength(1, 2, 0)), "Abandon a fighting dog", 100.0),
+      F986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 50.0),
+      F986.Sentence(listOf(PeriodLength(1, 1, 8)), "Loaf of bread stolen \uD83D\uDE32", 1000.0),
     )
 
-    assertLodgeWarrants986(
+    assertF986(
       sentences = sentences,
       expectedTotal = "£1,150.00",
-      outputFileName = "lodge-warrants-with-multiple-periods.html",
+      outputFileName = "f986-with-multiple-periods.html",
     )
   }
 
   @Test
-  fun `should render html from LodgeWarrants986 with empty total sum and custom period order`() {
+  fun `should render html from F986 with empty total sum and custom period order`() {
     val sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(PeriodLength(1, 2, 1, periodOrder = "weeks,days,years,months")), "Abandon a fighting dog", 0.0),
+      F986.Sentence(listOf(PeriodLength(1, 2, 1, periodOrder = "weeks,days,years,months")), "Abandon a fighting dog", 0.0),
     )
 
-    assertLodgeWarrants986(
+    assertF986(
       sentences = sentences,
       expectedTotal = "£0.00",
-      outputFileName = "lodge-warrants-with-empty-total.html",
+      outputFileName = "f986-with-empty-total.html",
       expectedPeriodOrder = "1 Week 0 Days 1 Year 2 Months",
     )
   }
 
-  private fun lodgeWarrants986SampleData(sentences: List<LodgeWarrants986.Sentence>) = LodgeWarrants986.Data(
+  private fun f986SampleData(sentences: List<F986.Sentence>) = F986.Data(
     name = "Joe Bloggs",
     nomsNumber = "AA4453",
-    court = LodgeWarrants986.Court("Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA"),
+    court = F986.Court("Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA"),
     docGeneratedDate = LocalDate.parse("2026-09-29"),
     sentenceDate = LocalDate.parse("2026-09-17"),
     sentences = sentences,
@@ -85,9 +85,9 @@ class MustacheHtmlRendererTest {
     version = "3.23",
   )
 
-  private fun assertLodgeWarrants986(sentences: List<LodgeWarrants986.Sentence>, expectedTotal: String, outputFileName: String, expectedPeriodOrder: String? = null) {
-    val lodgeWarrants986 = LodgeWarrants986(lodgeWarrants986SampleData(sentences))
-    val resp = convertTemplateToHtml(lodgeWarrants986)
+  private fun assertF986(sentences: List<F986.Sentence>, expectedTotal: String, outputFileName: String, expectedPeriodOrder: String? = null) {
+    val f986 = F986(f986SampleData(sentences))
+    val resp = convertTemplateToHtml(f986)
     val html = W3CDom().asString(resp)
 
     val doc = Jsoup.parse(html)
