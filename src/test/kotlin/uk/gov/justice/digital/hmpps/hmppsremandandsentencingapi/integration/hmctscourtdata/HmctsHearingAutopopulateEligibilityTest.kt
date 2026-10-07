@@ -6,6 +6,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.typeReference
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ExistingCaseReferenceAndId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeature
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeatureType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsHearingAutopopulateEligibility
@@ -77,17 +78,39 @@ class HmctsHearingAutopopulateEligibilityTest : IntegrationTestBase() {
     Assertions.assertThat(response).isEqualTo(
       listOf(
         HmctsHearingAutopopulateEligibility(
-
-          existingCaseIdentifier = courtCaseId,
+          prisonerOne,
+          prisonerOneHearingOne.hearingId,
+          cases = listOf(ExistingCaseReferenceAndId(caseReferenceOne, courtCaseId)),
           features = listOf(
             HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.NEW_REMAND_APPEARANCE_ON_EXISTING_CASE, enabled = true),
           ),
           hasWarrantAndPcr = true,
           hasBeenCompleted = false,
         ),
-        HmctsHearingAutopopulateEligibility(existingCaseIdentifier = null, features = listOf(HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.MULTIPLE_CASE_REFERENCES, enabled = false)), hasWarrantAndPcr = true, hasBeenCompleted = false),
-        HmctsHearingAutopopulateEligibility(existingCaseIdentifier = null, features = listOf(HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.REMAND_WARRANT, enabled = true)), hasWarrantAndPcr = true, hasBeenCompleted = false),
-        HmctsHearingAutopopulateEligibility(existingCaseIdentifier = null, features = listOf(HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.SENTENCING_WARRANT, enabled = true)), hasWarrantAndPcr = true, hasBeenCompleted = false),
+        HmctsHearingAutopopulateEligibility(
+          prisonerOne,
+          prisonerOneHearingTwo.hearingId,
+          cases = emptyList(),
+          features = listOf(HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.MULTIPLE_CASE_REFERENCES, enabled = false)),
+          hasWarrantAndPcr = true,
+          hasBeenCompleted = false,
+        ),
+        HmctsHearingAutopopulateEligibility(
+          prisonerTwo,
+          prisonerTwoHearingOne.hearingId,
+          cases = emptyList(),
+          features = listOf(HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.REMAND_WARRANT, enabled = true)),
+          hasWarrantAndPcr = true,
+          hasBeenCompleted = false,
+        ),
+        HmctsHearingAutopopulateEligibility(
+          prisonerTwo,
+          prisonerTwoHearingTwo.hearingId,
+          cases = emptyList(),
+          features = listOf(HmctsAutopopulateFeature(type = HmctsAutopopulateFeatureType.SENTENCING_WARRANT, enabled = true)),
+          hasWarrantAndPcr = true,
+          hasBeenCompleted = false,
+        ),
       ),
     )
   }
