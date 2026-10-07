@@ -32,10 +32,13 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
   @Autowired
   private lateinit var lodgeWarrants986Service: LodgeWarrants986Service
 
+  private val courtAppearanceUuid = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1")
+  private val fineSentenceTypeUuid = UUID.fromString("c71ceefe-932b-4a69-b87c-7c1294e37cf7")
+
   @Test
   fun `should generate pdf from CreateLodgeWarrants986 dto with single offence`() {
     arrangeSingleOffence()
-    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(DEFAULT_PRISONER_ID, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
+    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "lodge-warrants-single-sample.pdf").writeBytes(resp.readAllBytes())
@@ -44,15 +47,15 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
   @Test
   fun `should generate pdf from CreateLodgeWarrants986 dto with multiple offences and random set of periods`() {
     arrangeMultipleOffencesAndPeriods()
-    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(DEFAULT_PRISONER_ID, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
+    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "lodge-warrants-multiple-sample.pdf").writeBytes(resp.readAllBytes())
   }
 
   private fun arrangeSingleOffence() {
-    val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", sentence = DpsDataCreator.dpsCreateSentence(fineAmount = CreateFineAmount(BigDecimal(100.0))), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Veterinary surgeon fail to notify incorrect certification"))
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge), outcomeUuid = UUID.fromString("04f21679-268f-44c5-9a58-00aaa00c24e0"))
+    val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", sentence = DpsDataCreator.dpsCreateSentence(fineAmount = CreateFineAmount(BigDecimal(100.0)), sentenceTypeId = fineSentenceTypeUuid), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Veterinary surgeon fail to notify incorrect certification"))
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge), appearanceUUID = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1"), outcomeUuid = UUID.fromString("04f21679-268f-44c5-9a58-00aaa00c24e0"))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = DEFAULT_PRISONER_ID, appearances = listOf(appearance)))
 
     PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DEFAULT_PRISONER_ID)
@@ -83,6 +86,7 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
       DpsDataCreator.dpsCreateCharge(
         offenceCode = offenceCode,
         sentence = DpsDataCreator.dpsCreateSentence(
+          sentenceTypeId = fineSentenceTypeUuid,
           chargeNumber = (index + 1).toString(),
           periodLengths = randomPeriodLengths(),
           fineAmount = fineAmount,
@@ -93,6 +97,7 @@ class LodgeWarrants986ServiceTest : IntegrationTestBase() {
 
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = charges,
+      appearanceUUID = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1"),
       outcomeUuid = UUID.fromString("04f21679-268f-44c5-9a58-00aaa00c24e0"),
       courtCode = courtCode,
       appearanceDate = appearanceDate,

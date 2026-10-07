@@ -27,23 +27,23 @@ class LodgeWarrants986Service(
 ) {
 
   fun renderDocument(createLodgeWarrants986: CreateLodgeWarrants986): InputStream {
-    val imprisonmentInDefaultOfFineList = sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(createLodgeWarrants986.prisonerId)
+    val imprisonmentInDefaultOfFineList = sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(createLodgeWarrants986.courtAppearanceUuid)
     require(imprisonmentInDefaultOfFineList.isNotEmpty()) {
-      "No imprisonment in default of fine sentences found for prisoner ${createLodgeWarrants986.prisonerId}"
+      "No imprisonment in default of fine sentences found for court appearance ${createLodgeWarrants986.courtAppearanceUuid}"
     }
 
     val imprisonmentInDefaultOfFine = imprisonmentInDefaultOfFineList.first()
+    val prison = prisonSearchService.getPrisoner(imprisonmentInDefaultOfFine.prisonerId)
     val courtRegister = courtRegisterService.getCourtRegisterByCourtCodeCached(imprisonmentInDefaultOfFine.courtCode)
-    val personRecord = personRecordService.getPersonPrison(createLodgeWarrants986.prisonerId)
+    val personRecord = personRecordService.getPersonPrison(imprisonmentInDefaultOfFine.prisonerId)
     val courtName = courtRegister?.courtName
-    val name = personRecord?.let { "${it.firstName} ${it.lastName}".trim() } ?: createLodgeWarrants986.prisonerId
-    val prison = prisonSearchService.getPrisoner(createLodgeWarrants986.prisonerId)
+    val name = personRecord?.let { "${it.firstName} ${it.lastName}".trim() } ?: imprisonmentInDefaultOfFine.prisonerId
     val prisonName = prison?.prisonName
     val courtAddress: AgencyDetails.Address? = courtRegister?.let {
-      prisonRegisterService.getAgencyDetails(it.courtId)?.addresses?.first()
+      prisonRegisterService.getAgencyDetails(it.courtId)?.addresses?.firstOrNull()
     }
     val prisonTelephone: AgencyDetails.Telephone? = prison?.let {
-      prisonRegisterService.getAgencyDetails(prison.prisonId)?.phones?.first()
+      prisonRegisterService.getAgencyDetails(it.prisonId)?.phones?.firstOrNull()
     }
 
     val sentenceList = imprisonmentInDefaultOfFineList.groupBy { it.sentenceId }.map { (_, sentenceList) ->
@@ -61,7 +61,7 @@ class LodgeWarrants986Service(
     val lodgeWarrants986 = LodgeWarrants986(
       LodgeWarrants986.Data(
         name,
-        createLodgeWarrants986.prisonerId,
+        imprisonmentInDefaultOfFine.prisonerId,
         LodgeWarrants986.Court(
           courtName,
           courtAddress?.addressLine1 ?: createLodgeWarrants986.courtPremise ?: "",

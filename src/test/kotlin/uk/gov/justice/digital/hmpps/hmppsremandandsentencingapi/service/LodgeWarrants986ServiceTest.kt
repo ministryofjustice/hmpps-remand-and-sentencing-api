@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.external
 import java.io.ByteArrayInputStream
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 class LodgeWarrants986ServiceTest {
 
@@ -49,9 +50,10 @@ class LodgeWarrants986ServiceTest {
   )
 
   private val prisonerId = "A1234BC"
+  private val courtAppearanceId = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1")
 
   private fun createLodgeWarrants986() = CreateLodgeWarrants986(
-    prisonerId,
+    courtAppearanceId,
     "Court Premise",
     "Court Street",
     "Court Town",
@@ -67,17 +69,19 @@ class LodgeWarrants986ServiceTest {
 
   @Test
   fun `should throw when no imprisonment in default of fine sentences are found`() {
-    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(prisonerId) } returns emptyList()
+    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(courtAppearanceId) } returns emptyList()
 
     assertThatThrownBy { lodgeWarrants986Service.renderDocument(createLodgeWarrants986()) }
       .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("No imprisonment in default of fine sentences found for prisoner $prisonerId")
+      .hasMessageContaining("No imprisonment in default of fine sentences found for court appearance 15f21679-268f-44c5-9a58-00aaa00c24f1")
   }
 
   @Test
   fun `should render document using court and prison register details`() {
     val imprisonmentInDefaultOfFine = ImprisonmentInDefaultOfFine(
+      prisonerId = prisonerId,
       courtCode = "COURT1",
+      courtAppearanceId = 12,
       appearanceDate = LocalDate.of(2024, 1, 15),
       fineAmount = BigDecimal("100.00"),
       offenceCode = "AA06027",
@@ -89,7 +93,7 @@ class LodgeWarrants986ServiceTest {
       periodOrder = "years,months,weeks,days",
     )
 
-    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(prisonerId) } returns listOf(imprisonmentInDefaultOfFine)
+    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns CourtRegister("COURT1", "Liverpool Crown Court", "Liverpool Crown Court Description")
     every { personRecordService.getPersonPrison(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
     every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)")
@@ -141,7 +145,9 @@ class LodgeWarrants986ServiceTest {
   @Test
   fun `should fall back to request values and offence code when external apis nothing`() {
     val imprisonmentInDefaultOfFine = ImprisonmentInDefaultOfFine(
+      prisonerId = prisonerId,
       courtCode = "COURT1",
+      courtAppearanceId = 21,
       appearanceDate = LocalDate.of(2024, 1, 15),
       fineAmount = null,
       offenceCode = "AA06027",
@@ -153,7 +159,7 @@ class LodgeWarrants986ServiceTest {
       periodOrder = null,
     )
 
-    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(prisonerId) } returns listOf(imprisonmentInDefaultOfFine)
+    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns null
     every { personRecordService.getPersonPrison(prisonerId) } returns null
     every { prisonSearchService.getPrisoner(prisonerId) } returns null

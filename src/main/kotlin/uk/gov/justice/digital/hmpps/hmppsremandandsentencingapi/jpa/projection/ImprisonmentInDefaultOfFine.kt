@@ -4,7 +4,9 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 class ImprisonmentInDefaultOfFine(
+  val prisonerId: String,
   val courtCode: String,
+  val courtAppearanceId: Int,
   val appearanceDate: LocalDate,
   val fineAmount: BigDecimal?,
   val offenceCode: String,

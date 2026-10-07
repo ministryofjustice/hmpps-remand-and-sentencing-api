@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
@@ -198,24 +199,27 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    SELECT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine(ca.courtCode, ca.appearanceDate, s.fineAmount, c.offenceCode, s.id, pl.days, pl.weeks, pl.months, pl.years, pl.periodOrder) 
+    SELECT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine(cc.prisonerId, ca.courtCode, ca.id, ca.appearanceDate, s.fineAmount, c.offenceCode, s.id, pl.days, pl.weeks, pl.months, pl.years, pl.periodOrder) 
     FROM SentenceEntity s
     JOIN s.charge c
     JOIN c.appearanceCharges ac
     JOIN ac.appearance ca
     JOIN ca.courtCase cc
     JOIN s.periodLengths pl
+    JOIN s.sentenceType st
     JOIN ca.appearanceOutcome ao
-    WHERE cc.prisonerId = :prisonerId
+    WHERE ca.appearanceUuid = :#{#appearanceUuid}
     AND ca.statusId = :#{#courtAppearanceStatus}
-    AND ao.outcomeName = :outcomeName
+    AND cc.statusId = :#{#courtCaseStatus}
+    AND st.classification = :#{#classification} 
     ORDER BY pl.updatedAt DESC
   """,
   )
   fun findCourtCodesForImprisonmentInDefaultOfFine(
-    @Param("prisonerId") prisonerId: String,
-    @Param("outcomeName") outcomeName: String = "Imprisonment in default of a fine",
+    @Param("appearanceUuid") appearanceUuid: UUID,
+    @Param("classification") classification: SentenceTypeClassification = SentenceTypeClassification.FINE,
     @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
   ): List<ImprisonmentInDefaultOfFine>
 
   @Query(
