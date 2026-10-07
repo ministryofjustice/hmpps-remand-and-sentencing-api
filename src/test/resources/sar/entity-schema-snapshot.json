@@ -121,7 +121,8 @@
     "supersedingChargeId": "Integer",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String"
+    "updatedPrison": "String",
+    "hmctsChargeId": "UUID"
   },
   "ChargeOutcomeEntity": {
     "displayOrder": "int",
@@ -198,7 +199,8 @@
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String",
-    "warrantType": "String"
+    "warrantType": "String",
+    "hmctsCourtHearingId": "UUID"
   },
   "CourtAppearanceSarEntity": {
     "appearanceCharges": "Set",

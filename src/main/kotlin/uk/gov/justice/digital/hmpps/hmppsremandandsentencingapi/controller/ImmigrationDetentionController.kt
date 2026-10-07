@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateImmigrationDetention
@@ -89,7 +90,8 @@ class ImmigrationDetentionController(
   )
   fun getImmigrationDetentionByPrisonerId(
     @PathVariable prisonerId: String,
-  ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId)
+    @RequestParam(value = "bookingId", defaultValue = "") bookingId: String,
+  ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId, bookingId)
 
   @GetMapping("/person/{prisonerId}/exists")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RW', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")

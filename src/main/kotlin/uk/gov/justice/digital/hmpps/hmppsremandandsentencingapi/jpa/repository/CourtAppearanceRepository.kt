@@ -127,4 +127,15 @@ interface CourtAppearanceRepository : CrudRepository<CourtAppearanceEntity, Int>
   fun getLatestCourtAppearancesWithoutNextCourtAppearance(): List<LatestCourtAppearanceDataRow>
 
   fun findFirstByIdInOrderByCreatedAtAsc(ids: List<Int>): CourtAppearanceEntity
+
+  @Query(
+    """
+      select ca.appearance_uuid from court_appearance ca
+      join court_case cc on cc.id = ca.court_case_id
+      where ca.appearance_uuid in :appearanceUuids and
+      ((cc.legacy_data->>'bookingId' is null or cc.legacy_data->>'bookingId' = :bookingId) or :bookingId = '')
+    """,
+    nativeQuery = true,
+  )
+  fun findAppearanceUuidsByBookingIdOrAll(appearanceUuids: List<UUID>, bookingId: String): List<UUID>
 }

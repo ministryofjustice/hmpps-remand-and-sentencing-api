@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.10"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.11"
   kotlin("plugin.spring") version "2.4.20"
   kotlin("plugin.jpa") version "2.4.20"
 }
@@ -9,7 +9,7 @@ configurations {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.3")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
@@ -23,7 +23,7 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.31.1")
   implementation("org.springframework.boot:spring-boot-starter-mustache")
   implementation("com.github.spullara.mustache.java:compiler:0.9.14")
-  implementation("com.github.jknack:handlebars:4.5.4")
+  implementation("com.github.jknack:handlebars:4.5.5")
   implementation("org.jsoup:jsoup:1.23.2")
   implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
 
@@ -40,7 +40,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql:42.7.13")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.3")
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.2")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.3")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")

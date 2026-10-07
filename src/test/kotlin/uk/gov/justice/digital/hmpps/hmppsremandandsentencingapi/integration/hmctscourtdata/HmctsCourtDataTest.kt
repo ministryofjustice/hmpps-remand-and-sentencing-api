@@ -13,19 +13,26 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Hmcts
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.ResultKeyValue
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.NextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.DocumentManagementApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -65,10 +72,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Theft from the person of another",
           wording = "Theft from the person of another",
           code = "TH68001",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = "RI",
               description = "Remand in custody",
+              keyValuePairs = emptyList(),
             ),
           ),
         ),
@@ -83,10 +92,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Another crime",
           wording = "Another crime",
           code = "X123ABC",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = "WDRN",
               description = "Withdrawn",
+              keyValuePairs = emptyList(),
             ),
           ),
         ),
@@ -101,14 +112,17 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Another crime",
           wording = "Another crime",
           code = "X123ABC",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = "WDRN",
               description = "Withdrawn",
+              keyValuePairs = emptyList(),
             ),
             HmctsCourtResult(
               code = "RI",
               description = "Remand in custody",
+              keyValuePairs = emptyList(),
             ),
           ),
         ),
@@ -257,10 +271,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Theft from the person of another",
           wording = "Theft from the person of another",
           code = "TH68001",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = "RI",
               description = "Remand in custody",
+              keyValuePairs = emptyList(),
             ),
           ),
           chargeId = UUID.randomUUID(),
@@ -275,10 +291,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Another crime",
           wording = "Another crime",
           code = "X123ABC",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = "RI",
               description = "Remand in custody",
+              keyValuePairs = emptyList(),
             ),
           ),
           chargeId = UUID.randomUUID(),
@@ -412,10 +430,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Theft from the person of another",
           wording = "Theft from the person of another",
           code = "TH68001",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = "XXX",
               description = "Unknown outcome",
+              keyValuePairs = emptyList(),
             ),
           ),
         ),
@@ -490,6 +510,169 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     )
   }
 
+  @Test
+  fun `Test get appearance from hmcts sentence data`() {
+    val prisonerNumber = "PRIS123"
+    val courtRegisterId = UUID.randomUUID().toString()
+    val hmctsCourtHearing = HmctsCourtHearing(
+      hearingId = HMCTS_HEARING_ID,
+      courtName = "My court",
+      courtCode = courtRegisterId,
+      courtId = UUID.randomUUID(),
+      hearingDate = LocalDate.of(2026, 10, 1),
+      caseReferences = listOf("ABC123", "EFG456"),
+      hearingType = "Sentence hearing",
+      documents = listOf(
+        HmctsCourHearingDocument(
+          "SENTENCING_WARRANT",
+          REMAND_WARRANT_DOCUMENT_ID,
+        ),
+      ),
+      charges = listOf(
+        HmctsCourtCharge(
+          chargeId = UUID.randomUUID(),
+          listingNumber = 1,
+          offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
+          pleaDate = LocalDate.of(2026, 8, 15),
+          pleaValue = "NOT_GUILTY",
+          startDate = LocalDate.of(2026, 6, 15),
+          endDate = LocalDate.of(2026, 7, 15),
+          title = "Theft from the person of another",
+          wording = "Theft from the person of another",
+          code = "TH68001",
+          convictionDate = LocalDate.of(2026, 10, 1),
+          results = listOf(
+            HmctsCourtResult(
+              code = "GPTAC",
+              description = "Guilty plea taken into account Defendant's guilty plea taken into account when imposing sentence.",
+              keyValuePairs = emptyList(),
+            ),
+            HmctsCourtResult(
+              code = "IMP",
+              description = "Imprisonment",
+              keyValuePairs = listOf(
+                ResultKeyValue(
+                  key = "Imprisonment Period",
+                  value = "1 Years 60 Days",
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      nextHearing = null,
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      prisonerNumber,
+    )
+    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
+      listOf(
+        DocumentManagementApiDocument(
+          REMAND_WARRANT_DOCUMENT_ID,
+          documentFilename = "RemandWarrant.pdf",
+        ),
+      ),
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response).isEqualTo(
+      CourtAppearance(
+        appearanceUuid = response.appearanceUuid, // Random UUID
+        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
+        outcome = CourtAppearanceOutcome(
+          outcomeUuid = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
+          outcomeName = "Imprisonment",
+          nomisCode = "1002",
+          outcomeType = "SENTENCING",
+          displayOrder = 10,
+          relatedChargeOutcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
+          isSubList = false, dispositionCode = "FINAL", status = ReferenceEntityStatus.ACTIVE, warrantType = "SENTENCING",
+        ),
+        courtCode = courtRegisterId,
+        courtCaseReference = "ABC123",
+        criminalAppealOfficeReference = null,
+        appearanceDate = LocalDate.parse("2026-10-01"),
+        warrantType = "SENTENCING",
+        nextCourtAppearance = null,
+        charges = listOf(
+          Charge(
+            chargeUuid = response.charges.first().chargeUuid,
+            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+            offenceCode = "TH68001",
+            offenceStartDate = LocalDate.of(2026, 6, 15),
+            offenceEndDate = LocalDate.of(2026, 7, 15),
+            outcome = ChargeOutcome(
+              outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
+              outcomeName = "Imprisonment",
+              nomisCode = "1002",
+              outcomeType = "SENTENCING",
+              displayOrder = 10,
+              dispositionCode = "FINAL",
+              hmctsCode = "IMP",
+              status = ReferenceEntityStatus.ACTIVE,
+            ),
+            aggravatingFactors = emptyList(),
+            sentence = Sentence(
+              sentenceUuid = response.charges.first().sentence?.sentenceUuid!!,
+              chargeNumber = null,
+              periodLengths = listOf(
+                PeriodLength(
+                  years = 1,
+                  months = null,
+                  weeks = null,
+                  days = 60,
+                  periodOrder = "years,months,weeks,days",
+                  periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                  legacyData = null,
+                  periodLengthUuid = response.charges.first().sentence?.periodLengths?.first()?.periodLengthUuid!!,
+                ),
+              ),
+              sentenceServeType = "CONCURRENT",
+              sentenceType = SentenceType(
+                sentenceTypeUuid = UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"),
+                description = "SDS (Standard Determinate Sentence)",
+                classification = SentenceTypeClassification.STANDARD,
+                hintText = null,
+                displayOrder = 10,
+              ),
+              convictionDate = LocalDate.of(2026, 10, 1),
+              fineAmount = null,
+              legacyData = null,
+              consecutiveToSentenceUuid = null,
+              hasRecall = false,
+              status = SentenceEntityStatus.ACTIVE,
+            ),
+            legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
+          ),
+        ),
+        overallConvictionDate = null,
+        legacyData = null,
+        documents = listOf(
+          UploadedDocument(
+            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentType = "HMCTS_WARRANT",
+            fileName = "RemandWarrant.pdf",
+          ),
+        ),
+        source = EventSource.DPS,
+        deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+        periodLengths = emptyList(),
+      ),
+    )
+  }
+
   @ParameterizedTest(name = "Tests that offence results are mapped from hmcts {0} to ras outcome {1}")
   @MethodSource("offenceResultsProvider")
   fun `Test get offence outcome mappings`(hmctsCode: String, expectedRasOutcomeText: String) {
@@ -521,10 +704,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           title = "Theft from the person of another",
           wording = "Theft from the person of another",
           code = "TH68001",
+          convictionDate = null,
           results = listOf(
             HmctsCourtResult(
               code = hmctsCode,
               description = hmctsCode,
+              keyValuePairs = emptyList(),
             ),
           ),
         ),

@@ -615,9 +615,15 @@ abstract class IntegrationTestBase {
     .expectBodyList(ImmigrationDetention::class.java)
     .returnResult().responseBody!!
 
-  protected fun getImmigrationDetentionsByPrisonerId(prisonerId: String): List<ImmigrationDetention> = webTestClient
+  protected fun getImmigrationDetentionsByPrisonerId(prisonerId: String, bookingId: Long? = null): List<ImmigrationDetention> = webTestClient
     .get()
-    .uri("/immigration-detention/person/$prisonerId")
+    .uri {
+      val builder = it.path("/immigration-detention/person/$prisonerId")
+      if (bookingId != null) {
+        builder.queryParam("bookingId", bookingId)
+      }
+      builder.build()
+    }
     .headers {
       it.authToken(roles = listOf("ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW"))
     }
@@ -892,8 +898,8 @@ abstract class IntegrationTestBase {
     .returnResult(MigrationCreateCourtCasesResponse::class.java)
     .responseBody.blockFirst()!!
 
-  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true): Pair<UUID, LegacyCreateCourtAppearance> {
-    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase)
+  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true, bookingId: Long? = 1L): Pair<UUID, LegacyCreateCourtAppearance> {
+    val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase, bookingId = bookingId, legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId))
     val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
     val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData())
     val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)

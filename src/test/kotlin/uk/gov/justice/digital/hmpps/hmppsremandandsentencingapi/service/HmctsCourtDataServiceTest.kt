@@ -33,6 +33,9 @@ class HmctsCourtDataServiceTest {
   @Mock
   lateinit var appearanceOutcomeService: AppearanceOutcomeService
 
+  @Mock
+  lateinit var sentenceTypeService: SentenceTypeService
+
   @InjectMocks
   lateinit var service: HmctsCourtDataService
 
