@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ExistingCaseReferenceAndId
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeature
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeatureType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsHearingAutopopulateEligibility
@@ -26,25 +27,36 @@ class HmctsHearingAutopopulateEligibilityService(
   @Transactional(readOnly = true)
   fun isHmctsHearingEligibleForAutopopulate(hearing: HmctsCourtHearing, prisonerNumber: String): HmctsHearingAutopopulateEligibility {
     val hasWarrantAndPcr = hearing.documents.any { it.isWarrant() } && hearing.documents.any { it.isPcr() }
+
+    val cases = hearing.caseReferences.map { courtCaseRepository.findCourtCasesByPrisonerAndCourtCaseReference(prisonerNumber, it).maxByOrNull { it.appearances.maxOf { it.appearanceDate } } }
+    val caseIdentifiers = cases.filter { it?.latestCourtAppearance?.courtCaseReference != null }.map { ExistingCaseReferenceAndId(it!!.latestCourtAppearance!!.courtCaseReference!!, it.caseUniqueIdentifier) }
+    val case = cases.firstOrNull()
+    val rasHearing = case?.appearances?.find { it.appearanceDate == hearing.hearingDate }
+
     if (!hasWarrantAndPcr) {
       return HmctsHearingAutopopulateEligibility(
+        prisonerNumber = prisonerNumber,
+        hearingId = hearing.hearingId,
+        cases = caseIdentifiers,
         features = emptyList(),
         hasBeenCompleted = false,
         hasWarrantAndPcr = false,
       )
     }
-
     if (hearing.caseReferences.size > 1) {
-      return HmctsHearingAutopopulateEligibility(listOf(HmctsAutopopulateFeature(HmctsAutopopulateFeatureType.MULTIPLE_CASE_REFERENCES, false)))
+      return HmctsHearingAutopopulateEligibility(
+        prisonerNumber = prisonerNumber,
+        hearingId = hearing.hearingId,
+        cases = caseIdentifiers,
+        listOf(HmctsAutopopulateFeature(HmctsAutopopulateFeatureType.MULTIPLE_CASE_REFERENCES, false)),
+      )
     }
-
-    val cases =
-      courtCaseRepository.findCourtCasesByPrisonerAndCourtCaseReference(prisonerNumber, hearing.caseReferences[0])
-    val case = cases.maxByOrNull { it.appearances.maxOf { it.appearanceDate } }
-    val rasHearing = case?.appearances?.find { it.appearanceDate == hearing.hearingDate }
 
     if (rasHearing != null) {
       return HmctsHearingAutopopulateEligibility(
+        prisonerNumber = prisonerNumber,
+        hearingId = hearing.hearingId,
+        cases = caseIdentifiers,
         features = listOf(),
         hasBeenCompleted = true,
       )
@@ -83,8 +95,10 @@ class HmctsHearingAutopopulateEligibilityService(
       }
     }
     return HmctsHearingAutopopulateEligibility(
+      prisonerNumber = prisonerNumber,
+      hearingId = hearing.hearingId,
+      cases = caseIdentifiers,
       features,
-      existingCaseIdentifier = case?.caseUniqueIdentifier,
     )
   }
 }

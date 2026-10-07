@@ -37,7 +37,7 @@ class ThingsToDoService(
                 hearingDate = hearing.hearingDate,
                 hearingType = hearing.hearingType,
                 warrantType = if (hearing.isRemandHearing()) HearingThingsToDoWarrantType.REMAND else HearingThingsToDoWarrantType.SENTENCING,
-                courtCaseUuid = hearingEligibility.existingCaseIdentifier,
+                courtCaseUuid = hearingEligibility.cases.firstOrNull()?.caseUniqueIdentifier,
               ),
             )
           } else {
