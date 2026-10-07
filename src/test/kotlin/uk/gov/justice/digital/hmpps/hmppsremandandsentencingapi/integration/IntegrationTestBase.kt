@@ -63,6 +63,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceSubtypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ImmigrationDetentionRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.RecallRepository
@@ -188,6 +189,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var immigrationDetentionHistoryRepository: ImmigrationDetentionHistoryRepository
+
+  @Autowired
+  protected lateinit var immigrationDetentionRepository: ImmigrationDetentionRepository
 
   @Autowired
   protected lateinit var recallSentenceHistoryRepository: RecallSentenceHistoryRepository
