@@ -69,7 +69,7 @@ class LodgeWarrants986ServiceTest {
 
   @Test
   fun `should throw when no imprisonment in default of fine sentences are found`() {
-    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(courtAppearanceId) } returns emptyList()
+    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns emptyList()
 
     assertThatThrownBy { lodgeWarrants986Service.renderDocument(createLodgeWarrants986()) }
       .isInstanceOf(IllegalArgumentException::class.java)
@@ -93,7 +93,7 @@ class LodgeWarrants986ServiceTest {
       periodOrder = "years,months,weeks,days",
     )
 
-    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
+    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns CourtRegister("COURT1", "Liverpool Crown Court", "Liverpool Crown Court Description")
     every { personRecordService.getPersonPrison(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
     every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)")
@@ -159,7 +159,7 @@ class LodgeWarrants986ServiceTest {
       periodOrder = null,
     )
 
-    every { sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
+    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns null
     every { personRecordService.getPersonPrison(prisonerId) } returns null
     every { prisonSearchService.getPrisoner(prisonerId) } returns null

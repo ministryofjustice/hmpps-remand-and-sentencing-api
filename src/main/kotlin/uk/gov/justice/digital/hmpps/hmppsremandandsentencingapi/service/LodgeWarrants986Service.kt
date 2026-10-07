@@ -27,7 +27,7 @@ class LodgeWarrants986Service(
 ) {
 
   fun renderDocument(createLodgeWarrants986: CreateLodgeWarrants986): InputStream {
-    val imprisonmentInDefaultOfFineList = sentenceRepository.findCourtCodesForImprisonmentInDefaultOfFine(createLodgeWarrants986.courtAppearanceUuid)
+    val imprisonmentInDefaultOfFineList = sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(createLodgeWarrants986.courtAppearanceUuid)
     require(imprisonmentInDefaultOfFineList.isNotEmpty()) {
       "No imprisonment in default of fine sentences found for court appearance ${createLodgeWarrants986.courtAppearanceUuid}"
     }

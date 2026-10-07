@@ -215,7 +215,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     ORDER BY pl.updatedAt DESC
   """,
   )
-  fun findCourtCodesForImprisonmentInDefaultOfFine(
+  fun findImprisonmentInDefaultOfFineByAppearanceUuid(
     @Param("appearanceUuid") appearanceUuid: UUID,
     @Param("classification") classification: SentenceTypeClassification = SentenceTypeClassification.FINE,
     @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
