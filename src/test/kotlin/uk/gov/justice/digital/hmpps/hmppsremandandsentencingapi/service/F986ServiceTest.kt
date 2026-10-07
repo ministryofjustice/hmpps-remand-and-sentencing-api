@@ -185,5 +185,4 @@ class F986ServiceTest {
     assertThat(data.sentences.first().fineAmount).isEqualTo(0.0)
     assertThat(data.sentences.first().termLengths).containsExactly(PeriodLength())
   }
-
 }

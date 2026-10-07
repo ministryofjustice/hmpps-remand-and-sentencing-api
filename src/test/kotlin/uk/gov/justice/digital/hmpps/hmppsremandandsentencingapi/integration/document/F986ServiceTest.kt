@@ -26,12 +26,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.F986Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.random.Random
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 class F986ServiceTest : IntegrationTestBase() {
 
