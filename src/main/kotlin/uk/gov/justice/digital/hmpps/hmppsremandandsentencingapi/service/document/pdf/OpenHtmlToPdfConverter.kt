@@ -7,12 +7,12 @@ import java.io.ByteArrayOutputStream
 
 class OpenHtmlToPdfConverter : HtmlToDocumentConverter {
 
-  override fun convert(document: Document): ByteArray {
+  override fun convert(html: Document): ByteArray {
     val contentOutputStream = ByteArrayOutputStream()
 
     PdfRendererBuilder()
       .useFastMode()
-      .withW3cDocument(document, "")
+      .withW3cDocument(html, "")
       .toStream(contentOutputStream)
       .run()
 

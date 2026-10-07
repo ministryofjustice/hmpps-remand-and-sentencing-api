@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
+package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi
 
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 
+@Deprecated("This is a NOMIS Wrapper Service and should be avoided")
 @Service
 class PersonService(private val prisonApiClient: PrisonApiClient) {
 

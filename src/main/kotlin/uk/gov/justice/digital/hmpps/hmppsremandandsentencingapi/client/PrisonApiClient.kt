@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonerDetails
 
+@Deprecated("This is a NOMIS Wrapper Service and should be avoided")
 @Component
 class PrisonApiClient(@Qualifier("prisonApiWebClient") private val webClient: WebClient) {
 

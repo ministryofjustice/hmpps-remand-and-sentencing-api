@@ -13,6 +13,10 @@ generic-service:
     DOCUMENT_MANAGEMENT_API_URL: "https://document-api-dev.hmpps.service.justice.gov.uk"
     ADJUSTMENTS_API_URL: "https://adjustments-api-dev.hmpps.service.justice.gov.uk"
     COURT-REGISTER_API_URL: https://court-register-api-dev.hmpps.service.justice.gov.uk
+    PERSON-RECORD_API_URL: https://hmpps-person-record-dev.hmpps.service.justice.gov.uk
+    PRISON-REGISTER_API_URL: https://prison-register-dev.hmpps.service.justice.gov.uk
+    MANAGE_OFFENCES_API_URL: https://manage-offences-api-dev.hmpps.service.justice.gov.uk
+    PRISONER-SEARCH_API_URL: https://prisoner-search-dev.prison.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: DEV
     SPRINGDOC_API-DOCS_ENABLED: "true"
@@ -27,6 +31,7 @@ generic-service:
     FEATURES_HMCTS_WARRANT_THING_TO_DO_SENTENCING_ENABLED: "true"
     FEATURES_HMCTS_WARRANT_THING_TO_DO_MULTIPLE_NOTIFICATIONS_ENABLED: "true"
     FEATURES_APPEARANCE_SCHEDULES_EVENTS_ENABLED: "true"
+    FEATURES_CLIENT-API_PRISON-REGISTER_ENABLED: "true"
 
   resources:
     requests:

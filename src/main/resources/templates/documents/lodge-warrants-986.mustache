@@ -155,7 +155,7 @@
     <div class="addressee">
       The Clerk of Justices<br/>
         {{#court}}
-            {{#name}}{{name}}<br/>{{/name}}
+            {{#name}}{{name}}{{/name}}{{^name}}Court: {{optionalValue name}}{{/name}}<br/>
             {{#premise}}{{premise}}<br/>{{/premise}}
             {{#street}}{{street}}<br/>{{/street}}
             {{#town}}{{town}}<br/>{{/town}}
@@ -226,7 +226,7 @@
     <span class="signature-label">Signed</span>: <span class="fill-line fill-line--signature"></span><span class="authorised-person-label">Authorised person</span><br/>
     <span class="signature-label">Contact name</span>: <span class="fill-line fill-line--signature"></span><br/>
     <span class="signature-label">Telephone number</span>: {{telephoneNumber}}<br/>
-    <span class="signature-label">{{prisonName}}</span>
+    {{#prisonName}}<span class="signature-label">{{prisonName}}</span>{{/prisonName}}{{^prisonName}}<span class="signature-label">Prison</span>: {{optionalValue prisonName}}{{/prisonName}}
   </div>
 
   <div class="footer">

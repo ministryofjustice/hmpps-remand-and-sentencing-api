@@ -5,18 +5,17 @@ import com.github.jknack.handlebars.Handlebars
 import org.jsoup.Jsoup
 import org.jsoup.helper.W3CDom
 import org.springframework.core.io.ClassPathResource
-import org.springframework.stereotype.Service
 import org.w3c.dom.Document
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentDetail
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.HtmlRenderer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatCurrencyHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatDateHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatPeriodHelper
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.OptionalValueHelper
 
-@Service
-class MustacheHtmlRenderer<T : DocumentDetail<*>> : HtmlRenderer<T> {
+class MustacheHtmlRenderer : HtmlRenderer {
 
-  override fun render(documentDetail: T): Document {
+  override fun <T : DocumentDetail<*>> render(documentDetail: T): Document {
     val handlebars = Handlebars()
     registerHelpers(handlebars)
     val context = Context
@@ -34,5 +33,6 @@ class MustacheHtmlRenderer<T : DocumentDetail<*>> : HtmlRenderer<T> {
     handlebars.registerHelper("formatDate", FormatDateHelper())
     handlebars.registerHelper("formatCurrency", FormatCurrencyHelper())
     handlebars.registerHelper("formatPeriod", FormatPeriodHelper())
+    handlebars.registerHelper("optionalValue", OptionalValueHelper())
   }
 }

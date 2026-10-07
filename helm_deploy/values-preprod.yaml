@@ -13,6 +13,10 @@ generic-service:
     DOCUMENT_MANAGEMENT_API_URL: https://document-api-preprod.hmpps.service.justice.gov.uk
     ADJUSTMENTS_API_URL: "https://adjustments-api-preprod.hmpps.service.justice.gov.uk"
     COURT-REGISTER_API_URL: https://court-register-api-preprod.hmpps.service.justice.gov.uk
+    PERSON-RECORD_API_URL: https://hmpps-person-record-preprod.hmpps.service.justice.gov.uk
+    PRISON-REGISTER_API_URL: https://prison-register-preprod.hmpps.service.justice.gov.uk
+    MANAGE_OFFENCES_API_URL: https://manage-offences-api-preprod.hmpps.service.justice.gov.uk
+    PRISONER-SEARCH_API_URL: https://prisoner-search-preprod.prison.service.justice.gov.uk
     INGRESS_URL: *ingressHost
     ENVIRONMENT_NAME: PREPROD
     HMPPS_SAR_ENABLED: "true"

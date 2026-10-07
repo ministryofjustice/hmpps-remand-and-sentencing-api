@@ -11,8 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.CourtCaseSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.RecallSarRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtRegisterService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.PersonService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.CourtRegisterService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonService
 import java.time.LocalDate
 
 @ExtendWith(MockKExtension::class)

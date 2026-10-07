@@ -13,7 +13,7 @@ class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants98
     val docGeneratedDate: LocalDate,
     val sentences: List<Sentence>,
     val telephoneNumber: String,
-    val prisonName: String,
+    val prisonName: String?,
     val sentenceDate: LocalDate,
     val version: String,
   ) {
@@ -21,5 +21,5 @@ class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants98
   }
 
   data class Sentence(val termLengths: List<PeriodLength>, val offence: String, val fineAmount: Double)
-  data class Court(val name: String, val premise: String, val street: String, val town: String, val county: String, val postalCode: String)
+  data class Court(val name: String?, val premise: String, val street: String, val town: String, val county: String, val postalCode: String)
 }
