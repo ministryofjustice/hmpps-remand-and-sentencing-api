@@ -24,4 +24,5 @@ interface ImmigrationDetentionRepository : CrudRepository<ImmigrationDetentionEn
   ): Boolean
 
   fun findByCourtAppearanceUuidAndStatusId(courtAppearanceUuid: UUID, statusId: ImmigrationDetentionEntityStatus = ACTIVE): List<ImmigrationDetentionEntity>
+  fun findByCourtAppearanceUuidInAndStatusId(courtAppearanceUuids: List<UUID>, statusId: ImmigrationDetentionEntityStatus = ACTIVE): List<ImmigrationDetentionEntity>
 }

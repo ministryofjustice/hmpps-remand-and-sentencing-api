@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.untilAsserted
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import software.amazon.awssdk.services.sns.model.PublishRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
@@ -11,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator.Factory.sentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import java.time.LocalDate
 
@@ -83,6 +85,47 @@ class MoveBookingTests : IntegrationTestBase() {
     await untilAsserted {
       val recall = recallRepository.findOneByRecallUuid(recallUuid)
       Assertions.assertThat(recall?.prisonerId).isEqualTo(newPrisonerId)
+    }
+  }
+
+  @Test
+  fun `move booking updates immigration detention`() {
+    val oldPrisonerId = "OLDPRISONER"
+    val bookingId = 1L
+
+    val createdImmigrationDetention = createImmigrationDetention(DpsDataCreator.dpsCreateImmigrationDetention(prisonerId = oldPrisonerId))
+    val courtAppearanceUuid = createdImmigrationDetention.courtAppearanceUuid!!
+    val courtAppearanceEntity = courtAppearanceRepository.findByAppearanceUuid(courtAppearanceUuid)!!
+    val toUpdate = DataCreator.legacyCreateCourtCase(active = true, prisonerId = oldPrisonerId, bookingId = bookingId)
+    webTestClient
+      .put()
+      .uri("/legacy/court-case/${courtAppearanceEntity.courtCase.caseUniqueIdentifier}")
+      .bodyValue(toUpdate)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+    val newPrisonerId = "NEWPRISONER"
+    val eventType = "prison-offender-events.prisoner.booking.moved"
+    val payload = prisonerBookingMovedPayload(eventType, bookingId.toString(), oldPrisonerId, newPrisonerId)
+    hmppsTopicSnsClient.publish(
+      PublishRequest.builder().topicArn(hmppsTopicArn)
+        .message(payload)
+        .messageAttributes(
+          mapOf(
+            "eventType" to MessageAttributeValue.builder().dataType("String")
+              .stringValue(eventType).build(),
+          ),
+        ).build(),
+    ).get()
+
+    awaitUntilPrisonerQueueIsEmptyAndNoDlq()
+    await untilAsserted {
+      val storedImmigrationDetention = immigrationDetentionRepository.findOneByImmigrationDetentionUuid(createdImmigrationDetention.immigrationDetentionUuid)!!
+      Assertions.assertThat(storedImmigrationDetention.prisonerId).isEqualTo(newPrisonerId)
     }
   }
 
