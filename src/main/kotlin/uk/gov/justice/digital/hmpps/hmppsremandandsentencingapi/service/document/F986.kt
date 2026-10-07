@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.documen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.dto.PeriodLength
 import java.time.LocalDate
 
-class LodgeWarrants986(override val data: Data) : DocumentDetail<LodgeWarrants986.Data> {
-  override val templateName: String = "lodge-warrants-986"
+class F986(override val data: Data) : DocumentDetail<F986.Data> {
+  override val templateName: String = "f986"
 
   data class Data(
     val name: String,

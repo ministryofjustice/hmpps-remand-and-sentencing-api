@@ -13,11 +13,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.OffenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateLodgeWarrants986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentGeneratorService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.LodgeWarrants986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.F986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.CourtRegisterService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.ManageOffencesService
@@ -29,7 +29,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
-class LodgeWarrants986ServiceTest {
+class F986ServiceTest {
 
   private val sentenceRepository = mockk<SentenceRepository>()
   private val documentGeneratorService = mockk<DocumentGeneratorService>()
@@ -39,7 +39,7 @@ class LodgeWarrants986ServiceTest {
   private val personRecordService = mockk<PersonRecordService>()
   private val prisonSearchService = mockk<PrisonSearchService>()
 
-  private val lodgeWarrants986Service = LodgeWarrants986Service(
+  private val f986Service = F986Service(
     sentenceRepository,
     documentGeneratorService,
     courtRegisterService,
@@ -52,7 +52,7 @@ class LodgeWarrants986ServiceTest {
   private val prisonerId = "A1234BC"
   private val courtAppearanceId = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1")
 
-  private fun createLodgeWarrants986() = CreateLodgeWarrants986(
+  private fun createF986() = CreateF986(
     courtAppearanceId,
     "Court Premise",
     "Court Street",
@@ -71,7 +71,7 @@ class LodgeWarrants986ServiceTest {
   fun `should throw when no imprisonment in default of fine sentences are found`() {
     every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns emptyList()
 
-    assertThatThrownBy { lodgeWarrants986Service.renderDocument(createLodgeWarrants986()) }
+    assertThatThrownBy { f986Service.renderDocument(createF986()) }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("No imprisonment in default of fine sentences found for court appearance 15f21679-268f-44c5-9a58-00aaa00c24f1")
   }
@@ -115,10 +115,10 @@ class LodgeWarrants986ServiceTest {
     )
     every { manageOffencesService.getOffenceDetails("AA06027") } returns OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification")
 
-    val documentSlot = slot<LodgeWarrants986>()
+    val documentSlot = slot<F986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
 
-    lodgeWarrants986Service.renderDocument(createLodgeWarrants986())
+    f986Service.renderDocument(createF986())
 
     val data = documentSlot.captured.data
     assertThat(data.name).isEqualTo("Joe Bloggs")
@@ -165,11 +165,11 @@ class LodgeWarrants986ServiceTest {
     every { prisonSearchService.getPrisoner(prisonerId) } returns null
     every { manageOffencesService.getOffenceDetails("AA06027") } returns null
 
-    val documentSlot = slot<LodgeWarrants986>()
+    val documentSlot = slot<F986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
 
-    val createLodgeWarrants986 = createLodgeWarrants986()
-    lodgeWarrants986Service.renderDocument(createLodgeWarrants986)
+    val createF986 = createF986()
+    f986Service.renderDocument(createF986)
 
     val data = documentSlot.captured.data
     assertThat(data.name).isEqualTo("A1234BC")
@@ -185,4 +185,5 @@ class LodgeWarrants986ServiceTest {
     assertThat(data.sentences.first().fineAmount).isEqualTo(0.0)
     assertThat(data.sentences.first().termLengths).containsExactly(PeriodLength())
   }
+
 }

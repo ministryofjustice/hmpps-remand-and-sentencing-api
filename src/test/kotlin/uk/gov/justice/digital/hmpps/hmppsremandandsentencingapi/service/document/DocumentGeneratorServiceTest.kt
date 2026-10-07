@@ -12,15 +12,15 @@ import java.time.LocalDate
 
 class DocumentGeneratorServiceTest {
 
-  private fun sampleData() = LodgeWarrants986.Data(
+  private fun sampleData() = F986.Data(
     name = "Joe Bloggs",
     nomsNumber = "AA4453",
-    court = LodgeWarrants986.Court("Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA"),
+    court = F986.Court("Liverpool Crown Court", "The Queen Elizabeth II Law Courts", "Derby Square", "Liverpool", "Merseyside", "L2 1XA"),
     docGeneratedDate = LocalDate.parse("2026-09-29"),
     sentenceDate = LocalDate.parse("2026-09-17"),
     sentences = listOf(
-      LodgeWarrants986.Sentence(listOf(PeriodLength(0, 1, 0)), "Abandon a fighting dog", 0.0),
-      LodgeWarrants986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 0.0),
+      F986.Sentence(listOf(PeriodLength(0, 1, 0)), "Abandon a fighting dog", 0.0),
+      F986.Sentence(listOf(PeriodLength(0, 1, 0)), "ASSAULT COURT/PRISON OFFICER", 0.0),
     ),
     telephoneNumber = "128 555 1719",
     prisonName = "KIRKHAM (HMP)",
@@ -28,13 +28,13 @@ class DocumentGeneratorServiceTest {
   )
 
   @Test
-  fun `should render pdf from from LodgeWarrants986`() {
+  fun `should render pdf from from F986`() {
     val htmlRenderer: HtmlRenderer = MustacheHtmlRenderer()
     val pdfConverter: HtmlToDocumentConverter = OpenHtmlToPdfConverter()
-    val lodgeWarrants986 = LodgeWarrants986(sampleData())
+    val f986 = F986(sampleData())
     val pdfGeneratorService = DocumentGeneratorService(htmlRenderer, pdfConverter)
 
-    val resp = pdfGeneratorService.renderDocument(lodgeWarrants986)
+    val resp = pdfGeneratorService.renderDocument(f986)
 
     PDDocument.load(resp).use { pdf ->
       assertThat(pdf.numberOfPages).isGreaterThan(0)
@@ -57,6 +57,6 @@ class DocumentGeneratorServiceTest {
     }
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
-    File(outputDir, "lodge-warrants-sample.pdf").writeBytes(resp.readAllBytes())
+    File(outputDir, "f986-sample.pdf").writeBytes(resp.readAllBytes())
   }
 }

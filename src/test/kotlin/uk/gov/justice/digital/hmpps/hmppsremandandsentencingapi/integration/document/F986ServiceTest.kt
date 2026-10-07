@@ -1,14 +1,19 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.document
 
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.text.PDFTextStripper
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.OffenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateLodgeWarrants986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
@@ -18,7 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonRegisterExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonSearchExtension
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.LodgeWarrants986Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.F986Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import java.io.File
@@ -26,31 +31,157 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.random.Random
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
-class LodgeWarrants986ServiceTest : IntegrationTestBase() {
+class F986ServiceTest : IntegrationTestBase() {
 
   @Autowired
-  private lateinit var lodgeWarrants986Service: LodgeWarrants986Service
+  private lateinit var f986Service: F986Service
 
   private val courtAppearanceUuid = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1")
   private val fineSentenceTypeUuid = UUID.fromString("c71ceefe-932b-4a69-b87c-7c1294e37cf7")
 
   @Test
-  fun `should generate pdf from CreateLodgeWarrants986 dto with single offence`() {
+  fun `should generate pdf from F986 dto with single offence`() {
     arrangeSingleOffence()
-    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
+    val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
+    val response = webTestClient
+      .post()
+      .uri("/document-generator/f986")
+      .bodyValue(body)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_PDF)
+      .expectBody(ByteArray::class.java)
+      .returnResult()
+      .responseBody
+
+    PDDocument.load(response).use { pdf ->
+      assertThat(pdf.numberOfPages).isGreaterThan(0)
+      val text = PDFTextStripper().getText(pdf)
+      assertThat(text).contains("RESTRICTED")
+      assertThat(text).contains("RULE 63(1) MAGISTRATES' COURTS RULES 1981")
+      assertThat(text).contains("Name")
+      assertThat(text).contains("Joe Bloggs")
+      assertThat(text).contains("NOMS No")
+      assertThat(text).contains("PRI123")
+      assertThat(text).contains("Liverpool Crown Court")
+      assertThat(text).contains("7/10/2026")
+      assertThat(text).contains("PART A")
+      assertThat(text).contains("Veterinary surgeon fail to notify incorrect certification")
+      assertThat(text).contains("TOTAL")
+      assertThat(text).contains("£100.00")
+      assertThat(text).contains("PART B")
+      assertThat(text).contains("128 555 1719")
+      assertThat(text).contains("Kirkham (HMP)")
+    }
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
-    File(outputDir, "lodge-warrants-single-sample.pdf").writeBytes(resp.readAllBytes())
+    File(outputDir, "f986-sample.pdf").writeBytes(response!!)
   }
 
   @Test
-  fun `should generate pdf from CreateLodgeWarrants986 dto with multiple offences and random set of periods`() {
+  fun `should generate pdf from F986 dto with multiple offences and random set of periods`() {
     arrangeMultipleOffencesAndPeriods()
-    val resp = lodgeWarrants986Service.renderDocument(CreateLodgeWarrants986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719"))
+    val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
+    val response = webTestClient
+      .post()
+      .uri("/document-generator/f986")
+      .bodyValue(body)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_PDF)
+      .expectBody(ByteArray::class.java)
+      .returnResult()
+      .responseBody
+
+    PDDocument.load(response).use { pdf ->
+      assertThat(pdf.numberOfPages).isGreaterThan(0)
+      val text = PDFTextStripper().getText(pdf)
+      assertThat(text).contains("RESTRICTED")
+      assertThat(text).contains("RULE 63(1) MAGISTRATES' COURTS RULES 1981")
+      assertThat(text).contains("Name")
+      assertThat(text).contains("Joe Bloggs")
+      assertThat(text).contains("NOMS No")
+      assertThat(text).contains("PRI123")
+      assertThat(text).contains("Liverpool Crown Court")
+      assertThat(text).contains("7/10/2026")
+      assertThat(text).contains("PART A")
+      assertThat(text).contains("Common assault")
+      assertThat(text).contains("Veterinary surgeon fail to notify incorrect certification")
+      assertThat(text).contains("TOTAL")
+      assertThat(text).contains("£620.00")
+      assertThat(text).contains("PART B")
+      assertThat(text).contains("128 555 1719")
+      assertThat(text).contains("Kirkham (HMP)")
+    }
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
-    File(outputDir, "lodge-warrants-multiple-sample.pdf").writeBytes(resp.readAllBytes())
+    File(outputDir, "f986-multiple-sample.pdf").writeBytes(response!!)
+  }
+
+  @Test
+  fun `should return bad request when no imprisonment in default of fine sentences found`() {
+    val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
+
+    webTestClient
+      .post()
+      .uri("/document-generator/f986")
+      .bodyValue(body)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isBadRequest
+      .expectBody<ErrorResponse>()
+      .value { errorMessage ->
+        assertThat(errorMessage?.userMessage).contains("No imprisonment in default of fine sentences found for court appearance $courtAppearanceUuid")
+      }
+  }
+
+  @Test
+  fun `should return unauthorized when no auth token`() {
+    val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
+
+    webTestClient
+      .post()
+      .uri("/document-generator/f986")
+      .bodyValue(body)
+      .headers {
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `should return forbidden when invalid role`() {
+    val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
+
+    webTestClient
+      .post()
+      .uri("/document-generator/f986")
+      .bodyValue(body)
+      .headers {
+        it.authToken(roles = listOf("ROLE_INVALID_ROLE"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isForbidden
   }
 
   private fun arrangeSingleOffence() {

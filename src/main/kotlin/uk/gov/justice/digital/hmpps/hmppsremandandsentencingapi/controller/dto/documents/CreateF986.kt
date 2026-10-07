@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 import java.util.UUID
 
-data class CreateLodgeWarrants986(
+data class CreateF986(
   val courtAppearanceUuid: UUID,
   val courtPremise: String?,
   val courtStreet: String?,

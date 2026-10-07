@@ -2,10 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateLodgeWarrants986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentGeneratorService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.LodgeWarrants986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.F986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.CourtRegisterService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.ManageOffencesService
@@ -16,7 +16,7 @@ import java.io.InputStream
 import java.time.LocalDate
 
 @Service
-class LodgeWarrants986Service(
+class F986Service(
   private val sentenceRepository: SentenceRepository,
   private val documentGeneratorService: DocumentGeneratorService,
   private val courtRegisterService: CourtRegisterService,
@@ -26,10 +26,10 @@ class LodgeWarrants986Service(
   private val prisonSearchService: PrisonSearchService,
 ) {
 
-  fun renderDocument(createLodgeWarrants986: CreateLodgeWarrants986): InputStream {
-    val imprisonmentInDefaultOfFineList = sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(createLodgeWarrants986.courtAppearanceUuid)
+  fun renderDocument(createF986: CreateF986): InputStream {
+    val imprisonmentInDefaultOfFineList = sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(createF986.courtAppearanceUuid)
     require(imprisonmentInDefaultOfFineList.isNotEmpty()) {
-      "No imprisonment in default of fine sentences found for court appearance ${createLodgeWarrants986.courtAppearanceUuid}"
+      "No imprisonment in default of fine sentences found for court appearance ${createF986.courtAppearanceUuid}"
     }
 
     val imprisonmentInDefaultOfFine = imprisonmentInDefaultOfFineList.first()
@@ -51,34 +51,34 @@ class LodgeWarrants986Service(
         PeriodLength.fromNullable(it.years, it.months, it.weeks, it.days, it.periodOrder)
       }
       val sentence = sentenceList.first()
-      LodgeWarrants986.Sentence(
+      F986.Sentence(
         periodLengths,
         manageOffencesService.getOffenceDetails(sentence.offenceCode)?.description ?: "Offence Code (${sentence.offenceCode})",
         sentence.fineAmount?.toDouble() ?: 0.0,
       )
     }
 
-    val lodgeWarrants986 = LodgeWarrants986(
-      LodgeWarrants986.Data(
+    val f986 = F986(
+      F986.Data(
         name,
         imprisonmentInDefaultOfFine.prisonerId,
-        LodgeWarrants986.Court(
+        F986.Court(
           courtName,
-          courtAddress?.addressLine1 ?: createLodgeWarrants986.courtPremise ?: "",
-          courtAddress?.addressLine2 ?: createLodgeWarrants986.courtStreet ?: "",
-          courtAddress?.town ?: createLodgeWarrants986.courtTown ?: "",
-          courtAddress?.county ?: createLodgeWarrants986.courtCounty ?: "",
-          courtAddress?.postcode ?: createLodgeWarrants986.courtPostalCode ?: "",
+          courtAddress?.addressLine1 ?: createF986.courtPremise ?: "",
+          courtAddress?.addressLine2 ?: createF986.courtStreet ?: "",
+          courtAddress?.town ?: createF986.courtTown ?: "",
+          courtAddress?.county ?: createF986.courtCounty ?: "",
+          courtAddress?.postcode ?: createF986.courtPostalCode ?: "",
         ),
         LocalDate.now(),
         sentenceList,
-        prisonTelephone?.number ?: createLodgeWarrants986.prisonTelephoneNumber ?: "",
+        prisonTelephone?.number ?: createF986.prisonTelephoneNumber ?: "",
         prisonName,
         imprisonmentInDefaultOfFine.appearanceDate,
         "3.23",
       ),
     )
 
-    return documentGeneratorService.renderDocument(lodgeWarrants986)
+    return documentGeneratorService.renderDocument(f986)
   }
 }
