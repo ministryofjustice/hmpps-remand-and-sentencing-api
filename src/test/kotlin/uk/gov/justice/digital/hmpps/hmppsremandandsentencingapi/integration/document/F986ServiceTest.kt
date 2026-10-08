@@ -24,12 +24,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonRegisterExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonSearchExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.F986Service
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.helper.FormatDateHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.random.Random
 
@@ -71,7 +73,7 @@ class F986ServiceTest : IntegrationTestBase() {
       assertThat(text).contains("NOMS No")
       assertThat(text).contains("PRI123")
       assertThat(text).contains("Liverpool Crown Court")
-      assertThat(text).contains("7/10/2026")
+      assertThat(text).contains(LocalDate.now().format((DateTimeFormatter.ofPattern(FormatDateHelper.FORMAT_DATE))))
       assertThat(text).contains("PART A")
       assertThat(text).contains("Veterinary surgeon fail to notify incorrect certification")
       assertThat(text).contains("TOTAL")
@@ -115,7 +117,7 @@ class F986ServiceTest : IntegrationTestBase() {
       assertThat(text).contains("NOMS No")
       assertThat(text).contains("PRI123")
       assertThat(text).contains("Liverpool Crown Court")
-      assertThat(text).contains("7/10/2026")
+      assertThat(text).contains(LocalDate.now().format((DateTimeFormatter.ofPattern(FormatDateHelper.FORMAT_DATE))))
       assertThat(text).contains("PART A")
       assertThat(text).contains("Common assault")
       assertThat(text).contains("Veterinary surgeon fail to notify incorrect certification")
