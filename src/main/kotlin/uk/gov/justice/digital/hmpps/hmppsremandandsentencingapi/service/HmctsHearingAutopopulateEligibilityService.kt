@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.E
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeature
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeatureType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsHearingAutopopulateEligibility
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import java.util.UUID
 
@@ -31,7 +32,7 @@ class HmctsHearingAutopopulateEligibilityService(
     val cases = hearing.caseReferences.map { courtCaseRepository.findCourtCasesByPrisonerAndCourtCaseReference(prisonerNumber, it).maxByOrNull { it.appearances.maxOf { it.appearanceDate } } }
     val caseIdentifiers = cases.filter { it?.latestCourtAppearance?.courtCaseReference != null }.map { ExistingCaseReferenceAndId(it!!.latestCourtAppearance!!.courtCaseReference!!, it.caseUniqueIdentifier) }
     val case = cases.firstOrNull()
-    val rasHearing = case?.appearances?.find { it.appearanceDate == hearing.hearingDate }
+    val rasHearing = case?.appearances?.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }?.find { it.appearanceDate == hearing.hearingDate }
 
     if (!hasWarrantAndPcr) {
       return HmctsHearingAutopopulateEligibility(
