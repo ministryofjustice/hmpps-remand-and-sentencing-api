@@ -393,6 +393,27 @@ class ThingsToDoTest : IntegrationTestBase() {
         null,
       ),
       Arguments.of(
+        "Existing court case with future appearance on hearing date gives thing to do",
+        listOf(REMAND_HEARING),
+        DpsDataCreator.dpsCreateCourtAppearance(
+          courtCaseReference = REMAND_HEARING.caseReferences[0],
+          appearanceDate = REMAND_HEARING.hearingDate.minusDays(10),
+          nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(
+            appearanceDate = REMAND_HEARING.hearingDate,
+          ),
+        ),
+        listOf(
+          HearingThingsToDoData(
+            hearingId = HMCTS_HEARING_ID,
+            courtCaseReference = "ABC123",
+            hearingDate = LocalDate.of(2026, 1, 1),
+            hearingType = "First hearing",
+            warrantType = HearingThingsToDoWarrantType.REMAND,
+            courtCaseUuid = "EXISTING ID",
+          ),
+        ),
+      ),
+      Arguments.of(
         "Existing court case with lower case reference with sentencing warrant gives no thing to do",
         listOf(SENTENCING_HEARING),
         DpsDataCreator.dpsCreateCourtAppearance(
