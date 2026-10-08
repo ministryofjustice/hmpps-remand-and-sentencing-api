@@ -7,5 +7,9 @@ import java.time.format.DateTimeFormatter
 
 class FormatDateHelper : Helper<LocalDate> {
 
-  override fun apply(value: LocalDate?, options: Options?): String? = value?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+  override fun apply(value: LocalDate?, options: Options?): String? = value?.format(DateTimeFormatter.ofPattern(FORMAT_DATE))
+
+  companion object {
+    const val FORMAT_DATE = "dd/MM/yyyy"
+  }
 }
