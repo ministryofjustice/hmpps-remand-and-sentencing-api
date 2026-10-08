@@ -159,7 +159,8 @@ class CourtCaseController(
     @RequestParam("appearanceDateFrom", defaultValue = "0001-01-01") appearanceDateFrom: LocalDate,
     @RequestParam("appearanceDateTo", defaultValue = "9999-12-31") appearanceDateTo: LocalDate,
     @RequestParam(value = "bookingId", defaultValue = "") bookingId: String,
-  ): SearchCourtCasesPage = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo, bookingId).let { (pageCourtCase, eventsToEmit) ->
+    @RequestParam(value = "isPrisonerReadOnly", defaultValue = "false") isPrisonerReadOnly: Boolean,
+  ): SearchCourtCasesPage = courtCaseService.pagedSearchCourtCases(prisonerId, pageable, pagedCourtCaseOrderBy, appearanceDateFrom, appearanceDateTo, bookingId, isPrisonerReadOnly).let { (pageCourtCase, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     pageCourtCase
   }

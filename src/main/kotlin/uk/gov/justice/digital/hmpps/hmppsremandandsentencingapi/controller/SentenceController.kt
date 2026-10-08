@@ -62,7 +62,7 @@ class SentenceController(private val sentenceService: SentenceService, private v
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getConsecutiveToSentenceDetails(@RequestParam("sentenceUuids", required = true) sentenceUuids: List<UUID>): SentenceConsecutiveToDetailsResponse = sentenceService.findConsecutiveToSentenceDetails(sentenceUuids).let { (response, eventsToEmit) ->
+  fun getConsecutiveToSentenceDetails(@RequestParam("sentenceUuids", required = true) sentenceUuids: List<UUID>, @RequestParam(value = "isPrisonerReadOnly", defaultValue = "false") isPrisonerReadOnly: Boolean): SentenceConsecutiveToDetailsResponse = sentenceService.findConsecutiveToSentenceDetails(sentenceUuids, isPrisonerReadOnly).let { (response, eventsToEmit) ->
     dpsDomainEventService.emitEvents(eventsToEmit)
     response
   }
