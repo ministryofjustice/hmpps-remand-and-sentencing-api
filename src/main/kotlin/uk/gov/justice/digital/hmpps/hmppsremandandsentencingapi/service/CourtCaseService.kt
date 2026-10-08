@@ -148,6 +148,7 @@ class CourtCaseService(
     appearanceDateFrom: LocalDate,
     appearanceDateTo: LocalDate,
     bookingId: String,
+    isPrisonerReadOnly: Boolean,
   ): RecordResponse<SearchCourtCasesPage> {
     val courtCaseRows = courtCaseRepository.searchCourtCases(
       prisonerId,
@@ -162,7 +163,7 @@ class CourtCaseService(
     )
     val manyChargesToSentenceCourtCaseIds =
       courtCaseRows.filter { it.sentenceStatus == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }.map { it.courtCaseId }.toSet()
-    val eventsToEmit = fixManyChargesToSentenceService.fixCourtCasesById(manyChargesToSentenceCourtCaseIds)
+    val eventsToEmit = if (isPrisonerReadOnly) mutableSetOf() else fixManyChargesToSentenceService.fixCourtCasesById(manyChargesToSentenceCourtCaseIds)
     val toReturnCourtCases = if (eventsToEmit.isEmpty()) {
       courtCaseRows
     } else {

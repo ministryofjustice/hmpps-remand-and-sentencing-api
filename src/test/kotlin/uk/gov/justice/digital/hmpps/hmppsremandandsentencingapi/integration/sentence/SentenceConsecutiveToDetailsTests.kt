@@ -6,6 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceConsecutiveToDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 
 class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
@@ -81,5 +83,36 @@ class SentenceConsecutiveToDetailsTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `do not fix many charges to single sentence when is prisoner read only`() {
+    val sentence = DataCreator.migrationCreateSentence()
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+
+    val response = migrateCases(courtCases)
+
+    val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
+    val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
+    webTestClient.get()
+      .uri {
+        it.path("/sentence/consecutive-to-details")
+          .queryParam("sentenceUuids", sentenceUuid)
+          .queryParam("isPrisonerReadOnly", true)
+          .build()
+      }
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CCRD__RO")) }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val sentenceEntities = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    Assertions.assertThat(sentenceEntities).extracting<SentenceEntityStatus> { it.statusId }.allMatch { it == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
+    val periodLengthEntities = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+    Assertions.assertThat(periodLengthEntities).extracting<PeriodLengthEntityStatus> { it.statusId }.allMatch { it == PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX }
   }
 }

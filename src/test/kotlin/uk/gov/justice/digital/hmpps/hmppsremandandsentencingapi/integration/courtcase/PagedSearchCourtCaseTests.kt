@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
 import java.time.LocalDate
@@ -509,5 +510,38 @@ class PagedSearchCourtCaseTests : IntegrationTestBase() {
       .doesNotExist()
       .jsonPath("$.content.[0].latestCourtAppearance.periodLengths[?(@.periodLengthUuid == '${breachPeriodLength.periodLengthUuid}')]")
       .exists()
+  }
+
+  @Test
+  fun ` do not execute many charges to a single sentence when is prisoner read only`() {
+    val sentence = DataCreator.migrationCreateSentence()
+    val firstCharge = DataCreator.migrationCreateCharge(sentence = sentence)
+    val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1111, sentence = sentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
+    val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
+
+    val response = migrateCases(courtCases)
+
+    val sentenceUuid = response.sentences.first { sentence.sentenceId == it.sentenceNOMISId }.sentenceUuid
+    val periodLengthUuid = response.sentenceTerms.first { sentence.periodLengths.first().periodLengthId == it.sentenceTermNOMISId }.periodLengthUuid
+    webTestClient
+      .get()
+      .uri {
+        it.path("/court-case/paged/search")
+          .queryParam("prisonerId", courtCases.prisonerId)
+          .queryParam("isPrisonerReadOnly", true)
+          .build()
+      }
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val sentenceEntities = sentenceRepository.findBySentenceUuid(sentenceUuid)
+    Assertions.assertThat(sentenceEntities).extracting<SentenceEntityStatus> { it.statusId }.allMatch { it == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
+    val periodLengthEntities = periodLengthRepository.findByPeriodLengthUuid(periodLengthUuid)
+    Assertions.assertThat(periodLengthEntities).extracting<PeriodLengthEntityStatus> { it.statusId }.allMatch { it == PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX }
   }
 }
