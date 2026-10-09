@@ -204,6 +204,12 @@ class CourtCaseEntity(
     updatedBy = username
   }
 
+  fun caseReferences(): List<String> {
+    val legacyCaseReferences =  legacyData?.caseReferences?.map { it.offenderCaseReference } ?: emptyList()
+    val appearanceReferences = appearances.filter { it.statusId == CourtAppearanceEntityStatus.ACTIVE }.mapNotNull { it.courtCaseReference }
+    return (legacyCaseReferences + appearanceReferences).distinct()
+  }
+
   companion object {
 
     fun from(courtCase: CreateCourtCase, createdBy: String, caseUniqueIdentifier: String = UUID.randomUUID().toString()): CourtCaseEntity = CourtCaseEntity(prisonerId = courtCase.prisonerId, caseUniqueIdentifier = caseUniqueIdentifier, createdBy = createdBy, createdPrison = courtCase.prisonId, statusId = CourtCaseEntityStatus.ACTIVE, legacyData = courtCase.legacyData)
