@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.H
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsAutopopulateFeatureType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HmctsHearingAutopopulateEligibility
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
+import java.time.LocalDate
 import java.util.UUID
 
 @Component
@@ -28,8 +29,11 @@ class HmctsHearingAutopopulateEligibilityService(
   fun isHmctsHearingEligibleForAutopopulate(hearing: HmctsCourtHearing, prisonerNumber: String): HmctsHearingAutopopulateEligibility {
     val hasWarrantAndPcr = hearing.documents.any { it.isWarrant() } && hearing.documents.any { it.isPcr() }
 
-    val cases = hearing.caseReferences.map { courtCaseRepository.findCourtCasesByPrisonerAndCourtCaseReference(prisonerNumber, it).maxByOrNull { it.appearances.maxOf { it.appearanceDate } } }
-    val caseIdentifiers = cases.filter { it?.latestCourtAppearance?.courtCaseReference != null }.map { ExistingCaseReferenceAndId(it!!.latestCourtAppearance!!.courtCaseReference!!, it.caseUniqueIdentifier) }
+    val caseInsensitiveReferences = hearing.caseReferences.map { it.uppercase() }
+    val cases = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerNumber )
+      .filter { caseEntity -> caseEntity.caseReferences().any { caseInsensitiveReferences.contains(it.uppercase()) }  }
+    val caseMap = cases.flatMap { case -> case.caseReferences().map { it to case  } }.groupBy(keySelector = { (caseRef, _) -> caseRef }, valueTransform =  {(_, case) -> case})
+    val caseIdentifiers = caseMap.map { (key, value) -> ExistingCaseReferenceAndId(key, value.maxBy {it.latestCourtAppearance?.appearanceDate ?: LocalDate.MIN}.caseUniqueIdentifier) }
     val case = cases.firstOrNull()
     val rasHearing = case?.appearances?.find { it.appearanceDate == hearing.hearingDate }
 
