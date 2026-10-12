@@ -10,16 +10,18 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourHearingDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HearingThingsToDoWarrantType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingToDoType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ThingsToDo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtDataIngestionApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CaseReferenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import java.util.stream.Stream
 import kotlin.collections.map
@@ -29,16 +31,12 @@ class ThingsToDoTest : IntegrationTestBase() {
 
   @ParameterizedTest(name = "Things to do {0}")
   @MethodSource("thingsToDoArguments")
-  fun `Test get things to do`(testMessage: String, hearings: List<HmctsCourtHearing>, createCourtAppearance: CreateCourtAppearance?, expectedHearingData: List<HearingThingsToDoData>?) {
+  fun `Test get things to do`(testMessage: String, hearings: List<HmctsCourtHearing>, createCourtAppearance: (ThingsToDoTest.() -> String)?, expectedHearingData: List<HearingThingsToDoData>?) {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearingsByPrisoner(
       PRISONER_ID,
       hearings,
     )
-    val createdCourtCase = if (createCourtAppearance != null) {
-      createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = PRISONER_ID, appearances = listOf(createCourtAppearance)))
-    } else {
-      null
-    }
+    val createdCourtCase = createCourtAppearance?.invoke(this)
 
     val response = webTestClient
       .get()
@@ -58,7 +56,7 @@ class ThingsToDoTest : IntegrationTestBase() {
         ThingToDo(
           type = ThingToDoType.NEW_WARRANT,
           hearingThingsToDoData = it.copy(
-            courtCaseUuid = if (it.courtCaseUuid != null) createdCourtCase!!.first else null,
+            courtCaseUuid = if (it.courtCaseUuid != null) createdCourtCase else null,
           ),
         )
       },
@@ -315,9 +313,18 @@ class ThingsToDoTest : IntegrationTestBase() {
       Arguments.of(
         "Existing court case with same reference with remand warrant gives thing to do with case reference",
         listOf(REMAND_HEARING),
-        DpsDataCreator.dpsCreateCourtAppearance(
-          courtCaseReference = REMAND_HEARING.caseReferences[0],
-        ),
+        { test: ThingsToDoTest ->
+          test.createCourtCase(
+            DpsDataCreator.dpsCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              appearances = listOf(
+                DpsDataCreator.dpsCreateCourtAppearance(
+                  courtCaseReference = REMAND_HEARING.caseReferences[0],
+                ),
+              ),
+            ),
+          ).first
+        },
         listOf(
           HearingThingsToDoData(
             hearingId = HMCTS_HEARING_ID,
@@ -332,17 +339,36 @@ class ThingsToDoTest : IntegrationTestBase() {
       Arguments.of(
         "Existing court case with same reference with sentencing warrant gives no thing to do",
         listOf(SENTENCING_HEARING),
-        DpsDataCreator.dpsCreateCourtAppearance(
-          courtCaseReference = SENTENCING_HEARING.caseReferences[0],
-        ),
+        { test: ThingsToDoTest ->
+          test.createCourtCase(
+            DpsDataCreator.dpsCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              appearances = listOf(
+                DpsDataCreator.dpsCreateCourtAppearance(
+                  courtCaseReference = SENTENCING_HEARING.caseReferences[0],
+                ),
+              ),
+            ),
+          ).first
+        },
         null,
       ),
       Arguments.of(
         "Existing court case with different reference with remand warrant gives thing to do",
         listOf(REMAND_HEARING),
-        DpsDataCreator.dpsCreateCourtAppearance(
-          courtCaseReference = "OTHERCASEREF123",
-        ),
+        { test: ThingsToDoTest ->
+          test.createCourtCase(
+            DpsDataCreator.dpsCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              appearances = listOf(
+                DpsDataCreator.dpsCreateCourtAppearance(
+                  courtCaseReference = "OTHERCASEREF123",
+
+                ),
+              ),
+            ),
+          ).first
+        },
         listOf(
           HearingThingsToDoData(
             hearingId = HMCTS_HEARING_ID,
@@ -386,22 +412,40 @@ class ThingsToDoTest : IntegrationTestBase() {
       Arguments.of(
         "Existing court case with appearance on hearing date gives no thing to do",
         listOf(REMAND_HEARING),
-        DpsDataCreator.dpsCreateCourtAppearance(
-          courtCaseReference = REMAND_HEARING.caseReferences[0],
-          appearanceDate = REMAND_HEARING.hearingDate,
-        ),
+        { test: ThingsToDoTest ->
+          test.createCourtCase(
+            DpsDataCreator.dpsCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              appearances = listOf(
+                DpsDataCreator.dpsCreateCourtAppearance(
+                  courtCaseReference = REMAND_HEARING.caseReferences[0],
+                  appearanceDate = REMAND_HEARING.hearingDate,
+                ),
+              ),
+            ),
+          ).first
+        },
         null,
       ),
       Arguments.of(
         "Existing court case with future appearance on hearing date gives thing to do",
         listOf(REMAND_HEARING),
-        DpsDataCreator.dpsCreateCourtAppearance(
-          courtCaseReference = REMAND_HEARING.caseReferences[0],
-          appearanceDate = REMAND_HEARING.hearingDate.minusDays(10),
-          nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(
-            appearanceDate = REMAND_HEARING.hearingDate,
-          ),
-        ),
+        { test: ThingsToDoTest ->
+          test.createCourtCase(
+            DpsDataCreator.dpsCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              appearances = listOf(
+                DpsDataCreator.dpsCreateCourtAppearance(
+                  courtCaseReference = REMAND_HEARING.caseReferences[0],
+                  appearanceDate = REMAND_HEARING.hearingDate.minusDays(10),
+                  nextCourtAppearance = DpsDataCreator.dpsCreateNextCourtAppearance(
+                    appearanceDate = REMAND_HEARING.hearingDate,
+                  ),
+                ),
+              ),
+            ),
+          ).first
+        },
         listOf(
           HearingThingsToDoData(
             hearingId = HMCTS_HEARING_ID,
@@ -416,9 +460,37 @@ class ThingsToDoTest : IntegrationTestBase() {
       Arguments.of(
         "Existing court case with lower case reference with sentencing warrant gives no thing to do",
         listOf(SENTENCING_HEARING),
-        DpsDataCreator.dpsCreateCourtAppearance(
-          courtCaseReference = SENTENCING_HEARING.caseReferences[0].lowercase(),
-        ),
+        { test: ThingsToDoTest ->
+          test.createCourtCase(
+            DpsDataCreator.dpsCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              appearances = listOf(
+                DpsDataCreator.dpsCreateCourtAppearance(
+                  courtCaseReference = SENTENCING_HEARING.caseReferences[0].lowercase(),
+                ),
+              ),
+            ),
+          ).first
+        },
+        null,
+      ),
+      Arguments.of(
+        "Existing legacy court case with sentencing warrant gives no thing to do",
+        listOf(SENTENCING_HEARING),
+        { test: ThingsToDoTest ->
+
+          val caseId = test.createLegacyCourtCase(
+            DataCreator.legacyCreateCourtCase(
+              prisonerId = PRISONER_ID,
+              bookingId = null,
+              legacyData = DataCreator.courtCaseLegacyData(caseReferences = mutableListOf(CaseReferenceLegacyData(offenderCaseReference = SENTENCING_HEARING.caseReferences[0], updatedDate = LocalDateTime.now()))),
+            ),
+          ).first
+          test.createLegacyCourtAppearance(
+            existingCourtCaseUuid = caseId,
+          )
+          caseId
+        },
         null,
       ),
     )
