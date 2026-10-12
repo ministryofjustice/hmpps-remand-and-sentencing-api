@@ -334,13 +334,21 @@ interface CourtCaseRepository :
   fun findIdWithManyChargesDataFixByConsecutiveToLast(@Param("limit") limit: Int): Set<Int>
 
   @Query(
-    """select cc
+    $$"""select cc
     from CourtCaseEntity cc
     join cc.appearances app
     where cc.prisonerId = :prisonerId 
     and cc.latestCourtAppearance is not null 
     and cc.statusId not in :courtCaseStatuses
-    and app.courtCaseReference ILIKE :courtCaseReference
+    and (
+      app.courtCaseReference ILIKE :courtCaseReference
+      or FUNCTION(
+        'jsonb_path_exists',
+        cc.legacyData,
+        '$.caseReferences[*] ? (@.offenderCaseReference == $ref)',
+        FUNCTION('jsonb_build_object', 'ref', :courtCaseReference)
+        ) = true
+    )
   """,
   )
   fun findCourtCasesByPrisonerAndCourtCaseReference(
