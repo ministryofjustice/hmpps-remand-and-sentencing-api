@@ -116,6 +116,7 @@ class FixManyChargesToSentenceService(
     }
 
     val (consecutiveToSentences, nonConsecutiveToSentences) = manyChargedSentences.partition { it.sentenceEntity.consecutiveTo != null }
+    markCourtCaseWithUnconfirmedConsecutiveToFix(consecutiveToSentences, username)
     consecutiveToSentences.map { it.courtCase }.distinctBy { it.id }.forEach { consecutiveToCourtCases ->
       if (consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix != true) {
         consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix = true
@@ -126,15 +127,19 @@ class FixManyChargesToSentenceService(
     }
     val checkForConsecutiveToLink = nonConsecutiveToSentences.filter { nonConsecutiveToSentence -> consecutiveToSentences.none { it.courtCase.id == nonConsecutiveToSentence.courtCase.id } }.map { it.sentenceEntity.id }
     val sentencesWithConsecutiveToLink = sentenceRepository.findSentencesWithConsecutiveToLinkAndStatusNot(checkForConsecutiveToLink)
-    nonConsecutiveToSentences.filter { sentencesWithConsecutiveToLink.contains(it.sentenceEntity.id) }.map { it.courtCase }.distinctBy { it.id }.forEach { consecutiveToCourtCases ->
-      if (consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix != true) {
-        consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix = true
-        consecutiveToCourtCases.updatedAt = ZonedDateTime.now()
-        consecutiveToCourtCases.updatedBy = username
-        courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(consecutiveToCourtCases, ChangeSource.DPS))
+    markCourtCaseWithUnconfirmedConsecutiveToFix(nonConsecutiveToSentences.filter { sentencesWithConsecutiveToLink.contains(it.sentenceEntity.id) }, username)
+    return eventsToEmit
+  }
+
+  private fun markCourtCaseWithUnconfirmedConsecutiveToFix(fixSentenceHierarchies: List<FixSentenceHierarchy>, username: String?) {
+    fixSentenceHierarchies.map { it.courtCase }.distinctBy { it.id }.forEach { courtCase ->
+      if (courtCase.hasUnconfirmedConsecutiveToFix != true) {
+        courtCase.hasUnconfirmedConsecutiveToFix = true
+        courtCase.updatedAt = ZonedDateTime.now()
+        courtCase.updatedBy = username
+        courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.DPS))
       }
     }
-    return eventsToEmit
   }
 
   private fun fixSentence(
