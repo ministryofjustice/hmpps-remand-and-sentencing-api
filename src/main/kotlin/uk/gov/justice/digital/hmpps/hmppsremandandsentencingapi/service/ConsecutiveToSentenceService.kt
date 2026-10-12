@@ -21,7 +21,7 @@ class ConsecutiveToSentenceService(private val sentenceRepository: SentenceRepos
   @Transactional
   fun sentencesToChainTo(prisonerId: String, beforeOrOnAppearanceDate: LocalDate, bookingId: String?): RecordResponse<SentencesToChainToResponse> {
     return bookingId?.let {
-      val consecutiveToSentenceUuids = sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate, it).map { consecutiveToSentence -> consecutiveToSentence.toRecordEventMetadata(consecutiveToSentence.sentenceUuid) }
+      val consecutiveToSentenceUuids = sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate, it).map { consecutiveToSentence -> consecutiveToSentence.sentenceUuid }
       val eventsToEmit = fixManyChargesToSentenceService.fixSentencesBySentenceUuids(consecutiveToSentenceUuids)
       return RecordResponse(SentencesToChainToResponse.from(sentenceRepository.findConsecutiveToSentences(prisonerId, beforeOrOnAppearanceDate, it)), eventsToEmit)
     } ?: RecordResponse(SentencesToChainToResponse.from(emptyList()), mutableSetOf())
