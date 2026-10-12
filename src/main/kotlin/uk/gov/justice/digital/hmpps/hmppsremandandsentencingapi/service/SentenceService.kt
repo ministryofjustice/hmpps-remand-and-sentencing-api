@@ -237,7 +237,7 @@ class SentenceService(
   fun findConsecutiveToSentenceDetails(sentenceUuids: List<UUID>, isPrisonerReadOnly: Boolean): RecordResponse<SentenceConsecutiveToDetailsResponse> {
     var eventsToEmit = mutableSetOf<EventMetadata>()
     if (!isPrisonerReadOnly) {
-      val consecutiveToSentencesUuids = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids).map { it.toRecordEventMetadata(it.sentenceUuid) }
+      val consecutiveToSentencesUuids = sentenceRepository.findConsecutiveToSentenceDetails(sentenceUuids).map { it.sentenceUuid }
       eventsToEmit = fixManyChargesToSentenceService.fixSentencesBySentenceUuids(consecutiveToSentencesUuids)
     }
 

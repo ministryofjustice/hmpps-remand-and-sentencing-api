@@ -421,4 +421,13 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
     nativeQuery = true,
   )
   fun findLinkableBreachSentenceId(@Param("courtCaseUuid") courtCaseUuid: String, @Param("deletedStatus")deletedStatus: String = SentenceEntityStatus.DELETED.toString()): LinkBreachSentence
+
+  @Query(
+    """
+    select consec.id from SentenceEntity s
+    join s.consecutiveTo consec
+    where consec.id in :sentenceIds and s.statusId != :status
+  """,
+  )
+  fun findSentencesWithConsecutiveToLinkAndStatusNot(@Param("sentenceIds")sentenceIds: List<Int>, @Param("status") status: SentenceEntityStatus = SentenceEntityStatus.DELETED): Set<Int>
 }
