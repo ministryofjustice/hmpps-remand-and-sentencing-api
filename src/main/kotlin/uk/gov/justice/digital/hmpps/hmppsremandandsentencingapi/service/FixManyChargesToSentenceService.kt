@@ -77,8 +77,8 @@ class FixManyChargesToSentenceService(
   )
 
   fun fixSentences(sentences: List<FixSentenceHierarchy>, username: String? = null): MutableSet<EventMetadata> {
-    val toFixSentences = sentences
-      .filter { it.sentenceEntity.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
+    val manyChargedSentences = sentences.filter { it.sentenceEntity.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
+    val toFixSentences = manyChargedSentences
       .groupByTo(mutableMapOf()) { it.sentenceEntity.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
     sentences.minByOrNull { it.sentenceEntity.id }?.let { minIdSentence ->
@@ -115,7 +115,7 @@ class FixManyChargesToSentenceService(
       }
     }
 
-    val (consecutiveToSentences, nonConsecutiveToSentences) = sentences.partition { it.sentenceEntity.consecutiveTo != null }
+    val (consecutiveToSentences, nonConsecutiveToSentences) = manyChargedSentences.partition { it.sentenceEntity.consecutiveTo != null }
     consecutiveToSentences.map { it.courtCase }.distinctBy { it.id }.forEach { consecutiveToCourtCases ->
       if (consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix != true) {
         consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix = true

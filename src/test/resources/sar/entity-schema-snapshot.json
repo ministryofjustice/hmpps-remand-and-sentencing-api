@@ -86,6 +86,7 @@
     "createdBy": "String",
     "createdPrison": "String",
     "findingOfDomesticAbuse": "Boolean",
+    "hmctsChargeId": "UUID",
     "id": "int",
     "legacyData": "ChargeLegacyData",
     "mergedFromCourtCase": "CourtCaseEntity",
@@ -98,8 +99,7 @@
     "supersedingCharge": "ChargeEntity",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String",
-    "hmctsChargeId": "UUID"
+    "updatedPrison": "String"
   },
   "ChargeHistoryEntity": {
     "changeSource": "ChangeSource",
@@ -109,6 +109,7 @@
     "createdBy": "String",
     "createdPrison": "String",
     "findingOfDomesticAbuse": "Boolean",
+    "hmctsChargeId": "UUID",
     "id": "int",
     "legacyData": "ChargeLegacyData",
     "mergedFromCaseId": "Integer",
@@ -121,18 +122,17 @@
     "supersedingChargeId": "Integer",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String",
-    "hmctsChargeId": "UUID"
+    "updatedPrison": "String"
   },
   "ChargeOutcomeEntity": {
     "displayOrder": "int",
     "dispositionCode": "String",
+    "hmctsCode": "String",
     "id": "int",
     "nomisCode": "String",
     "outcomeName": "String",
     "outcomeType": "String",
     "outcomeUuid": "UUID",
-    "hmctsCode": "String",
     "status": "ReferenceEntityStatus"
   },
   "ChargeOutcomeSarEntity": {
@@ -165,6 +165,7 @@
     "createdPrison": "String",
     "criminalAppealOfficeReference": "String",
     "documents": "Set",
+    "hmctsCourtHearingId": "UUID",
     "id": "int",
     "legacyData": "CourtAppearanceLegacyData",
     "nextCourtAppearance": "NextCourtAppearanceEntity",
@@ -175,8 +176,7 @@
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String",
-    "warrantType": "String",
-    "hmctsCourtHearingId": "UUID"
+    "warrantType": "String"
   },
   "CourtAppearanceHistoryEntity": {
     "appearanceDate": "LocalDate",
@@ -189,6 +189,7 @@
     "createdAt": "ZonedDateTime",
     "createdBy": "String",
     "createdPrison": "String",
+    "hmctsCourtHearingId": "UUID",
     "id": "int",
     "legacyData": "CourtAppearanceLegacyData",
     "nextCourtAppearanceId": "Integer",
@@ -199,8 +200,7 @@
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String",
-    "warrantType": "String",
-    "hmctsCourtHearingId": "UUID"
+    "warrantType": "String"
   },
   "CourtAppearanceSarEntity": {
     "appearanceCharges": "Set",
@@ -229,6 +229,7 @@
     "createdAt": "ZonedDateTime",
     "createdBy": "String",
     "createdPrison": "String",
+    "hasUnconfirmedConsecutiveToFix": "Boolean",
     "id": "int",
     "latestCourtAppearance": "CourtAppearanceEntity",
     "legacyData": "CourtCaseLegacyData",
@@ -247,6 +248,7 @@
     "createdAt": "ZonedDateTime",
     "createdBy": "String",
     "createdPrison": "String",
+    "hasUnconfirmedConsecutiveToFix": "Boolean",
     "id": "int",
     "latestCourtAppearanceId": "Integer",
     "legacyData": "CourtCaseLegacyData",
@@ -338,8 +340,8 @@
     "courtAppearanceSubtype": "CourtAppearanceSubtypeEntity",
     "courtCode": "String",
     "futureSkeletonAppearance": "CourtAppearanceEntity",
-    "id": "int",
-    "hmctsCourtHearingId": "UUID"
+    "hmctsCourtHearingId": "UUID",
+    "id": "int"
   },
   "NextCourtAppearanceSarEntity": {
     "appearanceDate": "LocalDate",
