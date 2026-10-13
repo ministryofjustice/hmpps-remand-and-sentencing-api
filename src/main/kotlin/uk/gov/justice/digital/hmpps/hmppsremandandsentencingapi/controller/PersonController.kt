@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.d
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentenceenvelopes.PrisonerSentenceEnvelopes
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
@@ -154,4 +155,19 @@ class PersonController(
     ],
   )
   fun courtCaseCount(@PathVariable prisonerId: String, @RequestParam("bookingId", defaultValue = "") bookingId: String): PersonCourtCaseCount = courtCaseService.getCourtCaseCount(prisonerId, bookingId)
+
+  @GetMapping("/{prisonerId}/unconfirmed-sentence-fix-court-cases")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "retrieve unconfirmed sentence fix court cases for person",
+    description = "This endpoint will retrieve unconfirmed sentence fix court cases for person",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns unconfirmed sentence fix court cases for person"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun unconfirmedSentenceFixCourtCases(@PathVariable prisonerId: String): UnconfirmedCourtCases = courtCaseService.getUnconfirmedSentenceFixCourtCases(prisonerId)
 }
