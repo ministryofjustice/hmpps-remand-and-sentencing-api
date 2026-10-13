@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.U
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
@@ -243,4 +244,7 @@ class CourtCaseService(
 
   @Transactional(readOnly = true)
   fun getCourtCaseCount(prisonerId: String, bookingId: String): PersonCourtCaseCount = courtCaseRepository.countCourtCasesForBooking(prisonerId, bookingId)
+
+  @Transactional(readOnly = true)
+  fun getUnconfirmedSentenceFixCourtCases(prisonerId: String): UnconfirmedCourtCases = UnconfirmedCourtCases.from(courtCaseRepository.findUnconfirmedSentenceFixCourtCases(prisonerId))
 }

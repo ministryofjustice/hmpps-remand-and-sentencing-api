@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.Even
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.CourtCaseHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.PeriodLengthHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.audit.SentenceHistoryEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
@@ -25,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import java.time.ZonedDateTime
@@ -38,7 +36,6 @@ class FixManyChargesToSentenceService(
   private val serviceUserService: ServiceUserService,
   private val courtCaseRepository: CourtCaseRepository,
   private val sentenceRepository: SentenceRepository,
-  private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
 ) {
   @Transactional
   fun fixPrisoner(prisonerId: String, username: String? = null): MutableSet<EventMetadata> = courtCaseRepository.findAllByPrisonerIdAndStatusIdNot(prisonerId).flatMap { courtCase ->
@@ -78,6 +75,9 @@ class FixManyChargesToSentenceService(
 
   fun fixSentences(sentences: List<FixSentenceHierarchy>, username: String? = null): MutableSet<EventMetadata> {
     val manyChargedSentences = sentences.filter { it.sentenceEntity.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
+    val checkForConsecutiveToLink = manyChargedSentences.filter { it.sentenceEntity.consecutiveTo == null }.map { it.sentenceEntity.id }
+    val sentencesWithConsecutiveToLink = sentenceRepository.findSentencesWithConsecutiveToLinkAndStatusNot(checkForConsecutiveToLink)
+
     val toFixSentences = manyChargedSentences
       .groupByTo(mutableMapOf()) { it.sentenceEntity.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
@@ -86,11 +86,12 @@ class FixManyChargesToSentenceService(
     }
 
     toFixSentences.forEach { (originalSentenceUuid, sentenceRecords) ->
-      val firstSentenceRecordEventMetadata = sentenceRecords.removeFirst()
+      val anyHasConsecutiveTo = sentenceRecords.any { it.sentenceEntity.consecutiveTo != null || sentencesWithConsecutiveToLink.contains(it.sentenceEntity.id) }
+      val firstFixSentenceHierarchy = sentenceRecords.removeFirst()
       val firstSentenceEventToEmit =
-        fixSentence(firstSentenceRecordEventMetadata, EventType.SENTENCE_UPDATED, originalSentenceUuid, username)
+        fixSentence(firstFixSentenceHierarchy, EventType.SENTENCE_UPDATED, originalSentenceUuid, username, anyHasConsecutiveTo)
       eventsToEmit.add(firstSentenceEventToEmit)
-      fixPeriodLengths(firstSentenceRecordEventMetadata, username)
+      fixPeriodLengths(firstFixSentenceHierarchy, username)
 
       sentenceRecords.forEach { fixSentenceHierarchy ->
         val sentenceEventToEmit = fixSentence(
@@ -98,6 +99,7 @@ class FixManyChargesToSentenceService(
           EventType.SENTENCE_FIX_SINGLE_CHARGE_INSERTED,
           originalSentenceUuid,
           username,
+          anyHasConsecutiveTo,
         ) {
           it.sentenceUuid = UUID.randomUUID()
           it.legacyData?.nomisLineReference = null
@@ -114,32 +116,7 @@ class FixManyChargesToSentenceService(
         eventsToEmit.addAll(periodLengthEventsToEmit)
       }
     }
-
-    val (consecutiveToSentences, nonConsecutiveToSentences) = manyChargedSentences.partition { it.sentenceEntity.consecutiveTo != null }
-    markCourtCaseWithUnconfirmedConsecutiveToFix(consecutiveToSentences, username)
-    consecutiveToSentences.map { it.courtCase }.distinctBy { it.id }.forEach { consecutiveToCourtCases ->
-      if (consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix != true) {
-        consecutiveToCourtCases.hasUnconfirmedConsecutiveToFix = true
-        consecutiveToCourtCases.updatedAt = ZonedDateTime.now()
-        consecutiveToCourtCases.updatedBy = username
-        courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(consecutiveToCourtCases, ChangeSource.DPS))
-      }
-    }
-    val checkForConsecutiveToLink = nonConsecutiveToSentences.filter { nonConsecutiveToSentence -> consecutiveToSentences.none { it.courtCase.id == nonConsecutiveToSentence.courtCase.id } }.map { it.sentenceEntity.id }
-    val sentencesWithConsecutiveToLink = sentenceRepository.findSentencesWithConsecutiveToLinkAndStatusNot(checkForConsecutiveToLink)
-    markCourtCaseWithUnconfirmedConsecutiveToFix(nonConsecutiveToSentences.filter { sentencesWithConsecutiveToLink.contains(it.sentenceEntity.id) }, username)
     return eventsToEmit
-  }
-
-  private fun markCourtCaseWithUnconfirmedConsecutiveToFix(fixSentenceHierarchies: List<FixSentenceHierarchy>, username: String?) {
-    fixSentenceHierarchies.map { it.courtCase }.distinctBy { it.id }.forEach { courtCase ->
-      if (courtCase.hasUnconfirmedConsecutiveToFix != true) {
-        courtCase.hasUnconfirmedConsecutiveToFix = true
-        courtCase.updatedAt = ZonedDateTime.now()
-        courtCase.updatedBy = username
-        courtCaseHistoryRepository.save(CourtCaseHistoryEntity.from(courtCase, ChangeSource.DPS))
-      }
-    }
   }
 
   private fun fixSentence(
@@ -147,12 +124,16 @@ class FixManyChargesToSentenceService(
     sentenceEventType: EventType,
     originalSentenceUuid: UUID,
     username: String? = null,
+    anyHasConsecutiveTo: Boolean,
     sentenceModifyFunction: (SentenceEntity) -> Unit = {},
   ): EventMetadata {
     val sentenceRecord = fixSentenceHierarchy.sentenceEntity
     sentenceRecord.statusId = if (sentenceRecord.legacyData?.active == false) SentenceEntityStatus.INACTIVE else SentenceEntityStatus.ACTIVE
     sentenceRecord.updatedAt = ZonedDateTime.now()
     sentenceRecord.updatedBy = username ?: serviceUserService.getUsername()
+    if (anyHasConsecutiveTo) {
+      sentenceRecord.hasUnconfirmedConsecutiveToFix = true
+    }
     sentenceModifyFunction(sentenceRecord)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord, ChangeSource.DPS))
     return EventMetadataCreator.fixSentenceEventMetadata(

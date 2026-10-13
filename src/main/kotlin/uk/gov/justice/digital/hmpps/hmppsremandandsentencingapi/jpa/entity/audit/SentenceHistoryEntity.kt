@@ -51,12 +51,13 @@ class SentenceHistoryEntity(
   @Enumerated(EnumType.STRING)
   val changeSource: ChangeSource,
   val reason: String?,
+  val hasUnconfirmedConsecutiveToFix: Boolean?,
 ) {
   companion object {
     fun from(sentenceEntity: SentenceEntity, changeSource: ChangeSource): SentenceHistoryEntity = SentenceHistoryEntity(
       0, sentenceEntity.sentenceUuid, sentenceEntity.countNumber, sentenceEntity.statusId, sentenceEntity.createdAt, sentenceEntity.createdBy, sentenceEntity.createdPrison,
       sentenceEntity.updatedAt, sentenceEntity.updatedBy, sentenceEntity.updatedPrison, sentenceEntity.sentenceServeType, sentenceEntity.supersedingSentence?.id, sentenceEntity.charge.id, sentenceEntity.consecutiveTo?.id,
-      sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity.fineAmount, sentenceEntity, changeSource, sentenceEntity.reason,
+      sentenceEntity.convictionDate, sentenceEntity.sentenceType?.id, sentenceEntity.legacyData, sentenceEntity.fineAmount, sentenceEntity, changeSource, sentenceEntity.reason, sentenceEntity.hasUnconfirmedConsecutiveToFix,
     )
   }
 }

@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeE
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.UnconfirmedSentenceFixCourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.custom.CourtCaseSearchRepository
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -356,4 +357,22 @@ interface CourtCaseRepository :
     @Param("courtCaseReference") courtCaseReference: String,
     @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus> = listOf(CourtCaseEntityStatus.DELETED, CourtCaseEntityStatus.DUPLICATE),
   ): List<CourtCaseEntity>
+
+  @Query(
+    """
+    select cc.case_unique_identifier as courtCaseUuid, ca.court_case_reference as caseReference, ca.appearance_date as appearanceDate, ca.court_code as courtCode, c.offence_code as offenceCode, s.sentence_uuid as sentenceUuid, s.sentence_serve_type as sentenceServeType from court_case cc
+    join court_appearance ca on ca.court_case_id = cc.id
+    join appearance_charge ac on ac.appearance_id = ca.id
+    join charge c on c.id = ac.charge_id
+    join sentence s on s.charge_id = c.id
+    where cc.prisoner_id = :prisonerId
+    and cc.status_id != 'DELETED'
+    and ca.status_id != 'DELETED'
+    and c.status_id != 'DELETED'
+    and s.status_id != 'DELETED'
+    and s.has_unconfirmed_consecutive_to_fix = true
+  """,
+    nativeQuery = true,
+  )
+  fun findUnconfirmedSentenceFixCourtCases(@Param("prisonerId") prisonerId: String): List<UnconfirmedSentenceFixCourtCaseRow>
 }

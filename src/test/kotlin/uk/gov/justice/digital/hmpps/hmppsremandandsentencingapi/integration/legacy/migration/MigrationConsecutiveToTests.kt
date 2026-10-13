@@ -158,8 +158,8 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
       .isCreated
       .returnResult(MigrationCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
-    val migrationCourtCaseUuid = response.courtCases.first { it.caseId == migrationCourtCase.caseId }.courtCaseUuid
-    val otherCourtCaseUuid = response.courtCases.first { it.caseId == otherCase.caseId }.courtCaseUuid
+    val firstSentenceUuid = response.sentences.first { it.sentenceNOMISId == firstSentenceId }.sentenceUuid
+    val otherSentenceUuid = response.sentences.first { it.sentenceNOMISId == otherCaseSentenceId }.sentenceUuid
     webTestClient
       .get()
       .uri {
@@ -173,10 +173,11 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-    val migrationCourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(migrationCourtCaseUuid)!!
-    Assertions.assertTrue(migrationCourtCaseEntity.hasUnconfirmedConsecutiveToFix!!)
 
-    val otherCourtCaseEntity = courtCaseRepository.findByCaseUniqueIdentifier(otherCourtCaseUuid)!!
-    Assertions.assertTrue(otherCourtCaseEntity.hasUnconfirmedConsecutiveToFix!!)
+    val firstSentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(firstSentenceUuid)!!
+    Assertions.assertTrue(firstSentenceEntity.hasUnconfirmedConsecutiveToFix!!)
+
+    val otherSentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(otherSentenceUuid)!!
+    Assertions.assertTrue(otherSentenceEntity.hasUnconfirmedConsecutiveToFix!!)
   }
 }
