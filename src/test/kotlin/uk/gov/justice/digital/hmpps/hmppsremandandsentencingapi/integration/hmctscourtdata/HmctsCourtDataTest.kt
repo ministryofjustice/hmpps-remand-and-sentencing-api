@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Hmcts
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.ResultKeyValue
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
@@ -43,7 +44,7 @@ import java.util.stream.Stream
 class HmctsCourtDataTest : IntegrationTestBase() {
 
   @Test
-  fun `Test get appearance from hmcts data`() {
+  fun `Test get remand appearance from hmcts data`() {
     val prisonerNumber = "PRIS123"
     val courtRegisterId = UUID.randomUUID().toString()
     val hmctsCourtHearing = HmctsCourtHearing(
@@ -57,7 +58,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       documents = listOf(
         HmctsCourHearingDocument(
           "REMAND_WARRANT",
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
         ),
       ),
       charges = listOf(
@@ -142,7 +143,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
       listOf(
         DocumentManagementApiDocument(
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
@@ -230,7 +231,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         legacyData = null,
         documents = listOf(
           UploadedDocument(
-            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
             fileName = "RemandWarrant.pdf",
           ),
@@ -257,7 +258,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       documents = listOf(
         HmctsCourHearingDocument(
           "REMAND_WARRANT",
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
         ),
       ),
       charges = listOf(
@@ -311,7 +312,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
       listOf(
         DocumentManagementApiDocument(
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
@@ -389,7 +390,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         legacyData = null,
         documents = listOf(
           UploadedDocument(
-            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
             fileName = "RemandWarrant.pdf",
           ),
@@ -415,7 +416,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       documents = listOf(
         HmctsCourHearingDocument(
           "REMAND_WARRANT",
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
         ),
       ),
       charges = listOf(
@@ -454,7 +455,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
       listOf(
         DocumentManagementApiDocument(
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
@@ -498,7 +499,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         legacyData = null,
         documents = listOf(
           UploadedDocument(
-            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
             fileName = "RemandWarrant.pdf",
           ),
@@ -525,7 +526,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       documents = listOf(
         HmctsCourHearingDocument(
           "SENTENCING_WARRANT",
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
         ),
       ),
       charges = listOf(
@@ -548,11 +549,30 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               keyValuePairs = emptyList(),
             ),
             HmctsCourtResult(
+              code = "OAFPC",
+              description = "Aggravating factor one.",
+              keyValuePairs = emptyList(),
+            ),
+            HmctsCourtResult(
+              code = "OATC",
+              description = "Aggravating factor two.",
+              keyValuePairs = emptyList(),
+            ),
+            HmctsCourtResult(
+              code = "FODA",
+              description = "Domestic abuse factor.",
+              keyValuePairs = emptyList(),
+            ),
+            HmctsCourtResult(
               code = "IMP",
               description = "Imprisonment",
               keyValuePairs = listOf(
                 ResultKeyValue(
                   key = "Imprisonment Period",
+                  value = "1 Years 60 Days",
+                ),
+                ResultKeyValue(
+                  key = "Total custodial period",
                   value = "1 Years 60 Days",
                 ),
               ),
@@ -569,7 +589,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
       listOf(
         DocumentManagementApiDocument(
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
@@ -623,7 +643,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               hmctsCode = "IMP",
               status = ReferenceEntityStatus.ACTIVE,
             ),
-            aggravatingFactors = emptyList(),
+            aggravatingFactors = listOf(
+              AggravatingFactor(code = "OAFPC", title = "Offence aggravated by foreign power condition being met", description = "Offence aggravated by foreign power condition being met", displayOrder = 10),
+              AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 20),
+            ),
             sentence = Sentence(
               sentenceUuid = response.charges.first().sentence?.sentenceUuid!!,
               chargeNumber = null,
@@ -654,21 +677,35 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               hasRecall = false,
               status = SentenceEntityStatus.ACTIVE,
             ),
-            legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
+            legacyData = null,
+            mergedFromCase = null,
+            createdAt = response.charges.first().createdAt,
+            findingOfDomesticAbuse = true,
           ),
         ),
         overallConvictionDate = null,
         legacyData = null,
         documents = listOf(
           UploadedDocument(
-            documentUUID = REMAND_WARRANT_DOCUMENT_ID,
+            documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
             fileName = "RemandWarrant.pdf",
           ),
         ),
         source = EventSource.DPS,
         deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
-        periodLengths = emptyList(),
+        periodLengths = listOf(
+          PeriodLength(
+            years = 1,
+            months = null,
+            weeks = null,
+            days = 60,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.OVERALL_SENTENCE_LENGTH,
+            legacyData = null,
+            periodLengthUuid = response.periodLengths.first().periodLengthUuid,
+          ),
+        ),
       ),
     )
   }
@@ -689,7 +726,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       documents = listOf(
         HmctsCourHearingDocument(
           "REMAND_WARRANT",
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
         ),
       ),
       charges = listOf(
@@ -723,7 +760,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
       listOf(
         DocumentManagementApiDocument(
-          REMAND_WARRANT_DOCUMENT_ID,
+          DOCUMENT_ID,
           documentFilename = "RemandWarrant.pdf",
         ),
       ),
@@ -748,7 +785,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
 
   companion object {
     val HMCTS_HEARING_ID = UUID.randomUUID()
-    val REMAND_WARRANT_DOCUMENT_ID = UUID.randomUUID()
+    val DOCUMENT_ID = UUID.randomUUID()
 
     @JvmStatic
     fun offenceResultsProvider(): Stream<Arguments> = Stream.of(
