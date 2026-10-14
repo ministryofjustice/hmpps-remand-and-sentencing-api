@@ -51,7 +51,8 @@ class HmctsCourtDataService(
       .filter { it.duplicateOf == null }
     val chargeOutcomes = chargeOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
     val aggravatingFactors = aggravatingFactorsService.getAllByStatuses(listOf(AggravatingFactorStatus.ACTIVE))
-    val charges = hearing.charges.map { mapCharge(it, chargeOutcomes, aggravatingFactors) }
+    var charges = hearing.charges.map { mapCharge(it, chargeOutcomes, aggravatingFactors) }
+    charges = setFirstSentencedChargeToForthwith(charges)
 
     val appearanceOutcome = appearanceOutcome(charges)
     val periodLengths = overallPeriodLengths(hearing)
@@ -74,6 +75,21 @@ class HmctsCourtDataService(
       periodLengths = periodLengths,
       hmctsCourtHearingId = hearing.hearingId,
     )
+  }
+
+  private fun setFirstSentencedChargeToForthwith(charges: List<Charge>): List<Charge> {
+    val firstConcurrentCharge = charges.find { it.sentence?.sentenceServeType == "CONCURRENT" }
+    return charges.map {
+      if (it == firstConcurrentCharge) {
+        it.copy(
+          sentence = it.sentence!!.copy(
+            sentenceServeType = "FORTHWITH",
+          ),
+        )
+      } else {
+        it
+      }
+    }
   }
 
   private fun mapDocuments(hearing: HmctsCourtHearing, documents: List<DocumentManagementApiDocument>) = hearing.documents.mapNotNull {
@@ -143,12 +159,12 @@ class HmctsCourtDataService(
     val resultsWithMapping = charge.results.filter { result -> chargeOutcomes.find { result.code == it.hmctsCode } != null }
     val factors = aggravatingFactors.filter { factor -> charge.results.find { it.code == factor.code } != null }
     val findingOfDomesticAbuse = charge.results.any { it.code == FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE }
-    val sentence = mapSentence(charge, resultsWithMapping)
     val outcome = if (resultsWithMapping.size == 1) {
       chargeOutcomes.find { it.hmctsCode == resultsWithMapping.first().code }
     } else {
       null
     }
+    val sentence = mapSentence(charge, resultsWithMapping)
     return Charge(
       chargeUuid = UUID.randomUUID(),
       offenceCode = charge.code,
@@ -170,44 +186,46 @@ class HmctsCourtDataService(
       return null
     }
 
+    val periods = mutableListOf<PeriodLength>()
     val result = resultsWithMapping[0]
     val extensionPeriod = result.findValue(HmctsResultKeys.EXTENSION_PERIOD) != null
     val extensionPeriod35 = result.findValue(HmctsResultKeys.EXTENSION_PERIOD_SECTION_35A) != null
     val consecutive = result.findValue(HmctsResultKeys.CONSECUTIVE_TO_OFFENCE) != null ||
       result.findValue(HmctsResultKeys.CONCURRENT) == "false"
-    val foreignPower = result.findValue(HmctsResultKeys.FOREIGN_POWER_SECTION_31) == "true"
-
-    if (extensionPeriod || extensionPeriod35 || consecutive || foreignPower) {
-      return null
-    }
-
     val imprisonmentPeriod = result.findValue(HmctsResultKeys.IMPRISONMENT_PERIOD)
 
-    if (imprisonmentPeriod.isNullOrEmpty()) {
+    if (!result.hasAnySentencingKey()) {
       return null
     }
-    // currently only support concurrent standard sentences.
 
-    val sentenceType = sentenceTypeService.findByUuid(UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"))
-    val duration = HmctsDurationParts.parseDuration(imprisonmentPeriod)
+    val sentenceType = if (extensionPeriod || extensionPeriod35) {
+      null
+    } else {
+      sentenceTypeService.findByUuid(UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"))
+    }
 
-    return Sentence(
-      sentenceUuid = UUID.randomUUID(),
-      chargeNumber = null,
-      periodLengths = listOf(
+    if (!imprisonmentPeriod.isNullOrEmpty()) {
+      val duration = HmctsDurationParts.parseDuration(imprisonmentPeriod)
+      periods.add(
         PeriodLength(
           years = duration.years,
           months = duration.months,
           weeks = duration.weeks,
           days = duration.days,
           periodOrder = "years,months,weeks,days",
-          periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+          periodLengthType = if (!extensionPeriod && !extensionPeriod35) PeriodLengthType.SENTENCE_LENGTH else PeriodLengthType.CUSTODIAL_TERM,
           legacyData = null,
           periodLengthUuid = UUID.randomUUID(),
         ),
-      ),
+      )
+    }
+
+    return Sentence(
+      sentenceUuid = UUID.randomUUID(),
+      chargeNumber = null,
+      periodLengths = periods,
       consecutiveToSentenceUuid = null,
-      sentenceServeType = "CONCURRENT",
+      sentenceServeType = if (consecutive) "CONSECUTIVE" else "CONCURRENT",
       sentenceType = sentenceType,
       convictionDate = charge.convictionDate,
       fineAmount = null,
