@@ -683,7 +683,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             findingOfDomesticAbuse = true,
           ),
         ),
-        overallConvictionDate = null,
+        overallConvictionDate = LocalDate.of(2026, 10, 1),
         legacyData = null,
         documents = listOf(
           UploadedDocument(
