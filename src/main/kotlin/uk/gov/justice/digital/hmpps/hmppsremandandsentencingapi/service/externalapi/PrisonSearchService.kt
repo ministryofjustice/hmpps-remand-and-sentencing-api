@@ -13,6 +13,7 @@ class PrisonSearchService(private val prisonerSearchClient: PrisonerSearchClient
       return prisonerSearchClient.getPrisoner(prisonerId)
     } catch (e: Exception) {
       log.error("Unable to retrieve prisoner search details for prisoner id {}. API lookup failed.", prisonerId)
+      log.debug(e.message)
     }
     return null
   }
