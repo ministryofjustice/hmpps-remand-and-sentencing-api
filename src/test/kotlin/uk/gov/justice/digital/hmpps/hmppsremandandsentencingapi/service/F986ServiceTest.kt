@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Offen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentGeneratorService
@@ -69,9 +71,9 @@ class F986ServiceTest {
 
   @Test
   fun `should throw when no imprisonment in default of fine sentences are found`() {
-    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns emptyList()
+    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, courtAppearanceId) } returns emptyList()
 
-    assertThatThrownBy { f986Service.renderDocument(createF986()) }
+    assertThatThrownBy { f986Service.renderDocument(prisonerId, createF986()) }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("No imprisonment in default of fine sentences found for court appearance 15f21679-268f-44c5-9a58-00aaa00c24f1")
   }
@@ -93,7 +95,7 @@ class F986ServiceTest {
       periodOrder = "years,months,weeks,days",
     )
 
-    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
+    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns CourtRegister("COURT1", "Liverpool Crown Court", "Liverpool Crown Court Description")
     every { personRecordService.getPersonPrison(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
     every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)")
@@ -118,7 +120,7 @@ class F986ServiceTest {
     val documentSlot = slot<F986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
 
-    f986Service.renderDocument(createF986())
+    f986Service.renderDocument(prisonerId, createF986())
 
     val data = documentSlot.captured.data
     assertThat(data.name).isEqualTo("Joe Bloggs")
@@ -159,7 +161,7 @@ class F986ServiceTest {
       periodOrder = null,
     )
 
-    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
+    every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns null
     every { personRecordService.getPersonPrison(prisonerId) } returns null
     every { prisonSearchService.getPrisoner(prisonerId) } returns null
@@ -169,7 +171,7 @@ class F986ServiceTest {
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
 
     val createF986 = createF986()
-    f986Service.renderDocument(createF986)
+    f986Service.renderDocument(prisonerId, createF986)
 
     val data = documentSlot.captured.data
     assertThat(data.name).isEqualTo("A1234BC")
@@ -184,5 +186,40 @@ class F986ServiceTest {
     assertThat(data.sentences.first().offence).isEqualTo("Offence Code (AA06027)")
     assertThat(data.sentences.first().fineAmount).isEqualTo(0.0)
     assertThat(data.sentences.first().termLengths).containsExactly(PeriodLength())
+  }
+
+  @Test
+  fun `should group eligible appearances by appearance and sort by warrant date descending`() {
+    every { sentenceRepository.findCourtAppearancesWithFineByPrisonerId(prisonerId) } returns listOf(
+      CourtAppearanceWithFineRow(UUID.fromString("8E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2024, 1, 1), "COURT1", "REF1", "AA06027"),
+      CourtAppearanceWithFineRow(UUID.fromString("9E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 2), "COURT2", null, "BB00001"),
+      CourtAppearanceWithFineRow(UUID.fromString("7E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 1), "COURT2", null, "BB00002"),
+    )
+
+    val result = f986Service.getEligibleCourtAppearances(prisonerId)
+
+    assertThat(result).containsExactly(
+      F986EligibleCourtAppearance(UUID.fromString("9E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 2), "COURT2", null, listOf("BB00001")),
+      F986EligibleCourtAppearance(UUID.fromString("7E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 1), "COURT2", null, listOf("BB00002")),
+      F986EligibleCourtAppearance(UUID.fromString("8E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2024, 1, 1), "COURT1", "REF1", listOf("AA06027")),
+    )
+  }
+
+  @Test
+  fun `should return true when eligible court appearances exist`() {
+    every { sentenceRepository.existsCourtAppearancesWithFineByPrisonerId(prisonerId) } returns true
+
+    val result = f986Service.hasEligibleCourtAppearances(prisonerId)
+
+    assertThat(result).isTrue()
+  }
+
+  @Test
+  fun `should return false when no eligible court appearances exist`() {
+    every { sentenceRepository.existsCourtAppearancesWithFineByPrisonerId(prisonerId) } returns false
+
+    val result = f986Service.hasEligibleCourtAppearances(prisonerId)
+
+    assertThat(result).isFalse()
   }
 }
