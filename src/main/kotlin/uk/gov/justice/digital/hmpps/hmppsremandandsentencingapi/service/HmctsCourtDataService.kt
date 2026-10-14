@@ -67,7 +67,7 @@ class HmctsCourtDataService(
       warrantType = mapWarrantType(hearing),
       nextCourtAppearance = hearing.nextHearing?.let { mapNextCourtAppearance(it) },
       charges = charges,
-      overallConvictionDate = null,
+      overallConvictionDate = overallConvictionDate(charges),
       legacyData = null,
       documents = mapDocuments(hearing, documents),
       source = EventSource.DPS,
@@ -75,6 +75,14 @@ class HmctsCourtDataService(
       periodLengths = periodLengths,
       hmctsCourtHearingId = hearing.hearingId,
     )
+  }
+
+  private fun overallConvictionDate(charges: List<Charge>): LocalDate? {
+    val convictionDates = charges.mapNotNull { it.sentence?.convictionDate }.distinct()
+    if (convictionDates.size == 1) {
+      return convictionDates.first()
+    }
+    return null
   }
 
   private fun setFirstSentencedChargeToForthwith(charges: List<Charge>): List<Charge> {
