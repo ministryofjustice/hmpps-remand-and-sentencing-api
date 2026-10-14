@@ -8,6 +8,7 @@ data class UnconfirmedSentenceFixCourtCaseRow(
   val caseReference: String?,
   val appearanceDate: LocalDate,
   val courtCode: String,
+  val chargeLegacyOffenceDescription: String?,
   val offenceCode: String,
   val sentenceUuid: UUID,
   val sentenceServeType: String,

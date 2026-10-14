@@ -6,9 +6,10 @@ import java.util.UUID
 data class UnconfirmedSentence(
   val sentenceUuid: UUID,
   val offenceCode: String,
+  val chargeLegacyOffenceDescription: String?,
   val sentenceServeType: String,
 ) {
   companion object {
-    fun from(row: UnconfirmedSentenceFixCourtCaseRow): UnconfirmedSentence = UnconfirmedSentence(row.sentenceUuid, row.offenceCode, row.sentenceServeType)
+    fun from(row: UnconfirmedSentenceFixCourtCaseRow): UnconfirmedSentence = UnconfirmedSentence(row.sentenceUuid, row.offenceCode, row.chargeLegacyOffenceDescription, row.sentenceServeType)
   }
 }
