@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.expectBody
+import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.OffenceDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Priso
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateFineAmount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
@@ -49,7 +51,7 @@ class F986ServiceTest : IntegrationTestBase() {
     val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
     val response = webTestClient
       .post()
-      .uri("/document-generator/f986")
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID")
       .bodyValue(body)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
@@ -93,7 +95,7 @@ class F986ServiceTest : IntegrationTestBase() {
     val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
     val response = webTestClient
       .post()
-      .uri("/document-generator/f986")
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID")
       .bodyValue(body)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
@@ -138,7 +140,7 @@ class F986ServiceTest : IntegrationTestBase() {
 
     webTestClient
       .post()
-      .uri("/document-generator/f986")
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID")
       .bodyValue(body)
       .headers {
         it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
@@ -159,7 +161,7 @@ class F986ServiceTest : IntegrationTestBase() {
 
     webTestClient
       .post()
-      .uri("/document-generator/f986")
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID")
       .bodyValue(body)
       .headers {
         it.contentType = MediaType.APPLICATION_JSON
@@ -175,11 +177,127 @@ class F986ServiceTest : IntegrationTestBase() {
 
     webTestClient
       .post()
-      .uri("/document-generator/f986")
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID")
       .bodyValue(body)
       .headers {
         it.authToken(roles = listOf("ROLE_INVALID_ROLE"))
         it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isForbidden
+  }
+
+  @Test
+  fun `should return F986 eligible court appearances for prisoner`() {
+    arrangeSingleOffence()
+
+    val appearances = webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBodyList<F986EligibleCourtAppearance>()
+      .returnResult()
+      .responseBody!!
+
+    assertThat(appearances).hasSize(1)
+    assertThat(appearances.first().appearanceUuid).isEqualTo(courtAppearanceUuid)
+    assertThat(appearances.first().courtCode).isEqualTo("COURT1")
+    assertThat(appearances.first().offenceCodes).containsExactly("AA06027")
+  }
+
+  @Test
+  fun `should return empty list when prisoner has no eligible court appearances`() {
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBodyList<F986EligibleCourtAppearance>()
+      .hasSize(0)
+  }
+
+  @Test
+  fun `should return unauthorized for eligible appearances when no auth token`() {
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances")
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `should return forbidden for eligible appearances when invalid role`() {
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances")
+      .headers {
+        it.authToken(roles = listOf("ROLE_INVALID_ROLE"))
+      }
+      .exchange()
+      .expectStatus()
+      .isForbidden
+  }
+
+  @Test
+  fun `should return true when prisoner has eligible court appearances`() {
+    arrangeSingleOffence()
+
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances/exists")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(Boolean::class.java)
+      .isEqualTo(true)
+  }
+
+  @Test
+  fun `should return false when prisoner has no eligible court appearances`() {
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances/exists")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(Boolean::class.java)
+      .isEqualTo(false)
+  }
+
+  @Test
+  fun `should return unauthorized for eligible appearances exists when no auth token`() {
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances/exists")
+      .exchange()
+      .expectStatus()
+      .isUnauthorized
+  }
+
+  @Test
+  fun `should return forbidden for eligible appearances exists when invalid role`() {
+    webTestClient
+      .get()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID/eligible-appearances/exists")
+      .headers {
+        it.authToken(roles = listOf("ROLE_INVALID_ROLE"))
       }
       .exchange()
       .expectStatus()

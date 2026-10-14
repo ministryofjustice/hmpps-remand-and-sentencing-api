@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentGeneratorService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.F986
@@ -26,8 +27,24 @@ class F986Service(
   private val prisonSearchService: PrisonSearchService,
 ) {
 
-  fun renderDocument(createF986: CreateF986): InputStream {
-    val imprisonmentInDefaultOfFineList = sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(createF986.courtAppearanceUuid)
+  fun hasEligibleCourtAppearances(prisonerId: String): Boolean = sentenceRepository.existsCourtAppearancesWithFineByPrisonerId(prisonerId)
+
+  fun getEligibleCourtAppearances(prisonerId: String): List<F986EligibleCourtAppearance> = sentenceRepository.findCourtAppearancesWithFineByPrisonerId(prisonerId)
+    .groupBy { it.appearanceUuid }
+    .map { (appearanceUuid, rows) ->
+      val first = rows.first()
+      F986EligibleCourtAppearance(
+        appearanceUuid,
+        first.appearanceDate,
+        first.courtCode,
+        first.courtCaseReference,
+        rows.map { it.offenceCode }.distinct(),
+      )
+    }
+    .sortedByDescending { it.warrantDate }
+
+  fun renderDocument(prisonerId: String, createF986: CreateF986): InputStream {
+    val imprisonmentInDefaultOfFineList = sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, createF986.courtAppearanceUuid)
     require(imprisonmentInDefaultOfFineList.isNotEmpty()) {
       "No imprisonment in default of fine sentences found for court appearance ${createF986.courtAppearanceUuid}"
     }
