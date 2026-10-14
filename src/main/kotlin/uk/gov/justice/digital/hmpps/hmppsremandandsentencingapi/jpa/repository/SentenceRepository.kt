@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodL
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.MissingSentenceInformationDetails
@@ -199,28 +200,63 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
+    select case when count(s) > 0 then true else false end
+    $SENTENCES_BY_SENTENCE_TYPE_CLASSIFICATION
+  """,
+  )
+  fun existsCourtAppearancesWithFineByPrisonerId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("classification") classification: SentenceTypeClassification = SentenceTypeClassification.FINE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+  ): Boolean
+
+  @Query(
+    """
+    SELECT DISTINCT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow(ca.appearanceUuid, ca.appearanceDate, ca.courtCode, ca.courtCaseReference, c.offenceCode)
+    $SENTENCES_BY_SENTENCE_TYPE_CLASSIFICATION
+    ORDER BY ca.appearanceDate DESC, ca.appearanceUuid
+  """,
+  )
+  fun findCourtAppearancesWithFineByPrisonerId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("classification") classification: SentenceTypeClassification = SentenceTypeClassification.FINE,
+    @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
+    @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
+  ): List<CourtAppearanceWithFineRow>
+
+  @Query(
+    """
     SELECT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine(cc.prisonerId, ca.courtCode, ca.id, ca.appearanceDate, s.fineAmount, c.offenceCode, s.id, pl.days, pl.weeks, pl.months, pl.years, pl.periodOrder) 
-    FROM SentenceEntity s
-    JOIN s.charge c
-    JOIN c.appearanceCharges ac
-    JOIN ac.appearance ca
-    JOIN ca.courtCase cc
-    JOIN s.periodLengths pl
-    JOIN s.sentenceType st
-    JOIN ca.appearanceOutcome ao
-    WHERE ca.appearanceUuid = :#{#appearanceUuid}
-    AND ca.statusId = :#{#courtAppearanceStatus}
-    AND cc.statusId = :#{#courtCaseStatus}
-    AND st.classification = :#{#classification} 
+    $SENTENCES_BY_SENTENCE_TYPE_CLASSIFICATION
+    AND ca.appearanceUuid = :#{#appearanceUuid} 
     ORDER BY pl.updatedAt DESC
   """,
   )
   fun findImprisonmentInDefaultOfFineByAppearanceUuid(
+    @Param("prisonerId") prisonerId: String,
     @Param("appearanceUuid") appearanceUuid: UUID,
     @Param("classification") classification: SentenceTypeClassification = SentenceTypeClassification.FINE,
     @Param("courtAppearanceStatus") courtAppearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.ACTIVE,
     @Param("courtCaseStatus") courtCaseStatus: CourtCaseEntityStatus = CourtCaseEntityStatus.ACTIVE,
   ): List<ImprisonmentInDefaultOfFine>
+
+  companion object {
+    const val SENTENCES_BY_SENTENCE_TYPE_CLASSIFICATION =
+      """
+        FROM SentenceEntity s
+        JOIN s.charge c
+        JOIN c.appearanceCharges ac
+        JOIN ac.appearance ca
+        JOIN ca.courtCase cc
+        JOIN s.periodLengths pl
+        JOIN s.sentenceType st
+        WHERE cc.prisonerId = :prisonerId
+        AND ca.statusId = :courtAppearanceStatus
+        AND cc.statusId = :courtCaseStatus
+        AND st.classification = :classification
+      """
+  }
 
   @Query(
     """
