@@ -193,7 +193,8 @@ class CourtCaseService(
     }
     val pagedCourtCases = courtCaseMap.values.map { PagedCourtCase.from(it) }
       .sortedWith(appearanceDateCompareTo).toMutableList()
-    return RecordResponse(SearchCourtCasesPage(pagedCourtCases, pageable, count, totalCount), eventsToEmit)
+    val anyConsecutiveToFixes = eventsToEmit.any { it.hasUnconfirmedConsecutiveToFix == true }
+    return RecordResponse(SearchCourtCasesPage(pagedCourtCases, pageable, count, totalCount, anyConsecutiveToFixes), eventsToEmit)
   }
 
   @Transactional

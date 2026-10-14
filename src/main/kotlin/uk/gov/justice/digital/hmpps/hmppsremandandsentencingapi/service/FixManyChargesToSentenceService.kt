@@ -144,6 +144,7 @@ class FixManyChargesToSentenceService(
       fixSentenceHierarchy.courtAppearanceId,
       sentenceEventType,
       originalSentenceUuid.toString(),
+      anyHasConsecutiveTo,
     )
   }
 
