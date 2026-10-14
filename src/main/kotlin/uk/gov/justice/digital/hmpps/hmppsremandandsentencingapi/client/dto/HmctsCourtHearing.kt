@@ -50,6 +50,7 @@ data class HmctsCourtResult(
   val description: String,
   val keyValuePairs: List<ResultKeyValue>,
 ) {
+  fun hasAnySentencingKey(): Boolean = HmctsResultKeys.entries.filter { it.sentencing }.any { findValue(it) != null }
   fun findValue(key: HmctsResultKeys): String? = keyValuePairs.firstOrNull { it.key == key.key }?.value
 }
 
@@ -66,17 +67,17 @@ data class HmctsNextCourtHearing(
   val hearingId: UUID?,
 )
 
-enum class HmctsResultKeys(val key: String) {
-  APPROPRIATE_CUSTODIAL_TERM("Appropriate custodial term"),
+enum class HmctsResultKeys(val key: String, val sentencing: Boolean = false) {
+  APPROPRIATE_CUSTODIAL_TERM("Appropriate custodial term", true),
   TAGGED_BAIL("Bail remand days to count (tagged days)"),
-  CONCURRENT("Concurrent"),
-  CONSECUTIVE_TO_OFFENCE("Consecutive to offence"),
-  CUSTODIAL_PERIOD("Custodial period"),
-  EXTENSION_PERIOD("Extension period"),
-  EXTENSION_PERIOD_SECTION_35A("Extension period section 35A (immediate custodial sentence)"),
-  IMPRISONMENT_PERIOD("Imprisonment Period"),
+  CONCURRENT("Concurrent", true),
+  CONSECUTIVE_TO_OFFENCE("Consecutive to offence", true),
+  CUSTODIAL_PERIOD("Custodial period", true),
+  EXTENSION_PERIOD("Extension period", true),
+  EXTENSION_PERIOD_SECTION_35A("Extension period section 35A (immediate custodial sentence)", true),
+  IMPRISONMENT_PERIOD("Imprisonment Period", true),
   FOREIGN_JURISDICTION("Number of days in custody in foreign jurisdiction to count"),
   FOREIGN_POWER_SECTION_31("This offence is aggravated by the foreign power condition being met in relation to it as defined by section 31 of the National Security Act 2023"),
-  TOTAL_CUSTODIAL_PERIOD("Total custodial period"),
-  WHICH_IS_ON_CASE_NUMBER("Which is on case number"),
+  TOTAL_CUSTODIAL_PERIOD("Total custodial period", true),
+  WHICH_IS_ON_CASE_NUMBER("Which is on case number", true),
 }

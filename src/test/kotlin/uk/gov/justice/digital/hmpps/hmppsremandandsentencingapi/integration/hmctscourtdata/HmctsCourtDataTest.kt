@@ -662,7 +662,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
                   periodLengthUuid = response.charges.first().sentence?.periodLengths?.first()?.periodLengthUuid!!,
                 ),
               ),
-              sentenceServeType = "CONCURRENT",
+              sentenceServeType = "FORTHWITH",
               sentenceType = SentenceType(
                 sentenceTypeUuid = UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"),
                 description = "SDS (Standard Determinate Sentence)",
