@@ -42,7 +42,6 @@ class CourtCaseHistoryEntity(
   @OneToOne
   @JoinColumn(name = "original_court_case_id")
   val originalCourtCase: CourtCaseEntity,
-  var hasUnconfirmedConsecutiveToFix: Boolean?,
   @Enumerated(EnumType.STRING)
   val changeSource: ChangeSource,
 ) {
@@ -51,7 +50,7 @@ class CourtCaseHistoryEntity(
       0, courtCaseEntity.prisonerId, courtCaseEntity.caseUniqueIdentifier, courtCaseEntity.latestCourtAppearance?.id,
       courtCaseEntity.createdAt, courtCaseEntity.createdBy, courtCaseEntity.updatedAt, courtCaseEntity.updatedBy,
       courtCaseEntity.statusId, courtCaseEntity.reason, courtCaseEntity.legacyData, courtCaseEntity.createdPrison,
-      courtCaseEntity.mergedToCase?.id, courtCaseEntity.mergedToDate, courtCaseEntity, courtCaseEntity.hasUnconfirmedConsecutiveToFix, changeSource = changeSource,
+      courtCaseEntity.mergedToCase?.id, courtCaseEntity.mergedToDate, courtCaseEntity, changeSource = changeSource,
     )
   }
 }

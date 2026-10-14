@@ -220,6 +220,7 @@ class SentenceEntity(
   val totalRecallSentences: Int = -1,
   @Column
   var reason: String? = null,
+  var hasUnconfirmedConsecutiveToFix: Boolean? = null,
 ) {
   @OneToMany
   @JoinColumn(name = "sentence_id")

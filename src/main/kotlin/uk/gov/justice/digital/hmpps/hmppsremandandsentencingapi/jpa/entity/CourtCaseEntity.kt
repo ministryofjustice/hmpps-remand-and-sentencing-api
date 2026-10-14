@@ -198,8 +198,6 @@ class CourtCaseEntity(
 
   var mergedToDate: LocalDate? = null
 
-  var hasUnconfirmedConsecutiveToFix: Boolean? = null
-
   fun delete(username: String) {
     statusId = CourtCaseEntityStatus.DELETED
     updatedAt = ZonedDateTime.now()
