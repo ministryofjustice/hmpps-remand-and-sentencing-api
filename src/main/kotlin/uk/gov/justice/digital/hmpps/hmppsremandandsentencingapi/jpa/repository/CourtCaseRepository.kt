@@ -360,7 +360,7 @@ interface CourtCaseRepository :
 
   @Query(
     """
-    select cc.case_unique_identifier as courtCaseUuid, ca.court_case_reference as caseReference, ca.appearance_date as appearanceDate, ca.court_code as courtCode, c.offence_code as offenceCode, s.sentence_uuid as sentenceUuid, s.sentence_serve_type as sentenceServeType from court_case cc
+    select cc.case_unique_identifier as courtCaseUuid, ca.court_case_reference as caseReference, ca.appearance_date as appearanceDate, ca.court_code as courtCode, c.offence_code as offenceCode, c.legacy_data->>'offenceDescription' as chargeLegacyOffenceDescription, s.sentence_uuid as sentenceUuid, s.sentence_serve_type as sentenceServeType from court_case cc
     join court_appearance ca on ca.court_case_id = cc.id
     join appearance_charge ac on ac.appearance_id = ca.id
     join charge c on c.id = ac.charge_id
