@@ -13,6 +13,7 @@ class PrisonRegisterService(private val prisonRegisterClient: PrisonRegisterClie
       return prisonRegisterClient.getAgencyDetails(agencyId)
     } catch (e: Exception) {
       log.error("Unable to retrieve agency details for agency id {}. API lookup failed.", agencyId)
+      log.debug(e.message)
     }
     return null
   }

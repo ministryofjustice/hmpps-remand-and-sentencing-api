@@ -6,7 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.RecallSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.CourtRegisterService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonRecordService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
 
 @Configuration
@@ -18,13 +18,13 @@ class SubjectAccessRequestConfiguration {
     courtCaseSarRepository: CourtCaseSarRepository,
     recallSarRepository: RecallSarRepository,
     immigrationDetentionSarRepository: ImmigrationDetentionSarRepository,
-    personService: PersonService,
+    personRecordService: PersonRecordService,
     courtRegisterService: CourtRegisterService,
   ): PrisonerDetailsService = PrisonerDetailsService(
     courtCaseSarRepository,
     recallSarRepository,
     immigrationDetentionSarRepository,
-    personService,
+    personRecordService,
     courtRegisterService,
   )
 }

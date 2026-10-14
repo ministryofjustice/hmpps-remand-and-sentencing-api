@@ -10,9 +10,11 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.CourtRegisterApiExtension
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PersonRecordExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.PrisonApiExtension
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.subjectaccessrequest.PrisonerDetailsService
@@ -353,7 +355,7 @@ class SarIntegrationTests :
   private fun arrange() {
     // Data setup
     val (sentenceOne, _) = createCourtCaseTwoSentences()
-    PrisonApiExtension.prisonApi.stubGetPrisonerDetails(DpsDataCreator.DEFAULT_PRISONER_ID)
+    PersonRecordExtension.personRecord.stubGetPersonPrison(DpsDataCreator.DEFAULT_PRISONER_ID, PersonPrison("Cormac", "Meza", null))
     CourtRegisterApiExtension.courtRegisterApi.stubGetCourtRegister("COURT1")
     AdjustmentsApiExtension.adjustmentsApi.stubAllowCreateAdjustments()
     createRecall(

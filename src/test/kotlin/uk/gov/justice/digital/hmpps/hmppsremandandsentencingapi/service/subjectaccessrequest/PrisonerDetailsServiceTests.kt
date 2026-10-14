@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.RecallSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.CourtRegisterService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonRecordService
 import java.time.LocalDate
 
 @ExtendWith(MockKExtension::class)
@@ -28,7 +28,7 @@ class PrisonerDetailsServiceTests {
   private lateinit var immigrationDetentionSarRepository: ImmigrationDetentionSarRepository
 
   @MockK
-  private lateinit var personService: PersonService
+  private lateinit var personRecordService: PersonRecordService
 
   @MockK
   private lateinit var courtRegisterService: CourtRegisterService
@@ -349,7 +349,7 @@ class PrisonerDetailsServiceTests {
     every { courtRegisterService.getCourtRegisterByCourtCodeCached(any()) } returns MockedResponseData.constructCourtRegister(
       prn,
     )
-    every { personService.getPersonDetailsByPrisonerIdCached(prn) } returns MockedResponseData.constructPrisonerDetails(
+    every { personRecordService.getPersonPrisonCached(prn) } returns MockedResponseData.constructPrisonerDetails(
       prn,
     )
   }
@@ -358,7 +358,7 @@ class PrisonerDetailsServiceTests {
     every { courtCaseSarRepository.findByPrisonerId(prn) } returns listOf()
     every { recallSarRepository.findByPrisonerId(prn) } returns listOf()
     every { immigrationDetentionSarRepository.findByPrisonerId(prn) } returns listOf()
-    every { personService.getPersonDetailsByPrisonerIdCached(prn) } returns MockedResponseData.constructPrisonerDetails(
+    every { personRecordService.getPersonPrisonCached(prn) } returns MockedResponseData.constructPrisonerDetails(
       prn,
     )
   }

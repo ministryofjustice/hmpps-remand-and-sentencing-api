@@ -13,6 +13,7 @@ class ManageOffencesService(private val manageOffencesApiClient: ManageOffencesA
       return manageOffencesApiClient.getOffenceDetails(offenceCode)
     } catch (e: Exception) {
       log.error("Unable to retrieve offence details for offence code {}. API lookup failed.", offenceCode)
+      log.debug(e.message)
     }
     return null
   }

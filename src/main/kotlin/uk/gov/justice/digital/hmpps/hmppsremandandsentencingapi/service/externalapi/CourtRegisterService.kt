@@ -15,6 +15,7 @@ class CourtRegisterService(private val courtRegisterApiClient: CourtRegisterApiC
       return courtRegisterApiClient.getCourtRegister(courtCode)
     } catch (e: Exception) {
       log.error("Unable to retrieve court name for courtCode {}. API lookup failed.", courtCode)
+      log.debug(e.message)
     }
     return null
   }

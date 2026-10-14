@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi
 
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.PersonRecordClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
@@ -8,11 +9,23 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Perso
 @Service
 class PersonRecordService(private val personRecordClient: PersonRecordClient) {
 
+  @Cacheable("personPrisonCached")
+  fun getPersonPrisonCached(prisonerId: String): PersonPrison? {
+    try {
+      return personRecordClient.getPersonPrison(prisonerId)
+    } catch (e: Exception) {
+      log.error("Unable to retrieve person details for prisonerId {}. API lookup failed.", prisonerId)
+      log.debug(e.message)
+    }
+    return null
+  }
+
   fun getPersonPrison(prisonerId: String): PersonPrison? {
     try {
       return personRecordClient.getPersonPrison(prisonerId)
     } catch (e: Exception) {
-      log.error("Unable to retrieve offence details for prisoner id {}. API lookup failed.", prisonerId)
+      log.error("Unable to retrieve person details for prisoner id {}. API lookup failed.", prisonerId)
+      log.debug(e.message)
     }
     return null
   }

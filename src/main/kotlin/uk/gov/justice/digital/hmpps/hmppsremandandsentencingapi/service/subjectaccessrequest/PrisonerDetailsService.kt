@@ -19,14 +19,14 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.ImmigrationDetentionSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.subjectaccessrequest.RecallSarRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.CourtRegisterService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonRecordService
 import java.time.LocalDate
 
 class PrisonerDetailsService(
   private val courtCaseSarRepository: CourtCaseSarRepository,
   private val recallSarRepository: RecallSarRepository,
   private val immigrationDetentionSarRepository: ImmigrationDetentionSarRepository,
-  private val personService: PersonService,
+  private val personRecordService: PersonRecordService,
   private val courtRegisterService: CourtRegisterService,
 ) {
   fun getPrisonerDetails(
@@ -42,7 +42,7 @@ class PrisonerDetailsService(
       return null
     }
 
-    val personDetails = personService.getPersonDetailsByPrisonerIdCached(prisonerNumber)
+    val personDetails = personRecordService.getPersonPrisonCached(prisonerNumber)
     val prisonerName = personDetails?.let { "${personDetails.firstName} ${personDetails.lastName}" }
 
     return Prisoner(prisonerNumber, prisonerName, courtCases, recalls, immigrationDetentions)
