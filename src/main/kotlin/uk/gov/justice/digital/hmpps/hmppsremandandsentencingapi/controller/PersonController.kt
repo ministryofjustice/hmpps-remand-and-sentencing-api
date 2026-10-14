@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.PrisonerDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonFixManyChargesToSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentenceenvelopes.PrisonerSentenceEnvelopes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
@@ -130,15 +131,16 @@ class PersonController(
   )
   @ApiResponses(
     value = [
-      ApiResponse(responseCode = "204", description = "Fix applied"),
+      ApiResponse(responseCode = "200", description = "Fix applied"),
       ApiResponse(responseCode = "401", description = "Unauthorised"),
       ApiResponse(responseCode = "403", description = "Forbidden"),
     ],
   )
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  fun fixManyChargesToSentence(@PathVariable prisonerId: String) {
+  @ResponseStatus(HttpStatus.OK)
+  fun fixManyChargesToSentence(@PathVariable prisonerId: String): PersonFixManyChargesToSentence {
     val events = fixManyChargesToSentenceService.fixPrisoner(prisonerId)
     dpsDomainEventService.emitEvents(events)
+    return PersonFixManyChargesToSentence(events.any { it.hasUnconfirmedConsecutiveToFix == true })
   }
 
   @GetMapping("/{prisonerId}/booking-court-case-count")

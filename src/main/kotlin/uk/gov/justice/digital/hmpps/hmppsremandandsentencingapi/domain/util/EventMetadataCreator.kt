@@ -48,7 +48,8 @@ class EventMetadataCreator {
       courtAppearanceId: String,
       eventType: EventType,
       originalSentenceId: String,
-    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, sentenceId, null, eventType, originalSentenceId = originalSentenceId)
+      hasUnconfirmedConsecutiveToFix: Boolean,
+    ): EventMetadata = EventMetadata(prisonerId, courtCaseId, courtAppearanceId, chargeId, sentenceId, null, eventType, originalSentenceId = originalSentenceId, hasUnconfirmedConsecutiveToFix = hasUnconfirmedConsecutiveToFix)
 
     fun recallEventMetadata(
       prisonerId: String,

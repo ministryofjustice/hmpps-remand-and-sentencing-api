@@ -17,7 +17,9 @@ class ManyChargesToSentenceTests : IntegrationTestBase() {
     val sentence = DataCreator.migrationCreateSentence()
     val firstCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 1, sentence = sentence)
     val secondCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 2, sentence = sentence)
-    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val consecutiveToSentence = DataCreator.migrationCreateSentence(sentenceId = DataCreator.migrationSentenceId(sentence.sentenceId.offenderBookingId, sentence.sentenceId.sequence + 1), consecutiveToSentenceId = sentence.sentenceId)
+    val consecutiveToCharge = DataCreator.migrationCreateCharge(chargeNOMISId = 3, sentence = consecutiveToSentence)
+    val appearance = DataCreator.migrationCreateCourtAppearance(charges = listOf(firstCharge, secondCharge, consecutiveToCharge))
     val courtCase = DataCreator.migrationCreateCourtCase(appearances = listOf(appearance))
     val courtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(courtCase))
     val response = webTestClient
@@ -47,7 +49,10 @@ class ManyChargesToSentenceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isNoContent
+      .isOk
+      .expectBody()
+      .jsonPath("$.anyConsecutiveToFixes")
+      .isEqualTo(true)
 
     val sentencesAfter = sentenceRepository.findBySentenceUuid(sentenceUuid)
     assertThat(sentencesAfter).hasSize(1)
@@ -90,7 +95,10 @@ class ManyChargesToSentenceTests : IntegrationTestBase() {
       }
       .exchange()
       .expectStatus()
-      .isNoContent
+      .isOk
+      .expectBody()
+      .jsonPath("$.anyConsecutiveToFixes")
+      .isEqualTo(false)
 
     val periodLengthRecords = periodLengthRepository.findByPeriodLengthUuid(breachPeriodUuid)
     assertThat(periodLengthRecords).extracting<PeriodLengthEntityStatus> { it.statusId }.containsExactlyInAnyOrder(
