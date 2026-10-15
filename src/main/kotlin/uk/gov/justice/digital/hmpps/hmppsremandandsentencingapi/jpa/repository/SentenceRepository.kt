@@ -61,6 +61,8 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   fun findBySentenceUuid(sentenceUuid: UUID): List<SentenceEntity>
 
+  fun findBySentenceUuidAndStatusIdNot(sentenceUuid: UUID, statusId: SentenceEntityStatus = SentenceEntityStatus.DELETED): List<SentenceEntity>
+
   fun findBySentenceUuidAndStatusId(sentenceUuid: UUID, status: SentenceEntityStatus): List<SentenceEntity>
 
   @Query(

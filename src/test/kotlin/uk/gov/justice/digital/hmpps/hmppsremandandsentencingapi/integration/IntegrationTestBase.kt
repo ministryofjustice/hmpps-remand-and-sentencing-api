@@ -356,9 +356,10 @@ abstract class IntegrationTestBase {
     legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(),
     legacySentence: LegacyCreateSentence =
       DataCreator.legacyCreateSentence(),
+    chargeAppearanceUuid: Pair<UUID, UUID>? = null,
   ): Pair<UUID, LegacyCreateSentence> {
-    val (chargeLifetimeUuid, toCreateLegacyCharge) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
-    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeLifetimeUuid), appearanceUuid = toCreateLegacyCharge.appearanceLifetimeUuid)
+    val (chargeUuid, appearanceUuid) = chargeAppearanceUuid ?: createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge).let { it.first to it.second.appearanceLifetimeUuid }
+    val toCreateSentence = legacySentence.copy(chargeUuids = listOf(chargeUuid), appearanceUuid = appearanceUuid)
     val response = webTestClient
       .post()
       .uri("/legacy/sentence")
