@@ -89,6 +89,37 @@ class LegacyCreatePeriodLengthTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `create period length on moved sentence`() {
+    val (firstChargeUuid, firstCreatedCharge) = createLegacyCharge()
+    val (sentenceUuid, createdSentence) = createLegacySentence(chargeAppearanceUuid = firstChargeUuid to firstCreatedCharge.appearanceLifetimeUuid)
+    val (otherChargeUuid, createdCharge) = createLegacyCharge()
+    val toUpdate = createdSentence.copy(chargeUuids = listOf(otherChargeUuid), appearanceUuid = createdCharge.appearanceLifetimeUuid)
+    putLegacySentence(sentenceUuid, toUpdate)
+    webTestClient
+      .delete()
+      .uri("/legacy/court-appearance/${firstCreatedCharge.appearanceLifetimeUuid}/charge/$firstChargeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+    val periodLength = DataCreator.legacyCreatePeriodLength(sentenceUUID = sentenceUuid)
+    webTestClient
+      .post()
+      .uri("/legacy/period-length")
+      .bodyValue(periodLength)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_PERIOD_LENGTH_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+  }
+
+  @Test
   fun `fails to create period length if no sentence exists`() {
     val legacyCreatePeriodLength = DataCreator.legacyCreatePeriodLength()
     webTestClient
