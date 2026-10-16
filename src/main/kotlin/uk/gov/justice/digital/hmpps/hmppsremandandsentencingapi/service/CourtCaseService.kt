@@ -248,4 +248,7 @@ class CourtCaseService(
 
   @Transactional(readOnly = true)
   fun getUnconfirmedSentenceFixCourtCases(prisonerId: String): UnconfirmedCourtCases = UnconfirmedCourtCases.from(courtCaseRepository.findUnconfirmedSentenceFixCourtCases(prisonerId))
+
+  @Transactional(readOnly = true)
+  fun getUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids: List<String>): UnconfirmedCourtCases = UnconfirmedCourtCases.from(courtCaseRepository.findUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids))
 }
