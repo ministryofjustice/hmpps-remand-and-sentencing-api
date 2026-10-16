@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Referen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -144,8 +145,8 @@ class HmctsCourtDataService(
     }
   }
 
-  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing, charges: List<HmctsCourtCharge>): NextCourtAppearance? {
-    val hearingDate = nextAppearance.hearingDate?.toLocalDate() ?: return null
+  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing, charges: List<HmctsCourtCharge>): NextCourtAppearance {
+    val hearingDate = nextAppearance.hearingDate?.toLocalDate() ?: return blankNextCourtAppearance()
     val chargeLevelNextAppearanceDates = charges.flatMap { charge ->
       charge.results.filter { result -> NEXT_COURT_APPEARANCE_RESULT_CODES.contains(result.code) }
         .mapNotNull {
@@ -160,7 +161,7 @@ class HmctsCourtDataService(
       .map { LocalDate.parse(it, PCR_DATE_FORMAT) }
 
     if (chargeLevelNextAppearanceDates.any { it != hearingDate }) {
-      return null
+      return blankNextCourtAppearance()
     }
     return NextCourtAppearance(
       appearanceDate = nextAppearance.hearingDate.toLocalDate(),
@@ -278,5 +279,23 @@ class HmctsCourtDataService(
     private val NEXT_COURT_APPEARANCE_RESULT_CODES = listOf("NHMC", "NHCSSS")
     val PCR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val NEXT_MAGISTRATE_REGEX = Regex("""Date of hearing:\s*(\d{2}/\d{2}/\d{4})""")
+
+    /*
+      Blank next court appearance indicates that there is a next court appearance, but date/time/location can't be found.
+     */
+    fun blankNextCourtAppearance(): NextCourtAppearance = NextCourtAppearance(
+      appearanceDate = LocalDate.MIN,
+      appearanceTime = LocalTime.MIN,
+      courtCode = Constants.nilUUID.toString(),
+      appearanceType = AppearanceType(
+        appearanceTypeUuid = Constants.nilUUID,
+        description = "Unknown appearance type",
+        displayOrder = 1,
+        hasSubtypes = false,
+      ),
+      futureSkeletonAppearanceUuid = Constants.nilUUID,
+      courtAppearanceSubType = null,
+      hmctsCourtHearingId = null,
+    )
   }
 }
