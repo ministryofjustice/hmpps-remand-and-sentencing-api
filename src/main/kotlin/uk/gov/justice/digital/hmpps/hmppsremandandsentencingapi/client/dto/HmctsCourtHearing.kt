@@ -80,4 +80,6 @@ enum class HmctsResultKeys(val key: String, val sentencing: Boolean = false) {
   FOREIGN_POWER_SECTION_31("This offence is aggravated by the foreign power condition being met in relation to it as defined by section 31 of the National Security Act 2023"),
   TOTAL_CUSTODIAL_PERIOD("Total custodial period", true),
   WHICH_IS_ON_CASE_NUMBER("Which is on case number", true),
+  DATE_OF_HEARING("Date of hearing"),
+  NEXT_HEARING_IN_MAGISTRATES_COURT("Next hearing in magistrates' court"),
 }
