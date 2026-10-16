@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
@@ -309,4 +310,19 @@ class CourtCaseController(
     dpsDomainEventService.emitEvents(eventsToEmit)
     sentencedCharges
   } ?: throw EntityNotFoundException("No court case found at $courtCaseUuid")
+
+  @GetMapping("/court-case/multiple/unconfirmed-sentence-fix-court-cases")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "retrieve unconfirmed sentence fix court cases for court case UUIDS",
+    description = "This endpoint will retrieve unconfirmed sentence fix court cases for court case UUIDs",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns unconfirmed sentence fix court cases for court case uuids"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun getUnconfirmedSentenceFixCourtCasesByUuids(@RequestParam courtCaseUuids: List<String>): UnconfirmedCourtCases = courtCaseService.getUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids)
 }
