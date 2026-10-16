@@ -27,8 +27,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Referen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Component
@@ -65,7 +65,7 @@ class HmctsCourtDataService(
       criminalAppealOfficeReference = null,
       appearanceDate = hearing.hearingDate,
       warrantType = mapWarrantType(hearing),
-      nextCourtAppearance = hearing.nextHearing?.let { mapNextCourtAppearance(it) },
+      nextCourtAppearance = hearing.nextHearing?.let { mapNextCourtAppearance(it, hearing.charges) },
       charges = charges,
       overallConvictionDate = overallConvictionDate(charges),
       legacyData = null,
@@ -144,20 +144,39 @@ class HmctsCourtDataService(
     }
   }
 
-  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing): NextCourtAppearance = NextCourtAppearance(
-    appearanceDate = nextAppearance.hearingDate?.toLocalDate() ?: LocalDate.MIN,
-    appearanceTime = nextAppearance.hearingDate?.toLocalTime() ?: LocalTime.MIN,
-    courtCode = nextAppearance.hmppsCourtId ?: Constants.nilUUID.toString(),
-    appearanceType = AppearanceType(
-      appearanceTypeUuid = Constants.nilUUID,
-      description = "Unknown appearance type",
-      displayOrder = 1,
-      hasSubtypes = false,
-    ),
-    futureSkeletonAppearanceUuid = Constants.nilUUID,
-    courtAppearanceSubType = null,
-    hmctsCourtHearingId = nextAppearance.hearingId,
-  )
+  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing, charges: List<HmctsCourtCharge>): NextCourtAppearance? {
+    val hearingDate = nextAppearance.hearingDate?.toLocalDate() ?: return null
+    val chargeLevelNextAppearanceDates = charges.flatMap { charge ->
+      charge.results.filter { result -> NEXT_COURT_APPEARANCE_RESULT_CODES.contains(result.code) }
+        .mapNotNull {
+          val date = it.findValue(HmctsResultKeys.DATE_OF_HEARING) ?: return@mapNotNull null
+          LocalDate.parse(date, PCR_DATE_FORMAT)
+        }
+    }.toMutableList()
+
+    chargeLevelNextAppearanceDates += charges.flatMap { it.results }
+      .mapNotNull { it.findValue(HmctsResultKeys.NEXT_HEARING_IN_MAGISTRATES_COURT) }
+      .mapNotNull { NEXT_MAGISTRATE_REGEX.find(it)?.groupValues?.get(1) }
+      .map { LocalDate.parse(it, PCR_DATE_FORMAT) }
+
+    if (chargeLevelNextAppearanceDates.any { it != hearingDate }) {
+      return null
+    }
+    return NextCourtAppearance(
+      appearanceDate = nextAppearance.hearingDate.toLocalDate(),
+      appearanceTime = nextAppearance.hearingDate.toLocalTime(),
+      courtCode = nextAppearance.hmppsCourtId ?: Constants.nilUUID.toString(),
+      appearanceType = AppearanceType(
+        appearanceTypeUuid = Constants.nilUUID,
+        description = "Unknown appearance type",
+        displayOrder = 1,
+        hasSubtypes = false,
+      ),
+      futureSkeletonAppearanceUuid = Constants.nilUUID,
+      courtAppearanceSubType = null,
+      hmctsCourtHearingId = nextAppearance.hearingId,
+    )
+  }
 
   private fun mapCharge(
     charge: HmctsCourtCharge,
@@ -256,5 +275,8 @@ class HmctsCourtDataService(
   }
   companion object {
     private const val FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE = "FODA"
+    private val NEXT_COURT_APPEARANCE_RESULT_CODES = listOf("NHMC", "NHCSSS")
+    val PCR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    private val NEXT_MAGISTRATE_REGEX = Regex("""Date of hearing:\s*(\d{2}/\d{2}/\d{4})""")
   }
 }
