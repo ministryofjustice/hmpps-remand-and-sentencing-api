@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Referen
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.HmctsCourtDataService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.HmctsCourtDataService.Companion.blankNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -484,7 +485,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       .returnResult(CourtAppearance::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.nextCourtAppearance).isNull()
+    Assertions.assertThat(response.nextCourtAppearance).isEqualTo(blankNextCourtAppearance())
   }
 
   @Test
@@ -538,7 +539,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       .returnResult(CourtAppearance::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.nextCourtAppearance).isNull()
+    Assertions.assertThat(response.nextCourtAppearance).isEqualTo(blankNextCourtAppearance())
   }
 
   @Test
@@ -641,7 +642,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       .returnResult(CourtAppearance::class.java)
       .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.nextCourtAppearance).isNull()
+    Assertions.assertThat(response.nextCourtAppearance).isEqualTo(blankNextCourtAppearance())
   }
 
   @ParameterizedTest(name = "Tests that offence results are mapped from hmcts {0} to ras outcome {1}")
