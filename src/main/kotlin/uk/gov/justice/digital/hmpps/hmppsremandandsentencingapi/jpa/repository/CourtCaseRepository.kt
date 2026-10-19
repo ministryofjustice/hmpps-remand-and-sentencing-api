@@ -375,4 +375,22 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun findUnconfirmedSentenceFixCourtCases(@Param("prisonerId") prisonerId: String): List<UnconfirmedSentenceFixCourtCaseRow>
+
+  @Query(
+    """
+    select cc.case_unique_identifier as courtCaseUuid, ca.court_case_reference as caseReference, ca.appearance_date as appearanceDate, ca.court_code as courtCode, c.offence_code as offenceCode, c.legacy_data->>'offenceDescription' as chargeLegacyOffenceDescription, s.sentence_uuid as sentenceUuid, s.sentence_serve_type as sentenceServeType from court_case cc
+    join court_appearance ca on ca.court_case_id = cc.id
+    join appearance_charge ac on ac.appearance_id = ca.id
+    join charge c on c.id = ac.charge_id
+    join sentence s on s.charge_id = c.id
+    where cc.case_unique_identifier in :courtCaseUuids
+    and cc.status_id != 'DELETED'
+    and ca.status_id != 'DELETED'
+    and c.status_id != 'DELETED'
+    and s.status_id != 'DELETED'
+    and s.has_unconfirmed_consecutive_to_fix = true
+  """,
+    nativeQuery = true,
+  )
+  fun findUnconfirmedSentenceFixCourtCasesByUuids(@Param("courtCaseUuids") courtCaseUuids: List<String>): List<UnconfirmedSentenceFixCourtCaseRow>
 }

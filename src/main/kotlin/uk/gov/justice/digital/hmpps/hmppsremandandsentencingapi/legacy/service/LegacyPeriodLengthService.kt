@@ -35,7 +35,7 @@ class LegacyPeriodLengthService(
 ) {
   @Transactional
   fun create(periodLength: LegacyCreatePeriodLength): RecordResponse<LegacyPeriodLengthCreatedResponse> {
-    val sentenceEntities = sentenceRepository.findBySentenceUuid(periodLength.sentenceUuid)
+    val sentenceEntities = sentenceRepository.findBySentenceUuidAndStatusIdNot(periodLength.sentenceUuid)
     val firstSentenceEntity = sentenceEntities.firstOrNull()
       ?: throw EntityNotFoundException("No sentence found with UUID ${periodLength.sentenceUuid}")
 
