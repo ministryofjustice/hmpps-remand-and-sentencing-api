@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReason
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusReasonDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.ConfirmConsecutiveToSentenceFixes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -395,6 +396,16 @@ class SentenceService(
     }
     DeleteSentenceStatusDetails(status, reasons)
   } ?: DeleteSentenceStatusDetails(DeleteSentenceStatus.SUPPORTED, emptyList())
+
+  @Transactional
+  fun confirmConsecutiveToSentenceFixes(confirmConsecutiveToSentenceFixes: ConfirmConsecutiveToSentenceFixes) {
+    sentenceRepository.findBySentenceUuidInAndStatusIdNot(confirmConsecutiveToSentenceFixes.sentenceUuids).filter { it.hasUnconfirmedConsecutiveToFix == true }.forEach { sentenceEntity ->
+      sentenceEntity.hasUnconfirmedConsecutiveToFix = null
+      sentenceEntity.updatedBy = serviceUserService.getUsername()
+      sentenceEntity.updatedAt = ZonedDateTime.now()
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity, ChangeSource.DPS))
+    }
+  }
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

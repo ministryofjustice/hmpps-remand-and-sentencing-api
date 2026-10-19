@@ -5,12 +5,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ConsecutiveChainValidationRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.HasSentenceAfterOnOtherCourtAppearanceResponse
@@ -21,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesAfterOnOtherCourtAppearanceDetailsResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.delete.DeleteSentenceStatusDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentence.details.SentenceDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.ConfirmConsecutiveToSentenceFixes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceService
 import java.util.UUID
@@ -180,4 +184,20 @@ class SentenceController(private val sentenceService: SentenceService, private v
     ],
   )
   fun deleteSentenceStatus(@PathVariable sentenceUuid: UUID, @RequestParam(required = false, defaultValue = "") sentenceUuidsInChain: List<UUID>): DeleteSentenceStatusDetails = sentenceService.findSentenceDeleteStatusByUuid(sentenceUuid, sentenceUuidsInChain)
+
+  @PutMapping("/sentence/confirm-consecutive-to-sentence-fix")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
+  @Operation(
+    summary = "Confirm consecutive to sentence fixes",
+    description = "This endpoint will mark unconfirmed consecutive to sentence fixes to confirmed",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "204", description = "confirmed consecutive to sentence fixes"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun confirmConsecutiveToSentenceFixes(@RequestBody confirmConsecutiveToSentenceFixes: ConfirmConsecutiveToSentenceFixes) = sentenceService.confirmConsecutiveToSentenceFixes(confirmConsecutiveToSentenceFixes)
 }
