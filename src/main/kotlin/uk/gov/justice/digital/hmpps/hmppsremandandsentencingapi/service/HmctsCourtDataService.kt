@@ -52,7 +52,8 @@ class HmctsCourtDataService(
       .filter { it.duplicateOf == null }
     val chargeOutcomes = chargeOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
     val aggravatingFactors = aggravatingFactorsService.getAllByStatuses(listOf(AggravatingFactorStatus.ACTIVE))
-    var charges = hearing.charges.map { mapCharge(it, chargeOutcomes, aggravatingFactors) }
+    val anyConviction = hearing.charges.any { it.convictionDate != null }
+    var charges = hearing.charges.map { mapCharge(it, chargeOutcomes, aggravatingFactors, anyConviction) }
     charges = setFirstSentencedChargeToForthwith(charges)
 
     val appearanceOutcome = appearanceOutcome(charges)
@@ -114,8 +115,8 @@ class HmctsCourtDataService(
 
   private fun appearanceOutcome(charges: List<Charge>): CourtAppearanceOutcome? {
     val chargeOutcomeIds = charges.mapNotNull { it.outcome?.outcomeUuid }
-    return if (chargeOutcomeIds.distinct().size == 1) {
-      // All charge outcomes the same, find matching appearance outcome.
+    return if (chargeOutcomeIds.size == charges.size && chargeOutcomeIds.distinct().size == 1) {
+      // All charge outcomes the same and non-null, find matching appearance outcome.
       val chargeOutcomeId = chargeOutcomeIds.first()
       val appearanceOutcomes = appearanceOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
       appearanceOutcomes.find { it.relatedChargeOutcomeUuid == chargeOutcomeId }
@@ -183,12 +184,18 @@ class HmctsCourtDataService(
     charge: HmctsCourtCharge,
     chargeOutcomes: List<ChargeOutcome>,
     aggravatingFactors: List<AggravatingFactor>,
+    anyConviction: Boolean,
   ): Charge {
     val resultsWithMapping = charge.results.filter { result -> chargeOutcomes.find { result.code == it.hmctsCode } != null }
     val factors = aggravatingFactors.filter { factor -> charge.results.find { it.code == factor.code } != null }
     val findingOfDomesticAbuse = charge.results.any { it.code == FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE }
     val outcome = if (resultsWithMapping.size == 1) {
-      chargeOutcomes.find { it.hmctsCode == resultsWithMapping.first().code }
+      val resultCode = resultsWithMapping.first().code
+      if (resultCode == "RI" && anyConviction) {
+        null
+      } else {
+        chargeOutcomes.find { it.hmctsCode == resultCode }
+      }
     } else {
       null
     }
