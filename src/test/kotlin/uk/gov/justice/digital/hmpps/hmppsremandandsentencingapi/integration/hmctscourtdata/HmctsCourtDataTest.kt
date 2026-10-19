@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.hmctscourtdata
 
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -43,6 +44,17 @@ import java.util.UUID
 import java.util.stream.Stream
 
 class HmctsCourtDataTest : IntegrationTestBase() {
+  @BeforeEach
+  fun setUp() {
+    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
+      listOf(
+        DocumentManagementApiDocument(
+          DOCUMENT_ID,
+          documentFilename = "warrant.pdf",
+        ),
+      ),
+    )
+  }
 
   @Test
   fun `Test get remand appearance from hmcts data`() {
@@ -51,14 +63,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
       prisonerNumber,
-    )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
     )
 
     val response = webTestClient
@@ -145,7 +149,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           UploadedDocument(
             documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
-            fileName = "RemandWarrant.pdf",
+            fileName = "warrant.pdf",
           ),
         ),
         source = EventSource.DPS,
@@ -162,14 +166,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
       prisonerNumber,
-    )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
     )
 
     val response = webTestClient
@@ -266,7 +262,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           UploadedDocument(
             documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
-            fileName = "RemandWarrant.pdf",
+            fileName = "warrant.pdf",
           ),
         ),
         source = EventSource.DPS,
@@ -297,14 +293,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       hmctsCourtHearing,
       prisonerNumber,
     )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
-    )
+
     val response = webTestClient
       .get()
       .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
@@ -375,14 +364,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       hmctsCourtHearing,
       prisonerNumber,
     )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
-    )
 
     val response = webTestClient
       .get()
@@ -424,7 +405,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           UploadedDocument(
             documentUUID = DOCUMENT_ID,
             documentType = "HMCTS_WARRANT",
-            fileName = "RemandWarrant.pdf",
+            fileName = "warrant.pdf",
           ),
         ),
         source = EventSource.DPS,
@@ -463,14 +444,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
       prisonerNumber,
-    )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
     )
 
     val response = webTestClient
@@ -518,14 +491,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       hmctsCourtHearing,
       prisonerNumber,
     )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
-    )
 
     val response = webTestClient
       .get()
@@ -572,14 +537,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       hmctsCourtHearing,
       prisonerNumber,
     )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
-    )
 
     val response = webTestClient
       .get()
@@ -621,14 +578,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       hmctsCourtHearing,
       prisonerNumber,
     )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
-    )
 
     val response = webTestClient
       .get()
@@ -643,6 +592,36 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       .responseBody.blockFirst()!!
 
     Assertions.assertThat(response.nextCourtAppearance).isEqualTo(blankNextCourtAppearance())
+  }
+
+  @Test
+  fun `Test remand in custody with a conviction date results in null outcome`() {
+    val prisonerNumber = "PRIS123"
+    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
+      charges = listOf(
+        HMCTS_REMANDED_CHARGE.copy(convictionDate = HMCTS_REMAND_HEARING.hearingDate),
+        HMCTS_REMANDED_CHARGE.copy(),
+      ),
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      prisonerNumber,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$prisonerNumber/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.charges.all { it.outcome == null }).isTrue
+    Assertions.assertThat(response.outcome).isNull()
   }
 
   @ParameterizedTest(name = "Tests that offence results are mapped from hmcts {0} to ras outcome {1}")
@@ -690,14 +669,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
       prisonerNumber,
-    )
-    DocumentManagementApiExtension.documentManagementApi.stubGetDocumentsFromIds(
-      listOf(
-        DocumentManagementApiDocument(
-          DOCUMENT_ID,
-          documentFilename = "RemandWarrant.pdf",
-        ),
-      ),
     )
 
     val response = webTestClient
