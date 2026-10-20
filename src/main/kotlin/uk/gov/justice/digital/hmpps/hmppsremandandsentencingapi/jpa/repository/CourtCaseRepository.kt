@@ -393,4 +393,26 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun findUnconfirmedSentenceFixCourtCasesByUuids(@Param("courtCaseUuids") courtCaseUuids: List<String>): List<UnconfirmedSentenceFixCourtCaseRow>
+
+  @Query(
+    """
+    select exists (
+      select 1
+      from court_case cc
+      where cc.prisoner_id = :prisonerId
+        and cc.status_id = 'ACTIVE'
+        and (
+          select ao.outcome_type
+          from court_appearance ca
+          join appearance_outcome ao on ao.id = ca.appearance_outcome_id
+          where ca.court_case_id = cc.id
+            and ca.status_id = 'ACTIVE'
+          order by ca.appearance_date desc, ca.created_at desc
+          limit 1
+        ) = 'REMAND'
+    )
+    """,
+    nativeQuery = true,
+  )
+  fun hasActiveCaseWithLatestRemandOutcome(@Param("prisonerId") prisonerId: String): Boolean
 }

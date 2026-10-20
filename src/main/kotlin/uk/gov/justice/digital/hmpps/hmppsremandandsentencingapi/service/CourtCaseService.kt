@@ -251,4 +251,7 @@ class CourtCaseService(
 
   @Transactional(readOnly = true)
   fun getUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids: List<String>): UnconfirmedCourtCases = UnconfirmedCourtCases.from(courtCaseRepository.findUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids))
+
+  @Transactional(readOnly = true)
+  fun isOnRemand(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(prisonerId)
 }

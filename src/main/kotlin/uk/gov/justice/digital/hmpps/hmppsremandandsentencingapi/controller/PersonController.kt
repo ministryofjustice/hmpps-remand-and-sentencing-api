@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.d
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonFixManyChargesToSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentenceenvelopes.PrisonerSentenceEnvelopes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
@@ -60,6 +61,21 @@ class PersonController(
     ],
   )
   fun getPersonDetails(@PathVariable prisonerId: String): PersonDetails = personService.getPersonDetailsByPrisonerId(prisonerId)
+
+  @GetMapping("/{prisonerId}/status")
+  @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING__PRISONER__RO')")
+  @Operation(
+    summary = "Retrieve person status indicators",
+    description = "isOnRemand is true when an active court case has a latest appearance outcome of type REMAND",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns person status indicators"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun getPersonStatus(@PathVariable prisonerId: String): PersonStatus = PersonStatus(isOnRemand = courtCaseService.isOnRemand(prisonerId))
 
   @GetMapping("/{prisonerId}/sentenced-court-cases")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
