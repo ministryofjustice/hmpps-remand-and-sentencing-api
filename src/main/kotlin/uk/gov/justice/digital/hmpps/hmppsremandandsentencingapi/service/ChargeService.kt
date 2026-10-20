@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonCharge
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonChargeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonCharges
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
@@ -350,6 +353,8 @@ class ChargeService(
   @Transactional(readOnly = true)
   fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)?.let { Charge.from(it) }
 
+  @Transactional(readOnly = true)
+  fun findChargesByPrisonerId(prisonerId: String, statuses: List<PersonChargeStatus>): PersonCharges = PersonCharges(chargeRepository.findByPrisonerId(prisonerId, statuses.flatMap { it.courtCaseStatuses }).map { PersonCharge.from(it) })
   companion object {
     val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
   }
