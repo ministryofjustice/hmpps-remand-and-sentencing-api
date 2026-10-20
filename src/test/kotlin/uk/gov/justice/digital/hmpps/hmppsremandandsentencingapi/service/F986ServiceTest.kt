@@ -98,7 +98,7 @@ class F986ServiceTest {
     every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns CourtRegister("COURT1", "Liverpool Crown Court", "Liverpool Crown Court Description")
     every { personRecordService.getPersonPrison(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
-    every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)")
+    every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)", LocalDate.now())
     every { prisonRegisterService.getAgencyDetails("COURT1") } returns AgencyDetails(
       "COURT1",
       "COURT (#1)",

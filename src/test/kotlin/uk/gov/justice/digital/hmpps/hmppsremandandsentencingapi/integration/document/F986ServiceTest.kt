@@ -322,7 +322,14 @@ class F986ServiceTest : IntegrationTestBase() {
     )
     PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("KMI", AgencyDetails("KMI", "Kirkham (HMP)", "PRISON", true, listOf(AgencyDetails.Address("Freckleton Road", "Kirkham", "Preston", "Lancashire", "PR4 2RN")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
     PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("COURT1", AgencyDetails("COURT1", "COURT (#1)", "COURT", true, listOf(AgencyDetails.Address("Court Address Line 1", "Court Address Line 2", "Court Address Town", "Court Address County", "ABC DEF")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
-    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(DEFAULT_PRISONER_ID, PrisonSearchDetails("KMI", "Kirkham (HMP)"))
+    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+      DEFAULT_PRISONER_ID,
+      PrisonSearchDetails(
+        "KMI",
+        "Kirkham (HMP)",
+        LocalDate.now(),
+      ),
+    )
     ManageOffencesApiExtension.manageOffencesApi.stubManageOffences("AA06027", OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification"))
   }
 
@@ -366,7 +373,14 @@ class F986ServiceTest : IntegrationTestBase() {
         PersonPrison.Gender("N", "Not Known / Not Recorded"),
       ),
     )
-    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(DEFAULT_PRISONER_ID, PrisonSearchDetails("KMI", "Kirkham (HMP)"))
+    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+      DEFAULT_PRISONER_ID,
+      PrisonSearchDetails(
+        "KMI",
+        "Kirkham (HMP)",
+        LocalDate.now(),
+      ),
+    )
     PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("KMI", AgencyDetails("KMI", "Kirkham (HMP)", "PRISON", true, listOf(AgencyDetails.Address("Freckleton Road", "Kirkham", "Preston", "Lancashire", "PR4 2RN")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
     PrisonRegisterExtension.prisonRegister.stubGetAgencyDetails("COURT1", AgencyDetails("COURT1", "COURT (#1)", "COURT", true, listOf(AgencyDetails.Address("Court Address Line 1", "Court Address Line 2", "Court Address Town", "Court Address County", "ABC DEF")), listOf(AgencyDetails.Telephone(number = "0394839394"))))
     ManageOffencesApiExtension.manageOffencesApi.stubManageOffences("CJ88001", OffenceDetails(50171, "CJ88001", "Common assault"))
