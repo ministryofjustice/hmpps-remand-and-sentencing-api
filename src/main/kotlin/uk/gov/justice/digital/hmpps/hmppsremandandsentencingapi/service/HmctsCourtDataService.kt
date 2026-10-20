@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtDataIngestionApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.DocumentManagementApiClient
@@ -9,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Hmcts
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtResult
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsResultKeys
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AppearanceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Charge
@@ -25,15 +28,19 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Aggrava
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ReferenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceTypeClassification
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PrisonSearchService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Period
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Component
 class HmctsCourtDataService(
+  val prisonerSearchService: PrisonSearchService,
   val courtDataIngestionApi: CourtDataIngestionApiClient,
   val documentService: DocumentManagementApiClient,
   val chargeOutcomeService: ChargeOutcomeService,
@@ -44,16 +51,18 @@ class HmctsCourtDataService(
 
   fun getCourtAppearanceFromHmctsHearingId(courtHearingId: UUID, prisonerNumber: String): CourtAppearance {
     val hearing = courtDataIngestionApi.getCourtHearing(courtHearingId, prisonerNumber)
-    return getCourtAppearance(hearing)
+    return getCourtAppearance(hearing, prisonerNumber)
   }
 
-  private fun getCourtAppearance(hearing: HmctsCourtHearing): CourtAppearance {
+  private fun getCourtAppearance(hearing: HmctsCourtHearing, prisonerNumber: String): CourtAppearance {
+    val prisoner = prisonerSearchService.getPrisoner(prisonerNumber) ?: throw EntityNotFoundException("No prisoner found for  $prisonerNumber")
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
       .filter { it.duplicateOf == null }
     val chargeOutcomes = chargeOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
     val aggravatingFactors = aggravatingFactorsService.getAllByStatuses(listOf(AggravatingFactorStatus.ACTIVE))
     val anyConviction = hearing.charges.any { it.convictionDate != null }
-    var charges = hearing.charges.map { mapCharge(it, chargeOutcomes, aggravatingFactors, anyConviction) }
+    var charges = hearing.charges.map { mapCharge(it, prisoner, chargeOutcomes, aggravatingFactors, anyConviction) }
+
     charges = setFirstSentencedChargeToForthwith(charges)
 
     val appearanceOutcome = appearanceOutcome(charges)
@@ -182,6 +191,7 @@ class HmctsCourtDataService(
 
   private fun mapCharge(
     charge: HmctsCourtCharge,
+    prisoner: PrisonSearchDetails,
     chargeOutcomes: List<ChargeOutcome>,
     aggravatingFactors: List<AggravatingFactor>,
     anyConviction: Boolean,
@@ -199,7 +209,7 @@ class HmctsCourtDataService(
     } else {
       null
     }
-    val sentence = mapSentence(charge, resultsWithMapping)
+    val sentence = mapSentence(charge, prisoner, resultsWithMapping, outcome)
     return Charge(
       chargeUuid = UUID.randomUUID(),
       offenceCode = charge.code,
@@ -216,8 +226,13 @@ class HmctsCourtDataService(
     )
   }
 
-  private fun mapSentence(charge: HmctsCourtCharge, resultsWithMapping: List<HmctsCourtResult>): Sentence? {
-    if (resultsWithMapping.size != 1) {
+  private fun mapSentence(
+    charge: HmctsCourtCharge,
+    prisoner: PrisonSearchDetails,
+    resultsWithMapping: List<HmctsCourtResult>,
+    outcome: ChargeOutcome?,
+  ): Sentence? {
+    if (resultsWithMapping.size != 1 || outcome == null || charge.convictionDate == null) {
       return null
     }
 
@@ -233,11 +248,29 @@ class HmctsCourtDataService(
       return null
     }
 
-    val sentenceType = if (extensionPeriod || extensionPeriod35) {
+    val expectedClassification = classificationFromHmctsResultCode(result.code)
+    val convictionDate = charge.convictionDate
+    val age = Period.between(prisoner.dateOfBirth, convictionDate).years
+    val offenceDate = charge.endDate ?: charge.startDate
+    val sentenceTypes = sentenceTypeService.search(
+      age,
+      convictionDate,
+      listOf(ReferenceEntityStatus.ACTIVE),
+      offenceDate,
+      outcome.outcomeUuid,
+    ).filter {
+      val classificationMatches = expectedClassification == null || expectedClassification == it.classification
+      val ora = expectedClassification != SentenceTypeClassification.STANDARD || it.description.contains("ORA") != offenceDate.isBefore(ORA_DATE)
+      return@filter classificationMatches && ora
+    }
+
+    val sentenceType = if (sentenceTypes.size != 1) {
       null
     } else {
-      sentenceTypeService.findByUuid(UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"))
+      sentenceTypeService.findByUuid(sentenceTypes.first().sentenceTypeUuid)
     }
+
+    log.debug("Found sentence types: ${sentenceTypes.size}, ${sentenceTypes.joinToString(", ") { it.description }}")
 
     if (!imprisonmentPeriod.isNullOrEmpty()) {
       val duration = HmctsDurationParts.parseDuration(imprisonmentPeriod)
@@ -262,7 +295,7 @@ class HmctsCourtDataService(
       consecutiveToSentenceUuid = null,
       sentenceServeType = if (consecutive) "CONSECUTIVE" else "CONCURRENT",
       sentenceType = sentenceType,
-      convictionDate = charge.convictionDate,
+      convictionDate = convictionDate,
       fineAmount = null,
       legacyData = null,
       hasRecall = false,
@@ -281,11 +314,20 @@ class HmctsCourtDataService(
   } else {
     "NON_SENTENCING"
   }
+
+  private fun classificationFromHmctsResultCode(hmctsResultCode: String): SentenceTypeClassification? = when (hmctsResultCode) {
+    "IMP", "YOI" -> SentenceTypeClassification.STANDARD
+    "DTO" -> SentenceTypeClassification.DTO
+    else -> null
+  }
+
   companion object {
     private const val FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE = "FODA"
     private val NEXT_COURT_APPEARANCE_RESULT_CODES = listOf("NHMC", "NHCSSS")
     val PCR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val NEXT_MAGISTRATE_REGEX = Regex("""Date of hearing:\s*(\d{2}/\d{2}/\d{4})""")
+    val ORA_DATE = LocalDate.of(2015, 2, 1)
+    private val log = LoggerFactory.getLogger(this::class.java)
 
     /*
       Blank next court appearance indicates that there is a next court appearance, but date/time/location can't be found.
