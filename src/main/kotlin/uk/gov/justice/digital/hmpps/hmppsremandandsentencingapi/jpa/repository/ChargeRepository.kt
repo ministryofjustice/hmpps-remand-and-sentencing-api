@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import java.util.*
 
 interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
@@ -93,4 +94,16 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     nativeQuery = true,
   )
   fun updateToSupportedChargeOutcome(@Param("chargeOutcomeId") chargeOutcomeId: Int, @Param("nomisCode") nomisCode: String)
+
+  @Query(
+    """
+    select c from ChargeEntity c
+    join c.appearanceCharges ac
+    join ac.appearance ca
+    join ca.courtCase cc
+    where cc.prisonerId = :prisonerId
+    and cc.statusId in :courtCaseStatuses
+  """,
+  )
+  fun findByPrisonerId(@Param("prisonerId") prisonerId: String, @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus>): List<ChargeEntity>
 }

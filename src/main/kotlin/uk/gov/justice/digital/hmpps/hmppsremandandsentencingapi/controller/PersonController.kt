@@ -22,9 +22,12 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.d
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonFixManyChargesToSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonChargeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonCharges
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentenceenvelopes.PrisonerSentenceEnvelopes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.PersonDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ConsecutiveToSentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
@@ -45,6 +48,7 @@ class PersonController(
   private val uploadedDocumentService: UploadedDocumentService,
   private val sentenceEnvelopeService: SentenceEnvelopeService,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
+  private val chargeService: ChargeService,
 ) {
 
   @GetMapping("/{prisonerId}")
@@ -188,4 +192,19 @@ class PersonController(
     ],
   )
   fun unconfirmedSentenceFixCourtCases(@PathVariable prisonerId: String): UnconfirmedCourtCases = courtCaseService.getUnconfirmedSentenceFixCourtCases(prisonerId)
+
+  @GetMapping("/{prisonerId}/charges")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__CHARGE__RO')")
+  @Operation(
+    summary = "retrieve charges for person",
+    description = "This endpoint will retrieve charges for person",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns charges for person"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+    ],
+  )
+  fun charges(@PathVariable prisonerId: String, @RequestParam(required = false, defaultValue = "ACTIVE") statuses: List<PersonChargeStatus>): PersonCharges = chargeService.findChargesByPrisonerId(prisonerId, statuses)
 }
