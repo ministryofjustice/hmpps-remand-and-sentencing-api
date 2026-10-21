@@ -206,5 +206,10 @@ class PersonController(
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun charges(@PathVariable prisonerId: String, @RequestParam(required = false, defaultValue = "ACTIVE") statuses: List<PersonChargeStatus>): PersonCharges = chargeService.findChargesByPrisonerId(prisonerId, statuses)
+  fun charges(
+    @PathVariable prisonerId: String,
+    @RequestParam(required = false, defaultValue = "ACTIVE") statuses: List<PersonChargeStatus>,
+    @RequestParam(required = false, defaultValue = "0001-01-01") fromDate: LocalDate,
+    @RequestParam(required = false, defaultValue = "9999-12-31") toDate: LocalDate,
+  ): PersonCharges = chargeService.findChargesByPrisonerId(prisonerId, statuses, fromDate, toDate)
 }
