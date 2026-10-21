@@ -160,6 +160,7 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
       .responseBody.blockFirst()!!
     val firstSentenceUuid = response.sentences.first { it.sentenceNOMISId == firstSentenceId }.sentenceUuid
     val otherSentenceUuid = response.sentences.first { it.sentenceNOMISId == otherCaseSentenceId }.sentenceUuid
+    val consecutiveToSentenceUuid = response.sentences.first { it.sentenceNOMISId == consecutiveToSentenceId }.sentenceUuid
     webTestClient
       .get()
       .uri {
@@ -179,5 +180,8 @@ class MigrationConsecutiveToTests : IntegrationTestBase() {
 
     val otherSentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(otherSentenceUuid)!!
     Assertions.assertTrue(otherSentenceEntity.hasUnconfirmedConsecutiveToFix!!)
+
+    val consecutiveToSentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(consecutiveToSentenceUuid)!!
+    Assertions.assertTrue(consecutiveToSentenceEntity.hasUnconfirmedConsecutiveToFix!!)
   }
 }
