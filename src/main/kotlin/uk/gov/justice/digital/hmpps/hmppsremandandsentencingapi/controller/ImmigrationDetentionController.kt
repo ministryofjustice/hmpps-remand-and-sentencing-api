@@ -80,7 +80,7 @@ class ImmigrationDetentionController(
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
   @Operation(
     summary = "Retrieve active immigration detention records for a person. optionally filtered by dates",
-    description = "This endpoint will retrieve active immigration detention records for a person, optional startDate and endDate filter on record date.",
+    description = "This endpoint will retrieve active immigration detention records for a person, optional startDate and endDate filter on record date",
   )
   @ApiResponses(
     value = [

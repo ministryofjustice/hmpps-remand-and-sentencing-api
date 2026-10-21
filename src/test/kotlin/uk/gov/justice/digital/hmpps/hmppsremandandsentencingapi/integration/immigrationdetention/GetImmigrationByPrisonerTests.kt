@@ -204,7 +204,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `no start and end date includes all records (past and future)`() {
+  fun `no start or end date includes all records (past and future)`() {
     val (earlierNomisAppearance) = createNomisImmigrationDetentionCourtCase(
       prisonerId = "B12345B",
       nomisOutcomeCode = "5502",
