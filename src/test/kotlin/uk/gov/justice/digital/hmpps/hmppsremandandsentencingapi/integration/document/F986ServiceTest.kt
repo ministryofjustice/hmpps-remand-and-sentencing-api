@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreatePeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearanceOffence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension
@@ -208,7 +209,9 @@ class F986ServiceTest : IntegrationTestBase() {
     assertThat(appearances).hasSize(1)
     assertThat(appearances.first().appearanceUuid).isEqualTo(courtAppearanceUuid)
     assertThat(appearances.first().courtCode).isEqualTo("COURT1")
-    assertThat(appearances.first().offenceCodes).containsExactly("AA06027")
+    assertThat(appearances.first().offences).containsExactly(
+      F986EligibleCourtAppearanceOffence("AA06027", LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2)),
+    )
   }
 
   @Test
@@ -305,7 +308,7 @@ class F986ServiceTest : IntegrationTestBase() {
   }
 
   private fun arrangeSingleOffence() {
-    val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", sentence = DpsDataCreator.dpsCreateSentence(fineAmount = CreateFineAmount(BigDecimal(100.0)), sentenceTypeId = fineSentenceTypeUuid), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Veterinary surgeon fail to notify incorrect certification"))
+    val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", offenceStartDate = LocalDate.of(2024, 1, 1), offenceEndDate = LocalDate.of(2024, 1, 2), sentence = DpsDataCreator.dpsCreateSentence(fineAmount = CreateFineAmount(BigDecimal(100.0)), sentenceTypeId = fineSentenceTypeUuid), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Veterinary surgeon fail to notify incorrect certification"))
     val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge), appearanceUUID = UUID.fromString("15f21679-268f-44c5-9a58-00aaa00c24f1"), outcomeUuid = UUID.fromString("04f21679-268f-44c5-9a58-00aaa00c24e0"))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = DEFAULT_PRISONER_ID, appearances = listOf(appearance)))
 
