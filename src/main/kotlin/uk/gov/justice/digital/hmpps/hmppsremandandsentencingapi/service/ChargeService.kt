@@ -348,7 +348,6 @@ class ChargeService(
     if (charge.appearanceCharges.none { it.appearance!!.statusId == CourtAppearanceEntityStatus.ACTIVE }) {
       recordResponse = deleteCharge(charge, courtCaseHierarchyData)
     }
-    LocalDate.MIN
     return recordResponse
   }
 
