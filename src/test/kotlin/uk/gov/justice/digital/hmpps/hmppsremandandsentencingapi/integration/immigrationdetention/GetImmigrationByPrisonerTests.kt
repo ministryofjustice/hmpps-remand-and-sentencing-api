@@ -204,7 +204,7 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `no start date includes earlier records and end date defaults to today`() {
+  fun `no start and end date includes all records (past and future)`() {
     val (earlierNomisAppearance) = createNomisImmigrationDetentionCourtCase(
       prisonerId = "B12345B",
       nomisOutcomeCode = "5502",
@@ -234,7 +234,6 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
     val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B")
 
     assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }
-      .contains(earlierNomisAppearance, dpsToday.courtAppearanceUuid!!)
-      .doesNotContain(dpsAfterToday.courtAppearanceUuid)
+      .contains(earlierNomisAppearance, dpsToday.courtAppearanceUuid!!, dpsAfterToday.courtAppearanceUuid)
   }
 }

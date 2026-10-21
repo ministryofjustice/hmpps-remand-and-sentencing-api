@@ -221,10 +221,9 @@ class ImmigrationDetentionService(
   @Transactional(readOnly = true)
   fun findImmigrationDetentionByPrisonerId(
     prisonerId: String,
-    startDate: LocalDate?,
-    endDate: LocalDate?,
+    startDate: LocalDate,
+    endDate: LocalDate,
   ): List<ImmigrationDetention> {
-    val inclusiveEndDate = endDate ?: LocalDate.now()
     val dpsRecords = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE)
       .map { ImmigrationDetention.from(it) }
     val dpsCourtAppearanceUuids = dpsRecords.map { it.courtAppearanceUuid }.distinct()
@@ -232,7 +231,7 @@ class ImmigrationDetentionService(
       .map { courtAppearance: CourtAppearanceEntity -> ImmigrationDetention.fromCourtAppearance(courtAppearance, prisonerId) }
 
     return (dpsRecords + nomisRecords).filter { record ->
-      (startDate == null || !record.recordDate.isBefore(startDate)) && !record.recordDate.isAfter(inclusiveEndDate)
+      !record.recordDate.isBefore(startDate) && !record.recordDate.isAfter(endDate)
     }
   }
 
