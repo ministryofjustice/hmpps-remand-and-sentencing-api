@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.ImmigrationDetentionHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.ImmigrationDetentionEntityUpdater
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -218,16 +219,21 @@ class ImmigrationDetentionService(
   }
 
   @Transactional(readOnly = true)
-  fun findImmigrationDetentionByPrisonerId(prisonerId: String, bookingId: String): List<ImmigrationDetention> {
+  fun findImmigrationDetentionByPrisonerId(
+    prisonerId: String,
+    startDate: LocalDate?,
+    endDate: LocalDate?,
+  ): List<ImmigrationDetention> {
+    val inclusiveEndDate = endDate ?: LocalDate.now()
     val dpsRecords = immigrationDetentionRepository.findByPrisonerIdAndStatusId(prisonerId, ACTIVE)
       .map { ImmigrationDetention.from(it) }
     val dpsCourtAppearanceUuids = dpsRecords.map { it.courtAppearanceUuid }.distinct()
     val nomisRecords = courtAppearanceRepository.findNomisImmigrationDetentionRecordsForPrisoner(prisonerId, dpsCourtAppearanceUuids)
       .map { courtAppearance: CourtAppearanceEntity -> ImmigrationDetention.fromCourtAppearance(courtAppearance, prisonerId) }
 
-    val courtAppearanceUuids = dpsCourtAppearanceUuids + nomisRecords.map { it.courtAppearanceUuid }
-    val bookingCourtAppearanceUuids = courtAppearanceRepository.findAppearanceUuidsByBookingIdOrAll(courtAppearanceUuids, bookingId).toSet()
-    return (dpsRecords + nomisRecords).filter { bookingCourtAppearanceUuids.contains(it.courtAppearanceUuid) }
+    return (dpsRecords + nomisRecords).filter { record ->
+      (startDate == null || !record.recordDate.isBefore(startDate)) && !record.recordDate.isAfter(inclusiveEndDate)
+    }
   }
 
   @Transactional(readOnly = true)

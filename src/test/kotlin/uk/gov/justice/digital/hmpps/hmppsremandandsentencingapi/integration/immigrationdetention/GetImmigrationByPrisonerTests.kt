@@ -169,12 +169,72 @@ class GetImmigrationByPrisonerTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `filter by bookingId`() {
-    val bookingId = 1L
-    val (nomisCourtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", bookingId = bookingId)
-    val (otherBookingCourtAppearanceUuid) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500", bookingId = bookingId + 1)
-    val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B", bookingId)
-    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }.containsExactlyInAnyOrder(nomisCourtAppearanceUuid)
-    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }.doesNotContain(otherBookingCourtAppearanceUuid)
+  fun `filter by record date (inclusive of the boundary dates)`() {
+    val startDate = LocalDate.of(2021, 6, 1)
+    val endDate = LocalDate.of(2021, 12, 31)
+    val (nomisOnStartDate) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5502", appearanceDate = startDate)
+    val (nomisBeforeStartDate) = createNomisImmigrationDetentionCourtCase(prisonerId = "B12345B", "5500", appearanceDate = startDate.minusDays(1))
+    val dpsOnEndDate = createImmigrationDetention(
+      DpsDataCreator.dpsCreateImmigrationDetention(
+        prisonerId = "B12345B",
+        immigrationDetentionRecordType = DEPORTATION_ORDER,
+        createdByUsername = "aUser",
+        recordDate = endDate,
+        createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+      ),
+    )
+    val dpsAfterEndDate = createImmigrationDetention(
+      DpsDataCreator.dpsCreateImmigrationDetention(
+        prisonerId = "B12345B",
+        immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+        createdByUsername = "aUser",
+        recordDate = endDate.plusDays(1),
+        createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+      ),
+    )
+
+    val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B", startDate, endDate)
+
+    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }
+      .containsExactlyInAnyOrder(nomisOnStartDate, dpsOnEndDate.courtAppearanceUuid!!)
+    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }
+      .doesNotContain(nomisBeforeStartDate, dpsAfterEndDate.courtAppearanceUuid)
+  }
+
+  @Test
+  fun `no start date includes earlier records and end date defaults to today`() {
+    val (earlierNomisAppearance) = createNomisImmigrationDetentionCourtCase(
+      prisonerId = "B12345B",
+      nomisOutcomeCode = "5502",
+      appearanceDate = LocalDate.now().minusYears(2),
+    )
+    val dpsToday = createImmigrationDetention(
+      DpsDataCreator.dpsCreateImmigrationDetention(
+        prisonerId = "B12345B",
+        immigrationDetentionRecordType = DEPORTATION_ORDER,
+        createdByUsername = "aUser",
+        recordDate = LocalDate.now(),
+        createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_DECISION_TO_DEPORT_UUID,
+      ),
+    )
+    val dpsAfterToday = createImmigrationDetention(
+      DpsDataCreator.dpsCreateImmigrationDetention(
+        prisonerId = "B12345B",
+        immigrationDetentionRecordType = NO_LONGER_OF_INTEREST,
+        createdByUsername = "aUser",
+        recordDate = LocalDate.now().plusDays(1),
+        createdByPrison = "PRI",
+        appearanceOutcomeUuid = IMMIGRATION_NO_LONGER_OF_INTEREST_UUID,
+      ),
+    )
+
+    val immigrationDetentionRecords = getImmigrationDetentionsByPrisonerId("B12345B")
+
+    assertThat(immigrationDetentionRecords).extracting<UUID> { it.courtAppearanceUuid }
+      .contains(earlierNomisAppearance, dpsToday.courtAppearanceUuid!!)
+      .doesNotContain(dpsAfterToday.courtAppearanceUuid)
   }
 }
