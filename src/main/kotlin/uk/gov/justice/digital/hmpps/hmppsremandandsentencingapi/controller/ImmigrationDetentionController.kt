@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.I
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SaveImmigrationDetentionResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ImmigrationDetentionService
+import java.time.LocalDate
 import java.util.UUID
 
 @RestController
@@ -78,8 +79,8 @@ class ImmigrationDetentionController(
   @GetMapping("/person/{prisonerId}")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW')")
   @Operation(
-    summary = "Retrieve all active immigration detention records for a person",
-    description = "This endpoint will retrieve  all active immigration detention records for a person",
+    summary = "Retrieve active immigration detention records for a person. optionally filtered by dates",
+    description = "This endpoint will retrieve active immigration detention records for a person, optional startDate and endDate filter on record date",
   )
   @ApiResponses(
     value = [
@@ -90,8 +91,9 @@ class ImmigrationDetentionController(
   )
   fun getImmigrationDetentionByPrisonerId(
     @PathVariable prisonerId: String,
-    @RequestParam(value = "bookingId", defaultValue = "") bookingId: String,
-  ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId, bookingId)
+    @RequestParam(required = false, defaultValue = "0001-01-01") startDate: LocalDate,
+    @RequestParam(required = false, defaultValue = "9999-12-31") endDate: LocalDate,
+  ): List<ImmigrationDetention> = immigrationDetentionService.findImmigrationDetentionByPrisonerId(prisonerId, startDate, endDate)
 
   @GetMapping("/person/{prisonerId}/exists")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__IMMIGRATION_DETENTION_RW', 'ROLE_REMAND_AND_SENTENCING__CCRD__RO', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RW', 'ROLE_REMAND_AND_SENTENCING_SENTENCE_RO')")

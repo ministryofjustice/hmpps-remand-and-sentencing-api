@@ -100,6 +100,7 @@ import uk.gov.justice.hmpps.sqs.MissingTopicException
 import uk.gov.justice.hmpps.sqs.PurgeQueueRequest
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import uk.gov.justice.hmpps.test.kotlin.auth.JwtAuthorisationHelper
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -620,12 +621,19 @@ abstract class IntegrationTestBase {
     .expectBodyList(ImmigrationDetention::class.java)
     .returnResult().responseBody!!
 
-  protected fun getImmigrationDetentionsByPrisonerId(prisonerId: String, bookingId: Long? = null): List<ImmigrationDetention> = webTestClient
+  protected fun getImmigrationDetentionsByPrisonerId(
+    prisonerId: String,
+    startDate: LocalDate? = null,
+    endDate: LocalDate? = null,
+  ): List<ImmigrationDetention> = webTestClient
     .get()
     .uri {
       val builder = it.path("/immigration-detention/person/$prisonerId")
-      if (bookingId != null) {
-        builder.queryParam("bookingId", bookingId)
+      if (startDate != null) {
+        builder.queryParam("startDate", startDate)
+      }
+      if (endDate != null) {
+        builder.queryParam("endDate", endDate)
       }
       builder.build()
     }
@@ -903,9 +911,15 @@ abstract class IntegrationTestBase {
     .returnResult(MigrationCreateCourtCasesResponse::class.java)
     .responseBody.blockFirst()!!
 
-  fun createNomisImmigrationDetentionCourtCase(prisonerId: String = DEFAULT_PRISONER_ID, nomisOutcomeCode: String, activeCourtCase: Boolean = true, bookingId: Long? = 1L): Pair<UUID, LegacyCreateCourtAppearance> {
+  fun createNomisImmigrationDetentionCourtCase(
+    prisonerId: String = DEFAULT_PRISONER_ID,
+    nomisOutcomeCode: String,
+    activeCourtCase: Boolean = true,
+    bookingId: Long? = 1L,
+    appearanceDate: LocalDate = LocalDate.now().minusDays(1),
+  ): Pair<UUID, LegacyCreateCourtAppearance> {
     val legacyCreateCourtCase: LegacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId, active = activeCourtCase, bookingId = bookingId, legacyData = DataCreator.courtCaseLegacyData(bookingId = bookingId))
-    val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode))
+    val legacyCreateCourtAppearance: LegacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(courtCode = "IMM", legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = nomisOutcomeCode), appearanceDate = appearanceDate)
     val legacyCharge: LegacyCreateCharge = DataCreator.legacyCreateCharge(offenceCode = "IA99000-001N", legacyData = DataCreator.chargeLegacyData())
     val (_, createdChargeResponse) = createLegacyCharge(legacyCreateCourtCase, legacyCreateCourtAppearance, legacyCharge)
     return createdChargeResponse.appearanceLifetimeUuid to legacyCreateCourtAppearance
