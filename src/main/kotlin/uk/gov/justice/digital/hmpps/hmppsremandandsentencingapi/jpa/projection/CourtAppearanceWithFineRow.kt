@@ -9,4 +9,6 @@ class CourtAppearanceWithFineRow(
   val courtCode: String,
   val courtCaseReference: String?,
   val offenceCode: String,
+  val offenceStartDate: LocalDate?,
+  val offenceEndDate: LocalDate?,
 )

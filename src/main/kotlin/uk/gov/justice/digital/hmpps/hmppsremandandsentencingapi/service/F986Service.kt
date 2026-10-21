@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearanceOffence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.DocumentGeneratorService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.F986
@@ -38,7 +39,7 @@ class F986Service(
         first.appearanceDate,
         first.courtCode,
         first.courtCaseReference,
-        rows.map { it.offenceCode }.distinct(),
+        rows.map { F986EligibleCourtAppearanceOffence(it.offenceCode, it.offenceStartDate, it.offenceEndDate) }.distinct(),
       )
     }
     .sortedByDescending { it.warrantDate }

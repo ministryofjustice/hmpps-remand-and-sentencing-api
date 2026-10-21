@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Perso
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.CreateF986
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.F986EligibleCourtAppearanceOffence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
@@ -191,17 +192,17 @@ class F986ServiceTest {
   @Test
   fun `should group eligible appearances by appearance and sort by warrant date descending`() {
     every { sentenceRepository.findCourtAppearancesWithFineByPrisonerId(prisonerId) } returns listOf(
-      CourtAppearanceWithFineRow(UUID.fromString("8E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2024, 1, 1), "COURT1", "REF1", "AA06027"),
-      CourtAppearanceWithFineRow(UUID.fromString("9E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 2), "COURT2", null, "BB00001"),
-      CourtAppearanceWithFineRow(UUID.fromString("7E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 1), "COURT2", null, "BB00002"),
+      CourtAppearanceWithFineRow(UUID.fromString("8E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2024, 1, 1), "COURT1", "REF1", "AA06027", LocalDate.of(2023, 12, 1), LocalDate.of(2023, 12, 2)),
+      CourtAppearanceWithFineRow(UUID.fromString("9E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 2), "COURT2", null, "BB00001", LocalDate.of(2025, 1, 1), null),
+      CourtAppearanceWithFineRow(UUID.fromString("7E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 1), "COURT2", null, "BB00002", null, null),
     )
 
     val result = f986Service.getEligibleCourtAppearances(prisonerId)
 
     assertThat(result).containsExactly(
-      F986EligibleCourtAppearance(UUID.fromString("9E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 2), "COURT2", null, listOf("BB00001")),
-      F986EligibleCourtAppearance(UUID.fromString("7E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 1), "COURT2", null, listOf("BB00002")),
-      F986EligibleCourtAppearance(UUID.fromString("8E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2024, 1, 1), "COURT1", "REF1", listOf("AA06027")),
+      F986EligibleCourtAppearance(UUID.fromString("9E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 2), "COURT2", null, listOf(F986EligibleCourtAppearanceOffence("BB00001", LocalDate.of(2025, 1, 1), null))),
+      F986EligibleCourtAppearance(UUID.fromString("7E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2025, 6, 1), "COURT2", null, listOf(F986EligibleCourtAppearanceOffence("BB00002", null, null))),
+      F986EligibleCourtAppearance(UUID.fromString("8E463D2A-96A6-45E4-AF87-8DC5DFC9BD68"), LocalDate.of(2024, 1, 1), "COURT1", "REF1", listOf(F986EligibleCourtAppearanceOffence("AA06027", LocalDate.of(2023, 12, 1), LocalDate.of(2023, 12, 2)))),
     )
   }
 

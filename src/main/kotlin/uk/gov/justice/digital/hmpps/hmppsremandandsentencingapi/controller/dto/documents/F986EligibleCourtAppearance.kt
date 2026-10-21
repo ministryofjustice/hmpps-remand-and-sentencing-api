@@ -8,5 +8,5 @@ data class F986EligibleCourtAppearance(
   val warrantDate: LocalDate,
   val courtCode: String,
   val caseReference: String?,
-  val offenceCodes: List<String>,
+  val offences: List<F986EligibleCourtAppearanceOffence>,
 )

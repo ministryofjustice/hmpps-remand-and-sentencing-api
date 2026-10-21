@@ -215,7 +215,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    SELECT DISTINCT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow(ca.appearanceUuid, ca.appearanceDate, ca.courtCode, ca.courtCaseReference, c.offenceCode)
+    SELECT DISTINCT NEW uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow(ca.appearanceUuid, ca.appearanceDate, ca.courtCode, ca.courtCaseReference, c.offenceCode, c.offenceStartDate, c.offenceEndDate)
     $SENTENCES_BY_SENTENCE_TYPE_CLASSIFICATION
     ORDER BY ca.appearanceDate DESC, ca.appearanceUuid
   """,
