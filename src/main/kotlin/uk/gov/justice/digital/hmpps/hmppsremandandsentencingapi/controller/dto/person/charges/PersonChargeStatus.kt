@@ -4,5 +4,5 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 
 enum class PersonChargeStatus(val courtCaseStatuses: List<CourtCaseEntityStatus>) {
   ACTIVE(listOf(CourtCaseEntityStatus.ACTIVE)),
-  INACTIVE(listOf(CourtCaseEntityStatus.INACTIVE, CourtCaseEntityStatus.MERGED)),
+  INACTIVE(listOf(CourtCaseEntityStatus.INACTIVE, CourtCaseEntityStatus.MERGED, CourtCaseEntityStatus.DUPLICATE)),
 }
