@@ -462,10 +462,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
 
   @Query(
     """
-    select consec.id from SentenceEntity s
+    select s from SentenceEntity s
     join s.consecutiveTo consec
     where consec.id in :sentenceIds and s.statusId != :status
   """,
   )
-  fun findSentencesWithConsecutiveToLinkAndStatusNot(@Param("sentenceIds")sentenceIds: List<Int>, @Param("status") status: SentenceEntityStatus = SentenceEntityStatus.DELETED): Set<Int>
+  fun findSentencesWithConsecutiveToLinkAndStatusNot(@Param("sentenceIds")sentenceIds: List<Int>, @Param("status") status: SentenceEntityStatus = SentenceEntityStatus.DELETED): Set<SentenceEntity>
 }

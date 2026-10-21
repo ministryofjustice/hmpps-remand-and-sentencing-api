@@ -75,9 +75,9 @@ class FixManyChargesToSentenceService(
 
   fun fixSentences(sentences: List<FixSentenceHierarchy>, username: String? = null): MutableSet<EventMetadata> {
     val manyChargedSentences = sentences.filter { it.sentenceEntity.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
-    val checkForConsecutiveToLink = manyChargedSentences.filter { it.sentenceEntity.consecutiveTo == null }.map { it.sentenceEntity.id }
+    val checkForConsecutiveToLink = manyChargedSentences.map { it.sentenceEntity.id }
     val sentencesWithConsecutiveToLink = sentenceRepository.findSentencesWithConsecutiveToLinkAndStatusNot(checkForConsecutiveToLink)
-
+    val sentenceIdsWithConsecutiveToLink = sentencesWithConsecutiveToLink.filter { it.consecutiveTo != null }.map { it.consecutiveTo!!.id }.toSet()
     val toFixSentences = manyChargedSentences
       .groupByTo(mutableMapOf()) { it.sentenceEntity.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
@@ -86,7 +86,7 @@ class FixManyChargesToSentenceService(
     }
 
     toFixSentences.forEach { (originalSentenceUuid, sentenceRecords) ->
-      val anyHasConsecutiveTo = sentenceRecords.any { it.sentenceEntity.consecutiveTo != null || sentencesWithConsecutiveToLink.contains(it.sentenceEntity.id) }
+      val anyHasConsecutiveTo = sentenceRecords.any { it.sentenceEntity.consecutiveTo != null || sentenceIdsWithConsecutiveToLink.contains(it.sentenceEntity.id) }
       val firstFixSentenceHierarchy = sentenceRecords.removeFirst()
       val firstSentenceEventToEmit =
         fixSentence(firstFixSentenceHierarchy, EventType.SENTENCE_UPDATED, originalSentenceUuid, username, anyHasConsecutiveTo)
@@ -116,6 +116,12 @@ class FixManyChargesToSentenceService(
         eventsToEmit.addAll(periodLengthEventsToEmit)
       }
     }
+    sentencesWithConsecutiveToLink.filter { it.hasUnconfirmedConsecutiveToFix != true }.forEach { sentenceEntity ->
+      sentenceEntity.hasUnconfirmedConsecutiveToFix = true
+      sentenceEntity.updatedAt = ZonedDateTime.now()
+      sentenceEntity.updatedBy = username ?: serviceUserService.getUsername()
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity, ChangeSource.DPS))
+    }
     return eventsToEmit
   }
 
@@ -133,6 +139,14 @@ class FixManyChargesToSentenceService(
     sentenceRecord.updatedBy = username ?: serviceUserService.getUsername()
     if (anyHasConsecutiveTo) {
       sentenceRecord.hasUnconfirmedConsecutiveToFix = true
+      sentenceRecord.consecutiveTo?.let { consecutiveToSentence ->
+        if (consecutiveToSentence.hasUnconfirmedConsecutiveToFix != true) {
+          consecutiveToSentence.hasUnconfirmedConsecutiveToFix = true
+          consecutiveToSentence.updatedAt = ZonedDateTime.now()
+          consecutiveToSentence.updatedBy = username ?: serviceUserService.getUsername()
+          sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord, ChangeSource.DPS))
+        }
+      }
     }
     sentenceModifyFunction(sentenceRecord)
     sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceRecord, ChangeSource.DPS))
