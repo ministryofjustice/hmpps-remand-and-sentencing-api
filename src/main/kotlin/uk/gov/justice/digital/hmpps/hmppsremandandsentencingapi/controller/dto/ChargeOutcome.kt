@@ -11,7 +11,6 @@ data class ChargeOutcome(
   val outcomeType: String,
   val displayOrder: Int,
   val dispositionCode: String,
-  val hmctsCode: String? = null,
   val status: ReferenceEntityStatus,
 ) {
   companion object {
@@ -22,7 +21,6 @@ data class ChargeOutcome(
       chargeOutcomeEntity.outcomeType,
       chargeOutcomeEntity.displayOrder,
       chargeOutcomeEntity.dispositionCode,
-      chargeOutcomeEntity.hmctsCode,
       chargeOutcomeEntity.status,
     )
   }
