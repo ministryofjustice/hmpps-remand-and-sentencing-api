@@ -1176,6 +1176,21 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(events).extracting<String> { it.eventType }.contains("legacy.court-case-references.updated")
   }
 
+  @Test
+  fun `can move sentence to other charge`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+    val createdCharge = createdCourtCase.appearances.first().charges.first()
+    val createdSentence = createdCharge.sentence!!
+    val newCreatedCharge = DpsDataCreator.dpsCreateCharge(sentence = createdSentence)
+    val newAppearance = dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, charges = listOf(newCreatedCharge))
+    putCourtAppearance(newAppearance.appearanceUuid, newAppearance)
+    val courtCase = getCourtCase(courtCaseUuid)
+    val oldCharge = courtCase.appearances.flatMap { it.charges }.first { it.chargeUuid == createdCharge.chargeUuid }
+    assertThat(oldCharge.sentence).isNull()
+    val newCharge = courtCase.appearances.flatMap { it.charges }.first { it.chargeUuid == newCreatedCharge.chargeUuid }
+    assertThat(newCharge.sentence!!.sentenceUuid).isEqualTo(createdSentence.sentenceUuid)
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
