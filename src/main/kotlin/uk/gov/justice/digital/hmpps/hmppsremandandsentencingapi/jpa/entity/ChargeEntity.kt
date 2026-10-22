@@ -73,6 +73,7 @@ class ChargeEntity(
   var mergedFromDate: LocalDate? = null,
 
   val hmctsChargeId: UUID? = null,
+  var value: Double? = null,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()
