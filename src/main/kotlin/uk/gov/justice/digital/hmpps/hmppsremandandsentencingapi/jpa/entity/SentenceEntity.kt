@@ -238,7 +238,8 @@ class SentenceEntity(
     ((fineAmount == null && other.fineAmount == null) || (fineAmount != null && other.fineAmount?.compareTo(fineAmount) == 0)) &&
     statusId == other.statusId &&
     reason == other.reason &&
-    ((legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true)
+    ((legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
+    charge.id == other.charge.id
 
   fun latestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.status != RecallEntityStatus.DELETED }.maxByOrNull { it.createdAt }
   fun earliestRecall(): RecallEntity? = recallSentences.map { it.recall }.filter { it.status != RecallEntityStatus.DELETED }.minByOrNull { it.createdAt }
