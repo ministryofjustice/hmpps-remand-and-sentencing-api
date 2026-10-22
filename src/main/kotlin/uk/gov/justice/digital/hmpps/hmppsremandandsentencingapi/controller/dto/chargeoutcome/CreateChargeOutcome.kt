@@ -17,6 +17,7 @@ data class CreateChargeOutcome(
   val displayOrder: Int,
   @field:NotBlank(message = "Disposition Code must not be blank")
   val dispositionCode: String,
+  @Deprecated(message = "HMCTS Code no longer required, remove after frontend update")
   val hmctsCode: String?,
   val status: ReferenceEntityStatus,
 )
