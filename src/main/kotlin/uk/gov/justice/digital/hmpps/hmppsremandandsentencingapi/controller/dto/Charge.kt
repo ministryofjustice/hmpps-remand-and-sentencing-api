@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -20,7 +21,7 @@ data class Charge(
   val createdAt: ZonedDateTime,
   val findingOfDomesticAbuse: Boolean?,
   val hmctsChargeId: UUID? = null,
-  val value: Double? = null,
+  val value: BigDecimal? = null,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity, getSentenceFunction: java.util.function.Function<ChargeEntity, SentenceEntity?> = { it.getLiveSentence() }): Charge = Charge(

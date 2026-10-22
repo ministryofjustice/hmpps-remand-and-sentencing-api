@@ -100,7 +100,7 @@
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String",
-    "value": "Double"
+    "value": "BigDecimal"
   },
   "ChargeHistoryEntity": {
     "changeSource": "ChangeSource",
@@ -124,7 +124,7 @@
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
     "updatedPrison": "String",
-    "value": "Double"
+    "value": "BigDecimal"
   },
   "ChargeOutcomeEntity": {
     "displayOrder": "int",
