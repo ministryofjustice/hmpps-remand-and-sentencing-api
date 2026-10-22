@@ -120,7 +120,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               outcomeType = "REMAND",
               displayOrder = 570,
               dispositionCode = "INTERIM",
-              hmctsCode = "RI",
               status = ReferenceEntityStatus.ACTIVE,
             ),
             aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
@@ -138,7 +137,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               outcomeType = "NON_CUSTODIAL",
               displayOrder = 150,
               dispositionCode = "FINAL",
-              hmctsCode = "WDRN",
               status = ReferenceEntityStatus.ACTIVE,
             ),
             aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges[1].createdAt, findingOfDomesticAbuse = null,
@@ -222,7 +220,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               outcomeType = "SENTENCING",
               displayOrder = 10,
               dispositionCode = "FINAL",
-              hmctsCode = "IMP",
               status = ReferenceEntityStatus.ACTIVE,
             ),
             aggravatingFactors = listOf(
@@ -663,43 +660,18 @@ class HmctsCourtDataTest : IntegrationTestBase() {
   @ParameterizedTest(name = "Tests that offence results are mapped from hmcts {0} to ras outcome {1}")
   @MethodSource("offenceResultsProvider")
   fun `Test get offence outcome mappings`(hmctsCode: String, expectedRasOutcomeText: String) {
-    val hmctsCourtHearing = HmctsCourtHearing(
-      hearingId = HMCTS_HEARING_ID,
-      courtName = "My court",
-      courtCode = COURT_REGISTER_ID,
-      courtId = UUID.randomUUID(),
-      hearingDate = LocalDate.of(2026, 1, 1),
-      caseReferences = listOf("ABC123", "EFG456"),
-      hearingType = "First hearing",
-      documents = listOf(
-        HmctsCourHearingDocument(
-          "REMAND_WARRANT",
-          DOCUMENT_ID,
-        ),
-      ),
+    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
       charges = listOf(
-        HmctsCourtCharge(
-          chargeId = UUID.randomUUID(),
-          listingNumber = 1,
-          offenceLegislation = "Contrary to section 1(1) and 7 of the Theft Act 1968.",
-          pleaDate = LocalDate.of(2026, 8, 15),
-          pleaValue = "NOT_GUILTY",
-          startDate = LocalDate.of(2026, 6, 15),
-          endDate = LocalDate.of(2026, 7, 15),
-          title = "Theft from the person of another",
-          wording = "Theft from the person of another",
-          code = "TH68001",
-          convictionDate = null,
+        HMCTS_REMANDED_CHARGE.copy(
           results = listOf(
             HmctsCourtResult(
               code = hmctsCode,
-              description = hmctsCode,
+              description = "Code description",
               keyValuePairs = emptyList(),
             ),
           ),
         ),
       ),
-      nextHearing = null,
     )
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
@@ -720,7 +692,6 @@ class HmctsCourtDataTest : IntegrationTestBase() {
 
     Assertions.assertThat(response.charges.size).isEqualTo(1)
     Assertions.assertThat(response.charges.first().outcome?.outcomeName).isEqualTo(expectedRasOutcomeText)
-    Assertions.assertThat(response.charges.first().outcome?.hmctsCode).isEqualTo(hmctsCode)
   }
 
   companion object {

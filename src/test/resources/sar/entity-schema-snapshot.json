@@ -127,7 +127,6 @@
   "ChargeOutcomeEntity": {
     "displayOrder": "int",
     "dispositionCode": "String",
-    "hmctsCode": "String",
     "id": "int",
     "nomisCode": "String",
     "outcomeName": "String",
@@ -268,6 +267,14 @@
     "prisonerId": "String",
     "statusId": "String",
     "updatedAt": "ZonedDateTime"
+  },
+  "HmctsResultCodeEntity": {
+    "chargeOutcome": "ChargeOutcomeEntity",
+    "id": "int",
+    "resultCode": "String",
+    "resultName": "String",
+    "resultUuid": "UUID",
+    "status": "ReferenceEntityStatus"
   },
   "ImmigrationDetentionEntity": {
     "courtAppearanceUuid": "UUID",

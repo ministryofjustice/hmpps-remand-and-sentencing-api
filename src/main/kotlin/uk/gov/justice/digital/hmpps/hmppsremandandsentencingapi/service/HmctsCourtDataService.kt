@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.P
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.Sentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.hmctsresultcode.HmctsResultCode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -43,7 +44,7 @@ class HmctsCourtDataService(
   val prisonerSearchService: PrisonSearchService,
   val courtDataIngestionApi: CourtDataIngestionApiClient,
   val documentService: DocumentManagementApiClient,
-  val chargeOutcomeService: ChargeOutcomeService,
+  val hmctsResultCodeService: HmctsResultCodeService,
   val appearanceOutcomeService: AppearanceOutcomeService,
   val sentenceTypeService: SentenceTypeService,
   val aggravatingFactorsService: AggravatingFactorsService,
@@ -58,10 +59,10 @@ class HmctsCourtDataService(
     val prisoner = prisonerSearchService.getPrisoner(prisonerNumber) ?: throw EntityNotFoundException("No prisoner found for  $prisonerNumber")
     val documents = documentService.getDocumentsByIds(hearing.documents.map { it.documentId.toString() })
       .filter { it.duplicateOf == null }
-    val chargeOutcomes = chargeOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
+    val resultCodes = hmctsResultCodeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
     val aggravatingFactors = aggravatingFactorsService.getAllByStatuses(listOf(AggravatingFactorStatus.ACTIVE))
     val anyConviction = hearing.charges.any { it.convictionDate != null }
-    var charges = hearing.charges.map { mapCharge(it, prisoner, chargeOutcomes, aggravatingFactors, anyConviction) }
+    var charges = hearing.charges.map { mapCharge(it, prisoner, resultCodes, aggravatingFactors, anyConviction) }
 
     charges = setFirstSentencedChargeToForthwith(charges)
 
@@ -192,11 +193,11 @@ class HmctsCourtDataService(
   private fun mapCharge(
     charge: HmctsCourtCharge,
     prisoner: PrisonSearchDetails,
-    chargeOutcomes: List<ChargeOutcome>,
+    resultCodes: List<HmctsResultCode>,
     aggravatingFactors: List<AggravatingFactor>,
     anyConviction: Boolean,
   ): Charge {
-    val resultsWithMapping = charge.results.filter { result -> chargeOutcomes.find { result.code == it.hmctsCode } != null }
+    val resultsWithMapping = charge.results.filter { result -> resultCodes.find { result.code == it.resultCode } != null }
     val factors = aggravatingFactors.filter { factor -> charge.results.find { it.code == factor.code } != null }
     val findingOfDomesticAbuse = charge.results.any { it.code == FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE }
     val outcome = if (resultsWithMapping.size == 1) {
@@ -204,7 +205,7 @@ class HmctsCourtDataService(
       if (resultCode == "RI" && anyConviction) {
         null
       } else {
-        chargeOutcomes.find { it.hmctsCode == resultCode }
+        resultCodes.find { it.resultCode == resultCode }?.outcome
       }
     } else {
       null

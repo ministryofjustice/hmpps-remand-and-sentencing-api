@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.U
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.appearanceoutcome.CreateAppearanceOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.chargeoutcome.CreateChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.UpdateCourtAppearanceSchedule
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.hmctsresultcode.CreateHmctsResultCode
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionNoLongerOfInterestType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ImmigrationDetentionRecordType
@@ -269,6 +270,20 @@ class DpsDataCreator {
       displayOrder,
       dispositionCode,
       hmctsCode,
+      status,
+    )
+
+    fun createHmctsResultCode(
+      resultUuid: UUID? = null,
+      resultName: String = "Test result",
+      resultCode: String = "XYZ",
+      outcomeUuid: UUID = UUID.fromString("75af661d-df31-4f1f-b8d6-f0c490a0b87d"), // Default to immigration outcome, which won't have a hmcts result code.
+      status: ReferenceEntityStatus = ReferenceEntityStatus.ACTIVE,
+    ): CreateHmctsResultCode = CreateHmctsResultCode(
+      resultUuid,
+      resultName,
+      resultCode,
+      outcomeUuid,
       status,
     )
 
