@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -50,6 +51,7 @@ class ChargeHistoryEntity(
   val mergedFromDate: LocalDate? = null,
   @Enumerated(EnumType.STRING)
   val changeSource: ChangeSource,
+  val value: BigDecimal? = null,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity, changeSource: ChangeSource): ChargeHistoryEntity = ChargeHistoryEntity(
@@ -57,7 +59,7 @@ class ChargeHistoryEntity(
       chargeEntity.statusId, chargeEntity.chargeOutcome?.id, chargeEntity.supersedingCharge?.id, chargeEntity.findingOfDomesticAbuse, chargeEntity.hmctsChargeId,
       chargeEntity.createdAt, chargeEntity.createdBy, chargeEntity.createdPrison, chargeEntity.updatedAt, chargeEntity.updatedBy,
       chargeEntity.updatedPrison, chargeEntity.legacyData, chargeEntity.mergedFromCourtCase?.id, chargeEntity,
-      mergedFromDate = chargeEntity.mergedFromDate, changeSource = changeSource,
+      mergedFromDate = chargeEntity.mergedFromDate, changeSource = changeSource, value = chargeEntity.value,
     )
   }
 }

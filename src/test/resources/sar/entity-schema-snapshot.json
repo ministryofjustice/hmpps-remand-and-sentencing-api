@@ -99,7 +99,8 @@
     "supersedingCharge": "ChargeEntity",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String"
+    "updatedPrison": "String",
+    "value": "BigDecimal"
   },
   "ChargeHistoryEntity": {
     "changeSource": "ChangeSource",
@@ -122,7 +123,8 @@
     "supersedingChargeId": "Integer",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String"
+    "updatedPrison": "String",
+    "value": "BigDecimal"
   },
   "ChargeOutcomeEntity": {
     "displayOrder": "int",

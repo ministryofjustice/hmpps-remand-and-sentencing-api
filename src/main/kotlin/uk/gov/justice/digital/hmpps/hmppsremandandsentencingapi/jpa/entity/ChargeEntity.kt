@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCharge
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -73,6 +74,7 @@ class ChargeEntity(
   var mergedFromDate: LocalDate? = null,
 
   val hmctsChargeId: UUID? = null,
+  var value: BigDecimal? = null,
 ) {
   @OneToMany(mappedBy = "charge")
   var sentences: MutableSet<SentenceEntity> = mutableSetOf()
