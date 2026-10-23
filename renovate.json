@@ -23,8 +23,7 @@
         "**/.github/workflows/**/*.ya?ml",
         "**/.github/actions/**/*.ya?ml"
         ],
-      "minimumReleaseAge": "7 days",
-      "pinDigests": true
+      "enabled": false
     },
     {
       "matchPackageNames": ["uk.gov.justice.hmpps.gradle-spring-boot"],
@@ -32,5 +31,6 @@
       "minimumReleaseAge": "1 day",
       "automerge": true
     }
-  ]
+  ],
+  "platformCommit": "enabled"
 }

@@ -11,7 +11,7 @@ This is the Remand and Sentencing API project.
 
 If this is a HMPPS project then the project will be created as part of bootstrapping - 
 
-will build the application and run it and HMPPS Auth within a local docker instance.
+will run the application and HMPPS Auth within a local docker instance.
 
 ### Running the application in Intellij
 
@@ -60,3 +60,23 @@ Hi Team, we've made a change to https://github.com/ministryofjustice/hmpps-reman
 Once UAT testing on the change by the OSAR team has been carried out a subsequent request to ``#haa-sar-functionality-change-request`` to register the change in production will need to be carried out
 
 For further details on this see https://dsdmoj.atlassian.net/wiki/spaces/NDSS/pages/6057492933/SAR+Quickstart+for+Developers#Why-do-I-need-to-pre-register-templates%3F
+
+### Building and running the docker image locally
+
+The `Dockerfile` relies on the application being built first. Steps to build the docker image:
+1. Build the jar files
+```
+./gradlew clean assemble
+```
+2. Copy the jar files to the base directory so that the docker build can find them
+```
+cp build/libs/*.jar .
+```
+3. Build the docker image with required arguments
+```
+docker build --build-arg GIT_REF=21345 --build-arg GIT_BRANCH=bob --build-arg BUILD_NUMBER=$(date '+%Y-%m-%d') .
+```
+4. Run the docker image, setting the auth url so that it starts up
+```
+docker run -e HMPPS_AUTH_URL="https://sign-in-dev.hmpps.service.justice.gov.uk/auth" <sha from step 3>
+```
