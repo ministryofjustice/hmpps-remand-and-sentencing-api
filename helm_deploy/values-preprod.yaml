@@ -30,24 +30,6 @@ generic-service:
     FEATURES_APPEARANCE_SCHEDULES_EVENTS_ENABLED: "true"
 
   allowlist:
-    penetration-test-ip-1: 54.37.241.156/30
-    penetration-test-ip-2: 167.71.136.237/32
-    groups:
-      - internal
-      - circleci
-
-  resources:
-    requests:
-      memory: 2G
-    limits:
-      memory: 4G
-
-  scheduledDowntime:
-    enabled: true
-
-
-
-  allowlist:
     # Configure groups as appropriate to give the minimum ingress access required:
     #   global_protect: devices using the global_protect proxy
     #   moj_cloud_platform: services on Cloud Platform

@@ -45,7 +45,8 @@ jobs:
     steps:
       - id: app_version
         name: Application version creators
-        uses: ministryofjustice/hmpps-github-shared-actions/.github/actions/build-test-and-deploy/create_app_version@cd6fbead3223fc36e047987f45af2ffacfd41c70 # v1.1.6
+        uses: ministryofjustice/hmpps-github-shared-actions/.github/actions/build-test-and-deploy/create_app_version@f52dbae537425d92f2216c4a2d9e0e44e603abb1 # WORKFLOW_VERSION
+
   gradle_verify:
     name: Run the tests
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2 # WORKFLOW_VERSION
@@ -63,14 +64,8 @@ jobs:
       - app_version
   build:
     name: Build docker image from hmpps-github-actions
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      attestations: write
     if: github.ref == 'refs/heads/main'
-
-    uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build_ecr.yml@v2 # WORKFLOW_VERSION
+    uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
       - gradle_verify
     with:
@@ -78,11 +73,6 @@ jobs:
       push: ${{ inputs.push || inputs.push == null }}
       docker_multiplatform: false
       download_build_artifacts: true
-      generate_sbom: true
-      attach_sbom_to_registry: true
-      sign_image: true
-    secrets:
-      ECR_ROLE_TO_ASSUME: ${{ secrets.ECR_ROLE_TO_ASSUME}}
   database_report:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -131,9 +121,6 @@ jobs:
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
   deploy_dev:
     name: Deploy to the development environment
-    permissions:
-      contents: read
-      id-token: write
     needs:
       - build
       - helm_lint
@@ -142,13 +129,9 @@ jobs:
     with:
       environment: 'dev'
       app_version: '${{ needs.build.outputs.app_version }}'
-      helm_additional_args: '--set generic-service.image.repository=${{ vars.CLOUD_PLATFORM_ECR_REGISTRY_URL }}/${{ vars.ECR_REPOSITORY }}'
       slack_notification: 'false'
   deploy_preprod:
     name: Deploy to the preprod environment
-    permissions:
-      contents: read
-      id-token: write
     needs:
       - build
       - helm_lint
@@ -158,13 +141,9 @@ jobs:
     with:
       environment: 'preprod'
       app_version: '${{ needs.build.outputs.app_version }}'
-      helm_additional_args: '--set generic-service.image.repository=${{ vars.CLOUD_PLATFORM_ECR_REGISTRY_URL }}/${{ vars.ECR_REPOSITORY }}'
       slack_notification: 'false'
   deploy_prod:
     name: Deploy to the prod environment
-    permissions:
-      contents: read
-      id-token: write
     needs:
       - build
       - helm_lint
@@ -174,5 +153,4 @@ jobs:
     with:
       environment: 'prod'
       app_version: '${{ needs.build.outputs.app_version }}'
-      helm_additional_args: '--set generic-service.image.repository=${{ vars.CLOUD_PLATFORM_ECR_REGISTRY_URL }}/${{ vars.ECR_REPOSITORY }}'
       slack_notification: 'true'
