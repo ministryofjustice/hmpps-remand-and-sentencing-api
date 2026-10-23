@@ -113,3 +113,6 @@ manyChargesToSentenceFixCronjob:
     allowPrivilegeEscalation: false
     seccompProfile:
       type: RuntimeDefault
+
+image:
+  tag: app_version
