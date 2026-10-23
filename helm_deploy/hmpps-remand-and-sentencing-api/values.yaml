@@ -42,6 +42,16 @@ generic-service:
     SPRING_PROFILES_ACTIVE: "logstash"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     DB_SSL_MODE: "verify-full"
+    # JAVA_TOOL_OPTIONS is set in the base image (hmpps-eclipse-temurin) with:
+    #   -XX:MaxRAMPercentage=50.0
+    # Uncomment below to override memory settings if needed.
+    # Check resources.limits.memory is set appropriately.
+    #
+    # Percentage-based example:
+    JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    #
+    # Fixed memory example:
+    #   JAVA_TOOL_OPTIONS: "-Xms512m -Xmx1024m"
 
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
@@ -65,13 +75,6 @@ generic-service:
       HMPPS_SQS_QUEUES_PRISONERLISTENER_QUEUE_NAME: "sqs_queue_name"
     sqs-prisoner-events-dlq-secret:
       HMPPS_SQS_QUEUES_PRISONERLISTENER_DLQ_NAME: "sqs_queue_name"
-
-  allowlist:
-    cymulate-1: 54.217.50.18/32
-    cymulate-2: 52.208.202.111/32
-    cymulate-3: 52.49.144.209/32
-    groups:
-      - internal
 
   retryDlqCronjob:
     enabled: true
@@ -113,4 +116,3 @@ manyChargesToSentenceFixCronjob:
 
 image:
   tag: app_version
-

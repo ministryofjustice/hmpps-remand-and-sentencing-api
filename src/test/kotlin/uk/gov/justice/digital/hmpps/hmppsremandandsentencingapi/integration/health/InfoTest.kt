@@ -1,13 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.health
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.info.BuildProperties
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
-class InfoTest : IntegrationTestBase() {
-
+class InfoTest(
+  @Autowired private val buildProperties: BuildProperties,
+) : IntegrationTestBase() {
   @Test
   fun `Info page is accessible`() {
     webTestClient.get()
@@ -24,8 +24,6 @@ class InfoTest : IntegrationTestBase() {
     webTestClient.get().uri("/info")
       .exchange()
       .expectStatus().isOk
-      .expectBody().jsonPath("build.version").value<String> {
-        assertThat(it).startsWith(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE))
-      }
+      .expectBody().jsonPath("build.version").isEqualTo(buildProperties.version)
   }
 }

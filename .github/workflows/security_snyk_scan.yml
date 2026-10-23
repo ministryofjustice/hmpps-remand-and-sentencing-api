@@ -1,4 +1,5 @@
 name: Security Snyk dependency check
+
 on:
   workflow_dispatch:
   schedule:
@@ -8,6 +9,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      id-token: write
       security-events: write
     name: Project security Snyk dependency check
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/security_snyk_scan.yml@v2
