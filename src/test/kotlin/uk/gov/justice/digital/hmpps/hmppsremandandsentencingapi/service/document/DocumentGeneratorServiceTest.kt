@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.mustache.MustacheHtmlRenderer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.pdf.OpenHtmlToPdfConverter
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.pdf.PdfDigitalSignatureWriter
 import java.io.File
 import java.time.LocalDate
 
@@ -30,7 +31,8 @@ class DocumentGeneratorServiceTest {
   @Test
   fun `should render pdf from from F986`() {
     val htmlRenderer: HtmlRenderer = MustacheHtmlRenderer()
-    val pdfConverter: HtmlToDocumentConverter = OpenHtmlToPdfConverter()
+    val pdfDigitalSignatureWriter = PdfDigitalSignatureWriter()
+    val pdfConverter: HtmlToDocumentConverter = OpenHtmlToPdfConverter(pdfDigitalSignatureWriter)
     val f986 = F986(sampleData())
     val pdfGeneratorService = DocumentGeneratorService(htmlRenderer, pdfConverter)
 

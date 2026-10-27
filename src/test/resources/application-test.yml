@@ -54,6 +54,9 @@ document:
   management:
     api:
       url: http://localhost:8442
+  signing:
+    cert: # Generated at test time see F986ServiceTest#signingProperties for example
+    key: # Generated at test time see F986ServiceTest#signingProperties for example
 
 adjustments:
   api:
