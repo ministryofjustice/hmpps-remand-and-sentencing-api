@@ -14,3 +14,11 @@ VALUES
     ('Mental Health Commit to Crown Court for Restriction (Remand to Hospital)', '87e53399-f9ff-44b9-b60e-1b6039a2c935', '4570', 'REMAND', 1110, '315280e5-d53e-43b3-8ba6-44da25676ce2', false, 'LEGACY', 'NON_SENTENCING', 'INTERIM'),
     ('Mental Health Commit to Crown Court for Restriction (Remand to Prison)', 'a204f8b2-7bf8-4123-bb6c-d26a7d2a925b', '4571', 'REMAND', 1120, '315280e5-d53e-43b3-8ba6-44da25676ce2', false, 'LEGACY', 'NON_SENTENCING', 'INTERIM'),
     ('Civil Remand', 'e2f11654-72cd-4ab1-ae0f-48fd0c6f54b8', '5601', 'REMAND', 1130, '315280e5-d53e-43b3-8ba6-44da25676ce2', false, 'LEGACY', 'NON_SENTENCING', 'INTERIM');
+
+UPDATE court_appearance ca
+SET appearance_outcome_id = ao.id,
+    warrant_type = ao.warrant_type
+FROM appearance_outcome ao
+WHERE ao.status = 'LEGACY'
+  AND ao.outcome_type = 'REMAND'
+  AND ao.nomis_code = ca.legacy_data->>'nomisOutcomeCode';

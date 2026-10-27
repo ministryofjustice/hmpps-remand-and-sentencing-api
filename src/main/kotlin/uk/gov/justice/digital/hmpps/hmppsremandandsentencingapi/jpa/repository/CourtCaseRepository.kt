@@ -402,24 +402,14 @@ interface CourtCaseRepository :
       where cc.prisoner_id = :prisonerId
         and cc.status_id = 'ACTIVE'
         and (
-          select ao.outcome_type = 'REMAND'
-            or (
-              ao.id is null
-              and exists (
-                select 1
-                from appearance_outcome legacy_outcome
-                where legacy_outcome.status = 'LEGACY'
-                  and legacy_outcome.outcome_type = 'REMAND'
-                  and legacy_outcome.nomis_code = ca.legacy_data->>'nomisOutcomeCode'
-              )
-            )
+          select ao.outcome_type
           from court_appearance ca
-          left join appearance_outcome ao on ao.id = ca.appearance_outcome_id
+          join appearance_outcome ao on ao.id = ca.appearance_outcome_id
           where ca.court_case_id = cc.id
             and ca.status_id = 'ACTIVE'
           order by ca.appearance_date desc, ca.created_at desc
           limit 1
-        )
+        ) = 'REMAND'
     )
     """,
     nativeQuery = true,
