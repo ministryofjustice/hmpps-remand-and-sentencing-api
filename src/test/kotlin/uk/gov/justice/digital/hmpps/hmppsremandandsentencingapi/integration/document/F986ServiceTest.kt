@@ -3,9 +3,19 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.doc
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
 import org.assertj.core.api.Assertions.assertThat
+import org.bouncycastle.asn1.ASN1InputStream
+import org.bouncycastle.asn1.cms.ContentInfo
+import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.cms.CMSProcessableByteArray
+import org.bouncycastle.cms.CMSSignedData
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
+import org.bouncycastle.util.Selector
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AgencyDetails
@@ -88,6 +98,41 @@ class F986ServiceTest : IntegrationTestBase() {
 
     val outputDir = File("build/test-generated").apply { mkdirs() }
     File(outputDir, "f986-sample.pdf").writeBytes(response!!)
+  }
+
+  @Test
+  fun `should be a signed pdf`() {
+    arrangeSingleOffence()
+    val body = CreateF986(courtAppearanceUuid, "Liverpool Crown Court", "Derby Square", "Liverpool", "Merseyside", "L2 1XA", "128 555 1719")
+    val response = webTestClient
+      .post()
+      .uri("/document-generator/f986/person/$DEFAULT_PRISONER_ID")
+      .bodyValue(body)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectHeader().contentType(MediaType.APPLICATION_PDF)
+      .expectBody(ByteArray::class.java)
+      .returnResult()
+      .responseBody
+
+    PDDocument.load(response).use { doc ->
+      val sig = doc.signatureDictionaries.single()
+      assertThat(sig.subFilter).isEqualTo("adbe.pkcs7.detached")
+
+      val signed = sig.getSignedContent(response)
+      val contentInfo = ASN1InputStream(sig.getContents(response)).use { ContentInfo.getInstance(it.readObject()) }
+      val cms = CMSSignedData(CMSProcessableByteArray(signed), contentInfo)
+      val signerInfo = cms.signerInfos.signers.first()
+      val cert = JcaX509CertificateConverter().getCertificate(
+        (cms.certificates.getMatches(signerInfo.sid as Selector<X509CertificateHolder>) as Collection<X509CertificateHolder>).first(),
+      )
+      assertThat(signerInfo.verify(JcaSimpleSignerInfoVerifierBuilder().build(cert))).isTrue()
+    }
   }
 
   @Test
@@ -400,5 +445,15 @@ class F986ServiceTest : IntegrationTestBase() {
       days = Random.nextInt(0, 6),
       periodOrder = "years,months,weeks,days",
     )
+  }
+
+  companion object {
+    @JvmStatic
+    @DynamicPropertySource
+    fun signingProperties(registry: DynamicPropertyRegistry) {
+      val documentSigningCredentials = DocumentSigningCredentials()
+      registry.add("document.signing.cert") { documentSigningCredentials.cert }
+      registry.add("document.signing.key") { documentSigningCredentials.key }
+    }
   }
 }
