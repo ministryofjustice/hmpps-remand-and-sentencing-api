@@ -70,7 +70,7 @@ class PersonController(
   @PreAuthorize("hasRole('ROLE_REMAND_AND_SENTENCING__PRISONER__RO')")
   @Operation(
     summary = "Retrieve person status indicators",
-    description = "isOnRemand is true when an active court case has a latest appearance outcome of type REMAND",
+    description = "isOnRemand is true when an active court case has a latest appearance outcome of type REMAND, or one of the legacy Nomis Outcome Codes",
   )
   @ApiResponses(
     value = [
