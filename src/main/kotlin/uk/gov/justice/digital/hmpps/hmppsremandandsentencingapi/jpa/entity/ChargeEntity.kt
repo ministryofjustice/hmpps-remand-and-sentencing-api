@@ -112,6 +112,7 @@ class ChargeEntity(
     ((this.legacyData == null && other.legacyData == null) || legacyData?.isSame(other.legacyData) == true) &&
     this.mergedFromCourtCase == other.mergedFromCourtCase &&
     this.mergedFromDate == other.mergedFromDate &&
+    ((this.value == null && other.value == null) || (value != null && other.value?.compareTo(value) == 0)) &&
     otherHasSentence == hasSentence()
 
   fun isInterim(): Boolean = chargeOutcome?.dispositionCode == "INTERIM" || legacyData?.outcomeDispositionCode == "I"

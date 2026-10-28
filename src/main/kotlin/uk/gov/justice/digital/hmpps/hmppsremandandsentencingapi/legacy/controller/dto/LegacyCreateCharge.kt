@@ -11,5 +11,5 @@ data class LegacyCreateCharge(
   val offenceEndDate: LocalDate?,
   var legacyData: ChargeLegacyData,
   val performedByUser: String?,
-  val value: BigDecimal,
+  val value: BigDecimal?,
 )
