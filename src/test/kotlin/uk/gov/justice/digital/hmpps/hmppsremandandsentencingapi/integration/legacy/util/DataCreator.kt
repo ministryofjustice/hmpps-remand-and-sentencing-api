@@ -101,7 +101,8 @@ class DataCreator {
       offenceEndDate: LocalDate? = null,
       legacyData: ChargeLegacyData = chargeLegacyData(),
       performedByUser: String = "USER1",
-    ): LegacyCreateCharge = LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData, performedByUser)
+      value: BigDecimal = BigDecimal("100.00"),
+    ): LegacyCreateCharge = LegacyCreateCharge(appearanceLifetimeUuid, offenceCode, offenceStartDate, offenceEndDate, legacyData, performedByUser, value)
 
     fun legacyCreateFine(fineAmount: BigDecimal = BigDecimal.TEN): LegacyCreateFine = LegacyCreateFine(fineAmount)
 
@@ -156,7 +157,8 @@ class DataCreator {
       legacyData: ChargeLegacyData = chargeLegacyData(),
       performedByUser: String? = null,
       offenceCode: String? = null,
-    ): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData, performedByUser, offenceCode)
+      value: BigDecimal = BigDecimal("100.00"),
+    ): LegacyUpdateCharge = LegacyUpdateCharge(offenceStartDate, offenceEndDate, legacyData, performedByUser, offenceCode, value)
 
     fun caseReferenceLegacyData(
       offenderCaseReference: String = "NOMIS123",

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -10,4 +11,5 @@ data class LegacyCreateCharge(
   val offenceEndDate: LocalDate?,
   var legacyData: ChargeLegacyData,
   val performedByUser: String?,
+  val value: BigDecimal,
 )

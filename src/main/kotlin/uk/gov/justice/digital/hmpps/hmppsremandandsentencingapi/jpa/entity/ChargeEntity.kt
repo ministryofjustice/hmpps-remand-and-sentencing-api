@@ -81,14 +81,31 @@ class ChargeEntity(
 
   fun hasNoLiveCourtAppearances(): Boolean = appearanceCharges.none { it.appearance!!.statusId != CourtAppearanceEntityStatus.DELETED }
 
-  fun hasTwoOrMoreLiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet().count { it.statusId != CourtAppearanceEntityStatus.DELETED } >= 2
+  fun hasTwoOrMoreLiveCourtAppearance(courtAppearance: CourtAppearanceEntity): Boolean = (appearanceCharges.map { it.appearance!! } + courtAppearance).toSet()
+    .count { it.statusId != CourtAppearanceEntityStatus.DELETED } >= 2
 
   fun getLiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED }
 
   fun hasSentence(): Boolean = sentences.any { it.statusId != SentenceEntityStatus.DELETED }
   fun isSame(other: ChargeEntity, otherHasSentence: Boolean): Boolean = this.offenceCode == other.offenceCode &&
-    ((this.offenceStartDate == null && other.offenceStartDate == null) || (other.offenceStartDate != null && this.offenceStartDate?.isEqual(other.offenceStartDate) == true)) &&
-    ((this.offenceEndDate == null && other.offenceEndDate == null) || (other.offenceEndDate != null && this.offenceEndDate?.isEqual(other.offenceEndDate) == true)) &&
+    (
+      (this.offenceStartDate == null && other.offenceStartDate == null) ||
+        (
+          other.offenceStartDate != null &&
+            this.offenceStartDate?.isEqual(
+              other.offenceStartDate,
+            ) == true
+          )
+      ) &&
+    (
+      (this.offenceEndDate == null && other.offenceEndDate == null) ||
+        (
+          other.offenceEndDate != null &&
+            this.offenceEndDate?.isEqual(
+              other.offenceEndDate,
+            ) == true
+          )
+      ) &&
     this.statusId == other.statusId &&
     this.chargeOutcome == other.chargeOutcome &&
     this.findingOfDomesticAbuse == other.findingOfDomesticAbuse &&
@@ -100,27 +117,80 @@ class ChargeEntity(
   fun isInterim(): Boolean = chargeOutcome?.dispositionCode == "INTERIM" || legacyData?.outcomeDispositionCode == "I"
 
   fun toFutureCharge(): ChargeEntity = ChargeEntity(
-    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, null, this, findingOfDomesticAbuse, createdAt, createdBy,
+    0,
+    chargeUuid,
+    offenceCode,
+    offenceStartDate,
+    offenceEndDate,
+    ChargeEntityStatus.ACTIVE,
+    null,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    createdBy,
     createdPrison,
-    ZonedDateTime.now(), updatedBy, updatedPrison, legacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null), mutableSetOf(), mutableSetOf(), null, null,
+    ZonedDateTime.now(),
+    updatedBy,
+    updatedPrison,
+    legacyData?.copy(nomisOutcomeCode = null, outcomeDescription = null, outcomeDispositionCode = null),
+    mutableSetOf(),
+    mutableSetOf(),
+    null,
+    null,
   )
 
   fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, charge.offenceCode ?: offenceCode, charge.offenceStartDate, charge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, findingOfDomesticAbuse,
-    createdAt, this.createdBy, createdPrison, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, charge.legacyData,
+    0,
+    chargeUuid,
+    charge.offenceCode ?: offenceCode,
+    charge.offenceStartDate,
+    charge.offenceEndDate,
+    ChargeEntityStatus.ACTIVE,
+    chargeOutcome,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    this.createdBy,
+    createdPrison,
+    ZonedDateTime.now(),
+    createdBy,
+    updatedPrison ?: createdPrison,
+    charge.legacyData,
     appearanceCharges.toMutableSet(),
     chargeAggravatingFactors.toMutableSet(),
     mergedFromCourtCase,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergedFromDate,
+    value = charge.value,
   )
 
-  fun copyFrom(linkChargeToCase: LegacyLinkChargeToCase, mergedFromCase: CourtCaseEntity, createdBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, chargeOutcome, this, findingOfDomesticAbuse, createdAt, this.createdBy, createdPrison,
-    ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, legacyData, mutableSetOf(),
-    mutableSetOf(), mergedFromCase, linkChargeToCase.linkedDate,
+  fun copyFrom(
+    linkChargeToCase: LegacyLinkChargeToCase,
+    mergedFromCase: CourtCaseEntity,
+    createdBy: String,
+  ): ChargeEntity = ChargeEntity(
+    0,
+    chargeUuid,
+    offenceCode,
+    offenceStartDate,
+    offenceEndDate,
+    ChargeEntityStatus.ACTIVE,
+    chargeOutcome,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    this.createdBy,
+    createdPrison,
+    ZonedDateTime.now(),
+    createdBy,
+    updatedPrison ?: createdPrison,
+    legacyData,
+    mutableSetOf(),
+    mutableSetOf(),
+    mergedFromCase,
+    linkChargeToCase.linkedDate,
     hmctsChargeId = hmctsChargeId,
+    value,
   )
 
   fun copyFrom(charge: CreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -132,6 +202,7 @@ class ChargeEntity(
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
     hmctsChargeId = charge.hmctsChargeId,
+    value = charge.value,
   )
 
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -145,26 +216,86 @@ class ChargeEntity(
     mergedFromDate = mergedFromDate,
   )
 
-  fun copyFrom(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, migrationCreateCharge.offenceCode, migrationCreateCharge.offenceStartDate, migrationCreateCharge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, findingOfDomesticAbuse,
-    createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, migrationCreateCharge.legacyData, mutableSetOf(), mutableSetOf(), null,
+  fun copyFrom(
+    migrationCreateCharge: MigrationCreateCharge,
+    chargeOutcome: ChargeOutcomeEntity?,
+    createdBy: String,
+  ): ChargeEntity = ChargeEntity(
+    0,
+    chargeUuid,
+    migrationCreateCharge.offenceCode,
+    migrationCreateCharge.offenceStartDate,
+    migrationCreateCharge.offenceEndDate,
+    ChargeEntityStatus.ACTIVE,
+    chargeOutcome,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    this.createdBy,
+    null,
+    ZonedDateTime.now(),
+    createdBy,
+    updatedPrison ?: createdPrison,
+    migrationCreateCharge.legacyData,
+    mutableSetOf(),
+    mutableSetOf(),
+    null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = migrationCreateCharge.mergedFromDate,
   )
 
-  fun copyFrom(mergeCreateCharge: MergeCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, mergeCreateCharge.offenceCode, mergeCreateCharge.offenceStartDate, mergeCreateCharge.offenceEndDate,
-    ChargeEntityStatus.ACTIVE, chargeOutcome, this, findingOfDomesticAbuse,
-    createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, mergeCreateCharge.legacyData, mutableSetOf(), mutableSetOf(), null,
+  fun copyFrom(
+    mergeCreateCharge: MergeCreateCharge,
+    chargeOutcome: ChargeOutcomeEntity?,
+    createdBy: String,
+  ): ChargeEntity = ChargeEntity(
+    0,
+    chargeUuid,
+    mergeCreateCharge.offenceCode,
+    mergeCreateCharge.offenceStartDate,
+    mergeCreateCharge.offenceEndDate,
+    ChargeEntityStatus.ACTIVE,
+    chargeOutcome,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    this.createdBy,
+    null,
+    ZonedDateTime.now(),
+    createdBy,
+    updatedPrison ?: createdPrison,
+    mergeCreateCharge.legacyData,
+    mutableSetOf(),
+    mutableSetOf(),
+    null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergeCreateCharge.mergedFromDate,
   )
 
-  fun copyFrom(bookingCreateCharge: BookingCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, bookingCreateCharge.offenceCode, bookingCreateCharge.offenceStartDate, bookingCreateCharge.offenceEndDate,
-    ChargeEntityStatus.DUPLICATE, chargeOutcome, this, findingOfDomesticAbuse,
-    createdAt, this.createdBy, null, ZonedDateTime.now(), createdBy, updatedPrison ?: createdPrison, bookingCreateCharge.legacyData, mutableSetOf(), mutableSetOf(), null,
+  fun copyFrom(
+    bookingCreateCharge: BookingCreateCharge,
+    chargeOutcome: ChargeOutcomeEntity?,
+    createdBy: String,
+  ): ChargeEntity = ChargeEntity(
+    0,
+    chargeUuid,
+    bookingCreateCharge.offenceCode,
+    bookingCreateCharge.offenceStartDate,
+    bookingCreateCharge.offenceEndDate,
+    ChargeEntityStatus.DUPLICATE,
+    chargeOutcome,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    this.createdBy,
+    null,
+    ZonedDateTime.now(),
+    createdBy,
+    updatedPrison ?: createdPrison,
+    bookingCreateCharge.legacyData,
+    mutableSetOf(),
+    mutableSetOf(),
+    null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = bookingCreateCharge.mergedFromDate,
   )
@@ -187,10 +318,26 @@ class ChargeEntity(
   fun copyFromReplacedCharge(replacedCharge: ChargeEntity): ChargeEntity {
     val currentDate = ZonedDateTime.now()
     val charge = ChargeEntity(
-      0, UUID.randomUUID(), offenceCode, offenceStartDate, offenceEndDate, ChargeEntityStatus.ACTIVE, chargeOutcome, replacedCharge,
+      0,
+      UUID.randomUUID(),
+      offenceCode,
+      offenceStartDate,
+      offenceEndDate,
+      ChargeEntityStatus.ACTIVE,
+      chargeOutcome,
+      replacedCharge,
       findingOfDomesticAbuse,
-      currentDate, createdBy, createdPrison, currentDate, null, null, legacyData, appearanceCharges.toMutableSet(),
-      chargeAggravatingFactors.toMutableSet(), mergedFromCourtCase, mergedFromDate,
+      currentDate,
+      createdBy,
+      createdPrison,
+      currentDate,
+      null,
+      null,
+      legacyData,
+      appearanceCharges.toMutableSet(),
+      chargeAggravatingFactors.toMutableSet(),
+      mergedFromCourtCase,
+      mergedFromDate,
       hmctsChargeId = hmctsChargeId,
     )
     charge.sentences = sentences.toMutableSet()
@@ -198,8 +345,26 @@ class ChargeEntity(
   }
 
   fun copyFrom(updatedBy: String): ChargeEntity = ChargeEntity(
-    0, chargeUuid, offenceCode, offenceStartDate, offenceEndDate, statusId, chargeOutcome, this,
-    findingOfDomesticAbuse, createdAt, createdBy, createdPrison, ZonedDateTime.now(), updatedBy, null, legacyData, mutableSetOf(), mutableSetOf(), mergedFromCourtCase, mergedFromDate,
+    0,
+    chargeUuid,
+    offenceCode,
+    offenceStartDate,
+    offenceEndDate,
+    statusId,
+    chargeOutcome,
+    this,
+    findingOfDomesticAbuse,
+    createdAt,
+    createdBy,
+    createdPrison,
+    ZonedDateTime.now(),
+    updatedBy,
+    null,
+    legacyData,
+    mutableSetOf(),
+    mutableSetOf(),
+    mergedFromCourtCase,
+    mergedFromDate,
     hmctsChargeId = hmctsChargeId,
   )
 
@@ -273,9 +438,28 @@ class ChargeEntity(
       hmctsChargeId = charge.hmctsChargeId,
     )
 
-    fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(chargeUuid = UUID.randomUUID(), offenceCode = charge.offenceCode, offenceStartDate = charge.offenceStartDate, offenceEndDate = charge.offenceEndDate, statusId = ChargeEntityStatus.ACTIVE, chargeOutcome = chargeOutcome, supersedingCharge = null, findingOfDomesticAbuse = null, legacyData = charge.legacyData, appearanceCharges = mutableSetOf(), chargeAggravatingFactors = mutableSetOf(), createdBy = createdBy, createdPrison = null)
+    fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+      chargeUuid = UUID.randomUUID(),
+      offenceCode = charge.offenceCode,
+      offenceStartDate = charge.offenceStartDate,
+      offenceEndDate = charge.offenceEndDate,
+      statusId = ChargeEntityStatus.ACTIVE,
+      chargeOutcome = chargeOutcome,
+      supersedingCharge = null,
+      findingOfDomesticAbuse = null,
+      legacyData = charge.legacyData,
+      appearanceCharges = mutableSetOf(),
+      chargeAggravatingFactors = mutableSetOf(),
+      createdBy = createdBy,
+      createdPrison = null,
+      value = charge.value,
+    )
 
-    fun from(migrationCreateCharge: MigrationCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+    fun from(
+      migrationCreateCharge: MigrationCreateCharge,
+      chargeOutcome: ChargeOutcomeEntity?,
+      createdBy: String,
+    ): ChargeEntity = ChargeEntity(
       0,
       UUID.randomUUID(),
       migrationCreateCharge.offenceCode,
@@ -299,7 +483,11 @@ class ChargeEntity(
       migrationCreateCharge.mergedFromDate,
     )
 
-    fun from(mergeCreateCharge: MergeCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+    fun from(
+      mergeCreateCharge: MergeCreateCharge,
+      chargeOutcome: ChargeOutcomeEntity?,
+      createdBy: String,
+    ): ChargeEntity = ChargeEntity(
       0,
       UUID.randomUUID(),
       mergeCreateCharge.offenceCode,
@@ -323,7 +511,11 @@ class ChargeEntity(
       mergeCreateCharge.mergedFromDate,
     )
 
-    fun from(bookingCreateCharge: BookingCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
+    fun from(
+      bookingCreateCharge: BookingCreateCharge,
+      chargeOutcome: ChargeOutcomeEntity?,
+      createdBy: String,
+    ): ChargeEntity = ChargeEntity(
       0,
       UUID.randomUUID(),
       bookingCreateCharge.offenceCode,
