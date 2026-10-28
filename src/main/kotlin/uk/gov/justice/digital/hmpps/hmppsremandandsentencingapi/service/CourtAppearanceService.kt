@@ -699,7 +699,7 @@ class CourtAppearanceService(
     )
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   fun findAppearanceByUuid(appearanceUuid: UUID): RecordResponse<CourtAppearance>? = courtAppearanceRepository.findByAppearanceUuid(appearanceUuid)?.takeUnless { it.statusId == CourtAppearanceEntityStatus.DELETED }?.let {
     val eventsToEmit = fixManyChargesToSentenceService.fixCourtCaseSentences(listOf(it.courtCase))
     RecordResponse(CourtAppearance.from(it), eventsToEmit)

@@ -81,7 +81,7 @@ class FixManyChargesToSentenceService(
     val toFixSentences = manyChargedSentences
       .groupByTo(mutableMapOf()) { it.sentenceEntity.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
-    sentences.minByOrNull { it.sentenceEntity.id }?.let { minIdSentence ->
+    manyChargedSentences.minByOrNull { it.sentenceEntity.id }?.let { minIdSentence ->
       sentenceRepository.acquireSentenceTransactionLock(minIdSentence.sentenceEntity.sentenceUuid)
     }
 
