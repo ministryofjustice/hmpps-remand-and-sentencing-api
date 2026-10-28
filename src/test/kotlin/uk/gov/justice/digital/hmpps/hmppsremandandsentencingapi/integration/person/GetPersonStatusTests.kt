@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.per
 
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.time.LocalDate
 import java.util.UUID
@@ -43,6 +44,32 @@ class GetPersonStatusTests : IntegrationTestBase() {
             outcomeUuid = UUID.fromString("1709089f-0cf8-4544-8229-a2251e671241"), // Fine outcome
           ),
         ),
+      ),
+    )
+
+    expectIsOnRemand(prisonerId, false)
+  }
+
+  @Test
+  fun `isOnRemand is true when the latest appearance has a legacy NOMIS remand outcome`() {
+    val prisonerId = "PRN0004"
+    createLegacyCourtAppearance(
+      legacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId = prisonerId),
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+        legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "4505"),
+      ),
+    )
+
+    expectIsOnRemand(prisonerId, true)
+  }
+
+  @Test
+  fun `isOnRemand is false when the latest appearance has non-REMAND NOMIS outcome`() {
+    val prisonerId = "PRN0005"
+    createLegacyCourtAppearance(
+      legacyCreateCourtCase = DataCreator.legacyCreateCourtCase(prisonerId = prisonerId),
+      legacyCreateCourtAppearance = DataCreator.legacyCreateCourtAppearance(
+        legacyData = DataCreator.courtAppearanceLegacyData(nomisOutcomeCode = "9999"),
       ),
     )
 
