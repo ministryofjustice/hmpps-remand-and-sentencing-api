@@ -75,16 +75,13 @@ class FixManyChargesToSentenceService(
 
   fun fixSentences(sentences: List<FixSentenceHierarchy>, username: String? = null): MutableSet<EventMetadata> {
     val manyChargedSentences = sentences.filter { it.sentenceEntity.statusId == SentenceEntityStatus.MANY_CHARGES_DATA_FIX }
-    if (manyChargedSentences.isEmpty()) {
-      return mutableSetOf()
-    }
     val checkForConsecutiveToLink = manyChargedSentences.map { it.sentenceEntity.id }
     val sentencesWithConsecutiveToLink = sentenceRepository.findSentencesWithConsecutiveToLinkAndStatusNot(checkForConsecutiveToLink)
     val sentenceIdsWithConsecutiveToLink = sentencesWithConsecutiveToLink.filter { it.consecutiveTo != null }.map { it.consecutiveTo!!.id }.toSet()
     val toFixSentences = manyChargedSentences
       .groupByTo(mutableMapOf()) { it.sentenceEntity.sentenceUuid }
     val eventsToEmit = mutableSetOf<EventMetadata>()
-    sentences.minByOrNull { it.sentenceEntity.id }?.let { minIdSentence ->
+    manyChargedSentences.minByOrNull { it.sentenceEntity.id }?.let { minIdSentence ->
       sentenceRepository.acquireSentenceTransactionLock(minIdSentence.sentenceEntity.sentenceUuid)
     }
 
