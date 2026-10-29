@@ -315,6 +315,8 @@ class LegacySentenceServiceTests {
         previousSentenceIds = emptyList(),
         previousRecallId = null,
         eventType = EventType.RECALL_DELETED,
+        nomisRecall = true,
+        sentenceDeleted = true,
       ),
     )
     verify(exactly = 0) { adjustmentsApiClient.unlinkRecallAdjustments(any()) }

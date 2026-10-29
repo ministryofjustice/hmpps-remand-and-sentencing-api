@@ -19,6 +19,8 @@ data class EventMetadata(
   val chargeIds: Set<String>? = null,
   val periodLengthIds: Set<String>? = null,
   val hasUnconfirmedConsecutiveToFix: Boolean? = null,
+  val nomisRecall: Boolean? = null,
+  val sentenceDeleted: Boolean? = null,
 ) {
   fun isBreach(): Boolean = isBreach ?: false
 }
