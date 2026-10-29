@@ -1337,9 +1337,82 @@ class RecallIntTests : IntegrationTestBase() {
     val messages = getMessages(2)
     assertThat(messages).hasSize(2)
       .extracting<String> { it.eventType }.contains("recall.deleted", "sentence.deleted")
+    val recallDeleted = messages.first { it.eventType == "recall.deleted" }
+    assertThat(recallDeleted.additionalInformation.get("nomisRecall").asBoolean()).isTrue()
+    assertThat(recallDeleted.additionalInformation.get("sentenceDeleted").asBoolean()).isTrue()
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(recall.recallUuid)
     assertThat(historicalRecalls).hasSize(2)
+  }
+
+  @Test
+  fun `Delete a NOMIS recall deletes every recall in the group`() {
+    val arrestDate = LocalDate.of(2023, 6, 15)
+    createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = DataCreator.sentenceLegacyData(
+          sentenceCalcType = "FTR_ORA",
+          sentenceCategory = "2020",
+        ),
+        returnToCustodyDate = arrestDate,
+      ),
+    )
+    createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = DataCreator.sentenceLegacyData(
+          sentenceCalcType = "FTR_ORA",
+          sentenceCategory = "2020",
+        ),
+        returnToCustodyDate = arrestDate,
+      ),
+    )
+    val grouped = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).single()
+    purgeQueues()
+
+    deleteRecall(grouped.recallUuid)
+
+    assertThat(getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)).isEmpty()
+    assertThat(recallRepository.findByPrisonerIdAndStatus(DpsDataCreator.DEFAULT_PRISONER_ID)).isEmpty()
+
+    val messages = getMessages(4)
+    val recallDeleted = messages.filter { it.eventType == "recall.deleted" }
+    assertThat(recallDeleted).hasSize(2)
+    assertThat(recallDeleted).allSatisfy {
+      assertThat(it.additionalInformation.get("nomisRecall").asBoolean()).isTrue()
+      assertThat(it.additionalInformation.get("sentenceDeleted").asBoolean()).isTrue()
+    }
+  }
+
+  @Test
+  fun `Delete a NOMIS recall doesnt delete the sentence when a DPS recall is also on that sentence`() {
+    val (legacySentenceUuid, _) = createLegacySentence(
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = DataCreator.sentenceLegacyData(
+          sentenceCalcType = "FTR_ORA",
+          sentenceCategory = "2020",
+        ),
+        returnToCustodyDate = LocalDate.of(2023, 1, 1),
+      ),
+    )
+    val nomisRecall = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).single()
+    val dpsRecall = createRecall(
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(legacySentenceUuid),
+      ),
+    )
+    purgeQueues()
+
+    deleteRecall(nomisRecall.recallUuid)
+
+    val recalls = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    assertThat(recalls.map { it.recallUuid }).containsExactly(dpsRecall.recallUuid)
+
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1)
+    val recallDeleted = messages.single()
+    assertThat(recallDeleted.eventType).isEqualTo("recall.deleted")
+    assertThat(recallDeleted.additionalInformation.get("nomisRecall").asBoolean()).isTrue()
+    assertThat(recallDeleted.additionalInformation.get("sentenceDeleted").asBoolean()).isFalse()
   }
 
   @Test
@@ -1373,6 +1446,8 @@ class RecallIntTests : IntegrationTestBase() {
     val messages = getMessages(1)
     assertThat(messages).hasSize(1)
       .extracting<String> { it.eventType }.contains("recall.deleted")
+    assertThat(messages[0].additionalInformation.has("nomisRecall")).isFalse() // field is omitted
+    assertThat(messages[0].additionalInformation.has("sentenceDeleted")).isFalse() // field is omitted
 
     val historicalRecalls = recallHistoryRepository.findByRecallUuid(dpsRecall.recallUuid)
     assertThat(historicalRecalls).hasSize(2)

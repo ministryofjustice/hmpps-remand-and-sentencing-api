@@ -37,13 +37,21 @@ class RecallDomainEventService(
     )
   }
 
-  fun delete(prisonerId: String, recallId: String, sentenceIds: List<String>, previousRecallId: String?, source: EventSource) {
+  fun delete(
+    prisonerId: String,
+    recallId: String,
+    sentenceIds: List<String>,
+    previousRecallId: String?,
+    source: EventSource,
+    nomisRecall: Boolean? = null,
+    sentenceDeleted: Boolean? = null,
+  ) {
     snsService.publishDomainEvent(
       "recall.deleted",
       "Recall deleted",
       generateDetailsUri(recallLookupPath, recallId),
       ZonedDateTime.now(),
-      HmppsRecallMessage(recallId, sentenceIds, null, previousRecallId, source),
+      HmppsRecallMessage(recallId, sentenceIds, null, previousRecallId, source, nomisRecall, sentenceDeleted),
       PersonReference(listOf(PersonReferenceType("NOMS", prisonerId))),
     )
   }
