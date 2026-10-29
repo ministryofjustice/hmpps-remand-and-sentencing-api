@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSetter
 import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -26,5 +27,5 @@ data class CreateCharge(
   @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonSetter(nulls = Nulls.SKIP)
   val aggravatingFactors: List<AggravatingFactor> = emptyList(),
-
+  val value: BigDecimal? = null,
 )
