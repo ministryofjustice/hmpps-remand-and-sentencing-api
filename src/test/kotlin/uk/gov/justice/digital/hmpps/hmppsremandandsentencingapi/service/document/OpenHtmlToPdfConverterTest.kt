@@ -5,6 +5,7 @@ import org.apache.pdfbox.text.PDFTextStripper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.pdf.OpenHtmlToPdfConverter
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.pdf.PdfDigitalSignatureWriter
 import java.io.File
 
 class OpenHtmlToPdfConverterTest {
@@ -21,8 +22,9 @@ class OpenHtmlToPdfConverterTest {
         get() = data
     })
 
-    val pdfConverter = OpenHtmlToPdfConverter()
-    var resp = pdfConverter.convert(html)
+    val pdfDigitalSignatureWriter = PdfDigitalSignatureWriter()
+    val pdfConverter = OpenHtmlToPdfConverter(pdfDigitalSignatureWriter)
+    val resp = pdfConverter.convert(html)
 
     PDDocument.load(resp).use { pdf ->
       assertThat(pdf.numberOfPages).isGreaterThan(0)

@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.ExchangeFunction
 import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
 import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
+import uk.gov.justice.hmpps.kotlin.auth.unauthenticatedWebClient
 import java.time.Duration
 
 @Configuration
@@ -27,6 +28,7 @@ class WebClientConfiguration(
   @param:Value("\${prison-register.api.url}") private val prisonRegisterUri: String,
   @param:Value("\${prisoner-search.api.url}") private val prisonerSearchUri: String,
   @param:Value("\${manage-offences.api.url}") private val manageOffencesUri: String,
+  @param:Value("\${document.signing.tsa-url:}") private val timestampAuthorityUri: String,
   @param:Value("\${hmpps.auth.url}") val hmppsAuthBaseUri: String,
   @param:Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
   @param:Value("\${api.timeout:20s}") val timeout: Duration,
@@ -139,6 +141,9 @@ class WebClientConfiguration(
     "court-data-ingestion-api",
     courtDataIngestionApiUri,
   )
+
+  @Bean
+  fun timestampAuthorityWebClient(builder: WebClient.Builder): WebClient = builder.unauthenticatedWebClient(timestampAuthorityUri)
 
   // HMPPS Auth health ping is required if your service calls HMPPS Auth to get a token to call other services
   @Bean

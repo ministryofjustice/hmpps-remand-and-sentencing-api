@@ -5,7 +5,7 @@ import org.w3c.dom.Document
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.document.HtmlToDocumentConverter
 import java.io.ByteArrayOutputStream
 
-class OpenHtmlToPdfConverter : HtmlToDocumentConverter {
+class OpenHtmlToPdfConverter(private val pdfDigitalSignatureWriter: PdfDigitalSignatureWriter) : HtmlToDocumentConverter {
 
   override fun convert(html: Document): ByteArray {
     val contentOutputStream = ByteArrayOutputStream()
@@ -16,6 +16,6 @@ class OpenHtmlToPdfConverter : HtmlToDocumentConverter {
       .toStream(contentOutputStream)
       .run()
 
-    return contentOutputStream.toByteArray()
+    return pdfDigitalSignatureWriter.apply(contentOutputStream.toByteArray())
   }
 }

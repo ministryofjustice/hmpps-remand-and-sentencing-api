@@ -32,6 +32,13 @@ generic-service:
     FEATURES_HMCTS_WARRANT_THING_TO_DO_MULTIPLE_NOTIFICATIONS_ENABLED: "true"
     FEATURES_APPEARANCE_SCHEDULES_EVENTS_ENABLED: "true"
     FEATURES_CLIENT-API_PRISON-REGISTER_ENABLED: "true"
+    DOCUMENT_SIGNING_TSA_URL: "http://timestamp.digicert.com"
+
+  # DEV only. Uses existing TLS cert to prove PDF signing.
+  namespace_secrets:
+    hmpps-remand-and-sentencing-api-cert:
+      DOCUMENT_SIGNING_CERT: "tls.crt"
+      DOCUMENT_SIGNING_KEY: "tls.key"
 
   resources:
     requests:
