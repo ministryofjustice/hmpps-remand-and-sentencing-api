@@ -64,6 +64,7 @@ data class CourtCaseRow(
   var chargeLegacyData: ChargeLegacyData?,
   var chargeCreatedAt: ZonedDateTime?,
   var chargeFindingOfDomesticAbuse: Boolean?,
+  var chargeValue: BigDecimal?,
   var sentenceId: Int?,
   var sentenceUuid: UUID?,
   var sentenceCountNumber: String?,

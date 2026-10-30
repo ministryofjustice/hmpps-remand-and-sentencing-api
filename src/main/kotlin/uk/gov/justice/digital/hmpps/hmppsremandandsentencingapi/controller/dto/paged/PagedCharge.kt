@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.A
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtCaseRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -20,6 +21,7 @@ data class PagedCharge(
   val mergedFromCase: PagedMergedFromCase?,
   val createdAt: ZonedDateTime,
   val findingOfDomesticAbuse: Boolean?,
+  val value: BigDecimal?,
 ) {
   companion object {
     fun from(chargeRows: List<CourtCaseRow>): PagedCharge {
@@ -46,6 +48,7 @@ data class PagedCharge(
         charge.takeIf { it.mergedFromCaseId != null && it.mergedFromAppearanceId != null }?.let { PagedMergedFromCase.from(listOf(it)) },
         charge.chargeCreatedAt!!,
         charge.chargeFindingOfDomesticAbuse,
+        charge.chargeValue,
       )
     }
   }

@@ -99,6 +99,7 @@ import java.util.UUID
         ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),
         ColumnResult(name = "chargeCreatedAt", type = ZonedDateTime::class),
         ColumnResult(name = "chargeFindingOfDomesticAbuse"),
+        ColumnResult(name = "chargeValue"),
         ColumnResult(name = "sentenceId"),
         ColumnResult(name = "sentenceUuid"),
         ColumnResult(name = "sentenceCountNumber"),

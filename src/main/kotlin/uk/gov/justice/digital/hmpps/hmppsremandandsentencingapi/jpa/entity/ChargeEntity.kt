@@ -437,6 +437,7 @@ class ChargeEntity(
       createdBy = createdBy,
       createdPrison = charge.prisonId,
       hmctsChargeId = charge.hmctsChargeId,
+      value = charge.value,
     )
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(

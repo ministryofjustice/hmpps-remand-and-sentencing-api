@@ -76,6 +76,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         c.offence_code as chargeOffenceCode,
         c.offence_start_date as chargeOffenceStartDate,
         c.offence_end_date as chargeOffenceEndDate,
+        c.value as chargeValue,
         af.code as chargeAggravatingFactorCode,
         af.title as chargeAggravatingFactorTitle,
         af.description as chargeAggravatingFactorDescription,
