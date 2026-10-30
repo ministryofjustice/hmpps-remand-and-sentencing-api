@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.RecallSentenceEntity
@@ -285,7 +286,41 @@ class RecallService(
   fun deleteRecall(recallUuid: UUID): RecordResponse<DeleteRecallResponse> {
     val recallToDelete = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("Recall not found $recallUuid")
+    return if (recallToDelete.source == NOMIS) {
+      deleteNomisRecallsInSameGroup(recallToDelete)
+    } else {
+      deleteSingleRecall(recallToDelete)
+    }
+  }
 
+  private fun deleteNomisRecallsInSameGroup(recall: RecallEntity): RecordResponse<DeleteRecallResponse> {
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    var response: DeleteRecallResponse? = null
+    val nomisRecallsInSameGroup = getNomisRecallsInSameGroup(recall)
+    nomisRecallsInSameGroup.forEach { groupedRecall ->
+      val result = deleteSingleRecall(groupedRecall)
+      eventsToEmit.addAll(result.eventsToEmit)
+      if (groupedRecall.recallUuid == recall.recallUuid) {
+        response = result.record
+      }
+    }
+    return RecordResponse(response ?: DeleteRecallResponse.from(recall), eventsToEmit)
+  }
+
+  private fun getNomisRecallsInSameGroup(recall: RecallEntity): List<RecallEntity> {
+    val groupingKey = nomisGroupingKey(recall) ?: return listOf(recall)
+    val grouped = recallRepository.findByPrisonerIdAndStatus(recall.prisonerId)
+      .filter { it.source == NOMIS && nomisGroupingKey(it) == groupingKey }
+    return grouped.ifEmpty { listOf(recall) }
+  }
+
+  private fun nomisGroupingKey(recall: RecallEntity): String? = NomisRecallGrouper.groupingKey(
+    recall.recallType.code,
+    recall.returnToCustodyDate,
+    recall.recallSentences.firstOrNull()?.sentence?.legacyData?.postedDate,
+  )
+
+  private fun deleteSingleRecall(recallToDelete: RecallEntity): RecordResponse<DeleteRecallResponse> {
     val hasOnlyLegacySentences = recallToDelete.recallSentences.isNotEmpty() &&
       recallToDelete.recallSentences.all { it.sentence.sentenceType?.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid }
     val isOnlyRecall = recallToDelete.recallSentences.all { it.sentence.recallSentences.size == 1 }
@@ -293,7 +328,7 @@ class RecallService(
     val eventsToEmit = mutableListOf<EventMetadata>()
     var previousRecall: RecallEntity?
     val ualAdjustmentToDelete: AdjustmentDto? = if (recallToDelete.source == DPS) {
-      adjustmentsApiClient.getRecallAdjustment(recallToDelete.prisonerId, recallUuid)
+      adjustmentsApiClient.getRecallAdjustment(recallToDelete.prisonerId, recallToDelete.recallUuid)
     } else {
       null
     }
@@ -304,7 +339,7 @@ class RecallService(
         it.sentence
       }.flatMap { it.recallSentences }
         .map { it.recall }
-        .filter { it.recallUuid != recallUuid }
+        .filter { it.recallUuid != recallToDelete.recallUuid }
         .maxByOrNull { it.createdAt }
 
       // deleting the sentence for the legacy recall will delete the recall so it's only required here for DPS
@@ -322,6 +357,7 @@ class RecallService(
         ),
       )
       recallRepository.save(recallToDelete)
+      val isNomisRecall = recallToDelete.source == NOMIS
       eventsToEmit.add(
         EventMetadataCreator.recallEventMetadata(
           recallToDelete.prisonerId,
@@ -330,6 +366,8 @@ class RecallService(
           emptyList(),
           previousRecall?.recallUuid?.toString(),
           EventType.RECALL_DELETED,
+          nomisRecall = if (isNomisRecall) true else null,
+          sentenceDeleted = if (isNomisRecall) false else null,
         ),
       )
     }

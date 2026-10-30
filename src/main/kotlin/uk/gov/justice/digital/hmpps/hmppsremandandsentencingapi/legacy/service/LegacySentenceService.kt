@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMeta
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.DPS
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.error.ChargeAlreadySentencedException
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
@@ -589,6 +590,7 @@ class LegacySentenceService(
           adjustmentsApiClient.unlinkRecallAdjustments(recall.recallUuid)
         }
 
+        val isNomisRecall = recall.source == NOMIS
         eventMetaDataList.add(
           EventMetadataCreator.recallEventMetadata(
             prisonerId = recall.prisonerId,
@@ -597,6 +599,8 @@ class LegacySentenceService(
             previousSentenceIds = emptyList(),
             previousRecallId = null,
             eventType = EventType.RECALL_DELETED,
+            nomisRecall = if (isNomisRecall) true else null,
+            sentenceDeleted = if (isNomisRecall) true else null,
           ),
         )
       } else {
