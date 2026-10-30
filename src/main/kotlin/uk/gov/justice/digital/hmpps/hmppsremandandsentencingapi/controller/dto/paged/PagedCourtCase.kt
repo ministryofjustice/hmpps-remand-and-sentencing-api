@@ -25,6 +25,8 @@ data class PagedCourtCase(
   val canAppeal: Boolean,
   val canBreach: Boolean,
   val hasUnconfirmedConsecutiveToFixSentences: Boolean,
+  val hasRecalls: Boolean,
+  val canAddHearing: Boolean,
 ) {
   companion object {
     fun from(courtCaseRows: List<CourtCaseRow>): PagedCourtCase {
@@ -49,6 +51,7 @@ data class PagedCourtCase(
             it.appearanceSentenceTypeClassification == SentenceTypeClassification.DTO
         }
       val hasUnconfirmedConsecutiveToFixSentences = courtCaseRows.any { it.appearanceSentenceHasUnconfirmedConsecutiveToFix == true }
+      val canAddHearing = noRecalls && !canAppeal && !canBreach && firstCourtCase.courtCaseStatus != CourtCaseEntityStatus.MERGED
       return PagedCourtCase(
         firstCourtCase.prisonerId,
         firstCourtCase.courtCaseUuid,
@@ -65,6 +68,8 @@ data class PagedCourtCase(
         canAppeal,
         canBreach,
         hasUnconfirmedConsecutiveToFixSentences,
+        !noRecalls,
+        canAddHearing,
       )
     }
   }
