@@ -19,13 +19,13 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.33.0")
 
   // PDF generation related dependencies
   implementation("org.springframework.boot:spring-boot-starter-mustache")
   implementation("com.github.spullara.mustache.java:compiler:0.9.14")
-  implementation("com.github.jknack:handlebars:4.5.5")
+  implementation("com.github.jknack:handlebars:4.5.7")
   implementation("org.jsoup:jsoup:1.23.2")
   implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
   implementation("org.bouncycastle:bcprov-jdk18on:1.86")
