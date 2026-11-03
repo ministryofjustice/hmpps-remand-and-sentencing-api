@@ -257,6 +257,6 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .isEqualTo(null)
         .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
         .isEqualTo(null)
-      }
+    }
   }
 }
