@@ -1071,18 +1071,18 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       Arguments.of(
         "2020 Extended Determinate Sentence (18-20)",
         HMCTS_SENTENCED_CHARGE.copy(
-          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTDVSU")),
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTDVS")),
           startDate = LocalDate.of(2014, 8, 15),
           endDate = null,
-          convictionDate = CONVICTION_2003_ACT_DATE,
+          convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         null, // UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"), More than one sentence type.
-        CONVICTION_2003_ACT_DATE.minusYears(19),
+        CONVICTION_2020_ACT_DATE.minusYears(19),
       ),
       Arguments.of(
         "2020 Extended Determinate Sentence (21+)",
         HMCTS_SENTENCED_CHARGE.copy(
-          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTDVSU")),
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTIVS")),
           startDate = LocalDate.of(2014, 8, 15),
           endDate = null,
           convictionDate = CONVICTION_2020_ACT_DATE,
