@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
+import java.math.BigDecimal
 import java.time.LocalDate
 
 data class LegacyUpdateCharge(
@@ -8,4 +9,5 @@ data class LegacyUpdateCharge(
   var legacyData: ChargeLegacyData,
   val performedByUser: String?,
   val offenceCode: String?,
+  val value: BigDecimal?,
 )

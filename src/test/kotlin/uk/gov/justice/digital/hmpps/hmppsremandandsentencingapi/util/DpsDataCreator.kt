@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.PeriodLengthLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -167,6 +168,7 @@ class DpsDataCreator {
       createChargeOrder: Int? = null,
       aggravatingFactors: List<AggravatingFactor> = listOf(AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 10)),
       hmctsChargeId: UUID? = UUID.fromString("48a3b2d1-5a5a-4233-a5ef-a27882a4436b"),
+      chargeValue: BigDecimal? = null,
     ): CreateCharge = CreateCharge(
       appearanceUuid,
       chargeUuid,
@@ -182,6 +184,7 @@ class DpsDataCreator {
       createChargeOrder,
       hmctsChargeId,
       aggravatingFactors,
+      chargeValue,
     )
 
     fun dpsCreateSentence(

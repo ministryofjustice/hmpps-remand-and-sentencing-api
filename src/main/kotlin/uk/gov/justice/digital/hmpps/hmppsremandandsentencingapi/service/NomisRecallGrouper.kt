@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
+import java.time.LocalDate
 
 /**
  * NOMIS creates one recall per sentence. Group NOMIS recalls that share the same recall type
@@ -25,14 +27,16 @@ object NomisRecallGrouper {
     return otherRecalls + groupedNomisRecalls
   }
 
-  private fun groupingKey(recall: Recall): String? {
-    if (recall.returnToCustodyDate != null) {
-      return "${recall.recallType}|arrest:${recall.returnToCustodyDate}"
+  fun groupingKey(recallType: RecallType, returnToCustodyDate: LocalDate?, postedDate: String?): String? {
+    if (returnToCustodyDate != null) {
+      return "$recallType|arrest:$returnToCustodyDate"
     }
-    if (recall.postedDate.isNullOrBlank()) return null
+    if (postedDate.isNullOrBlank()) return null
     // postedDate is a datetime string; first 10 chars are yyyy-MM-dd
-    return "${recall.recallType}|posted:${recall.postedDate.take(10)}"
+    return "$recallType|posted:${postedDate.take(10)}"
   }
+
+  private fun groupingKey(recall: Recall): String? = groupingKey(recall.recallType, recall.returnToCustodyDate, recall.postedDate)
 
   private fun merge(recallsWithSameKey: List<Recall>): Recall {
     val primary = recallsWithSameKey.minBy { it.createdAt }

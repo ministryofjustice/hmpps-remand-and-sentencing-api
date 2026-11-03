@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -13,6 +14,7 @@ data class LegacyCharge(
   val offenceStartDate: LocalDate?,
   val offenceEndDate: LocalDate?,
   val legacyData: ChargeLegacyData?,
+  val value: BigDecimal?,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity): LegacyCharge = LegacyCharge(
@@ -24,6 +26,7 @@ data class LegacyCharge(
       chargeEntity.offenceStartDate,
       chargeEntity.offenceEndDate,
       chargeEntity.legacyData,
+      chargeEntity.value,
     )
   }
 }

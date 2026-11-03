@@ -237,13 +237,10 @@ class HmctsCourtDataService(
       return null
     }
 
-    val periods = mutableListOf<PeriodLength>()
+    val periods = mutableListOf<PeriodLength?>()
     val result = resultsWithMapping[0]
-    val extensionPeriod = result.findValue(HmctsResultKeys.EXTENSION_PERIOD) != null
-    val extensionPeriod35 = result.findValue(HmctsResultKeys.EXTENSION_PERIOD_SECTION_35A) != null
     val consecutive = result.findValue(HmctsResultKeys.CONSECUTIVE_TO_OFFENCE) != null ||
       result.findValue(HmctsResultKeys.CONCURRENT) == "false"
-    val imprisonmentPeriod = result.findValue(HmctsResultKeys.IMPRISONMENT_PERIOD)
 
     if (!result.hasAnySentencingKey()) {
       return null
@@ -273,26 +270,15 @@ class HmctsCourtDataService(
 
     log.debug("Found sentence types: ${sentenceTypes.size}, ${sentenceTypes.joinToString(", ") { it.description }}")
 
-    if (!imprisonmentPeriod.isNullOrEmpty()) {
-      val duration = HmctsDurationParts.parseDuration(imprisonmentPeriod)
-      periods.add(
-        PeriodLength(
-          years = duration.years,
-          months = duration.months,
-          weeks = duration.weeks,
-          days = duration.days,
-          periodOrder = "years,months,weeks,days",
-          periodLengthType = if (!extensionPeriod && !extensionPeriod35) PeriodLengthType.SENTENCE_LENGTH else PeriodLengthType.CUSTODIAL_TERM,
-          legacyData = null,
-          periodLengthUuid = UUID.randomUUID(),
-        ),
-      )
-    }
+    periods.add(periodLengthFromResult(result, HmctsResultKeys.IMPRISONMENT_PERIOD, PeriodLengthType.SENTENCE_LENGTH))
+    periods.add(periodLengthFromResult(result, HmctsResultKeys.PERIOD_OF_DETENTION_AND_TRAINING, PeriodLengthType.TERM_LENGTH))
+    periods.add(periodLengthFromResult(result, HmctsResultKeys.APPROPRIATE_CUSTODIAL_TERM, PeriodLengthType.CUSTODIAL_TERM))
+    periods.add(periodLengthFromResult(result, HmctsResultKeys.EXTENSION_PERIOD, PeriodLengthType.LICENCE_PERIOD))
 
     return Sentence(
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = null,
-      periodLengths = periods,
+      periodLengths = periods.filterNotNull(),
       consecutiveToSentenceUuid = null,
       sentenceServeType = if (consecutive) "CONSECUTIVE" else "CONCURRENT",
       sentenceType = sentenceType,
@@ -319,7 +305,17 @@ class HmctsCourtDataService(
   private fun classificationFromHmctsResultCode(hmctsResultCode: String): SentenceTypeClassification? = when (hmctsResultCode) {
     "IMP", "YOI" -> SentenceTypeClassification.STANDARD
     "DTO" -> SentenceTypeClassification.DTO
+    "EXTDVSU", "EXTDVS", "EXTIVS" -> SentenceTypeClassification.EXTENDED
+    "MLI" -> SentenceTypeClassification.INDETERMINATE
     else -> null
+  }
+
+  private fun periodLengthFromResult(result: HmctsCourtResult, key: HmctsResultKeys, periodLengthType: PeriodLengthType): PeriodLength? {
+    val periodValue = result.findValue(key)
+    if (periodValue.isNullOrEmpty()) {
+      return null
+    }
+    return HmctsDurationParts.parseDuration(periodValue).toPeriodLength(periodLengthType)
   }
 
   companion object {

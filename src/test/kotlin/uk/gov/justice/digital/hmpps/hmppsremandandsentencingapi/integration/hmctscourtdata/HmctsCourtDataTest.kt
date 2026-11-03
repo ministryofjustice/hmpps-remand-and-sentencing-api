@@ -101,7 +101,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           appearanceDate = LocalDate.of(2026, 8, 15),
           appearanceTime = LocalTime.of(10, 0),
           courtCode = hmctsCourtHearing.nextHearing?.hmppsCourtId!!,
-          appearanceType = AppearanceType(appearanceTypeUuid = Constants.nilUUID, description = "Unknown appearance type", displayOrder = 1, hasSubtypes = false),
+          appearanceType = AppearanceType(
+            appearanceTypeUuid = Constants.nilUUID,
+            description = "Unknown appearance type",
+            displayOrder = 1,
+            hasSubtypes = false,
+          ),
           futureSkeletonAppearanceUuid = Constants.nilUUID,
           courtAppearanceSubType = null,
           hmctsCourtHearingId = hmctsCourtHearing.nextHearing.hearingId,
@@ -122,7 +127,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               dispositionCode = "INTERIM",
               status = ReferenceEntityStatus.ACTIVE,
             ),
-            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
+            aggravatingFactors = emptyList(),
+            sentence = null,
+            legacyData = null,
+            mergedFromCase = null,
+            createdAt = response.charges.first().createdAt,
+            findingOfDomesticAbuse = null,
           ),
           Charge(
             chargeUuid = response.charges[1].chargeUuid,
@@ -139,7 +149,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               dispositionCode = "FINAL",
               status = ReferenceEntityStatus.ACTIVE,
             ),
-            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges[1].createdAt, findingOfDomesticAbuse = null,
+            aggravatingFactors = emptyList(),
+            sentence = null,
+            legacyData = null,
+            mergedFromCase = null,
+            createdAt = response.charges[1].createdAt,
+            findingOfDomesticAbuse = null,
           ),
           Charge(
             chargeUuid = response.charges[2].chargeUuid,
@@ -148,7 +163,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             offenceStartDate = LocalDate.of(2026, 6, 14),
             offenceEndDate = null,
             outcome = null,
-            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges[2].createdAt, findingOfDomesticAbuse = null,
+            aggravatingFactors = emptyList(),
+            sentence = null,
+            legacyData = null,
+            mergedFromCase = null,
+            createdAt = response.charges[2].createdAt,
+            findingOfDomesticAbuse = null,
           ),
         ),
         overallConvictionDate = null,
@@ -168,7 +188,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Test get appearance from hmcts sentence data`() {
+  fun `Test get appearance from hmcts standard sentence data`() {
     val hmctsCourtHearing = HMCTS_SENTENCE_HEARING
     CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
       hmctsCourtHearing,
@@ -198,7 +218,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           outcomeType = "SENTENCING",
           displayOrder = 10,
           relatedChargeOutcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
-          isSubList = false, dispositionCode = "FINAL", status = ReferenceEntityStatus.ACTIVE, warrantType = "SENTENCING",
+          isSubList = false,
+          dispositionCode = "FINAL",
+          status = ReferenceEntityStatus.ACTIVE,
+          warrantType = "SENTENCING",
         ),
         courtCode = COURT_REGISTER_ID,
         courtCaseReference = "ABC123",
@@ -223,8 +246,18 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               status = ReferenceEntityStatus.ACTIVE,
             ),
             aggravatingFactors = listOf(
-              AggravatingFactor(code = "OAFPC", title = "Offence aggravated by foreign power condition being met", description = "Offence aggravated by foreign power condition being met", displayOrder = 10),
-              AggravatingFactor(code = "OATC", title = "Offence Aggravated by Terrorist Connection", description = "Offence Aggravated by Terrorist Connection", displayOrder = 20),
+              AggravatingFactor(
+                code = "OAFPC",
+                title = "Offence aggravated by foreign power condition being met",
+                description = "Offence aggravated by foreign power condition being met",
+                displayOrder = 10,
+              ),
+              AggravatingFactor(
+                code = "OATC",
+                title = "Offence Aggravated by Terrorist Connection",
+                description = "Offence Aggravated by Terrorist Connection",
+                displayOrder = 20,
+              ),
             ),
             sentence = Sentence(
               sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
@@ -285,6 +318,180 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             periodLengthUuid = response.periodLengths.first().periodLengthUuid,
           ),
         ),
+      ),
+    )
+  }
+
+  @Test
+  fun `Test get appearance from hmcts DTO sentence data`() {
+    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+      charges = listOf(
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(
+            HMCTS_SENTENCED_RESULT.copy(
+              code = "DTO",
+              keyValuePairs = listOf(
+                ResultKeyValue(
+                  key = "Period of detention and training",
+                  value = "2 Years 10 Weeks",
+                ),
+              ),
+            ),
+          ),
+          startDate = LocalDate.of(2016, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+      ),
+    )
+    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+      DEFAULT_PRISONER_ID,
+      PrisonSearchDetails(
+        "KMI",
+        "Kirkham (HMP)",
+        CONVICTION_2020_ACT_DATE.minusYears(17),
+      ),
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      DEFAULT_PRISONER_ID,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+      Sentence(
+        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+        chargeNumber = null,
+        periodLengths = listOf(
+          PeriodLength(
+            years = 2,
+            months = null,
+            weeks = 10,
+            days = null,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.TERM_LENGTH,
+            legacyData = null,
+            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+          ),
+        ),
+        sentenceServeType = "FORTHWITH",
+        sentenceType = SentenceType(
+          sentenceTypeUuid = UUID.fromString("903ca33b-e264-4a16-883d-fee03a2a3396"),
+          description = "ORA Detention and Training Order",
+          classification = SentenceTypeClassification.DTO,
+          hintText = null,
+          displayOrder = 230,
+        ),
+        convictionDate = CONVICTION_2020_ACT_DATE,
+        fineAmount = null,
+        legacyData = null,
+        consecutiveToSentenceUuid = null,
+        hasRecall = false,
+        status = SentenceEntityStatus.ACTIVE,
+      ),
+    )
+  }
+
+  @Test
+  fun `Test get appearance from hmcts EDS sentence data`() {
+    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+      charges = listOf(
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(
+            HMCTS_SENTENCED_RESULT.copy(
+              code = "EXTDVSU",
+              keyValuePairs = listOf(
+                ResultKeyValue(
+                  key = "Appropriate custodial term",
+                  value = "5 Years",
+                ),
+                ResultKeyValue(
+                  key = "Extension period",
+                  value = "30 Months",
+                ),
+              ),
+            ),
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+      ),
+    )
+    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+      DEFAULT_PRISONER_ID,
+      PrisonSearchDetails(
+        "KMI",
+        "Kirkham (HMP)",
+        CONVICTION_2020_ACT_DATE.minusYears(17),
+      ),
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      DEFAULT_PRISONER_ID,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+      Sentence(
+        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+        chargeNumber = null,
+        periodLengths = listOf(
+          PeriodLength(
+            years = 5,
+            months = null,
+            weeks = null,
+            days = null,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.CUSTODIAL_TERM,
+            legacyData = null,
+            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+          ),
+          PeriodLength(
+            years = null,
+            months = 30,
+            weeks = null,
+            days = null,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.LICENCE_PERIOD,
+            legacyData = null,
+            periodLengthUuid = response.charges.first().sentence!!.periodLengths.last().periodLengthUuid,
+          ),
+        ),
+        sentenceServeType = "FORTHWITH",
+        sentenceType = SentenceType(
+          sentenceTypeUuid = UUID.fromString("f1ddc9d6-3c2e-419a-b54d-4e05c92a0f55"),
+          description = "EDS (Extended Determinate Sentence)",
+          classification = SentenceTypeClassification.EXTENDED,
+          hintText = null,
+          displayOrder = 20,
+        ),
+        convictionDate = CONVICTION_2020_ACT_DATE,
+        fineAmount = null,
+        legacyData = null,
+        consecutiveToSentenceUuid = null,
+        hasRecall = false,
+        status = SentenceEntityStatus.ACTIVE,
       ),
     )
   }
@@ -353,7 +560,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         outcomeType = "REMAND",
         displayOrder = 70,
         relatedChargeOutcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
-        isSubList = false, dispositionCode = "INTERIM", status = ReferenceEntityStatus.ACTIVE, warrantType = "NON_SENTENCING",
+        isSubList = false,
+        dispositionCode = "INTERIM",
+        status = ReferenceEntityStatus.ACTIVE,
+        warrantType = "NON_SENTENCING",
       ),
     )
   }
@@ -434,7 +644,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             offenceStartDate = LocalDate.of(2026, 6, 15),
             offenceEndDate = null,
             outcome = null,
-            aggravatingFactors = emptyList(), sentence = null, legacyData = null, mergedFromCase = null, createdAt = response.charges.first().createdAt, findingOfDomesticAbuse = null,
+            aggravatingFactors = emptyList(),
+            sentence = null,
+            legacyData = null,
+            mergedFromCase = null,
+            createdAt = response.charges.first().createdAt,
+            findingOfDomesticAbuse = null,
           ),
         ),
         overallConvictionDate = null,
@@ -560,7 +775,8 @@ class HmctsCourtDataTest : IntegrationTestBase() {
               keyValuePairs = listOf(
                 ResultKeyValue(
                   "Date of hearing",
-                  HMCTS_REMAND_HEARING.nextHearing?.hearingDate?.toLocalDate()!!.format(HmctsCourtDataService.PCR_DATE_FORMAT),
+                  HMCTS_REMAND_HEARING.nextHearing?.hearingDate?.toLocalDate()!!
+                    .format(HmctsCourtDataService.PCR_DATE_FORMAT),
                 ),
               ),
             ),
@@ -726,7 +942,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT),
           startDate = LocalDate.of(2021, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2022, 8, 15),
+          convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"),
         LocalDate.of(1990, 1, 1),
@@ -737,7 +953,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT),
           startDate = LocalDate.of(2021, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2019, 8, 15),
+          convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         UUID.fromString("6d0948c1-243b-4a2d-8b23-0721a5a1a949"),
         LocalDate.of(1990, 1, 1),
@@ -748,7 +964,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT),
           startDate = LocalDate.of(2014, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2022, 8, 15),
+          convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"),
         LocalDate.of(1990, 1, 1),
@@ -759,7 +975,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT),
           startDate = LocalDate.of(2014, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2019, 8, 15),
+          convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         UUID.fromString("8d04557c-8e54-4e2a-844f-272163fca833"),
         LocalDate.of(1990, 1, 1),
@@ -770,10 +986,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "YOI")),
           startDate = LocalDate.of(2021, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2022, 8, 15),
+          convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         UUID.fromString("d64283fd-7e48-4ed8-a98c-d68e938a5661"),
-        LocalDate.of(2022, 8, 15).minusYears(19),
+        CONVICTION_2020_ACT_DATE.minusYears(19),
       ),
       Arguments.of(
         "2003 ORA Young Offender Instituition",
@@ -781,10 +997,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "YOI")),
           startDate = LocalDate.of(2021, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2019, 8, 15),
+          convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         null, // UUID.fromString("babc059d-53aa-423c-9129-be2ba86026ad"), more than one matching sentence type currently.
-        LocalDate.of(2019, 8, 15).minusYears(17),
+        CONVICTION_2003_ACT_DATE.minusYears(17),
       ),
       Arguments.of(
         "2020 Young Offender Instituition (Non-ORA)",
@@ -792,10 +1008,10 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "YOI")),
           startDate = LocalDate.of(2014, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2022, 8, 15),
+          convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         UUID.fromString("3bfbf00d-747e-4576-8d96-aa4f8f9832ef"),
-        LocalDate.of(2022, 8, 15).minusYears(19),
+        CONVICTION_2020_ACT_DATE.minusYears(19),
       ),
       Arguments.of(
         "2003 Young Offender Instituition (Non-ORA)",
@@ -803,12 +1019,101 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "YOI")),
           startDate = LocalDate.of(2014, 8, 15),
           endDate = null,
-          convictionDate = LocalDate.of(2019, 8, 15),
+          convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         null, // UUID.fromString("87ef5d34-5912-411a-8733-2b8cf0cfc8e5"), more than one matching sentence type currently.
-        LocalDate.of(2019, 8, 15).minusYears(17),
+        CONVICTION_2003_ACT_DATE.minusYears(17),
+      ),
+      Arguments.of(
+        "2020 ORA Detention and Training Order",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "DTO")),
+          startDate = LocalDate.of(2016, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("903ca33b-e264-4a16-883d-fee03a2a3396"),
+        LocalDate.of(2023, 8, 15).minusYears(17),
+      ),
+      Arguments.of(
+        "2020 Detention and Training Order (Non-ORA)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "DTO")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("cab9e914-e0de-48d0-9e72-0e1fc9a19cf4"),
+        LocalDate.of(2023, 8, 15).minusYears(17),
+      ),
+      Arguments.of(
+        "2003 Detention and Training Order(Non-ORA)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "DTO")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2003_ACT_DATE,
+        ),
+        UUID.fromString("e8098305-f909-4cf5-9b06-f71a4e4d9df0"),
+        CONVICTION_2003_ACT_DATE.minusYears(17),
+      ),
+      Arguments.of(
+        "2020 Extended Determinate Sentence (U18)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTDVSU")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("f1ddc9d6-3c2e-419a-b54d-4e05c92a0f55"),
+        CONVICTION_2020_ACT_DATE.minusYears(16),
+      ),
+      Arguments.of(
+        "2020 Extended Determinate Sentence (18-20)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTDVS")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        null, // UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"), More than one sentence type.
+        CONVICTION_2020_ACT_DATE.minusYears(19),
+      ),
+      Arguments.of(
+        "2020 Extended Determinate Sentence (21+)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "EXTIVS")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        null, // UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"), More than one sentence type
+        LocalDate.of(1990, 1, 1),
+      ),
+      Arguments.of(
+        "2020 Adult Mandatory Life Sentences",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "MLI")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        null, // UUID.fromString("0da58738-2db6-4fba-8f65-438284019756"), More than one sentence type
+        LocalDate.of(1990, 1, 1),
+      ),
+      Arguments.of(
+        "2003 Adult Mandatory Life Sentences",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "MLI")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2003_ACT_DATE,
+        ),
+        null, // UUID.fromString("e3b69eb7-6362-4d8b-affe-480abcfd35f7"), More than one sentence type
+        CONVICTION_2003_ACT_DATE.minusYears(17),
       ),
     )
+
     val HMCTS_SENTENCED_RESULT = HmctsCourtResult(
       code = "IMP",
       description = "Imprisonment",
@@ -968,5 +1273,8 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       charges = listOf(HMCTS_SENTENCED_CHARGE),
       nextHearing = null,
     )
+    val SENTENCING_ACT_DATE = LocalDate.of(2020, 12, 1)
+    val CONVICTION_2003_ACT_DATE = SENTENCING_ACT_DATE.minusYears(1)
+    val CONVICTION_2020_ACT_DATE = SENTENCING_ACT_DATE.plusYears(1)
   }
 }

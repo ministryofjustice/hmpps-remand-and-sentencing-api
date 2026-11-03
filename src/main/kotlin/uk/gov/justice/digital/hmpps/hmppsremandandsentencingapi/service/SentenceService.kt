@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordResponse
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.PeriodLengthEntity
@@ -222,6 +223,7 @@ class SentenceService(
     onlyRecallSentence.recall.updatedAt = ZonedDateTime.now()
     recallHistoryRepository.save(RecallHistoryEntity.from(onlyRecallSentence.recall, ChangeSource.DPS))
     recallSentenceRepository.delete(onlyRecallSentence)
+    val isNomisRecall = onlyRecallSentence.recall.source == NOMIS
     eventsToEmit.add(
       EventMetadataCreator.recallEventMetadata(
         onlyRecallSentence.recall.prisonerId,
@@ -230,6 +232,8 @@ class SentenceService(
         emptyList(),
         null,
         EventType.RECALL_DELETED,
+        nomisRecall = if (isNomisRecall) true else null,
+        sentenceDeleted = if (isNomisRecall) true else null,
       ),
     )
   }

@@ -76,6 +76,7 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         c.offence_code as chargeOffenceCode,
         c.offence_start_date as chargeOffenceStartDate,
         c.offence_end_date as chargeOffenceEndDate,
+        c.value as chargeValue,
         af.code as chargeAggravatingFactorCode,
         af.title as chargeAggravatingFactorTitle,
         af.description as chargeAggravatingFactorDescription,
@@ -130,7 +131,8 @@ class CourtCaseSearchRepositoryImpl : CourtCaseSearchRepository {
         c2.status_id as appearanceChargeStatus,
         s2.status_id as appearanceSentenceStatus,
         st2.classification as appearanceSentenceTypeClassification,
-        s2.has_unconfirmed_consecutive_to_fix as appearanceSentenceHasUnconfirmedConsecutiveToFix
+        s2.has_unconfirmed_consecutive_to_fix as appearanceSentenceHasUnconfirmedConsecutiveToFix,
+        ca.warrant_type as courtAppearanceWarrantType
       from court_case cc
       join (select cc1.id, count(ca1.id) as appearance_count, string_agg(ca1.court_case_reference, ',') as case_references, min(ca1.appearance_date) as first_day_in_custody 
         from court_case cc1

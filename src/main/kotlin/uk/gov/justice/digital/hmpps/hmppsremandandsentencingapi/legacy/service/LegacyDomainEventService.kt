@@ -152,6 +152,8 @@ class LegacyDomainEventService(
             eventMetaData.sentenceIds!!,
             eventMetaData.previousRecallId,
             EventSource.NOMIS,
+            eventMetaData.nomisRecall,
+            eventMetaData.sentenceDeleted,
           )
           EventType.PERIOD_LENGTH_INSERTED -> periodLengthDomainEventService.create(
             prisonerId = eventMetaData.prisonerId,
