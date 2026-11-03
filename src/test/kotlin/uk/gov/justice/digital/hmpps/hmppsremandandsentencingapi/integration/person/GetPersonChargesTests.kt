@@ -244,12 +244,6 @@ class GetPersonChargesTests : IntegrationTestBase() {
     fun `should retrieve all charges and no recall type per sentence for a person with no recalls`() {
       val prisonerId = "PRI123"
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
-      DpsDataCreator.dpsCreateRecall(
-        sentenceIds = listOf(
-          sentenceOne.sentenceUuid,
-          sentenceTwo.sentenceUuid,
-        ),
-      )
 
       webTestClient
         .get()
