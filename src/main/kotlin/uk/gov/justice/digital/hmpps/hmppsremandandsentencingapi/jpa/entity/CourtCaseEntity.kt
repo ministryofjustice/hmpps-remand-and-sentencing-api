@@ -146,6 +146,7 @@ import java.util.UUID
         ColumnResult(name = "appearanceSentenceStatus", type = SentenceEntityStatus::class),
         ColumnResult(name = "appearanceSentenceTypeClassification", type = SentenceTypeClassification::class),
         ColumnResult(name = "appearanceSentenceHasUnconfirmedConsecutiveToFix"),
+        ColumnResult(name = "courtAppearanceWarrantType"),
       ),
     ),
   ],
