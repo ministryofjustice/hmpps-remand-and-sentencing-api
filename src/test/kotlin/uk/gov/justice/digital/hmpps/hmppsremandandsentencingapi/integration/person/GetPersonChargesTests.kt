@@ -166,7 +166,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
   }
 
   @Nested
-  inner class WithRecalls {
+  inner class RecallTypeTests {
 
     @BeforeEach
     fun setUp() {
@@ -175,7 +175,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
     }
 
     @Test
-    fun `should retrieve all charges and latest recall per sentence for a person with a single recall`() {
+    fun `should retrieve all charges and latest recall type per sentence for a person with a single recall`() {
       val prisonerId = "PRI123"
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
       val originalRecall = DpsDataCreator.dpsCreateRecall(
@@ -203,7 +203,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
     }
 
     @Test
-    fun `should retrieve all charges and latest recall per sentence for a person with a multiple recalls`() {
+    fun `should retrieve all charges and latest recall type per sentence for a person with multiple recalls`() {
       val prisonerId = "PRI123"
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
       val originalRecall = DpsDataCreator.dpsCreateRecall(
@@ -224,7 +224,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
         revocationDate = originalRecall.revocationDate.plusWeeks(4),
         returnToCustodyDate = originalRecall.returnToCustodyDate!!.plusWeeks(4),
       )
-      createRecall(recallTwo).recallUuid
+      createRecall(recallTwo)
 
       webTestClient
         .get()
@@ -239,5 +239,30 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
         .isEqualTo(listOf(RecallType.FTR_14.name))
     }
+
+    @Test
+    fun `should retrieve all charges and no recall type per sentence for a person with no recalls`() {
+      val prisonerId = "PRI123"
+      val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+      DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(
+          sentenceOne.sentenceUuid,
+          sentenceTwo.sentenceUuid,
+        ),
+      )
+
+      webTestClient
+        .get()
+        .uri("/person/$prisonerId/charges")
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.recallType")
+        .isEqualTo(null)
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
+        .isEqualTo(null)
+      }
   }
 }
