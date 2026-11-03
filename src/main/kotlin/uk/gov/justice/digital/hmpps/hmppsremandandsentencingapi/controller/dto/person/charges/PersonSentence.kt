@@ -4,10 +4,11 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.F
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentenceType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.SentenceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 
 data class PersonSentence(
   val sentenceUuid: UUID,
@@ -19,7 +20,7 @@ data class PersonSentence(
   val legacyData: SentenceLegacyData?,
   val consecutiveToSentenceUuid: UUID?,
   val hasRecall: Boolean,
-  val recallType: String?,
+  val recallType: RecallType?,
   val status: SentenceEntityStatus,
   val periodLengths: List<PersonPeriodLength>,
 ) {
@@ -34,7 +35,7 @@ data class PersonSentence(
       sentenceEntity.legacyData,
       sentenceEntity.consecutiveTo?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.sentenceUuid,
       sentenceEntity.totalRecallSentences > 0,
-      sentenceEntity.latestRecall()?.recallType?.code?.name,
+      sentenceEntity.latestRecall()?.recallType?.code,
       sentenceEntity.statusId,
       sentenceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.map { PersonPeriodLength.from(it) },
     )
