@@ -1,11 +1,26 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
+import java.util.UUID
+
 data class HmctsDurationParts(
   val years: Int? = null,
   val months: Int? = null,
   val weeks: Int? = null,
   val days: Int? = null,
 ) {
+  fun toPeriodLength(periodLengthType: PeriodLengthType): PeriodLength = PeriodLength(
+    years = years,
+    months = months,
+    weeks = weeks,
+    days = days,
+    periodOrder = "years,months,weeks,days",
+    periodLengthType = periodLengthType,
+    legacyData = null,
+    periodLengthUuid = UUID.randomUUID(),
+  )
+
   companion object {
 
     fun parseDuration(input: String): HmctsDurationParts {
