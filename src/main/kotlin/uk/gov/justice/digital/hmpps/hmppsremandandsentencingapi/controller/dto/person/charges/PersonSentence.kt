@@ -19,6 +19,7 @@ data class PersonSentence(
   val legacyData: SentenceLegacyData?,
   val consecutiveToSentenceUuid: UUID?,
   val hasRecall: Boolean,
+  val recallType: String?,
   val status: SentenceEntityStatus,
   val periodLengths: List<PersonPeriodLength>,
 ) {
@@ -33,6 +34,7 @@ data class PersonSentence(
       sentenceEntity.legacyData,
       sentenceEntity.consecutiveTo?.takeUnless { it.statusId == SentenceEntityStatus.DELETED }?.sentenceUuid,
       sentenceEntity.totalRecallSentences > 0,
+      sentenceEntity.latestRecall()?.recallType?.code?.name,
       sentenceEntity.statusId,
       sentenceEntity.periodLengths.filter { it.statusId != PeriodLengthEntityStatus.DELETED }.map { PersonPeriodLength.from(it) },
     )
