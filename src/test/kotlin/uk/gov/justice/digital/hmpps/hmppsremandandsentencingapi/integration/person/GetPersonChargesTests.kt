@@ -1,11 +1,16 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.person
 
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -158,5 +163,81 @@ class GetPersonChargesTests : IntegrationTestBase() {
       .exists()
       .jsonPath(("$.charges[?(@.chargeUuid == '${afterToDateCharge.chargeUuid}')]"))
       .doesNotExist()
+  }
+
+  @Nested
+  inner class WithRecalls {
+
+    @BeforeEach
+    fun setUp() {
+      adjustmentsApi.stubAllowCreateAdjustments()
+      adjustmentsApi.stubGetAdjustmentsDefaultToNone()
+    }
+
+    @Test
+    fun `should retrieve all charges and latest recall per sentence for a person with a single recall`() {
+      val prisonerId = "PRI123"
+      val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+      val originalRecall = DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(
+          sentenceOne.sentenceUuid,
+          sentenceTwo.sentenceUuid,
+        ),
+      )
+      createRecall(originalRecall)
+      purgeQueues()
+      sleep(1000)
+
+      webTestClient
+        .get()
+        .uri("/person/$prisonerId/charges")
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.recallType")
+        .isEqualTo(listOf(RecallType.FTR_14.name))
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
+        .isEqualTo(listOf(RecallType.FTR_14.name))
+    }
+
+    @Test
+    fun `should retrieve all charges and latest recall per sentence for a person with a multiple recalls`() {
+      val prisonerId = "PRI123"
+      val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
+      val originalRecall = DpsDataCreator.dpsCreateRecall(
+        sentenceIds = listOf(
+          sentenceOne.sentenceUuid,
+          sentenceTwo.sentenceUuid,
+        ),
+      )
+      createRecall(originalRecall)
+      purgeQueues()
+      sleep(1000)
+
+      val recallTwo = DpsDataCreator.dpsCreateRecall(
+        recallTypeCode = RecallType.FTR_56,
+        sentenceIds = listOf(
+          sentenceOne.sentenceUuid,
+        ),
+        revocationDate = originalRecall.revocationDate.plusWeeks(4),
+        returnToCustodyDate = originalRecall.returnToCustodyDate!!.plusWeeks(4),
+      )
+      createRecall(recallTwo).recallUuid
+
+      webTestClient
+        .get()
+        .uri("/person/$prisonerId/charges")
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.recallType")
+        .isEqualTo(listOf(RecallType.FTR_56.name))
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
+        .isEqualTo(listOf(RecallType.FTR_14.name))
+    }
   }
 }
