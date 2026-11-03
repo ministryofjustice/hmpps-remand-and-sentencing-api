@@ -20,7 +20,7 @@ data class PersonSentence(
   val legacyData: SentenceLegacyData?,
   val consecutiveToSentenceUuid: UUID?,
   val hasRecall: Boolean,
-  val recallType: RecallType?,
+  val latestRecallType: RecallType?,
   val status: SentenceEntityStatus,
   val periodLengths: List<PersonPeriodLength>,
 ) {

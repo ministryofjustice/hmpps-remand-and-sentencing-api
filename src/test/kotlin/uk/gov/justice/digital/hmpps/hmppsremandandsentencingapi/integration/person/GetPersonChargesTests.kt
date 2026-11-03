@@ -196,9 +196,9 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .expectStatus()
         .isOk
         .expectBody()
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.recallType")
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(listOf(RecallType.FTR_14.name))
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(listOf(RecallType.FTR_14.name))
     }
 
@@ -234,9 +234,9 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .expectStatus()
         .isOk
         .expectBody()
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.recallType")
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(listOf(RecallType.FTR_56.name))
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(listOf(RecallType.FTR_14.name))
     }
 
@@ -253,9 +253,9 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .expectStatus()
         .isOk
         .expectBody()
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.recallType")
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(null)
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.recallType")
+        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(null)
     }
   }
