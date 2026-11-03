@@ -50,8 +50,9 @@ data class PagedCourtCase(
             it.appearanceChargeStatus == ChargeEntityStatus.ACTIVE &&
             it.appearanceSentenceTypeClassification == SentenceTypeClassification.DTO
         }
+      val hasNoSentencingWarrantTypes = courtCaseRows.none { it.courtAppearanceWarrantType == "SENTENCING" }
       val hasUnconfirmedConsecutiveToFixSentences = courtCaseRows.any { it.appearanceSentenceHasUnconfirmedConsecutiveToFix == true }
-      val canAddHearing = noRecalls && !canAppeal && !canBreach && firstCourtCase.courtCaseStatus != CourtCaseEntityStatus.MERGED
+      val canAddHearing = noRecalls && !canAppeal && !canBreach && firstCourtCase.courtCaseStatus != CourtCaseEntityStatus.MERGED && hasNoSentencingWarrantTypes
       return PagedCourtCase(
         firstCourtCase.prisonerId,
         firstCourtCase.courtCaseUuid,
