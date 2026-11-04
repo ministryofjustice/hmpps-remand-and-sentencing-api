@@ -62,7 +62,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       PrisonSearchDetails(
         "KMI",
         "Kirkham (HMP)",
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
     )
   }
@@ -945,7 +945,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"),
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
       Arguments.of(
         "2003 ORA Standard Determinate Sentences",
@@ -956,7 +956,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         UUID.fromString("6d0948c1-243b-4a2d-8b23-0721a5a1a949"),
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
       Arguments.of(
         "2020 Standard Determinate Sentences (Non-ORA)",
@@ -967,7 +967,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         UUID.fromString("02fe3513-40a6-47e9-a72d-9dafdd936a0e"),
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
       Arguments.of(
         "2003 Standard Determinate Sentences (Non-ORA)",
@@ -978,7 +978,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         UUID.fromString("8d04557c-8e54-4e2a-844f-272163fca833"),
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
       Arguments.of(
         "2020 ORA Young Offender Instituition",
@@ -1088,7 +1088,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         null, // UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"), More than one sentence type
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
       Arguments.of(
         "2020 Adult Mandatory Life Sentences",
@@ -1099,7 +1099,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2020_ACT_DATE,
         ),
         null, // UUID.fromString("0da58738-2db6-4fba-8f65-438284019756"), More than one sentence type
-        LocalDate.of(1990, 1, 1),
+        ADULT_DOB,
       ),
       Arguments.of(
         "2003 Adult Mandatory Life Sentences",
@@ -1110,7 +1110,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         null, // UUID.fromString("e3b69eb7-6362-4d8b-affe-480abcfd35f7"), More than one sentence type
-        CONVICTION_2003_ACT_DATE.minusYears(17),
+        ADULT_DOB,
       ),
     )
 
@@ -1273,6 +1273,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       charges = listOf(HMCTS_SENTENCED_CHARGE),
       nextHearing = null,
     )
+    val ADULT_DOB = LocalDate.of(1991, 1, 1)
     val SENTENCING_ACT_DATE = LocalDate.of(2020, 12, 1)
     val CONVICTION_2003_ACT_DATE = SENTENCING_ACT_DATE.minusYears(1)
     val CONVICTION_2020_ACT_DATE = SENTENCING_ACT_DATE.plusYears(1)
