@@ -6,6 +6,10 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.FirstNextCourtAppearance
+import java.time.LocalDate
 
 interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEntity, Int> {
   fun findFirstByFutureSkeletonAppearance(futureSkeletonAppearance: CourtAppearanceEntity): NextCourtAppearanceEntity?
@@ -34,4 +38,25 @@ interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEnti
     nativeQuery = true,
   )
   fun deleteByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
+
+  @Query(
+    """
+    select nca, lca.courtCaseReference from CourtAppearanceEntity ca
+    join ca.nextCourtAppearance nca
+    join ca.courtCase cc
+    left join cc.latestCourtAppearance lca
+    where cc.prisonerId = :prisonerId
+    and cc.statusId != :courtCaseStatusId
+    and ca.statusId != :courtAppearanceStatusId
+    and nca.appearanceDate >= :from
+    order by nca.appearanceDate asc
+    limit 1
+  """,
+  )
+  fun findFirstByPrisonerId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseStatusId") courtCaseStatusId: CourtCaseEntityStatus = CourtCaseEntityStatus.DELETED,
+    @Param("courtAppearanceStatusId") courtAppearanceStatusId: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
+    @Param("from") from: LocalDate = LocalDate.now(),
+  ): FirstNextCourtAppearance?
 }

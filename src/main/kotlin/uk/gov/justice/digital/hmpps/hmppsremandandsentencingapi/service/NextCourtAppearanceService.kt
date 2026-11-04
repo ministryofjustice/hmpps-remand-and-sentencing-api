@@ -2,6 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtCaseEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.NextCourtAppearanceEntity
@@ -56,4 +58,9 @@ class NextCourtAppearanceService(private val nextCourtAppearanceRepository: Next
     listOf(CourtAppearanceEntityStatus.ACTIVE, CourtAppearanceEntityStatus.FUTURE),
     courtAppearanceId,
   )
+
+  @Transactional(readOnly = true)
+  fun findFirstByPrisonerId(prisonerId: String): PersonNextCourtAppearance? = nextCourtAppearanceRepository.findFirstByPrisonerId(prisonerId)?.let { firstNextCourtAppearance ->
+    PersonNextCourtAppearance.from(firstNextCourtAppearance.nextCourtAppearanceEntity, firstNextCourtAppearance.caseReference)
+  }
 }

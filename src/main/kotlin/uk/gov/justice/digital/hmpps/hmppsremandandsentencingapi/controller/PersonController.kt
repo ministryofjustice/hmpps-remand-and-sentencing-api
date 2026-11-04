@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -21,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.d
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.documents.SearchDocuments
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonFixManyChargesToSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonNextCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonChargeStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonCharges
@@ -32,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.Consecut
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtCaseService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.FixManyChargesToSentenceService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.NextCourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.SentenceEnvelopeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi.PersonService
@@ -49,6 +52,7 @@ class PersonController(
   private val sentenceEnvelopeService: SentenceEnvelopeService,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val chargeService: ChargeService,
+  private val nextCourtAppearanceService: NextCourtAppearanceService,
 ) {
 
   @GetMapping("/{prisonerId}")
@@ -212,4 +216,20 @@ class PersonController(
     @RequestParam(required = false, defaultValue = "0001-01-01") fromDate: LocalDate,
     @RequestParam(required = false, defaultValue = "9999-12-31") toDate: LocalDate,
   ): PersonCharges = chargeService.findChargesByPrisonerId(prisonerId, statuses, fromDate, toDate)
+
+  @GetMapping("/{prisonerId}/next-court-appearance")
+  @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__COURT_APPEARANCE__RO','ROLE_REMAND_AND_SENTENCING__COURT_APPEARANCE__RW')")
+  @Operation(
+    summary = "retrieve the first next court appearance",
+    description = "This endpoint will retrieve the first next court appearance for the future",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(responseCode = "200", description = "Returns next court appearance for person"),
+      ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
+      ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
+      ApiResponse(responseCode = "404", description = "No next court appearance"),
+    ],
+  )
+  fun firstNextCourtAppearance(@PathVariable prisonerId: String): PersonNextCourtAppearance = nextCourtAppearanceService.findFirstByPrisonerId(prisonerId) ?: throw EntityNotFoundException("No next court appearance found for $prisonerId")
 }
