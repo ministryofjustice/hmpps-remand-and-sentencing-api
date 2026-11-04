@@ -292,6 +292,7 @@ class HmctsCourtDataService(
     periods.add(periodLengthFromResult(result, HmctsResultKeys.PERIOD_OF_DETENTION_AND_TRAINING, PeriodLengthType.TERM_LENGTH))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.APPROPRIATE_CUSTODIAL_TERM, PeriodLengthType.CUSTODIAL_TERM))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.EXTENSION_PERIOD, PeriodLengthType.LICENCE_PERIOD))
+    periods.add(periodLengthFromResult(result, HmctsResultKeys.MINIMUM_TERM, PeriodLengthType.TARIFF_LENGTH))
 
     return Sentence(
       sentenceUuid = UUID.randomUUID(),
