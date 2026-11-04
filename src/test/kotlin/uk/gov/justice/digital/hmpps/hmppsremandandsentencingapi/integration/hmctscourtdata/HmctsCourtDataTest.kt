@@ -516,6 +516,71 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     )
   }
 
+  @Test
+  fun `Test get appearance from hmcts MLI sentence data`() {
+    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+      charges = listOf(
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(
+            HMCTS_SENTENCED_RESULT.copy(
+              code = "MLI",
+              keyValuePairs = listOf(
+                ResultKeyValue(
+                  key = "Minimum term",
+                  value = "30 Years",
+                ),
+              ),
+            ),
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+      ),
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      DEFAULT_PRISONER_ID,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+      Sentence(
+        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+        chargeNumber = null,
+        periodLengths = listOf(
+          PeriodLength(
+            years = 30,
+            months = null,
+            weeks = null,
+            days = null,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.TARIFF_LENGTH,
+            legacyData = null,
+            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+          ),
+        ),
+        sentenceServeType = "FORTHWITH",
+        sentenceType = null,
+        convictionDate = CONVICTION_2020_ACT_DATE,
+        fineAmount = null,
+        legacyData = null,
+        consecutiveToSentenceUuid = null,
+        hasRecall = false,
+        status = SentenceEntityStatus.ACTIVE,
+      ),
+    )
+  }
+
   @ParameterizedTest(name = "Tests that sentences are mapped: {0}")
   @MethodSource("sentenceTestProvider")
   fun `Test sentence type mapping`(testName: String, charge: HmctsCourtCharge, sentenceType: UUID?, dob: LocalDate) {
