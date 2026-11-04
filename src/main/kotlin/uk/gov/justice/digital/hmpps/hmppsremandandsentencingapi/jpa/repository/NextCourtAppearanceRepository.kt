@@ -49,7 +49,7 @@ interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEnti
     and cc.statusId != :courtCaseStatusId
     and ca.statusId != :courtAppearanceStatusId
     and nca.appearanceDate >= :from
-    order by nca.appearanceDate asc
+    order by nca.appearanceDate asc, nca.appearanceTime asc
     limit 1
   """,
   )
