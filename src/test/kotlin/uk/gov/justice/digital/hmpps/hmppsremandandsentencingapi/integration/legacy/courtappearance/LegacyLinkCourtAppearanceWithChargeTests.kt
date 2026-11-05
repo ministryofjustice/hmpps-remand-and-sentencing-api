@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.util.UUID
 
 class LegacyLinkCourtAppearanceWithChargeTests : IntegrationTestBase() {
@@ -23,7 +24,7 @@ class LegacyLinkCourtAppearanceWithChargeTests : IntegrationTestBase() {
   fun `link existing appearance with existing charge`() {
     val courtAppearance = createLegacyCourtAppearance()
     val charge = createLegacyCharge()
-    val toUpdateCharge = DataCreator.legacyUpdateCharge()
+    val toUpdateCharge = DataCreator.legacyUpdateCharge(value = BigDecimal.valueOf(22.12))
     webTestClient
       .put()
       .uri("/legacy/court-appearance/${courtAppearance.first}/charge/${charge.first}")
@@ -38,6 +39,18 @@ class LegacyLinkCourtAppearanceWithChargeTests : IntegrationTestBase() {
     val messages = getMessages(2)
     Assertions.assertThat(messages).hasSize(2).extracting<String> { it.eventType }.containsExactlyInAnyOrder("charge.updated", "court-appearance.updated")
     Assertions.assertThat(messages).hasSize(2).extracting<String> { it.additionalInformation.get("source").asText() }.containsOnly("NOMIS")
+    webTestClient
+      .get()
+      .uri("/legacy/court-appearance/${courtAppearance.first}/charge/${charge.first}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_APPEARANCE_RO"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(toUpdateCharge.value!!.toDouble())
   }
 
   @Test
