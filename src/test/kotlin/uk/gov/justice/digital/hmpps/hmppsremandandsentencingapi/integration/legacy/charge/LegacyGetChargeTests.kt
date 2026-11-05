@@ -3,14 +3,16 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.leg
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.util.UUID
 
 class LegacyGetChargeTests : IntegrationTestBase() {
 
   @Test
   fun `get charge by lifetime uuid`() {
-    val (lifetimeUuid, createdCharge) = createLegacyCharge()
+    val (lifetimeUuid, createdCharge) = createLegacyCharge(legacyCharge = DataCreator.legacyCreateCharge(value = BigDecimal.valueOf(22.12)))
 
     webTestClient
       .get()
@@ -26,6 +28,8 @@ class LegacyGetChargeTests : IntegrationTestBase() {
       .isEqualTo(lifetimeUuid.toString())
       .jsonPath("$.offenceCode")
       .isEqualTo(createdCharge.offenceCode)
+      .jsonPath("$.value")
+      .isEqualTo(createdCharge.value!!.toDouble())
   }
 
   @Test

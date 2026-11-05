@@ -138,6 +138,8 @@ class ChargeEntity(
     mutableSetOf(),
     null,
     null,
+    hmctsChargeId = hmctsChargeId,
+    value = value,
   )
 
   fun copyFrom(charge: LegacyUpdateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -215,6 +217,7 @@ class ChargeEntity(
     mergedFromCourtCase,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergedFromDate,
+    value = value,
   )
 
   fun copyFrom(
@@ -243,6 +246,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = migrationCreateCharge.mergedFromDate,
+    value = value,
   )
 
   fun copyFrom(
@@ -271,6 +275,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergeCreateCharge.mergedFromDate,
+    value = value,
   )
 
   fun copyFrom(
@@ -299,6 +304,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = bookingCreateCharge.mergedFromDate,
+    value = value,
   )
 
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
@@ -311,6 +317,7 @@ class ChargeEntity(
       mergedFromCourtCase,
       hmctsChargeId = hmctsChargeId,
       mergedFromDate = mergedFromDate,
+      value = value,
     )
     chargeEntity.sentences = sentences.toMutableSet()
     return chargeEntity
@@ -340,6 +347,7 @@ class ChargeEntity(
       mergedFromCourtCase,
       mergedFromDate,
       hmctsChargeId = hmctsChargeId,
+      value = value,
     )
     charge.sentences = sentences.toMutableSet()
     return charge
@@ -367,6 +375,7 @@ class ChargeEntity(
     mergedFromCourtCase,
     mergedFromDate,
     hmctsChargeId = hmctsChargeId,
+    value = value,
   )
 
   fun updateFrom(chargeEntity: ChargeEntity) {
@@ -383,6 +392,7 @@ class ChargeEntity(
     legacyData = chargeEntity.legacyData
     mergedFromCourtCase = chargeEntity.mergedFromCourtCase
     mergedFromDate = chargeEntity.mergedFromDate
+    value = chargeEntity.value
   }
 
   fun updateFrom(chargeOutcome: ChargeOutcomeEntity?, username: String, prisonId: String) {
