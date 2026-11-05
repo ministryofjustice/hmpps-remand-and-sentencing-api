@@ -83,7 +83,7 @@ class PersonController(
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getPersonStatus(@PathVariable prisonerId: String): PersonStatus = PersonStatus(isOnRemand = courtCaseService.isOnRemand(prisonerId))
+  fun getPersonStatus(@PathVariable prisonerId: String): PersonStatus = PersonStatus(isOnRemand = courtCaseService.isOnRemand(prisonerId), isCurrentlyOnRecall = courtCaseService.isCurrentlyOnRecall(prisonerId))
 
   @GetMapping("/{prisonerId}/sentenced-court-cases")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
