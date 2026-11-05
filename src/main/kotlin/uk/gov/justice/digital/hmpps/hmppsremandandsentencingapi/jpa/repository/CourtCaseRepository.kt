@@ -415,4 +415,30 @@ interface CourtCaseRepository :
     nativeQuery = true,
   )
   fun hasActiveCaseWithLatestRemandOutcome(@Param("prisonerId") prisonerId: String): Boolean
+
+  @Query(
+    """
+    SELECT EXISTS(
+        SELECT 1
+        FROM court_case cc
+        JOIN court_appearance ca ON ca.id = cc.latest_court_appearance_id
+        JOIN appearance_charge ac ON ac.appearance_id = ca.id
+        JOIN charge c ON c.id = ac.charge_id
+        JOIN sentence s ON s.charge_id = c.id
+        JOIN recall_sentence rs ON rs.sentence_id = s.id
+        JOIN (SELECT r.id
+              FROM recall r
+              WHERE r.status <> 'DELETED' 
+              AND r.prisoner_id = :prisonerId
+              ORDER BY r.created_at DESC, r.id DESC
+              LIMIT 1) lr ON rs.recall_id = lr.id
+        WHERE cc.prisoner_id = :prisonerId
+          AND ca.status_id = 'ACTIVE'
+          AND cc.status_id = 'ACTIVE'
+          AND s.status_id = 'ACTIVE'
+    )
+    """,
+    nativeQuery = true,
+  )
+  fun hasActiveCaseWithSentenceOnLatestRecall(@Param("prisonerId") prisonerId: String): Boolean
 }

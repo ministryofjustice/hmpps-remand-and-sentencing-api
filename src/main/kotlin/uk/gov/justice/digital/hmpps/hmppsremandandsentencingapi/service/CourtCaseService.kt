@@ -254,4 +254,7 @@ class CourtCaseService(
 
   @Transactional(readOnly = true)
   fun isOnRemand(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(prisonerId)
+
+  @Transactional(readOnly = true)
+  fun isCurrentlyOnRecall(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(prisonerId)
 }
