@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.lega
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacyCourtAppearanceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -29,7 +30,7 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
     val (_, createdCourtCase) = createCourtCase()
     val appearance = createdCourtCase.appearances.first()
     val charge = appearance.charges.first()
-    val toUpdate = DataCreator.legacyUpdateCharge(offenceCode = "ADIFFERENTCODE")
+    val toUpdate = DataCreator.legacyUpdateCharge(offenceCode = "ADIFFERENTCODE", value = BigDecimal.valueOf(55.50))
     webTestClient
       .put()
       .uri("/legacy/charge/${charge.chargeUuid}/appearance/${appearance.appearanceUuid}")
@@ -58,6 +59,8 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .isEqualTo(charge.chargeUuid)
       .jsonPath("$.charges[0].offenceCode")
       .isEqualTo(toUpdate.offenceCode!!)
+      .jsonPath("$.charges[0].value")
+      .isEqualTo(toUpdate.value!!.toDouble())
   }
 
   @Test

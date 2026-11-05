@@ -26,6 +26,8 @@ class LegacyGetChargeTests : IntegrationTestBase() {
       .isEqualTo(lifetimeUuid.toString())
       .jsonPath("$.offenceCode")
       .isEqualTo(createdCharge.offenceCode)
+      .jsonPath("$.value")
+      .isEqualTo(createdCharge.value!!.toDouble())
   }
 
   @Test
