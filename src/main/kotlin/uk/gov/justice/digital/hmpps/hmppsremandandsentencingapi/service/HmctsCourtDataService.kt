@@ -38,6 +38,7 @@ import java.time.Period
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.collections.isNotEmpty
 
 @Component
 class HmctsCourtDataService(
@@ -124,10 +125,16 @@ class HmctsCourtDataService(
   }
 
   private fun appearanceOutcome(charges: List<Charge>): CourtAppearanceOutcome? {
-    val chargeOutcomeIds = charges.mapNotNull { it.outcome?.outcomeUuid }
-    return if (chargeOutcomeIds.size == charges.size && chargeOutcomeIds.distinct().size == 1) {
+    val chargeOutcomes = charges.mapNotNull { it.outcome }
+    val mostImportantOutcomesMapped = chargeOutcomes.groupBy { it.outcomeType }
+    val mostImportantOutcomeIds = OUTCOME_TYPE_IMPORTANCE_ORDER.firstNotNullOfOrNull { key ->
+      mostImportantOutcomesMapped[key]?.takeIf { it.isNotEmpty() }
+    }?.map { it.outcomeUuid }
+    val allChargesHaveOutcomes = chargeOutcomes.size == charges.size
+
+    return if (allChargesHaveOutcomes && mostImportantOutcomeIds?.distinct()?.size == 1) {
       // All charge outcomes the same and non-null, find matching appearance outcome.
-      val chargeOutcomeId = chargeOutcomeIds.first()
+      val chargeOutcomeId = mostImportantOutcomeIds.first()
       val appearanceOutcomes = appearanceOutcomeService.getAllByStatus(listOf(ReferenceEntityStatus.ACTIVE))
       appearanceOutcomes.find { it.relatedChargeOutcomeUuid == chargeOutcomeId }
     } else {
@@ -198,10 +205,11 @@ class HmctsCourtDataService(
     anyConviction: Boolean,
   ): Charge {
     val resultsWithMapping = charge.results.filter { result -> resultCodes.find { result.code == it.resultCode } != null }
+    val resultsWithMostImportantMapping = findMostImportantMappingResults(resultCodes, resultsWithMapping)
     val factors = aggravatingFactors.filter { factor -> charge.results.find { it.code == factor.code } != null }
     val findingOfDomesticAbuse = charge.results.any { it.code == FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE }
-    val outcome = if (resultsWithMapping.size == 1) {
-      val resultCode = resultsWithMapping.first().code
+    val outcome = if (resultsWithMostImportantMapping?.size == 1) {
+      val resultCode = resultsWithMostImportantMapping.first().code
       if (resultCode == "RI" && anyConviction) {
         null
       } else {
@@ -210,7 +218,7 @@ class HmctsCourtDataService(
     } else {
       null
     }
-    val sentence = mapSentence(charge, prisoner, resultsWithMapping, outcome)
+    val sentence = mapSentence(charge, prisoner, resultsWithMostImportantMapping, outcome)
     return Charge(
       chargeUuid = UUID.randomUUID(),
       offenceCode = charge.code,
@@ -227,13 +235,23 @@ class HmctsCourtDataService(
     )
   }
 
+  private fun findMostImportantMappingResults(
+    resultCodes: List<HmctsResultCode>,
+    resultsWithMapping: List<HmctsCourtResult>,
+  ): List<HmctsCourtResult>? {
+    val grouped = resultsWithMapping.groupBy { result -> resultCodes.find { it.resultCode == result.code }?.outcome?.outcomeType }
+    return OUTCOME_TYPE_IMPORTANCE_ORDER.firstNotNullOfOrNull { key ->
+      grouped[key]?.takeIf { it.isNotEmpty() }
+    }
+  }
+
   private fun mapSentence(
     charge: HmctsCourtCharge,
     prisoner: PrisonSearchDetails,
-    resultsWithMapping: List<HmctsCourtResult>,
+    resultsWithMapping: List<HmctsCourtResult>?,
     outcome: ChargeOutcome?,
   ): Sentence? {
-    if (resultsWithMapping.size != 1 || outcome == null || charge.convictionDate == null) {
+    if (resultsWithMapping?.size != 1 || outcome == null || charge.convictionDate == null) {
       return null
     }
 
@@ -274,6 +292,7 @@ class HmctsCourtDataService(
     periods.add(periodLengthFromResult(result, HmctsResultKeys.PERIOD_OF_DETENTION_AND_TRAINING, PeriodLengthType.TERM_LENGTH))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.APPROPRIATE_CUSTODIAL_TERM, PeriodLengthType.CUSTODIAL_TERM))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.EXTENSION_PERIOD, PeriodLengthType.LICENCE_PERIOD))
+    periods.add(periodLengthFromResult(result, HmctsResultKeys.MINIMUM_TERM, PeriodLengthType.TARIFF_LENGTH))
 
     return Sentence(
       sentenceUuid = UUID.randomUUID(),
@@ -325,6 +344,11 @@ class HmctsCourtDataService(
     private val NEXT_MAGISTRATE_REGEX = Regex("""Date of hearing:\s*(\d{2}/\d{2}/\d{4})""")
     val ORA_DATE = LocalDate.of(2015, 2, 1)
     private val log = LoggerFactory.getLogger(this::class.java)
+    val OUTCOME_TYPE_IMPORTANCE_ORDER = listOf(
+      "SENTENCING",
+      "REMAND",
+      "NON_CUSTODIAL",
+    )
 
     /*
       Blank next court appearance indicates that there is a next court appearance, but date/time/location can't be found.
