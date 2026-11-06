@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.RecordEventMetadata
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -23,6 +24,7 @@ data class ConsecutiveToSentenceRow(
   val countNumber: String?,
   val chargeLegacyData: ChargeLegacyData?,
   val status: SentenceEntityStatus,
+  val value: BigDecimal? = null,
 ) {
 
   fun toConsecutiveToSentenceAppearance(): ConsecutiveToSentenceAppearance = ConsecutiveToSentenceAppearance(
