@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.a
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.RecallSentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.SentenceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RecallSentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.SentenceLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacySentenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
@@ -877,38 +878,66 @@ class RecallServiceTest {
       assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
     }
 
-    private fun unknownPreRecallSentence(legacyCategory: String) = SentenceEntity(
-      sentenceUuid = UUID.randomUUID(),
-      statusId = SentenceEntityStatus.ACTIVE,
-      createdBy = "FOO",
-      sentenceServeType = "CONCURRENT",
-      consecutiveTo = null,
-      sentenceType = SentenceTypeEntity(
-        sentenceTypeUuid = LegacySentenceService.recallSentenceTypeBucketUuid,
-        description = "Unknown pre-recall sentence",
-        classification = SentenceTypeClassification.LEGACY_RECALL,
-        nomisCjaCode = "UNKNOWN",
-        nomisSentenceCalcType = "UNKNOWN",
-        displayOrder = 0,
-        status = ReferenceEntityStatus.ACTIVE,
-        minAgeInclusive = null,
-        maxAgeExclusive = null,
-        minDateInclusive = null,
-        maxDateExclusive = null,
-        minOffenceDateInclusive = null,
-        maxOffenceDateExclusive = null,
-        hintText = null,
-        isRecallable = true,
-      ),
-      supersedingSentence = null,
-      charge = testCharge,
-      convictionDate = null,
-      fineAmount = null,
-      legacyData = baseSentenceLegacyData.copy(
-        sentenceCalcType = "LR",
-        sentenceCategory = legacyCategory,
-      ),
-    )
+    private fun unknownPreRecallSentence(legacyCategory: String): SentenceEntity {
+      val sentence = SentenceEntity(
+        sentenceUuid = UUID.randomUUID(),
+        statusId = SentenceEntityStatus.ACTIVE,
+        createdBy = "FOO",
+        sentenceServeType = "CONCURRENT",
+        consecutiveTo = null,
+        sentenceType = SentenceTypeEntity(
+          sentenceTypeUuid = LegacySentenceService.recallSentenceTypeBucketUuid,
+          description = "Unknown pre-recall sentence",
+          classification = SentenceTypeClassification.LEGACY_RECALL,
+          nomisCjaCode = "UNKNOWN",
+          nomisSentenceCalcType = "UNKNOWN",
+          displayOrder = 0,
+          status = ReferenceEntityStatus.ACTIVE,
+          minAgeInclusive = null,
+          maxAgeExclusive = null,
+          minDateInclusive = null,
+          maxDateExclusive = null,
+          minOffenceDateInclusive = null,
+          maxOffenceDateExclusive = null,
+          hintText = null,
+          isRecallable = true,
+        ),
+        supersedingSentence = null,
+        charge = testCharge,
+        convictionDate = null,
+        fineAmount = null,
+        legacyData = baseSentenceLegacyData.copy(
+          sentenceCalcType = "LR",
+          sentenceCategory = legacyCategory,
+        ),
+      )
+      val recall = RecallEntity(
+        id = 1,
+        prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+        revocationDate = LocalDate.of(2024, 1, 1),
+        returnToCustodyDate = null,
+        inPrisonOnRevocationDate = null,
+        recallType = RecallTypeEntity(0, RecallType.LR, "Standard"),
+        status = RecallEntityStatus.ACTIVE,
+        createdByUsername = "FOO",
+        source = EventSource.NOMIS,
+      )
+      val recallSentence = RecallSentenceEntity(
+        recallSentenceUuid = UUID.randomUUID(),
+        sentence = sentence,
+        recall = recall,
+        createdByUsername = "FOO",
+        legacyData = RecallSentenceLegacyData(
+          sentenceCalcType = "LR",
+          sentenceCategory = legacyCategory,
+          sentenceTypeDesc = "Licence Recall",
+          postedDate = "2026-01-18",
+          active = true,
+        ),
+      )
+      sentence.recallSentences = mutableSetOf(recallSentence)
+      return sentence
+    }
 
     private fun legacySentence(sentenceCalcType: String, sentenceCategory: String) = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
