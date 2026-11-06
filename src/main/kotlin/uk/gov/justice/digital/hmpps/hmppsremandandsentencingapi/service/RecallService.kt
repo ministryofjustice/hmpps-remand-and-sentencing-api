@@ -811,7 +811,14 @@ class RecallService(
 
   private fun sentenceHasCjaCategory1991(sentence: SentenceEntity): Boolean = sentenceCjaCategory(sentence) == CJA_CODE_1991
 
-  private fun sentenceCjaCategory(sentence: SentenceEntity): String? = sentence.sentenceType?.nomisCjaCode ?: sentence.legacyData?.sentenceCategory
+  private fun sentenceCjaCategory(sentence: SentenceEntity): String? {
+    val sentenceType = sentence.sentenceType
+    return if (sentenceType == null || sentenceType.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
+      sentence.legacyData?.sentenceCategory
+    } else {
+      sentenceType.nomisCjaCode
+    }
+  }
 
   companion object {
     private const val CJA_CODE_1991 = "1991"

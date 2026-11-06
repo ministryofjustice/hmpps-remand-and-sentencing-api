@@ -844,6 +844,24 @@ class RecallServiceTest {
     }
 
     @Test
+    fun `FTR_56 on unknown pre-recall sentence with 1991 legacy category is not possible`() {
+      val sentence = unknownPreRecallSentence(legacyCategory = "1991")
+
+      every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+      val result = service.isRecallPossible(
+        IsRecallPossibleRequest(
+          sentenceIds = listOf(sentence.sentenceUuid),
+          recallType = RecallType.FTR_56,
+        ),
+      )
+
+      assertThat(result.isRecallPossible)
+        .isEqualTo(IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE)
+      assertThat(result.sentenceIds).containsExactly(sentence.sentenceUuid)
+    }
+
+    @Test
     fun `LR on legacy sentence with 1991 category remains possible`() {
       val sentence = legacySentence(sentenceCalcType = "YOI", sentenceCategory = "1991")
 
@@ -858,6 +876,39 @@ class RecallServiceTest {
 
       assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
     }
+
+    private fun unknownPreRecallSentence(legacyCategory: String) = SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = SentenceEntityStatus.ACTIVE,
+      createdBy = "FOO",
+      sentenceServeType = "CONCURRENT",
+      consecutiveTo = null,
+      sentenceType = SentenceTypeEntity(
+        sentenceTypeUuid = LegacySentenceService.recallSentenceTypeBucketUuid,
+        description = "Unknown pre-recall sentence",
+        classification = SentenceTypeClassification.LEGACY_RECALL,
+        nomisCjaCode = "UNKNOWN",
+        nomisSentenceCalcType = "UNKNOWN",
+        displayOrder = 0,
+        status = ReferenceEntityStatus.ACTIVE,
+        minAgeInclusive = null,
+        maxAgeExclusive = null,
+        minDateInclusive = null,
+        maxDateExclusive = null,
+        minOffenceDateInclusive = null,
+        maxOffenceDateExclusive = null,
+        hintText = null,
+        isRecallable = true,
+      ),
+      supersedingSentence = null,
+      charge = testCharge,
+      convictionDate = null,
+      fineAmount = null,
+      legacyData = baseSentenceLegacyData.copy(
+        sentenceCalcType = "LR",
+        sentenceCategory = legacyCategory,
+      ),
+    )
 
     private fun legacySentence(sentenceCalcType: String, sentenceCategory: String) = SentenceEntity(
       sentenceUuid = UUID.randomUUID(),
