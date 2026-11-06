@@ -4,13 +4,25 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
 class SentenceToChainToTests : IntegrationTestBase() {
 
   @Test
   fun `returns sentences to chain to grouped by appearance when there is an active sentence in the past`() {
-    val (_, createCourtCase) = createCourtCase()
+    val (_, createCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(
+            charges = listOf(
+              DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50")),
+            ),
+          ),
+        ),
+      ),
+    )
     val appearance = createCourtCase.appearances.first()
     val charge = appearance.charges.first()
     val sentence = charge.sentence!!
@@ -41,6 +53,7 @@ class SentenceToChainToTests : IntegrationTestBase() {
     Assertions.assertThat(sentenceToChainTo.offenceStartDate).isEqualTo(charge.offenceStartDate)
     Assertions.assertThat(sentenceToChainTo.offenceEndDate).isEqualTo(charge.offenceEndDate)
     Assertions.assertThat(sentenceToChainTo.countNumber).isEqualTo(sentence.chargeNumber)
+    Assertions.assertThat(sentenceToChainTo.value).isEqualTo(charge.value)
   }
 
   @Test
