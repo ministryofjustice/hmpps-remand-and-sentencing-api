@@ -813,11 +813,17 @@ class RecallService(
 
   private fun sentenceCjaCategory(sentence: SentenceEntity): String? {
     val sentenceType = sentence.sentenceType
-    return if (sentenceType == null || sentenceType.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid) {
-      sentence.legacyData?.sentenceCategory
-    } else {
-      sentenceType.nomisCjaCode
+    return when {
+      sentenceType == null -> sentence.legacyData?.sentenceCategory
+      sentenceType.sentenceTypeUuid == LegacySentenceService.recallSentenceTypeBucketUuid ->
+        nomisRecallCjaCategory(sentence)
+      else -> sentenceType.nomisCjaCode
     }
+  }
+
+  private fun nomisRecallCjaCategory(sentence: SentenceEntity): String? {
+    val earliestRecall = sentence.earliestRecall() ?: return null
+    return sentence.recallSentences.find { it.recall.id == earliestRecall.id }?.legacyData?.sentenceCategory
   }
 
   companion object {
