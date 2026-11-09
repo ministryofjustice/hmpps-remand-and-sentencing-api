@@ -86,15 +86,6 @@ class ChargeEntity(
 
   fun getLiveSentence(): SentenceEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED }
 
-  /**
-   * Unlike [CourtAppearanceEntity.getLatestCourtAppearance], this is not limited to Active appearances only
-   * but searches all Non Deleted Court Appearances for the latest Court Appearance.
-   */
-  fun latestNonDeletedAppearanceBetween(from: LocalDate, to: LocalDate): CourtAppearanceEntity? = appearanceCharges
-    .mapNotNull { it.appearance }
-    .filter { it.statusId != CourtAppearanceEntityStatus.DELETED && it.appearanceDate in from..to }
-    .maxWithOrNull(compareBy<CourtAppearanceEntity> { it.appearanceDate }.thenBy { it.createdAt }.thenBy { it.id })
-
   fun hasSentence(): Boolean = sentences.any { it.statusId != SentenceEntityStatus.DELETED }
   fun isSame(other: ChargeEntity, otherHasSentence: Boolean): Boolean = this.offenceCode == other.offenceCode &&
     (

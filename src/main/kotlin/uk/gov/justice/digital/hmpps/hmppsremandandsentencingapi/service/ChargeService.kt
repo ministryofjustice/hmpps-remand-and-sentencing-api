@@ -355,7 +355,9 @@ class ChargeService(
   fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)?.let { Charge.from(it) }
 
   @Transactional(readOnly = true)
-  fun findChargesByPrisonerId(prisonerId: String, statuses: List<PersonChargeStatus>, fromDate: LocalDate, toDate: LocalDate): PersonCharges = PersonCharges(chargeRepository.findByPrisonerId(prisonerId, statuses.flatMap { it.courtCaseStatuses }, fromDate, toDate).map { PersonCharge.from(it, fromDate, toDate) })
+  fun findChargesByPrisonerId(prisonerId: String, statuses: List<PersonChargeStatus>, fromDate: LocalDate, toDate: LocalDate): PersonCharges = PersonCharges(
+    chargeRepository.findByPrisonerId(prisonerId, statuses.flatMap { it.courtCaseStatuses }, fromDate, toDate).map { PersonCharge.from(it.charge, it.appearance) },
+  )
 
   companion object {
     val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")

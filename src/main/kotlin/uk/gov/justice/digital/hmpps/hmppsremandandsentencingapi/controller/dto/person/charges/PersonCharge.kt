@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -18,25 +19,22 @@ data class PersonCharge(
   val legacyData: ChargeLegacyData?,
   val findingOfDomesticAbuse: Boolean?,
   val sentence: PersonSentence?,
-  val warrantDate: LocalDate?,
-  val warrantCreatedAt: ZonedDateTime?,
+  val warrantDate: LocalDate,
+  val warrantCreatedAt: ZonedDateTime,
 ) {
   companion object {
-    fun from(chargeEntity: ChargeEntity, fromDate: LocalDate, toDate: LocalDate): PersonCharge {
-      val appearance = chargeEntity.latestNonDeletedAppearanceBetween(fromDate, toDate)
-      return PersonCharge(
-        chargeEntity.chargeUuid,
-        chargeEntity.offenceCode,
-        chargeEntity.offenceStartDate,
-        chargeEntity.offenceEndDate,
-        chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
-        chargeEntity.chargeAggravatingFactors.map { AggravatingFactor.from(it.aggravatingFactor) },
-        chargeEntity.legacyData,
-        chargeEntity.findingOfDomesticAbuse,
-        chargeEntity.getLiveSentence()?.let { PersonSentence.from(it) },
-        appearance?.appearanceDate,
-        appearance?.createdAt,
-      )
-    }
+    fun from(chargeEntity: ChargeEntity, courtAppearanceEntity: CourtAppearanceEntity): PersonCharge = PersonCharge(
+      chargeEntity.chargeUuid,
+      chargeEntity.offenceCode,
+      chargeEntity.offenceStartDate,
+      chargeEntity.offenceEndDate,
+      chargeEntity.chargeOutcome?.let { ChargeOutcome.from(it) },
+      chargeEntity.chargeAggravatingFactors.map { AggravatingFactor.from(it.aggravatingFactor) },
+      chargeEntity.legacyData,
+      chargeEntity.findingOfDomesticAbuse,
+      chargeEntity.getLiveSentence()?.let { PersonSentence.from(it) },
+      courtAppearanceEntity.appearanceDate,
+      courtAppearanceEntity.createdAt,
+    )
   }
 }

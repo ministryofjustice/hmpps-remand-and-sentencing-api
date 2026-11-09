@@ -1,10 +1,12 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.person
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.charges.PersonCharges
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
@@ -266,7 +268,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
   inner class WarrantTests {
 
     @Test
-    fun `should return the warrant date - created at from latest non deleted appearance`() {
+    fun `should return the warrant date - created at for a non deleted appearance`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val appearanceDate = LocalDate.now().minusDays(5)
       val (_, createdCourtCase) = createCourtCase(
@@ -294,7 +296,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
     }
 
     @Test
-    fun `should return the warrant date - created at from the latest appearance when a charge is on multiple appearances`() {
+    fun `should return a record with the warrant date - created at for each appearance when a charge is on multiple appearances`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val chargeUuid = UUID.randomUUID()
       val earlierDate = LocalDate.now().minusDays(20)
@@ -317,22 +319,24 @@ class GetPersonChargesTests : IntegrationTestBase() {
         ),
       )
 
-      webTestClient
+      val charges = webTestClient
         .get()
         .uri("/person/$prisonerId/charges")
         .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
         .exchange()
         .expectStatus()
         .isOk
-        .expectBody()
-        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantDate")
-        .isEqualTo(listOf(latestDate.format(DateTimeFormatter.ISO_DATE)))
-        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantCreatedAt")
-        .isNotEmpty
+        .expectBody(PersonCharges::class.java)
+        .returnResult()
+        .responseBody!!
+        .charges
+        .filter { it.chargeUuid == chargeUuid }
+
+      assertThat(charges.map { it.warrantDate }).containsExactlyInAnyOrder(earlierDate, latestDate)
     }
 
     @Test
-    fun `should return the warrant date - created at from latest active appearance across multiple court cases`() {
+    fun `should return the warrant date - created at for each active appearance across multiple court cases`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val appearanceDates = listOf(
         LocalDate.now().minusDays(21),
@@ -374,7 +378,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
     }
 
     @Test
-    fun `should return the warrant date - created at from latest non deleted non active appearance across multiple court cases`() {
+    fun `should return the warrant date - created at for each non deleted non active appearance across multiple court cases`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val appearanceDates = listOf(
         LocalDate.now().minusDays(21),
@@ -427,7 +431,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
     }
 
     @Test
-    fun `should return the warrant date - created at from the latest appearance within the from and to dates`() {
+    fun `should return the warrant date - created at only for appearances within the from and to dates`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val chargeUuid = UUID.randomUUID()
       val beforeRangeDate = LocalDate.now().minusDays(30)
