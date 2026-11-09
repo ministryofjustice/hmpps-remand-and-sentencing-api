@@ -237,7 +237,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
             ),
             sentence = Sentence(
               sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-              chargeNumber = null,
+              chargeNumber = "-1",
               periodLengths = listOf(
                 PeriodLength(
                   years = 1,
@@ -392,7 +392,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     Assertions.assertThat(response.charges.first().sentence).isEqualTo(
       Sentence(
         sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = null,
+        chargeNumber = "-1",
         periodLengths = listOf(
           PeriodLength(
             years = 2,
@@ -475,7 +475,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     Assertions.assertThat(response.charges.first().sentence).isEqualTo(
       Sentence(
         sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = null,
+        chargeNumber = "-1",
         periodLengths = listOf(
           PeriodLength(
             years = 5,
@@ -556,7 +556,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     Assertions.assertThat(response.charges.first().sentence).isEqualTo(
       Sentence(
         sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = null,
+        chargeNumber = "-1",
         periodLengths = listOf(
           PeriodLength(
             years = 30,
