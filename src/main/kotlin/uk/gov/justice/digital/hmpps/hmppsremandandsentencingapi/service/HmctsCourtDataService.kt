@@ -296,7 +296,7 @@ class HmctsCourtDataService(
 
     return Sentence(
       sentenceUuid = UUID.randomUUID(),
-      chargeNumber = null,
+      chargeNumber = "-1",
       periodLengths = periods.filterNotNull(),
       consecutiveToSentenceUuid = null,
       sentenceServeType = if (consecutive) "CONSECUTIVE" else "CONCURRENT",
