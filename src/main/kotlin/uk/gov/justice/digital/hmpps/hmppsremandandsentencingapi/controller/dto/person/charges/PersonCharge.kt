@@ -19,8 +19,8 @@ data class PersonCharge(
   val legacyData: ChargeLegacyData?,
   val findingOfDomesticAbuse: Boolean?,
   val sentence: PersonSentence?,
-  val warrantDate: LocalDate,
-  val warrantCreatedAt: ZonedDateTime,
+  val appearanceDate: LocalDate,
+  val appearanceCreatedAt: ZonedDateTime,
 ) {
   companion object {
     fun from(chargeEntity: ChargeEntity, courtAppearanceEntity: CourtAppearanceEntity): PersonCharge = PersonCharge(

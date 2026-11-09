@@ -265,10 +265,10 @@ class GetPersonChargesTests : IntegrationTestBase() {
   }
 
   @Nested
-  inner class WarrantTests {
+  inner class AppearanceTests {
 
     @Test
-    fun `should return the warrant date - created at for a non deleted appearance`() {
+    fun `should return the appearance date - created at for a non deleted appearance`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val appearanceDate = LocalDate.now().minusDays(5)
       val (_, createdCourtCase) = createCourtCase(
@@ -289,14 +289,14 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .expectStatus()
         .isOk
         .expectBody()
-        .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantDate")
+        .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].appearanceDate")
         .isEqualTo(listOf(appearanceDate.format(DateTimeFormatter.ISO_DATE)))
-        .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantCreatedAt")
+        .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].appearanceCreatedAt")
         .isNotEmpty
     }
 
     @Test
-    fun `should return a record with the warrant date - created at for each appearance when a charge is on multiple appearances`() {
+    fun `should return a record with the appearance date - created at for each appearance when a charge is on multiple appearances`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val chargeUuid = UUID.randomUUID()
       val earlierDate = LocalDate.now().minusDays(20)
@@ -332,11 +332,11 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .charges
         .filter { it.chargeUuid == chargeUuid }
 
-      assertThat(charges.map { it.warrantDate }).containsExactlyInAnyOrder(earlierDate, latestDate)
+      assertThat(charges.map { it.appearanceDate }).containsExactlyInAnyOrder(earlierDate, latestDate)
     }
 
     @Test
-    fun `should return the warrant date - created at for each active appearance across multiple court cases`() {
+    fun `should return the appearance date - created at for each active appearance across multiple court cases`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val appearanceDates = listOf(
         LocalDate.now().minusDays(21),
@@ -370,15 +370,15 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
       chargesWithDates.forEach { (charge, appearanceDate) ->
         response
-          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantDate")
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].appearanceDate")
           .isEqualTo(listOf(appearanceDate.format(DateTimeFormatter.ISO_DATE)))
-          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantCreatedAt")
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].appearanceCreatedAt")
           .isNotEmpty
       }
     }
 
     @Test
-    fun `should return the warrant date - created at for each non deleted non active appearance across multiple court cases`() {
+    fun `should return the appearance date - created at for each non deleted non active appearance across multiple court cases`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val appearanceDates = listOf(
         LocalDate.now().minusDays(21),
@@ -423,15 +423,15 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
       chargesWithDates.forEach { (charge, appearanceDate) ->
         response
-          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantDate")
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].appearanceDate")
           .isEqualTo(listOf(appearanceDate.format(DateTimeFormatter.ISO_DATE)))
-          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantCreatedAt")
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].appearanceCreatedAt")
           .isNotEmpty
       }
     }
 
     @Test
-    fun `should return the warrant date - created at only for appearances within the from and to dates`() {
+    fun `should return the appearance date - created at only for appearances within the from and to dates`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val chargeUuid = UUID.randomUUID()
       val beforeRangeDate = LocalDate.now().minusDays(30)
@@ -463,9 +463,9 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .expectStatus()
         .isOk
         .expectBody()
-        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantDate")
+        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].appearanceDate")
         .isEqualTo(listOf(inRangeDate.format(DateTimeFormatter.ISO_DATE)))
-        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantCreatedAt")
+        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].appearanceCreatedAt")
         .isNotEmpty
     }
 
