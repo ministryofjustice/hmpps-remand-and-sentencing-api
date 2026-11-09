@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.LegacySentenceCreatedResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
@@ -302,6 +303,7 @@ class RecallIntTests : IntegrationTestBase() {
     val firstChargeCourtCaseOne = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDateOne),
       offenceStartDate = LocalDate.of(2025, 2, 3),
+      chargeValue = BigDecimal("100.50"),
     )
     val secondChargeCourtCaseOne = DpsDataCreator.dpsCreateCharge(
       sentence = DpsDataCreator.dpsCreateSentence(convictionDate = appearanceDateOne),
@@ -418,6 +420,7 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceServeType = "FORTHWITH",
                   sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
                   findingOfDomesticAbuse = null,
+                  value = BigDecimal("100.50"),
                 ),
                 RecalledSentence(
                   sentenceUuid = sentenceTwoOnCourtCaseOne.sentenceUuid,
@@ -450,6 +453,7 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceServeType = "FORTHWITH",
                   sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
                   findingOfDomesticAbuse = null,
+                  value = null,
                 ),
               ),
             ),
@@ -490,6 +494,7 @@ class RecallIntTests : IntegrationTestBase() {
                   sentenceServeType = "FORTHWITH",
                   sentenceTypeDescription = "Serious Offence Sec 250 Sentencing Code (U18)",
                   findingOfDomesticAbuse = null,
+                  value = null,
                 ),
               ),
             ),
