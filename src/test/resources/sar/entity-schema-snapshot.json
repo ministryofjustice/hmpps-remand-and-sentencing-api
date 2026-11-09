@@ -151,7 +151,8 @@
     "offenceEndDate": "LocalDate",
     "offenceStartDate": "LocalDate",
     "sentences": "Set",
-    "statusId": "String"
+    "statusId": "String",
+    "value": "BigDecimal"
   },
   "CourtAppearanceEntity": {
     "appearanceCharges": "Set",

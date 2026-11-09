@@ -162,6 +162,7 @@ class PrisonerDetailsService(
           chargeSarEntity?.offenceStartDate,
           chargeSarEntity?.offenceEndDate,
           chargeSarEntity?.chargeOutcome?.outcomeName,
+          chargeSarEntity?.value,
           mapSentence(chargeSarEntity?.getLiveSentence()),
         ),
       )
