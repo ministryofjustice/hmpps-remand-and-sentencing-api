@@ -10,15 +10,17 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wire
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
 import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 class GetPersonChargesTests : IntegrationTestBase() {
 
   @Test
   fun `retrieve all charges for a person, no query parameters means active only`() {
-    val prisonerId = "PRI123"
+    val prisonerId = DEFAULT_PRISONER_ID
     val (_, createdCourtCase) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(prisonerId = prisonerId))
     val createdCharge = createdCourtCase.appearances.first().charges.first()
     val (inactiveCourtCaseUuid, createdInactiveCourtCase) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(prisonerId = prisonerId))
@@ -51,7 +53,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
   @Test
   fun `can return inactive charges for a person`() {
-    val prisonerId = "PRI123"
+    val prisonerId = DEFAULT_PRISONER_ID
     val (_, createdCourtCase) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(prisonerId = prisonerId))
     val createdCharge = createdCourtCase.appearances.first().charges.first()
     val (inactiveCourtCaseUuid, createdInactiveCourtCase) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(prisonerId = prisonerId))
@@ -87,7 +89,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
   @Test
   fun `can filter using from date`() {
-    val prisonerId = "PRI123"
+    val prisonerId = DEFAULT_PRISONER_ID
     val fromDate = LocalDate.now().minusDays(10)
     val (_, beforeCourtCase) = createCourtCase(
       createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
@@ -127,7 +129,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
   @Test
   fun `can filter using to date`() {
-    val prisonerId = "PRI123"
+    val prisonerId = DEFAULT_PRISONER_ID
     val toDate = LocalDate.now().minusDays(10)
     val (_, beforeCourtCase) = createCourtCase(
       createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
@@ -176,7 +178,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
     @Test
     fun `should retrieve all charges and latest recall type per sentence for a person with a single recall`() {
-      val prisonerId = "PRI123"
+      val prisonerId = DEFAULT_PRISONER_ID
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
       val originalRecall = DpsDataCreator.dpsCreateRecall(
         sentenceIds = listOf(
@@ -204,7 +206,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
     @Test
     fun `should retrieve all charges and latest recall type per sentence for a person with multiple recalls`() {
-      val prisonerId = "PRI123"
+      val prisonerId = DEFAULT_PRISONER_ID
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
       val originalRecall = DpsDataCreator.dpsCreateRecall(
         sentenceIds = listOf(
@@ -242,7 +244,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
 
     @Test
     fun `should retrieve all charges and no recall type per sentence for a person with no recalls`() {
-      val prisonerId = "PRI123"
+      val prisonerId = DEFAULT_PRISONER_ID
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
 
       webTestClient
@@ -257,6 +259,246 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .isEqualTo(null)
         .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(null)
+    }
+  }
+
+  @Nested
+  inner class WarrantTests {
+
+    @Test
+    fun `should return the warrant date - created at from latest non deleted appearance`() {
+      val prisonerId = DEFAULT_PRISONER_ID
+      val appearanceDate = LocalDate.now().minusDays(5)
+      val (_, createdCourtCase) = createCourtCase(
+        createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
+          prisonerId = prisonerId,
+          appearances = listOf(
+            DpsDataCreator.dpsCreateNonSentencedCourtAppearance(appearanceDate = appearanceDate, nextCourtAppearance = null),
+          ),
+        ),
+      )
+      val charge = createdCourtCase.appearances.first().charges.first()
+
+      webTestClient
+        .get()
+        .uri("/person/$prisonerId/charges")
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantDate")
+        .isEqualTo(listOf(appearanceDate.format(DateTimeFormatter.ISO_DATE)))
+        .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantCreatedAt")
+        .isNotEmpty
+    }
+
+    @Test
+    fun `should return the warrant date - created at from the latest appearance when a charge is on multiple appearances`() {
+      val prisonerId = DEFAULT_PRISONER_ID
+      val chargeUuid = UUID.randomUUID()
+      val earlierDate = LocalDate.now().minusDays(20)
+      val latestDate = LocalDate.now().minusDays(5)
+      createCourtCase(
+        createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
+          prisonerId = prisonerId,
+          appearances = listOf(
+            DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
+              appearanceDate = earlierDate,
+              nextCourtAppearance = null,
+              charges = listOf(DpsDataCreator.dpsCreateNonSentencedCharge(chargeUuid = chargeUuid)),
+            ),
+            DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
+              appearanceDate = latestDate,
+              nextCourtAppearance = null,
+              charges = listOf(DpsDataCreator.dpsCreateNonSentencedCharge(chargeUuid = chargeUuid)),
+            ),
+          ),
+        ),
+      )
+
+      webTestClient
+        .get()
+        .uri("/person/$prisonerId/charges")
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantDate")
+        .isEqualTo(listOf(latestDate.format(DateTimeFormatter.ISO_DATE)))
+        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantCreatedAt")
+        .isNotEmpty
+    }
+
+    @Test
+    fun `should return the warrant date - created at from latest active appearance across multiple court cases`() {
+      val prisonerId = DEFAULT_PRISONER_ID
+      val appearanceDates = listOf(
+        LocalDate.now().minusDays(21),
+        LocalDate.now().minusDays(14),
+        LocalDate.now().minusDays(7),
+      )
+      val chargesWithDates = appearanceDates.mapIndexed { index, appearanceDate ->
+        val (_, createdCourtCase) = createCourtCase(
+          createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
+            prisonerId = prisonerId,
+            appearances = listOf(
+              DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
+                appearanceDate = appearanceDate,
+                nextCourtAppearance = null,
+                charges = listOf(DpsDataCreator.dpsCreateNonSentencedCharge(offenceCode = "OFF12$index")),
+              ),
+            ),
+          ),
+        )
+        createdCourtCase.appearances.first().charges.first() to appearanceDate
+      }
+
+      val response = webTestClient
+        .get()
+        .uri("/person/$prisonerId/charges")
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+
+      chargesWithDates.forEach { (charge, appearanceDate) ->
+        response
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantDate")
+          .isEqualTo(listOf(appearanceDate.format(DateTimeFormatter.ISO_DATE)))
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantCreatedAt")
+          .isNotEmpty
+      }
+    }
+
+    @Test
+    fun `should return the warrant date - created at from latest non deleted non active appearance across multiple court cases`() {
+      val prisonerId = DEFAULT_PRISONER_ID
+      val appearanceDates = listOf(
+        LocalDate.now().minusDays(21),
+        LocalDate.now().minusDays(14),
+        LocalDate.now().minusDays(7),
+      )
+      val chargesWithDates = appearanceDates.mapIndexed { index, appearanceDate ->
+        val (courtCaseUuid, createdCourtCase) = createCourtCase(
+          createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
+            prisonerId = prisonerId,
+            appearances = listOf(
+              DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
+                appearanceDate = appearanceDate,
+                nextCourtAppearance = null,
+                charges = listOf(DpsDataCreator.dpsCreateNonSentencedCharge(offenceCode = "OFF12$index")),
+              ),
+            ),
+          ),
+        )
+        webTestClient
+          .put()
+          .uri("/court-case/$courtCaseUuid/status")
+          .bodyValue(UpdateCourtCaseStatus(status = CourtCaseEntityStatus.INACTIVE, reason = "Making inactive for this test"))
+          .headers {
+            it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+            it.contentType = MediaType.APPLICATION_JSON
+          }
+          .exchange()
+          .expectStatus()
+          .isNoContent
+        createdCourtCase.appearances.first().charges.first() to appearanceDate
+      }
+
+      val response = webTestClient
+        .get()
+        .uri { it.path("/person/$prisonerId/charges").queryParam("statuses", "INACTIVE").build() }
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+
+      chargesWithDates.forEach { (charge, appearanceDate) ->
+        response
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantDate")
+          .isEqualTo(listOf(appearanceDate.format(DateTimeFormatter.ISO_DATE)))
+          .jsonPath("$.charges[?(@.chargeUuid == '${charge.chargeUuid}')].warrantCreatedAt")
+          .isNotEmpty
+      }
+    }
+
+    @Test
+    fun `should return the warrant date - created at from the latest appearance within the from and to dates`() {
+      val prisonerId = DEFAULT_PRISONER_ID
+      val chargeUuid = UUID.randomUUID()
+      val beforeRangeDate = LocalDate.now().minusDays(30)
+      val inRangeDate = LocalDate.now().minusDays(20)
+      val afterRangeDate = LocalDate.now().minusDays(5)
+      createCourtCase(
+        createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
+          prisonerId = prisonerId,
+          appearances = listOf(beforeRangeDate, inRangeDate, afterRangeDate).map {
+            DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
+              appearanceDate = it,
+              nextCourtAppearance = null,
+              charges = listOf(DpsDataCreator.dpsCreateNonSentencedCharge(chargeUuid = chargeUuid)),
+            )
+          },
+        ),
+      )
+
+      webTestClient
+        .get()
+        .uri {
+          it.path("/person/$prisonerId/charges")
+            .queryParam("fromDate", LocalDate.now().minusDays(25).format(DateTimeFormatter.ISO_DATE))
+            .queryParam("toDate", LocalDate.now().minusDays(10).format(DateTimeFormatter.ISO_DATE))
+            .build()
+        }
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantDate")
+        .isEqualTo(listOf(inRangeDate.format(DateTimeFormatter.ISO_DATE)))
+        .jsonPath("$.charges[?(@.chargeUuid == '$chargeUuid')].warrantCreatedAt")
+        .isNotEmpty
+    }
+
+    @Test
+    fun `should not return charges when the from and to dates out of range`() {
+      val prisonerId = DEFAULT_PRISONER_ID
+      val chargeUuid = UUID.randomUUID()
+      val beforeRangeDate = LocalDate.now().minusDays(30)
+      val inRangeDate = LocalDate.now().minusDays(20)
+      val afterRangeDate = LocalDate.now().minusDays(5)
+      createCourtCase(
+        createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(
+          prisonerId = prisonerId,
+          appearances = listOf(beforeRangeDate, inRangeDate, afterRangeDate).map {
+            DpsDataCreator.dpsCreateNonSentencedCourtAppearance(
+              appearanceDate = it,
+              nextCourtAppearance = null,
+              charges = listOf(DpsDataCreator.dpsCreateNonSentencedCharge(chargeUuid = chargeUuid)),
+            )
+          },
+        ),
+      )
+
+      webTestClient
+        .get()
+        .uri {
+          it.path("/person/$prisonerId/charges")
+            .queryParam("fromDate", LocalDate.now().minusDays(40).format(DateTimeFormatter.ISO_DATE))
+            .queryParam("toDate", LocalDate.now().minusDays(35).format(DateTimeFormatter.ISO_DATE))
+            .build()
+        }
+        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
+        .exchange()
+        .expectStatus()
+        .isOk
+        .expectBody()
+        .json("""{ "charges": [] } """)
     }
   }
 }
