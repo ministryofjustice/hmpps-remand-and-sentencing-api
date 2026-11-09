@@ -85,6 +85,7 @@ data class Recall(
                 aggravatingFactors = it.sentence.charge.chargeAggravatingFactors
                   .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
                 findingOfDomesticAbuse = it.sentence.charge.findingOfDomesticAbuse,
+                value = it.sentence.charge.value,
               )
             }.sortedWith { a, b ->
               SentenceOrdering.compare(
