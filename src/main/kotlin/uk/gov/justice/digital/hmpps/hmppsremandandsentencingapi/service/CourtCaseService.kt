@@ -13,7 +13,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UpdateCourtCaseStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.PagedCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.paged.SearchCourtCasesPage
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PeopleStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonCourtCaseCount
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.CourtCaseHierarchyData
@@ -253,8 +255,17 @@ class CourtCaseService(
   fun getUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids: List<String>): UnconfirmedCourtCases = UnconfirmedCourtCases.from(courtCaseRepository.findUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids))
 
   @Transactional(readOnly = true)
-  fun isOnRemand(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(prisonerId)
+  fun isOnRemand(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf(prisonerId))
 
   @Transactional(readOnly = true)
-  fun isCurrentlyOnRecall(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(prisonerId)
+  fun isCurrentlyOnRecall(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(prisonerId))
+
+  @Transactional(readOnly = true)
+  fun getPeopleStatus(prisonerIds: Set<String>): PeopleStatus {
+    val onRecall = courtCaseRepository.findPrisonerIdsActiveCasesWithSentenceOnLatestRecall(prisonerIds)
+    val onRemand = courtCaseRepository.findPrisonerIdsActiveCaseWithLatestRemandOutcome(prisonerIds)
+    return PeopleStatus(
+      prisonerIds.associateWith { PersonStatus(isOnRemand = it in onRemand, isCurrentlyOnRecall = it in onRecall) },
+    )
+  }
 }
