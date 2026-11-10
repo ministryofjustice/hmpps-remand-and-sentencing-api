@@ -294,6 +294,10 @@ class HmctsCourtDataService(
     periods.add(periodLengthFromResult(result, HmctsResultKeys.EXTENSION_PERIOD, PeriodLengthType.LICENCE_PERIOD))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.MINIMUM_TERM, PeriodLengthType.TARIFF_LENGTH))
 
+    if (expectedClassification == SentenceTypeClassification.SOPC) {
+      periods.add(sopcYearLicensePeriodLength())
+    }
+
     return Sentence(
       sentenceUuid = UUID.randomUUID(),
       chargeNumber = "-1",
@@ -325,6 +329,7 @@ class HmctsCourtDataService(
     "IMP", "YOI" -> SentenceTypeClassification.STANDARD
     "DTO" -> SentenceTypeClassification.DTO
     "EXTDVSU", "EXTDVS", "EXTIVS" -> SentenceTypeClassification.EXTENDED
+    "SPECCC", "SPECC", "SPECCD" -> SentenceTypeClassification.SOPC
     "MLI" -> SentenceTypeClassification.INDETERMINATE
     else -> null
   }
@@ -336,6 +341,17 @@ class HmctsCourtDataService(
     }
     return HmctsDurationParts.parseDuration(periodValue).toPeriodLength(periodLengthType)
   }
+
+  private fun sopcYearLicensePeriodLength() = PeriodLength(
+    years = 1,
+    months = null,
+    weeks = null,
+    days = null,
+    periodOrder = "years,months,weeks,days",
+    periodLengthType = PeriodLengthType.LICENCE_PERIOD,
+    legacyData = null,
+    periodLengthUuid = UUID.randomUUID(),
+  )
 
   companion object {
     private const val FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE = "FODA"

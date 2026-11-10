@@ -517,6 +517,87 @@ class HmctsCourtDataTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Test get appearance from hmcts SOPC sentence data`() {
+    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+      charges = listOf(
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(
+            HMCTS_SENTENCED_RESULT.copy(
+              code = "SPECC",
+              keyValuePairs = listOf(
+                ResultKeyValue(
+                  key = "Imprisonment Period",
+                  value = "8 Years",
+                ),
+              ),
+            ),
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+      ),
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      DEFAULT_PRISONER_ID,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+      Sentence(
+        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+        chargeNumber = "-1",
+        periodLengths = listOf(
+          PeriodLength(
+            years = 8,
+            months = null,
+            weeks = null,
+            days = null,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+            legacyData = null,
+            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+          ),
+          PeriodLength(
+            years = 1,
+            months = null,
+            weeks = null,
+            days = null,
+            periodOrder = "years,months,weeks,days",
+            periodLengthType = PeriodLengthType.LICENCE_PERIOD,
+            legacyData = null,
+            periodLengthUuid = response.charges.first().sentence!!.periodLengths.last().periodLengthUuid,
+          ),
+        ),
+        sentenceServeType = "FORTHWITH",
+        sentenceType = SentenceType(
+          sentenceTypeUuid = UUID.fromString("deb22e75-2335-44de-8a9f-1047d58c9b04"),
+          description = "SOPC (offenders of a particular concern)",
+          classification = SentenceTypeClassification.SOPC,
+          hintText = "A mandatory licence period of 12 months will be automatically added to the sentence",
+          displayOrder = 30,
+        ),
+        convictionDate = CONVICTION_2020_ACT_DATE,
+        fineAmount = null,
+        legacyData = null,
+        consecutiveToSentenceUuid = null,
+        hasRecall = false,
+        status = SentenceEntityStatus.ACTIVE,
+      ),
+    )
+  }
+
+  @Test
   fun `Test get appearance from hmcts MLI sentence data`() {
     val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
       charges = listOf(
@@ -1242,6 +1323,50 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           convictionDate = CONVICTION_2003_ACT_DATE,
         ),
         null, // UUID.fromString("e3b69eb7-6362-4d8b-affe-480abcfd35f7"), More than one sentence type
+        ADULT_DOB,
+      ),
+      Arguments.of(
+        "2020 SOPC 18-20",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SPECCC")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("4d434819-4aff-442a-8c78-64dfcfba61cc"),
+        CONVICTION_2020_ACT_DATE.minusYears(19),
+      ),
+      Arguments.of(
+        "2003 Section 236A SOPC CJA03",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SPECC")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2003_ACT_DATE,
+        ),
+        UUID.fromString("b4769983-fd23-4c95-9f47-5e5eb3aef491"),
+        ADULT_DOB,
+      ),
+      Arguments.of(
+        "2020 SOPC U18",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SPECCD")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("5fc63cba-510f-4122-8fdd-649fbcd52efb"),
+        CONVICTION_2020_ACT_DATE.minusYears(17),
+      ),
+      Arguments.of(
+        "2020 SOPC 21+",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SPECC")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("deb22e75-2335-44de-8a9f-1047d58c9b04"),
         ADULT_DOB,
       ),
     )
