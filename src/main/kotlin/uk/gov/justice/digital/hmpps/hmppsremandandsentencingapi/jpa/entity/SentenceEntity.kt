@@ -60,6 +60,14 @@ import java.util.UUID
         ColumnResult(name = "chargeLegacyData", type = ChargeLegacyData::class),
         ColumnResult(name = "status", type = SentenceEntityStatus::class),
         ColumnResult(name = "value", type = BigDecimal::class),
+        ColumnResult(name = "periodLengthUuid"),
+        ColumnResult(name = "years"),
+        ColumnResult(name = "months"),
+        ColumnResult(name = "weeks"),
+        ColumnResult(name = "days"),
+        ColumnResult(name = "periodOrder"),
+        ColumnResult(name = "periodLengthType", type = PeriodLengthType::class),
+        ColumnResult(name = "periodLengthLegacyData", type = PeriodLengthLegacyData::class),
       ),
     ),
   ],
@@ -67,12 +75,13 @@ import java.util.UUID
 @NamedNativeQuery(
   name = "SentenceEntity.findConsecutiveToSentences",
   query = """
-  select cc.prisoner_id as prisonerId, cc.case_unique_identifier as caseUniqueIdentifier, ca.appearance_uuid as appearanceUuid, ca.court_code as courtCode, ca.court_case_reference as courtCaseReference, ca.appearance_date as appearanceDate, c.charge_uuid as chargeUuid, c.offence_code as offenceCode, c.offence_start_date as offenceStartDate, c.offence_end_date as offenceEndDate, s.sentence_uuid as sentenceUuid, s.count_number as countNumber, c.legacy_data as chargeLegacyData, s.status_id as status, c.value as value
+  select cc.prisoner_id as prisonerId, cc.case_unique_identifier as caseUniqueIdentifier, ca.appearance_uuid as appearanceUuid, ca.court_code as courtCode, ca.court_case_reference as courtCaseReference, ca.appearance_date as appearanceDate, c.charge_uuid as chargeUuid, c.offence_code as offenceCode, c.offence_start_date as offenceStartDate, c.offence_end_date as offenceEndDate, s.sentence_uuid as sentenceUuid, s.count_number as countNumber, c.legacy_data as chargeLegacyData, s.status_id as status, c.value as value, pl.period_length_uuid as periodLengthUuid, pl.years as years, pl.months as months, pl.weeks as weeks, pl.days as days, pl.period_order as periodOrder, pl.period_length_type as periodLengthType, pl.legacy_data as periodLengthLegacyData
     from sentence s
     join charge c on s.charge_id = c.id
     join appearance_charge ac on ac.charge_id = c.id
     join court_appearance ca on ac.appearance_id = ca.id
     join court_case cc on ca.court_case_id = cc.id
+    left join period_length pl on pl.sentence_id = s.id and pl.status_id in :periodLengthStatuses
     where s.status_id in :sentenceStatuses
     and cc.prisoner_id = :prisonerId
     and c.status_id = :status
