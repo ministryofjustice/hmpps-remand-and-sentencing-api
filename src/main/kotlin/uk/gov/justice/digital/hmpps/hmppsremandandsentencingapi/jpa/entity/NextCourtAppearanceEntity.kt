@@ -35,10 +35,10 @@ class NextCourtAppearanceEntity(
   var appearanceTime: LocalTime?,
   @Column
   var courtCode: String,
-  @OneToOne(fetch = FetchType.EAGER)
+  @OneToOne
   @JoinColumn(name = "appearance_type_id")
   var appearanceType: AppearanceTypeEntity,
-  @OneToOne(fetch = FetchType.EAGER)
+  @OneToOne
   @JoinColumn(name = "court_appearance_subtype_id")
   var courtAppearanceSubtype: CourtAppearanceSubtypeEntity?,
   @OneToOne(fetch = FetchType.LAZY)
