@@ -18,7 +18,7 @@ data class AppearanceToChainTo(
       appearance.courtCaseReference,
       appearance.appearanceDate,
       appearance.appearanceUuid,
-      consecutiveToSentenceRows.map { SentenceToChainTo.from(it) },
+      consecutiveToSentenceRows.groupBy { it.chargeUuid to it.sentenceUuid }.map { (_, rows) -> SentenceToChainTo.from(rows) },
     )
   }
 }

@@ -54,6 +54,15 @@ class SentenceToChainToTests : IntegrationTestBase() {
     Assertions.assertThat(sentenceToChainTo.offenceEndDate).isEqualTo(charge.offenceEndDate)
     Assertions.assertThat(sentenceToChainTo.countNumber).isEqualTo(sentence.chargeNumber)
     Assertions.assertThat(sentenceToChainTo.value).isEqualTo(charge.value)
+    Assertions.assertThat(sentenceToChainTo.periodLengths).hasSize(sentence.periodLengths.size)
+    val periodLength = sentenceToChainTo.periodLengths.first()
+    val expectedPeriodLength = sentence.periodLengths.first()
+    Assertions.assertThat(periodLength.years).isEqualTo(expectedPeriodLength.years)
+    Assertions.assertThat(periodLength.months).isEqualTo(expectedPeriodLength.months)
+    Assertions.assertThat(periodLength.weeks).isEqualTo(expectedPeriodLength.weeks)
+    Assertions.assertThat(periodLength.days).isEqualTo(expectedPeriodLength.days)
+    Assertions.assertThat(periodLength.periodOrder).isEqualTo(expectedPeriodLength.periodOrder)
+    Assertions.assertThat(periodLength.periodLengthType).isEqualTo(expectedPeriodLength.type)
   }
 
   @Test

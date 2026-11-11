@@ -15,8 +15,37 @@ data class SentenceToChainTo(
   val countNumber: String?,
   val chargeLegacyData: ChargeLegacyData?,
   val value: BigDecimal? = null,
+  val periodLengths: List<PeriodLength> = emptyList(),
 ) {
   companion object {
-    fun from(consecutiveToSentenceRow: ConsecutiveToSentenceRow): SentenceToChainTo = SentenceToChainTo(consecutiveToSentenceRow.offenceCode, consecutiveToSentenceRow.offenceStartDate, consecutiveToSentenceRow.offenceEndDate, consecutiveToSentenceRow.chargeUuid, consecutiveToSentenceRow.sentenceUuid, consecutiveToSentenceRow.countNumber, consecutiveToSentenceRow.chargeLegacyData, consecutiveToSentenceRow.value)
+    fun from(consecutiveToSentenceRows: List<ConsecutiveToSentenceRow>): SentenceToChainTo {
+      val firstRow = consecutiveToSentenceRows.first()
+      val periodLengths = consecutiveToSentenceRows
+        .filter { it.periodLengthUuid != null }
+        .distinctBy { it.periodLengthUuid }
+        .map {
+          PeriodLength(
+            years = it.years,
+            months = it.months,
+            weeks = it.weeks,
+            days = it.days,
+            periodOrder = it.periodOrder!!,
+            periodLengthType = it.periodLengthType!!,
+            legacyData = it.periodLengthLegacyData,
+            periodLengthUuid = it.periodLengthUuid!!,
+          )
+        }
+      return SentenceToChainTo(
+        firstRow.offenceCode,
+        firstRow.offenceStartDate,
+        firstRow.offenceEndDate,
+        firstRow.chargeUuid,
+        firstRow.sentenceUuid,
+        firstRow.countNumber,
+        firstRow.chargeLegacyData,
+        firstRow.value,
+        periodLengths,
+      )
+    }
   }
 }
