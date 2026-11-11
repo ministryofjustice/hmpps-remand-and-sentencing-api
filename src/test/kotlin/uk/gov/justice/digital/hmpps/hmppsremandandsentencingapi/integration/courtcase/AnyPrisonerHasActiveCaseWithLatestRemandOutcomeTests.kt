@@ -7,18 +7,18 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCrea
 import java.time.LocalDate
 import java.util.UUID
 
-class HasActiveCaseWithLatestRemandOutcomeTests : IntegrationTestBase() {
+class AnyPrisonerHasActiveCaseWithLatestRemandOutcomeTests : IntegrationTestBase() {
 
   @Test
   fun `should return false when the prisoner has no court cases`() {
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
   }
 
   @Test
   fun `should return true when the latest appearance outcome is REMAND`() {
     createCourtCase(DpsDataCreator.dpsCreateNonSentencedCourtCase(prisonerId = "PRI124"))
 
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf("PRI124"))).isTrue()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf("PRI124"))).isTrue()
   }
 
   @Test
@@ -34,7 +34,7 @@ class HasActiveCaseWithLatestRemandOutcomeTests : IntegrationTestBase() {
       ),
     )
 
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
   }
 
   @Test
@@ -49,7 +49,7 @@ class HasActiveCaseWithLatestRemandOutcomeTests : IntegrationTestBase() {
       ),
     )
 
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf("PRI124"))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf("PRI124"))).isFalse()
   }
 
   @Test
@@ -66,12 +66,12 @@ class HasActiveCaseWithLatestRemandOutcomeTests : IntegrationTestBase() {
       ),
     )
 
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf("PRI125"))).isFalse()
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf("PRI125", "PRI124"))).isTrue()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf("PRI125"))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf("PRI125", "PRI124"))).isTrue()
   }
 
   @Test
   fun `should return false when none of several prisoners is on remand`() {
-    assertThat(courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf("PRI125", "PRI126"))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf("PRI125", "PRI126"))).isFalse()
   }
 }

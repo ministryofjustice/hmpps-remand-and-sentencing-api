@@ -255,10 +255,10 @@ class CourtCaseService(
   fun getUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids: List<String>): UnconfirmedCourtCases = UnconfirmedCourtCases.from(courtCaseRepository.findUnconfirmedSentenceFixCourtCasesByUuids(courtCaseUuids))
 
   @Transactional(readOnly = true)
-  fun isOnRemand(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithLatestRemandOutcome(setOf(prisonerId))
+  fun isOnRemand(prisonerId: String): Boolean = courtCaseRepository.anyPrisonerHasActiveCaseWithLatestRemandOutcome(setOf(prisonerId))
 
   @Transactional(readOnly = true)
-  fun isCurrentlyOnRecall(prisonerId: String): Boolean = courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(prisonerId))
+  fun isCurrentlyOnRecall(prisonerId: String): Boolean = courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(prisonerId))
 
   @Transactional(readOnly = true)
   fun getPeopleStatus(prisonerIds: Set<String>): PeopleStatus {

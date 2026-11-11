@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.util.UUID
 
-class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
+class AnyPrisonerHasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var jdbcTemplate: NamedParameterJdbcTemplate
@@ -27,7 +27,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
   fun `should return false when the prisoner has no recalls`() {
     createCourtCaseTwoSentences()
 
-    assertThat(courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
   }
 
   @Test
@@ -36,7 +36,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
     val (otherSentence, _) = createCourtCaseTwoSentences(prisonerId = "PRI124")
     createRecall(DpsDataCreator.dpsCreateRecall(prisonerId = "PRI124", sentenceIds = listOf(otherSentence.sentenceUuid)))
 
-    assertThat(courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
   }
 
   @Test
@@ -45,7 +45,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
     createRecall(DpsDataCreator.dpsCreateRecall(sentenceIds = listOf(sentenceOne.sentenceUuid)))
     createRecall(DpsDataCreator.dpsCreateRecall(sentenceIds = listOf(sentenceTwo.sentenceUuid)))
 
-    assertThat(courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isTrue()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isTrue()
   }
 
   @Test
@@ -55,7 +55,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
     createRecall(DpsDataCreator.dpsCreateRecall(sentenceIds = listOf(sentenceTwo.sentenceUuid)))
     setSentenceStatus(sentenceTwo.sentenceUuid, SentenceEntityStatus.INACTIVE)
 
-    assertThat(courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
   }
 
   @Test
@@ -66,7 +66,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
     courtCases.forEach { it.statusId = CourtCaseEntityStatus.INACTIVE }
     courtCaseRepository.saveAll(courtCases)
 
-    assertThat(courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isFalse()
   }
 
   @Test
@@ -81,7 +81,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
 
     deleteRecall(latestRecallUuid)
 
-    assertThat(courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isTrue()
+    assertThat(courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID))).isTrue()
   }
 
   @Test
@@ -93,7 +93,7 @@ class HasActiveCaseWithSentenceOnLatestRecallTests : IntegrationTestBase() {
     setSentenceStatus(otherSentence.sentenceUuid, SentenceEntityStatus.INACTIVE)
 
     assertThat(
-      courtCaseRepository.hasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID, "PRI124")),
+      courtCaseRepository.anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(setOf(DpsDataCreator.DEFAULT_PRISONER_ID, "PRI124")),
     ).isTrue()
   }
 

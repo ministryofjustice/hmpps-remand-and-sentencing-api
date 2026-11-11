@@ -403,7 +403,7 @@ interface CourtCaseRepository :
     """,
     nativeQuery = true,
   )
-  fun hasActiveCaseWithLatestRemandOutcome(@Param("prisonerIds") prisonerIds: Set<String>): Boolean
+  fun anyPrisonerHasActiveCaseWithLatestRemandOutcome(@Param("prisonerIds") prisonerIds: Set<String>): Boolean
 
   @Query(
     """
@@ -423,7 +423,7 @@ interface CourtCaseRepository :
     """,
     nativeQuery = true,
   )
-  fun hasActiveCaseWithSentenceOnLatestRecall(@Param("prisonerIds") prisonerIds: Set<String>): Boolean
+  fun anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(@Param("prisonerIds") prisonerIds: Set<String>): Boolean
 
   @Query(
     """
