@@ -30,7 +30,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-mustache")
   implementation("com.github.spullara.mustache.java:compiler:0.9.14")
   implementation("com.github.jknack:handlebars:4.5.8")
-  implementation("org.jsoup:jsoup:1.23.2")
+  implementation("org.jsoup:jsoup:1.24.1")
   implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
   implementation("org.bouncycastle:bcprov-jdk18on:1.86")
   implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
