@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateNextCourtAppearance
@@ -22,6 +23,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "next_court_appearance")
+@NamedEntityGraph(name = "joined", includeAllAttributes = true)
 class NextCourtAppearanceEntity(
   @Id
   @Column
@@ -33,10 +35,10 @@ class NextCourtAppearanceEntity(
   var appearanceTime: LocalTime?,
   @Column
   var courtCode: String,
-  @OneToOne
+  @OneToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "appearance_type_id")
   var appearanceType: AppearanceTypeEntity,
-  @OneToOne
+  @OneToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "court_appearance_subtype_id")
   var courtAppearanceSubtype: CourtAppearanceSubtypeEntity?,
   @OneToOne(fetch = FetchType.LAZY)

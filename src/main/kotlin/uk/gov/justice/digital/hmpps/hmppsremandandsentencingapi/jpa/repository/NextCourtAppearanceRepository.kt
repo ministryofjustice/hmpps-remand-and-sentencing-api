@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository
 
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
@@ -39,6 +40,7 @@ interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEnti
   )
   fun deleteByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
 
+  @EntityGraph("joined")
   @Query(
     """
     select nca, lca.courtCaseReference from CourtAppearanceEntity ca
