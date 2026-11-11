@@ -2,8 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.per
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.SentencesToChainToResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
@@ -63,6 +65,76 @@ class SentenceToChainToTests : IntegrationTestBase() {
     Assertions.assertThat(periodLength.days).isEqualTo(expectedPeriodLength.days)
     Assertions.assertThat(periodLength.periodOrder).isEqualTo(expectedPeriodLength.periodOrder)
     Assertions.assertThat(periodLength.periodLengthType).isEqualTo(expectedPeriodLength.type)
+  }
+
+  @Test
+  fun `returns all period lengths for a sentence with multiple period lengths`() {
+    val (_, createCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(
+            charges = listOf(
+              DpsDataCreator.dpsCreateCharge(
+                sentence = DpsDataCreator.dpsCreateSentence(
+                  periodLengths = listOf(
+                    DpsDataCreator.dpsCreatePeriodLength(
+                      years = 2,
+                      months = 6,
+                      periodOrder = "years,months",
+                      type = PeriodLengthType.SENTENCE_LENGTH,
+                    ),
+                    DpsDataCreator.dpsCreatePeriodLength(
+                      years = 1,
+                      months = 0,
+                      periodOrder = "years,months",
+                      type = PeriodLengthType.LICENCE_PERIOD,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    )
+    val appearance = createCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence!!
+    val bookingId = addBookingIdToDpsSentence(sentence.sentenceUuid!!, charge.chargeUuid, appearance.appearanceUuid)
+
+    val result = webTestClient.get()
+      .uri {
+        it.path("/person/{prisonerId}/sentences-to-chain-to")
+          .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
+          .queryParam("bookingId", bookingId.toString())
+          .build(createCourtCase.prisonerId)
+      }
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(SentencesToChainToResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(result.appearances).hasSize(1)
+    val appearanceToChainTo = result.appearances[0]
+    Assertions.assertThat(appearanceToChainTo.sentences).hasSize(1)
+    val sentenceToChainTo = appearanceToChainTo.sentences.first()
+    Assertions.assertThat(sentenceToChainTo.sentenceUuid).isEqualTo(sentence.sentenceUuid)
+    Assertions.assertThat(sentenceToChainTo.periodLengths).containsExactlyInAnyOrderElementsOf(
+      sentence.periodLengths.map {
+        PeriodLength(
+          years = it.years,
+          months = it.months,
+          weeks = it.weeks,
+          days = it.days,
+          periodOrder = it.periodOrder,
+          periodLengthType = it.type,
+          legacyData = it.legacyData,
+          periodLengthUuid = it.periodLengthUuid,
+        )
+      },
+    )
   }
 
   @Test
