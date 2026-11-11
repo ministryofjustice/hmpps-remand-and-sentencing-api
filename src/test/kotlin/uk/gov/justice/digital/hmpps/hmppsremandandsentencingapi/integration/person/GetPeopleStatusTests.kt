@@ -82,6 +82,11 @@ class GetPeopleStatusTests : IntegrationTestBase() {
       .expectStatus().isForbidden
   }
 
+  @Test
+  fun `should fail when no prisoners specified in body`() {
+    postStatuses(emptySet()).expectStatus().isBadRequest
+  }
+
   private fun postStatuses(prisonerIds: Set<String>) = webTestClient.post()
     .uri("/person/statuses")
     .headers {

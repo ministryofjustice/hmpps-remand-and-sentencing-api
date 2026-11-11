@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.persistence.EntityNotFoundException
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -98,11 +99,12 @@ class PersonController(
   @ApiResponses(
     value = [
       ApiResponse(responseCode = "200", description = "Returns person status indicators for a list of people"),
+      ApiResponse(responseCode = "400", description = "Malformed request such as empty personIds"),
       ApiResponse(responseCode = "401", description = "Unauthorised, requires a valid Oauth2 token"),
       ApiResponse(responseCode = "403", description = "Forbidden, requires an appropriate role"),
     ],
   )
-  fun getPeopleStatus(@RequestBody peopleStatusRequest: PeopleStatusRequest): PeopleStatus = courtCaseService.getPeopleStatus(peopleStatusRequest.personIds)
+  fun getPeopleStatus(@Valid @RequestBody peopleStatusRequest: PeopleStatusRequest): PeopleStatus = courtCaseService.getPeopleStatus(peopleStatusRequest.personIds)
 
   @GetMapping("/{prisonerId}/sentenced-court-cases")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")

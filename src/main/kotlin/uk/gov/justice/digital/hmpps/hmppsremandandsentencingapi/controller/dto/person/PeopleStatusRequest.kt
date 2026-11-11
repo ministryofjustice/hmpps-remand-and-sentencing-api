@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotEmpty
 
 @Schema(description = "Status indicators for a list of people")
 data class PeopleStatusRequest(
-  @NotEmpty
+  @field:NotEmpty
   val personIds: Set<String>,
 )
