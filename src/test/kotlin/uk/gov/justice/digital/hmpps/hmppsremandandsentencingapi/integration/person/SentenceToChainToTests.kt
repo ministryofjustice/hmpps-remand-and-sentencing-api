@@ -138,6 +138,50 @@ class SentenceToChainToTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `returns sentence with empty period lengths when sentence has no period lengths`() {
+    val (_, createCourtCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(
+            charges = listOf(
+              DpsDataCreator.dpsCreateCharge(
+                sentence = DpsDataCreator.dpsCreateSentence(
+                  periodLengths = emptyList(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    )
+    val appearance = createCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    val sentence = charge.sentence!!
+    val bookingId = addBookingIdToDpsSentence(sentence.sentenceUuid!!, charge.chargeUuid, appearance.appearanceUuid)
+
+    val result = webTestClient.get()
+      .uri {
+        it.path("/person/{prisonerId}/sentences-to-chain-to")
+          .queryParam("beforeOrOnAppearanceDate", appearance.appearanceDate.plusDays(5).format(DateTimeFormatter.ISO_DATE))
+          .queryParam("bookingId", bookingId.toString())
+          .build(createCourtCase.prisonerId)
+      }
+      .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI")) }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .returnResult(SentencesToChainToResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(result.appearances).hasSize(1)
+    val appearanceToChainTo = result.appearances[0]
+    Assertions.assertThat(appearanceToChainTo.sentences).hasSize(1)
+    val sentenceToChainTo = appearanceToChainTo.sentences.first()
+    Assertions.assertThat(sentenceToChainTo.sentenceUuid).isEqualTo(sentence.sentenceUuid)
+    Assertions.assertThat(sentenceToChainTo.periodLengths).isEmpty()
+  }
+
+  @Test
   fun `returns no appearances when there is only an active sentence in the future`() {
     val (_, createCourtCase) = createCourtCase()
     val appearance = createCourtCase.appearances.first()

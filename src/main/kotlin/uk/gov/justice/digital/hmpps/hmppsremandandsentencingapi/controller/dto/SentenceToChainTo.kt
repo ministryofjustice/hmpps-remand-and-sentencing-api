@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.math.BigDecimal
@@ -29,8 +30,8 @@ data class SentenceToChainTo(
             months = it.months,
             weeks = it.weeks,
             days = it.days,
-            periodOrder = it.periodOrder!!,
-            periodLengthType = it.periodLengthType!!,
+            periodOrder = it.periodOrder ?: "years,months,weeks,days",
+            periodLengthType = it.periodLengthType ?: PeriodLengthType.UNSUPPORTED,
             legacyData = it.periodLengthLegacyData,
             periodLengthUuid = it.periodLengthUuid!!,
           )
