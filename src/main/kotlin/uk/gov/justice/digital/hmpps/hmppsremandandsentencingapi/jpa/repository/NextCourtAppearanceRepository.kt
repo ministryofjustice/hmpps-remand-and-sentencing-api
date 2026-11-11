@@ -40,7 +40,7 @@ interface NextCourtAppearanceRepository : CrudRepository<NextCourtAppearanceEnti
   )
   fun deleteByCourtCasePrisonerId(@Param("prisonerId") prisonerId: String)
 
-  @EntityGraph("joined")
+  @EntityGraph("NextCourtAppearance.withAllAttributes")
   @Query(
     """
     select nca, lca.courtCaseReference from CourtAppearanceEntity ca

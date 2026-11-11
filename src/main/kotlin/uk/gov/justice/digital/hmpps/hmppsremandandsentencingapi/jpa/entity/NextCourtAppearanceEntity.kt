@@ -23,7 +23,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "next_court_appearance")
-@NamedEntityGraph(name = "joined", includeAllAttributes = true)
+@NamedEntityGraph(name = "NextCourtAppearance.withAllAttributes", includeAllAttributes = true)
 class NextCourtAppearanceEntity(
   @Id
   @Column
