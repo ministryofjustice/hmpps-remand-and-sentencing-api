@@ -3,8 +3,10 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.ChargeOutcome
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.ChargeEntity
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.CourtAppearanceEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.UUID
 
 data class PersonCharge(
@@ -17,9 +19,11 @@ data class PersonCharge(
   val legacyData: ChargeLegacyData?,
   val findingOfDomesticAbuse: Boolean?,
   val sentence: PersonSentence?,
+  val appearanceDate: LocalDate,
+  val appearanceCreatedAt: ZonedDateTime,
 ) {
   companion object {
-    fun from(chargeEntity: ChargeEntity): PersonCharge = PersonCharge(
+    fun from(chargeEntity: ChargeEntity, courtAppearanceEntity: CourtAppearanceEntity): PersonCharge = PersonCharge(
       chargeEntity.chargeUuid,
       chargeEntity.offenceCode,
       chargeEntity.offenceStartDate,
@@ -29,6 +33,8 @@ data class PersonCharge(
       chargeEntity.legacyData,
       chargeEntity.findingOfDomesticAbuse,
       chargeEntity.getLiveSentence()?.let { PersonSentence.from(it) },
+      courtAppearanceEntity.appearanceDate,
+      courtAppearanceEntity.createdAt,
     )
   }
 }

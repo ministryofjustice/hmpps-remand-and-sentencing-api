@@ -8,8 +8,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 
 interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
 
@@ -99,7 +100,8 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
 
   @Query(
     """
-    select c from ChargeEntity c
+    select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance(c, ca)
+    from ChargeEntity c
     join c.appearanceCharges ac
     join ac.appearance ca
     join ca.courtCase cc
@@ -109,6 +111,7 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     and ca.appearanceDate <= :toDate
     and ca.statusId != :appearanceStatus
     and c.statusId != :chargeStatus
+    order by ca.appearanceDate desc, ca.createdAt desc, ca.id desc
   """,
   )
   fun findByPrisonerId(
@@ -118,5 +121,5 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     @Param("toDate") toDate: LocalDate,
     @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
-  ): List<ChargeEntity>
+  ): List<ChargeAppearance>
 }
