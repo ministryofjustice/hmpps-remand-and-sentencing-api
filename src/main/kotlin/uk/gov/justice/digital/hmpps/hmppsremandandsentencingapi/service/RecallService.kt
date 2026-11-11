@@ -414,7 +414,7 @@ class RecallService(
   }
 
   @Transactional(readOnly = true)
-  fun findRecallByUuid(recallUuid: UUID): Recall {
+  fun findRecallByUuid(recallUuid: UUID, groupNomisRecalls: Boolean = false): Recall {
     val recall = recallRepository.findOneByRecallUuid(recallUuid)
       ?: throw EntityNotFoundException("No recall exists for the passed in UUID")
     val recallSentences = recallSentenceRepository.findByRecallId(recall.id).orEmpty()
@@ -424,7 +424,21 @@ class RecallService(
       } else {
         null
       }
-    return Recall.from(recall, recallSentences, adjustment)
+    val singleRecall = Recall.from(recall, recallSentences, adjustment)
+    if (!groupNomisRecalls || recall.source != NOMIS) {
+      return singleRecall
+    }
+    return groupedNomisRecall(singleRecall)
+  }
+
+  private fun groupedNomisRecall(recall: Recall): Recall {
+    val groupingKey = NomisRecallGrouper.groupingKey(recall.recallType, recall.returnToCustodyDate, recall.postedDate)
+      ?: return recall
+    val nomisRecallsInSameGroup = findRecallsByPrisonerId(recall.prisonerId).filter {
+      it.source == NOMIS &&
+        NomisRecallGrouper.groupingKey(it.recallType, it.returnToCustodyDate, it.postedDate) == groupingKey
+    }
+    return NomisRecallGrouper.group(nomisRecallsInSameGroup).single()
   }
 
   private fun findRecallsByPrisonerId(prisonerId: String): List<Recall> {

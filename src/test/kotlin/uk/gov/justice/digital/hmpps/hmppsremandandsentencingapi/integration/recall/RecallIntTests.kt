@@ -827,6 +827,32 @@ class RecallIntTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `Get NOMIS recall with groupNomisRecalls=true returns all NOMIS recalls in same group`() {
+    val returnToCustodyDate = LocalDate.of(2023, 1, 1)
+    val legacyData = DataCreator.sentenceLegacyData(sentenceCalcType = "FTR_ORA", sentenceCategory = "2020")
+    val (firstSentenceUuid, _) = createLegacySentence(
+      legacyCharge = DataCreator.legacyCreateCharge(offenceCode = "OFF1"),
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = legacyData,
+        returnToCustodyDate = returnToCustodyDate,
+      ),
+    )
+    val (secondSentenceUuid, _) = createLegacySentence(
+      legacyCharge = DataCreator.legacyCreateCharge(offenceCode = "OFF2"),
+      legacySentence = DataCreator.legacyCreateSentence(
+        sentenceLegacyData = legacyData.copy(nomisLineReference = "5"),
+        returnToCustodyDate = returnToCustodyDate,
+      ),
+    )
+
+    val primaryRecallId = getRecallsByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID).single().recallUuid
+
+    val grouped = getRecallByUUID(primaryRecallId, groupNomisRecalls = true)
+    assertThat(grouped.recallUuid).isEqualTo(primaryRecallId)
+    assertThat(grouped.courtCases.flatMap { it.sentences }.map { it.sentenceUuid }).containsExactlyInAnyOrder(firstSentenceUuid, secondSentenceUuid)
+  }
+
+  @Test
   fun `Updating a recall with the same UAL does not make any changes to adjustments`() {
     val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
     val originalRecall = DpsDataCreator.dpsCreateRecall(
