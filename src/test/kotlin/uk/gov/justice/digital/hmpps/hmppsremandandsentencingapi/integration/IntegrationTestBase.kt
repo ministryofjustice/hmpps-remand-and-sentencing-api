@@ -487,9 +487,9 @@ abstract class IntegrationTestBase {
 
   protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> = getPrisonerRecallsResponse(prisonerId, bookingId).recalls
 
-  protected fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
+  protected fun getRecallByUUID(recallUuid: UUID, groupNomisRecalls: Boolean = false): Recall = webTestClient
     .get()
-    .uri("/recall/$recallUuid")
+    .uri("/recall/$recallUuid?groupNomisRecalls=$groupNomisRecalls")
     .headers {
       it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
     }
