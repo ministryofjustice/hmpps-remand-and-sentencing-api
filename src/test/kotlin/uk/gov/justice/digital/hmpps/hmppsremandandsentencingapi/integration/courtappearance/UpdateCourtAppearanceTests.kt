@@ -1191,6 +1191,23 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     assertThat(newCharge.sentence!!.sentenceUuid).isEqualTo(createdSentence.sentenceUuid)
   }
 
+  @Test
+  fun `do not emit charge deleted event when charge on future appearance`() {
+    val firstCharge = DpsDataCreator.dpsCreateNonSentencedCharge()
+    val secondCharge = DpsDataCreator.dpsCreateNonSentencedCharge()
+    val courtAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(charges = listOf(firstCharge, secondCharge))
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateNonSentencedCourtCase(appearances = listOf(courtAppearance)))
+
+    val updateAppearance = courtAppearance.copy(
+      courtCaseUuid = courtCaseUuid,
+      charges = listOf(secondCharge),
+    )
+
+    putCourtAppearance(updateAppearance.appearanceUuid, updateAppearance)
+    val events = getMessages(1)
+    Assertions.assertThat(events).extracting<String> { it.eventType }.doesNotContain("charge.deleted")
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")

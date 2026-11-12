@@ -345,7 +345,8 @@ class ChargeService(
     courtCaseHierarchyData: CourtCaseHierarchyData,
   ): RecordResponse<ChargeEntity> {
     var recordResponse = RecordResponse(charge, mutableSetOf())
-    if (charge.appearanceCharges.none { it.appearance!!.statusId == CourtAppearanceEntityStatus.ACTIVE }) {
+    val anyOtherChargeRecordStillActive = chargeRepository.anyOtherChargeStillActive(charge.chargeUuid, charge.id)
+    if (charge.appearanceCharges.all { it.appearance!!.statusId == CourtAppearanceEntityStatus.DELETED } && !anyOtherChargeRecordStillActive) {
       recordResponse = deleteCharge(charge, courtCaseHierarchyData)
     }
     return recordResponse
