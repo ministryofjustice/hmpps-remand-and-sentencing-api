@@ -122,4 +122,15 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
   ): List<ChargeAppearance>
+
+  @Query(
+    """
+    select count(c) > 0 
+    from ChargeEntity c
+    where c.chargeUuid = :chargeUuid
+    and c.id != :chargeId
+    and c.statusId != :chargeStatus
+  """,
+  )
+  fun anyOtherChargeStillActive(@Param("chargeUuid") chargeUuid: UUID, @Param("chargeId") chargeId: Int, @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED): Boolean
 }
