@@ -16,7 +16,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.UUID
 
-class NextCourtAppearancePersonCacheExpiryTest {
+class NextCourtAppearancePersonCacheExpiryTests {
 
   private val londonZone = ZoneId.of("Europe/London")
   private var currentInstant: Instant = ZonedDateTime.of(2026, 5, 10, 10, 0, 0, 0, londonZone).toInstant()
