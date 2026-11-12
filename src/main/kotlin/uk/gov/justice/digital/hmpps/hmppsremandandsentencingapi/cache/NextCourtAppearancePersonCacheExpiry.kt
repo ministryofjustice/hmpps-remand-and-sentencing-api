@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit
 
 class NextCourtAppearancePersonCacheExpiry(
   private val clock: Clock = Clock.system(ZoneId.of("Europe/London")),
-  private val emptyResultTtl: Duration = Duration.ofHours(1),
+  private val maxResultTtl: Duration = Duration.ofHours(1),
 ) : Expiry<Any, Any> {
 
   override fun expireAfterCreate(
@@ -37,8 +37,8 @@ class NextCourtAppearancePersonCacheExpiry(
     is PersonNextCourtAppearance -> {
       val now = ZonedDateTime.now(clock)
       val appearanceTime = value.dateTime.atZone(clock.zone)
-      ChronoUnit.NANOS.between(now, appearanceTime).coerceAtLeast(0L)
+      ChronoUnit.NANOS.between(now, appearanceTime).coerceIn(0L, maxResultTtl.toNanos())
     }
-    else -> emptyResultTtl.toNanos()
+    else -> maxResultTtl.toNanos()
   }
 }
