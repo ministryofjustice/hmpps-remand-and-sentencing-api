@@ -1222,6 +1222,28 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(events).extracting<String> { it.eventType }.contains("sentence.deleted", "sentence.period-length.deleted")
   }
 
+  @Test
+  fun `removing charge record from one appearance keeps it in the other`() {
+    val nonSentencedCharge = DpsDataCreator.dpsCreateNonSentencedCharge()
+    val firstAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(charges = listOf(nonSentencedCharge), nextCourtAppearance = null)
+    val secondAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(charges = listOf(nonSentencedCharge), nextCourtAppearance = null)
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance)))
+    val firstAppearanceWithoutCharge = firstAppearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf())
+    putCourtAppearance(firstAppearanceWithoutCharge.appearanceUuid, firstAppearanceWithoutCharge)
+    webTestClient
+      .get()
+      .uri("/court-appearance/${secondAppearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(nonSentencedCharge.chargeUuid.toString())
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")

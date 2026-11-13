@@ -308,11 +308,11 @@ class ChargeService(
   private fun deleteCharge(
     charge: ChargeEntity,
   ): EntityChangeStatus {
-    val changeStatus =
-      if (charge.statusId == ChargeEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
-    charge.delete(serviceUserService.getUsername())
-    if (changeStatus == EntityChangeStatus.DELETED) {
+    var changeStatus = EntityChangeStatus.NO_CHANGE
+    if (charge.appearanceCharges.all { it.appearance!!.statusId == CourtAppearanceEntityStatus.DELETED } && charge.statusId != ChargeEntityStatus.DELETED) {
+      charge.delete(serviceUserService.getUsername())
       chargeHistoryRepository.save(ChargeHistoryEntity.from(charge, ChangeSource.DPS))
+      changeStatus = EntityChangeStatus.DELETED
     }
     return changeStatus
   }
