@@ -305,16 +305,27 @@ class ChargeService(
   }
 
   @Transactional
-  fun deleteCharge(
+  private fun deleteCharge(
     charge: ChargeEntity,
-    courtCaseHierarchyData: CourtCaseHierarchyData,
-  ): RecordResponse<ChargeEntity> {
+  ): EntityChangeStatus {
     val changeStatus =
       if (charge.statusId == ChargeEntityStatus.DELETED) EntityChangeStatus.NO_CHANGE else EntityChangeStatus.DELETED
     charge.delete(serviceUserService.getUsername())
-    val eventsToEmit: MutableSet<EventMetadata> = mutableSetOf()
+    if (changeStatus == EntityChangeStatus.DELETED) {
+      chargeHistoryRepository.save(ChargeHistoryEntity.from(charge, ChangeSource.DPS))
+    }
+    return changeStatus
+  }
+
+  @Transactional
+  fun deleteChargeIfOrphan(
+    charge: ChargeEntity,
+    courtCaseHierarchyData: CourtCaseHierarchyData,
+  ): RecordResponse<ChargeEntity> {
+    val recordResponse = RecordResponse(charge, mutableSetOf())
+    val entityChangeStatus = deleteCharge(charge)
     charge.getLiveSentence()?.let {
-      eventsToEmit.addAll(
+      recordResponse.eventsToEmit.addAll(
         sentenceService.deleteSentence(
           it,
           charge,
@@ -322,8 +333,10 @@ class ChargeService(
         ).eventsToEmit,
       )
     }
-    if (changeStatus == EntityChangeStatus.DELETED) {
-      eventsToEmit.add(
+
+    val anyOtherChargeRecordStillActive = chargeRepository.anyOtherChargeStillActive(charge.chargeUuid, charge.id)
+    if (entityChangeStatus == EntityChangeStatus.DELETED && charge.appearanceCharges.all { it.appearance!!.statusId == CourtAppearanceEntityStatus.DELETED } && !anyOtherChargeRecordStillActive) {
+      recordResponse.eventsToEmit.add(
         EventMetadataCreator.chargeEventMetadata(
           courtCaseHierarchyData.prisonerId,
           courtCaseHierarchyData.courtCaseId!!,
@@ -334,20 +347,6 @@ class ChargeService(
           courtCaseHierarchyData.isBreach,
         ),
       )
-      chargeHistoryRepository.save(ChargeHistoryEntity.from(charge, ChangeSource.DPS))
-    }
-    return RecordResponse(charge, eventsToEmit)
-  }
-
-  @Transactional
-  fun deleteChargeIfOrphan(
-    charge: ChargeEntity,
-    courtCaseHierarchyData: CourtCaseHierarchyData,
-  ): RecordResponse<ChargeEntity> {
-    var recordResponse = RecordResponse(charge, mutableSetOf())
-    val anyOtherChargeRecordStillActive = chargeRepository.anyOtherChargeStillActive(charge.chargeUuid, charge.id)
-    if (charge.appearanceCharges.all { it.appearance!!.statusId == CourtAppearanceEntityStatus.DELETED } && !anyOtherChargeRecordStillActive) {
-      recordResponse = deleteCharge(charge, courtCaseHierarchyData)
     }
     return recordResponse
   }

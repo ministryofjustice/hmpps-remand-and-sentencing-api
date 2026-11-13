@@ -1208,6 +1208,20 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
     Assertions.assertThat(events).extracting<String> { it.eventType }.doesNotContain("charge.deleted")
   }
 
+  @Test
+  fun `removing the sentenced charge must emit sentence deleted event`() {
+    val nonSentencedCharge = DpsDataCreator.dpsCreateNonSentencedCharge()
+    val nonSentencedAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(charges = listOf(nonSentencedCharge), nextCourtAppearance = null)
+    val sentencedCharge = nonSentencedCharge.copy(sentence = DpsDataCreator.dpsCreateSentence(), outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"))
+    val sentencedAppearance = dpsCreateCourtAppearance(charges = listOf(sentencedCharge), nextCourtAppearance = null)
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(nonSentencedAppearance, sentencedAppearance)))
+    purgeQueues()
+    val sentencedAppearanceWithoutCharge = sentencedAppearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf())
+    putCourtAppearance(sentencedAppearanceWithoutCharge.appearanceUuid, sentencedAppearanceWithoutCharge)
+    val events = getMessages(3)
+    Assertions.assertThat(events).extracting<String> { it.eventType }.contains("sentence.deleted", "sentence.period-length.deleted")
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")
