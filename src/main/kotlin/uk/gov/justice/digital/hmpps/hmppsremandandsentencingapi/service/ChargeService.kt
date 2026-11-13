@@ -349,6 +349,15 @@ class ChargeService(
     if (charge.appearanceCharges.all { it.appearance!!.statusId == CourtAppearanceEntityStatus.DELETED } && !anyOtherChargeRecordStillActive) {
       recordResponse = deleteCharge(charge, courtCaseHierarchyData)
     }
+    charge.getLiveSentence()?.let {
+      recordResponse.eventsToEmit.addAll(
+        sentenceService.deleteSentence(
+          it,
+          charge,
+          courtCaseHierarchyData,
+        ).eventsToEmit,
+      )
+    }
     return recordResponse
   }
 
