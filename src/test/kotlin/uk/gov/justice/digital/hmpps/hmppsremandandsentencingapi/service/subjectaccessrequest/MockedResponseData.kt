@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subje
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.RecallTypeSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.SentenceSarEntity
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.subjectaccessrequest.SentenceTypeSarEntity
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -140,6 +141,7 @@ object MockedResponseData {
     false,
     ChargeLegacyDataSar("2026-01-01", "Littering"),
     "ACTIVE",
+    BigDecimal("50.00"),
   )
 
   fun sentencesSarEntity(

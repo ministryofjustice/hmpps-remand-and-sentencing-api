@@ -3,10 +3,12 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 import com.fasterxml.jackson.annotation.JsonFormat
 import tools.jackson.databind.annotation.JsonSerialize
 import tools.jackson.databind.ser.jdk.StringSerializer
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.BigDecimalNullSerializer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.BooleanNullSerializer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.BooleanSerializer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.LocalDateNullSerializer
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.jackson.StringNullSerializer
+import java.math.BigDecimal
 import java.time.LocalDate
 
 data class Charge(
@@ -25,5 +27,7 @@ data class Charge(
   val offenceEndDate: LocalDate?,
   @param:JsonSerialize(using = StringSerializer::class, nullsUsing = StringNullSerializer::class)
   val chargeOutcome: String?,
+  @param:JsonSerialize(nullsUsing = BigDecimalNullSerializer::class)
+  val value: BigDecimal? = null,
   val liveSentence: Sentence?,
 )
