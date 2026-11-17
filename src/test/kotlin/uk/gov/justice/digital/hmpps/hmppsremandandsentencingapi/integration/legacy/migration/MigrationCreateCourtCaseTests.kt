@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.MigrationCreateCourtCasesResponse
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -292,5 +293,50 @@ class MigrationCreateCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `can migrate charge with value and update snapshot persists value when omitted`() {
+    val chargeNOMISId = 556L
+    val firstSnapshot = DataCreator.migrationCreateCharge(
+      chargeNOMISId = chargeNOMISId,
+      value = BigDecimal("123.45"),
+      sentence = null,
+    )
+    val secondSnapshot = DataCreator.migrationCreateCharge(
+      chargeNOMISId = chargeNOMISId,
+      value = null,
+      sentence = null,
+    )
+    val firstAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 1, appearanceDate = LocalDate.now().minusDays(7), charges = listOf(firstSnapshot))
+    val secondAppearance = DataCreator.migrationCreateCourtAppearance(eventId = 2, appearanceDate = LocalDate.now().minusDays(2), charges = listOf(secondSnapshot))
+    val migrationCourtCases = DataCreator.migrationCreateCourtCases(courtCases = listOf(DataCreator.migrationCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/migration")
+      .bodyValue(migrationCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MigrationCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val createdChargeUuid = response.charges.first().chargeUuid
+    webTestClient
+      .get()
+      .uri("/legacy/charge/$createdChargeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(123.45)
   }
 }
