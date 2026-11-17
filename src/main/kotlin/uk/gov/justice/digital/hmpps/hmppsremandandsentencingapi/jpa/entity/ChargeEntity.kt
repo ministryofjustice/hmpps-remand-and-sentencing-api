@@ -164,7 +164,11 @@ class ChargeEntity(
     mergedFromCourtCase,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergedFromDate,
-    value = charge.value,
+    value = when {
+      charge.value == null -> value
+      charge.value < BigDecimal.ZERO -> null
+      else -> charge.value
+    },
   )
 
   fun copyFrom(
@@ -205,7 +209,11 @@ class ChargeEntity(
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
     hmctsChargeId = charge.hmctsChargeId,
-    value = charge.value,
+    value = when {
+      charge.value == null -> value
+      charge.value < BigDecimal.ZERO -> null
+      else -> charge.value
+    },
   )
 
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -447,7 +455,7 @@ class ChargeEntity(
       createdBy = createdBy,
       createdPrison = charge.prisonId,
       hmctsChargeId = charge.hmctsChargeId,
-      value = charge.value,
+      value = if (charge.value != null && charge.value < BigDecimal.ZERO) null else charge.value,
     )
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -464,7 +472,7 @@ class ChargeEntity(
       chargeAggravatingFactors = mutableSetOf(),
       createdBy = createdBy,
       createdPrison = null,
-      value = charge.value,
+      value = if (charge.value != null && charge.value < BigDecimal.ZERO) null else charge.value,
     )
 
     fun from(

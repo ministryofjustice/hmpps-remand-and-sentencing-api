@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ChargeService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -1242,6 +1243,67 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.charges[0].chargeUuid")
       .isEqualTo(nonSentencedCharge.chargeUuid.toString())
+  }
+
+  @Test
+  fun `update appearance with non-custodial outcome on charge persists existing charge value when value is omitted`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("150.00"))
+    val appearance = dpsCreateCourtAppearance(charges = listOf(sentencedCharge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    // Update appearance: outcome becomes non-custodial (Community order), sentence = null, value is omitted (null)
+    val nonCustodialOutcomeUuid = UUID.fromString("c3a0e1a2-5a7c-4a56-8f3f-2a4d8c78d611")
+    val updatedCharge = sentencedCharge.copy(
+      outcomeUuid = nonCustodialOutcomeUuid,
+      sentence = null,
+      value = null,
+    )
+    val updatedAppearance = appearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(updatedCharge))
+    putCourtAppearance(appearance.appearanceUuid, updatedAppearance)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(sentencedCharge.chargeUuid.toString())
+      .jsonPath("$.charges[0].outcome.outcomeUuid")
+      .isEqualTo(nonCustodialOutcomeUuid.toString())
+      .jsonPath("$.charges[0].value")
+      .isEqualTo(150.0)
+  }
+
+  @Test
+  fun `update appearance with negative sentinel value drops charge value`() {
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("150.00"))
+    val appearance = dpsCreateCourtAppearance(charges = listOf(sentencedCharge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    // User selected "No" on value: sentinel -1 is sent
+    val updatedCharge = sentencedCharge.copy(value = BigDecimal("-1"))
+    val updatedAppearance = appearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(updatedCharge))
+    putCourtAppearance(appearance.appearanceUuid, updatedAppearance)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(sentencedCharge.chargeUuid.toString())
+      .jsonPath("$.charges[0].value")
+      .isEmpty
   }
 
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient

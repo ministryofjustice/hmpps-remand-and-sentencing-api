@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance.ChargeAggravatingFactorHelper
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.dpsCreateCourtAppearance
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -44,6 +45,107 @@ class UpdateChargeTests : IntegrationTestBase() {
       }
     val messages = getMessages(1)
     assertThat(messages).hasSize(1).extracting<String> { it.eventType }.contains("charge.updated")
+  }
+
+  @Test
+  fun `updating only the charge value emits charge updated event and legacy charge returns new value`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50"))
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(value = BigDecimal("250.75"), appearanceUuid = createAppearance.appearanceUuid)
+    webTestClient
+      .put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    val messages = getMessages(1)
+    assertThat(messages).hasSize(1).extracting<String> { it.eventType }.containsExactly("charge.updated")
+    assertThat(messages.first().additionalInformation.get("source").asText()).isEqualTo("DPS")
+    assertThat(messages.first().additionalInformation.get("courtChargeId").asText()).isEqualTo(createCharge.chargeUuid.toString())
+
+    webTestClient
+      .get()
+      .uri("/legacy/charge/${createCharge.chargeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(250.75)
+  }
+
+  @Test
+  fun `updating charge with null value persists existing value`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50"))
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(value = null, appearanceUuid = createAppearance.appearanceUuid)
+    webTestClient
+      .put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/legacy/charge/${createCharge.chargeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(100.50)
+  }
+
+  @Test
+  fun `updating charge with negative sentinel value drops existing value`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50"))
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(value = BigDecimal("-1"), appearanceUuid = createAppearance.appearanceUuid)
+    webTestClient
+      .put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/legacy/charge/${createCharge.chargeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEmpty
   }
 
   @Test
