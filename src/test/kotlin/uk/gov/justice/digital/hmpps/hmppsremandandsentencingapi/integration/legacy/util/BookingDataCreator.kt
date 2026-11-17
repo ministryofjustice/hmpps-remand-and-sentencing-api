@@ -57,6 +57,7 @@ class BookingDataCreator {
       sentence: BookingCreateSentence? = null,
       mergedFromCaseId: Long? = null,
       mergedFromDate: LocalDate? = null,
+      value: BigDecimal? = null,
     ): BookingCreateCharge = BookingCreateCharge(
       chargeNOMISId,
       offenceCode,
@@ -66,6 +67,7 @@ class BookingDataCreator {
       sentence,
       mergedFromCaseId,
       mergedFromDate,
+      value,
     )
 
     fun bookingCreateSentence(

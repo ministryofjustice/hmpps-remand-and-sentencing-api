@@ -246,7 +246,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = migrationCreateCharge.mergedFromDate,
-    value = value,
+    value = resolveChargeValue(migrationCreateCharge.value, value),
   )
 
   fun copyFrom(
@@ -275,7 +275,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergeCreateCharge.mergedFromDate,
-    value = value,
+    value = resolveChargeValue(mergeCreateCharge.value, value),
   )
 
   fun copyFrom(
@@ -304,7 +304,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = bookingCreateCharge.mergedFromDate,
-    value = value,
+    value = resolveChargeValue(bookingCreateCharge.value, value),
   )
 
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
@@ -502,6 +502,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       migrationCreateCharge.mergedFromDate,
+      value = resolveChargeValue(migrationCreateCharge.value),
     )
 
     fun from(
@@ -530,6 +531,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       mergeCreateCharge.mergedFromDate,
+      value = resolveChargeValue(mergeCreateCharge.value),
     )
 
     fun from(
@@ -557,6 +559,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       bookingCreateCharge.mergedFromDate,
+      value = resolveChargeValue(bookingCreateCharge.value),
     )
   }
 }

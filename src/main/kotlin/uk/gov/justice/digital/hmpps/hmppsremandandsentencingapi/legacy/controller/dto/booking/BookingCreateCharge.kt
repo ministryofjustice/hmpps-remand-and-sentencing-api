@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
+import java.math.BigDecimal
 import java.time.LocalDate
 
 data class BookingCreateCharge(
@@ -12,4 +13,5 @@ data class BookingCreateCharge(
   val sentence: BookingCreateSentence?,
   val mergedFromCaseId: Long?,
   val mergedFromDate: LocalDate?,
+  val value: BigDecimal? = null,
 )

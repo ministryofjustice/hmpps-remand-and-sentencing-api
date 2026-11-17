@@ -74,6 +74,7 @@ class PrisonerMergeDataCreator {
       sentence: MergeCreateSentence? = mergeCreateSentence(),
       mergedFromCaseId: Long? = null,
       mergedFromDate: LocalDate? = null,
+      value: BigDecimal? = null,
     ): MergeCreateCharge = MergeCreateCharge(
       chargeNOMISId,
       offenceCode,
@@ -83,6 +84,7 @@ class PrisonerMergeDataCreator {
       sentence,
       mergedFromCaseId,
       mergedFromDate,
+      value,
     )
 
     fun mergeCreateSentence(
