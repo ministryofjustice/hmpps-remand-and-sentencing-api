@@ -32,7 +32,7 @@ class NextCourtAppearancePersonCacheExpiryTests {
   }
 
   private val nativeCache = Caffeine.newBuilder()
-    .expireAfter(NextCourtAppearancePersonCacheExpiry(testClock))
+    .expireAfter(NextCourtAppearancePersonCacheExpiry(clock = testClock))
     .ticker(testTicker)
     .build<Any, Any>()
 

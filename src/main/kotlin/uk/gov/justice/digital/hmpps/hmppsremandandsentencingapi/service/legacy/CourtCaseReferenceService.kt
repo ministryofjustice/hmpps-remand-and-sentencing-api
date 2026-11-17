@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controlle
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.RefreshCaseReferences
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.ServiceUserService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants.Companion.ZONE_ID
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -42,7 +43,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
         val firstAppearance = appearances.minBy { it.createdAt }
         CaseReferenceLegacyData(
           offenderCaseReference = courtCaseReference,
-          updatedDate = firstAppearance.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+          updatedDate = firstAppearance.createdAt.withZoneSameInstant(ZoneId.of(ZONE_ID)).toLocalDateTime(),
           source = firstAppearance.source,
         )
       }
@@ -55,7 +56,7 @@ class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseReposi
         val firstAppearance = appearances.minBy { it.createdAt }
         CaseReferenceLegacyData(
           offenderCaseReference = courtCaseReference,
-          updatedDate = firstAppearance.createdAt.withZoneSameInstant(ZoneId.of("Europe/London")).toLocalDateTime(),
+          updatedDate = firstAppearance.createdAt.withZoneSameInstant(ZoneId.of(ZONE_ID)).toLocalDateTime(),
           source = firstAppearance.source,
         )
       }

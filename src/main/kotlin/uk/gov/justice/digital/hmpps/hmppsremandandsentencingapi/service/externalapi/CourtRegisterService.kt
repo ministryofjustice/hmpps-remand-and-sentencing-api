@@ -5,11 +5,12 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.CourtRegisterApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.CourtRegister
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 
 @Service
 class CourtRegisterService(private val courtRegisterApiClient: CourtRegisterApiClient) {
 
-  @Cacheable("courtRegisterByCourtCode")
+  @Cacheable(Constants.COURT_REGISTER_BY_COURT_CODE_CACHE_KEY, key = "#courtCode", unless = "#result == null")
   fun getCourtRegisterByCourtCodeCached(courtCode: String): CourtRegister? {
     try {
       return courtRegisterApiClient.getCourtRegister(courtCode)

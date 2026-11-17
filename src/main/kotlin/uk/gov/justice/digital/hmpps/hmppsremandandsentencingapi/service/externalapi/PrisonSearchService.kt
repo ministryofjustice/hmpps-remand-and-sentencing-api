@@ -1,14 +1,27 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.externalapi
 
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 
 @Component
 class PrisonSearchService(private val prisonerSearchClient: PrisonerSearchClient) {
 
   fun getPrisoner(prisonerId: String): PrisonSearchDetails? {
+    try {
+      return prisonerSearchClient.getPrisoner(prisonerId)
+    } catch (e: Exception) {
+      log.error("Unable to retrieve prisoner search details for prisoner id {}. API lookup failed.", prisonerId)
+      log.debug(e.message)
+    }
+    return null
+  }
+
+  @Cacheable(Constants.PRISONER_SEARCH_API_CACHE_KEY, key = "#prisonerId", unless = "#result == null")
+  fun getPrisonerCached(prisonerId: String): PrisonSearchDetails? {
     try {
       return prisonerSearchClient.getPrisoner(prisonerId)
     } catch (e: Exception) {

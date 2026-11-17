@@ -51,17 +51,17 @@ class F986Service(
     }
 
     val imprisonmentInDefaultOfFine = imprisonmentInDefaultOfFineList.first()
-    val prison = prisonSearchService.getPrisoner(imprisonmentInDefaultOfFine.prisonerId)
+    val prison = prisonSearchService.getPrisonerCached(imprisonmentInDefaultOfFine.prisonerId)
     val courtRegister = courtRegisterService.getCourtRegisterByCourtCodeCached(imprisonmentInDefaultOfFine.courtCode)
-    val personRecord = personRecordService.getPersonPrison(imprisonmentInDefaultOfFine.prisonerId)
+    val personRecord = personRecordService.getPersonPrisonCached(imprisonmentInDefaultOfFine.prisonerId)
     val courtName = courtRegister?.courtName
     val name = personRecord?.let { "${it.firstName} ${it.lastName}".trim() } ?: imprisonmentInDefaultOfFine.prisonerId
     val prisonName = prison?.prisonName
     val courtAddress: AgencyDetails.Address? = courtRegister?.let {
-      prisonRegisterService.getAgencyDetails(it.courtId)?.addresses?.firstOrNull()
+      prisonRegisterService.getAgencyDetailsCached(it.courtId)?.addresses?.firstOrNull()
     }
     val prisonTelephone: AgencyDetails.Telephone? = prison?.let {
-      prisonRegisterService.getAgencyDetails(it.prisonId)?.phones?.firstOrNull()
+      prisonRegisterService.getAgencyDetailsCached(it.prisonId)?.phones?.firstOrNull()
     }
 
     val sentenceList = imprisonmentInDefaultOfFineList.groupBy { it.sentenceId }.map { (_, sentenceList) ->
@@ -71,7 +71,7 @@ class F986Service(
       val sentence = sentenceList.first()
       F986.Sentence(
         periodLengths,
-        manageOffencesService.getOffenceDetails(sentence.offenceCode)?.description ?: "Offence Code (${sentence.offenceCode})",
+        manageOffencesService.getOffenceDetailsCached(sentence.offenceCode)?.description ?: "Offence Code (${sentence.offenceCode})",
         sentence.fineAmount?.toDouble() ?: 0.0,
       )
     }
