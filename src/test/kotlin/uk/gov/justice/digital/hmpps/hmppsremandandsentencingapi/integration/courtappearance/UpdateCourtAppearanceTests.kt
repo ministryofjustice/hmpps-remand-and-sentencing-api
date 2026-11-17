@@ -1246,17 +1246,17 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `update appearance with non-custodial outcome on charge persists existing charge value when value is omitted`() {
+  fun `update appearance with non-custodial outcome on charge retains charge value`() {
     val sentencedCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("150.00"))
     val appearance = dpsCreateCourtAppearance(charges = listOf(sentencedCharge))
     val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
 
-    // Update appearance: outcome becomes non-custodial (Community order), sentence = null, value is omitted (null)
+    // Update appearance: outcome becomes non-custodial (Community order), sentence = null, value is sent
     val nonCustodialOutcomeUuid = UUID.fromString("c3a0e1a2-5a7c-4a56-8f3f-2a4d8c78d611")
     val updatedCharge = sentencedCharge.copy(
       outcomeUuid = nonCustodialOutcomeUuid,
       sentence = null,
-      value = null,
+      value = sentencedCharge.value,
     )
     val updatedAppearance = appearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(updatedCharge))
     putCourtAppearance(appearance.appearanceUuid, updatedAppearance)
@@ -1275,6 +1275,33 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEqualTo(sentencedCharge.chargeUuid.toString())
       .jsonPath("$.charges[0].outcome.outcomeUuid")
       .isEqualTo(nonCustodialOutcomeUuid.toString())
+      .jsonPath("$.charges[0].value")
+      .isEqualTo(150.0)
+  }
+
+  @Test
+  fun `update appearance persists existing charge value when value is omitted`() {
+    val charge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("150.00"))
+    val appearance = dpsCreateCourtAppearance(charges = listOf(charge))
+    val (courtCaseUuid) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(appearance)))
+
+    // Update appearance with omitted value (null)
+    val updatedCharge = charge.copy(value = null)
+    val updatedAppearance = appearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(updatedCharge))
+    putCourtAppearance(appearance.appearanceUuid, updatedAppearance)
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid.toString())
       .jsonPath("$.charges[0].value")
       .isEqualTo(150.0)
   }

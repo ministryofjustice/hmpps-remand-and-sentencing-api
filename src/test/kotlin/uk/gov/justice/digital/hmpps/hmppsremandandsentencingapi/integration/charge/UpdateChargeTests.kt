@@ -48,7 +48,7 @@ class UpdateChargeTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `updating only the charge value emits charge updated event and legacy charge returns new value`() {
+  fun `updating charge value emits charge updated event and legacy charge returns new value`() {
     val createCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50"))
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
     createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
