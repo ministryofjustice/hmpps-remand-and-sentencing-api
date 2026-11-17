@@ -110,7 +110,7 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     left join c.sentences s
     left join s.recallSentences rs
     left join rs.recall r
-    where (cc.prisonerId = :prisonerId
+    where ((cc.prisonerId = :prisonerId
     and ca.appearanceDate >= :fromDate
     and ca.appearanceDate <= :toDate) or (
         r.prisonerId = :prisonerId
@@ -118,7 +118,7 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
       and r.status != :recallStatus
       and r.revocationDate >= :fromDate
       and r.revocationDate <= :toDate
-    )
+    ))
     and c.statusId != :chargeStatus
     and cc.statusId in :courtCaseStatuses
     and ca.statusId != :appearanceStatus
