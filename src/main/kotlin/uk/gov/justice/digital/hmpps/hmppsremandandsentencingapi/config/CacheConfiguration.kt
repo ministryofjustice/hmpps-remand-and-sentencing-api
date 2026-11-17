@@ -23,10 +23,10 @@ class CacheConfiguration(
 
   @Bean
   fun cacheManager(): CacheManager = object : CaffeineCacheManager() {
-    override fun createCaffeineCache(name: String): Cache = CaffeineCache(name, buildCaffeine(name).build(), true)
+    override fun createCaffeineCache(name: String): Cache = CaffeineCache(name, buildCaffeineSpec(name).build(), true)
   }
 
-  private fun buildCaffeine(cacheName: String): Caffeine<Any, Any> {
+  private fun buildCaffeineSpec(cacheName: String): Caffeine<Any, Any> {
     val builder = Caffeine.newBuilder().ticker(ticker)
     expiryByCacheMap[cacheName]?.let { builder.maximumSize(it.maximumSize).expireAfter(it) }
     return builder
