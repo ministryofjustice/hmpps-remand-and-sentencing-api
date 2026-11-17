@@ -261,7 +261,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
     }
 
     @Test
-    fun `should retrieve all charges and recalls by when renovation date is within date range`() {
+    fun `should retrieve all charges and recalls by when revocation date is within date range`() {
       val prisonerId = DEFAULT_PRISONER_ID
       val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
       val revocationDate = LocalDate.now()
