@@ -117,6 +117,38 @@ class UpdateChargeTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `updating charge with zero value sets value to zero`() {
+    val createCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50"))
+    val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))
+    createCourtCase(DpsDataCreator.dpsCreateCourtCase(appearances = listOf(createAppearance)))
+    val updateCharge = createCharge.copy(value = BigDecimal.ZERO, appearanceUuid = createAppearance.appearanceUuid)
+    webTestClient
+      .put()
+      .uri("/charge/${createCharge.chargeUuid}")
+      .bodyValue(updateCharge)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+
+    webTestClient
+      .get()
+      .uri("/legacy/charge/${createCharge.chargeUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(0)
+  }
+
+  @Test
   fun `updating charge with negative sentinel value drops existing value`() {
     val createCharge = DpsDataCreator.dpsCreateCharge(chargeValue = BigDecimal("100.50"))
     val createAppearance = dpsCreateCourtAppearance(charges = listOf(createCharge))

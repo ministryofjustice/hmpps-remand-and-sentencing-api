@@ -113,6 +113,54 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
   }
 
   @Test
+  fun `update charge in appearance with zero value sets value to zero`() {
+    val (_, createdCourtCase) = createCourtCase()
+    val appearance = createdCourtCase.appearances.first()
+    val charge = appearance.charges.first()
+    // First set a value on the charge
+    val toUpdateInitial = DataCreator.legacyUpdateCharge(value = BigDecimal.valueOf(55.50))
+    webTestClient
+      .put()
+      .uri("/legacy/charge/${charge.chargeUuid}/appearance/${appearance.appearanceUuid}")
+      .bodyValue(toUpdateInitial)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    val toUpdateZero = DataCreator.legacyUpdateCharge(value = BigDecimal.ZERO)
+    webTestClient
+      .put()
+      .uri("/legacy/charge/${charge.chargeUuid}/appearance/${appearance.appearanceUuid}")
+      .bodyValue(toUpdateZero)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isNoContent
+
+    webTestClient
+      .get()
+      .uri("/court-appearance/${appearance.appearanceUuid}")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.charges[0].chargeUuid")
+      .isEqualTo(charge.chargeUuid)
+      .jsonPath("$.charges[0].value")
+      .isEqualTo(0)
+  }
+
+  @Test
   fun `update charge in appearance with negative sentinel value drops value`() {
     val (_, createdCourtCase) = createCourtCase()
     val appearance = createdCourtCase.appearances.first()
