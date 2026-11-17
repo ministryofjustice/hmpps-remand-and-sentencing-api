@@ -103,25 +103,32 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   @Query(
     """
     select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance(c, ca)
-    from ChargeEntity c
-    join c.appearanceCharges ac
-    join ac.appearance ca
-    join ca.courtCase cc
-    left join c.sentences s
-    left join s.recallSentences rs
-    left join rs.recall r
-    where ((cc.prisonerId = :prisonerId
-    and ca.appearanceDate >= :fromDate
-    and ca.appearanceDate <= :toDate) or (
-        r.prisonerId = :prisonerId
-      and s.statusId != :sentenceStatus
-      and r.status != :recallStatus
-      and r.revocationDate >= :fromDate
-      and r.revocationDate <= :toDate
-    ))
-    and c.statusId != :chargeStatus
-    and cc.statusId in :courtCaseStatuses
-    and ca.statusId != :appearanceStatus
+      from ChargeEntity c
+      join c.appearanceCharges ac
+      join ac.appearance ca
+      join ca.courtCase cc
+      where c.statusId != :chargeStatus
+        and cc.statusId in :courtCaseStatuses
+        and ca.statusId != :appearanceStatus
+        and (
+            (
+                cc.prisonerId = :prisonerId
+                and ca.appearanceDate >= :fromDate
+                and ca.appearanceDate <= :toDate
+            )
+            or exists (
+                select 1
+                from SentenceEntity s
+                join s.recallSentences rs
+                join rs.recall r
+                where s.charge = c
+                  and r.prisonerId = :prisonerId
+                  and s.statusId != :sentenceStatus
+                  and r.status != :recallStatus
+                  and r.revocationDate >= :fromDate
+                  and r.revocationDate <= :toDate
+            )
+        )
     order by ca.appearanceDate desc, ca.createdAt desc, ca.id desc
   """,
   )
