@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance
 import java.time.LocalDate
 import java.util.UUID
@@ -101,16 +103,32 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   @Query(
     """
     select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance(c, ca)
-    from ChargeEntity c
-    join c.appearanceCharges ac
-    join ac.appearance ca
-    join ca.courtCase cc
-    where cc.prisonerId = :prisonerId
-    and cc.statusId in :courtCaseStatuses
-    and ca.appearanceDate >= :fromDate
-    and ca.appearanceDate <= :toDate
-    and ca.statusId != :appearanceStatus
-    and c.statusId != :chargeStatus
+      from ChargeEntity c
+      join c.appearanceCharges ac
+      join ac.appearance ca
+      join ca.courtCase cc
+      where c.statusId != :chargeStatus
+        and cc.statusId in :courtCaseStatuses
+        and ca.statusId != :appearanceStatus
+        and (
+            (
+                cc.prisonerId = :prisonerId
+                and ca.appearanceDate >= :fromDate
+                and ca.appearanceDate <= :toDate
+            )
+            or exists (
+                select 1
+                from SentenceEntity s
+                join s.recallSentences rs
+                join rs.recall r
+                where s.charge = c
+                  and r.prisonerId = :prisonerId
+                  and s.statusId != :sentenceStatus
+                  and r.status != :recallStatus
+                  and r.revocationDate >= :fromDate
+                  and r.revocationDate <= :toDate
+            )
+        )
     order by ca.appearanceDate desc, ca.createdAt desc, ca.id desc
   """,
   )
@@ -121,6 +139,8 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     @Param("toDate") toDate: LocalDate,
     @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
+    @Param("recallStatus") recallStatus: RecallEntityStatus = RecallEntityStatus.DELETED,
   ): List<ChargeAppearance>
 
   @Query(
