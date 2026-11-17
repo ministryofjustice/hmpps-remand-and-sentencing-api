@@ -98,9 +98,9 @@ class F986ServiceTest {
 
     every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns CourtRegister("COURT1", "Liverpool Crown Court", "Liverpool Crown Court Description")
-    every { personRecordService.getPersonPrison(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
-    every { prisonSearchService.getPrisoner(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)", LocalDate.now())
-    every { prisonRegisterService.getAgencyDetails("COURT1") } returns AgencyDetails(
+    every { personRecordService.getPersonPrisonCached(prisonerId) } returns PersonPrison("Joe", "Bloggs", PersonPrison.Gender("N", "Not Known / Not Recorded"))
+    every { prisonSearchService.getPrisonerCached(prisonerId) } returns PrisonSearchDetails("KMI", "Kirkham (HMP)", LocalDate.now())
+    every { prisonRegisterService.getAgencyDetailsCached("COURT1") } returns AgencyDetails(
       "COURT1",
       "COURT (#1)",
       "COURT",
@@ -108,7 +108,7 @@ class F986ServiceTest {
       listOf(AgencyDetails.Address("Court Address Line 1", "Court Address Line 2", "Court Address Town", "Court Address County", "ABC DEF")),
       listOf(AgencyDetails.Telephone("0394839394")),
     )
-    every { prisonRegisterService.getAgencyDetails("KMI") } returns AgencyDetails(
+    every { prisonRegisterService.getAgencyDetailsCached("KMI") } returns AgencyDetails(
       "KMI",
       "Kirkham (HMP)",
       "PRISON",
@@ -116,7 +116,7 @@ class F986ServiceTest {
       listOf(AgencyDetails.Address("Freckleton Road", "Kirkham", "Preston", "Lancashire", "PR4 2RN")),
       listOf(AgencyDetails.Telephone("0123456789")),
     )
-    every { manageOffencesService.getOffenceDetails("AA06027") } returns OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification")
+    every { manageOffencesService.getOffenceDetailsCached("AA06027") } returns OffenceDetails(48437, "AA06027", "Veterinary surgeon fail to notify incorrect certification")
 
     val documentSlot = slot<F986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
@@ -164,9 +164,9 @@ class F986ServiceTest {
 
     every { sentenceRepository.findImprisonmentInDefaultOfFineByAppearanceUuid(prisonerId, courtAppearanceId) } returns listOf(imprisonmentInDefaultOfFine)
     every { courtRegisterService.getCourtRegisterByCourtCodeCached("COURT1") } returns null
-    every { personRecordService.getPersonPrison(prisonerId) } returns null
-    every { prisonSearchService.getPrisoner(prisonerId) } returns null
-    every { manageOffencesService.getOffenceDetails("AA06027") } returns null
+    every { personRecordService.getPersonPrisonCached(prisonerId) } returns null
+    every { prisonSearchService.getPrisonerCached(prisonerId) } returns null
+    every { manageOffencesService.getOffenceDetailsCached("AA06027") } returns null
 
     val documentSlot = slot<F986>()
     every { documentGeneratorService.renderDocument(capture(documentSlot)) } returns ByteArrayInputStream(ByteArray(0))
