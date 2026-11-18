@@ -44,6 +44,35 @@ To regenerate the latest view of the Entity Model Schema for comparison see [Sar
 
 Likewise, to regenerate the latest version of the api / html for review see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarIntegrationTests.kt)
 
+#### Deploying template changes pre-requisites
+
+Before apply any DB changes to the jpa/entity/subjectaccessrequest Entities, it is important to ensure OSAR are made aware of this change
+in order for them to approve it and for us to send this evidence to the SAR team. The following steps should be taken to notify OSAR of the Change.
+
+1. Generate the exiting version (from Main branch) of the PDF via SarIntegrationTests.kt. This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf`` and save this as existing-sar-generated-report.pdf
+2. Now switch to your feature branch and generate the new version of the PDF via SarIntegrationTests.kt. This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf`` and save this as new-sar-generated-report.pdf
+3. Compose an Email to the OSAR team by including the two PDFs and advising that re-registration is required
+
+```
+to: SARchangeManagement@justice.gov.uk
+cc: <BA owning this process>
+
+Dear OSAR,
+
+Please find attached two examples (existing and new) of the SAR generated PDF for the Court Cases - Remand and Sentencing - Recalls -
+Immigration Detention. If you note the difference between the PDFs, the new report includes "<enter changes>".
+
+Please advise you are happy for these changes to be deployed to Production
+
+Regards,
+
+<your name>
+
+<attachments exisiting.pdf and new.pdf>
+```
+
+4. Wait for the team to respond to with the green light then proceed to 'Deploying template changes to Pre-prod / Prod'
+
 #### Deploying template changes to Pre-prod / Prod
 
 Any changes to the SAR Template will cause an ERRORED response once deployed to Pre-Prod / Prod and will require 
@@ -55,7 +84,7 @@ e.g.
 Hi Team, we've made a change to https://github.com/ministryofjustice/hmpps-remand-and-sentencing-api/blob/main/src/main/resources/templates/template_remand-and-sentencing-api.mustache would you please re-register this in the Pre-Prod environment.
 ```
 
-> Note: The team may require email evidence this change was approved by the OSAR team.
+> Note: The team may require email evidence this change was approved by the OSAR team - see Deploying template changes pre-requisites
 
 Once UAT testing on the change by the OSAR team has been carried out a subsequent request to ``#haa-sar-functionality-change-request`` to register the change in production will need to be carried out
 
