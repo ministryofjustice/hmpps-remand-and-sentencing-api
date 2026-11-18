@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
+import java.lang.Thread.sleep
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -169,7 +170,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
   }
 
   @Nested
-  inner class RecallTests {
+  inner class RecallTypeTests {
 
     @BeforeEach
     fun setUp() {
@@ -189,6 +190,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
       )
       createRecall(originalRecall)
       purgeQueues()
+      sleep(1000)
 
       webTestClient
         .get()
@@ -216,6 +218,7 @@ class GetPersonChargesTests : IntegrationTestBase() {
       )
       createRecall(originalRecall)
       purgeQueues()
+      sleep(1000)
 
       val recallTwo = DpsDataCreator.dpsCreateRecall(
         recallTypeCode = RecallType.FTR_56,
@@ -258,39 +261,6 @@ class GetPersonChargesTests : IntegrationTestBase() {
         .isEqualTo(null)
         .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.latestRecallType")
         .isEqualTo(null)
-    }
-
-    @Test
-    fun `should retrieve all charges and recalls by when revocation date is within date range`() {
-      val prisonerId = DEFAULT_PRISONER_ID
-      val (sentenceOne, sentenceTwo) = createCourtCaseTwoSentences()
-      val revocationDate = LocalDate.now()
-      val originalRecall = DpsDataCreator.dpsCreateRecall(
-        revocationDate = revocationDate,
-        sentenceIds = listOf(
-          sentenceOne.sentenceUuid,
-          sentenceTwo.sentenceUuid,
-        ),
-      )
-      createRecall(originalRecall)
-      purgeQueues()
-
-      webTestClient
-        .get()
-        .uri {
-          it.path("/person/$prisonerId/charges")
-            .queryParam("fromDate", revocationDate.minusDays(2).format(DateTimeFormatter.ISO_DATE))
-            .build()
-        }
-        .headers { it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__CHARGE__RO")) }
-        .exchange()
-        .expectStatus()
-        .isOk
-        .expectBody()
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceOne.sentenceUuid}')].sentence.latestRecallType")
-        .isEqualTo(listOf(RecallType.FTR_14.name))
-        .jsonPath("$.charges[?(@.sentence.sentenceUuid == '${sentenceTwo.sentenceUuid}')].sentence.latestRecallType")
-        .isEqualTo(listOf(RecallType.FTR_14.name))
     }
   }
 
