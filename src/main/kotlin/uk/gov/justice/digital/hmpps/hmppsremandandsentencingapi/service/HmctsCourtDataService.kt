@@ -219,9 +219,14 @@ class HmctsCourtDataService(
       null
     }
     val sentence = mapSentence(charge, prisoner, resultsWithMostImportantMapping, outcome)
+    val offenceCode = if (sentence != null && SUSPENDED_SENTENCE_RESULT_CODES.contains(resultsWithMostImportantMapping?.first()?.code)) {
+      HmctsWordingParser(charge.wording).parseSuspendedSentenceOffenceCode() ?: charge.code
+    } else {
+      charge.code
+    }
     return Charge(
       chargeUuid = UUID.randomUUID(),
-      offenceCode = charge.code,
+      offenceCode = offenceCode,
       offenceStartDate = charge.startDate,
       offenceEndDate = charge.endDate,
       outcome = outcome,
@@ -289,6 +294,17 @@ class HmctsCourtDataService(
     log.debug("Found sentence types: ${sentenceTypes.size}, ${sentenceTypes.joinToString(", ") { it.description }}")
 
     periods.add(periodLengthFromResult(result, HmctsResultKeys.IMPRISONMENT_PERIOD, PeriodLengthType.SENTENCE_LENGTH))
+    if (!result.findValue(HmctsResultKeys.LESSER_TERM_IMPOSED).isNullOrEmpty()) {
+      periods.add(periodLengthFromResult(result, HmctsResultKeys.LESSER_TERM_IMPOSED, PeriodLengthType.SENTENCE_LENGTH))
+    } else {
+      periods.add(
+        periodLengthFromResult(
+          result,
+          HmctsResultKeys.ORIGINAL_CUSTODY_TERM,
+          PeriodLengthType.SENTENCE_LENGTH,
+        ),
+      )
+    }
     periods.add(periodLengthFromResult(result, HmctsResultKeys.PERIOD_OF_DETENTION_AND_TRAINING, PeriodLengthType.TERM_LENGTH))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.APPROPRIATE_CUSTODIAL_TERM, PeriodLengthType.CUSTODIAL_TERM))
     periods.add(periodLengthFromResult(result, HmctsResultKeys.EXTENSION_PERIOD, PeriodLengthType.LICENCE_PERIOD))
@@ -326,7 +342,7 @@ class HmctsCourtDataService(
   }
 
   private fun classificationFromHmctsResultCode(hmctsResultCode: String): SentenceTypeClassification? = when (hmctsResultCode) {
-    "IMP", "YOI" -> SentenceTypeClassification.STANDARD
+    "IMP", "YOI", "SSI", "SSIV", "SSID", "SSIDV" -> SentenceTypeClassification.STANDARD
     "DTO" -> SentenceTypeClassification.DTO
     "EXTDVSU", "EXTDVS", "EXTIVS" -> SentenceTypeClassification.EXTENDED
     "SPECCC", "SPECC", "SPECCD" -> SentenceTypeClassification.SOPC
@@ -356,6 +372,7 @@ class HmctsCourtDataService(
   companion object {
     private const val FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE = "FODA"
     private val NEXT_COURT_APPEARANCE_RESULT_CODES = listOf("NHMC", "NHCSSS")
+    private val SUSPENDED_SENTENCE_RESULT_CODES = listOf("SSI", "SSIV", "SSID", "SSIDV")
     val PCR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     private val NEXT_MAGISTRATE_REGEX = Regex("""Date of hearing:\s*(\d{2}/\d{2}/\d{4})""")
     val ORA_DATE = LocalDate.of(2015, 2, 1)
