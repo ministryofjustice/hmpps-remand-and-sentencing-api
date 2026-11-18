@@ -36,6 +36,9 @@ Changes to the Entity Model will likely cause the Subject Access Request (SAR) t
 SAR tests comparing the Entity Model Schema to a previously generated version 
 of the Entity Model Schema. The same goes for changes to it's API response data.
 
+> [!IMPORTANT]
+> Before making changes to the SAR entity model, consider the impact this might have with blocking the deployment pipeline as it may take many days before the approval process is completed.
+
 #### Entity Model Schema
 
 To regenerate the latest view of the Entity Model Schema for comparison see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarEntityComparisonIntegrationTests.kt)
@@ -46,13 +49,14 @@ Likewise, to regenerate the latest version of the api / html for review see [Sar
 
 #### Deploying template changes pre-requisites
 
-Before apply any DB changes to the jpa/entity/subjectaccessrequest Entities, it is important to ensure OSAR are made aware of this change
-in order for them to approve it and for us to send this evidence to the SAR team. The following steps should be taken to notify OSAR of the Change.
+Before applying any DB changes to the jpa/entity/subjectaccessrequest entities, it is important to ensure OSAR are made aware of this change
+in order for them to approve it and for us to send this evidence to the SAR team. The following steps should be taken to notify OSAR of the change.
 
-1. Generate the exiting version (from Main branch) of the PDF via SarIntegrationTests.kt. This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf`` and save this as existing-sar-generated-report.pdf
-2. Now switch to your feature branch and generate the new version of the PDF via SarIntegrationTests.kt. This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf`` and save this as new-sar-generated-report.pdf
-3. Compose an Email to the OSAR team by including the two PDFs and advising that re-registration is required
+1. Generate the exiting version (from main branch) of the PDF via SarIntegrationTests.kt (see class docs). This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf``. Save this temporarily as existing-sar-generated-report.pdf away from this transient folder.
+2. Now switch to your feature branch and generate the new version of the PDF via SarIntegrationTests.kt (see class docs). This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf``. Save this temporarily as new-sar-generated-report.pdf away from this transient folder.
+3. Compose an Email to the OSAR team by including the two PDFs and advising that re-registration is required.
 
+Example email:
 ```
 to: SARchangeManagement@justice.gov.uk
 cc: <BA owning this process>
@@ -62,16 +66,14 @@ Dear OSAR,
 Please find attached two examples (existing and new) of the SAR generated PDF for the Court Cases - Remand and Sentencing - Recalls -
 Immigration Detention. If you note the difference between the PDFs, the new report includes "<enter changes>".
 
-Please advise you are happy for these changes to be deployed to Production
+Please advise you are happy for these changes to be deployed to Production.
 
 Regards,
-
-<your name>
 
 <attachments exisiting.pdf and new.pdf>
 ```
 
-4. Wait for the team to respond to with the green light then proceed to 'Deploying template changes to Pre-prod / Prod'
+4. Wait for the team to respond with the green light then proceed to 'Deploying template changes to Pre-prod / Prod'
 
 #### Deploying template changes to Pre-prod / Prod
 
