@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.s
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Recall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.subjectaccessrequest.Sentence
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -33,6 +34,7 @@ object ExpectedResponseData {
           offenceStartDate = LocalDate.of(2026, 1, 1),
           offenceEndDate = LocalDate.of(2026, 1, 2),
           chargeOutcome = "Street Cleaning Order",
+          value = BigDecimal("50.00"),
           liveSentence = Sentence(
             sentenceTypeDescription = "Detention and Training Order",
             sentenceTypeClassification = "DTO",
@@ -70,6 +72,7 @@ object ExpectedResponseData {
           offenceStartDate = LocalDate.of(2026, 1, 1),
           offenceEndDate = LocalDate.of(2026, 1, 2),
           chargeOutcome = "Street Cleaning Order",
+          value = BigDecimal("50.00"),
           liveSentence = Sentence(
             sentenceTypeDescription = "Detention and Training Order",
             sentenceTypeClassification = "DTO",
@@ -103,6 +106,7 @@ object ExpectedResponseData {
           offenceStartDate = LocalDate.of(2026, 1, 1),
           offenceEndDate = LocalDate.of(2026, 1, 2),
           chargeOutcome = "Street Cleaning Order",
+          value = BigDecimal("50.00"),
           liveSentence = Sentence(
             sentenceTypeDescription = "Detention and Training Order",
             sentenceTypeClassification = "DTO",

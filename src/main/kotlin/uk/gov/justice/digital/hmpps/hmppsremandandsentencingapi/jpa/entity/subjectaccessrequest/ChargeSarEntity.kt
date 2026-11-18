@@ -12,6 +12,7 @@ import org.hibernate.annotations.Synchronize
 import org.hibernate.type.SqlTypes
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.ConditionalOnSarEnabled
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @ConditionalOnSarEnabled
@@ -27,6 +28,7 @@ import java.time.LocalDate
   ,finding_of_domestic_abuse
   ,legacy_data
   ,status_id
+  ,value
   from charge
   where status_id not in ('DELETED', 'DUPLICATE', 'FUTURE')""",
 )
@@ -49,6 +51,7 @@ class ChargeSarEntity(
   @JdbcTypeCode(SqlTypes.JSON)
   var legacyData: ChargeLegacyDataSar? = null,
   var statusId: String,
+  var value: BigDecimal? = null,
 ) {
   fun getLiveSentence(): SentenceSarEntity? = sentences.firstOrNull { it.statusId != SentenceEntityStatus.DELETED.toString() }
 }
