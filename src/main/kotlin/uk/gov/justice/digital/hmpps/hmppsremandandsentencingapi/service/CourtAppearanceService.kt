@@ -672,16 +672,9 @@ class CourtAppearanceService(
     )
     courtAppearanceEntity.appearanceCharges
       .removeAll { appearanceCharge ->
-        if (appearanceCharge.charge!!.hasNoLiveCourtAppearances()) {
-          eventsToEmit.addAll(
-            chargeService.deleteCharge(
-              appearanceCharge.charge!!,
-              courtCaseHierarchyData,
-            ).eventsToEmit,
-          )
-        }
         appearanceChargeHistoryRepository.save(AppearanceChargeHistoryEntity.removedFrom(appearanceCharge, serviceUserService.getUsername(), null, ChangeSource.DPS))
         appearanceCharge.charge!!.appearanceCharges.remove(appearanceCharge)
+        eventsToEmit.addAll(chargeService.deleteChargeIfOrphan(appearanceCharge.charge!!, courtCaseHierarchyData).eventsToEmit)
         appearanceCharge.appearance = null
         appearanceCharge.charge = null
         true

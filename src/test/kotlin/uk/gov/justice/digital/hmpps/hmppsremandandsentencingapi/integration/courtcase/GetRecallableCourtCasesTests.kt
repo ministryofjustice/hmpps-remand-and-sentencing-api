@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator.Factory.DEFAULT_PRISONER_ID
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -26,6 +27,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
         outcomeDispositionCode = "C",
         outcomeConvictionFlag = true,
       ),
+      chargeValue = BigDecimal("250.50"),
     )
     val sentencedAppearance = DpsDataCreator.dpsCreateCourtAppearance(
       charges = listOf(sentencedCharge),
@@ -71,6 +73,7 @@ class GetRecallableCourtCasesTests : IntegrationTestBase() {
       .jsonPath("$.cases[0].sentences[0].sentenceServeType").isEqualTo("FORTHWITH")
       .jsonPath("$.cases[0].sentences[0].sentenceLegacyData").doesNotExist()
       .jsonPath("$.cases[0].sentences[0].sentenceDate").exists()
+      .jsonPath("$.cases[0].sentences[0].value").isEqualTo(250.5)
   }
 
   @Test

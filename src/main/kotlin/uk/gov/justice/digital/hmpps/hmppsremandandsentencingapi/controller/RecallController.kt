@@ -56,7 +56,7 @@ class RecallController(private val recallService: RecallService, private val dps
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING', 'ROLE_RELEASE_DATES_CALCULATOR',  'ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Retrieve a recall",
-    description = "This endpoint will retrieve the details of a recall",
+    description = "This endpoint will retrieve the details of a recall. Pass groupNomisRecalls=true to group NOMIS recalls",
   )
   @ApiResponses(
     value = [
@@ -66,7 +66,10 @@ class RecallController(private val recallService: RecallService, private val dps
       ApiResponse(responseCode = "404", description = "Not found if no recall uuid"),
     ],
   )
-  fun getRecall(@PathVariable recallUuid: UUID): Recall = recallService.findRecallByUuid(recallUuid)
+  fun getRecall(
+    @PathVariable recallUuid: UUID,
+    @RequestParam(name = "groupNomisRecalls", defaultValue = "false") groupNomisRecalls: Boolean,
+  ): Recall = recallService.findRecallByUuid(recallUuid, groupNomisRecalls)
 
   @GetMapping("/person/{prisonerId}/search")
   @PreAuthorize(

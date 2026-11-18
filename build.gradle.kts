@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.14"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.15"
   kotlin("plugin.spring") version "2.4.21"
   kotlin("plugin.jpa") version "2.4.21"
 }
@@ -9,13 +9,14 @@ configurations {
 }
 
 dependencies {
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.3")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.1.0")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.springframework.boot:spring-boot-starter-cache")
+  implementation("com.github.ben-manes.caffeine:caffeine")
   implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -30,7 +31,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-mustache")
   implementation("com.github.spullara.mustache.java:compiler:0.9.14")
   implementation("com.github.jknack:handlebars:4.5.8")
-  implementation("org.jsoup:jsoup:1.23.2")
+  implementation("org.jsoup:jsoup:1.24.1")
   implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
   implementation("org.bouncycastle:bcprov-jdk18on:1.86")
   implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
@@ -48,13 +49,13 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql:42.7.14")
 
   testImplementation("uk.gov.justice.service.hmpps:hmpps-subject-access-request-test-support:2.8.6")
-  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.0.3")
+  testImplementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter-test:3.1.0")
   testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
   testImplementation("io.jsonwebtoken:jjwt-impl:0.13.0")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
   testImplementation("org.wiremock:wiremock-standalone:3.13.2")
   testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
-  testImplementation("io.mockk:mockk:1.14.11")
+  testImplementation("io.mockk:mockk:1.14.12")
   testImplementation("io.swagger.parser.v3:swagger-parser:2.1.48") {
     exclude(group = "io.swagger.core.v3")
     exclude(group = "io.swagger.parser.v3", module = "swagger-parser-v2-converter")

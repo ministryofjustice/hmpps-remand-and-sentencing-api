@@ -75,8 +75,10 @@ data class LegacySentence(
           if (recallLegacyData?.sentenceCalcType != null) {
             return recallLegacyData.sentenceCalcType to recallLegacyData.sentenceCategory!!
           } else {
-            val earliestRecall = sentenceEntity.earliestRecall()!!
-            val earliestRecallLegacyData = earliestRecall.let { recall -> sentenceEntity.recallSentences.find { it.recall.id == recall.id }?.legacyData }!!
+            val earliestRecall = sentenceEntity.earliestRecall()
+              ?: throw IllegalStateException("No earliest recall found for sentence ${sentenceEntity.sentenceUuid}")
+            val earliestRecallLegacyData = earliestRecall.let { recall -> sentenceEntity.recallSentences.find { it.recall.id == recall.id }?.legacyData }
+              ?: throw IllegalStateException("No recall legacy data found for earliest recall ${earliestRecall.recallUuid} on sentence ${sentenceEntity.sentenceUuid}")
             return mapNewRecallOnNomisRecall(latestRecall, earliestRecallLegacyData)
           }
         } else if (sentenceEntity.sentenceType == null) {

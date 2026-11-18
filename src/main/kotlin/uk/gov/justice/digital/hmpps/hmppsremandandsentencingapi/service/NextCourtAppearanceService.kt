@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.domain.AppearanceTypeCourtAppearanceSubtype
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.service.LegacyAppearanceTypeService
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
@@ -59,6 +61,7 @@ class NextCourtAppearanceService(private val nextCourtAppearanceRepository: Next
     courtAppearanceId,
   )
 
+  @Cacheable(Constants.NEXT_COURT_APPEARANCE_PERSON_CACHE_KEY, key = "#prisonerId")
   @Transactional(readOnly = true)
   fun findFirstByPrisonerId(prisonerId: String): PersonNextCourtAppearance? = nextCourtAppearanceRepository.findFirstByPrisonerId(prisonerId)?.let { firstNextCourtAppearance ->
     PersonNextCourtAppearance.from(firstNextCourtAppearance.nextCourtAppearanceEntity, firstNextCourtAppearance.caseReference)

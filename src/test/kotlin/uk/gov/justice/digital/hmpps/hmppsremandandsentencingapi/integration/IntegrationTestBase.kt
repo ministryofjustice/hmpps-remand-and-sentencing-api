@@ -487,9 +487,9 @@ abstract class IntegrationTestBase {
 
   protected fun getRecallsByPrisonerId(prisonerId: String, bookingId: String? = null): List<Recall> = getPrisonerRecallsResponse(prisonerId, bookingId).recalls
 
-  protected fun getRecallByUUID(recallUuid: UUID): Recall = webTestClient
+  protected fun getRecallByUUID(recallUuid: UUID, groupNomisRecalls: Boolean = false): Recall = webTestClient
     .get()
-    .uri("/recall/$recallUuid")
+    .uri("/recall/$recallUuid?groupNomisRecalls=$groupNomisRecalls")
     .headers {
       it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING"))
     }
@@ -762,7 +762,7 @@ abstract class IntegrationTestBase {
   ): Pair<CreateSentence, CreateSentence> {
     val firstCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "AA06027", sentence = DpsDataCreator.dpsCreateSentence(), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Veterinary surgeon fail to notify incorrect certification"))
     val secondCharge = DpsDataCreator.dpsCreateCharge(offenceCode = "EC10001", sentence = DpsDataCreator.dpsCreateSentence(), legacyData = DataCreator.chargeLegacyData(offenceDescription = "Fail to comply /contravene provision in schedule 3 of Eggs and Chicks (Wales) Regulations 2010"))
-    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge), courtCaseReference = courtCaseReference)
+    val appearance = DpsDataCreator.dpsCreateCourtAppearance(charges = listOf(firstCharge, secondCharge), appearanceDate = LocalDate.now().minusYears(2), courtCaseReference = courtCaseReference)
     val (_, courtCase) = createCourtCase(DpsDataCreator.dpsCreateCourtCase(prisonerId = prisonerId, appearances = listOf(appearance)))
     val sentenceOne = courtCase.appearances.first().charges.first().sentence!!
     val sentenceTwo = courtCase.appearances.first().charges[1].sentence!!

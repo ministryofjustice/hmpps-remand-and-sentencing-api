@@ -164,7 +164,7 @@ class ChargeEntity(
     mergedFromCourtCase,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergedFromDate,
-    value = charge.value,
+    value = resolveChargeValue(charge.value, value),
   )
 
   fun copyFrom(
@@ -205,7 +205,7 @@ class ChargeEntity(
     mergedFromCourtCase,
     mergedFromDate = mergedFromDate,
     hmctsChargeId = charge.hmctsChargeId,
-    value = charge.value,
+    value = resolveChargeValue(charge.value, value),
   )
 
   fun copyFrom(chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -246,7 +246,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = migrationCreateCharge.mergedFromDate,
-    value = value,
+    value = resolveChargeValue(migrationCreateCharge.value, value),
   )
 
   fun copyFrom(
@@ -275,7 +275,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergeCreateCharge.mergedFromDate,
-    value = value,
+    value = resolveChargeValue(mergeCreateCharge.value, value),
   )
 
   fun copyFrom(
@@ -304,7 +304,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = bookingCreateCharge.mergedFromDate,
-    value = value,
+    value = resolveChargeValue(bookingCreateCharge.value, value),
   )
 
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
@@ -427,6 +427,15 @@ class ChargeEntity(
   }
 
   companion object {
+    private fun resolveChargeValue(
+      incomingValue: BigDecimal?,
+      existingValue: BigDecimal? = null,
+    ): BigDecimal? = when {
+      incomingValue == null -> existingValue
+      incomingValue < BigDecimal.ZERO -> null
+      else -> incomingValue
+    }
+
     fun from(
       charge: CreateCharge,
       chargeOutcome: ChargeOutcomeEntity?,
@@ -447,7 +456,7 @@ class ChargeEntity(
       createdBy = createdBy,
       createdPrison = charge.prisonId,
       hmctsChargeId = charge.hmctsChargeId,
-      value = charge.value,
+      value = resolveChargeValue(charge.value),
     )
 
     fun from(charge: LegacyCreateCharge, chargeOutcome: ChargeOutcomeEntity?, createdBy: String): ChargeEntity = ChargeEntity(
@@ -464,7 +473,7 @@ class ChargeEntity(
       chargeAggravatingFactors = mutableSetOf(),
       createdBy = createdBy,
       createdPrison = null,
-      value = charge.value,
+      value = resolveChargeValue(charge.value),
     )
 
     fun from(
@@ -493,6 +502,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       migrationCreateCharge.mergedFromDate,
+      value = resolveChargeValue(migrationCreateCharge.value),
     )
 
     fun from(
@@ -521,6 +531,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       mergeCreateCharge.mergedFromDate,
+      value = resolveChargeValue(mergeCreateCharge.value),
     )
 
     fun from(
@@ -548,6 +559,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       bookingCreateCharge.mergedFromDate,
+      value = resolveChargeValue(bookingCreateCharge.value),
     )
   }
 }

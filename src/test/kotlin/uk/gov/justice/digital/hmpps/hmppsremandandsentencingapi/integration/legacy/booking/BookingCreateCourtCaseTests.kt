@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.BookingDataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.booking.BookingCreateCourtCasesResponse
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
@@ -287,5 +288,50 @@ class BookingCreateCourtCaseTests : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isForbidden
+  }
+
+  @Test
+  fun `can create booking charge with value and update snapshot persists value when omitted`() {
+    val chargeNOMISId = 557L
+    val firstSnapshot = BookingDataCreator.bookingCreateCharge(
+      chargeNOMISId = chargeNOMISId,
+      value = BigDecimal("345.67"),
+      sentence = null,
+    )
+    val secondSnapshot = BookingDataCreator.bookingCreateCharge(
+      chargeNOMISId = chargeNOMISId,
+      value = null,
+      sentence = null,
+    )
+    val firstAppearance = BookingDataCreator.bookingCreateCourtAppearance(eventId = 1, appearanceDate = LocalDate.now().minusDays(7), charges = listOf(firstSnapshot))
+    val secondAppearance = BookingDataCreator.bookingCreateCourtAppearance(eventId = 2, appearanceDate = LocalDate.now().minusDays(2), charges = listOf(secondSnapshot))
+    val bookingCourtCases = BookingDataCreator.bookingCreateCourtCases(courtCases = listOf(BookingDataCreator.bookingCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))))
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/booking")
+      .bodyValue(bookingCourtCases)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(BookingCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val createdChargeUuid = response.charges.first().chargeUuid
+    webTestClient
+      .get()
+      .uri("/legacy/charge/$createdChargeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(345.67)
   }
 }

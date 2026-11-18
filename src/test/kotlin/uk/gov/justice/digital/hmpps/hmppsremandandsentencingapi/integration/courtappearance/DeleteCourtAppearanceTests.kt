@@ -159,7 +159,7 @@ class DeleteCourtAppearanceTests : IntegrationTestBase() {
       .isNoContent
       .expectBody()
 
-    val events = getMessages(4)
+    val events = getMessages(3)
     Assertions.assertThat(events).anyMatch { it.eventType == "sentence.period-length.deleted" }
     val periodLengthInsertedEvent = events.first { it.eventType == "sentence.period-length.deleted" }
     val additionalInformation = objectMapper.treeToValue(periodLengthInsertedEvent.additionalInformation, HmppsPeriodLengthMessage::class.java)

@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCa
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.merge.MergeCreateCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.*
 import java.util.regex.Pattern
@@ -237,5 +238,53 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
     )
 
     return createRecall(recall).recallUuid
+  }
+
+  @Test
+  fun `can create merge charge with value and update snapshot persists value when omitted`() {
+    val chargeNOMISId = 558L
+    val firstSnapshot = PrisonerMergeDataCreator.mergeCreateCharge(
+      chargeNOMISId = chargeNOMISId,
+      value = BigDecimal("789.01"),
+      sentence = null,
+    )
+    val secondSnapshot = PrisonerMergeDataCreator.mergeCreateCharge(
+      chargeNOMISId = chargeNOMISId,
+      value = null,
+      sentence = null,
+    )
+    val firstAppearance = PrisonerMergeDataCreator.mergeCreateCourtAppearance(eventId = 1, appearanceDate = LocalDate.now().minusDays(7), charges = listOf(firstSnapshot))
+    val secondAppearance = PrisonerMergeDataCreator.mergeCreateCourtAppearance(eventId = 2, appearanceDate = LocalDate.now().minusDays(2), charges = listOf(secondSnapshot))
+    val courtCase = PrisonerMergeDataCreator.mergeCreateCourtCase(appearances = listOf(firstAppearance, secondAppearance))
+    val mergePerson = PrisonerMergeDataCreator.mergePerson(casesCreated = listOf(courtCase))
+    val retainedPrisonerNumber = "PRI888"
+
+    val response = webTestClient
+      .post()
+      .uri("/legacy/court-case/merge/person/$retainedPrisonerNumber")
+      .bodyValue(mergePerson)
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_COURT_CASE_RW"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus()
+      .isCreated
+      .returnResult(MergeCreateCourtCasesResponse::class.java)
+      .responseBody.blockFirst()!!
+
+    val createdChargeUuid = response.charges.first().chargeUuid
+    webTestClient
+      .get()
+      .uri("/legacy/charge/$createdChargeUuid")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+      }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("$.value")
+      .isEqualTo(789.01)
   }
 }

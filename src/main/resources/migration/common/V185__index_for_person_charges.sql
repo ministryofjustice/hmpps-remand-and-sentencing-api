@@ -1,0 +1,1 @@
+CREATE INDEX idx_court_case_prisoner_status ON court_case (prisoner_id, status_id);

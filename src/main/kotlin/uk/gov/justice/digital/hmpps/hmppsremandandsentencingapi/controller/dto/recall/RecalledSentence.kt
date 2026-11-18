@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.
 
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -19,4 +20,5 @@ data class RecalledSentence(
   val consecutiveToSentenceUuid: UUID? = null,
   val aggravatingFactors: List<AggravatingFactor> = emptyList(),
   val findingOfDomesticAbuse: Boolean?,
+  val value: BigDecimal? = null,
 )

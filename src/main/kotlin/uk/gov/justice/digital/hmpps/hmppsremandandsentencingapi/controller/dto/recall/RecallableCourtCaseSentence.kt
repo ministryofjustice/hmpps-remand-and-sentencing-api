@@ -35,4 +35,5 @@ data class RecallableCourtCaseSentence(
   val createdAt: LocalDateTime,
   val aggravatingFactors: List<AggravatingFactor> = emptyList(),
   val findingOfDomesticAbuse: Boolean?,
+  val value: BigDecimal? = null,
 )

@@ -11,7 +11,7 @@ data class PagedNextCourtAppearance(
   val courtCode: String?,
   val appearanceTypeDescription: String,
   val appearanceSubtypeDescription: String?,
-  val futureSkeletonAppearanceUuid: UUID,
+  val futureSkeletonAppearanceUuid: UUID?,
 ) {
   companion object {
     fun from(courtCaseRow: CourtCaseRow): PagedNextCourtAppearance = PagedNextCourtAppearance(
@@ -20,7 +20,7 @@ data class PagedNextCourtAppearance(
       courtCaseRow.nextCourtAppearanceCourtCode!!,
       courtCaseRow.nextCourtAppearanceTypeDescription!!,
       courtCaseRow.nextCourtAppearanceSubtypeDescription,
-      courtCaseRow.futureSkeletonAppearanceUuid!!,
+      courtCaseRow.futureSkeletonAppearanceUuid,
     )
   }
 }

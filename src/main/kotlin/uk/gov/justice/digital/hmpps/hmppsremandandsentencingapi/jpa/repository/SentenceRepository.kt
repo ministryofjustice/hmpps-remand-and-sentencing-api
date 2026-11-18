@@ -293,6 +293,10 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
       SentenceEntityStatus.ACTIVE.toString(),
       SentenceEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
     ),
+    @Param("periodLengthStatuses") periodLengthStatuses: List<String> = listOf(
+      PeriodLengthEntityStatus.ACTIVE.toString(),
+      PeriodLengthEntityStatus.MANY_CHARGES_DATA_FIX.toString(),
+    ),
   ): List<ConsecutiveToSentenceRow>
 
   @Query(

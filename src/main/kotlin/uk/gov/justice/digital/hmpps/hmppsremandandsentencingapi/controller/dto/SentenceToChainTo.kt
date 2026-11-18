@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto
 
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.ChargeLegacyData
 import java.math.BigDecimal
@@ -15,8 +16,37 @@ data class SentenceToChainTo(
   val countNumber: String?,
   val chargeLegacyData: ChargeLegacyData?,
   val value: BigDecimal? = null,
+  val periodLengths: List<PeriodLength> = emptyList(),
 ) {
   companion object {
-    fun from(consecutiveToSentenceRow: ConsecutiveToSentenceRow): SentenceToChainTo = SentenceToChainTo(consecutiveToSentenceRow.offenceCode, consecutiveToSentenceRow.offenceStartDate, consecutiveToSentenceRow.offenceEndDate, consecutiveToSentenceRow.chargeUuid, consecutiveToSentenceRow.sentenceUuid, consecutiveToSentenceRow.countNumber, consecutiveToSentenceRow.chargeLegacyData, consecutiveToSentenceRow.value)
+    fun from(consecutiveToSentenceRows: List<ConsecutiveToSentenceRow>): SentenceToChainTo {
+      val firstRow = consecutiveToSentenceRows.first()
+      val periodLengths = consecutiveToSentenceRows
+        .filter { it.periodLengthUuid != null }
+        .distinctBy { it.periodLengthUuid }
+        .map {
+          PeriodLength(
+            years = it.years,
+            months = it.months,
+            weeks = it.weeks,
+            days = it.days,
+            periodOrder = it.periodOrder ?: "years,months,weeks,days",
+            periodLengthType = it.periodLengthType ?: PeriodLengthType.UNSUPPORTED,
+            legacyData = it.periodLengthLegacyData,
+            periodLengthUuid = it.periodLengthUuid!!,
+          )
+        }
+      return SentenceToChainTo(
+        firstRow.offenceCode,
+        firstRow.offenceStartDate,
+        firstRow.offenceEndDate,
+        firstRow.chargeUuid,
+        firstRow.sentenceUuid,
+        firstRow.countNumber,
+        firstRow.chargeLegacyData,
+        firstRow.value,
+        periodLengths,
+      )
+    }
   }
 }

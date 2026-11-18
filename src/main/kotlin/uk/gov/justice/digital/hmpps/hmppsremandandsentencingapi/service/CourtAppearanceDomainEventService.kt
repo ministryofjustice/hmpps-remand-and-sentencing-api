@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
@@ -8,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.Hmp
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.HmppsCourtAppearanceMessage
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.PersonReferenceType
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.time.ZonedDateTime
 
 @Service
@@ -17,6 +19,7 @@ class CourtAppearanceDomainEventService(
   @Value("\${court.appearance.getByIdPath}") private val courtAppearanceLookupPath: String,
 ) {
 
+  @CacheEvict(Constants.NEXT_COURT_APPEARANCE_PERSON_CACHE_KEY, key = "#prisonerId")
   fun create(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "court-appearance.inserted",
@@ -28,6 +31,7 @@ class CourtAppearanceDomainEventService(
     )
   }
 
+  @CacheEvict(Constants.NEXT_COURT_APPEARANCE_PERSON_CACHE_KEY, key = "#prisonerId")
   fun update(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "court-appearance.updated",
@@ -39,6 +43,7 @@ class CourtAppearanceDomainEventService(
     )
   }
 
+  @CacheEvict(Constants.NEXT_COURT_APPEARANCE_PERSON_CACHE_KEY, key = "#prisonerId")
   fun delete(prisonerId: String, courtAppearanceId: String, courtCaseId: String, source: EventSource, isOnFutureCourtAppearance: Boolean, isBreach: Boolean) {
     snsService.publishDomainEvent(
       "court-appearance.deleted",
@@ -50,6 +55,7 @@ class CourtAppearanceDomainEventService(
     )
   }
 
+  @CacheEvict(Constants.NEXT_COURT_APPEARANCE_PERSON_CACHE_KEY, key = "#prisonerId")
   fun createBreach(prisonerId: String, courtCaseId: String, courtAppearanceId: String, courtAppearanceIds: Set<String>, chargeIds: Set<String>, sentenceIds: List<String>, periodLengthIds: Set<String>, source: EventSource) {
     snsService.publishDomainEvent(
       "breach.inserted",

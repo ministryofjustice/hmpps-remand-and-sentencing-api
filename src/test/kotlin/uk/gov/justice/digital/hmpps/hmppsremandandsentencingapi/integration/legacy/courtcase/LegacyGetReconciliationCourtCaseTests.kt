@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.Inte
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallType.LR
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -12,7 +13,19 @@ class LegacyGetReconciliationCourtCaseTests : IntegrationTestBase() {
 
   @Test
   fun `get reconciliation court case by uuid`() {
-    val (uuid, createdCase) = createCourtCase()
+    val (uuid, createdCase) = createCourtCase(
+      DpsDataCreator.dpsCreateCourtCase(
+        appearances = listOf(
+          DpsDataCreator.dpsCreateCourtAppearance(
+            charges = listOf(
+              DpsDataCreator.dpsCreateCharge(
+                chargeValue = BigDecimal("150.75"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    )
     val appearance = createdCase.appearances.first()
     val nextAppearance = appearance.nextCourtAppearance!!
     val appearanceSubtype = courtAppearanceSubtypeRepository.findByAppearanceSubtypeUuid(nextAppearance.courtAppearanceSubtypeUuid!!)
@@ -34,6 +47,8 @@ class LegacyGetReconciliationCourtCaseTests : IntegrationTestBase() {
       .isEqualTo(true)
       .jsonPath("$.appearances[?(@.appearanceDate == '${appearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')]")
       .exists()
+      .jsonPath("$.appearances[?(@.appearanceDate == '${appearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')].charges[0].value")
+      .isEqualTo(150.75)
       .jsonPath("$.appearances[?(@.appearanceDate == '${nextAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')]")
       .exists()
       .jsonPath("$.appearances[?(@.appearanceDate == '${nextAppearance.appearanceDate.format(DateTimeFormatter.ISO_DATE)}')].appearanceTypeUuid")

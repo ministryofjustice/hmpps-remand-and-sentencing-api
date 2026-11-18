@@ -398,47 +398,79 @@ interface CourtCaseRepository :
     """
     select exists (
       select 1
-      from court_case cc
-      where cc.prisoner_id = :prisonerId
-        and cc.status_id = 'ACTIVE'
-        and (
-          select ao.outcome_type
-          from court_appearance ca
-          join appearance_outcome ao on ao.id = ca.appearance_outcome_id
-          where ca.court_case_id = cc.id
-            and ca.status_id = 'ACTIVE'
-          order by ca.appearance_date desc, ca.created_at desc
-          limit 1
-        ) = 'REMAND'
+      $ACTIVE_CASE_WITH_LATEST_REMAND_OUTCOME_FROM_WHERE
     )
     """,
     nativeQuery = true,
   )
-  fun hasActiveCaseWithLatestRemandOutcome(@Param("prisonerId") prisonerId: String): Boolean
+  fun anyPrisonerHasActiveCaseWithLatestRemandOutcome(@Param("prisonerIds") prisonerIds: Set<String>): Boolean
+
+  @Query(
+    """
+      select cc.prisoner_id
+      $ACTIVE_CASE_WITH_LATEST_REMAND_OUTCOME_FROM_WHERE
+    """,
+    nativeQuery = true,
+  )
+  fun findPrisonerIdsActiveCaseWithLatestRemandOutcome(@Param("prisonerIds") prisonerIds: Set<String>): List<String>
 
   @Query(
     """
     SELECT EXISTS(
         SELECT 1
+        $ACTIVE_CASE_WITH_SENTENCE_ON_LATEST_RECALL_FROM_WHERE
+    )
+    """,
+    nativeQuery = true,
+  )
+  fun anyPrisonerHasActiveCaseWithSentenceOnLatestRecall(@Param("prisonerIds") prisonerIds: Set<String>): Boolean
+
+  @Query(
+    """
+        SELECT cc.prisoner_id
+        $ACTIVE_CASE_WITH_SENTENCE_ON_LATEST_RECALL_FROM_WHERE
+    """,
+    nativeQuery = true,
+  )
+  fun findPrisonerIdsActiveCasesWithSentenceOnLatestRecall(@Param("prisonerIds") prisonerIds: Set<String>): List<String>
+
+  companion object {
+    const val ACTIVE_CASE_WITH_SENTENCE_ON_LATEST_RECALL_FROM_WHERE =
+      """
         FROM court_case cc
         JOIN court_appearance ca ON ca.id = cc.latest_court_appearance_id
         JOIN appearance_charge ac ON ac.appearance_id = ca.id
         JOIN charge c ON c.id = ac.charge_id
         JOIN sentence s ON s.charge_id = c.id
         JOIN recall_sentence rs ON rs.sentence_id = s.id
-        JOIN (SELECT r.id
-              FROM recall r
-              WHERE r.status <> 'DELETED' 
-              AND r.prisoner_id = :prisonerId
-              ORDER BY r.created_at DESC, r.id DESC
-              LIMIT 1) lr ON rs.recall_id = lr.id
-        WHERE cc.prisoner_id = :prisonerId
-          AND ca.status_id = 'ACTIVE'
-          AND cc.status_id = 'ACTIVE'
-          AND s.status_id = 'ACTIVE'
-    )
-    """,
-    nativeQuery = true,
-  )
-  fun hasActiveCaseWithSentenceOnLatestRecall(@Param("prisonerId") prisonerId: String): Boolean
+        JOIN recall lr ON lr.id = rs.recall_id
+        WHERE cc.prisoner_id IN (:prisonerIds)
+        AND lr.prisoner_id = cc.prisoner_id
+        AND lr.id = (SELECT r.id
+                     FROM recall r
+                     WHERE r.prisoner_id = cc.prisoner_id
+                     AND r.status <> 'DELETED'
+                     ORDER BY r.created_at DESC, r.id DESC
+                     LIMIT 1)
+        AND ca.status_id = 'ACTIVE'
+        AND cc.status_id = 'ACTIVE'
+        AND s.status_id = 'ACTIVE'
+      """
+
+    const val ACTIVE_CASE_WITH_LATEST_REMAND_OUTCOME_FROM_WHERE =
+      """
+        from court_case cc
+        where cc.prisoner_id in (:prisonerIds)
+          and cc.status_id = 'ACTIVE'
+          and (
+            select ao.outcome_type
+            from court_appearance ca
+            join appearance_outcome ao on ao.id = ca.appearance_outcome_id
+            where ca.court_case_id = cc.id
+              and ca.status_id = 'ACTIVE'
+            order by ca.appearance_date desc, ca.created_at desc
+            limit 1
+          ) = 'REMAND'
+      """
+  }
 }
