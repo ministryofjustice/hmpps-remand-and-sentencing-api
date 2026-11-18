@@ -662,6 +662,95 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     )
   }
 
+  @Test
+  fun `Test get appearance from hmcts suspended sentence data`() {
+    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+      charges = listOf(
+        HMCTS_SENTENCED_CHARGE.copy(
+          wording = "Activation of a suspended sentence order. Original CaseURN: ABC123, Original code : TH68010, Original details: On 13/05/2026 at an address Bob Bobby stole A LARGE QUANTITY OF VITAMIN C SUPPLEMENTS , to the value of £159.91 belonging to HOLLAND AND BARRETT",
+          code = "SE20512",
+          results = listOf(
+            HMCTS_SENTENCED_RESULT.copy(
+              code = "SSI",
+              keyValuePairs = listOf(
+                ResultKeyValue(
+                  key = "Original custody term",
+                  value = "5 Years",
+                ),
+              ),
+            ),
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+      ),
+    )
+    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+      hmctsCourtHearing,
+      DEFAULT_PRISONER_ID,
+    )
+
+    val response = webTestClient
+      .get()
+      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+      .headers {
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+        it.contentType = MediaType.APPLICATION_JSON
+      }
+      .exchange()
+      .expectStatus().isOk
+      .returnResult(CourtAppearance::class.java)
+      .responseBody.blockFirst()!!
+
+    Assertions.assertThat(response.charges.first()).isEqualTo(
+      Charge(
+        chargeUuid = response.charges.first().chargeUuid,
+        hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+        offenceCode = "TH68010",
+        offenceStartDate = LocalDate.of(2026, 6, 15),
+        offenceEndDate = LocalDate.of(2026, 7, 15),
+        outcome = ChargeOutcome(
+          outcomeUuid = UUID.fromString("8a5c4f7d-8e9c-4c1b-9f8e-2f4a3a6d0b21"),
+          outcomeName = "Suspended sentence implemented",
+          nomisCode = "1507",
+          outcomeType = "SENTENCING",
+          displayOrder = 30,
+          dispositionCode = "FINAL",
+          status = ReferenceEntityStatus.ACTIVE,
+        ),
+        aggravatingFactors = emptyList(),
+        sentence = Sentence(
+          sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+          chargeNumber = "-1",
+          periodLengths = listOf(
+            PeriodLength(
+              years = 5,
+              months = null,
+              weeks = null,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+            ),
+          ),
+          sentenceServeType = "FORTHWITH",
+          sentenceType = SentenceType(sentenceTypeUuid = UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"), description = "ORA SDS (Offender rehabilitation act standard determinate sentence)", classification = SentenceTypeClassification.STANDARD, hintText = null, displayOrder = 40),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+          fineAmount = null,
+          legacyData = null,
+          consecutiveToSentenceUuid = null,
+          hasRecall = false,
+          status = SentenceEntityStatus.ACTIVE,
+        ),
+        legacyData = null,
+        mergedFromCase = null,
+        createdAt = response.charges.first().createdAt,
+        findingOfDomesticAbuse = false,
+      ),
+
+    )
+  }
+
   @ParameterizedTest(name = "Tests that sentences are mapped: {0}")
   @MethodSource("sentenceTestProvider")
   fun `Test sentence type mapping`(testName: String, charge: HmctsCourtCharge, sentenceType: UUID?, dob: LocalDate) {
@@ -1368,6 +1457,50 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         ),
         UUID.fromString("deb22e75-2335-44de-8a9f-1047d58c9b04"),
         ADULT_DOB,
+      ),
+      Arguments.of(
+        "SSI Result Code - Activated Unaltered",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SSI")),
+          startDate = LocalDate.of(2021, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"),
+        ADULT_DOB,
+      ),
+      Arguments.of(
+        "SSIV Result Code - Activated with Lesser Term",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SSIV")),
+          startDate = LocalDate.of(2021, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"),
+        ADULT_DOB,
+      ),
+      Arguments.of(
+        "SSID Result Code - YOI Activated Unaltered",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SSID")),
+          startDate = LocalDate.of(2021, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("f1fb11de-aa51-4a74-8c5c-9c08ada6db37"),
+        CONVICTION_2020_ACT_DATE.minusYears(17),
+      ),
+      Arguments.of(
+        "SSIDV Result Code - YOI Activated with Lesser Term",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "SSIDV")),
+          startDate = LocalDate.of(2021, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("f1fb11de-aa51-4a74-8c5c-9c08ada6db37"),
+        CONVICTION_2020_ACT_DATE.minusYears(17),
       ),
     )
 
