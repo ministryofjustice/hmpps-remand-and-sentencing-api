@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Charg
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.RecallEntityStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance
 import java.time.LocalDate
 import java.util.UUID
@@ -111,7 +113,6 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     and ca.appearanceDate <= :toDate
     and ca.statusId != :appearanceStatus
     and c.statusId != :chargeStatus
-    order by ca.appearanceDate desc, ca.createdAt desc, ca.id desc
   """,
   )
   fun findByPrisonerId(
@@ -121,6 +122,37 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     @Param("toDate") toDate: LocalDate,
     @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
+  ): List<ChargeAppearance>
+
+  @Query(
+    """
+    select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance(c, ca)
+      from ChargeEntity c
+      join c.appearanceCharges ac
+      join ac.appearance ca
+      join ca.courtCase cc
+      join c.sentences s
+      join s.recallSentences rs
+      join rs.recall r
+      where r.prisonerId = :prisonerId
+        and r.status != :recallStatus
+        and r.revocationDate >= :fromDate
+        and r.revocationDate <= :toDate
+        and s.statusId != :sentenceStatus
+        and c.statusId != :chargeStatus
+        and ca.statusId != :appearanceStatus
+        and cc.statusId in :courtCaseStatuses
+  """,
+  )
+  fun findRecalledChargesByPrisonerId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus>,
+    @Param("fromDate") fromDate: LocalDate,
+    @Param("toDate") toDate: LocalDate,
+    @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
+    @Param("recallStatus") recallStatus: RecallEntityStatus = RecallEntityStatus.DELETED,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): List<ChargeAppearance>
 
   @Query(
