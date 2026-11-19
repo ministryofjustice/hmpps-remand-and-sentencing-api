@@ -262,6 +262,7 @@ class ChargeService(
     } else {
       createChargeEntity(charge, sentencesCreated, courtCaseHierarchyData, supersedingCharge)
     }
+    charge.eventsToEmit.addAll(inactivateSentenceQuashedSentences(charge))
     return charge
   }
 
@@ -371,7 +372,17 @@ class ChargeService(
     )
   }
 
+  @Transactional
+  private fun inactivateSentenceQuashedSentences(charge: RecordResponse<ChargeEntity>): Set<EventMetadata> {
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    if (charge.eventsToEmit.any { setOf(EventType.CHARGE_UPDATED, EventType.CHARGE_INSERTED).contains(it.eventType) } && charge.record.chargeOutcome?.outcomeUuid == sentenceQuashedOutcomeUuid) {
+      eventsToEmit.addAll(sentenceService.inactivateSentencesOnChargeUuid(charge.record.chargeUuid))
+    }
+    return eventsToEmit
+  }
+
   companion object {
     val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
+    val sentenceQuashedOutcomeUuid: UUID = UUID.fromString("019daf9f-942d-7be3-b3f0-f4620bb7a8c8")
   }
 }
