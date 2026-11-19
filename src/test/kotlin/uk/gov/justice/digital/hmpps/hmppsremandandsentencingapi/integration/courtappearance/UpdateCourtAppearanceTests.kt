@@ -1359,6 +1359,42 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       .isEmpty
   }
 
+  @Test
+  fun `set sentence to inactive when charge is recorded with sentence quashed outcome`() {
+    val (courtCaseUuid, createdCourtCase) = createCourtCase()
+    val charge = createdCourtCase.appearances.first().charges.first()
+    val sentence = charge.sentence!!
+    val sentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentence.sentenceUuid)!!
+    Assertions.assertThat(sentenceEntity.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+    val sentenceQuashedCharge = charge.copy(sentence = null, outcomeUuid = UUID.fromString("019daf9f-942d-7be3-b3f0-f4620bb7a8c8"))
+    val appealedCourtAppearance = dpsCreateCourtAppearance(courtCaseUuid = courtCaseUuid, outcomeUuid = UUID.fromString("019daf9f-942d-72fe-bc0a-2d504d86a942"), charges = listOf(sentenceQuashedCharge), nextCourtAppearance = null)
+
+    putCourtAppearance(appealedCourtAppearance.appearanceUuid, appealedCourtAppearance)
+    val events = getMessages(3)
+    Assertions.assertThat(events).extracting<String> { it.eventType }.contains("sentence.updated")
+    val updatedSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentence.sentenceUuid)!!
+    Assertions.assertThat(updatedSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+  }
+
+  @Test
+  fun `set sentence to inactive when charge is updated to sentence quashed outcome`() {
+    val sentence = DpsDataCreator.dpsCreateSentence()
+    val sentencedCharge = DpsDataCreator.dpsCreateCharge(sentence = sentence)
+    val sentencedAppearance = dpsCreateCourtAppearance(charges = listOf(sentencedCharge), nextCourtAppearance = null)
+    val appealPendingCharge = DpsDataCreator.dpsCreateCharge(chargeUuid = sentencedCharge.chargeUuid, outcomeUuid = UUID.fromString("019dabb4-c632-7835-a299-034cdd9e49da"), sentence = null)
+    val appealCourtAppearance = dpsCreateCourtAppearance(outcomeUuid = UUID.fromString("019daf9f-942d-72fe-bc0a-2d504d86a942"), charges = listOf(appealPendingCharge), nextCourtAppearance = null)
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(appearances = listOf(sentencedAppearance, appealCourtAppearance)))
+    val sentenceEntity = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentence.sentenceUuid)!!
+    Assertions.assertThat(sentenceEntity.statusId).isEqualTo(SentenceEntityStatus.ACTIVE)
+    val sentenceQuashedCharge = appealPendingCharge.copy(outcomeUuid = UUID.fromString("019daf9f-942d-7be3-b3f0-f4620bb7a8c8"))
+    val updatedCourtAppearance = appealCourtAppearance.copy(courtCaseUuid = courtCaseUuid, charges = listOf(sentenceQuashedCharge))
+    putCourtAppearance(updatedCourtAppearance.appearanceUuid, updatedCourtAppearance)
+    val events = getMessages(2)
+    Assertions.assertThat(events).extracting<String> { it.eventType }.contains("sentence.updated")
+    val updatedSentence = sentenceRepository.findFirstBySentenceUuidAndStatusIdNotOrderByUpdatedAtDesc(sentence.sentenceUuid)!!
+    Assertions.assertThat(updatedSentence.statusId).isEqualTo(SentenceEntityStatus.INACTIVE)
+  }
+
   private fun getCourtCase(caseUuid: String): CourtCase = webTestClient
     .get()
     .uri("/court-case/$caseUuid")

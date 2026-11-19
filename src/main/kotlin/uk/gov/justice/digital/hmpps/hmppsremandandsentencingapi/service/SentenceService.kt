@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service
 import jakarta.persistence.EntityNotFoundException
 import org.jetbrains.annotations.VisibleForTesting
 import org.slf4j.LoggerFactory
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateSentence
@@ -410,6 +411,25 @@ class SentenceService(
       sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity, ChangeSource.DPS))
     }
   }
+
+  @Transactional
+  fun inactivateSentencesOnChargeUuid(chargeUuid: UUID): Set<EventMetadata> = sentenceRepository.findByChargeUuidAndStatus(chargeUuid).map { sentenceCaseHierarchy ->
+    sentenceRepository.findByIdOrNull(sentenceCaseHierarchy.sentenceId)!!.let { sentenceEntity ->
+      sentenceEntity.statusId = SentenceEntityStatus.INACTIVE
+      sentenceEntity.updatedBy = serviceUserService.getUsername()
+      sentenceEntity.updatedAt = ZonedDateTime.now()
+      sentenceHistoryRepository.save(SentenceHistoryEntity.from(sentenceEntity, ChangeSource.DPS))
+      EventMetadataCreator.sentenceEventMetadata(
+        sentenceCaseHierarchy.prisonerId,
+        sentenceCaseHierarchy.courtCaseUuid,
+        chargeUuid.toString(),
+        sentenceEntity.sentenceUuid.toString(),
+        sentenceCaseHierarchy.appearanceUuid.toString(),
+        EventType.SENTENCE_UPDATED,
+        false,
+      )
+    }
+  }.toSet()
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)

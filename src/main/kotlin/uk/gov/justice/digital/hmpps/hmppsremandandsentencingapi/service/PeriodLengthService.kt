@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityC
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceCaseHierarchy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.PeriodLengthRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.SentenceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.PeriodLengthHistoryRepository
@@ -69,8 +69,8 @@ class PeriodLengthService(
     return toAddPeriodLengths
   }
 
-  private fun linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseUuid: String, periodLengthEntity: PeriodLengthEntity): RecordResponse<LinkBreachSentence>? {
-    var linkBreachSentence: RecordResponse<LinkBreachSentence>? = null
+  private fun linkSentenceWithBreachOfSupervisionAppearancePeriodLength(courtCaseUuid: String, periodLengthEntity: PeriodLengthEntity): RecordResponse<SentenceCaseHierarchy>? {
+    var linkBreachSentence: RecordResponse<SentenceCaseHierarchy>? = null
     if (periodLengthEntity.appearanceEntity != null && periodLengthEntity.sentenceEntity == null && periodLengthEntity.periodLengthType == PeriodLengthType.BREACH_OF_SUPERVISION_REQUIREMENTS) {
       linkBreachSentence = RecordResponse(sentenceRepository.findLinkableBreachSentenceId(courtCaseUuid), mutableSetOf())
       val sentenceEntity = sentenceRepository.findByIdOrNull(linkBreachSentence.record.sentenceId)
