@@ -36,6 +36,9 @@ Changes to the Entity Model will likely cause the Subject Access Request (SAR) t
 SAR tests comparing the Entity Model Schema to a previously generated version 
 of the Entity Model Schema. The same goes for changes to it's API response data.
 
+> [!IMPORTANT]
+> Before making changes to the SAR entity model, consider the impact this might have with blocking the deployment pipeline as it may take many days before the approval process is completed.
+
 #### Entity Model Schema
 
 To regenerate the latest view of the Entity Model Schema for comparison see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarEntityComparisonIntegrationTests.kt)
@@ -44,20 +47,53 @@ To regenerate the latest view of the Entity Model Schema for comparison see [Sar
 
 Likewise, to regenerate the latest version of the api / html for review see [SarEntityComparisonIntegrationTests](src/test/kotlin/uk/gov/justice/digital/hmpps/hmppsremandandsentencingapi/integration/subjectaccessrequest/SarIntegrationTests.kt)
 
+#### Deploying template changes pre-requisites
+
+Before applying any DB changes to the jpa/entity/subjectaccessrequest entities, it is important to ensure OSAR are made aware of this change
+in order for them to approve it and for us to send this evidence to the SAR team. The following steps should be taken to notify OSAR of the change.
+
+1. Discuss with the BA the data change to ensure they have updated the data dictionary https://dsdmoj.atlassian.net/wiki/spaces/SOM/pages/6107562299/SAR+Data+requirement#%E2%9C%85-Updated-version-(Across-the-3-product)%E2%9C%85
+2. Generate the exiting version (from main branch) of the PDF via SarIntegrationTests.kt (see class docs). This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf``. Save this temporarily as existing-sar-generated-report.pdf away from this transient folder.
+3. Now switch to your feature branch and generate the new version of the PDF via SarIntegrationTests.kt (see class docs). This should generate a PDF in the location: ``build/test-generated/sar-generated-report.pdf``. Save this temporarily as new-sar-generated-report.pdf away from this transient folder.
+4. Compose an Email to the OSAR team by including the two PDFs and advising that re-registration is required.
+
+Example email:
+```
+to: SARchangeManagement@justice.gov.uk
+cc: <BA owning this process>
+
+Dear OSAR,
+
+Please find attached two examples (existing and new) of the SAR generated PDF for the Court Cases - Remand and Sentencing - Recalls -
+Immigration Detention. If you note the difference between the PDFs, the new report includes "<enter changes>".
+
+These changes have also been reflected in the data dictionary https://dsdmoj.atlassian.net/wiki/spaces/SOM/pages/6107562299/SAR+Data+requirement#%E2%9C%85-Updated-version-(Across-the-3-product)%E2%9C%85
+
+Please advise you are happy for these changes to be deployed to Production.
+
+Regards,
+
+<attachments exisiting.pdf and new.pdf>
+```
+
+5. Wait for the team to respond with the green light then proceed to **Deploying template changes to Pre-prod / Prod**
+
 #### Deploying template changes to Pre-prod / Prod
 
 Any changes to the SAR Template will cause an ERRORED response once deployed to Pre-Prod / Prod and will require 
 re-registration with the Subject Access Request change control process Slack channel ``#haa-sar-functionality-change-request``
 
-e.g.
+1. Send the following slack message
 
 ```
 Hi Team, we've made a change to https://github.com/ministryofjustice/hmpps-remand-and-sentencing-api/blob/main/src/main/resources/templates/template_remand-and-sentencing-api.mustache would you please re-register this in the Pre-Prod environment.
 ```
 
-> Note: The team may require email evidence this change was approved by the OSAR team.
+> Note: The team may require email evidence this change was approved by the OSAR team - see Deploying template changes pre-requisites
 
-Once UAT testing on the change by the OSAR team has been carried out a subsequent request to ``#haa-sar-functionality-change-request`` to register the change in production will need to be carried out
+2. Notify OSAR that the changes have been released to the pre-prod environment for them to UAT test.
+
+3. Once UAT testing of the change by the OSAR team has been carried out a subsequent request to ``#haa-sar-functionality-change-request`` to register the change in production will need to be carried out
 
 For further details on this see https://dsdmoj.atlassian.net/wiki/spaces/NDSS/pages/6057492933/SAR+Quickstart+for+Developers#Why-do-I-need-to-pre-register-templates%3F
 

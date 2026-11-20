@@ -103,33 +103,16 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
   @Query(
     """
     select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance(c, ca)
-      from ChargeEntity c
-      join c.appearanceCharges ac
-      join ac.appearance ca
-      join ca.courtCase cc
-      where c.statusId != :chargeStatus
-        and cc.statusId in :courtCaseStatuses
-        and ca.statusId != :appearanceStatus
-        and (
-            (
-                cc.prisonerId = :prisonerId
-                and ca.appearanceDate >= :fromDate
-                and ca.appearanceDate <= :toDate
-            )
-            or exists (
-                select 1
-                from SentenceEntity s
-                join s.recallSentences rs
-                join rs.recall r
-                where s.charge = c
-                  and r.prisonerId = :prisonerId
-                  and s.statusId != :sentenceStatus
-                  and r.status != :recallStatus
-                  and r.revocationDate >= :fromDate
-                  and r.revocationDate <= :toDate
-            )
-        )
-    order by ca.appearanceDate desc, ca.createdAt desc, ca.id desc
+    from ChargeEntity c
+    join c.appearanceCharges ac
+    join ac.appearance ca
+    join ca.courtCase cc
+    where cc.prisonerId = :prisonerId
+    and cc.statusId in :courtCaseStatuses
+    and ca.appearanceDate >= :fromDate
+    and ca.appearanceDate <= :toDate
+    and ca.statusId != :appearanceStatus
+    and c.statusId != :chargeStatus
   """,
   )
   fun findByPrisonerId(
@@ -139,8 +122,37 @@ interface ChargeRepository : CrudRepository<ChargeEntity, Int> {
     @Param("toDate") toDate: LocalDate,
     @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
     @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
-    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
+  ): List<ChargeAppearance>
+
+  @Query(
+    """
+    select new uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance(c, ca)
+      from ChargeEntity c
+      join c.appearanceCharges ac
+      join ac.appearance ca
+      join ca.courtCase cc
+      join c.sentences s
+      join s.recallSentences rs
+      join rs.recall r
+      where r.prisonerId = :prisonerId
+        and r.status != :recallStatus
+        and r.revocationDate >= :fromDate
+        and r.revocationDate <= :toDate
+        and s.statusId != :sentenceStatus
+        and c.statusId != :chargeStatus
+        and ca.statusId != :appearanceStatus
+        and cc.statusId in :courtCaseStatuses
+  """,
+  )
+  fun findRecalledChargesByPrisonerId(
+    @Param("prisonerId") prisonerId: String,
+    @Param("courtCaseStatuses") courtCaseStatuses: List<CourtCaseEntityStatus>,
+    @Param("fromDate") fromDate: LocalDate,
+    @Param("toDate") toDate: LocalDate,
+    @Param("appearanceStatus") appearanceStatus: CourtAppearanceEntityStatus = CourtAppearanceEntityStatus.DELETED,
+    @Param("chargeStatus") chargeStatus: ChargeEntityStatus = ChargeEntityStatus.DELETED,
     @Param("recallStatus") recallStatus: RecallEntityStatus = RecallEntityStatus.DELETED,
+    @Param("sentenceStatus") sentenceStatus: SentenceEntityStatus = SentenceEntityStatus.DELETED,
   ): List<ChargeAppearance>
 
   @Query(

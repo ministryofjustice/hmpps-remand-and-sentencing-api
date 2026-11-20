@@ -33,8 +33,8 @@ dependencies {
   implementation("com.github.jknack:handlebars:4.5.8")
   implementation("org.jsoup:jsoup:1.24.1")
   implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
-  implementation("org.bouncycastle:bcprov-jdk18on:1.86")
-  implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
+  implementation("org.bouncycastle:bcprov-jdk18on:1.87")
+  implementation("org.bouncycastle:bcpkix-jdk18on:1.87")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-database-postgresql")

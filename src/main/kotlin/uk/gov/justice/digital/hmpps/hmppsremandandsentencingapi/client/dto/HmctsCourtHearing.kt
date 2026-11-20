@@ -84,4 +84,6 @@ enum class HmctsResultKeys(val key: String, val sentencing: Boolean = false) {
   NEXT_HEARING_IN_MAGISTRATES_COURT("Next hearing in magistrates' court"),
   PERIOD_OF_DETENTION_AND_TRAINING("Period of detention and training", true),
   MINIMUM_TERM("Minimum term", true),
+  ORIGINAL_CUSTODY_TERM("Original custody term", true),
+  LESSER_TERM_IMPOSED("Lesser term imposed", true),
 }

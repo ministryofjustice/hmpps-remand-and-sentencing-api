@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChangeS
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.ChargeEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtAppearanceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.EntityChangeStatus
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ChargeAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeOutcomeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.ChargeRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtAppearanceRepository
@@ -261,6 +262,7 @@ class ChargeService(
     } else {
       createChargeEntity(charge, sentencesCreated, courtCaseHierarchyData, supersedingCharge)
     }
+    charge.eventsToEmit.addAll(inactivateSentenceQuashedSentences(charge))
     return charge
   }
 
@@ -355,11 +357,32 @@ class ChargeService(
   fun findChargeByUuid(chargeUuid: UUID): Charge? = chargeRepository.findFirstByChargeUuidAndStatusIdNotOrderByUpdatedAtDesc(chargeUuid)?.let { Charge.from(it) }
 
   @Transactional(readOnly = true)
-  fun findChargesByPrisonerId(prisonerId: String, statuses: List<PersonChargeStatus>, fromDate: LocalDate, toDate: LocalDate): PersonCharges = PersonCharges(
-    chargeRepository.findByPrisonerId(prisonerId, statuses.flatMap { it.courtCaseStatuses }, fromDate, toDate).map { PersonCharge.from(it.charge, it.appearance) },
-  )
+  fun findChargesByPrisonerId(prisonerId: String, statuses: List<PersonChargeStatus>, fromDate: LocalDate, toDate: LocalDate): PersonCharges {
+    val courtCaseCharges = chargeRepository.findByPrisonerId(prisonerId, statuses.flatMap { it.courtCaseStatuses }, fromDate, toDate)
+    val recalledCharges = chargeRepository.findRecalledChargesByPrisonerId(prisonerId, statuses.flatMap { it.courtCaseStatuses }, fromDate, toDate)
+    val combined = (courtCaseCharges + recalledCharges)
+      .distinctBy { it.charge.id to it.appearance.id }
+      .sortedWith(
+        compareByDescending<ChargeAppearance> { it.appearance.appearanceDate }
+          .thenByDescending { it.appearance.createdAt }
+          .thenByDescending { it.appearance.id },
+      )
+    return PersonCharges(
+      combined.map { PersonCharge.from(it.charge, it.appearance) },
+    )
+  }
+
+  @Transactional
+  private fun inactivateSentenceQuashedSentences(charge: RecordResponse<ChargeEntity>): Set<EventMetadata> {
+    val eventsToEmit = mutableSetOf<EventMetadata>()
+    if (charge.eventsToEmit.any { setOf(EventType.CHARGE_UPDATED, EventType.CHARGE_INSERTED).contains(it.eventType) } && charge.record.chargeOutcome?.outcomeUuid == sentenceQuashedOutcomeUuid) {
+      eventsToEmit.addAll(sentenceService.inactivateSentencesOnChargeUuid(charge.record.chargeUuid))
+    }
+    return eventsToEmit
+  }
 
   companion object {
     val replacedWithAnotherOutcomeUuid: UUID = UUID.fromString("68e56c1f-b179-43da-9d00-1272805a7ad3")
+    val sentenceQuashedOutcomeUuid: UUID = UUID.fromString("019daf9f-942d-7be3-b3f0-f4620bb7a8c8")
   }
 }

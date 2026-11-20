@@ -14,9 +14,9 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.Sentenc
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ConsecutiveToSentenceRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.CourtAppearanceWithFineRow
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ImprisonmentInDefaultOfFine
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.LinkBreachSentence
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.MissingSentenceInformationDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceAfterOnAnotherCourtAppearanceRow
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.SentenceCaseHierarchy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.projection.ViewSentenceRow
 import java.time.LocalDate
 import java.util.*
@@ -462,7 +462,7 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   """,
     nativeQuery = true,
   )
-  fun findLinkableBreachSentenceId(@Param("courtCaseUuid") courtCaseUuid: String, @Param("deletedStatus")deletedStatus: String = SentenceEntityStatus.DELETED.toString()): LinkBreachSentence
+  fun findLinkableBreachSentenceId(@Param("courtCaseUuid") courtCaseUuid: String, @Param("deletedStatus")deletedStatus: String = SentenceEntityStatus.DELETED.toString()): SentenceCaseHierarchy
 
   @Query(
     """
@@ -472,4 +472,22 @@ interface SentenceRepository : CrudRepository<SentenceEntity, Int> {
   """,
   )
   fun findSentencesWithConsecutiveToLinkAndStatusNot(@Param("sentenceIds")sentenceIds: List<Int>, @Param("status") status: SentenceEntityStatus = SentenceEntityStatus.DELETED): Set<SentenceEntity>
+
+  @Query(
+    """
+    select cc.prisoner_id as prisonerId, cc.case_unique_identifier as courtCaseUuid, ca.appearance_uuid as appearanceUuid, c.charge_uuid as chargeUuid, s.sentence_uuid as sentenceUuid, s.id as sentenceId 
+      from sentence s
+        join charge c on c.id = s.charge_id
+        join appearance_charge ac on ac.charge_id = c.id
+        join court_appearance ca on ca.id = ac.appearance_id
+        join court_case cc on ca.court_case_id = cc.id
+        where s.status_id = :sentenceStatus
+        and c.status_id != :deletedStatus
+        and ca.status_id != :deletedStatus
+        and cc.status_id != :deletedStatus
+        and c.charge_uuid = :chargeUuid
+  """,
+    nativeQuery = true,
+  )
+  fun findByChargeUuidAndStatus(@Param("chargeUuid") chargeUuid: UUID, @Param("sentenceStatus") sentenceStatus: String = SentenceEntityStatus.ACTIVE.toString(), @Param("deletedStatus") deletedStatus: String = SentenceEntityStatus.DELETED.toString()): List<SentenceCaseHierarchy>
 }

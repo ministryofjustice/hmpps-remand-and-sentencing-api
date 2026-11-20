@@ -5,11 +5,12 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.PersonRecordClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PersonPrison
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants.Companion.PERSON_PRISON_CACHE_KEY
 
 @Service
 class PersonRecordService(private val personRecordClient: PersonRecordClient) {
 
-  @Cacheable("personPrisonCached")
+  @Cacheable(PERSON_PRISON_CACHE_KEY, key = "#prisonerId", unless = "#result == null")
   fun getPersonPrisonCached(prisonerId: String): PersonPrison? {
     try {
       return personRecordClient.getPersonPrison(prisonerId)

@@ -1,37 +1,29 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.cache
 
-import com.github.benmanes.caffeine.cache.Expiry
+import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PersonNextCourtAppearance
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants.Companion.ZONE_ID
 import java.time.Clock
 import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
+@Component
 class NextCourtAppearancePersonCacheExpiry(
-  private val clock: Clock = Clock.system(ZoneId.of("Europe/London")),
-  private val maxResultTtl: Duration = Duration.ofHours(1),
-) : Expiry<Any, Any> {
+  override val maxResultTtl: Duration = Duration.ofHours(1),
+  override val maximumSize: Long = 100_000L,
+  private val clock: Clock = Clock.system(ZoneId.of(ZONE_ID)),
+) : CacheExpiry {
+
+  override val cacheName = Constants.NEXT_COURT_APPEARANCE_PERSON_CACHE_KEY
 
   override fun expireAfterCreate(
     key: Any,
     value: Any,
     currentTime: Long,
   ): Long = calculateExpiryNanos(value)
-
-  override fun expireAfterUpdate(
-    key: Any,
-    value: Any,
-    currentTime: Long,
-    currentDuration: Long,
-  ): Long = currentDuration
-
-  override fun expireAfterRead(
-    key: Any,
-    value: Any,
-    currentTime: Long,
-    currentDuration: Long,
-  ): Long = currentDuration
 
   private fun calculateExpiryNanos(value: Any): Long = when (value) {
     is PersonNextCourtAppearance -> {
