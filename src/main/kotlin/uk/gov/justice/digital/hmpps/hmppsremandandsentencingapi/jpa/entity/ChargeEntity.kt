@@ -164,7 +164,7 @@ class ChargeEntity(
     mergedFromCourtCase,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergedFromDate,
-    value = resolveChargeValue(charge.value, value),
+    value = charge.value,
   )
 
   fun copyFrom(
@@ -246,7 +246,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = migrationCreateCharge.mergedFromDate,
-    value = resolveChargeValue(migrationCreateCharge.value, value),
+    value = migrationCreateCharge.value,
   )
 
   fun copyFrom(
@@ -275,7 +275,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = mergeCreateCharge.mergedFromDate,
-    value = resolveChargeValue(mergeCreateCharge.value, value),
+    value = mergeCreateCharge.value,
   )
 
   fun copyFrom(
@@ -304,7 +304,7 @@ class ChargeEntity(
     null,
     hmctsChargeId = hmctsChargeId,
     mergedFromDate = bookingCreateCharge.mergedFromDate,
-    value = resolveChargeValue(bookingCreateCharge.value, value),
+    value = bookingCreateCharge.value,
   )
 
   fun copyFrom(charge: LegacyUpdateWholeCharge, createdBy: String): ChargeEntity {
@@ -473,7 +473,7 @@ class ChargeEntity(
       chargeAggravatingFactors = mutableSetOf(),
       createdBy = createdBy,
       createdPrison = null,
-      value = resolveChargeValue(charge.value),
+      value = charge.value,
     )
 
     fun from(
@@ -502,7 +502,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       migrationCreateCharge.mergedFromDate,
-      value = resolveChargeValue(migrationCreateCharge.value),
+      value = migrationCreateCharge.value,
     )
 
     fun from(
@@ -531,7 +531,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       mergeCreateCharge.mergedFromDate,
-      value = resolveChargeValue(mergeCreateCharge.value),
+      value = mergeCreateCharge.value,
     )
 
     fun from(
@@ -559,7 +559,7 @@ class ChargeEntity(
       mutableSetOf(),
       null,
       bookingCreateCharge.mergedFromDate,
-      value = resolveChargeValue(bookingCreateCharge.value),
+      value = bookingCreateCharge.value,
     )
   }
 }
