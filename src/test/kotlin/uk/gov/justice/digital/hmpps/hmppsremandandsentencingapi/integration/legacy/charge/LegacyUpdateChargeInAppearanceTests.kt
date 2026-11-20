@@ -130,7 +130,6 @@ class LegacyUpdateChargeInAppearanceTests : IntegrationTestBase() {
       .expectStatus()
       .isNoContent
 
-    // Sentinel -1 is sent to drop the value
     val toUpdateDropValue = DataCreator.legacyUpdateCharge(value = null)
     webTestClient
       .put()
