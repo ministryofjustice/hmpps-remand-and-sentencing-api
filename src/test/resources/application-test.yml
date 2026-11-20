@@ -103,3 +103,5 @@ features:
     multipleNotificationsEnabled: true
   appearanceSchedulesEvents:
     enabled: true
+  recallableCourtCases:
+    includeSentencesOnAnyActiveAppearance: true

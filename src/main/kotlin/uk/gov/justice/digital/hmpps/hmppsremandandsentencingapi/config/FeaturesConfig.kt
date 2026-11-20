@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding
 data class FeaturesConfig @ConstructorBinding constructor(
   val hmctsWarrantThingToDo: HmctsWarrantThingToDoConfig,
   val appearanceSchedulesEvents: AppearanceSchedulesEventsConfig,
+  val recallableCourtCases: RecallableCourtCasesConfig = RecallableCourtCasesConfig(),
 )
 
 data class HmctsWarrantThingToDoConfig(
@@ -18,4 +19,8 @@ data class HmctsWarrantThingToDoConfig(
 
 data class AppearanceSchedulesEventsConfig(
   val enabled: Boolean,
+)
+
+data class RecallableCourtCasesConfig(
+  val includeSentencesOnAnyActiveAppearance: Boolean = false,
 )

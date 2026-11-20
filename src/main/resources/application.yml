@@ -148,3 +148,7 @@ springdoc:
     enabled: false
     filter: true
     version: 5.34.1
+
+features:
+  recallableCourtCases:
+    includeSentencesOnAnyActiveAppearance: false
