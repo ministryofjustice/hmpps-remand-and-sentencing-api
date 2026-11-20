@@ -8,7 +8,7 @@ data class RecallableCourtCase(
   val reference: String,
   val courtCode: String,
   val status: CourtCaseEntityStatus,
-  val isSentenced: Boolean,
+  val isSentenced: Boolean,  // TODO this isnt used by anything, can be removed
   val sentences: List<RecallableCourtCaseSentence>,
   val appearanceDate: LocalDate,
   val firstDayInCustody: LocalDate?,

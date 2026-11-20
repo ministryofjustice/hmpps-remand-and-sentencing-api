@@ -617,15 +617,19 @@ class RecallService(
         val firstDayInCustody = activeAppearances
           .minOfOrNull { it.appearanceDate }
 
-        val firstSentencingAppearance = activeAppearances
-          .firstOrNull { appearance -> appearance.warrantType == "SENTENCING" }
-          ?: return@mapNotNull null
-
         val activeAndInactiveSentencesWithAppearances = activeAppearances.flatMap { appearance ->
           appearance.appearanceCharges
             .filter { it.charge?.statusId == ChargeEntityStatus.ACTIVE && it.charge?.getLiveSentence() != null }
             .map { it.charge!!.getLiveSentence()!! to appearance }
         }
+
+        if (activeAndInactiveSentencesWithAppearances.isEmpty()) {
+          return@mapNotNull null
+        }
+
+        val firstAppearanceWithSentences = activeAndInactiveSentencesWithAppearances
+          .minBy { (_, appearance) -> appearance.appearanceDate }
+          .second
 
         RecallableCourtCase(
           courtCaseUuid = courtCase.caseUniqueIdentifier,
@@ -634,11 +638,6 @@ class RecallService(
           status = courtCase.statusId,
           isSentenced = activeAndInactiveSentencesWithAppearances.isNotEmpty(),
           sentences = activeAndInactiveSentencesWithAppearances.map { (sentence, appearance) ->
-            val sentenceAppearance = if (appearance.warrantType == "SENTENCING") {
-              appearance
-            } else {
-              firstSentencingAppearance
-            }
             RecallableCourtCaseSentence(
               sentenceUuid = sentence.sentenceUuid,
               offenceCode = sentence.charge.offenceCode,
@@ -674,7 +673,7 @@ class RecallService(
               aggravatingFactors = sentence.charge.chargeAggravatingFactors
                 .map { caf -> AggravatingFactor.from(caf.aggravatingFactor) },
               isRecallable = sentence.sentenceType?.isRecallable ?: true,
-              sentenceDate = sentenceAppearance.appearanceDate,
+              sentenceDate = appearance.appearanceDate,
               consecutiveToSentenceUuid = sentence.consecutiveTo?.sentenceUuid,
               createdAt = sentence.legacyData?.postedDate
                 ?.let { minOf(LocalDateTime.parse(it), sentence.createdAt.toLocalDateTime()) }
@@ -683,7 +682,7 @@ class RecallService(
               value = sentence.charge.value,
             )
           },
-          appearanceDate = firstSentencingAppearance.appearanceDate,
+          appearanceDate = firstAppearanceWithSentences.appearanceDate,
           firstDayInCustody = firstDayInCustody,
         )
       }
