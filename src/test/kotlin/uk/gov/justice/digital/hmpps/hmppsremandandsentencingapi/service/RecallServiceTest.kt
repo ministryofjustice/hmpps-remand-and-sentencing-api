@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.AppearanceSchedulesEventsConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.HmctsWarrantThingToDoConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.RecallableCourtCasesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossible
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.IsRecallPossibleRequest
@@ -77,100 +81,8 @@ class RecallServiceTest {
     serviceUserService,
     courtCaseRepository,
     fixManyChargesToSentenceService,
+    featuresConfig(),
   )
-
-  private fun createCourtCaseWithSentences(
-    sentences: List<SentenceEntity>,
-  ): CourtCaseEntity {
-    val courtCase = CourtCaseEntity(
-      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
-      caseUniqueIdentifier = UUID.randomUUID().toString(),
-      statusId = CourtCaseEntityStatus.ACTIVE,
-      createdBy = "test-user",
-    )
-
-    val appearance = CourtAppearanceEntity(
-      appearanceUuid = UUID.randomUUID(),
-      appearanceOutcome = null,
-      courtCase = courtCase,
-      courtCode = "MDSTCC",
-      courtCaseReference = null,
-      appearanceDate = LocalDate.of(2026, 1, 1),
-      statusId = CourtAppearanceEntityStatus.ACTIVE,
-      createdBy = "test-user",
-      createdPrison = "TEST",
-      warrantType = "SENTENCING",
-      nextCourtAppearance = null,
-      overallConvictionDate = null,
-    )
-
-    appearance.appearanceCharges.addAll(
-      sentences.map {
-        AppearanceChargeEntity(
-          courtAppearanceEntity = appearance,
-          chargeEntity = it.charge,
-          createdBy = "test-user",
-          createdPrison = "TEST",
-        )
-      },
-    )
-
-    courtCase.appearances = setOf(appearance)
-    courtCase.latestCourtAppearance = appearance
-
-    return courtCase
-  }
-
-  private fun createRecallableSentence(
-    countNumber: String? = null,
-    lineNumber: String? = null,
-    offenceStartDate: LocalDate = LocalDate.now(),
-  ): SentenceEntity {
-    val charge = ChargeEntity(
-      chargeUuid = UUID.randomUUID(),
-      offenceCode = "TEST123",
-      statusId = ChargeEntityStatus.ACTIVE,
-      createdBy = "test-user",
-      createdPrison = "TEST",
-      offenceStartDate = offenceStartDate,
-      offenceEndDate = null,
-      chargeOutcome = null,
-      supersedingCharge = null,
-      findingOfDomesticAbuse = null,
-      legacyData = ChargeLegacyData(
-        postedDate = "2024-01-01",
-        nomisOutcomeCode = "1002",
-        outcomeDescription = "Guilty",
-        outcomeDispositionCode = "C",
-        outcomeConvictionFlag = true,
-        offenceDescription = "Test offence",
-      ),
-      appearanceCharges = mutableSetOf(),
-    )
-
-    val sentence = SentenceEntity(
-      sentenceUuid = UUID.randomUUID(),
-      statusId = SentenceEntityStatus.ACTIVE,
-      createdBy = "test-user",
-      createdPrison = "TEST",
-      sentenceServeType = "FORTHWITH",
-      consecutiveTo = null,
-      supersedingSentence = null,
-      charge = charge,
-      convictionDate = LocalDate.now(),
-      legacyData = SentenceLegacyData(
-        postedDate = "2024-01-01T00:00:00",
-        bookingId = null,
-        nomisLineReference = lineNumber,
-      ),
-      fineAmount = null,
-      countNumber = countNumber,
-      sentenceType = null,
-    )
-
-    charge.sentences.add(sentence)
-    return sentence
-  }
 
   @Test
   fun `delete a dps recall checks for adjustment and deletes if found`() {
@@ -268,6 +180,66 @@ class RecallServiceTest {
     val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
 
     assertThat(result.record.cases).isEmpty()
+  }
+
+  @Test
+  fun `getRecallableCourtCases includes a sentence on an appeal appearance`() {
+    val appealDate = LocalDate.of(2024, 10, 24)
+    val courtCase = courtCaseWithSentenceOnAppearance(warrantType = "APPEAL", appearanceDate = appealDate)
+    val sentenceUuid = courtCase.appearances.single().appearanceCharges.single().charge!!.sentences.single().sentenceUuid
+
+    every {
+      courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    } returns listOf(courtCase)
+
+    val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(result.record.cases).hasSize(1)
+    assertThat(result.record.cases.single().appearanceDate).isEqualTo(appealDate)
+    assertThat(result.record.cases.single().sentences).hasSize(1)
+    assertThat(result.record.cases.single().sentences.single().sentenceUuid).isEqualTo(sentenceUuid)
+    assertThat(result.record.cases.single().sentences.single().sentenceDate).isEqualTo(appealDate)
+  }
+
+  private fun featuresConfig() = FeaturesConfig(
+    hmctsWarrantThingToDo = HmctsWarrantThingToDoConfig(
+      enabled = false,
+      repeatRemandHearingEnabled = false,
+      sentencingEnabled = false,
+      multipleNotificationsEnabled = false,
+    ),
+    appearanceSchedulesEvents = AppearanceSchedulesEventsConfig(enabled = false),
+    recallableCourtCases = RecallableCourtCasesConfig(true),
+  )
+
+  @Test
+  fun `getRecallableCourtCases uses the appearance the sentence is on when a sentencing appearance also exists`() {
+    val appealDate = LocalDate.of(2024, 10, 24)
+    val courtCase = courtCaseWithSentenceOnAppearance(warrantType = "APPEAL", appearanceDate = appealDate)
+    val sentencingAppearance = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = "CASE-012",
+      appearanceDate = LocalDate.of(2024, 8, 10),
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+    courtCase.appearances = courtCase.appearances + sentencingAppearance
+
+    every {
+      courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
+    } returns listOf(courtCase)
+
+    val result = service.getRecallableCourtCases(DpsDataCreator.DEFAULT_PRISONER_ID)
+
+    assertThat(result.record.cases.single().appearanceDate).isEqualTo(appealDate)
+    assertThat(result.record.cases.single().sentences.single().sentenceDate).isEqualTo(appealDate)
   }
 
   @Test
@@ -955,6 +927,137 @@ class RecallServiceTest {
         sentenceCategory = sentenceCategory,
       ),
     )
+  }
+
+  private fun createCourtCaseWithSentences(
+    sentences: List<SentenceEntity>,
+  ): CourtCaseEntity {
+    val courtCase = CourtCaseEntity(
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      caseUniqueIdentifier = UUID.randomUUID().toString(),
+      statusId = CourtCaseEntityStatus.ACTIVE,
+      createdBy = "test-user",
+    )
+
+    val appearance = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = null,
+      appearanceDate = LocalDate.of(2026, 1, 1),
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = "SENTENCING",
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+
+    appearance.appearanceCharges.addAll(
+      sentences.map {
+        AppearanceChargeEntity(
+          courtAppearanceEntity = appearance,
+          chargeEntity = it.charge,
+          createdBy = "test-user",
+          createdPrison = "TEST",
+        )
+      },
+    )
+
+    courtCase.appearances = setOf(appearance)
+    courtCase.latestCourtAppearance = appearance
+
+    return courtCase
+  }
+
+  private fun createRecallableSentence(
+    countNumber: String? = null,
+    lineNumber: String? = null,
+    offenceStartDate: LocalDate = LocalDate.now(),
+  ): SentenceEntity {
+    val charge = ChargeEntity(
+      chargeUuid = UUID.randomUUID(),
+      offenceCode = "TEST123",
+      statusId = ChargeEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      offenceStartDate = offenceStartDate,
+      offenceEndDate = null,
+      chargeOutcome = null,
+      supersedingCharge = null,
+      findingOfDomesticAbuse = null,
+      legacyData = ChargeLegacyData(
+        postedDate = "2024-01-01",
+        nomisOutcomeCode = "1002",
+        outcomeDescription = "Guilty",
+        outcomeDispositionCode = "C",
+        outcomeConvictionFlag = true,
+        offenceDescription = "Test offence",
+      ),
+      appearanceCharges = mutableSetOf(),
+    )
+
+    val sentence = SentenceEntity(
+      sentenceUuid = UUID.randomUUID(),
+      statusId = SentenceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      sentenceServeType = "FORTHWITH",
+      consecutiveTo = null,
+      supersedingSentence = null,
+      charge = charge,
+      convictionDate = LocalDate.now(),
+      legacyData = SentenceLegacyData(
+        postedDate = "2024-01-01T00:00:00",
+        bookingId = null,
+        nomisLineReference = lineNumber,
+      ),
+      fineAmount = null,
+      countNumber = countNumber,
+      sentenceType = null,
+    )
+
+    charge.sentences.add(sentence)
+    return sentence
+  }
+
+  private fun courtCaseWithSentenceOnAppearance(
+    warrantType: String,
+    appearanceDate: LocalDate,
+  ): CourtCaseEntity {
+    val courtCase = CourtCaseEntity(
+      prisonerId = DpsDataCreator.DEFAULT_PRISONER_ID,
+      caseUniqueIdentifier = "CASE-APPEAL-SENTENCE",
+      statusId = CourtCaseEntityStatus.ACTIVE,
+      createdBy = "test-user",
+    )
+    val sentence = createRecallableSentence()
+    val appearance = CourtAppearanceEntity(
+      appearanceUuid = UUID.randomUUID(),
+      appearanceOutcome = null,
+      courtCase = courtCase,
+      courtCode = "MDSTCC",
+      courtCaseReference = "CASE-012",
+      appearanceDate = appearanceDate,
+      statusId = CourtAppearanceEntityStatus.ACTIVE,
+      createdBy = "test-user",
+      createdPrison = "TEST",
+      warrantType = warrantType,
+      nextCourtAppearance = null,
+      overallConvictionDate = null,
+    )
+    appearance.appearanceCharges.add(
+      AppearanceChargeEntity(
+        courtAppearanceEntity = appearance,
+        chargeEntity = sentence.charge,
+        createdBy = "test-user",
+        createdPrison = "TEST",
+      ),
+    )
+    courtCase.appearances = setOf(appearance)
+    courtCase.latestCourtAppearance = appearance
+    return courtCase
   }
 
   companion object {
