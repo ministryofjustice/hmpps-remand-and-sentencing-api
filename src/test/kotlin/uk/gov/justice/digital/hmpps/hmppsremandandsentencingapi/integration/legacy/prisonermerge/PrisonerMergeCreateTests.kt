@@ -241,7 +241,7 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
   }
 
   @Test
-  fun `can create merge charge with value and update snapshot persists value when omitted`() {
+  fun `can create merge charge with value in one appearance and null in another`() {
     val chargeNOMISId = 558L
     val firstSnapshot = PrisonerMergeDataCreator.mergeCreateCharge(
       chargeNOMISId = chargeNOMISId,
@@ -273,18 +273,23 @@ class PrisonerMergeCreateTests : IntegrationTestBase() {
       .returnResult(MergeCreateCourtCasesResponse::class.java)
       .responseBody.blockFirst()!!
 
-    val createdChargeUuid = response.charges.first().chargeUuid
+    val createdChargeUuid = response.charges.first { it.chargeNOMISId == chargeNOMISId }.chargeUuid
+    val firstAppearanceUuid = response.appearances.first { it.eventId == firstAppearance.eventId }.appearanceUuid
+    val secondAppearanceUuid = response.appearances.first { it.eventId == secondAppearance.eventId }.appearanceUuid
+    val courtCaseUuid = response.courtCases.first { it.caseId == courtCase.caseId }.courtCaseUuid
     webTestClient
       .get()
-      .uri("/legacy/charge/$createdChargeUuid")
+      .uri("/court-case/$courtCaseUuid")
       .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING_CHARGE_RW"))
+        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
       }
       .exchange()
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.value")
+      .jsonPath("$.appearances.[?(@.appearanceUuid == '$firstAppearanceUuid')].charges[?(@.chargeUuid == '$createdChargeUuid')].value")
       .isEqualTo(789.01)
+      .jsonPath("$.appearances.[?(@.appearanceUuid == '$secondAppearanceUuid')].charges[?(@.chargeUuid == '$createdChargeUuid')].value")
+      .isEqualTo(null)
   }
 }
