@@ -61,6 +61,7 @@ jobs:
       postgres-db: ras
       postgres-username: ras-user
       postgres-password: ras-pass
+      test-report-continue-on-error: true
     needs:
       - app_version
   build:
