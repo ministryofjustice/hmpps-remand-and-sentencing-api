@@ -8,6 +8,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.AppearanceSchedulesEventsConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.HmctsWarrantThingToDoConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.RecallableCourtCasesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.AdjustmentDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.UnlawfullyAtLargeDto
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateRecall
@@ -77,6 +81,7 @@ class RecallServiceTest {
     serviceUserService,
     courtCaseRepository,
     fixManyChargesToSentenceService,
+    featuresConfig(),
   )
 
   @Test
@@ -195,6 +200,17 @@ class RecallServiceTest {
     assertThat(result.record.cases.single().sentences.single().sentenceUuid).isEqualTo(sentenceUuid)
     assertThat(result.record.cases.single().sentences.single().sentenceDate).isEqualTo(appealDate)
   }
+
+  private fun featuresConfig() = FeaturesConfig(
+    hmctsWarrantThingToDo = HmctsWarrantThingToDoConfig(
+      enabled = false,
+      repeatRemandHearingEnabled = false,
+      sentencingEnabled = false,
+      multipleNotificationsEnabled = false,
+    ),
+    appearanceSchedulesEvents = AppearanceSchedulesEventsConfig(enabled = false),
+    recallableCourtCases = RecallableCourtCasesConfig(true),
+  )
 
   @Test
   fun `getRecallableCourtCases uses the appearance the sentence is on when a sentencing appearance also exists`() {

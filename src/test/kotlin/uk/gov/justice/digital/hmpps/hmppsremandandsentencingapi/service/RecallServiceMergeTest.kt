@@ -6,6 +6,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.AdjustmentsApiClient
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.AppearanceSchedulesEventsConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.FeaturesConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.HmctsWarrantThingToDoConfig
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.config.RecallableCourtCasesConfig
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.PeriodLength
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCase
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCaseSentence
@@ -61,6 +65,16 @@ class RecallServiceMergeTest {
     serviceUserService,
     courtCaseRepository,
     fixManyChargesToSentenceService,
+    FeaturesConfig(
+      hmctsWarrantThingToDo = HmctsWarrantThingToDoConfig(
+        enabled = false,
+        repeatRemandHearingEnabled = false,
+        sentencingEnabled = false,
+        multipleNotificationsEnabled = false,
+      ),
+      appearanceSchedulesEvents = AppearanceSchedulesEventsConfig(enabled = false),
+      recallableCourtCases = RecallableCourtCasesConfig(includeSentencesOnAnyActiveAppearance = true),
+    ),
   )
 
   @Nested
