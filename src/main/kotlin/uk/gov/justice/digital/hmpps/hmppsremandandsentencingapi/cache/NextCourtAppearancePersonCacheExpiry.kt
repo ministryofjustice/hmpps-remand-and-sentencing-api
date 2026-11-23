@@ -8,7 +8,6 @@ import java.time.Clock
 import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 @Component
 class NextCourtAppearancePersonCacheExpiry(
@@ -29,7 +28,9 @@ class NextCourtAppearancePersonCacheExpiry(
     is PersonNextCourtAppearance -> {
       val now = ZonedDateTime.now(clock)
       val appearanceTime = value.dateTime.atZone(clock.zone)
-      ChronoUnit.NANOS.between(now, appearanceTime).coerceIn(0L, maxResultTtl.toNanos())
+      Duration.between(now, appearanceTime)
+        .coerceIn(Duration.ZERO, maxResultTtl)
+        .toNanos()
     }
     else -> maxResultTtl.toNanos()
   }

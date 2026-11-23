@@ -113,6 +113,22 @@ class NextCourtAppearancePersonCacheExpiryTests {
     assertThat(cache.get("A1234AA")).isNull()
   }
 
+  @Test
+  fun `caps expiry at 1 hour without overflowing when court appearance dateTime is centuries in the future`() {
+    // Dates > ~292 years ahead overflow a 64-bit Long when measured in nanoseconds
+    val farFutureAppearance = createAppearance(LocalDateTime.of(9999, 12, 31, 23, 59, 59))
+
+    cache.put("A1234AA", farFutureAppearance)
+
+    // Advance 59 minutes (still valid)
+    advanceTimeBy(Duration.ofMinutes(59))
+    assertThat(cache.get("A1234AA", PersonNextCourtAppearance::class.java)).isEqualTo(farFutureAppearance)
+
+    // Advance 1 more minute to hit 1 hour max TTL (expired)
+    advanceTimeBy(Duration.ofMinutes(1))
+    assertThat(cache.get("A1234AA")).isNull()
+  }
+
   private fun advanceTimeBy(duration: Duration) {
     currentInstant = currentInstant.plus(duration)
   }
