@@ -902,7 +902,7 @@ class RecallServiceMergeTest {
       appearance.appearanceCharges.add(appearanceCharge)
       charge.appearanceCharges.add(appearanceCharge)
 
-      courtCase.appearances = setOf(appearance)
+      courtCase.appearances = mutableSetOf(appearance)
       courtCase.latestCourtAppearance = appearance
 
       return courtCase

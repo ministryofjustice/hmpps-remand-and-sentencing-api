@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.C
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.NextCourtAppearanceRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
 import java.util.UUID
 
@@ -37,6 +38,7 @@ class CourtAppearanceServiceTests {
   private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
   private val documentService = mockk<UploadedDocumentService>()
   private val courtAppearanceSubtypeRepository = mockk<CourtAppearanceSubtypeRepository>()
+  private val courtCaseReferenceService = mockk<CourtCaseReferenceService>()
   private val courtAppearanceService = CourtAppearanceService(
     courtAppearanceRepository = courtAppearanceRepository,
     nextCourtAppearanceRepository = nextCourtAppearanceRepository,
@@ -51,6 +53,7 @@ class CourtAppearanceServiceTests {
     fixManyChargesToSentenceService = fixManyChargesToSentenceService,
     documentService = documentService,
     courtAppearanceSubtypeRepository = courtAppearanceSubtypeRepository,
+    courtCaseReferenceService = courtCaseReferenceService,
   )
 
   @Nested

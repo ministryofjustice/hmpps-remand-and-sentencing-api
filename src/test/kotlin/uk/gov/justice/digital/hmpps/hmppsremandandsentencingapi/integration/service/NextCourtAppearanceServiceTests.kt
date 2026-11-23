@@ -32,6 +32,7 @@ class NextCourtAppearanceServiceTests : IntegrationTestBase() {
     val (_, createdCourtCase) = createCourtCase()
     val session = entityManager.unwrap(Session::class.java)
     session.sessionFactory.statistics.isStatisticsEnabled = true
+    session.sessionFactory.statistics.clear()
     val firstNextCourtAppearance = nextCourtAppearanceService.findFirstByPrisonerId(createdCourtCase.prisonerId)
     Assertions.assertNotNull(firstNextCourtAppearance)
     val statistics = session.sessionFactory.statistics

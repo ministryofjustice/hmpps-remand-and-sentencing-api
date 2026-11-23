@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCo
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -46,6 +47,7 @@ class CourtCaseService(
   private val serviceUserService: ServiceUserService,
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val courtCaseHistoryRepository: CourtCaseHistoryRepository,
+  private val courtCaseReferenceService: CourtCaseReferenceService,
 ) {
 
   @Transactional
@@ -65,6 +67,11 @@ class CourtCaseService(
         eventType,
       ),
     )
+    courtCaseReferenceService.updateCourtCaseEntity(courtCase).takeIf { it.hasUpdated }?.let {
+      eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
+      )
+    }
     return RecordResponseWithDocumentUpdates(
       savedCourtCase,
       eventsToEmit,
@@ -103,6 +110,11 @@ class CourtCaseService(
         EventType.COURT_CASE_INSERTED,
       ),
     )
+    courtCaseReferenceService.updateCourtCaseEntity(courtCase).takeIf { it.hasUpdated }?.let {
+      eventsToEmit.add(
+        EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
+      )
+    }
     return RecordResponseWithDocumentUpdates(
       savedCourtCase,
       eventsToEmit,
@@ -129,7 +141,8 @@ class CourtCaseService(
     val appearances = appearanceRecords.map { it.record }.toSet()
     eventsToEmit.addAll(appearanceRecords.flatMap { it.eventsToEmit })
     courtCase.latestCourtAppearance = CourtAppearanceEntity.getLatestCourtAppearance(appearances)
-    return RecordResponseWithDocumentUpdates(courtCaseRepository.save(courtCase), eventsToEmit, appearanceRecords.flatMap { it.documentUpdates })
+    courtCase.appearances.addAll(appearances)
+    return RecordResponseWithDocumentUpdates(courtCase, eventsToEmit, appearanceRecords.flatMap { it.documentUpdates })
   }
 
   fun handleUpdatingLatestCourtAppearanceInCourtCase(courtCase: CourtCaseEntity, courtAppearance: CourtAppearanceEntity, performedByUser: String) {

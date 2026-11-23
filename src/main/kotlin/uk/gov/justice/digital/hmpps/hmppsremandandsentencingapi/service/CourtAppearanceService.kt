@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.N
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.AppearanceChargeHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtAppearanceHistoryRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtAppearanceLegacyData
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.Constants
 import java.util.UUID
 
@@ -59,6 +60,7 @@ class CourtAppearanceService(
   private val fixManyChargesToSentenceService: FixManyChargesToSentenceService,
   private val documentService: UploadedDocumentService,
   private val courtAppearanceSubtypeRepository: CourtAppearanceSubtypeRepository,
+  private val courtCaseReferenceService: CourtCaseReferenceService,
 ) {
 
   @Transactional
@@ -75,6 +77,12 @@ class CourtAppearanceService(
         val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity, courtCaseHierarchyData)
         courtCaseEntity.latestCourtAppearance =
           CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance.record)
+        courtCaseEntity.appearances.add(courtAppearance.record)
+        courtCaseReferenceService.updateCourtCaseEntity(courtCaseEntity).takeIf { it.hasUpdated }?.let {
+          courtAppearance.eventsToEmit.add(
+            EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
+          )
+        }
         return courtAppearance
       }
   }
@@ -109,6 +117,12 @@ class CourtAppearanceService(
         }
         courtCaseEntity.latestCourtAppearance =
           CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + savedAppearance.record)
+        courtCaseEntity.appearances.add(savedAppearance.record)
+        courtCaseReferenceService.updateCourtCaseEntity(courtCaseEntity).takeIf { it.hasUpdated }?.let {
+          savedAppearance.eventsToEmit.add(
+            EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
+          )
+        }
         return savedAppearance
       }
   }
@@ -737,6 +751,12 @@ class CourtAppearanceService(
         courtCaseUuid = courtCaseEntity.caseUniqueIdentifier,
         documentUpdates = documentUpdates,
       )
+    } else {
+      courtCaseReferenceService.updateCourtCaseEntity(courtCaseEntity).takeIf { it.hasUpdated }?.let {
+        eventsToEmit.add(
+          EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
+        )
+      }
     }
     courtCaseEntity.latestCourtAppearance =
       CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances - courtAppearanceEntity)

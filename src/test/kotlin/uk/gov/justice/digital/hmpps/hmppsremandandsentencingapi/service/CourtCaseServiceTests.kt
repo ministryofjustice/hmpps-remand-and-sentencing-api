@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.entity.Court
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.CourtCaseEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.CourtCaseRepository
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.repository.audit.CourtCaseHistoryRepository
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.util.UUID
 
 class CourtCaseServiceTests {
@@ -22,6 +23,7 @@ class CourtCaseServiceTests {
   private val serviceUserService = mockk<ServiceUserService>()
   private val fixManyChargesToSentenceService = mockk<FixManyChargesToSentenceService>()
   private val courtCaseHistoryRepository = mockk<CourtCaseHistoryRepository>()
+  private val courtCaseReferenceService = mockk<CourtCaseReferenceService>()
 
   private lateinit var courtCaseService: CourtCaseService
 
@@ -35,6 +37,7 @@ class CourtCaseServiceTests {
       serviceUserService,
       fixManyChargesToSentenceService,
       courtCaseHistoryRepository,
+      courtCaseReferenceService,
     )
 
     every { serviceUserService.getUsername() } returns "test-user"
