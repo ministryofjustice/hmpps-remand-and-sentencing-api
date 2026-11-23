@@ -31,8 +31,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.p
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.recall.RecallableCourtCasesResponse
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.unconfirmedsentencefix.UnconfirmedCourtCases
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.validate.CourtCaseValidationDate
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PagedCourtCaseOrderBy
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.SentenceEntityStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.legacy.controller.dto.CourtCaseLegacyData
@@ -50,10 +48,10 @@ import java.util.UUID
 @Tag(name = "court-case-controller", description = "Court case")
 class CourtCaseController(
   private val courtCaseService: CourtCaseService,
-  private val courtCaseReferenceService: CourtCaseReferenceService,
   private val dpsDomainEventService: DpsDomainEventService,
   private val recallService: RecallService,
   private val uploadedDocumentService: UploadedDocumentService,
+  private val courtCaseReferenceService: CourtCaseReferenceService,
 ) {
 
   @PostMapping("/court-case")
@@ -72,16 +70,6 @@ class CourtCaseController(
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtCase(@RequestBody createCourtCase: CreateCourtCase): CreateCourtCaseResponse {
     val (courtCase, eventsToEmit, documentUpdates) = courtCaseService.createCourtCase(createCourtCase)
-    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
-    if (updatedCourtCaseReferences?.hasUpdated == true) {
-      eventsToEmit.add(
-        EventMetadataCreator.courtCaseEventMetadata(
-          updatedCourtCaseReferences.prisonerId,
-          updatedCourtCaseReferences.courtCaseId,
-          EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED,
-        ),
-      )
-    }
     dpsDomainEventService.emitEvents(eventsToEmit)
     uploadedDocumentService.updateDocumentMetadata(documentUpdates)
     return CreateCourtCaseResponse.from(courtCase.caseUniqueIdentifier, createCourtCase)
@@ -103,16 +91,6 @@ class CourtCaseController(
   @ResponseStatus(HttpStatus.OK)
   fun putCourtCase(@RequestBody createCourtCase: CreateCourtCase, @PathVariable courtCaseUuid: String): CreateCourtCaseResponse {
     val (courtCase, eventsToEmit, documentUpdates) = courtCaseService.putCourtCase(createCourtCase, courtCaseUuid)
-    val updatedCourtCaseReferences = courtCaseReferenceService.updateCourtCaseReferences(courtCase.caseUniqueIdentifier)
-    if (updatedCourtCaseReferences?.hasUpdated == true) {
-      eventsToEmit.add(
-        EventMetadataCreator.courtCaseEventMetadata(
-          updatedCourtCaseReferences.prisonerId,
-          updatedCourtCaseReferences.courtCaseId,
-          EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED,
-        ),
-      )
-    }
     dpsDomainEventService.emitEvents(eventsToEmit)
     uploadedDocumentService.updateDocumentMetadata(documentUpdates)
     return CreateCourtCaseResponse.from(courtCaseUuid, createCourtCase)
@@ -170,7 +148,7 @@ class CourtCaseController(
   @PreAuthorize("hasAnyRole('ROLE_REMAND_SENTENCING__RECORD_RECALL_RW')")
   @Operation(
     summary = "Retrieve recallable court cases for a prisoner",
-    description = "This endpoint returns filtered court cases optimised for recall processing workflows. Only includes ACTIVE cases with SENTENCING warrant type that have sentences.",
+    description = "This endpoint returns filtered court cases optimised for recall processing workflows. Only includes ACTIVE cases that have at least one sentence on an active appearance.",
   )
   @ApiResponses(
     value = [

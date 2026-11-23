@@ -80,6 +80,8 @@ features:
     multipleNotificationsEnabled: false
   appearanceSchedulesEvents:
     enabled: false
+  recallableCourtCases:
+    includeSentencesOnAnyActiveAppearance: true
 
 springdoc:
   api-docs:

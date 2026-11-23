@@ -189,7 +189,7 @@ class CourtCaseEntity(
   @OneToMany
   @JoinColumn(name = "court_case_id")
   @BatchSize(size = 50)
-  var appearances: Set<CourtAppearanceEntity> = emptySet()
+  var appearances: MutableSet<CourtAppearanceEntity> = mutableSetOf()
 
   @OneToOne
   @JoinColumn(name = "latest_court_appearance_id")

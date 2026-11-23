@@ -18,17 +18,14 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearance
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.CreateCourtAppearanceResponse
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.EventType
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.util.EventMetadataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.CourtAppearanceService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.DpsDomainEventService
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.UploadedDocumentService
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.service.legacy.CourtCaseReferenceService
 import java.util.UUID
 
 @RestController
 @Tag(name = "court-appearance-controller", description = "Court Appearances")
-class CourtAppearanceController(private val courtAppearanceService: CourtAppearanceService, private val courtCaseReferenceService: CourtCaseReferenceService, private val dpsDomainEventService: DpsDomainEventService, private val uploadedDocumentService: UploadedDocumentService) {
+class CourtAppearanceController(private val courtAppearanceService: CourtAppearanceService, private val dpsDomainEventService: DpsDomainEventService, private val uploadedDocumentService: UploadedDocumentService) {
 
   @PostMapping("/court-appearance")
   @PreAuthorize("hasAnyRole('ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI')")
@@ -45,11 +42,6 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   )
   @ResponseStatus(HttpStatus.CREATED)
   fun createCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearance(createCourtAppearance)?.let { (appearance, eventsToEmit, documentUpdates) ->
-    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-      eventsToEmit.add(
-        EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
-      )
-    }
     dpsDomainEventService.emitEvents(eventsToEmit)
     uploadedDocumentService.updateDocumentMetadata(documentUpdates)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
@@ -89,11 +81,6 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   )
   @ResponseStatus(HttpStatus.OK)
   fun updateCourtAppearance(@RequestBody createCourtAppearance: CreateCourtAppearance, @PathVariable appearanceUuid: UUID): CreateCourtAppearanceResponse = courtAppearanceService.createCourtAppearanceByAppearanceUuid(createCourtAppearance.copy(appearanceUuid = appearanceUuid), appearanceUuid)?.let { (appearance, eventsToEmit, documentUpdates) ->
-    courtCaseReferenceService.updateCourtCaseReferences(createCourtAppearance.courtCaseUuid!!)?.takeIf { it.hasUpdated }?.let {
-      eventsToEmit.add(
-        EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
-      )
-    }
     dpsDomainEventService.emitEvents(eventsToEmit)
     uploadedDocumentService.updateDocumentMetadata(documentUpdates)
     CreateCourtAppearanceResponse.from(appearance.appearanceUuid)
@@ -116,11 +103,6 @@ class CourtAppearanceController(private val courtAppearanceService: CourtAppeara
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun deleteCourtAppearance(@PathVariable appearanceUuid: UUID) {
     courtAppearanceService.delete(appearanceUuid).let { (records, courtCaseUuid, documentUpdates) ->
-      courtCaseReferenceService.updateCourtCaseReferences(courtCaseUuid)?.takeIf { it.hasUpdated }?.let {
-        records.eventsToEmit.add(
-          EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
-        )
-      }
       dpsDomainEventService.emitEvents(records.eventsToEmit)
       uploadedDocumentService.updateDocumentMetadata(documentUpdates)
     }
