@@ -766,6 +766,7 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
     val session = entityManager.unwrap(Session::class.java)
     session.sessionFactory.statistics.isStatisticsEnabled = true
+    session.sessionFactory.statistics.clear()
     putCourtAppearance(appearanceWithWithNewRef.appearanceUuid, appearanceWithWithNewRef)
     val statistics = session.sessionFactory.statistics
     Assertions.assertThat(statistics.transactionCount).isEqualTo(1)
