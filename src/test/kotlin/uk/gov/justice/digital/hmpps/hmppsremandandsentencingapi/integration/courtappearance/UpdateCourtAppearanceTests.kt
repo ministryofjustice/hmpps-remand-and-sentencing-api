@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.courtappearance
 
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.everyItem
 import org.hamcrest.core.IsNull
+import org.hibernate.Session
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -44,6 +46,9 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sentenceHistoryRepository: SentenceHistoryRepository
+
+  @Autowired
+  private lateinit var entityManager: EntityManager
 
   @Test
   fun `update appearance in existing court case`() {
@@ -758,8 +763,12 @@ class UpdateCourtAppearanceTests : IntegrationTestBase() {
       courtCaseReference = newRef,
       courtCaseUuid = caseUuid,
     )
-    putCourtAppearance(appearanceWithWithNewRef.appearanceUuid, appearanceWithWithNewRef)
 
+    val session = entityManager.unwrap(Session::class.java)
+    session.sessionFactory.statistics.isStatisticsEnabled = true
+    putCourtAppearance(appearanceWithWithNewRef.appearanceUuid, appearanceWithWithNewRef)
+    val statistics = session.sessionFactory.statistics
+    Assertions.assertThat(statistics.transactionCount).isEqualTo(1)
     val courtCaseAfter = getCourtCase(caseUuid)
     assertThat(courtCaseAfter.legacyData!!.caseReferences.map { it.offenderCaseReference }).containsExactly(newRef)
   }
