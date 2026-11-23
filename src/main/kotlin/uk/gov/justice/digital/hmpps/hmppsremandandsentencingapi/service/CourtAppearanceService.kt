@@ -77,6 +77,7 @@ class CourtAppearanceService(
         val courtAppearance = createCourtAppearance(createCourtAppearance, courtCaseEntity, courtCaseHierarchyData)
         courtCaseEntity.latestCourtAppearance =
           CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + courtAppearance.record)
+        courtCaseEntity.appearances.add(courtAppearance.record)
         courtCaseReferenceService.updateCourtCaseEntity(courtCaseEntity).takeIf { it.hasUpdated }?.let {
           courtAppearance.eventsToEmit.add(
             EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
@@ -116,6 +117,7 @@ class CourtAppearanceService(
         }
         courtCaseEntity.latestCourtAppearance =
           CourtAppearanceEntity.getLatestCourtAppearance(courtCaseEntity.appearances + savedAppearance.record)
+        courtCaseEntity.appearances.add(savedAppearance.record)
         courtCaseReferenceService.updateCourtCaseEntity(courtCaseEntity).takeIf { it.hasUpdated }?.let {
           savedAppearance.eventsToEmit.add(
             EventMetadataCreator.courtCaseEventMetadata(it.prisonerId, it.courtCaseId, EventType.LEGACY_COURT_CASE_REFERENCES_UPDATED),
