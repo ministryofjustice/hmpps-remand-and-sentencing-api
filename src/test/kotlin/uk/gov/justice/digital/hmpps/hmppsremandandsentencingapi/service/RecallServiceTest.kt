@@ -166,7 +166,7 @@ class RecallServiceTest {
       overallConvictionDate = null,
     )
 
-    courtCase.appearances = setOf(
+    courtCase.appearances = mutableSetOf(
       activeNonSentencingOne,
       activeNonSentencingTwo,
       recallSentencingAppearance,
@@ -230,7 +230,7 @@ class RecallServiceTest {
       nextCourtAppearance = null,
       overallConvictionDate = null,
     )
-    courtCase.appearances = courtCase.appearances + sentencingAppearance
+    courtCase.appearances = (courtCase.appearances + sentencingAppearance).toMutableSet()
 
     every {
       courtCaseRepository.findSentencedCourtCasesByPrisonerId(DpsDataCreator.DEFAULT_PRISONER_ID)
@@ -965,7 +965,7 @@ class RecallServiceTest {
       },
     )
 
-    courtCase.appearances = setOf(appearance)
+    courtCase.appearances = mutableSetOf(appearance)
     courtCase.latestCourtAppearance = appearance
 
     return courtCase
@@ -1055,7 +1055,7 @@ class RecallServiceTest {
         createdPrison = "TEST",
       ),
     )
-    courtCase.appearances = setOf(appearance)
+    courtCase.appearances = mutableSetOf(appearance)
     courtCase.latestCourtAppearance = appearance
     return courtCase
   }

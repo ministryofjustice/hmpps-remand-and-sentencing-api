@@ -28,11 +28,6 @@ import java.time.ZonedDateTime
 class CourtCaseReferenceService(private val courtCaseRepository: CourtCaseRepository, val courtAppearanceRepository: CourtAppearanceRepository, private val serviceUserService: ServiceUserService, private val courtAppearanceHistoryRepository: CourtAppearanceHistoryRepository, private val courtCaseHistoryRepository: CourtCaseHistoryRepository, private val objectMapper: ObjectMapper) {
 
   @Transactional
-  fun updateCourtCaseReferences(caseUniqueIdentifier: String): UpdatedCourtCaseReferences? = courtCaseRepository.findByCaseUniqueIdentifier(caseUniqueIdentifier)?.let { courtCaseEntity ->
-    updateCourtCaseEntity(courtCaseEntity)
-  }
-
-  @Transactional
   fun updateCourtCaseEntity(courtCaseEntity: CourtCaseEntity): UpdatedCourtCaseReferences {
     val appearanceStatuses = courtCaseEntity.appearances.groupBy { it.statusId == CourtAppearanceEntityStatus.ACTIVE }
     val activeCaseReferences = appearanceStatuses.getOrDefault(true, emptySet())
