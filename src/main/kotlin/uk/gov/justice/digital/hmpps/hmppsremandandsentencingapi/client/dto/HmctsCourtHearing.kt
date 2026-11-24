@@ -14,7 +14,6 @@ data class HmctsCourtHearing(
   val hearingType: String,
   val documents: List<HmctsCourHearingDocument>,
   val charges: List<HmctsCourtCharge> = emptyList(),
-  val nextHearing: HmctsNextCourtHearing? = null,
 ) {
   fun isRemandHearing() = documents.any { it.isRemandWarrant() }
   fun isSentenceHearing() = documents.any { it.isSentenceWarrant() }
@@ -49,6 +48,7 @@ data class HmctsCourtResult(
   val code: String,
   val description: String,
   val keyValuePairs: List<ResultKeyValue>,
+  val nextHearing: HmctsNextCourtHearing? = null,
 ) {
   fun hasAnySentencingKey(): Boolean = HmctsResultKeys.entries.filter { it.sentencing }.any { findValue(it) != null }
   fun findValue(key: HmctsResultKeys): String? = keyValuePairs.firstOrNull { it.key == key.key }?.value

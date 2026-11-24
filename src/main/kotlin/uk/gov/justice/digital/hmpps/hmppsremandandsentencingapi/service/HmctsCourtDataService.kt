@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.Docum
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtCharge
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsCourtResult
-import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsNextCourtHearing
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.HmctsResultKeys
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.client.dto.PrisonSearchDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.AggravatingFactor
@@ -78,7 +77,7 @@ class HmctsCourtDataService(
       criminalAppealOfficeReference = null,
       appearanceDate = hearing.hearingDate,
       warrantType = mapWarrantType(hearing),
-      nextCourtAppearance = hearing.nextHearing?.let { mapNextCourtAppearance(it, hearing.charges) },
+      nextCourtAppearance = mapNextCourtAppearance(hearing),
       charges = charges,
       overallConvictionDate = overallConvictionDate(charges),
       legacyData = null,
@@ -163,22 +162,16 @@ class HmctsCourtDataService(
     }
   }
 
-  private fun mapNextCourtAppearance(nextAppearance: HmctsNextCourtHearing, charges: List<HmctsCourtCharge>): NextCourtAppearance {
-    val hearingDate = nextAppearance.hearingDate?.toLocalDate() ?: return blankNextCourtAppearance()
-    val chargeLevelNextAppearanceDates = charges.flatMap { charge ->
-      charge.results.filter { result -> NEXT_COURT_APPEARANCE_RESULT_CODES.contains(result.code) }
-        .mapNotNull {
-          val date = it.findValue(HmctsResultKeys.DATE_OF_HEARING) ?: return@mapNotNull null
-          LocalDate.parse(date, PCR_DATE_FORMAT)
-        }
-    }.toMutableList()
-
-    chargeLevelNextAppearanceDates += charges.flatMap { it.results }
-      .mapNotNull { it.findValue(HmctsResultKeys.NEXT_HEARING_IN_MAGISTRATES_COURT) }
-      .mapNotNull { NEXT_MAGISTRATE_REGEX.find(it)?.groupValues?.get(1) }
-      .map { LocalDate.parse(it, PCR_DATE_FORMAT) }
-
-    if (chargeLevelNextAppearanceDates.any { it != hearingDate }) {
+  private fun mapNextCourtAppearance(hearing: HmctsCourtHearing): NextCourtAppearance? {
+    val nextHearings = hearing.charges.flatMap { it.results.mapNotNull { result -> result.nextHearing } }.distinct()
+    if (nextHearings.isEmpty()) {
+      return null
+    }
+    if (nextHearings.size > 1) {
+      return blankNextCourtAppearance()
+    }
+    val nextAppearance = nextHearings.first()
+    if (nextAppearance.hearingDate == null) {
       return blankNextCourtAppearance()
     }
     return NextCourtAppearance(
