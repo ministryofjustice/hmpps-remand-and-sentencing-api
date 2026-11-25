@@ -45,7 +45,15 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
 
   fun findBySentenceTypeUuidIn(sentenceTypeUuids: List<UUID>): List<SentenceTypeEntity>
 
-  fun findByChargeOutcomesOutcomeUuid(chargeOutcomeUuid: UUID): List<SentenceTypeEntity>
+  @Query(
+    """
+    select ste from SentenceTypeEntity ste
+    join ste.chargeOutcomes coste
+    join coste.chargeOutcome co
+    where co.outcomeUuid = :chargeOutcomeUuid and (coste.maxDateExclusive > :convictionDate or coste.maxDateExclusive is null)
+  """,
+  )
+  fun findByChargeOutcomeAndConvictionDate(chargeOutcomeUuid: UUID, convictionDate: LocalDate): List<SentenceTypeEntity>
 
   fun findByNomisCjaCodeAndNomisSentenceCalcType(nomisCjaCode: String, nomisSentenceCalcType: String): SentenceTypeEntity?
 
@@ -54,7 +62,8 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
   @Query(
     """
       select co from SentenceTypeEntity ste
-      join ste.chargeOutcomes co
+      join ste.chargeOutcomes cost
+      join cost.chargeOutcome co
     """,
   )
   fun findChargeOutcomes(): List<ChargeOutcomeEntity>

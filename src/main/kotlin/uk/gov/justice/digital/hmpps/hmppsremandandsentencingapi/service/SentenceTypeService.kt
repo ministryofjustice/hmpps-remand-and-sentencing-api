@@ -26,7 +26,7 @@ class SentenceTypeService(
 ) {
 
   fun search(age: Int, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>, offenceDate: LocalDate, chargeOutcomeUuid: UUID?): List<SentenceTypeDetails> {
-    val chargeOutcomeSentenceTypes = chargeOutcomeUuid?.let { sentenceTypeRepository.findByChargeOutcomesOutcomeUuid(it).map { sentenceType -> sentenceType.id } }?.takeIf { it.isNotEmpty() }
+    val chargeOutcomeSentenceTypes = chargeOutcomeUuid?.let { sentenceTypeRepository.findByChargeOutcomeAndConvictionDate(it, convictionDate).map { sentenceType -> sentenceType.id } }?.takeIf { it.isNotEmpty() }
     return sentenceTypeRepository.searchSentenceTypes(
       age,
       convictionDate,

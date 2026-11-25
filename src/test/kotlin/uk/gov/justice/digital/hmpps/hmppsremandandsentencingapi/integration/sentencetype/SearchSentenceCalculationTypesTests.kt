@@ -157,6 +157,57 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
     sentenceTypeRepository.delete(sentenceTypeNotAssociatedToChargeOutcome)
   }
 
+  @Test
+  fun `filter out sentence types with charge outcome by conviction date`() {
+    val convictionDate = LocalDate.of(2012, 11, 19)
+    val offenceDate = LocalDate.of(2000, 11, 19)
+    val age = 18
+    val imprisonmentChargeOutcomeUuid = "f17328cf-ceaa-43c2-930a-26cf74480e18"
+    val scheduleB1991 = sentenceTypeRepository.findBySentenceTypeUuid(UUID.fromString("75d642f1-a1ed-4dab-a630-ccecd7de93c7"))!!
+    scheduleB1991.status = ReferenceEntityStatus.ACTIVE
+    sentenceTypeRepository.save(scheduleB1991)
+    val scehduleB1967 = sentenceTypeRepository.findBySentenceTypeUuid(UUID.fromString("01a1ee53-dbb4-770e-9815-6e93c32ae47d"))!!
+    scehduleB1967.status = ReferenceEntityStatus.ACTIVE
+    sentenceTypeRepository.save(scehduleB1967)
+
+    val result = webTestClient.get()
+      .uri(
+        "/sentence-type/search?age=$age&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}&chargeOutcomeUuid=$imprisonmentChargeOutcomeUuid",
+      )
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
+      .returnResult().responseBody!!
+
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.containsExactlyInAnyOrderElementsOf(listOf(scheduleB1991.sentenceTypeUuid, scehduleB1967.sentenceTypeUuid))
+  }
+
+  @Test
+  fun `keeps sentence types with charge outcome beyond conviction date`() {
+    val convictionDate = LocalDate.of(2020, 11, 19)
+    val offenceDate = LocalDate.of(2000, 11, 19)
+    val age = 18
+    val imprisonmentChargeOutcomeUuid = "f17328cf-ceaa-43c2-930a-26cf74480e18"
+
+    val result = webTestClient.get()
+      .uri(
+        "/sentence-type/search?age=$age&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}&chargeOutcomeUuid=$imprisonmentChargeOutcomeUuid",
+      )
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
+      .returnResult().responseBody!!
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("8d04557c-8e54-4e2a-844f-272163fca833"))
+  }
+
   @ParameterizedTest(name = "Sentence type bucket test, age {0} on conviction date {1} and offence date {3}")
   @MethodSource("sentenceTypeParameters")
   fun `sentence type bucket tests`(age: Int, convictionDate: LocalDate, expectedDescriptions: List<String>, offenceDate: LocalDate) {

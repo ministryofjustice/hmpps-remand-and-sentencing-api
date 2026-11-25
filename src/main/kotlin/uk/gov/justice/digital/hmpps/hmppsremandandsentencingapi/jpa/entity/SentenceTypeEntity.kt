@@ -8,9 +8,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
-import jakarta.persistence.ManyToMany
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.DynamicUpdate
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.CreateSentenceType
@@ -45,13 +43,8 @@ class SentenceTypeEntity(
   var status: ReferenceEntityStatus,
   @Column(name = "is_recallable")
   var isRecallable: Boolean,
-  @ManyToMany(cascade = [CascadeType.ALL])
-  @JoinTable(
-    name = "charge_outcome_sentence_type",
-    joinColumns = [JoinColumn(name = "sentence_type_id")],
-    inverseJoinColumns = [JoinColumn(name = "charge_outcome_id")],
-  )
-  val chargeOutcomes: MutableSet<ChargeOutcomeEntity> = mutableSetOf(),
+  @OneToMany(mappedBy = "sentenceType", cascade = [CascadeType.ALL])
+  val chargeOutcomes: MutableSet<ChargeOutcomeSentenceTypeEntity> = mutableSetOf(),
 ) {
 
   fun updateFrom(existingUuid: UUID, updateSentenceType: CreateSentenceType) {
