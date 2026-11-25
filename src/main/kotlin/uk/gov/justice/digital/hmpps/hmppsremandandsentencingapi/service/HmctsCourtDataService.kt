@@ -35,7 +35,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Period
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.collections.isNotEmpty
 
@@ -249,7 +248,7 @@ class HmctsCourtDataService(
     resultsWithMapping: List<HmctsCourtResult>?,
     outcome: ChargeOutcome?,
   ): Sentence? {
-    if (resultsWithMapping?.size != 1 || outcome == null || charge.convictionDate == null) {
+    if (resultsWithMapping?.size != 1 || outcome == null || outcome.outcomeType != "SENTENCING") {
       return null
     }
 
@@ -262,20 +261,29 @@ class HmctsCourtDataService(
       return null
     }
 
-    val expectedClassification = classificationFromHmctsResultCode(result.code)
-    val convictionDate = charge.convictionDate
-    val age = Period.between(prisoner.dateOfBirth, convictionDate).years
-    val offenceDate = charge.endDate ?: charge.startDate
-    val sentenceTypes = sentenceTypeService.search(
-      age,
-      convictionDate,
-      listOf(ReferenceEntityStatus.ACTIVE),
-      offenceDate,
-      outcome.outcomeUuid,
-    ).filter {
-      val classificationMatches = expectedClassification == null || expectedClassification == it.classification
-      val ora = expectedClassification != SentenceTypeClassification.STANDARD || it.description.contains("ORA") != offenceDate.isBefore(ORA_DATE)
-      return@filter classificationMatches && ora
+    var expectedClassification: SentenceTypeClassification? = null
+    val sentenceTypes = if (charge.convictionDate == null) {
+      emptyList()
+    } else {
+      expectedClassification = classificationFromHmctsResultCode(result.code)
+      val convictionDate = charge.convictionDate
+      val age = Period.between(prisoner.dateOfBirth, convictionDate).years
+      val offenceDate = charge.endDate ?: charge.startDate
+      sentenceTypeService.search(
+        age,
+        convictionDate,
+        listOf(ReferenceEntityStatus.ACTIVE),
+        offenceDate,
+        outcome.outcomeUuid,
+      ).filter {
+        val classificationMatches = expectedClassification == null || expectedClassification == it.classification
+        val ora =
+          expectedClassification != SentenceTypeClassification.STANDARD ||
+            it.description.contains("ORA") != offenceDate.isBefore(
+              ORA_DATE,
+            )
+        return@filter classificationMatches && ora
+      }
     }
 
     val sentenceType = if (sentenceTypes.size != 1) {
@@ -314,7 +322,7 @@ class HmctsCourtDataService(
       consecutiveToSentenceUuid = null,
       sentenceServeType = if (consecutive) "CONSECUTIVE" else "CONCURRENT",
       sentenceType = sentenceType,
-      convictionDate = convictionDate,
+      convictionDate = charge.convictionDate,
       fineAmount = null,
       legacyData = null,
       hasRecall = false,
@@ -364,10 +372,7 @@ class HmctsCourtDataService(
 
   companion object {
     private const val FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE = "FODA"
-    private val NEXT_COURT_APPEARANCE_RESULT_CODES = listOf("NHMC", "NHCSSS")
     private val SUSPENDED_SENTENCE_RESULT_CODES = listOf("SSI", "SSIV", "SSID", "SSIDV")
-    val PCR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    private val NEXT_MAGISTRATE_REGEX = Regex("""Date of hearing:\s*(\d{2}/\d{2}/\d{4})""")
     val ORA_DATE = LocalDate.of(2015, 2, 1)
     private val log = LoggerFactory.getLogger(this::class.java)
     val OUTCOME_TYPE_IMPORTANCE_ORDER = listOf(
