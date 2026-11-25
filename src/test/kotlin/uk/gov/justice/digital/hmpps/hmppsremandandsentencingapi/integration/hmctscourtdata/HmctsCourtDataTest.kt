@@ -2,7 +2,9 @@ package uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.hmc
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -67,31 +69,139 @@ class HmctsCourtDataTest : IntegrationTestBase() {
     )
   }
 
-  @Test
-  fun `Test get remand appearance from hmcts data`() {
-    val hmctsCourtHearing = HMCTS_REMAND_HEARING
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
+  @Nested
+  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+  inner class RemandAppearanceTests {
+    @Test
+    fun `Test get remand appearance from hmcts data`() {
+      val hmctsCourtHearing = HMCTS_REMAND_HEARING
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
 
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response).isEqualTo(
-      CourtAppearance(
-        appearanceUuid = response.appearanceUuid, // Random UUID
-        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
-        outcome = CourtAppearanceOutcome(
+      Assertions.assertThat(response).isEqualTo(
+        CourtAppearance(
+          appearanceUuid = response.appearanceUuid, // Random UUID
+          hmctsCourtHearingId = hmctsCourtHearing.hearingId,
+          outcome = CourtAppearanceOutcome(
+            outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
+            outcomeName = "Remand in custody",
+            nomisCode = "4531",
+            outcomeType = "REMAND",
+            displayOrder = 70,
+            relatedChargeOutcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+            isSubList = false,
+            dispositionCode = "INTERIM",
+            status = ReferenceEntityStatus.ACTIVE,
+            warrantType = "NON_SENTENCING",
+          ),
+          courtCode = COURT_REGISTER_ID,
+          courtCaseReference = "ABC123",
+          criminalAppealOfficeReference = null,
+          appearanceDate = LocalDate.parse("2026-01-01"),
+          warrantType = "NON_SENTENCING",
+          nextCourtAppearance = NextCourtAppearance(
+            appearanceDate = LocalDate.of(2026, 8, 15),
+            appearanceTime = LocalTime.of(10, 0),
+            courtCode = HMCTS_REMANDED_CHARGE.results.first().nextHearing!!.hmppsCourtId!!,
+            appearanceType = AppearanceType(
+              appearanceTypeUuid = Constants.nilUUID,
+              description = "Unknown appearance type",
+              displayOrder = 1,
+              hasSubtypes = false,
+            ),
+            futureSkeletonAppearanceUuid = Constants.nilUUID,
+            courtAppearanceSubType = null,
+            hmctsCourtHearingId = HMCTS_REMANDED_CHARGE.results.first().nextHearing!!.hearingId,
+          ),
+          charges = listOf(
+            Charge(
+              chargeUuid = response.charges.first().chargeUuid,
+              hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+              offenceCode = "TH68001",
+              offenceStartDate = LocalDate.of(2026, 6, 15),
+              offenceEndDate = LocalDate.of(2026, 7, 15),
+              outcome = ChargeOutcome(
+                outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
+                outcomeName = "Remand in custody",
+                nomisCode = "4531",
+                outcomeType = "REMAND",
+                displayOrder = 570,
+                dispositionCode = "INTERIM",
+                status = ReferenceEntityStatus.ACTIVE,
+              ),
+              aggravatingFactors = emptyList(),
+              sentence = null,
+              legacyData = null,
+              mergedFromCase = null,
+              createdAt = response.charges.first().createdAt,
+              findingOfDomesticAbuse = null,
+            ),
+          ),
+          overallConvictionDate = null,
+          legacyData = null,
+          documents = listOf(
+            UploadedDocument(
+              documentUUID = DOCUMENT_ID,
+              documentType = "HMCTS_WARRANT",
+              fileName = "warrant.pdf",
+            ),
+          ),
+          source = EventSource.DPS,
+          deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+          periodLengths = emptyList(),
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get remand appearance from with offence outcomes different outcome types`() {
+      val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
+        charges = listOf(
+          HMCTS_REMANDED_CHARGE.copy(),
+          HMCTS_REMANDED_CHARGE.copy(
+            results = listOf(
+              HmctsCourtResult(
+                code = "WDRN",
+                description = "Withdrwan",
+                keyValuePairs = emptyList(),
+              ),
+            ),
+          ),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.outcome).isEqualTo(
+        CourtAppearanceOutcome(
           outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
           outcomeName = "Remand in custody",
           nomisCode = "4531",
@@ -103,983 +213,250 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           status = ReferenceEntityStatus.ACTIVE,
           warrantType = "NON_SENTENCING",
         ),
-        courtCode = COURT_REGISTER_ID,
-        courtCaseReference = "ABC123",
-        criminalAppealOfficeReference = null,
-        appearanceDate = LocalDate.parse("2026-01-01"),
-        warrantType = "NON_SENTENCING",
-        nextCourtAppearance = NextCourtAppearance(
-          appearanceDate = LocalDate.of(2026, 8, 15),
-          appearanceTime = LocalTime.of(10, 0),
-          courtCode = HMCTS_REMANDED_CHARGE.results.first().nextHearing!!.hmppsCourtId!!,
-          appearanceType = AppearanceType(
-            appearanceTypeUuid = Constants.nilUUID,
-            description = "Unknown appearance type",
-            displayOrder = 1,
-            hasSubtypes = false,
+      )
+    }
+
+    @Test
+    fun `Test get remand appearance from with offence outcomes different outcomes same types`() {
+      val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
+        charges = listOf(
+          HMCTS_REMANDED_CHARGE.copy(),
+          HMCTS_REMANDED_CHARGE.copy(
+            results = listOf(
+              HmctsCourtResult(
+                code = "CCII",
+                description = "Crown court remand",
+                keyValuePairs = emptyList(),
+              ),
+            ),
           ),
-          futureSkeletonAppearanceUuid = Constants.nilUUID,
-          courtAppearanceSubType = null,
-          hmctsCourtHearingId = HMCTS_REMANDED_CHARGE.results.first().nextHearing!!.hearingId,
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.outcome).isNull()
+    }
+
+    @Test
+    fun `Test get minimal remand appearance from hmcts data`() {
+      val hmctsCourtHearing = HmctsCourtHearing(
+        hearingId = HMCTS_HEARING_ID,
+        courtName = "My court",
+        courtCode = null,
+        courtId = UUID.randomUUID(),
+        hearingDate = LocalDate.of(2026, 1, 1),
+        caseReferences = listOf("ABC123", "EFG456"),
+        hearingType = "First hearing",
+        documents = listOf(
+          HmctsCourHearingDocument(
+            "REMAND_WARRANT",
+            DOCUMENT_ID,
+          ),
         ),
         charges = listOf(
-          Charge(
-            chargeUuid = response.charges.first().chargeUuid,
-            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
-            offenceCode = "TH68001",
-            offenceStartDate = LocalDate.of(2026, 6, 15),
-            offenceEndDate = LocalDate.of(2026, 7, 15),
-            outcome = ChargeOutcome(
-              outcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
-              outcomeName = "Remand in custody",
-              nomisCode = "4531",
-              outcomeType = "REMAND",
-              displayOrder = 570,
-              dispositionCode = "INTERIM",
-              status = ReferenceEntityStatus.ACTIVE,
+          HmctsCourtCharge(
+            chargeId = UUID.randomUUID(),
+            listingNumber = null,
+            offenceLegislation = null,
+            pleaDate = null,
+            pleaValue = null,
+            startDate = LocalDate.of(2026, 6, 15),
+            endDate = null,
+            title = "Theft from the person of another",
+            wording = "Theft from the person of another",
+            code = "TH68001",
+            convictionDate = null,
+            results = listOf(
+              HmctsCourtResult(
+                code = "XXX",
+                description = "Unknown outcome",
+                keyValuePairs = emptyList(),
+              ),
             ),
-            aggravatingFactors = emptyList(),
-            sentence = null,
-            legacyData = null,
-            mergedFromCase = null,
-            createdAt = response.charges.first().createdAt,
-            findingOfDomesticAbuse = null,
           ),
         ),
-        overallConvictionDate = null,
-        legacyData = null,
-        documents = listOf(
-          UploadedDocument(
-            documentUUID = DOCUMENT_ID,
-            documentType = "HMCTS_WARRANT",
-            fileName = "warrant.pdf",
-          ),
-        ),
-        source = EventSource.DPS,
-        deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
-        periodLengths = emptyList(),
-      ),
-    )
-  }
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
 
-  @Test
-  fun `Test get appearance from hmcts standard sentence data`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
 
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response).isEqualTo(
-      CourtAppearance(
-        appearanceUuid = response.appearanceUuid, // Random UUID
-        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
-        outcome = CourtAppearanceOutcome(
-          outcomeUuid = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
-          outcomeName = "Imprisonment",
-          nomisCode = "1002",
-          outcomeType = "SENTENCING",
-          displayOrder = 10,
-          relatedChargeOutcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
-          isSubList = false,
-          dispositionCode = "FINAL",
-          status = ReferenceEntityStatus.ACTIVE,
-          warrantType = "SENTENCING",
-        ),
-        courtCode = COURT_REGISTER_ID,
-        courtCaseReference = "ABC123",
-        criminalAppealOfficeReference = null,
-        appearanceDate = LocalDate.parse("2026-10-01"),
-        warrantType = "SENTENCING",
-        nextCourtAppearance = null,
-        charges = listOf(
-          Charge(
-            chargeUuid = response.charges.first().chargeUuid,
-            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
-            offenceCode = "TH68001",
-            offenceStartDate = LocalDate.of(2026, 6, 15),
-            offenceEndDate = LocalDate.of(2026, 7, 15),
-            outcome = ChargeOutcome(
-              outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
-              outcomeName = "Imprisonment",
-              nomisCode = "1002",
-              outcomeType = "SENTENCING",
-              displayOrder = 10,
-              dispositionCode = "FINAL",
-              status = ReferenceEntityStatus.ACTIVE,
-            ),
-            aggravatingFactors = listOf(
-              AggravatingFactor(
-                code = "OAFPC",
-                title = "Offence aggravated by foreign power condition being met",
-                description = "Offence aggravated by foreign power condition being met",
-                displayOrder = 10,
-              ),
-              AggravatingFactor(
-                code = "OATC",
-                title = "Offence Aggravated by Terrorist Connection",
-                description = "Offence Aggravated by Terrorist Connection",
-                displayOrder = 20,
-              ),
-            ),
-            sentence = Sentence(
-              sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-              chargeNumber = "-1",
-              periodLengths = listOf(
-                PeriodLength(
-                  years = 1,
-                  months = null,
-                  weeks = null,
-                  days = 60,
-                  periodOrder = "years,months,weeks,days",
-                  periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-                  legacyData = null,
-                  periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
-                ),
-              ),
-              sentenceServeType = "FORTHWITH",
-              sentenceType = SentenceType(
-                sentenceTypeUuid = UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"),
-                description = "ORA SDS (Offender rehabilitation act standard determinate sentence)",
-                classification = SentenceTypeClassification.STANDARD,
-                hintText = null,
-                displayOrder = 40,
-              ),
-              convictionDate = LocalDate.of(2026, 10, 1),
-              fineAmount = null,
+      Assertions.assertThat(response).isEqualTo(
+        CourtAppearance(
+          appearanceUuid = response.appearanceUuid, // Random UUID
+          hmctsCourtHearingId = hmctsCourtHearing.hearingId,
+          outcome = null,
+          courtCode = Constants.nilUUID.toString(),
+          courtCaseReference = "ABC123",
+          criminalAppealOfficeReference = null,
+          appearanceDate = LocalDate.parse("2026-01-01"),
+          warrantType = "NON_SENTENCING",
+          nextCourtAppearance = null,
+          charges = listOf(
+            Charge(
+              chargeUuid = response.charges.first().chargeUuid,
+              hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+              offenceCode = "TH68001",
+              offenceStartDate = LocalDate.of(2026, 6, 15),
+              offenceEndDate = null,
+              outcome = null,
+              aggravatingFactors = emptyList(),
+              sentence = null,
               legacyData = null,
-              consecutiveToSentenceUuid = null,
-              hasRecall = false,
-              status = SentenceEntityStatus.ACTIVE,
-            ),
-            legacyData = null,
-            mergedFromCase = null,
-            createdAt = response.charges.first().createdAt,
-            findingOfDomesticAbuse = true,
-          ),
-        ),
-        overallConvictionDate = LocalDate.of(2026, 10, 1),
-        legacyData = null,
-        documents = listOf(
-          UploadedDocument(
-            documentUUID = DOCUMENT_ID,
-            documentType = "HMCTS_WARRANT",
-            fileName = "warrant.pdf",
-          ),
-        ),
-        source = EventSource.DPS,
-        deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
-        periodLengths = listOf(
-          PeriodLength(
-            years = 1,
-            months = null,
-            weeks = null,
-            days = 60,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.OVERALL_SENTENCE_LENGTH,
-            legacyData = null,
-            periodLengthUuid = response.periodLengths.first().periodLengthUuid,
-          ),
-        ),
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get appearance from hmcts standard sentence data with other non sentencing mapped results`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(
-        HMCTS_SENTENCED_CHARGE.copy(
-          results = HMCTS_SENTENCED_CHARGE.results + HmctsCourtResult(
-            code = "COEW",
-            description = "Community order",
-            keyValuePairs = emptyList(),
-          ),
-        ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first().outcome).isEqualTo(
-      ChargeOutcome(
-        outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
-        outcomeName = "Imprisonment",
-        nomisCode = "1002",
-        outcomeType = "SENTENCING",
-        displayOrder = 10,
-        dispositionCode = "FINAL",
-        status = ReferenceEntityStatus.ACTIVE,
-      ),
-    )
-    Assertions.assertThat(response.charges.first().sentence).isNotNull
-  }
-
-  @Test
-  fun `Test get appearance from hmcts DTO sentence data`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(
-        HMCTS_SENTENCED_CHARGE.copy(
-          results = listOf(
-            HMCTS_SENTENCED_RESULT.copy(
-              code = "DTO",
-              keyValuePairs = listOf(
-                ResultKeyValue(
-                  key = "Period of detention and training",
-                  value = "2 Years 10 Weeks",
-                ),
-              ),
+              mergedFromCase = null,
+              createdAt = response.charges.first().createdAt,
+              findingOfDomesticAbuse = null,
             ),
           ),
-          startDate = LocalDate.of(2016, 8, 15),
-          endDate = null,
-          convictionDate = CONVICTION_2020_ACT_DATE,
-        ),
-      ),
-    )
-    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
-      DEFAULT_PRISONER_ID,
-      PrisonSearchDetails(
-        "KMI",
-        "Kirkham (HMP)",
-        CONVICTION_2020_ACT_DATE.minusYears(17),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
-      Sentence(
-        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = "-1",
-        periodLengths = listOf(
-          PeriodLength(
-            years = 2,
-            months = null,
-            weeks = 10,
-            days = null,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.TERM_LENGTH,
-            legacyData = null,
-            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
-          ),
-        ),
-        sentenceServeType = "FORTHWITH",
-        sentenceType = SentenceType(
-          sentenceTypeUuid = UUID.fromString("903ca33b-e264-4a16-883d-fee03a2a3396"),
-          description = "ORA Detention and Training Order",
-          classification = SentenceTypeClassification.DTO,
-          hintText = null,
-          displayOrder = 230,
-        ),
-        convictionDate = CONVICTION_2020_ACT_DATE,
-        fineAmount = null,
-        legacyData = null,
-        consecutiveToSentenceUuid = null,
-        hasRecall = false,
-        status = SentenceEntityStatus.ACTIVE,
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get appearance from hmcts EDS sentence data`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(
-        HMCTS_SENTENCED_CHARGE.copy(
-          results = listOf(
-            HMCTS_SENTENCED_RESULT.copy(
-              code = "EXTDVSU",
-              keyValuePairs = listOf(
-                ResultKeyValue(
-                  key = "Appropriate custodial term",
-                  value = "5 Years",
-                ),
-                ResultKeyValue(
-                  key = "Extension period",
-                  value = "30 Months",
-                ),
-              ),
-            ),
-          ),
-          convictionDate = CONVICTION_2020_ACT_DATE,
-        ),
-      ),
-    )
-    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
-      DEFAULT_PRISONER_ID,
-      PrisonSearchDetails(
-        "KMI",
-        "Kirkham (HMP)",
-        CONVICTION_2020_ACT_DATE.minusYears(17),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
-      Sentence(
-        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = "-1",
-        periodLengths = listOf(
-          PeriodLength(
-            years = 5,
-            months = null,
-            weeks = null,
-            days = null,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.CUSTODIAL_TERM,
-            legacyData = null,
-            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
-          ),
-          PeriodLength(
-            years = null,
-            months = 30,
-            weeks = null,
-            days = null,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.LICENCE_PERIOD,
-            legacyData = null,
-            periodLengthUuid = response.charges.first().sentence!!.periodLengths.last().periodLengthUuid,
-          ),
-        ),
-        sentenceServeType = "FORTHWITH",
-        sentenceType = SentenceType(
-          sentenceTypeUuid = UUID.fromString("f1ddc9d6-3c2e-419a-b54d-4e05c92a0f55"),
-          description = "EDS (Extended Determinate Sentence)",
-          classification = SentenceTypeClassification.EXTENDED,
-          hintText = null,
-          displayOrder = 20,
-        ),
-        convictionDate = CONVICTION_2020_ACT_DATE,
-        fineAmount = null,
-        legacyData = null,
-        consecutiveToSentenceUuid = null,
-        hasRecall = false,
-        status = SentenceEntityStatus.ACTIVE,
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get appearance from hmcts SOPC sentence data`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(
-        HMCTS_SENTENCED_CHARGE.copy(
-          results = listOf(
-            HMCTS_SENTENCED_RESULT.copy(
-              code = "SPECC",
-              keyValuePairs = listOf(
-                ResultKeyValue(
-                  key = "Imprisonment Period",
-                  value = "8 Years",
-                ),
-              ),
-            ),
-          ),
-          convictionDate = CONVICTION_2020_ACT_DATE,
-        ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
-      Sentence(
-        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = "-1",
-        periodLengths = listOf(
-          PeriodLength(
-            years = 8,
-            months = null,
-            weeks = null,
-            days = null,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-            legacyData = null,
-            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
-          ),
-          PeriodLength(
-            years = 1,
-            months = null,
-            weeks = null,
-            days = null,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.LICENCE_PERIOD,
-            legacyData = null,
-            periodLengthUuid = response.charges.first().sentence!!.periodLengths.last().periodLengthUuid,
-          ),
-        ),
-        sentenceServeType = "FORTHWITH",
-        sentenceType = SentenceType(
-          sentenceTypeUuid = UUID.fromString("deb22e75-2335-44de-8a9f-1047d58c9b04"),
-          description = "SOPC (offenders of a particular concern)",
-          classification = SentenceTypeClassification.SOPC,
-          hintText = "A mandatory licence period of 12 months will be automatically added to the sentence",
-          displayOrder = 30,
-        ),
-        convictionDate = CONVICTION_2020_ACT_DATE,
-        fineAmount = null,
-        legacyData = null,
-        consecutiveToSentenceUuid = null,
-        hasRecall = false,
-        status = SentenceEntityStatus.ACTIVE,
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get appearance from hmcts MLI sentence data`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(
-        HMCTS_SENTENCED_CHARGE.copy(
-          results = listOf(
-            HMCTS_SENTENCED_RESULT.copy(
-              code = "MLI",
-              keyValuePairs = listOf(
-                ResultKeyValue(
-                  key = "Minimum term",
-                  value = "30 Years",
-                ),
-              ),
-            ),
-          ),
-          convictionDate = CONVICTION_2020_ACT_DATE,
-        ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first().sentence).isEqualTo(
-      Sentence(
-        sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-        chargeNumber = "-1",
-        periodLengths = listOf(
-          PeriodLength(
-            years = 30,
-            months = null,
-            weeks = null,
-            days = null,
-            periodOrder = "years,months,weeks,days",
-            periodLengthType = PeriodLengthType.TARIFF_LENGTH,
-            legacyData = null,
-            periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
-          ),
-        ),
-        sentenceServeType = "FORTHWITH",
-        sentenceType = null,
-        convictionDate = CONVICTION_2020_ACT_DATE,
-        fineAmount = null,
-        legacyData = null,
-        consecutiveToSentenceUuid = null,
-        hasRecall = false,
-        status = SentenceEntityStatus.ACTIVE,
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get appearance from hmcts suspended sentence data`() {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(
-        HMCTS_SENTENCED_CHARGE.copy(
-          wording = "Activation of a suspended sentence order. Original CaseURN: ABC123, Original code : TH68010, Original details: On 13/05/2026 at an address Bob Bobby stole A LARGE QUANTITY OF VITAMIN C SUPPLEMENTS , to the value of £159.91 belonging to HOLLAND AND BARRETT",
-          code = "SE20512",
-          results = listOf(
-            HMCTS_SENTENCED_RESULT.copy(
-              code = "SSI",
-              keyValuePairs = listOf(
-                ResultKeyValue(
-                  key = "Original custody term",
-                  value = "5 Years",
-                ),
-              ),
-            ),
-          ),
-          convictionDate = CONVICTION_2020_ACT_DATE,
-        ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first()).isEqualTo(
-      Charge(
-        chargeUuid = response.charges.first().chargeUuid,
-        hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
-        offenceCode = "TH68010",
-        offenceStartDate = LocalDate.of(2026, 6, 15),
-        offenceEndDate = LocalDate.of(2026, 7, 15),
-        outcome = ChargeOutcome(
-          outcomeUuid = UUID.fromString("8a5c4f7d-8e9c-4c1b-9f8e-2f4a3a6d0b21"),
-          outcomeName = "Suspended sentence implemented",
-          nomisCode = "1507",
-          outcomeType = "SENTENCING",
-          displayOrder = 30,
-          dispositionCode = "FINAL",
-          status = ReferenceEntityStatus.ACTIVE,
-        ),
-        aggravatingFactors = emptyList(),
-        sentence = Sentence(
-          sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
-          chargeNumber = "-1",
-          periodLengths = listOf(
-            PeriodLength(
-              years = 5,
-              months = null,
-              weeks = null,
-              days = null,
-              periodOrder = "years,months,weeks,days",
-              periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
-              legacyData = null,
-              periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
-            ),
-          ),
-          sentenceServeType = "FORTHWITH",
-          sentenceType = SentenceType(sentenceTypeUuid = UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"), description = "ORA SDS (Offender rehabilitation act standard determinate sentence)", classification = SentenceTypeClassification.STANDARD, hintText = null, displayOrder = 40),
-          convictionDate = CONVICTION_2020_ACT_DATE,
-          fineAmount = null,
+          overallConvictionDate = null,
           legacyData = null,
-          consecutiveToSentenceUuid = null,
-          hasRecall = false,
-          status = SentenceEntityStatus.ACTIVE,
-        ),
-        legacyData = null,
-        mergedFromCase = null,
-        createdAt = response.charges.first().createdAt,
-        findingOfDomesticAbuse = false,
-      ),
-
-    )
-  }
-
-  @ParameterizedTest(name = "Tests that sentences are mapped: {0}")
-  @MethodSource("sentenceTestProvider")
-  fun `Test sentence type mapping`(testName: String, charge: HmctsCourtCharge, sentenceType: UUID?, dob: LocalDate) {
-    val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
-      charges = listOf(charge),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-    PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
-      DEFAULT_PRISONER_ID,
-      PrisonSearchDetails(
-        "KMI",
-        "Kirkham (HMP)",
-        dob,
-      ),
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.charges.first().sentence?.sentenceType?.sentenceTypeUuid).isEqualTo(sentenceType)
-  }
-
-  @Test
-  fun `Test get remand appearance from with offence outcomes different outcome types`() {
-    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
-      charges = listOf(
-        HMCTS_REMANDED_CHARGE.copy(),
-        HMCTS_REMANDED_CHARGE.copy(
-          results = listOf(
-            HmctsCourtResult(
-              code = "WDRN",
-              description = "Withdrwan",
-              keyValuePairs = emptyList(),
+          documents = listOf(
+            UploadedDocument(
+              documentUUID = DOCUMENT_ID,
+              documentType = "HMCTS_WARRANT",
+              fileName = "warrant.pdf",
             ),
           ),
+          source = EventSource.DPS,
+          deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+          periodLengths = emptyList(),
         ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
+      )
+    }
 
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.outcome).isEqualTo(
-      CourtAppearanceOutcome(
-        outcomeUuid = UUID.fromString("2f585681-7b1a-44fb-a0cb-f9a4b1d9cda8"),
-        outcomeName = "Remand in custody",
-        nomisCode = "4531",
-        outcomeType = "REMAND",
-        displayOrder = 70,
-        relatedChargeOutcomeUuid = UUID.fromString("315280e5-d53e-43b3-8ba6-44da25676ce2"),
-        isSubList = false,
-        dispositionCode = "INTERIM",
-        status = ReferenceEntityStatus.ACTIVE,
-        warrantType = "NON_SENTENCING",
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get remand appearance from with offence outcomes different outcomes same types`() {
-    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
-      charges = listOf(
-        HMCTS_REMANDED_CHARGE.copy(),
-        HMCTS_REMANDED_CHARGE.copy(
-          results = listOf(
-            HmctsCourtResult(
-              code = "CCII",
-              description = "Crown court remand",
-              keyValuePairs = emptyList(),
-            ),
-          ),
-        ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response.outcome).isNull()
-  }
-
-  @Test
-  fun `Test get minimal appearance from hmcts data`() {
-    val hmctsCourtHearing = HmctsCourtHearing(
-      hearingId = HMCTS_HEARING_ID,
-      courtName = "My court",
-      courtCode = null,
-      courtId = UUID.randomUUID(),
-      hearingDate = LocalDate.of(2026, 1, 1),
-      caseReferences = listOf("ABC123", "EFG456"),
-      hearingType = "First hearing",
-      documents = listOf(
-        HmctsCourHearingDocument(
-          "REMAND_WARRANT",
-          DOCUMENT_ID,
-        ),
-      ),
-      charges = listOf(
-        HmctsCourtCharge(
-          chargeId = UUID.randomUUID(),
-          listingNumber = null,
-          offenceLegislation = null,
-          pleaDate = null,
-          pleaValue = null,
-          startDate = LocalDate.of(2026, 6, 15),
-          endDate = null,
-          title = "Theft from the person of another",
-          wording = "Theft from the person of another",
-          code = "TH68001",
-          convictionDate = null,
-          results = listOf(
-            HmctsCourtResult(
-              code = "XXX",
-              description = "Unknown outcome",
-              keyValuePairs = emptyList(),
-            ),
-          ),
-        ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
-
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
-
-    Assertions.assertThat(response).isEqualTo(
-      CourtAppearance(
-        appearanceUuid = response.appearanceUuid, // Random UUID
-        hmctsCourtHearingId = hmctsCourtHearing.hearingId,
-        outcome = null,
-        courtCode = Constants.nilUUID.toString(),
-        courtCaseReference = "ABC123",
-        criminalAppealOfficeReference = null,
-        appearanceDate = LocalDate.parse("2026-01-01"),
-        warrantType = "NON_SENTENCING",
-        nextCourtAppearance = null,
+    @Test
+    fun `Test get remand appearance with multiple difference next hearing results from hmcts data`() {
+      val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
         charges = listOf(
-          Charge(
-            chargeUuid = response.charges.first().chargeUuid,
-            hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
-            offenceCode = "TH68001",
-            offenceStartDate = LocalDate.of(2026, 6, 15),
-            offenceEndDate = null,
-            outcome = null,
-            aggravatingFactors = emptyList(),
-            sentence = null,
-            legacyData = null,
-            mergedFromCase = null,
-            createdAt = response.charges.first().createdAt,
-            findingOfDomesticAbuse = null,
+          HMCTS_REMANDED_CHARGE.copy(
+            results = listOf(
+              HMCTS_REMANDED_RESULT,
+            ),
           ),
-        ),
-        overallConvictionDate = null,
-        legacyData = null,
-        documents = listOf(
-          UploadedDocument(
-            documentUUID = DOCUMENT_ID,
-            documentType = "HMCTS_WARRANT",
-            fileName = "warrant.pdf",
-          ),
-        ),
-        source = EventSource.DPS,
-        deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
-        periodLengths = emptyList(),
-      ),
-    )
-  }
-
-  @Test
-  fun `Test get remand appearance with multiple difference next hearing results from hmcts data`() {
-    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
-      charges = listOf(
-        HMCTS_REMANDED_CHARGE.copy(
-          results = listOf(
-            HMCTS_REMANDED_RESULT,
-          ),
-        ),
-        HMCTS_REMANDED_CHARGE.copy(
-          results = listOf(
-            HMCTS_REMANDED_RESULT.copy(
-              nextHearing = HMCTS_REMANDED_RESULT.nextHearing!!.copy(
-                hearingDate = HMCTS_REMANDED_RESULT.nextHearing.hearingDate!!.minusDays(1),
+          HMCTS_REMANDED_CHARGE.copy(
+            results = listOf(
+              HMCTS_REMANDED_RESULT.copy(
+                nextHearing = HMCTS_REMANDED_RESULT.nextHearing!!.copy(
+                  hearingDate = HMCTS_REMANDED_RESULT.nextHearing.hearingDate!!.minusDays(1),
+                ),
               ),
             ),
           ),
         ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
 
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.nextCourtAppearance).isEqualTo(blankNextCourtAppearance())
-  }
+      Assertions.assertThat(response.nextCourtAppearance).isEqualTo(blankNextCourtAppearance())
+    }
 
-  @Test
-  fun `Test remand in custody with a conviction date results in null outcome`() {
-    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
-      charges = listOf(
-        HMCTS_REMANDED_CHARGE.copy(convictionDate = HMCTS_REMAND_HEARING.hearingDate),
-        HMCTS_REMANDED_CHARGE.copy(),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
+    @Test
+    fun `Test remand in custody with a conviction date results in null outcome`() {
+      val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
+        charges = listOf(
+          HMCTS_REMANDED_CHARGE.copy(convictionDate = HMCTS_REMAND_HEARING.hearingDate),
+          HMCTS_REMANDED_CHARGE.copy(),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
 
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.charges.all { it.outcome == null }).isTrue
-    Assertions.assertThat(response.outcome).isNull()
-  }
+      Assertions.assertThat(response.charges.all { it.outcome == null }).isTrue
+      Assertions.assertThat(response.outcome).isNull()
+    }
 
-  @ParameterizedTest(name = "Tests that offence results are mapped from hmcts {0} to ras outcome {1}")
-  @MethodSource("offenceResultsProvider")
-  fun `Test get offence outcome mappings`(hmctsCode: String, expectedRasOutcomeText: String) {
-    val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
-      charges = listOf(
-        HMCTS_REMANDED_CHARGE.copy(
-          results = listOf(
-            HmctsCourtResult(
-              code = hmctsCode,
-              description = "Code description",
-              keyValuePairs = emptyList(),
+    @ParameterizedTest(name = "Tests that offence results are mapped from hmcts {0} to ras outcome {1}")
+    @MethodSource("offenceResultsProvider")
+    fun `Test get offence non sentencing outcome mappings`(hmctsCode: String, expectedRasOutcomeText: String) {
+      val hmctsCourtHearing = HMCTS_REMAND_HEARING.copy(
+        charges = listOf(
+          HMCTS_REMANDED_CHARGE.copy(
+            results = listOf(
+              HmctsCourtResult(
+                code = hmctsCode,
+                description = "Code description",
+                keyValuePairs = emptyList(),
+              ),
             ),
           ),
         ),
-      ),
-    )
-    CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
-      hmctsCourtHearing,
-      DEFAULT_PRISONER_ID,
-    )
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
 
-    val response = webTestClient
-      .get()
-      .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
-      .headers {
-        it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
-        it.contentType = MediaType.APPLICATION_JSON
-      }
-      .exchange()
-      .expectStatus().isOk
-      .returnResult(CourtAppearance::class.java)
-      .responseBody.blockFirst()!!
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
 
-    Assertions.assertThat(response.charges.size).isEqualTo(1)
-    Assertions.assertThat(response.charges.first().outcome?.outcomeName).isEqualTo(expectedRasOutcomeText)
-  }
+      Assertions.assertThat(response.charges.size).isEqualTo(1)
+      Assertions.assertThat(response.charges.first().outcome?.outcomeName).isEqualTo(expectedRasOutcomeText)
+    }
 
-  companion object {
-    val HMCTS_HEARING_ID = UUID.randomUUID()
-    val DOCUMENT_ID = UUID.randomUUID()
-    val COURT_REGISTER_ID = UUID.randomUUID().toString()
-
-    @JvmStatic
     fun offenceResultsProvider(): Stream<Arguments> = Stream.of(
       Arguments.of("RI", "Remand in custody"),
       Arguments.of("CCII", "Send to Crown Court for trial "),
@@ -1097,8 +474,707 @@ class HmctsCourtDataTest : IntegrationTestBase() {
       Arguments.of("DISC", "Discontinuance"),
       Arguments.of("DISM", "Dismissed"),
     )
+  }
 
-    @JvmStatic
+  @Nested
+  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+  inner class SentenceAppearanceTests {
+    @Test
+    fun `Test get appearance from hmcts standard sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response).isEqualTo(
+        CourtAppearance(
+          appearanceUuid = response.appearanceUuid, // Random UUID
+          hmctsCourtHearingId = hmctsCourtHearing.hearingId,
+          outcome = CourtAppearanceOutcome(
+            outcomeUuid = UUID.fromString("62412083-9892-48c9-bf01-7864af4a8b3c"),
+            outcomeName = "Imprisonment",
+            nomisCode = "1002",
+            outcomeType = "SENTENCING",
+            displayOrder = 10,
+            relatedChargeOutcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
+            isSubList = false,
+            dispositionCode = "FINAL",
+            status = ReferenceEntityStatus.ACTIVE,
+            warrantType = "SENTENCING",
+          ),
+          courtCode = COURT_REGISTER_ID,
+          courtCaseReference = "ABC123",
+          criminalAppealOfficeReference = null,
+          appearanceDate = LocalDate.parse("2026-10-01"),
+          warrantType = "SENTENCING",
+          nextCourtAppearance = null,
+          charges = listOf(
+            Charge(
+              chargeUuid = response.charges.first().chargeUuid,
+              hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+              offenceCode = "TH68001",
+              offenceStartDate = LocalDate.of(2026, 6, 15),
+              offenceEndDate = LocalDate.of(2026, 7, 15),
+              outcome = ChargeOutcome(
+                outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
+                outcomeName = "Imprisonment",
+                nomisCode = "1002",
+                outcomeType = "SENTENCING",
+                displayOrder = 10,
+                dispositionCode = "FINAL",
+                status = ReferenceEntityStatus.ACTIVE,
+              ),
+              aggravatingFactors = listOf(
+                AggravatingFactor(
+                  code = "OAFPC",
+                  title = "Offence aggravated by foreign power condition being met",
+                  description = "Offence aggravated by foreign power condition being met",
+                  displayOrder = 10,
+                ),
+                AggravatingFactor(
+                  code = "OATC",
+                  title = "Offence Aggravated by Terrorist Connection",
+                  description = "Offence Aggravated by Terrorist Connection",
+                  displayOrder = 20,
+                ),
+              ),
+              sentence = Sentence(
+                sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+                chargeNumber = "-1",
+                periodLengths = listOf(
+                  PeriodLength(
+                    years = 1,
+                    months = null,
+                    weeks = null,
+                    days = 60,
+                    periodOrder = "years,months,weeks,days",
+                    periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                    legacyData = null,
+                    periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+                  ),
+                ),
+                sentenceServeType = "FORTHWITH",
+                sentenceType = SentenceType(
+                  sentenceTypeUuid = UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"),
+                  description = "ORA SDS (Offender rehabilitation act standard determinate sentence)",
+                  classification = SentenceTypeClassification.STANDARD,
+                  hintText = null,
+                  displayOrder = 40,
+                ),
+                convictionDate = LocalDate.of(2026, 10, 1),
+                fineAmount = null,
+                legacyData = null,
+                consecutiveToSentenceUuid = null,
+                hasRecall = false,
+                status = SentenceEntityStatus.ACTIVE,
+              ),
+              legacyData = null,
+              mergedFromCase = null,
+              createdAt = response.charges.first().createdAt,
+              findingOfDomesticAbuse = true,
+            ),
+          ),
+          overallConvictionDate = LocalDate.of(2026, 10, 1),
+          legacyData = null,
+          documents = listOf(
+            UploadedDocument(
+              documentUUID = DOCUMENT_ID,
+              documentType = "HMCTS_WARRANT",
+              fileName = "warrant.pdf",
+            ),
+          ),
+          source = EventSource.DPS,
+          deleteStatus = DeleteCourtAppearanceStatus.SUPPORTED,
+          periodLengths = listOf(
+            PeriodLength(
+              years = 1,
+              months = null,
+              weeks = null,
+              days = 60,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.OVERALL_SENTENCE_LENGTH,
+              legacyData = null,
+              periodLengthUuid = response.periodLengths.first().periodLengthUuid,
+            ),
+          ),
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get appearance from hmcts minimal sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            convictionDate = null,
+            results = listOf(
+              HMCTS_SENTENCED_RESULT.copy(
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Concurrent",
+                    value = "true",
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first()).isEqualTo(
+        Charge(
+          chargeUuid = response.charges.first().chargeUuid,
+          hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+          offenceCode = "TH68001",
+          offenceStartDate = LocalDate.of(2026, 6, 15),
+          offenceEndDate = LocalDate.of(2026, 7, 15),
+          outcome = ChargeOutcome(
+            outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
+            outcomeName = "Imprisonment",
+            nomisCode = "1002",
+            outcomeType = "SENTENCING",
+            displayOrder = 10,
+            dispositionCode = "FINAL",
+            status = ReferenceEntityStatus.ACTIVE,
+          ),
+          aggravatingFactors = emptyList(),
+          sentence = Sentence(
+            sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+            chargeNumber = "-1",
+            periodLengths = emptyList(),
+            sentenceServeType = "FORTHWITH",
+            sentenceType = null,
+            convictionDate = null,
+            fineAmount = null,
+            legacyData = null,
+            consecutiveToSentenceUuid = null,
+            hasRecall = false,
+            status = SentenceEntityStatus.ACTIVE,
+          ),
+          legacyData = null,
+          mergedFromCase = null,
+          createdAt = response.charges.first().createdAt,
+          findingOfDomesticAbuse = false,
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get appearance from hmcts standard sentence data with other non sentencing mapped results`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            results = HMCTS_SENTENCED_CHARGE.results + HmctsCourtResult(
+              code = "COEW",
+              description = "Community order",
+              keyValuePairs = emptyList(),
+            ),
+          ),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first().outcome).isEqualTo(
+        ChargeOutcome(
+          outcomeUuid = UUID.fromString("f17328cf-ceaa-43c2-930a-26cf74480e18"),
+          outcomeName = "Imprisonment",
+          nomisCode = "1002",
+          outcomeType = "SENTENCING",
+          displayOrder = 10,
+          dispositionCode = "FINAL",
+          status = ReferenceEntityStatus.ACTIVE,
+        ),
+      )
+      Assertions.assertThat(response.charges.first().sentence).isNotNull
+    }
+
+    @Test
+    fun `Test get appearance from hmcts DTO sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            results = listOf(
+              HMCTS_SENTENCED_RESULT.copy(
+                code = "DTO",
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Period of detention and training",
+                    value = "2 Years 10 Weeks",
+                  ),
+                ),
+              ),
+            ),
+            startDate = LocalDate.of(2016, 8, 15),
+            endDate = null,
+            convictionDate = CONVICTION_2020_ACT_DATE,
+          ),
+        ),
+      )
+      PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+        DEFAULT_PRISONER_ID,
+        PrisonSearchDetails(
+          "KMI",
+          "Kirkham (HMP)",
+          CONVICTION_2020_ACT_DATE.minusYears(17),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+        Sentence(
+          sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+          chargeNumber = "-1",
+          periodLengths = listOf(
+            PeriodLength(
+              years = 2,
+              months = null,
+              weeks = 10,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.TERM_LENGTH,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+            ),
+          ),
+          sentenceServeType = "FORTHWITH",
+          sentenceType = SentenceType(
+            sentenceTypeUuid = UUID.fromString("903ca33b-e264-4a16-883d-fee03a2a3396"),
+            description = "ORA Detention and Training Order",
+            classification = SentenceTypeClassification.DTO,
+            hintText = null,
+            displayOrder = 230,
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+          fineAmount = null,
+          legacyData = null,
+          consecutiveToSentenceUuid = null,
+          hasRecall = false,
+          status = SentenceEntityStatus.ACTIVE,
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get appearance from hmcts EDS sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            results = listOf(
+              HMCTS_SENTENCED_RESULT.copy(
+                code = "EXTDVSU",
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Appropriate custodial term",
+                    value = "5 Years",
+                  ),
+                  ResultKeyValue(
+                    key = "Extension period",
+                    value = "30 Months",
+                  ),
+                ),
+              ),
+            ),
+            convictionDate = CONVICTION_2020_ACT_DATE,
+          ),
+        ),
+      )
+      PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+        DEFAULT_PRISONER_ID,
+        PrisonSearchDetails(
+          "KMI",
+          "Kirkham (HMP)",
+          CONVICTION_2020_ACT_DATE.minusYears(17),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+        Sentence(
+          sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+          chargeNumber = "-1",
+          periodLengths = listOf(
+            PeriodLength(
+              years = 5,
+              months = null,
+              weeks = null,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.CUSTODIAL_TERM,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+            ),
+            PeriodLength(
+              years = null,
+              months = 30,
+              weeks = null,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.LICENCE_PERIOD,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.last().periodLengthUuid,
+            ),
+          ),
+          sentenceServeType = "FORTHWITH",
+          sentenceType = SentenceType(
+            sentenceTypeUuid = UUID.fromString("f1ddc9d6-3c2e-419a-b54d-4e05c92a0f55"),
+            description = "EDS (Extended Determinate Sentence)",
+            classification = SentenceTypeClassification.EXTENDED,
+            hintText = null,
+            displayOrder = 20,
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+          fineAmount = null,
+          legacyData = null,
+          consecutiveToSentenceUuid = null,
+          hasRecall = false,
+          status = SentenceEntityStatus.ACTIVE,
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get appearance from hmcts SOPC sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            results = listOf(
+              HMCTS_SENTENCED_RESULT.copy(
+                code = "SPECC",
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Imprisonment Period",
+                    value = "8 Years",
+                  ),
+                ),
+              ),
+            ),
+            convictionDate = CONVICTION_2020_ACT_DATE,
+          ),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+        Sentence(
+          sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+          chargeNumber = "-1",
+          periodLengths = listOf(
+            PeriodLength(
+              years = 8,
+              months = null,
+              weeks = null,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+            ),
+            PeriodLength(
+              years = 1,
+              months = null,
+              weeks = null,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.LICENCE_PERIOD,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.last().periodLengthUuid,
+            ),
+          ),
+          sentenceServeType = "FORTHWITH",
+          sentenceType = SentenceType(
+            sentenceTypeUuid = UUID.fromString("deb22e75-2335-44de-8a9f-1047d58c9b04"),
+            description = "SOPC (offenders of a particular concern)",
+            classification = SentenceTypeClassification.SOPC,
+            hintText = "A mandatory licence period of 12 months will be automatically added to the sentence",
+            displayOrder = 30,
+          ),
+          convictionDate = CONVICTION_2020_ACT_DATE,
+          fineAmount = null,
+          legacyData = null,
+          consecutiveToSentenceUuid = null,
+          hasRecall = false,
+          status = SentenceEntityStatus.ACTIVE,
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get appearance from hmcts MLI sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            results = listOf(
+              HMCTS_SENTENCED_RESULT.copy(
+                code = "MLI",
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Minimum term",
+                    value = "30 Years",
+                  ),
+                ),
+              ),
+            ),
+            convictionDate = CONVICTION_2020_ACT_DATE,
+          ),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first().sentence).isEqualTo(
+        Sentence(
+          sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+          chargeNumber = "-1",
+          periodLengths = listOf(
+            PeriodLength(
+              years = 30,
+              months = null,
+              weeks = null,
+              days = null,
+              periodOrder = "years,months,weeks,days",
+              periodLengthType = PeriodLengthType.TARIFF_LENGTH,
+              legacyData = null,
+              periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+            ),
+          ),
+          sentenceServeType = "FORTHWITH",
+          sentenceType = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+          fineAmount = null,
+          legacyData = null,
+          consecutiveToSentenceUuid = null,
+          hasRecall = false,
+          status = SentenceEntityStatus.ACTIVE,
+        ),
+      )
+    }
+
+    @Test
+    fun `Test get appearance from hmcts suspended sentence data`() {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(
+          HMCTS_SENTENCED_CHARGE.copy(
+            wording = "Activation of a suspended sentence order. Original CaseURN: ABC123, Original code : TH68010, Original details: On 13/05/2026 at an address Bob Bobby stole A LARGE QUANTITY OF VITAMIN C SUPPLEMENTS , to the value of £159.91 belonging to HOLLAND AND BARRETT",
+            code = "SE20512",
+            results = listOf(
+              HMCTS_SENTENCED_RESULT.copy(
+                code = "SSI",
+                keyValuePairs = listOf(
+                  ResultKeyValue(
+                    key = "Original custody term",
+                    value = "5 Years",
+                  ),
+                ),
+              ),
+            ),
+            convictionDate = CONVICTION_2020_ACT_DATE,
+          ),
+        ),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first()).isEqualTo(
+        Charge(
+          chargeUuid = response.charges.first().chargeUuid,
+          hmctsChargeId = hmctsCourtHearing.charges.first().chargeId,
+          offenceCode = "TH68010",
+          offenceStartDate = LocalDate.of(2026, 6, 15),
+          offenceEndDate = LocalDate.of(2026, 7, 15),
+          outcome = ChargeOutcome(
+            outcomeUuid = UUID.fromString("8a5c4f7d-8e9c-4c1b-9f8e-2f4a3a6d0b21"),
+            outcomeName = "Suspended sentence implemented",
+            nomisCode = "1507",
+            outcomeType = "SENTENCING",
+            displayOrder = 30,
+            dispositionCode = "FINAL",
+            status = ReferenceEntityStatus.ACTIVE,
+          ),
+          aggravatingFactors = emptyList(),
+          sentence = Sentence(
+            sentenceUuid = response.charges.first().sentence!!.sentenceUuid,
+            chargeNumber = "-1",
+            periodLengths = listOf(
+              PeriodLength(
+                years = 5,
+                months = null,
+                weeks = null,
+                days = null,
+                periodOrder = "years,months,weeks,days",
+                periodLengthType = PeriodLengthType.SENTENCE_LENGTH,
+                legacyData = null,
+                periodLengthUuid = response.charges.first().sentence!!.periodLengths.first().periodLengthUuid,
+              ),
+            ),
+            sentenceServeType = "FORTHWITH",
+            sentenceType = SentenceType(sentenceTypeUuid = UUID.fromString("e138374d-810f-4718-a81a-1c9d4745031e"), description = "ORA SDS (Offender rehabilitation act standard determinate sentence)", classification = SentenceTypeClassification.STANDARD, hintText = null, displayOrder = 40),
+            convictionDate = CONVICTION_2020_ACT_DATE,
+            fineAmount = null,
+            legacyData = null,
+            consecutiveToSentenceUuid = null,
+            hasRecall = false,
+            status = SentenceEntityStatus.ACTIVE,
+          ),
+          legacyData = null,
+          mergedFromCase = null,
+          createdAt = response.charges.first().createdAt,
+          findingOfDomesticAbuse = false,
+        ),
+
+      )
+    }
+
+    @ParameterizedTest(name = "Tests that sentences are mapped: {0}")
+    @MethodSource("sentenceTestProvider")
+    fun `Test sentence type mapping`(testName: String, charge: HmctsCourtCharge, sentenceType: UUID?, dob: LocalDate) {
+      val hmctsCourtHearing = HMCTS_SENTENCE_HEARING.copy(
+        charges = listOf(charge),
+      )
+      CourtDataIngestionApiExtension.courtDataIngestionApi.stubCourtHearing(
+        hmctsCourtHearing,
+        DEFAULT_PRISONER_ID,
+      )
+      PrisonSearchExtension.prisonSearch.stubPrisonSearchDetails(
+        DEFAULT_PRISONER_ID,
+        PrisonSearchDetails(
+          "KMI",
+          "Kirkham (HMP)",
+          dob,
+        ),
+      )
+
+      val response = webTestClient
+        .get()
+        .uri("/hmcts-court-data/${HMCTS_HEARING_ID}/prisoner/$DEFAULT_PRISONER_ID/appearance")
+        .headers {
+          it.authToken(roles = listOf("ROLE_REMAND_AND_SENTENCING__REMAND_AND_SENTENCING_UI"))
+          it.contentType = MediaType.APPLICATION_JSON
+        }
+        .exchange()
+        .expectStatus().isOk
+        .returnResult(CourtAppearance::class.java)
+        .responseBody.blockFirst()!!
+
+      Assertions.assertThat(response.charges.first().sentence?.sentenceType?.sentenceTypeUuid).isEqualTo(sentenceType)
+    }
+
     fun sentenceTestProvider(): Stream<Arguments> = Stream.of(
       Arguments.of(
         "2020 ORA Standard Determinate Sentences",
@@ -1365,6 +1441,12 @@ class HmctsCourtDataTest : IntegrationTestBase() {
         CONVICTION_2020_ACT_DATE.minusYears(17),
       ),
     )
+  }
+
+  companion object {
+    val HMCTS_HEARING_ID = UUID.randomUUID()
+    val DOCUMENT_ID = UUID.randomUUID()
+    val COURT_REGISTER_ID = UUID.randomUUID().toString()
 
     val HMCTS_SENTENCED_RESULT = HmctsCourtResult(
       code = "IMP",
