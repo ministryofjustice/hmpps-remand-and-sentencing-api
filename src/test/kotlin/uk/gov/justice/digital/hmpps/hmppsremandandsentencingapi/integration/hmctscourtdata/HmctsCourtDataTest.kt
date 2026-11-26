@@ -1316,7 +1316,7 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           endDate = null,
           convictionDate = CONVICTION_2020_ACT_DATE,
         ),
-        null, // UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"), More than one sentence type.
+        UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"),
         CONVICTION_2020_ACT_DATE.minusYears(19),
       ),
       Arguments.of(
@@ -1327,7 +1327,29 @@ class HmctsCourtDataTest : IntegrationTestBase() {
           endDate = null,
           convictionDate = CONVICTION_2020_ACT_DATE,
         ),
-        null, // UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"), More than one sentence type
+        UUID.fromString("0da58738-2db6-4fba-8f65-438284019756"),
+        ADULT_DOB,
+      ),
+      Arguments.of(
+        "2020 Serious Terrorism Sentence Sentence (18-20)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "STSDY")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("b14be497-e9fe-4b67-913b-91b6c27a57c4"),
+        CONVICTION_2020_ACT_DATE.minusYears(19),
+      ),
+      Arguments.of(
+        "2020 Serious Terrorism Sentence Sentence (21+)",
+        HMCTS_SENTENCED_CHARGE.copy(
+          results = listOf(HMCTS_SENTENCED_RESULT.copy(code = "STSI")),
+          startDate = LocalDate.of(2014, 8, 15),
+          endDate = null,
+          convictionDate = CONVICTION_2020_ACT_DATE,
+        ),
+        UUID.fromString("0e822fe7-80dd-4c5d-b477-33b7109058c9"),
         ADULT_DOB,
       ),
       Arguments.of(
