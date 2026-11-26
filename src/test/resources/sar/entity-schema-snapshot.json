@@ -141,6 +141,12 @@
     "outcomeName": "String",
     "outcomeType": "String"
   },
+  "ChargeOutcomeSentenceTypeEntity": {
+    "chargeOutcome": "ChargeOutcomeEntity",
+    "id": "ChargeOutcomeSentenceTypeId",
+    "maxDateExclusive": "LocalDate",
+    "sentenceType": "SentenceTypeEntity"
+  },
   "ChargeSarEntity": {
     "chargeAggravatingFactors": "Set",
     "chargeOutcome": "ChargeOutcomeSarEntity",
