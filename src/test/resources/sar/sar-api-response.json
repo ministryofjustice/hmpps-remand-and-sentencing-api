@@ -25,6 +25,7 @@
             "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
             "offenceEndDate": "No Data Held",
             "chargeOutcome": "Imprisonment",
+            "value": "No Data Held",
             "liveSentence": {
               "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
               "sentenceTypeClassification": "STANDARD",
@@ -50,6 +51,7 @@
             "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
             "offenceEndDate": "No Data Held",
             "chargeOutcome": "Imprisonment",
+            "value": "No Data Held",
             "liveSentence": {
               "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
               "sentenceTypeClassification": "STANDARD",
@@ -86,6 +88,7 @@
               "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
               "offenceEndDate": "No Data Held",
               "chargeOutcome": "Imprisonment",
+              "value": "No Data Held",
               "liveSentence": {
                 "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
                 "sentenceTypeClassification": "STANDARD",
@@ -111,6 +114,7 @@
               "offenceStartDate": "${json-unit.regex}^\\d{4}-\\d{2}-\\d{2}$",
               "offenceEndDate": "No Data Held",
               "chargeOutcome": "Imprisonment",
+              "value": "No Data Held",
               "liveSentence": {
                 "sentenceTypeDescription": "Serious Offence Sec 250 Sentencing Code (U18)",
                 "sentenceTypeClassification": "STANDARD",
