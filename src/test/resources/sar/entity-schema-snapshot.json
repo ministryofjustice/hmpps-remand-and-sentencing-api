@@ -99,7 +99,8 @@
     "supersedingCharge": "ChargeEntity",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String"
+    "updatedPrison": "String",
+    "value": "BigDecimal"
   },
   "ChargeHistoryEntity": {
     "changeSource": "ChangeSource",
@@ -122,12 +123,12 @@
     "supersedingChargeId": "Integer",
     "updatedAt": "ZonedDateTime",
     "updatedBy": "String",
-    "updatedPrison": "String"
+    "updatedPrison": "String",
+    "value": "BigDecimal"
   },
   "ChargeOutcomeEntity": {
     "displayOrder": "int",
     "dispositionCode": "String",
-    "hmctsCode": "String",
     "id": "int",
     "nomisCode": "String",
     "outcomeName": "String",
@@ -139,6 +140,12 @@
     "id": "int",
     "outcomeName": "String",
     "outcomeType": "String"
+  },
+  "ChargeOutcomeSentenceTypeEntity": {
+    "chargeOutcome": "ChargeOutcomeEntity",
+    "id": "ChargeOutcomeSentenceTypeId",
+    "maxDateExclusive": "LocalDate",
+    "sentenceType": "SentenceTypeEntity"
   },
   "ChargeSarEntity": {
     "chargeAggravatingFactors": "Set",
@@ -268,6 +275,14 @@
     "prisonerId": "String",
     "statusId": "String",
     "updatedAt": "ZonedDateTime"
+  },
+  "HmctsResultCodeEntity": {
+    "chargeOutcome": "ChargeOutcomeEntity",
+    "id": "int",
+    "resultCode": "String",
+    "resultName": "String",
+    "resultUuid": "UUID",
+    "status": "ReferenceEntityStatus"
   },
   "ImmigrationDetentionEntity": {
     "courtAppearanceUuid": "UUID",
