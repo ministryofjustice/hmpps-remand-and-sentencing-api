@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.S
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.UploadedDocument
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.courtappearanceschedule.DeleteCourtAppearanceStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.hmctsresultcode.HmctsResultCode
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.sentencetypes.SentenceTypeDetails
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.domain.event.EventSource
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.AggravatingFactorStatus
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.jpa.enum.PeriodLengthType
@@ -282,7 +283,8 @@ class HmctsCourtDataService(
             it.description.contains("ORA") != offenceDate.isBefore(
               ORA_DATE,
             )
-        return@filter classificationMatches && ora
+        val edsStsMatch: Boolean = if (expectedClassification == SentenceTypeClassification.EXTENDED) doesSentenceTypeMatchEDSorSTS(it, result) else true
+        return@filter classificationMatches && ora && edsStsMatch
       }
     }
 
@@ -330,6 +332,14 @@ class HmctsCourtDataService(
     )
   }
 
+  fun doesSentenceTypeMatchEDSorSTS(sentenceType: SentenceTypeDetails, result: HmctsCourtResult): Boolean = if (EDS_RESULT_CODES.contains(result.code)) {
+    EDS_SENTENCE_TYPES.contains(sentenceType.sentenceTypeUuid)
+  } else if (STS_RESULT_CODES.contains(result.code)) {
+    STS_SENTENCE_TYPES.contains(sentenceType.sentenceTypeUuid)
+  } else {
+    true
+  }
+
   private fun mapDocumentType(documentType: String): String = if (documentType == "PRISON_COURT_REGISTER") {
     "PRISON_COURT_REGISTER"
   } else {
@@ -345,7 +355,7 @@ class HmctsCourtDataService(
   private fun classificationFromHmctsResultCode(hmctsResultCode: String): SentenceTypeClassification? = when (hmctsResultCode) {
     "IMP", "YOI", "SSI", "SSIV", "SSID", "SSIDV" -> SentenceTypeClassification.STANDARD
     "DTO" -> SentenceTypeClassification.DTO
-    "EXTDVSU", "EXTDVS", "EXTIVS" -> SentenceTypeClassification.EXTENDED
+    "EXTDVSU", "EXTDVS", "EXTIVS", "STSDY", "STSI" -> SentenceTypeClassification.EXTENDED
     "SPECCC", "SPECC", "SPECCD" -> SentenceTypeClassification.SOPC
     "MLI" -> SentenceTypeClassification.INDETERMINATE
     else -> null
@@ -373,6 +383,17 @@ class HmctsCourtDataService(
   companion object {
     private const val FINDING_OF_DOMESTIC_ABUSE_RESULT_CODE = "FODA"
     private val SUSPENDED_SENTENCE_RESULT_CODES = listOf("SSI", "SSIV", "SSID", "SSIDV")
+    private val EDS_RESULT_CODES = listOf("EXTDVSU", "EXTDVS", "EXTIVS")
+    private val EDS_SENTENCE_TYPES = listOf(
+      UUID.fromString("0da58738-2db6-4fba-8f65-438284019756"),
+      UUID.fromString("18d5af6d-2fa7-4166-a4c9-8381a1e3c7e0"),
+      UUID.fromString("f1ddc9d6-3c2e-419a-b54d-4e05c92a0f55"),
+    )
+    private val STS_RESULT_CODES = listOf("STSDY", "STSI")
+    private val STS_SENTENCE_TYPES = listOf(
+      UUID.fromString("b14be497-e9fe-4b67-913b-91b6c27a57c4"),
+      UUID.fromString("0e822fe7-80dd-4c5d-b477-33b7109058c9"),
+    )
     val ORA_DATE = LocalDate.of(2015, 2, 1)
     private val log = LoggerFactory.getLogger(this::class.java)
     val OUTCOME_TYPE_IMPORTANCE_ORDER = listOf(
