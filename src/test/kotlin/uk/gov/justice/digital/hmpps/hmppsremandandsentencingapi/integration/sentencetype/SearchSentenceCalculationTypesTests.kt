@@ -163,10 +163,10 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
     val offenceDate = LocalDate.of(2000, 11, 19)
     val age = 18
     val imprisonmentChargeOutcomeUuid = "f17328cf-ceaa-43c2-930a-26cf74480e18"
-    val scheduleB1991 = sentenceTypeRepository.findBySentenceTypeUuid(UUID.fromString("75d642f1-a1ed-4dab-a630-ccecd7de93c7"))!!
+    val scheduleB1991 = sentenceTypeRepository.findBySentenceTypeUuid(scheduleB1991SentenceTypeUuid)!!
     scheduleB1991.status = ReferenceEntityStatus.ACTIVE
     sentenceTypeRepository.save(scheduleB1991)
-    val scehduleB1967 = sentenceTypeRepository.findBySentenceTypeUuid(UUID.fromString("01a1ee53-dbb4-770e-9815-6e93c32ae47d"))!!
+    val scehduleB1967 = sentenceTypeRepository.findBySentenceTypeUuid(scheduleB1967SentenceTypeUuid)!!
     scehduleB1967.status = ReferenceEntityStatus.ACTIVE
     sentenceTypeRepository.save(scehduleB1967)
 
@@ -184,6 +184,10 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
       .returnResult().responseBody!!
 
     Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.containsExactlyInAnyOrderElementsOf(listOf(scheduleB1991.sentenceTypeUuid, scehduleB1967.sentenceTypeUuid))
+    scheduleB1991.status = ReferenceEntityStatus.INACTIVE
+    sentenceTypeRepository.save(scheduleB1991)
+    scehduleB1967.status = ReferenceEntityStatus.INACTIVE
+    sentenceTypeRepository.save(scehduleB1967)
   }
 
   @Test
@@ -205,6 +209,29 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
       .isOk
       .expectBody(typeReference<List<SentenceTypeDetails>>())
       .returnResult().responseBody!!
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("8d04557c-8e54-4e2a-844f-272163fca833"))
+  }
+
+  @Test
+  fun `keep other sentence types when sentence types are inactive within the conviction date`() {
+    val convictionDate = LocalDate.of(2012, 11, 19)
+    val offenceDate = LocalDate.of(2000, 11, 19)
+    val age = 18
+    val imprisonmentChargeOutcomeUuid = "f17328cf-ceaa-43c2-930a-26cf74480e18"
+    val result = webTestClient.get()
+      .uri(
+        "/sentence-type/search?age=$age&convictionDate=${convictionDate.format(DateTimeFormatter.ISO_DATE)}&offenceDate=${offenceDate.format(
+          DateTimeFormatter.ISO_DATE,
+        )}&chargeOutcomeUuid=$imprisonmentChargeOutcomeUuid",
+      )
+      .headers { it.authToken() }
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody(typeReference<List<SentenceTypeDetails>>())
+      .returnResult().responseBody!!
+
+    Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.doesNotContain(scheduleB1991SentenceTypeUuid, scheduleB1967SentenceTypeUuid)
     Assertions.assertThat(result).extracting<UUID> { it.sentenceTypeUuid }.contains(UUID.fromString("8d04557c-8e54-4e2a-844f-272163fca833"))
   }
 
@@ -328,5 +355,7 @@ class SearchSentenceCalculationTypesTests : IntegrationTestBase() {
         LocalDate.parse("2020-12-15"),
       ),
     )
+    val scheduleB1991SentenceTypeUuid = UUID.fromString("75d642f1-a1ed-4dab-a630-ccecd7de93c7")
+    val scheduleB1967SentenceTypeUuid = UUID.fromString("01a1ee53-dbb4-770e-9815-6e93c32ae47d")
   }
 }

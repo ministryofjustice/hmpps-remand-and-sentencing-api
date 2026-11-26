@@ -50,10 +50,10 @@ interface SentenceTypeRepository : CrudRepository<SentenceTypeEntity, Int> {
     select ste from SentenceTypeEntity ste
     join ste.chargeOutcomes coste
     join coste.chargeOutcome co
-    where co.outcomeUuid = :chargeOutcomeUuid and (coste.maxDateExclusive > :convictionDate or coste.maxDateExclusive is null)
+    where co.outcomeUuid = :chargeOutcomeUuid and (coste.maxDateExclusive > :convictionDate or coste.maxDateExclusive is null) and ste.status IN :statuses
   """,
   )
-  fun findByChargeOutcomeAndConvictionDate(chargeOutcomeUuid: UUID, convictionDate: LocalDate): List<SentenceTypeEntity>
+  fun findByChargeOutcomeAndConvictionDateAndStatuses(chargeOutcomeUuid: UUID, convictionDate: LocalDate, statuses: List<ReferenceEntityStatus>): List<SentenceTypeEntity>
 
   fun findByNomisCjaCodeAndNomisSentenceCalcType(nomisCjaCode: String, nomisSentenceCalcType: String): SentenceTypeEntity?
 
