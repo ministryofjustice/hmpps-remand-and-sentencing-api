@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.controller.dto.person.PeopleStatusRequest
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.legacy.util.DataCreator
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.integration.wiremock.AdjustmentsApiExtension.Companion.adjustmentsApi
 import uk.gov.justice.digital.hmpps.hmppsremandandsentencingapi.util.DpsDataCreator
+import java.time.LocalDate
 
 class GetPeopleStatusTests : IntegrationTestBase() {
 
@@ -29,7 +31,6 @@ class GetPeopleStatusTests : IntegrationTestBase() {
     postStatuses(setOf(remandPrisoner, recallPrisoner, notFoundPrisoner))
       .expectStatus().isOk
       .expectBody()
-      .consumeWith { println(objectMapper.readTree(it.responseBody).toPrettyString()) }
       .jsonPath("$.peopleStatus.$remandPrisoner.isOnRemand").isEqualTo(true)
       .jsonPath("$.peopleStatus.$remandPrisoner.isCurrentlyOnRecall").isEqualTo(false)
       .jsonPath("$.peopleStatus.$recallPrisoner.isOnRemand").isEqualTo(false)
@@ -57,6 +58,19 @@ class GetPeopleStatusTests : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.peopleStatus.PRI123.isOnRemand").isEqualTo(true)
       .jsonPath("$.peopleStatus.PRI124").doesNotExist()
+  }
+
+  @Test
+  fun `should return false when latest court appearance has legacy outcome`() {
+    val legacyPrisoner = DpsDataCreator.DEFAULT_PRISONER_ID
+    val pastRemandAppearance = DpsDataCreator.dpsCreateNonSentencedCourtAppearance(nextCourtAppearance = null, appearanceDate = LocalDate.now().minusDays(10))
+    val (courtCaseUuid) = createCourtCase(createCourtCase = DpsDataCreator.dpsCreateCourtCase(prisonerId = legacyPrisoner, appearances = listOf(pastRemandAppearance)))
+    val legacyLatestAppearance = DataCreator.legacyCreateCourtAppearance(courtCaseUuid = courtCaseUuid)
+    createLegacyCourtAppearance(legacyCreateCourtAppearance = legacyLatestAppearance, existingCourtCaseUuid = courtCaseUuid)
+    postStatuses(setOf(legacyPrisoner))
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.peopleStatus.$legacyPrisoner.isOnRemand").isEqualTo(false)
   }
 
   @Test
