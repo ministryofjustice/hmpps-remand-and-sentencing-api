@@ -465,7 +465,7 @@ interface CourtCaseRepository :
           and (
             select ao.outcome_type
             from court_appearance ca
-            join appearance_outcome ao on ao.id = ca.appearance_outcome_id
+            left join appearance_outcome ao on ao.id = ca.appearance_outcome_id
             where ca.court_case_id = cc.id
               and ca.status_id = 'ACTIVE'
             order by ca.appearance_date desc, ca.created_at desc
