@@ -834,6 +834,45 @@ class RecallServiceTest {
       assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
     }
 
+    @Nested
+    inner class Schedule20BTests {
+      @Test
+      fun `a standard recall is allowed for a schedule 20b sentence`() {
+        val sentence = createRecallableSentence().apply {
+          sentenceType = schedule20bSentenceType("01a1ee53-dbb4-770e-9815-6e93c32ae47d")
+        }
+
+        every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+        val result = service.isRecallPossible(
+          IsRecallPossibleRequest(
+            sentenceIds = listOf(sentence.sentenceUuid),
+            recallType = RecallType.LR,
+          ),
+        )
+
+        assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.YES)
+      }
+
+      @Test
+      fun `a recall that is not standard is blocked for a schedule 20b sentence`() {
+        val sentence = createRecallableSentence().apply {
+          sentenceType = schedule20bSentenceType("75d642f1-a1ed-4dab-a630-ccecd7de93c7")
+        }
+
+        every { sentenceRepository.findBySentenceUuidInAndStatusIdNot(any(), any()) } returns listOf(sentence)
+
+        val result = service.isRecallPossible(
+          IsRecallPossibleRequest(
+            sentenceIds = listOf(sentence.sentenceUuid),
+            recallType = FTR_14,
+          ),
+        )
+
+        assertThat(result.isRecallPossible).isEqualTo(IsRecallPossible.RECALL_TYPE_AND_SENTENCE_MAPPING_NOT_POSSIBLE)
+      }
+    }
+
     private fun unknownPreRecallSentence(legacyCategory: String): SentenceEntity {
       val sentence = SentenceEntity(
         sentenceUuid = UUID.randomUUID(),
@@ -1043,6 +1082,24 @@ class RecallServiceTest {
     courtCase.latestCourtAppearance = appearance
     return courtCase
   }
+
+  private fun schedule20bSentenceType(sentenceTypeUuid: String) = SentenceTypeEntity(
+    sentenceTypeUuid = UUID.fromString(sentenceTypeUuid),
+    description = "Legacy sentence - Schedule 20B",
+    classification = SentenceTypeClassification.LEGACY,
+    nomisCjaCode = "1967",
+    nomisSentenceCalcType = "SCHED20B",
+    displayOrder = 1,
+    status = ReferenceEntityStatus.ACTIVE,
+    minAgeInclusive = null,
+    maxAgeExclusive = null,
+    minDateInclusive = null,
+    maxDateExclusive = null,
+    minOffenceDateInclusive = null,
+    maxOffenceDateExclusive = null,
+    hintText = null,
+    isRecallable = true,
+  )
 
   companion object {
     private val testCourtCase = CourtCaseEntity(
